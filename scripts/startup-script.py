@@ -37,6 +37,7 @@ MAX_NODE_COUNT    = @MAX_NODE_COUNT@
 DEF_SLURM_ACCT    = '@DEF_SLURM_ACCT@'
 DEF_SLURM_USERS   = '@DEF_SLURM_USERS@'
 EXTERNAL_COMPUTE_IPS = @EXTERNAL_COMPUTE_IPS@
+GPU_TYPE          = '@GPU_TYPE@'
 
 SLURM_PREFIX  = APPS_DIR + '/slurm/slurm-' + SLURM_VERSION
 
@@ -124,11 +125,20 @@ def end_motd():
     subprocess.call(['wall', '-n',
         '*** Slurm ' + INSTANCE_TYPE + ' daemon installation complete ***'])
 
+    if "nvidia" in GPU_TYPE:
+        subprocess.call(['wall', '-n',
+            '*** Nvidia driver installation complete. Reboot will begin in 10 sec. ***'])
+
     if INSTANCE_TYPE != "controller":
         subprocess.call(['wall', '-n', """
 /home on the controller was mounted over the existing /home.
 Either log out and log back in or cd into ~.
 """])
+
+
+
+
+
 
 #END start_motd()
 
@@ -329,7 +339,7 @@ ProctrackType=proctrack/cgroup
 #PropagateResourceLimitsExcept=Sched
 #RebootProgram=
 
-ReturnToService=1
+ReturnToService=2
 #SallocDefaultCommand=
 SlurmctldPidFile=/var/run/slurm/slurmctld.pid
 SlurmctldPort=6817
@@ -582,6 +592,22 @@ def install_suspend_progs():
 
 #END install_suspend_progs()
 
+def install_nvidia_drivers():
+    GOOGLE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/attributes"
+
+    req = urllib2.Request(GOOGLE_URL + '/gpu_script')
+    req.add_header('Metadata-Flavor', 'Google')
+    resp = urllib2.urlopen(req)
+
+    f = open(APPS_DIR + '/slurm/scripts/nvidia.sh', 'w')
+    f.write(resp.read())
+    f.close()
+    os.chmod(APPS_DIR + '/slurm/scripts/nvidia.sh', 0o755)
+
+    subprocess.call(['./' + APPS_DIR + '/slurm/scripts/nvidia.sh'])
+
+#END install_nvidia_drivers()
+
 def install_slurm():
 
     SCHEDMD_URL = 'https://download.schedmd.com/slurm/'
@@ -816,6 +842,14 @@ def main():
         subprocess.call(shlex.split('systemctl enable slurmd'))
         subprocess.call(shlex.split('systemctl start slurmd'))
 
+        if "nvidia" in GPU_TYPE:
+            if not os.path.exists('/usr/local/cuda'):
+                install_nvidia_drivers()
+                end_motd()
+                time.sleep(10)
+                subprocess.call(['sudo', 'umount', '-l', '/apps', '/home'])
+                os.system('reboot')
+
     end_motd()
 
 # END main()
@@ -823,5 +857,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

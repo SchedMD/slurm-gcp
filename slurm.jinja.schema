@@ -25,6 +25,7 @@ imports:
 - path: scripts/resume.py
 - path: scripts/startup-script.py
 - path: scripts/suspend.py
+- path: scripts/nvidia.sh
 
 required:
 - cidr
@@ -50,6 +51,8 @@ optional:
 - login_disk_size_gb
 - login_disk_type
 - preemptible_bursting
+- gpu_type
+- gpu_count
 
 properties:
   cidr:
@@ -112,6 +115,14 @@ properties:
       then the compute nodes will get to the internet through the controller
       through a NAT'ed gateway.
 
+  gpu_type:
+    enum: ["nvidia-tesla-k80", "nvidia-tesla-p100"]
+    description: GPU Type to attach to static nodes.
+
+  gpu_count:
+    enum: [1, 2, 4, 8]
+    description: Number of GPUs to attach to each node.
+
   login_machine_type:
     type        : string
     description : |
@@ -161,4 +172,3 @@ properties:
   zone:
     type        : string
     description : Zone to run the instances in based on Region.
-

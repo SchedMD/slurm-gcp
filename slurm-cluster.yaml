@@ -25,17 +25,24 @@ resources:
   properties:
     cluster_name            : google1
     static_node_count       : 2
-    max_node_count          : 10
-    zone                    : us-east1-b
+    max_node_count          : 100
+    zone                    : us-east1-c
     region                  : us-east1
     cidr                    : 10.10.0.0/16
 
-    controller_machine_type : n1-standard-2
+    controller_machine_type : n1-standard-8
     compute_machine_type    : n1-standard-2
+
+    #[optional gpu_type]
+    gpu_type                : nvidia-tesla-k80
+    #[optional gpu_count]
+    gpu_count               : 1
     login_machine_type      : n1-standard-1
 
-    slurm_version           : <slurm version e.g. 17.11.5>
+
+    slurm_version           : 17.11.5
+
     default_account         : default
-    default_users           : <comma separated list of users>
-    munge_key               : <.e.g date +%s | sha512sum | cut -d' ' -f1 >
+    default_users           : kbinder
+    munge_key               : 3021d74b93eb23da00d23de72adbf952fb4c61b34a5ce2071cc693d78b71b73d76864a4ad0e5c238b5cfab2a3e60a8a8b6721c3c88c0cac79066bca4f29a2d04
 #  [END cluster_yaml]
