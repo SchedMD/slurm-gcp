@@ -552,7 +552,7 @@ space (e.g. same uids across all the clusters).
 
    e.g.
    ```
-   $ sacctmgr add account=<default account> [cluster=<cluster name>]
+   $ sacctmgr add account <default account> [cluster=<cluster name>]
    $ sacctmgr add user <user> account=<default account> [cluster=<cluster name>]
    ```
 
