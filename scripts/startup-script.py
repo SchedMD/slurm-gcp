@@ -186,7 +186,10 @@ def install_packages():
                 'rpm-build',
                 'rrdtool-devel',
                 'vim',
-                'wget'
+                'wget',
+                'tmux',
+                'pdsh',
+                'openmpi'
                ]
 
     while subprocess.call(['yum', 'install', '-y'] + packages):
@@ -438,13 +441,13 @@ SlurmdLogFile={apps_dir}/slurm/log/slurmd-%n.log
 # POWER SAVE SUPPORT FOR IDLE NODES (optional)
 SuspendProgram={apps_dir}/slurm/scripts/suspend.py
 ResumeProgram={apps_dir}/slurm/scripts/resume.py
-SuspendTimeout=900
-ResumeTimeout=900
+SuspendTimeout=300
+ResumeTimeout=1800
 #ResumeRate=
 #SuspendExcNodes=
 #SuspendExcParts=
 #SuspendRate=
-SuspendTime=1800
+SuspendTime=2100
 #
 #
 # COMPUTE NODES
@@ -773,6 +776,17 @@ controller:/home  /home   nfs      rw,sync,hard,intr  0     0
 
 #END mount_nfs_vols()
 
+# Tune the NFS server to support many mounts
+def setup_nfs_threads():
+
+    f = open('/etc/sysconfig/nfs', 'a')
+    f.write("""
+# Added by Google
+RPCNFSDCOUNT=256
+""".format(APPS_DIR))
+    f.close()
+
+# END setup_nfs_threads()
 
 def main():
     # Disable SELinux
@@ -807,6 +821,9 @@ def main():
 
     if INSTANCE_TYPE == "controller":
         install_slurm()
+
+        # Add any additional installation functions here
+
         install_controller_service_scripts()
 
         subprocess.call(shlex.split('systemctl enable mariadb'))
@@ -839,6 +856,9 @@ def main():
 
     elif INSTANCE_TYPE == "compute":
         install_compute_service_scripts()
+
+        # Add any additional installation functions here
+
         subprocess.call(shlex.split('systemctl enable slurmd'))
         subprocess.call(shlex.split('systemctl start slurmd'))
 
