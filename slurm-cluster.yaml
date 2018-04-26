@@ -25,7 +25,7 @@ resources:
   properties:
     cluster_name            : google1
     static_node_count       : 2
-    max_node_count          : 100
+    max_node_count          : 10
 
     zone                    : us-central1-b
     region                  : us-central1
