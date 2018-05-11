@@ -53,6 +53,7 @@ optional:
 - preemptible_bursting
 - gpu_type
 - gpu_count
+- labels
 
 properties:
   cidr:
@@ -122,6 +123,10 @@ properties:
   gpu_count:
     enum: [1, 2, 4, 8]
     description: Number of GPUs to attach to each node.
+
+  labels:
+    type: string
+    description: Labels to add to nodes for reporting. Key will be node name (key,value).
 
   login_machine_type:
     type        : string

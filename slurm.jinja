@@ -86,16 +86,14 @@ resources:
     serviceAccounts:
       - email: "default"
         scopes:
-        - "https://www.googleapis.com/auth/logging.write"
-        - "https://www.googleapis.com/auth/compute"
-        - "https://www.googleapis.com/auth/servicecontrol"
-        - "https://www.googleapis.com/auth/service.management.readonly"
-        - "https://www.googleapis.com/auth/monitoring.write"
-        - "https://www.googleapis.com/auth/trace.append"
-        - "https://www.googleapis.com/auth/devstorage.read_only"
+        - "https://www.googleapis.com/auth/cloud-platform"
     tags:
       items:
         - controller
+{% if properties["labels"] %}
+    labels:
+      controller: {{properties["labels"]}}
+{% endif %}
     metadata:
       items:
         - key: startup-script
@@ -106,7 +104,7 @@ resources:
             {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","compute")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"]) }}
         - key: slurm_resume
           value: |
-            {{ imports["scripts/resume.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@REGION@",properties["region"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@DISK_SIZE_GB@",properties["compute_disk_size_gb"])|replace("@DISK_TYPE@",properties["compute_disk_type"])  }}
+            {{ imports["scripts/resume.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@REGION@",properties["region"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@DISK_SIZE_GB@",properties["compute_disk_size_gb"])|replace("@DISK_TYPE@",properties["compute_disk_type"])|replace("@LABELS@",properties["labels"]) }}
         - key: slurm_suspend
           value: |
             {{ imports["scripts/suspend.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"]) }}
@@ -138,6 +136,10 @@ resources:
     tags:
       items:
         - login
+{% if properties["labels"] %}
+    labels:
+      login: {{properties["labels"]}}
+{% endif %}
     metadata:
       items:
         - key: startup-script
@@ -177,11 +179,14 @@ resources:
     serviceAccounts:
       - email: "default"
         scopes:
-        - "https://www.googleapis.com/auth/logging.write"
-        - "https://www.googleapis.com/auth/compute"
+        - "https://www.googleapis.com/auth/cloud-platform"
     tags:
       items:
         - compute
+{% if properties["labels"] %}
+    labels:
+      compute{{ n + 1}}: {{properties["labels"]}}
+{% endif %}
     metadata:
       items:
         - key: startup-script

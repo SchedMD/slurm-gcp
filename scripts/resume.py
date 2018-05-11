@@ -35,6 +35,8 @@ EXTERNAL_IP  = @EXTERNAL_COMPUTE_IPS@
 DISK_SIZE_GB = '@DISK_SIZE_GB@'
 DISK_TYPE    = '@DISK_TYPE@'
 
+LABELS       = '@LABELS@'
+
 NETWORK_TYPE = 'subnetwork'
 NETWORK      = "projects/%s/regions/%s/subnetworks/slurm-subnet" % (PROJECT, REGION)
 
@@ -79,12 +81,12 @@ def create_instance(compute, project, zone, instance_type, instance_name):
     'serviceAccounts': [{
       'email': 'default',
       'scopes': [
-        'https://www.googleapis.com/auth/logging.write',
-        'https://www.googleapis.com/auth/compute'
+        'https://www.googleapis.com/auth/cloud-platform'
       ]
     }],
 
     'tags': {'items': ['compute'] },
+    'labels': {instance_name: LABELS},
 
     # Metadata is readable from the instance and allows you to
     # pass configuration from deployment scripts to instances.
