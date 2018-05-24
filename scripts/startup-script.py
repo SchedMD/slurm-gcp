@@ -39,6 +39,8 @@ DEF_SLURM_USERS   = '@DEF_SLURM_USERS@'
 EXTERNAL_COMPUTE_IPS = @EXTERNAL_COMPUTE_IPS@
 GPU_TYPE          = '@GPU_TYPE@'
 
+CONTROL_MACHINE = CLUSTER_NAME + '-controller'
+
 SLURM_PREFIX  = APPS_DIR + '/slurm/slurm-' + SLURM_VERSION
 
 MOTD_HEADER = '''
@@ -288,7 +290,7 @@ def install_slurm_conf():
 # Put this file on all nodes of your cluster.
 # See the slurm.conf man page for more information.
 #
-ControlMachine=controller
+ControlMachine={control_machine}
 #ControlAddr=
 #BackupController=
 #BackupAddr=
@@ -414,7 +416,7 @@ SelectTypeParameters=CR_Core_Memory
 #
 # LOGGING AND ACCOUNTING
 AccountingStorageEnforce=associations,limits,qos,safe
-AccountingStorageHost=controller
+AccountingStorageHost={control_machine}
 #AccountingStorageLoc=
 #AccountingStoragePass=
 #AccountingStoragePort=
@@ -452,7 +454,7 @@ SuspendTime=2100
 #
 # COMPUTE NODES
 """.format(cluster_name = CLUSTER_NAME, apps_dir = APPS_DIR,
-        def_mem_per_cpu = def_mem_per_cpu)
+        def_mem_per_cpu = def_mem_per_cpu, control_machine = CONTROL_MACHINE)
 
     conf += """
 NodeName=DEFAULT Sockets=%d CoresPerSocket=%d ThreadsPerCore=%d RealMemory=%d State=UNKNOWN
@@ -471,16 +473,16 @@ NodeName=DEFAULT Sockets=%d CoresPerSocket=%d ThreadsPerCore=%d RealMemory=%d St
 
     if static_range:
         conf += """
-SuspendExcNodes=compute{0}
-NodeName=compute{0}
-""".format(static_range)
+SuspendExcNodes={1}-compute{0}
+NodeName={1}-compute{0}
+""".format(static_range, CLUSTER_NAME)
 
     if cloud_range:
-        conf += "NodeName=compute%s State=CLOUD" % cloud_range
+        conf += "NodeName={0}-compute{1} State=CLOUD".format(CLUSTER_NAME, cloud_range)
 
     conf += """
-PartitionName=debug Nodes=compute[1-%d] Default=YES MaxTime=INFINITE State=UP
-""" % MAX_NODE_COUNT
+PartitionName=debug Nodes={0}-compute[1-{1:d}] Default=YES MaxTime=INFINITE State=UP
+""".format(CLUSTER_NAME, MAX_NODE_COUNT)
 
     etc_dir = SLURM_PREFIX + '/etc'
     if not os.path.exists(etc_dir):
@@ -503,7 +505,7 @@ def install_slurmdbd_conf():
 #ArchiveUsage=no
 
 AuthType=auth/munge
-DbdHost=controller
+DbdHost={control_machine}
 DebugLevel=debug2
 
 #PurgeEventAfter=1month
@@ -525,7 +527,7 @@ StorageType=accounting_storage/mysql
 #StorageUser=database_mgr
 #StoragePass=shazaam
 
-""".format(apps_dir = APPS_DIR)
+""".format(apps_dir = APPS_DIR, control_machine = CONTROL_MACHINE)
     etc_dir = SLURM_PREFIX + '/etc'
     if not os.path.exists(etc_dir):
         os.makedirs(etc_dir)
@@ -765,9 +767,9 @@ def mount_nfs_vols():
 
     f = open('/etc/fstab', 'a')
     f.write("""
-controller:{0}    {0}     nfs      rw,sync,hard,intr  0     0
-controller:/home  /home   nfs      rw,sync,hard,intr  0     0
-""".format(APPS_DIR))
+{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:/home  /home   nfs      rw,sync,hard,intr  0     0
+""".format(APPS_DIR, CONTROL_MACHINE))
     f.close()
 
     while subprocess.call(['mount', '-a']):
@@ -834,7 +836,7 @@ def main():
 	subprocess.call(['mysql', '-u', 'root', '-e',
 	    "grant all on slurm_acct_db.* TO 'slurm'@'localhost';"])
 	subprocess.call(['mysql', '-u', 'root', '-e',
-	    "grant all on slurm_acct_db.* TO 'slurm'@'controller';"])
+	    "grant all on slurm_acct_db.* TO 'slurm'@'{0}';".format(CONTROL_MACHINE)])
 
         subprocess.call(shlex.split('systemctl enable slurmdbd'))
         subprocess.call(shlex.split('systemctl start slurmdbd'))

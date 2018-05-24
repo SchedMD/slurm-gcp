@@ -25,6 +25,8 @@ import time
 
 import googleapiclient.discovery
 
+CLUSTER_NAME = '@CLUSTER_NAME@'
+
 PROJECT      = '@PROJECT@'
 ZONE         = '@ZONE@'
 REGION       = '@REGION@'
@@ -38,7 +40,7 @@ DISK_TYPE    = '@DISK_TYPE@'
 LABELS       = '@LABELS@'
 
 NETWORK_TYPE = 'subnetwork'
-NETWORK      = "projects/%s/regions/%s/subnetworks/slurm-subnet" % (PROJECT, REGION)
+NETWORK      = "projects/%s/regions/%s/subnetworks/%s-slurm-subnet" % (PROJECT, REGION, CLUSTER_NAME)
 
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/resume.log'
