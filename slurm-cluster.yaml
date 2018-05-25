@@ -51,7 +51,7 @@ resources:
     #gpu_type                : nvidia-tesla-k80
     #gpu_count               : 1
 
-    slurm_version           : <slurm version e.g. 17.11.5>
+    slurm_version           : <slurm version e.g. 17.11.6>
     default_account         : default
     default_users           : <comma separated list of users>
     munge_key               : <.e.g date +%s | sha512sum | cut -d' ' -f1 >

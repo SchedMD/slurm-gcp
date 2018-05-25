@@ -448,7 +448,7 @@ ResumeTimeout=1800
 #ResumeRate=
 #SuspendExcNodes=
 #SuspendExcParts=
-#SuspendRate=
+SuspendRate=0
 SuspendTime=2100
 #
 #
