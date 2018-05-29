@@ -850,7 +850,7 @@ def main():
 
         subprocess.call(shlex.split('systemctl enable slurmctld'))
         subprocess.call(shlex.split('systemctl start slurmctld'))
-
+        setup_nfs_threads()
         # Export at the end to signal that everything is up
         subprocess.call(shlex.split('systemctl enable nfs-server'))
         subprocess.call(shlex.split('systemctl start nfs-server'))
