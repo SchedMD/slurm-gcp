@@ -54,6 +54,7 @@ optional:
 - gpu_type
 - gpu_count
 - labels
+- cpu_platform
 
 properties:
   cidr:
@@ -97,6 +98,10 @@ properties:
     minimum     : 10
     maximum     : 64000
     description : Size of disk for the controller.
+
+  cpu_platform:
+    enum: ["Intel Sandy Bridge", "Intel Ivy Bridge", "Intel Haswell", "Intel Broadwell", "Intel Skylake"]
+    description: Minimum Intel Platform for Compute Nodes to Use
 
   default_account:
     type        : string

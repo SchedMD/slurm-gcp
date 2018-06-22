@@ -31,6 +31,7 @@ PROJECT      = '@PROJECT@'
 ZONE         = '@ZONE@'
 REGION       = '@REGION@'
 MACHINE_TYPE = '@MACHINE_TYPE@'
+CPU_PLATFORM = '@CPU_PLATFORM@'
 PREEMPTIBLE  = @PREEMPTIBLE@
 EXTERNAL_IP  = @EXTERNAL_COMPUTE_IPS@
 
@@ -88,7 +89,6 @@ def create_instance(compute, project, zone, instance_type, instance_name):
     }],
 
     'tags': {'items': ['compute'] },
-    'labels': {instance_name: LABELS},
 
     # Metadata is readable from the instance and allows you to
     # pass configuration from deployment scripts to instances.
@@ -107,7 +107,13 @@ def create_instance(compute, project, zone, instance_type, instance_name):
               "preemptible": True,
               "onHostMaintenance": "TERMINATE",
               "automaticRestart": False
-              },
+              }
+
+  if LABELS:
+      config['labels'] = {instance_name: LABELS},
+
+  if CPU_PLATFORM:
+      config['minCpuPlatform'] = CPU_PLATFORM,
 
   if EXTERNAL_IP:
       config['networkInterfaces'][0]['accessConfigs'] = [
