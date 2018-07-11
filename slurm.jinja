@@ -108,6 +108,8 @@ resources:
         - key: slurm_suspend
           value: |
             {{ imports["scripts/suspend.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"]) }}
+        - key: enable-oslogin
+          value: "TRUE"
 
 
 - name: {{properties["cluster_name"]}}-login1
@@ -145,6 +147,8 @@ resources:
         - key: startup-script
           value: |
             {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","login")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@CLUSTER_NAME@",properties["cluster_name"]) }}
+        - key: enable-oslogin
+          value: "TRUE"
 
 
 {% for n in range(properties['static_node_count']) %}
@@ -198,4 +202,6 @@ resources:
         - key: gpu_script
           value: |
             {{imports["scripts/nvidia.sh"]|indent(12)}}
+        - key: enable-oslogin
+          value: "TRUE"
 {% endfor %}
