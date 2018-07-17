@@ -844,9 +844,16 @@ def main():
         # Wait for slurmdbd to come up
         time.sleep(5)
 
+        oslogin_chars = ['@', '.']
+
+        SLURM_USERS = DEF_SLURM_USERS
+
+        for char in oslogin_chars:
+            SLURM_USERS = SLURM_USERS.replace(char, '_')
+
         subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add cluster ' + CLUSTER_NAME))
         subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add account ' + DEF_SLURM_ACCT))
-        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add user ' + DEF_SLURM_USERS + ' account=' + DEF_SLURM_ACCT))
+        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add user ' + SLURM_USERS + ' account=' + DEF_SLURM_ACCT))
 
         subprocess.call(shlex.split('systemctl enable slurmctld'))
         subprocess.call(shlex.split('systemctl start slurmctld'))

@@ -54,6 +54,6 @@ resources:
 
     slurm_version           : < Current slurm version, e.g. 17.11.7 >
     default_account         : default
-    default_users           : < GCP user names, comma separated >
+    default_users           : < GCP user email addr, comma separated >
     munge_key               : < MUNGE Key, e.g date +%s | sha512sum | cut -d' ' -f1 >
 #  [END cluster_yaml]
