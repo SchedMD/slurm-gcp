@@ -38,6 +38,8 @@ DEF_SLURM_ACCT    = '@DEF_SLURM_ACCT@'
 DEF_SLURM_USERS   = '@DEF_SLURM_USERS@'
 EXTERNAL_COMPUTE_IPS = @EXTERNAL_COMPUTE_IPS@
 GPU_TYPE          = '@GPU_TYPE@'
+NFS_APPS_SERVER   = '@NFS_APPS_SERVER@'
+NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
 
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
 
@@ -763,20 +765,42 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 #END setup_bash_profile()
 
 
-def mount_nfs_vols():
+def mount_nfs_apps_vols():
 
     f = open('/etc/fstab', 'a')
-    f.write("""
+    if "@NFS_APPS_SERVER@" in NFS_APPS_SERVER:
+        if ((INSTANCE_TYPE != "controller")):
+            f.write("""
 {1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
-{1}:/home  /home   nfs      rw,sync,hard,intr  0     0
 """.format(APPS_DIR, CONTROL_MACHINE))
+    else:
+        f.write("""
+{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+""".format(APPS_DIR, NFS_APPS_SERVER))
+    f.close()
+
+#END mount_nfs_apps_vols()
+
+def mount_nfs_home_vols():
+
+    f = open('/etc/fstab', 'a')
+    if "@NFS_HOME_SERVER@" in NFS_HOME_SERVER:
+        if ((INSTANCE_TYPE != "controller")):
+            f.write("""
+{0}:/home    /home     nfs      rw,sync,hard,intr  0     0
+""".format(CONTROL_MACHINE))
+    else:
+        if ((INSTANCE_TYPE != "controller")):
+            f.write("""
+{0}:/home    /home     nfs      rw,sync,hard,intr  0     0
+""".format(NFS_HOME_SERVER))
     f.close()
 
     while subprocess.call(['mount', '-a']):
         print "Waiting for " + APPS_DIR + " and /home to be mounted"
         time.sleep(5)
 
-#END mount_nfs_vols()
+#END mount_nfs_home_vols()
 
 # Tune the NFS server to support many mounts
 def setup_nfs_threads():
@@ -819,9 +843,12 @@ def main():
         os.makedirs(APPS_DIR + '/slurm')
 
     if INSTANCE_TYPE != "controller":
-        mount_nfs_vols()
+        mount_nfs_apps_vols()
+        mount_nfs_home_vols()
 
     if INSTANCE_TYPE == "controller":
+        mount_nfs_apps_vols()
+        mount_nfs_home_vols()
         install_slurm()
 
         # Add any additional installation functions here
