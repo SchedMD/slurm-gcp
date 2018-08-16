@@ -98,6 +98,10 @@ def create_instance(compute, project, zone, instance_type, instance_name):
         # instance upon startup.
         'key': 'startup-script',
         'value': startup_script
+        },
+        {
+        'key': 'enable-oslogin',
+        'value': True
       }]
     }
   }
