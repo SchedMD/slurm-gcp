@@ -43,6 +43,9 @@ LABELS       = '@LABELS@'
 NETWORK_TYPE = 'subnetwork'
 NETWORK      = "projects/%s/regions/%s/subnetworks/%s-slurm-subnet" % (PROJECT, REGION, CLUSTER_NAME)
 
+GPU_TYPE     = '@GPU_TYPE@'
+GPU_COUNT    = '@GPU_COUNT@'
+
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/resume.log'
 
@@ -57,6 +60,7 @@ def create_instance(compute, project, zone, instance_type, instance_name):
   machine_type = "zones/%s/machineTypes/%s" % (zone, instance_type)
   disk_type = "projects/%s/zones/%s/diskTypes/%s" % (PROJECT, ZONE, DISK_TYPE)
   startup_script = open('/apps/slurm/scripts/startup-script.py', 'r').read()
+  gpu_script = open('/apps/slurm/scripts/nvidia.sh', 'r').read()
 
   config = {
     'name': instance_name,
@@ -98,10 +102,12 @@ def create_instance(compute, project, zone, instance_type, instance_name):
         # instance upon startup.
         'key': 'startup-script',
         'value': startup_script
-        },
-        {
+      }, {
         'key': 'enable-oslogin',
-        'value': True
+        'value': 'TRUE'
+      }, {
+        'key': 'gpu-script',
+        'value': gpu_script
       }]
     }
   }
@@ -124,6 +130,13 @@ def create_instance(compute, project, zone, instance_type, instance_name):
                 {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
               ]
 
+  if GPU_TYPE:
+      config['guestAccelerators'] = [
+                {'acceleratorCount': GPU_COUNT, 'acceleratorType': 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE }
+              ]
+      config['scheduling'] = [
+                {'onHostMaintenance': 'TERMINATE' }
+              ]
 
   return compute.instances().insert(
     project=project,

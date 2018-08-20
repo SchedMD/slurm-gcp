@@ -129,20 +129,15 @@ def end_motd():
     subprocess.call(['wall', '-n',
         '*** Slurm ' + INSTANCE_TYPE + ' daemon installation complete ***'])
 
-    if "nvidia" in GPU_TYPE:
-        subprocess.call(['wall', '-n',
-            '*** Nvidia driver installation complete. Reboot will begin in 10 sec. ***'])
-
     if INSTANCE_TYPE != "controller":
         subprocess.call(['wall', '-n', """
 /home on the controller was mounted over the existing /home.
 Either log out and log back in or cd into ~.
 """])
 
-
-
-
-
+    if "nvidia" in GPU_TYPE:
+        subprocess.call(['wall', '-n',
+            '*** Nvidia driver installation complete. Reboot will begin in 10 sec. ***'])
 
 #END start_motd()
 
@@ -217,11 +212,11 @@ def setup_munge():
     os.chmod('/etc/munge/munge.key' ,0o400)
     os.chmod('/etc/munge/'          ,0o700)
     os.chmod('/var/log/munge/'      ,0o700)
+
     subprocess.call(['systemctl', 'enable', 'munge'])
     subprocess.call(['systemctl', 'start', 'munge'])
 
 #END setup_munge ()
-
 
 def setup_nfs_exports():
 
@@ -600,9 +595,10 @@ def install_suspend_progs():
 #END install_suspend_progs()
 
 def install_nvidia_drivers():
+    print "Installing NVIDIA Drivers..."
     GOOGLE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/attributes"
 
-    req = urllib2.Request(GOOGLE_URL + '/gpu_script')
+    req = urllib2.Request(GOOGLE_URL + '/gpu-script')
     req.add_header('Metadata-Flavor', 'Google')
     resp = urllib2.urlopen(req)
 
@@ -612,6 +608,7 @@ def install_nvidia_drivers():
     os.chmod(APPS_DIR + '/slurm/scripts/nvidia.sh', 0o755)
 
     subprocess.call(['./' + APPS_DIR + '/slurm/scripts/nvidia.sh'])
+    #subprocess.call(['bash ' + APPS_DIR + '/slurm/scripts/nvidia.sh'])
 
 #END install_nvidia_drivers()
 
@@ -764,8 +761,7 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 
 #END setup_bash_profile()
 
-
-def mount_nfs_apps_vols():
+def setup_nfs_apps_vols():
 
     f = open('/etc/fstab', 'a')
     if "@NFS_APPS_SERVER@" in NFS_APPS_SERVER:
@@ -779,9 +775,9 @@ def mount_nfs_apps_vols():
 """.format(APPS_DIR, NFS_APPS_SERVER))
     f.close()
 
-#END mount_nfs_apps_vols()
+#END setup_nfs_apps_vols()
 
-def mount_nfs_home_vols():
+def setup_nfs_home_vols():
 
     f = open('/etc/fstab', 'a')
     if "@NFS_HOME_SERVER@" in NFS_HOME_SERVER:
@@ -790,17 +786,20 @@ def mount_nfs_home_vols():
 {0}:/home    /home     nfs      rw,sync,hard,intr  0     0
 """.format(CONTROL_MACHINE))
     else:
-        if ((INSTANCE_TYPE != "controller")):
-            f.write("""
+        f.write("""
 {0}:/home    /home     nfs      rw,sync,hard,intr  0     0
 """.format(NFS_HOME_SERVER))
     f.close()
 
+#END setup_nfs_home_vols()
+
+
+def mount_nfs_vols():
     while subprocess.call(['mount', '-a']):
         print "Waiting for " + APPS_DIR + " and /home to be mounted"
         time.sleep(5)
 
-#END mount_nfs_home_vols()
+#END mount_nfs_vols()
 
 # Tune the NFS server to support many mounts
 def setup_nfs_threads():
@@ -814,7 +813,24 @@ RPCNFSDCOUNT=256
 
 # END setup_nfs_threads()
 
+def mark_installed():
+    f = open('/var/lib/slurm/slurm.installed', 'a')
+    f.close()
+# END mark_installed()
+
+def setup_slurmd_cronjob():
+    #subprocess.call(shlex.split('crontab < /apps/slurm/scripts/cron'))
+    os.system("echo '*/2 * * * * if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then mount -a; systemctl restart slurmd; fi' | crontab -u root -")
+# END setup_slurmd_cronjob()
+
 def main():
+    if os.path.isfile('/var/lib/slurm/slurm.installed'):
+        SLURM_INSTALLED = "TRUE"
+    else:
+        SLURM_INSTALLED = "FALSE"
+
+    print "ww Slurm Installed? " + SLURM_INSTALLED
+
     # Disable SELinux
     subprocess.call(shlex.split('setenforce 0'))
 
@@ -829,82 +845,96 @@ def main():
         while not have_internet():
             print "Waiting for internet connection"
 
-    add_slurm_user()
-    start_motd()
-    install_packages()
-    setup_munge()
-
-    setup_bash_profile()
-
-    subprocess.call(shlex.split('systemctl enable munge'))
-    subprocess.call(shlex.split('systemctl start munge'))
-
     if not os.path.exists(APPS_DIR + '/slurm'):
         os.makedirs(APPS_DIR + '/slurm')
+        print "ww Created Slurm Folders"
 
-    if INSTANCE_TYPE != "controller":
-        mount_nfs_apps_vols()
-        mount_nfs_home_vols()
+    start_motd()
 
-    if INSTANCE_TYPE == "controller":
-        mount_nfs_apps_vols()
-        mount_nfs_home_vols()
-        install_slurm()
+    if SLURM_INSTALLED == "FALSE":
 
-        # Add any additional installation functions here
+        add_slurm_user()
+        install_packages()
+        setup_munge()
+        setup_bash_profile()
 
-        install_controller_service_scripts()
+        setup_nfs_apps_vols()
+        setup_nfs_home_vols()
 
-        subprocess.call(shlex.split('systemctl enable mariadb'))
-        subprocess.call(shlex.split('systemctl start mariadb'))
+        if INSTANCE_TYPE == "controller":
+            mount_nfs_vols()
 
-	subprocess.call(['mysql', '-u', 'root', '-e',
-	    "create user 'slurm'@'localhost'"])
-	subprocess.call(['mysql', '-u', 'root', '-e',
-	    "grant all on slurm_acct_db.* TO 'slurm'@'localhost';"])
-	subprocess.call(['mysql', '-u', 'root', '-e',
-	    "grant all on slurm_acct_db.* TO 'slurm'@'{0}';".format(CONTROL_MACHINE)])
+            install_slurm()
 
-        subprocess.call(shlex.split('systemctl enable slurmdbd'))
-        subprocess.call(shlex.split('systemctl start slurmdbd'))
+            # Add any additional installation functions here
 
-        # Wait for slurmdbd to come up
-        time.sleep(5)
+            install_controller_service_scripts()
 
-        oslogin_chars = ['@', '.']
+            subprocess.call(shlex.split('systemctl enable mariadb'))
+            subprocess.call(shlex.split('systemctl start mariadb'))
 
-        SLURM_USERS = DEF_SLURM_USERS
+            subprocess.call(['mysql', '-u', 'root', '-e',
+                "create user 'slurm'@'localhost'"])
+            subprocess.call(['mysql', '-u', 'root', '-e',
+                "grant all on slurm_acct_db.* TO 'slurm'@'localhost';"])
+            subprocess.call(['mysql', '-u', 'root', '-e',
+                "grant all on slurm_acct_db.* TO 'slurm'@'{0}';".format(CONTROL_MACHINE)])
 
-        for char in oslogin_chars:
-            SLURM_USERS = SLURM_USERS.replace(char, '_')
+            subprocess.call(shlex.split('systemctl enable slurmdbd'))
+            subprocess.call(shlex.split('systemctl start slurmdbd'))
 
-        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add cluster ' + CLUSTER_NAME))
-        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add account ' + DEF_SLURM_ACCT))
-        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add user ' + SLURM_USERS + ' account=' + DEF_SLURM_ACCT))
+            # Wait for slurmdbd to come up
+            time.sleep(5)
 
-        subprocess.call(shlex.split('systemctl enable slurmctld'))
-        subprocess.call(shlex.split('systemctl start slurmctld'))
-        setup_nfs_threads()
-        # Export at the end to signal that everything is up
-        subprocess.call(shlex.split('systemctl enable nfs-server'))
-        subprocess.call(shlex.split('systemctl start nfs-server'))
-        setup_nfs_exports()
+            oslogin_chars = ['@', '.']
 
-    elif INSTANCE_TYPE == "compute":
-        install_compute_service_scripts()
+            SLURM_USERS = DEF_SLURM_USERS
 
-        # Add any additional installation functions here
+            for char in oslogin_chars:
+                SLURM_USERS = SLURM_USERS.replace(char, '_')
 
-        subprocess.call(shlex.split('systemctl enable slurmd'))
-        subprocess.call(shlex.split('systemctl start slurmd'))
+            subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add cluster ' + CLUSTER_NAME))
+            subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add account ' + DEF_SLURM_ACCT))
+            subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add user ' + SLURM_USERS + ' account=' + DEF_SLURM_ACCT))
 
-        if "nvidia" in GPU_TYPE:
-            if not os.path.exists('/usr/local/cuda'):
-                install_nvidia_drivers()
-                end_motd()
-                time.sleep(10)
-                subprocess.call(['sudo', 'umount', '-l', '/apps', '/home'])
-                os.system('reboot')
+            subprocess.call(shlex.split('systemctl enable slurmctld'))
+            subprocess.call(shlex.split('systemctl start slurmctld'))
+            setup_nfs_threads()
+            # Export at the end to signal that everything is up
+            subprocess.call(shlex.split('systemctl enable nfs-server'))
+            subprocess.call(shlex.split('systemctl start nfs-server'))
+            setup_nfs_exports()
+
+            print "ww Done installing controller"
+            mark_installed()
+
+        elif INSTANCE_TYPE == "compute":
+            install_compute_service_scripts()
+
+            # Add any additional installation functions here
+
+            mount_nfs_vols()
+
+            #subprocess.call(shlex.split('systemctl enable slurmd'))
+            #setup_slurmd_cronjob()
+
+            if "nvidia" in GPU_TYPE:
+                if not os.path.exists('/usr/local/cuda'):
+                    # Add error checking below
+                    install_nvidia_drivers()
+
+                    subprocess.call(shlex.split('systemctl enable slurmd'))
+                    setup_slurmd_cronjob()
+                    mark_installed()
+                    end_motd()
+                    time.sleep(10)
+                    subprocess.call(['sudo', 'umount', '-l', '/apps', '/home'])
+                    os.system('reboot')
+
+            subprocess.call(shlex.split('systemctl enable slurmd'))
+            setup_slurmd_cronjob()
+            subprocess.call(shlex.split('systemctl start slurmd'))
+            mark_installed()
 
     end_motd()
 
