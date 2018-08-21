@@ -39,7 +39,7 @@ resources:
     #cpu_platform               : Intel Skylake
     #preemptible_bursting       : False
     #external_compute_ips       : False
-    private_google_access      : True
+    private_google_access      : true
 
     #compute_disk_type          : pd-standard
     #compute_disk_size_gb       : 10
@@ -51,8 +51,6 @@ resources:
     #nfs_home_server            :
 
     # Optional GPU configuration fields
-    # NOTE: This is currently functional for
-    #   static nodes only.
     #gpu_type                   : nvidia-tesla-v100
     #gpu_count                  : 8
 

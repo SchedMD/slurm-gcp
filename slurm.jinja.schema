@@ -41,6 +41,7 @@ required:
 - slurm_version
 - static_node_count
 - zone
+- private_google_access
 
 optional:
 - compute_disk_size_gb
@@ -102,6 +103,11 @@ properties:
   cpu_platform:
     enum: ["Intel Sandy Bridge", "Intel Ivy Bridge", "Intel Haswell", "Intel Broadwell", "Intel Skylake"]
     description: Minimum Intel Platform for Compute Nodes to Use
+
+  private_google_access:
+    type        : boolean
+    default     : True
+    description : Private Google Access is Enabled (True/False).
 
   default_account:
     type        : string

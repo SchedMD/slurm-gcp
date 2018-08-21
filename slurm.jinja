@@ -26,7 +26,7 @@ resources:
     network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
     ipCidrRange: {{ properties["cidr"]}}
     region: {{ properties["region"] }}
-    privateIpGoogleAccess: {{ properties["PrivateGoogleAccess"] }}
+    privateIpGoogleAccess: {{ properties["private_google_access"]}}
 - name: {{properties["cluster_name"]}}-ssh-firewall-rule
   type: compute.v1.firewall
   properties:
