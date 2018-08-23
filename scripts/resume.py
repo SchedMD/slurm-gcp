@@ -60,7 +60,6 @@ def create_instance(compute, project, zone, instance_type, instance_name):
   machine_type = "zones/%s/machineTypes/%s" % (zone, instance_type)
   disk_type = "projects/%s/zones/%s/diskTypes/%s" % (PROJECT, ZONE, DISK_TYPE)
   startup_script = open('/apps/slurm/scripts/startup-script.py', 'r').read()
-  gpu_script = open('/apps/slurm/scripts/nvidia.sh', 'r').read()
 
   config = {
     'name': instance_name,
@@ -105,9 +104,6 @@ def create_instance(compute, project, zone, instance_type, instance_name):
       }, {
         'key': 'enable-oslogin',
         'value': 'TRUE'
-      }, {
-        'key': 'gpu-script',
-        'value': gpu_script
       }]
     }
   }
@@ -131,12 +127,18 @@ def create_instance(compute, project, zone, instance_type, instance_name):
               ]
 
   if GPU_TYPE:
+      gpu_script = open('/apps/slurm/scripts/nvidia.sh', 'r').read()
       config['guestAccelerators'] = [
                 {'acceleratorCount': GPU_COUNT, 'acceleratorType': 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE }
               ]
       config['scheduling'] = [
                 {'onHostMaintenance': 'TERMINATE' }
               ]
+      config['metadata'] = [
+                {'items': [{
+                    'key': 'gpu-script',
+                    'value': gpu_script }]
+               }]
 
   return compute.instances().insert(
     project=project,
