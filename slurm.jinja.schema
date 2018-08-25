@@ -128,7 +128,7 @@ properties:
       through a NAT'ed gateway.
 
   gpu_type:
-    enum: ["nvidia-tesla-k80", "nvidia-tesla-p100", "nvidia-tesla-v100"]
+    enum: ["nvidia-tesla-k80", "nvidia-tesla-p100", "nvidia-tesla-v100", "nvidia-tesla-p4"]
     description: GPU Type to attach to static nodes.
 
   gpu_count:
