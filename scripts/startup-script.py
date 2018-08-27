@@ -594,8 +594,7 @@ def install_suspend_progs():
 
 #END install_suspend_progs()
 
-def install_nvidia_drivers():
-    print "Installing NVIDIA Drivers..."
+def copy_nvidia_scripts():
     GOOGLE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/attributes"
 
     req = urllib2.Request(GOOGLE_URL + '/gpu-script')
@@ -606,6 +605,10 @@ def install_nvidia_drivers():
     f.write(resp.read())
     f.close()
     os.chmod(APPS_DIR + '/slurm/scripts/nvidia.sh', 0o755)
+
+def install_nvidia_drivers():
+    print "Installing NVIDIA Drivers..."
+    copy_nvidia_scripts()
 
     subprocess.call(['./' + APPS_DIR + '/slurm/scripts/nvidia.sh'])
     #subprocess.call(['bash ' + APPS_DIR + '/slurm/scripts/nvidia.sh'])
@@ -904,7 +907,8 @@ def main():
             subprocess.call(shlex.split('systemctl enable nfs-server'))
             subprocess.call(shlex.split('systemctl start nfs-server'))
             setup_nfs_exports()
-
+            copy_nvidia_scripts()
+            
             print "ww Done installing controller"
             mark_installed()
 
