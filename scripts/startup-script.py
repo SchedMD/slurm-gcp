@@ -17,6 +17,7 @@
 import httplib
 import os
 import shlex
+import socket
 import subprocess
 import time
 import urllib
@@ -595,16 +596,18 @@ def install_suspend_progs():
 #END install_suspend_progs()
 
 def copy_nvidia_scripts():
-    GOOGLE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/attributes"
+    if GPU_TYPE:
+        GOOGLE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/attributes"
 
-    req = urllib2.Request(GOOGLE_URL + '/gpu-script')
-    req.add_header('Metadata-Flavor', 'Google')
-    resp = urllib2.urlopen(req)
+        req = urllib2.Request(GOOGLE_URL + '/gpu-script')
+        req.add_header('Metadata-Flavor', 'Google')
+        resp = urllib2.urlopen(req)
 
-    f = open(APPS_DIR + '/slurm/scripts/nvidia.sh', 'w')
-    f.write(resp.read())
-    f.close()
-    os.chmod(APPS_DIR + '/slurm/scripts/nvidia.sh', 0o755)
+        f = open(APPS_DIR + '/slurm/scripts/nvidia.sh', 'w')
+        f.write(resp.read())
+        f.close()
+        os.chmod(APPS_DIR + '/slurm/scripts/nvidia.sh', 0o755)
+#End copy_nvidia_scripts()
 
 def install_nvidia_drivers():
     print "Installing NVIDIA Drivers..."
@@ -907,13 +910,16 @@ def main():
             subprocess.call(shlex.split('systemctl enable nfs-server'))
             subprocess.call(shlex.split('systemctl start nfs-server'))
             setup_nfs_exports()
+
             copy_nvidia_scripts()
-            
             print "ww Done installing controller"
-            mark_installed()
+            subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ CONTROL_MACHINE + ' --zone=' + ZONE + ' --keys=startup-script'))
+            #mark_installed()
 
         elif INSTANCE_TYPE == "compute":
             install_compute_service_scripts()
+
+            hostname = socket.gethostname()
 
             # Add any additional installation functions here
 
@@ -929,7 +935,8 @@ def main():
 
                     subprocess.call(shlex.split('systemctl enable slurmd'))
                     setup_slurmd_cronjob()
-                    mark_installed()
+                    subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
+                    #mark_installed()
                     end_motd()
                     time.sleep(10)
                     subprocess.call(['sudo', 'umount', '-l', '/apps', '/home'])
@@ -938,7 +945,8 @@ def main():
             subprocess.call(shlex.split('systemctl enable slurmd'))
             setup_slurmd_cronjob()
             subprocess.call(shlex.split('systemctl start slurmd'))
-            mark_installed()
+            subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
+            #mark_installed()
 
     end_motd()
 
