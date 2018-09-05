@@ -165,7 +165,16 @@ def create_instance(compute, project, zone, instance_type, instance_name):
               "preemptible": True,
               "onHostMaintenance": "TERMINATE",
               "automaticRestart": False
-              }
+              },
+      if GPU_TYPE:
+          config['guestAccelerators'] = [
+                {'acceleratorCount': GPU_COUNT, 'acceleratorType': 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE }
+              ]
+  elif GPU_TYPE:
+      config['guestAccelerators'] = [
+                {'acceleratorCount': GPU_COUNT, 'acceleratorType': 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE }
+              ]
+      config['scheduling'] = {'onHostMaintenance': 'TERMINATE' },
 
   if LABELS:
       config['labels'] = {instance_name: LABELS},
@@ -178,13 +187,6 @@ def create_instance(compute, project, zone, instance_type, instance_name):
                 {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
               ]
 
-  if GPU_TYPE:
-      config['guestAccelerators'] = [
-                {'acceleratorCount': GPU_COUNT, 'acceleratorType': 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE }
-              ]
-      config['scheduling'] = [
-                {'onHostMaintenance': 'TERMINATE' }
-              ]
 
   return compute.instances().insert(
     project=project,
