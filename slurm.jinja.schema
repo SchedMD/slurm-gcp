@@ -56,6 +56,9 @@ optional:
 - gpu_count
 - labels
 - cpu_platform
+- controller_secondary_disk
+- nfs_apps_server
+- nfs_home_server
 
 properties:
   cidr:
@@ -80,7 +83,7 @@ properties:
     type        : integer
     default     : 100
     minimum     : 10
-    maximum     : 64000
+    maximum     : 2000
     description : Size of disk for compute nodes.
 
   controller_machine_type:
@@ -97,8 +100,25 @@ properties:
     type        : integer
     default     : 100
     minimum     : 10
-    maximum     : 64000
+    maximum     : 2000
     description : Size of disk for the controller.
+
+  controller_secondary_disk:
+    type        : boolean
+    default     : False
+    description : Create secondary disk mounted to controller node (True/False)
+
+  controller_secondary_disk_type:
+    enum        : ["pd-ssd", "pd-standard"]
+    default     : pd-standard
+    description : Disk type (pd-ssd or pd-standard) for secondary disk.
+
+  controller_secondary_disk_size_gb:
+    type        : integer
+    default     : 100
+    minimum     : 10
+    maximum     : 64000
+    description : Size of disk for the secondary disk.
 
   cpu_platform:
     enum: ["Intel Sandy Bridge", "Intel Ivy Bridge", "Intel Haswell", "Intel Broadwell", "Intel Skylake"]
@@ -153,7 +173,7 @@ properties:
     type        : integer
     default     : 100
     minimum     : 10
-    maximum     : 64000
+    maximum     : 2000
     description : Size of disk for login node.
 
   max_node_count:
@@ -163,6 +183,14 @@ properties:
   munge_key:
     type        : string
     description : The generated mungekey
+
+  nfs_apps_server:
+    type        : string
+    description : IP address of NFS server hosting apps dir
+
+  nfs_home_server:
+    type        : string
+    description : IP address of NFS server hosting home dir
 
   preemptible_bursting:
     type        : boolean

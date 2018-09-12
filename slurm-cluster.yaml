@@ -49,6 +49,9 @@ resources:
     #login_disk_size_gb         : 10
     #nfs_apps_server            :
     #nfs_home_server            :
+    #controller_secondary_disk          : True
+    #controller_secondary_disk_type     : pd-standard
+    #controller_secondary_disk_size_gb  : 300
 
     # Optional GPU configuration fields
     #gpu_type                   : nvidia-tesla-v100

@@ -41,6 +41,8 @@ EXTERNAL_COMPUTE_IPS = @EXTERNAL_COMPUTE_IPS@
 GPU_TYPE          = '@GPU_TYPE@'
 NFS_APPS_SERVER   = '@NFS_APPS_SERVER@'
 NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
+CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
+SEC_DISK_DIR      = '/mnt/disks/sec'
 
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
 
@@ -136,7 +138,7 @@ def end_motd():
 Either log out and log back in or cd into ~.
 """])
 
-    if "nvidia" in GPU_TYPE:
+    if (GPU_TYPE and INSTANCE_TYPE == "compute"):
         subprocess.call(['wall', '-n',
             '*** Nvidia driver installation complete. Reboot will begin in 10 sec. ***'])
 
@@ -226,6 +228,10 @@ def setup_nfs_exports():
 /home  *(rw,sync,no_subtree_check,no_root_squash)
 %s  *(rw,sync,no_subtree_check,no_root_squash)
 """ % APPS_DIR)
+    if CONTROLLER_SECONDARY_DISK:
+        f.write("""
+%s  *(rw,sync,no_subtree_check,no_root_squash)
+""" % SEC_DISK_DIR)
     f.close()
 
     subprocess.call(shlex.split("exportfs -a"))
@@ -596,7 +602,7 @@ def install_suspend_progs():
 #END install_suspend_progs()
 
 def copy_nvidia_scripts():
-    if GPU_TYPE:
+
         GOOGLE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/attributes"
 
         req = urllib2.Request(GOOGLE_URL + '/gpu-script')
@@ -770,7 +776,7 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 def setup_nfs_apps_vols():
 
     f = open('/etc/fstab', 'a')
-    if "@NFS_APPS_SERVER@" in NFS_APPS_SERVER:
+    if not NFS_APPS_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
 {1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
@@ -786,7 +792,7 @@ def setup_nfs_apps_vols():
 def setup_nfs_home_vols():
 
     f = open('/etc/fstab', 'a')
-    if "@NFS_HOME_SERVER@" in NFS_HOME_SERVER:
+    if not NFS_HOME_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
 {0}:/home    /home     nfs      rw,sync,hard,intr  0     0
@@ -799,6 +805,29 @@ def setup_nfs_home_vols():
 
 #END setup_nfs_home_vols()
 
+def setup_nfs_sec_vols():
+    f = open('/etc/fstab', 'a')
+
+    if CONTROLLER_SECONDARY_DISK:
+        if ((INSTANCE_TYPE != "controller")):
+            f.write("""
+{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+""".format(SEC_DISK_DIR, CONTROL_MACHINE))
+    f.close()
+
+#END setup_nfs_sec_vols()
+
+def setup_secondary_disks():
+
+    subprocess.call(shlex.split("sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb"))
+    f = open('/etc/fstab', 'a')
+
+    f.write("""
+/dev/sdb    {0}  ext4    discard,defaults,nofail  0  2
+""".format(SEC_DISK_DIR))
+    f.close()
+
+#END setup_secondary_disks()
 
 def mount_nfs_vols():
     while subprocess.call(['mount', '-a']):
@@ -829,6 +858,14 @@ def setup_slurmd_cronjob():
     os.system("echo '*/2 * * * * if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then mount -a; systemctl restart slurmd; fi' | crontab -u root -")
 # END setup_slurmd_cronjob()
 
+def format_disk():
+    subprocess.call(shlex.split("sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb"))
+    #subprocess.call(shlex.split("sudo mkdir -p " + SEC_DISK_DIR))
+    subprocess.call(shlex.split("sudo mount -o discard,defaults /dev/sdb " + SEC_DISK_DIR))
+    subprocess.call(shlex.split("sudo chmod a+w " + SEC_DISK_DIR))
+
+# END format_disk()
+
 def main():
     if os.path.isfile('/var/lib/slurm/slurm.installed'):
         SLURM_INSTALLED = "TRUE"
@@ -855,6 +892,10 @@ def main():
         os.makedirs(APPS_DIR + '/slurm')
         print "ww Created Slurm Folders"
 
+    if CONTROLLER_SECONDARY_DISK:
+        if not os.path.exists(SEC_DISK_DIR):
+            os.makedirs(SEC_DISK_DIR)
+
     start_motd()
 
     if SLURM_INSTALLED == "FALSE":
@@ -864,11 +905,15 @@ def main():
         setup_munge()
         setup_bash_profile()
 
+        if (CONTROLLER_SECONDARY_DISK and (INSTANCE_TYPE == "controller")):
+            setup_secondary_disks()
+
         setup_nfs_apps_vols()
         setup_nfs_home_vols()
+        setup_nfs_sec_vols()
+        mount_nfs_vols()
 
         if INSTANCE_TYPE == "controller":
-            mount_nfs_vols()
 
             install_slurm()
 
@@ -910,8 +955,8 @@ def main():
             subprocess.call(shlex.split('systemctl enable nfs-server'))
             subprocess.call(shlex.split('systemctl start nfs-server'))
             setup_nfs_exports()
-
-            copy_nvidia_scripts()
+            if GPU_TYPE:
+                copy_nvidia_scripts()
             print "ww Done installing controller"
             subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ CONTROL_MACHINE + ' --zone=' + ZONE + ' --keys=startup-script'))
             #mark_installed()
@@ -923,12 +968,12 @@ def main():
 
             # Add any additional installation functions here
 
-            mount_nfs_vols()
+            #mount_nfs_vols()
 
             #subprocess.call(shlex.split('systemctl enable slurmd'))
             #setup_slurmd_cronjob()
 
-            if "nvidia" in GPU_TYPE:
+            if GPU_TYPE:
                 if not os.path.exists('/usr/local/cuda'):
                     # Add error checking below
                     install_nvidia_drivers()

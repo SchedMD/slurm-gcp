@@ -94,7 +94,11 @@ def create_instance(compute, project, zone, instance_type, instance_name):
       }],
 
       'tags': {'items': ['compute'] },
+      'guestAccelerators': [{
+          'acceleratorCount': GPU_COUNT, 'acceleratorType': 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE
+      }],
 
+      'scheduling': {'onHostMaintenance': 'TERMINATE' },
       # Metadata is readable from the instance and allows you to
       # pass configuration from deployment scripts to instances.
       'metadata': {
@@ -166,15 +170,6 @@ def create_instance(compute, project, zone, instance_type, instance_name):
               "onHostMaintenance": "TERMINATE",
               "automaticRestart": False
               },
-      if GPU_TYPE:
-          config['guestAccelerators'] = [
-                {'acceleratorCount': GPU_COUNT, 'acceleratorType': 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE }
-              ]
-  elif GPU_TYPE:
-      config['guestAccelerators'] = [
-                {'acceleratorCount': GPU_COUNT, 'acceleratorType': 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE }
-              ]
-      config['scheduling'] = {'onHostMaintenance': 'TERMINATE' },
 
   if LABELS:
       config['labels'] = {instance_name: LABELS},
