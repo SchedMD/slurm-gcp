@@ -37,30 +37,30 @@ required:
 - login_machine_type
 - max_node_count
 - munge_key
+- private_google_access
 - region
 - slurm_version
 - static_node_count
 - zone
-- private_google_access
 
 optional:
-- compute_disk_size_gb
 - compute_disk_type
-- controller_disk_size_gb
+- compute_disk_size_gb
 - controller_disk_type
-- external_compute_ips
-- login_disk_size_gb
-- login_disk_type
-- preemptible_bursting
-- gpu_type
-- gpu_count
-- labels
-- cpu_platform
+- controller_disk_size_gb
 - controller_secondary_disk
 - controller_secondary_disk_type
 - controller_secondary_disk_size_gb
+- cpu_platform
+- external_compute_ips
+- gpu_count
+- gpu_type
+- labels
+- login_disk_size_gb
+- login_disk_type
 - nfs_apps_server
 - nfs_home_server
+- preemptible_bursting
 
 properties:
   cidr:
@@ -125,11 +125,6 @@ properties:
   cpu_platform:
     enum: ["Intel Sandy Bridge", "Intel Ivy Bridge", "Intel Haswell", "Intel Broadwell", "Intel Skylake"]
     description: Minimum Intel Platform for Compute Nodes to Use
-
-  private_google_access:
-    type        : boolean
-    default     : True
-    description : Private Google Access is Enabled (True/False).
 
   default_account:
     type        : string
@@ -200,6 +195,11 @@ properties:
     description : |
       Whether bursted compute nodes are preemptible instances or not. Makre sure
       to choose a zone that has preemptible resources.
+
+  private_google_access:
+    type        : boolean
+    default     : True
+    description : Private Google Access is Enabled (True/False).
 
   region:
     type        : string
