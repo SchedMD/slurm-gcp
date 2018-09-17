@@ -57,6 +57,8 @@ optional:
 - labels
 - cpu_platform
 - controller_secondary_disk
+- controller_secondary_disk_type
+- controller_secondary_disk_size_gb
 - nfs_apps_server
 - nfs_home_server
 
