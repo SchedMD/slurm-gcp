@@ -59,14 +59,7 @@ Steps:
        slurm_version           : 17.11.5
        default_account         : default
        default_users           : bob,joe
-       munge_key               : <put munge key here>
    ```
-
-   You can generate a munge key by doing:
-   ```
-   date +%s | sha512sum | cut -d' ' -f1
-   ```
-   See also [Creating a Secret Key](https://github.com/dun/munge/wiki/Installation-Guide#user-content-creating-a-secret-key)
 
    **NOTE:** The version number must match the version of the link name found
    at (https://www.schedmd.com/downloads.php).

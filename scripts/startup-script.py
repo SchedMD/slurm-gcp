@@ -207,19 +207,41 @@ def install_packages():
 
 def setup_munge():
 
-    f = open('/etc/munge/munge.key', 'w')
-    f.write(MUNGE_KEY)
+    MUNGE_DIR = "/etc/munge"
+
+    f = open('/etc/fstab', 'a')
+    if not NFS_APPS_SERVER:
+        if ((INSTANCE_TYPE != "controller")):
+            f.write("""
+{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+""".format(MUNGE_DIR, CONTROL_MACHINE))
+    else:
+        f.write("""
+{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+""".format(MUNGE_DIR, NFS_APPS_SERVER))
     f.close()
 
-    subprocess.call(['chown', '-R', 'munge:', '/etc/munge/', '/var/log/munge/'])
-    os.chmod('/etc/munge/munge.key' ,0o400)
-    os.chmod('/etc/munge/'          ,0o700)
-    os.chmod('/var/log/munge/'      ,0o700)
+    if (INSTANCE_TYPE != "controller"):
+        return
 
-    subprocess.call(['systemctl', 'enable', 'munge'])
-    subprocess.call(['systemctl', 'start', 'munge'])
+    if MUNGE_KEY:
+        f = open(MUNGE_DIR +'/munge.key', 'w')
+        f.write(MUNGE_KEY)
+        f.close()
+
+        subprocess.call(['chown', '-R', 'munge:', MUNGE_DIR, '/var/log/munge/'])
+        os.chmod(MUNGE_DIR + '/munge.key' ,0o400)
+        os.chmod(MUNGE_DIR                ,0o700)
+        os.chmod('/var/log/munge/'        ,0o700)
+    else:
+        subprocess.call(['create-munge-key'])
 
 #END setup_munge ()
+
+def start_munge():
+        subprocess.call(['systemctl', 'enable', 'munge'])
+        subprocess.call(['systemctl', 'start', 'munge'])
+#END start_munge()
 
 def setup_nfs_exports():
 
@@ -227,6 +249,7 @@ def setup_nfs_exports():
     f.write("""
 /home  *(rw,sync,no_subtree_check,no_root_squash)
 %s  *(rw,sync,no_subtree_check,no_root_squash)
+/etc/munge *(rw,sync,no_subtree_check,no_root_squash)
 """ % APPS_DIR)
     if CONTROLLER_SECONDARY_DISK:
         f.write("""
@@ -912,6 +935,8 @@ def main():
         setup_nfs_home_vols()
         setup_nfs_sec_vols()
         mount_nfs_vols()
+
+        start_munge()
 
         if INSTANCE_TYPE == "controller":
 

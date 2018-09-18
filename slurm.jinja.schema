@@ -36,7 +36,6 @@ required:
 - default_users
 - login_machine_type
 - max_node_count
-- munge_key
 - private_google_access
 - region
 - slurm_version
@@ -58,6 +57,7 @@ optional:
 - labels
 - login_disk_size_gb
 - login_disk_type
+- munge_key
 - nfs_apps_server
 - nfs_home_server
 - preemptible_bursting
@@ -179,7 +179,9 @@ properties:
 
   munge_key:
     type        : string
-    description : The generated mungekey
+    description : Specific munge key to use
+                  (e.g "date +%s | sha512sum | cut -d' ' -f1"). If not specified
+                  then a random key will be generated at deployment creation.
 
   nfs_apps_server:
     type        : string
