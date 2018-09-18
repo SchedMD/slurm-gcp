@@ -464,7 +464,7 @@ JobAcctGatherType=jobacct_gather/none
 SlurmctldDebug=info
 SlurmctldLogFile={apps_dir}/slurm/log/slurmctld.log
 SlurmdDebug=debug
-SlurmdLogFile={apps_dir}/slurm/log/slurmd-%n.log
+SlurmdLogFile=/var/log/slurm/slurmd-%n.log
 #
 #
 # POWER SAVE SUPPORT FOR IDLE NODES (optional)
@@ -922,6 +922,9 @@ def main():
     start_motd()
 
     if SLURM_INSTALLED == "FALSE":
+
+        if not os.path.exists('/var/log/slurm'):
+            os.makedirs('/var/log/slurm')
 
         add_slurm_user()
         install_packages()
