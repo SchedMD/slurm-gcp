@@ -162,6 +162,7 @@ properties:
 
   labels:
     type        : string
+    default     : slurm-on-gcp
     description : Labels to add to nodes for reporting. Key will be node name
                   (key,value).
 
