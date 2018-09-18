@@ -73,8 +73,8 @@ properties:
 
   compute_machine_type:
     type        : string
-    description : |
-      Machine type to use for compute node instances, eg. n1-standard-4.
+    description : Machine type to use for compute node instances.
+                  eg. n1-standard-4.
 
   compute_disk_type:
     enum        : ["pd-ssd", "pd-standard"]
@@ -90,8 +90,8 @@ properties:
 
   controller_machine_type:
     type        : string
-    description : |
-      Machine type to use for the controller instance, eg. n1-standard-4.
+    description : Machine type to use for the controller instance.
+                  eg. n1-standard-4.
 
   controller_disk_type:
     enum        : ["pd-ssd", "pd-standard"]
@@ -123,8 +123,13 @@ properties:
     description : Size of disk for the secondary disk.
 
   cpu_platform:
-    enum: ["Intel Sandy Bridge", "Intel Ivy Bridge", "Intel Haswell", "Intel Broadwell", "Intel Skylake"]
-    description: Minimum Intel Platform for Compute Nodes to Use
+    enum        :
+                - Intel Sandy Bridge
+                - Intel Ivy Bridge
+                - Intel Haswell
+                - Intel Broadwell
+                - Intel Skylake
+    description : Minimum Intel Platform for Compute Nodes to Use
 
   default_account:
     type        : string
@@ -133,34 +138,37 @@ properties:
 
   default_users:
     type        : string
-    description : |
-      Default users to add to accounting. Added to default_account. Users can be
-      added later using sacctmgr.
+    description : Default users to add to accounting. Added to default_account.
+                  Users can be added later using sacctmgr.
 
   external_compute_ips:
     type        : boolean
     default     : True
-    description : |
-      Whether compute nodes are assigned external IPs or not. If set to false,
-      then the compute nodes will get to the internet through the controller
-      through a NAT'ed gateway.
+    description : Whether compute nodes are assigned external IPs or not. If set
+                  to false, then the compute nodes will get to the internet
+                  through the controller through a NAT'ed gateway.
 
   gpu_type:
-    enum: ["nvidia-tesla-k80", "nvidia-tesla-p100", "nvidia-tesla-v100", "nvidia-tesla-p4"]
-    description: GPU Type to attach to static nodes.
+    enum        :
+                - nvidia-tesla-k80
+                - nvidia-tesla-p100
+                - nvidia-tesla-v100
+                - nvidia-tesla-p4
+    description : GPU Type to attach to static nodes.
 
   gpu_count:
-    enum: [1, 2, 4, 8]
-    description: Number of GPUs to attach to each node.
+    enum        : [1, 2, 4, 8]
+    description : Number of GPUs to attach to each node.
 
   labels:
-    type: string
-    description: Labels to add to nodes for reporting. Key will be node name (key,value).
+    type        : string
+    description : Labels to add to nodes for reporting. Key will be node name
+                  (key,value).
 
   login_machine_type:
     type        : string
-    description : |
-      Machine type to use for login node instances, eg. n1-standard-4.
+    description : Machine type to use for login node instances, eg.
+                  n1-standard-4.
 
   login_disk_type:
     enum        : ["pd-ssd", "pd-standard"]
@@ -195,9 +203,9 @@ properties:
   preemptible_bursting:
     type        : boolean
     default     : False
-    description : |
-      Whether bursted compute nodes are preemptible instances or not. Makre sure
-      to choose a zone that has preemptible resources.
+    description : Whether bursted compute nodes are preemptible instances or
+                  not. Makre sure to choose a zone that has preemptible
+                  resources.
 
   private_google_access:
     type        : boolean
