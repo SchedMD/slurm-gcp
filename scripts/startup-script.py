@@ -871,11 +871,6 @@ RPCNFSDCOUNT=256
 
 # END setup_nfs_threads()
 
-def mark_installed():
-    f = open('/var/lib/slurm/slurm.installed', 'a')
-    f.close()
-# END mark_installed()
-
 def setup_slurmd_cronjob():
     #subprocess.call(shlex.split('crontab < /apps/slurm/scripts/cron'))
     os.system("echo '*/2 * * * * if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then mount -a; systemctl restart slurmd; fi' | crontab -u root -")
@@ -890,13 +885,6 @@ def format_disk():
 # END format_disk()
 
 def main():
-    if os.path.isfile('/var/lib/slurm/slurm.installed'):
-        SLURM_INSTALLED = "TRUE"
-    else:
-        SLURM_INSTALLED = "FALSE"
-
-    print "ww Slurm Installed? " + SLURM_INSTALLED
-
     # Disable SELinux
     subprocess.call(shlex.split('setenforce 0'))
 
@@ -921,105 +909,100 @@ def main():
 
     start_motd()
 
-    if SLURM_INSTALLED == "FALSE":
+    if not os.path.exists('/var/log/slurm'):
+        os.makedirs('/var/log/slurm')
 
-        if not os.path.exists('/var/log/slurm'):
-            os.makedirs('/var/log/slurm')
+    add_slurm_user()
+    install_packages()
+    setup_munge()
+    setup_bash_profile()
 
-        add_slurm_user()
-        install_packages()
-        setup_munge()
-        setup_bash_profile()
+    if (CONTROLLER_SECONDARY_DISK and (INSTANCE_TYPE == "controller")):
+        setup_secondary_disks()
 
-        if (CONTROLLER_SECONDARY_DISK and (INSTANCE_TYPE == "controller")):
-            setup_secondary_disks()
+    setup_nfs_apps_vols()
+    setup_nfs_home_vols()
+    setup_nfs_sec_vols()
+    mount_nfs_vols()
 
-        setup_nfs_apps_vols()
-        setup_nfs_home_vols()
-        setup_nfs_sec_vols()
-        mount_nfs_vols()
+    start_munge()
 
-        start_munge()
+    if INSTANCE_TYPE == "controller":
 
-        if INSTANCE_TYPE == "controller":
+        install_slurm()
 
-            install_slurm()
+        # Add any additional installation functions here
 
-            # Add any additional installation functions here
+        install_controller_service_scripts()
 
-            install_controller_service_scripts()
+        subprocess.call(shlex.split('systemctl enable mariadb'))
+        subprocess.call(shlex.split('systemctl start mariadb'))
 
-            subprocess.call(shlex.split('systemctl enable mariadb'))
-            subprocess.call(shlex.split('systemctl start mariadb'))
+        subprocess.call(['mysql', '-u', 'root', '-e',
+            "create user 'slurm'@'localhost'"])
+        subprocess.call(['mysql', '-u', 'root', '-e',
+            "grant all on slurm_acct_db.* TO 'slurm'@'localhost';"])
+        subprocess.call(['mysql', '-u', 'root', '-e',
+            "grant all on slurm_acct_db.* TO 'slurm'@'{0}';".format(CONTROL_MACHINE)])
 
-            subprocess.call(['mysql', '-u', 'root', '-e',
-                "create user 'slurm'@'localhost'"])
-            subprocess.call(['mysql', '-u', 'root', '-e',
-                "grant all on slurm_acct_db.* TO 'slurm'@'localhost';"])
-            subprocess.call(['mysql', '-u', 'root', '-e',
-                "grant all on slurm_acct_db.* TO 'slurm'@'{0}';".format(CONTROL_MACHINE)])
+        subprocess.call(shlex.split('systemctl enable slurmdbd'))
+        subprocess.call(shlex.split('systemctl start slurmdbd'))
 
-            subprocess.call(shlex.split('systemctl enable slurmdbd'))
-            subprocess.call(shlex.split('systemctl start slurmdbd'))
+        # Wait for slurmdbd to come up
+        time.sleep(5)
 
-            # Wait for slurmdbd to come up
-            time.sleep(5)
+        oslogin_chars = ['@', '.']
 
-            oslogin_chars = ['@', '.']
+        SLURM_USERS = DEF_SLURM_USERS
 
-            SLURM_USERS = DEF_SLURM_USERS
+        for char in oslogin_chars:
+            SLURM_USERS = SLURM_USERS.replace(char, '_')
 
-            for char in oslogin_chars:
-                SLURM_USERS = SLURM_USERS.replace(char, '_')
+        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add cluster ' + CLUSTER_NAME))
+        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add account ' + DEF_SLURM_ACCT))
+        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add user ' + SLURM_USERS + ' account=' + DEF_SLURM_ACCT))
 
-            subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add cluster ' + CLUSTER_NAME))
-            subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add account ' + DEF_SLURM_ACCT))
-            subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add user ' + SLURM_USERS + ' account=' + DEF_SLURM_ACCT))
+        subprocess.call(shlex.split('systemctl enable slurmctld'))
+        subprocess.call(shlex.split('systemctl start slurmctld'))
+        setup_nfs_threads()
+        # Export at the end to signal that everything is up
+        subprocess.call(shlex.split('systemctl enable nfs-server'))
+        subprocess.call(shlex.split('systemctl start nfs-server'))
+        setup_nfs_exports()
+        if GPU_TYPE:
+            copy_nvidia_scripts()
+        print "ww Done installing controller"
+        subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ CONTROL_MACHINE + ' --zone=' + ZONE + ' --keys=startup-script'))
 
-            subprocess.call(shlex.split('systemctl enable slurmctld'))
-            subprocess.call(shlex.split('systemctl start slurmctld'))
-            setup_nfs_threads()
-            # Export at the end to signal that everything is up
-            subprocess.call(shlex.split('systemctl enable nfs-server'))
-            subprocess.call(shlex.split('systemctl start nfs-server'))
-            setup_nfs_exports()
-            if GPU_TYPE:
-                copy_nvidia_scripts()
-            print "ww Done installing controller"
-            subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ CONTROL_MACHINE + ' --zone=' + ZONE + ' --keys=startup-script'))
-            #mark_installed()
+    elif INSTANCE_TYPE == "compute":
+        install_compute_service_scripts()
 
-        elif INSTANCE_TYPE == "compute":
-            install_compute_service_scripts()
+        hostname = socket.gethostname()
 
-            hostname = socket.gethostname()
+        # Add any additional installation functions here
 
-            # Add any additional installation functions here
+        #mount_nfs_vols()
 
-            #mount_nfs_vols()
+        #subprocess.call(shlex.split('systemctl enable slurmd'))
+        #setup_slurmd_cronjob()
 
-            #subprocess.call(shlex.split('systemctl enable slurmd'))
-            #setup_slurmd_cronjob()
+        if GPU_TYPE:
+            if not os.path.exists('/usr/local/cuda'):
+                # Add error checking below
+                install_nvidia_drivers()
 
-            if GPU_TYPE:
-                if not os.path.exists('/usr/local/cuda'):
-                    # Add error checking below
-                    install_nvidia_drivers()
+                subprocess.call(shlex.split('systemctl enable slurmd'))
+                setup_slurmd_cronjob()
+                subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
+                end_motd()
+                time.sleep(10)
+                subprocess.call(['sudo', 'umount', '-l', '/apps', '/home'])
+                os.system('reboot')
 
-                    subprocess.call(shlex.split('systemctl enable slurmd'))
-                    setup_slurmd_cronjob()
-                    subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
-                    #mark_installed()
-                    end_motd()
-                    time.sleep(10)
-                    subprocess.call(['sudo', 'umount', '-l', '/apps', '/home'])
-                    os.system('reboot')
-
-            subprocess.call(shlex.split('systemctl enable slurmd'))
-            setup_slurmd_cronjob()
-            subprocess.call(shlex.split('systemctl start slurmd'))
-            subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
-            #mark_installed()
+        subprocess.call(shlex.split('systemctl enable slurmd'))
+        setup_slurmd_cronjob()
+        subprocess.call(shlex.split('systemctl start slurmd'))
+        subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
 
     end_motd()
 
