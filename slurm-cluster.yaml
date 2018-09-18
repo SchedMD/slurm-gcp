@@ -58,6 +58,5 @@ resources:
     #gpu_count                  : 8
 
     #slurm_version           : < Current slurm version, e.g. 17.11.8 >
-    default_account         : default
     default_users           : < GCP user email addr, comma separated >
 #  [END cluster_yaml]
