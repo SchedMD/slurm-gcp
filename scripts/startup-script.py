@@ -488,8 +488,10 @@ SuspendTime=2100
 #
 #
 # COMPUTE NODES
-""".format(cluster_name = CLUSTER_NAME, apps_dir = APPS_DIR,
-        def_mem_per_cpu = def_mem_per_cpu, control_machine = CONTROL_MACHINE)
+""".format(apps_dir        = APPS_DIR,
+           cluster_name    = CLUSTER_NAME,
+           control_machine = CONTROL_MACHINE,
+           def_mem_per_cpu = def_mem_per_cpu)
 
     conf += ' '.join(("NodeName=DEFAULT",
                       "Sockets="        + str(machine['sockets']),
