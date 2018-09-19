@@ -34,6 +34,7 @@ resources:
     controller_machine_type : n1-standard-2
     compute_machine_type    : n1-standard-2
     login_machine_type      : n1-standard-2
+    #login_node_count        : 1
 
     # Optional compute configuration fields
     #cpu_platform               : Intel Skylake
