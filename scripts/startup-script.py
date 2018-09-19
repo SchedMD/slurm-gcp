@@ -39,6 +39,7 @@ DEF_SLURM_ACCT    = '@DEF_SLURM_ACCT@'
 DEF_SLURM_USERS   = '@DEF_SLURM_USERS@'
 EXTERNAL_COMPUTE_IPS = @EXTERNAL_COMPUTE_IPS@
 GPU_TYPE          = '@GPU_TYPE@'
+GPU_COUNT         = @GPU_COUNT@
 NFS_APPS_SERVER   = '@NFS_APPS_SERVER@'
 NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
 CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
@@ -138,10 +139,6 @@ def end_motd():
 Either log out and log back in or cd into ~.
 """])
 
-    if (GPU_TYPE and INSTANCE_TYPE == "compute"):
-        subprocess.call(['wall', '-n',
-            '*** Nvidia driver installation complete. Reboot will begin in 10 sec. ***'])
-
 #END start_motd()
 
 
@@ -202,6 +199,17 @@ def install_packages():
         'google-api-python-client']):
         print "failed to install google python api client. Trying again 5 seconds."
         time.sleep(5)
+
+    if GPU_TYPE:
+        rpm = "cuda-repo-rhel7-9.2.148-1.x86_64.rpm"
+        subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
+        subprocess.call(shlex.split("wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/" + rpm))
+        subprocess.call(shlex.split("sudo rpm -i " + rpm))
+        subprocess.call(shlex.split("sudo yum clean all"))
+        subprocess.call(shlex.split("sudo yum -y install cuda"))
+
+        if INSTANCE_TYPE == "compute":
+            subprocess.call(shlex.split("nvidia-smi")) # Create the device files
 
 #END install_packages()
 
@@ -331,7 +339,7 @@ CryptoType=crypto/munge
 #EpilogSlurmctld=
 #FirstJobId=1
 #MaxJobId=999999
-#GresTypes=
+GresTypes=gpu
 #GroupUpdateForce=0
 #GroupUpdateTime=600
 #JobCheckpointDir=/var/slurm/checkpoint
@@ -483,10 +491,16 @@ SuspendTime=2100
 """.format(cluster_name = CLUSTER_NAME, apps_dir = APPS_DIR,
         def_mem_per_cpu = def_mem_per_cpu, control_machine = CONTROL_MACHINE)
 
-    conf += """
-NodeName=DEFAULT Sockets=%d CoresPerSocket=%d ThreadsPerCore=%d RealMemory=%d State=UNKNOWN
-""" % (machine['sockets'], machine['cores'], machine['threads'],
-        machine['memory'])
+    conf += ' '.join(("NodeName=DEFAULT",
+                      "Sockets="        + str(machine['sockets']),
+                      "CoresPerSocket=" + str(machine['cores']),
+                      "ThreadsPerCore=" + str(machine['threads']),
+                      "RealMemory="     + str(machine['memory']),
+                      "State=UNKNOWN"))
+
+    if GPU_TYPE:
+        conf += " Gres=gpu:" + str(GPU_COUNT)
+    conf += "\n"
 
     static_range = ""
     if STATIC_NODE_COUNT and STATIC_NODE_COUNT > 1:
@@ -574,7 +588,7 @@ ConstrainCores=yes
 ConstrainRamSpace=yes
 ConstrainSwapSpace=yes
 TaskAffinity=no
-#ConstrainDevices=yes
+ConstrainDevices=yes
 """
 
     etc_dir = SLURM_PREFIX + '/etc'
@@ -582,6 +596,14 @@ TaskAffinity=no
     f.write(conf)
     f.close()
 
+    f = open(etc_dir + '/cgroup_allowed_devices_file.conf', 'w')
+    f.write("")
+    f.close()
+
+    f = open(etc_dir + '/gres.conf', 'w')
+    f.write("NodeName=%s-compute[1-%d] Name=gpu File=/dev/nvidia[0-%d]"
+            % (CLUSTER_NAME, MAX_NODE_COUNT, (GPU_COUNT - 1)))
+    f.close()
 #END install_cgroup_conf()
 
 
@@ -623,29 +645,6 @@ def install_suspend_progs():
     os.chmod(APPS_DIR + '/slurm/scripts/startup-script.py', 0o755)
 
 #END install_suspend_progs()
-
-def copy_nvidia_scripts():
-
-        GOOGLE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/attributes"
-
-        req = urllib2.Request(GOOGLE_URL + '/gpu-script')
-        req.add_header('Metadata-Flavor', 'Google')
-        resp = urllib2.urlopen(req)
-
-        f = open(APPS_DIR + '/slurm/scripts/nvidia.sh', 'w')
-        f.write(resp.read())
-        f.close()
-        os.chmod(APPS_DIR + '/slurm/scripts/nvidia.sh', 0o755)
-#End copy_nvidia_scripts()
-
-def install_nvidia_drivers():
-    print "Installing NVIDIA Drivers..."
-    copy_nvidia_scripts()
-
-    subprocess.call(['./' + APPS_DIR + '/slurm/scripts/nvidia.sh'])
-    #subprocess.call(['bash ' + APPS_DIR + '/slurm/scripts/nvidia.sh'])
-
-#END install_nvidia_drivers()
 
 def install_slurm():
 
@@ -792,6 +791,15 @@ def setup_bash_profile():
 S_PATH=%s/slurm/current
 PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """ % APPS_DIR)
+    f.close()
+
+#FIXME get cuda library automatically
+    f = open('/etc/profile.d/cuda.sh', 'w')
+    f.write("""
+CUDA_PATH=/usr/local/cuda-9.2
+PATH=$CUDA_PATH/bin${PATH:+:${PATH}}
+LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+""")
     f.close()
 
 #END setup_bash_profile()
@@ -969,8 +977,6 @@ def main():
         subprocess.call(shlex.split('systemctl enable nfs-server'))
         subprocess.call(shlex.split('systemctl start nfs-server'))
         setup_nfs_exports()
-        if GPU_TYPE:
-            copy_nvidia_scripts()
         print "ww Done installing controller"
         subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ CONTROL_MACHINE + ' --zone=' + ZONE + ' --keys=startup-script'))
 
@@ -980,24 +986,6 @@ def main():
         hostname = socket.gethostname()
 
         # Add any additional installation functions here
-
-        #mount_nfs_vols()
-
-        #subprocess.call(shlex.split('systemctl enable slurmd'))
-        #setup_slurmd_cronjob()
-
-        if GPU_TYPE:
-            if not os.path.exists('/usr/local/cuda'):
-                # Add error checking below
-                install_nvidia_drivers()
-
-                subprocess.call(shlex.split('systemctl enable slurmd'))
-                setup_slurmd_cronjob()
-                subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
-                end_motd()
-                time.sleep(10)
-                subprocess.call(['sudo', 'umount', '-l', '/apps', '/home'])
-                os.system('reboot')
 
         subprocess.call(shlex.split('systemctl enable slurmd'))
         setup_slurmd_cronjob()

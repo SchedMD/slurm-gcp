@@ -25,7 +25,6 @@ imports:
 - path: scripts/resume.py
 - path: scripts/startup-script.py
 - path: scripts/suspend.py
-- path: scripts/nvidia.sh
 
 required:
 - cidr

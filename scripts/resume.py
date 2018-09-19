@@ -61,108 +61,60 @@ def create_instance(compute, project, zone, instance_type, instance_name):
   disk_type = "projects/%s/zones/%s/diskTypes/%s" % (PROJECT, ZONE, DISK_TYPE)
   startup_script = open('/apps/slurm/scripts/startup-script.py', 'r').read()
 
+  config = {
+    'name': instance_name,
+    'machineType': machine_type,
+
+    # Specify the boot disk and the image to use as a source.
+    'disks': [
+      {
+        'boot': True,
+        'autoDelete': True,
+        'initializeParams': {
+          'sourceImage': source_disk_image,
+          'diskType': disk_type,
+          'diskSizeGb': DISK_SIZE_GB
+        }
+      }
+    ],
+
+    # Specify a network interface
+    'networkInterfaces': [{
+      NETWORK_TYPE : NETWORK,
+    }],
+
+    # Allow the instance to access cloud storage and logging.
+    'serviceAccounts': [{
+      'email': 'default',
+      'scopes': [
+        'https://www.googleapis.com/auth/cloud-platform'
+      ]
+    }],
+
+    'tags': {'items': ['compute'] },
+
+    # Metadata is readable from the instance and allows you to
+    # pass configuration from deployment scripts to instances.
+    'metadata': {
+      'items': [{
+        # Startup script is automatically executed by the
+        # instance upon startup.
+        'key': 'startup-script',
+        'value': startup_script
+      }, {
+        'key': 'enable-oslogin',
+        'value': 'TRUE'
+      }]
+    }
+  }
+
   if GPU_TYPE:
-    gpu_script = open('/apps/slurm/scripts/nvidia.sh', 'r').read()
-    config = {
-      'name': instance_name,
-      'machineType': machine_type,
-
-      # Specify the boot disk and the image to use as a source.
-      'disks': [
-        {
-          'boot': True,
-          'autoDelete': True,
-          'initializeParams': {
-            'sourceImage': source_disk_image,
-            'diskType': disk_type,
-            'diskSizeGb': DISK_SIZE_GB
-          }
-        }
-      ],
-
-      # Specify a network interface
-      'networkInterfaces': [{
-        NETWORK_TYPE : NETWORK,
-      }],
-
-      # Allow the instance to access cloud storage and logging.
-      'serviceAccounts': [{
-        'email': 'default',
-        'scopes': [
-          'https://www.googleapis.com/auth/cloud-platform'
-        ]
-      }],
-
-      'tags': {'items': ['compute'] },
-      'guestAccelerators': [{
-          'acceleratorCount': GPU_COUNT, 'acceleratorType': 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE
-      }],
-
-      'scheduling': {'onHostMaintenance': 'TERMINATE' },
-      # Metadata is readable from the instance and allows you to
-      # pass configuration from deployment scripts to instances.
-      'metadata': {
-        'items': [{
-          # Startup script is automatically executed by the
-          # instance upon startup.
-          'key': 'startup-script',
-          'value': startup_script
-        }, {
-          'key': 'enable-oslogin',
-          'value': 'TRUE'
-        }, {
-          'key': 'gpu-script',
-          'value': gpu_script
+    config['guestAccelerators'] = [{
+        'acceleratorCount': GPU_COUNT,
+        'acceleratorType' : 'https://www.googleapis.com/compute/v1/projects/' + PROJECT + '/zones/' + ZONE + '/acceleratorTypes/' + GPU_TYPE
         }]
-      }
-    }
-  else:
-    config = {
-      'name': instance_name,
-      'machineType': machine_type,
 
-      # Specify the boot disk and the image to use as a source.
-      'disks': [
-        {
-          'boot': True,
-          'autoDelete': True,
-          'initializeParams': {
-            'sourceImage': source_disk_image,
-            'diskType': disk_type,
-            'diskSizeGb': DISK_SIZE_GB
-          }
-        }
-      ],
-
-      # Specify a network interface
-      'networkInterfaces': [{
-        NETWORK_TYPE : NETWORK,
-      }],
-
-      # Allow the instance to access cloud storage and logging.
-      'serviceAccounts': [{
-        'email': 'default',
-        'scopes': [
-          'https://www.googleapis.com/auth/cloud-platform'
-        ]
-      }],
-
-      'tags': {'items': ['compute'] },
-
-      # Metadata is readable from the instance and allows you to
-      # pass configuration from deployment scripts to instances.
-      'metadata': {
-        'items': [{
-          # Startup script is automatically executed by the
-          # instance upon startup.
-          'key': 'startup-script',
-          'value': startup_script
-        }, {
-          'key': 'enable-oslogin',
-          'value': 'TRUE'
-        }]
-      }
-    }
+    config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
   if PREEMPTIBLE:
       config['scheduling'] = {
