@@ -795,10 +795,9 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """ % APPS_DIR)
     f.close()
 
-#FIXME get cuda library automatically
     f = open('/etc/profile.d/cuda.sh', 'w')
     f.write("""
-CUDA_PATH=/usr/local/cuda-9.2
+CUDA_PATH=/usr/local/cuda
 PATH=$CUDA_PATH/bin${PATH:+:${PATH}}
 LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 """)
