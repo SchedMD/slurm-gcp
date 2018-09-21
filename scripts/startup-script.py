@@ -200,16 +200,14 @@ def install_packages():
         print "failed to install google python api client. Trying again 5 seconds."
         time.sleep(5)
 
-    if GPU_TYPE:
+    if GPU_TYPE and (INSTANCE_TYPE == "compute"):
         rpm = "cuda-repo-rhel7-9.2.148-1.x86_64.rpm"
         subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
         subprocess.call(shlex.split("wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/" + rpm))
         subprocess.call(shlex.split("sudo rpm -i " + rpm))
         subprocess.call(shlex.split("sudo yum clean all"))
         subprocess.call(shlex.split("sudo yum -y install cuda"))
-
-        if INSTANCE_TYPE == "compute":
-            subprocess.call(shlex.split("nvidia-smi")) # Create the device files
+        subprocess.call(shlex.split("nvidia-smi")) # Creates the device files
 
 #END install_packages()
 
@@ -795,13 +793,14 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """ % APPS_DIR)
     f.close()
 
-    f = open('/etc/profile.d/cuda.sh', 'w')
-    f.write("""
+    if GPU_TYPE and (INSTANCE_TYPE == "compute"):
+        f = open('/etc/profile.d/cuda.sh', 'w')
+        f.write("""
 CUDA_PATH=/usr/local/cuda
 PATH=$CUDA_PATH/bin${PATH:+:${PATH}}
 LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 """)
-    f.close()
+        f.close()
 
 #END setup_bash_profile()
 
