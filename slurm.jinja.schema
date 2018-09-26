@@ -157,7 +157,8 @@ properties:
     description : GPU Type to attach to static nodes.
 
   gpu_count:
-    enum        : [1, 2, 4, 8]
+    enum        : [0, 1, 2, 4, 8]
+    default     : 0
     description : Number of GPUs to attach to each node.
 
   labels:

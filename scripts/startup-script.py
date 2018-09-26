@@ -200,7 +200,7 @@ def install_packages():
         print "failed to install google python api client. Trying again 5 seconds."
         time.sleep(5)
 
-    if GPU_TYPE and (INSTANCE_TYPE == "compute"):
+    if GPU_COUNT and (INSTANCE_TYPE == "compute"):
         rpm = "cuda-repo-rhel7-9.2.148-1.x86_64.rpm"
         subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
         subprocess.call(shlex.split("wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/" + rpm))
@@ -498,7 +498,7 @@ SuspendTime=2100
                       "RealMemory="     + str(machine['memory']),
                       "State=UNKNOWN"))
 
-    if GPU_TYPE:
+    if GPU_COUNT:
         conf += " Gres=gpu:" + str(GPU_COUNT)
     conf += "\n"
 
@@ -600,10 +600,11 @@ ConstrainDevices=yes
     f.write("")
     f.close()
 
-    f = open(etc_dir + '/gres.conf', 'w')
-    f.write("NodeName=%s-compute[1-%d] Name=gpu File=/dev/nvidia[0-%d]"
-            % (CLUSTER_NAME, MAX_NODE_COUNT, (GPU_COUNT - 1)))
-    f.close()
+    if GPU_COUNT:
+        f = open(etc_dir + '/gres.conf', 'w')
+        f.write("NodeName=%s-compute[1-%d] Name=gpu File=/dev/nvidia[0-%d]"
+                % (CLUSTER_NAME, MAX_NODE_COUNT, (GPU_COUNT - 1)))
+        f.close()
 #END install_cgroup_conf()
 
 
@@ -793,7 +794,7 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """ % APPS_DIR)
     f.close()
 
-    if GPU_TYPE and (INSTANCE_TYPE == "compute"):
+    if GPU_COUNT and (INSTANCE_TYPE == "compute"):
         f = open('/etc/profile.d/cuda.sh', 'w')
         f.write("""
 CUDA_PATH=/usr/local/cuda
