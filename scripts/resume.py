@@ -141,7 +141,7 @@ def create_instance(compute, project, zone, instance_type, instance_name):
       	NETWORK_TYPE : "projects/%s/regions/%s/subnetworks/%s" % (SHARED_VPC_HOST_PROJ, REGION, VPC_SUBNET)
       }]
       
-  if EXTERNAL_IP:
+  if EXTERNAL_IP or SHARED_VPC_HOST_PROJ:
       config['networkInterfaces'][0]['accessConfigs'] = [
                 {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
              ]
