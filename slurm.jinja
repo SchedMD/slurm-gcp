@@ -50,11 +50,15 @@ resources:
     - IPProtocol: ICMP
 {% endif %}
 
-{% if not properties['external_compute_ips'] %}
+{% if (not properties['external_compute_ips'] or not properties['shared_vpc_host_proj']) %}
 - name: {{properties["cluster_name"]}}-no-ip-internet-route
   type: compute.v1.route
   properties:
+{% if properties['vpc_net'] %}
+    network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/{{ properties["vpc_net"]}}
+{% else %}
     network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
+{% endif %}
     tags: ["compute"]
     destRange: 0.0.0.0/0
     nextHopInstance: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/instances/{{properties["cluster_name"]}}-controller
@@ -92,22 +96,16 @@ resources:
 {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-      accessConfigs:
-      - name: External NAT
-        type: ONE_TO_ONE_NAT
 {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-      accessConfigs:
-      - name: External NAT
-        type: ONE_TO_ONE_NAT
 {% else %}
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
+{% endif %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
-{% endif %}
     serviceAccounts:
       - email: "default"
         scopes:
@@ -157,22 +155,16 @@ resources:
 {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-      accessConfigs:
-      - name: External NAT
-        type: ONE_TO_ONE_NAT
 {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-      accessConfigs:
-      - name: External NAT
-        type: ONE_TO_ONE_NAT
 {% else %}
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
+{% endif %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
-{% endif %}
     serviceAccounts:
       - email: "default"
         scopes:

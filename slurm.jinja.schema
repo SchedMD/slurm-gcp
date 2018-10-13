@@ -62,6 +62,7 @@ optional:
 - nfs_home_server
 - preemptible_bursting
 - shared_vpc_host_proj
+- vpc_net
 - vpc_subnet
 
 properties:
@@ -229,7 +230,7 @@ properties:
     type        : string
     description : Shared VPC network that this project has been granted access to. 
                   Default service account and APIs service agent must be granted 
-                  "Network User" role in host project         
+                  "Network User" role in host project. Requires external IPs         
 
   slurm_version:
     type        : string
@@ -240,6 +241,11 @@ properties:
   static_node_count:
     type        : integer
     description : Number of initial instances in the cluster.
+
+  vpc_net:
+    type        : string
+    description : The name of the pre-defined VPC network you want the nodes 
+                  to attach to based on Region
     
   vpc_subnet:
     type        : string
