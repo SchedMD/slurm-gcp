@@ -50,7 +50,7 @@ resources:
     - IPProtocol: ICMP
 {% endif %}
 
-{% if (not properties['external_compute_ips'] or not properties['shared_vpc_host_proj']) %}
+{% if (not properties['external_compute_ips'] and not properties['shared_vpc_host_proj']) %}
 - name: {{properties["cluster_name"]}}-no-ip-internet-route
   type: compute.v1.route
   properties:
