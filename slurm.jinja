@@ -51,22 +51,28 @@ resources:
 {% endif %}
 
 {% if (not properties['external_compute_ips'] and not properties['shared_vpc_host_proj']) %}
-- name: {{properties["cluster_name"]}}-no-ip-internet-route
-  type: compute.v1.route
+- name: {{properties["cluster_name"]}}-router
+  type: compute.beta.router
   properties:
 {% if properties['vpc_net'] %}
     network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/{{ properties["vpc_net"]}}
 {% else %}
     network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
 {% endif %}
-    tags: ["compute"]
-    destRange: 0.0.0.0/0
-    nextHopInstance: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/instances/{{properties["cluster_name"]}}-controller
-    priority: 800
-  metadata:
-    dependsOn:
-    - {{properties["cluster_name"]}}-controller
+    region: {{ properties["region"] }}
+    nats:
+    - name: {{properties["cluster_name"]}}-nat
+      natIpAllocateOption: "AUTO_ONLY"
+      sourceSubnetworkIpRangesToNat: "LIST_OF_SUBNETWORKS"
+      subnetworks:
+{% if properties['vpc_net'] %}
+      - name: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+{% else %}
+      - name: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
 {% endif %}
+        sourceIpRangesToNat: ["PRIMARY_IP_RANGE"]
+{% endif %}
+
 
 - name: {{properties["cluster_name"]}}-controller
   type: compute.v1.instance
@@ -221,7 +227,7 @@ resources:
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
 {% endif %}
-{% if properties['external_compute_ips'] %}
+{% if properties['external_compute_ips'] or properties['shared_vpc_host_proj'] %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT

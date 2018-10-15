@@ -149,7 +149,7 @@ properties:
     default     : True
     description : Whether compute nodes are assigned external IPs or not. If set
                   to false, then the compute nodes will get to the internet
-                  through the controller through a NAT'ed gateway.
+                  through a Cloud NAT gateway.
 
   gpu_type:
     enum        :
@@ -230,7 +230,8 @@ properties:
     type        : string
     description : Shared VPC network that this project has been granted access to. 
                   Default service account and APIs service agent must be granted 
-                  "Network User" role in host project. Requires external IPs         
+                  "Network User" role in host project. Requires external IPs or
+                  Cloud NAT configured in host project
 
   slurm_version:
     type        : string
