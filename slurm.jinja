@@ -54,22 +54,22 @@ resources:
 - name: {{properties["cluster_name"]}}-router
   type: compute.beta.router
   properties:
-{% if properties['vpc_net'] %}
+  {% if properties['vpc_net'] %}
     network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/{{ properties["vpc_net"]}}
-{% else %}
+  {% else %}
     network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
-{% endif %}
+  {% endif %}
     region: {{ properties["region"] }}
     nats:
     - name: {{properties["cluster_name"]}}-nat
       natIpAllocateOption: "AUTO_ONLY"
       sourceSubnetworkIpRangesToNat: "LIST_OF_SUBNETWORKS"
       subnetworks:
-{% if properties['vpc_net'] %}
+  {% if properties['vpc_net'] %}
       - name: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-{% else %}
+  {% else %}
       - name: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
-{% endif %}
+  {% endif %}
         sourceIpRangesToNat: ["PRIMARY_IP_RANGE"]
 {% endif %}
 
@@ -156,16 +156,16 @@ resources:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
         diskType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["login_disk_type"] }}
         diskSizeGb: {{ properties["login_disk_size_gb"] }}
-{% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
+  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-{% elif properties ['vpc_subnet'] %}
+  {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-{% else %}
+  {% else %}
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
-{% endif %}
+  {% endif %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
@@ -176,10 +176,10 @@ resources:
     tags:
       items:
         - login
-{% if properties["labels"] %}
+  {% if properties["labels"] %}
     labels:
       {{properties["cluster_name"]}}-login1: {{properties["labels"]}}
-{% endif %}
+  {% endif %}
     metadata:
       items:
         - key: startup-script
@@ -196,16 +196,16 @@ resources:
   properties:
     zone: {{ properties["zone"] }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/{{ properties["compute_machine_type"] }}
-{% if properties ["cpu_platform"] %}
+  {% if properties ["cpu_platform"] %}
     minCpuPlatform: {{ properties["cpu_platform"]}}
-{% endif %}
-{% if properties["gpu_type"] %}
+  {% endif %}
+  {% if properties["gpu_type"] %}
     guestAccelerators:
     - acceleratorType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/acceleratorTypes/{{ properties["gpu_type"] }}
       acceleratorCount: {{ properties['gpu_count']}}
     scheduling:
       onHostMaintenance: TERMINATE
-{% endif %}
+  {% endif %}
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -215,21 +215,21 @@ resources:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
         diskType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["compute_disk_type"] }}
         diskSizeGb: {{ properties["compute_disk_size_gb"] }}
-{% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
+  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-{% elif properties ['vpc_subnet'] %}
+  {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-{% else %}
+  {% else %}
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
-{% endif %}
-{% if properties['external_compute_ips'] or properties['shared_vpc_host_proj'] %}
+  {% endif %}
+  {% if properties['external_compute_ips'] or properties['shared_vpc_host_proj'] %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
-{% endif %}
+  {% endif %}
     serviceAccounts:
       - email: "default"
         scopes:
@@ -237,10 +237,10 @@ resources:
     tags:
       items:
         - compute
-{% if properties["labels"] %}
+  {% if properties["labels"] %}
     labels:
       {{properties["cluster_name"]}}-compute{{ n + 1}}: {{properties["labels"]}}
-{% endif %}
+  {% endif %}
     metadata:
       items:
         - key: startup-script
