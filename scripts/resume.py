@@ -130,17 +130,17 @@ def create_instance(compute, project, zone, instance_type, instance_name):
 
   if CPU_PLATFORM:
       config['minCpuPlatform'] = CPU_PLATFORM,
-              
+
   if VPC_SUBNET:
       config['networkInterfaces'] = [{
       	NETWORK_TYPE : "projects/%s/regions/%s/subnetworks/%s" % (PROJECT, REGION, VPC_SUBNET)
       }]
-      
+
   if SHARED_VPC_HOST_PROJ:
       config['networkInterfaces'] = [{
       	NETWORK_TYPE : "projects/%s/regions/%s/subnetworks/%s" % (SHARED_VPC_HOST_PROJ, REGION, VPC_SUBNET)
       }]
-      
+
   if EXTERNAL_IP or SHARED_VPC_HOST_PROJ:
       config['networkInterfaces'][0]['accessConfigs'] = [
                 {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}

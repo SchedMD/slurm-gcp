@@ -245,13 +245,13 @@ properties:
 
   vpc_net:
     type        : string
-    description : The name of the pre-defined VPC network you want the nodes 
-                  to attach to based on Region
-    
+    description : The name of the pre-defined VPC network you want the nodes
+                  to attach to based on Region.
+
   vpc_subnet:
     type        : string
-    description : The name of the pre-defined VPC subnet you want the nodes 
-                  to attach to based on Region. 
+    description : The name of the pre-defined VPC subnet you want the nodes
+                  to attach to based on Region.
 
   zone:
     type        : string
