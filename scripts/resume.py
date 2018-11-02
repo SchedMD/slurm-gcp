@@ -34,6 +34,8 @@ MACHINE_TYPE = '@MACHINE_TYPE@'
 CPU_PLATFORM = '@CPU_PLATFORM@'
 PREEMPTIBLE  = @PREEMPTIBLE@
 EXTERNAL_IP  = @EXTERNAL_COMPUTE_IPS@
+SHARED_VPC_HOST_PROJ = '@SHARED_VPC_HOST_PROJ@'
+VPC_SUBNET   = '@VPC_SUBNET@'
 
 DISK_SIZE_GB = '@DISK_SIZE_GB@'
 DISK_TYPE    = '@DISK_TYPE@'
@@ -129,10 +131,20 @@ def create_instance(compute, project, zone, instance_type, instance_name):
   if CPU_PLATFORM:
       config['minCpuPlatform'] = CPU_PLATFORM,
 
-  if EXTERNAL_IP:
+  if VPC_SUBNET:
+      config['networkInterfaces'] = [{
+      	NETWORK_TYPE : "projects/%s/regions/%s/subnetworks/%s" % (PROJECT, REGION, VPC_SUBNET)
+      }]
+
+  if SHARED_VPC_HOST_PROJ:
+      config['networkInterfaces'] = [{
+      	NETWORK_TYPE : "projects/%s/regions/%s/subnetworks/%s" % (SHARED_VPC_HOST_PROJ, REGION, VPC_SUBNET)
+      }]
+
+  if EXTERNAL_IP or SHARED_VPC_HOST_PROJ:
       config['networkInterfaces'][0]['accessConfigs'] = [
                 {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
-              ]
+             ]
 
 
   return compute.instances().insert(

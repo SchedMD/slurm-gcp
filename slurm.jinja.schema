@@ -61,6 +61,9 @@ optional:
 - nfs_apps_server
 - nfs_home_server
 - preemptible_bursting
+- shared_vpc_host_proj
+- vpc_net
+- vpc_subnet
 
 properties:
   cidr:
@@ -146,7 +149,7 @@ properties:
     default     : True
     description : Whether compute nodes are assigned external IPs or not. If set
                   to false, then the compute nodes will get to the internet
-                  through the controller through a NAT'ed gateway.
+                  through a Cloud NAT gateway.
 
   gpu_type:
     enum        :
@@ -223,6 +226,13 @@ properties:
     type        : string
     description : Region to run the instances in.
 
+  shared_vpc_host_project:
+    type        : string
+    description : Shared VPC network that this project has been granted access
+                  to. Default service account and APIs service agent must be
+                  granted "Network User" role in host project. Requires external
+                  IPs or Cloud NAT configured in host project.
+
   slurm_version:
     type        : string
     default     : 17.11.9-2
@@ -232,6 +242,16 @@ properties:
   static_node_count:
     type        : integer
     description : Number of initial instances in the cluster.
+
+  vpc_net:
+    type        : string
+    description : The name of the pre-defined VPC network you want the nodes
+                  to attach to based on Region.
+
+  vpc_subnet:
+    type        : string
+    description : The name of the pre-defined VPC subnet you want the nodes
+                  to attach to based on Region.
 
   zone:
     type        : string

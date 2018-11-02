@@ -897,13 +897,6 @@ def main():
     # Disable SELinux
     subprocess.call(shlex.split('setenforce 0'))
 
-    if ((INSTANCE_TYPE == "controller") and  not EXTERNAL_COMPUTE_IPS):
-        # Setup a NAT gateway for the compute instances to get internet from.
-        subprocess.call(shlex.split("sysctl -w net.ipv4.ip_forward=1"))
-        subprocess.call(shlex.split("firewall-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -o eth0 -j MASQUERADE"))
-        subprocess.call(shlex.split("firewall-cmd --reload"))
-        subprocess.call(shlex.split("echo net.ipv4.ip_forward=1 >> /etc/sysctl.conf"))
-
     if INSTANCE_TYPE == "compute":
         while not have_internet():
             print "Waiting for internet connection"
