@@ -31,6 +31,7 @@ PROJECT           = '@PROJECT@'
 ZONE              = '@ZONE@'
 
 APPS_DIR          = '/apps'
+MUNGE_DIR         = "/etc/munge"
 MUNGE_KEY         = '@MUNGE_KEY@'
 SLURM_VERSION     = '@SLURM_VERSION@'
 STATIC_NODE_COUNT = @STATIC_NODE_COUNT@
@@ -213,8 +214,6 @@ def install_packages():
 
 def setup_munge():
 
-    MUNGE_DIR = "/etc/munge"
-
     f = open('/etc/fstab', 'a')
     if not NFS_APPS_SERVER:
         if ((INSTANCE_TYPE != "controller")):
@@ -228,6 +227,13 @@ def setup_munge():
     f.close()
 
     if (INSTANCE_TYPE != "controller"):
+        munge_over_path = "/etc/systemd/system/munge.service.d"
+        if not os.path.exists(munge_over_path):
+            os.makedirs(munge_over_path)
+        f = open(munge_over_path + "/override.conf", 'w')
+        f.write("[Unit]\nRequiresMountsFor={}\n".format(MUNGE_DIR))
+        f.close()
+
         return
 
     if MUNGE_KEY:
