@@ -54,16 +54,24 @@ LOGFILE      = '/apps/slurm/log/resume.log'
 # [START create_instance]
 def create_instance(compute, project, zone, instance_type, instance_name):
     # Get the latest CentOS 7image.
-    image_response = compute.images().getFromFamily(
-        project='centos-cloud', family='centos-7').execute()
-    source_disk_image = image_response['selfLink']
+    have_compute_img = False
+    try:
+        image_response = compute.images().get(
+            project = PROJECT, image = CLUSTER_NAME + "-compute-image").execute()
+        if image_response['status'] != "READY":
+            logging.info("image not ready, using the startup script")
+            raise Exception("image not ready")
+        source_disk_image = image_response['selfLink']
+        have_compute_img = True
+    except:
+        image_response = compute.images().getFromFamily(
+            project='centos-cloud', family='centos-7').execute()
+        source_disk_image = image_response['selfLink']
 
     # Configure the machine
     machine_type = "zones/{}/machineTypes/{}".format(zone, instance_type)
     disk_type = "projects/{}/zones/{}/diskTypes/{}".format(PROJECT, ZONE,
                                                            DISK_TYPE)
-    startup_script = open('/apps/slurm/scripts/startup-script.py', 'r').read()
-
     config = {
         'name': instance_name,
         'machineType': machine_type,
@@ -94,20 +102,21 @@ def create_instance(compute, project, zone, instance_type, instance_name):
 
         'tags': {'items': ['compute'] },
 
-        # Metadata is readable from the instance and allows you to
-        # pass configuration from deployment scripts to instances.
         'metadata': {
             'items': [{
-                # Startup script is automatically executed by the
-                # instance upon startup.
-                'key': 'startup-script',
-                'value': startup_script
-            }, {
                 'key': 'enable-oslogin',
                 'value': 'TRUE'
             }]
         }
     }
+
+    if not have_compute_img:
+        startup_script = open(
+            '/apps/slurm/scripts/startup-script.py', 'r').read()
+        config['metadata']['items'].append({
+            'key': 'startup-script',
+            'value': startup_script
+        })
 
     if GPU_TYPE:
         accel_type = ("https://www.googleapis.com/compute/v1/"

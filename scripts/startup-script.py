@@ -993,6 +993,14 @@ def main():
         subprocess.call(shlex.split('systemctl start slurmd'))
         subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
 
+        # create image
+        subprocess.call("sync")
+        subprocess.call(shlex.split("gcloud compute images "
+                                    "create {}-compute-image "
+                                    "--source-disk {} "
+                                    "--source-disk-zone {} --force".format(
+                                        CLUSTER_NAME, hostname, ZONE)))
+
     end_motd()
 
 # END main()
