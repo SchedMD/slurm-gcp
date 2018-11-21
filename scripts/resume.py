@@ -18,12 +18,16 @@
 # limitations under the License.
 
 import argparse
+import httplib2
 import logging
 import shlex
 import subprocess
 import time
 
 import googleapiclient.discovery
+from google.auth import compute_engine
+import google_auth_httplib2
+from googleapiclient.http import set_user_agent
 
 CLUSTER_NAME = '@CLUSTER_NAME@'
 
@@ -50,6 +54,11 @@ GPU_COUNT    = '@GPU_COUNT@'
 
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/resume.log'
+
+credentials = compute_engine.Credentials()
+
+http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
+authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 
 # [START create_instance]
 def create_instance(compute, project, zone, instance_type, instance_name):
@@ -190,6 +199,7 @@ def wait_for_operation(compute, project, zone, operation):
 def main(short_node_list):
     logging.info("Bursting out:" + short_node_list)
     compute = googleapiclient.discovery.build('compute', 'v1',
+                                              http=authorized_http,
                                               cache_discovery=False)
 
     # Get node list
