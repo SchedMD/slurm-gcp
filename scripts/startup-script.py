@@ -624,8 +624,9 @@ ConstrainDevices=yes
 
 def install_suspend_progs():
 
-    if not os.path.exists(APPS_DIR + '/slurm/scripts'):
-        os.makedirs(APPS_DIR + '/slurm/scripts')
+    scripts_path = APPS_DIR + '/slurm/scripts'
+    if not os.path.exists(scripts_path):
+        os.makedirs(scripts_path)
 
     GOOGLE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/attributes"
 
@@ -634,30 +635,33 @@ def install_suspend_progs():
     req.add_header('Metadata-Flavor', 'Google')
     resp = urllib2.urlopen(req)
 
-    f = open(APPS_DIR + '/slurm/scripts/suspend.py', 'w')
+    file_name = "suspend.py"
+    f = open(scripts_path + "/" + file_name, 'w')
     f.write(resp.read())
     f.close()
-    os.chmod(APPS_DIR + '/slurm/scripts/suspend.py', 0o755)
+    os.chmod(scripts_path + "/" + file_name, 0o755)
 
     # Resume
     req = urllib2.Request(GOOGLE_URL + '/slurm_resume')
     req.add_header('Metadata-Flavor', 'Google')
     resp = urllib2.urlopen(req)
 
-    f = open(APPS_DIR + '/slurm/scripts/resume.py', 'w')
+    file_name = "resume.py"
+    f = open(scripts_path + "/" + file_name, 'w')
     f.write(resp.read())
     f.close()
-    os.chmod(APPS_DIR + '/slurm/scripts/resume.py', 0o755)
+    os.chmod(scripts_path + "/" + file_name, 0o755)
 
     # Startup script
     req = urllib2.Request(GOOGLE_URL + '/startup-script-compute')
     req.add_header('Metadata-Flavor', 'Google')
     resp = urllib2.urlopen(req)
 
-    f = open(APPS_DIR + '/slurm/scripts/startup-script.py', 'w')
+    file_name = "startup-script.py"
+    f = open(scripts_path + "/" + file_name, 'w')
     f.write(resp.read())
     f.close()
-    os.chmod(APPS_DIR + '/slurm/scripts/startup-script.py', 0o755)
+    os.chmod(scripts_path + "/" + file_name, 0o755)
 
 #END install_suspend_progs()
 
