@@ -125,11 +125,14 @@ complete before making changes in your home directory.
 # END start_motd()
 
 
-def end_motd():
+def end_motd(broadcast=True):
 
     f = open('/etc/motd', 'w')
     f.write(MOTD_HEADER)
     f.close()
+
+    if not broadcast:
+        return
 
     subprocess.call(['wall', '-n',
         '*** Slurm ' + INSTANCE_TYPE + ' daemon installation complete ***'])
@@ -234,7 +237,10 @@ def setup_munge():
         f.write("[Unit]\nRequiresMountsFor={}\n".format(MUNGE_DIR))
         f.close()
 
+        subprocess.call(['systemctl', 'enable', 'munge'])
         return
+
+    subprocess.call(['systemctl', 'enable', 'munge'])
 
     if MUNGE_KEY:
         f = open(MUNGE_DIR +'/munge.key', 'w')
@@ -251,7 +257,6 @@ def setup_munge():
 #END setup_munge ()
 
 def start_munge():
-        subprocess.call(['systemctl', 'enable', 'munge'])
         subprocess.call(['systemctl', 'start', 'munge'])
 #END start_munge()
 
@@ -788,6 +793,7 @@ WantedBy=multi-user.target
     f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmd.service', 0o644)
+    subprocess.call(shlex.split('systemctl enable slurmd'))
 
 #END install_compute_service_scripts()
 
@@ -900,6 +906,23 @@ def format_disk():
 
 # END format_disk()
 
+def create_compute_image():
+
+    end_motd(False)
+    subprocess.call("sync")
+
+    if GPU_COUNT:
+        time.sleep(300)
+
+    hostname = socket.gethostname()
+    subprocess.call(shlex.split("gcloud compute images "
+                                "create {}-compute-image "
+                                "--source-disk {} "
+                                "--source-disk-zone {} --force".format(
+                                    CLUSTER_NAME, hostname, ZONE)))
+#END create_compute_image()
+
+
 def main():
     # Disable SELinux
     subprocess.call(shlex.split('setenforce 0'))
@@ -932,12 +955,10 @@ def main():
     setup_nfs_apps_vols()
     setup_nfs_home_vols()
     setup_nfs_sec_vols()
-    mount_nfs_vols()
-
-    start_munge()
 
     if INSTANCE_TYPE == "controller":
-
+        mount_nfs_vols()
+        start_munge()
         install_slurm()
 
         # Add any additional installation functions here
@@ -983,23 +1004,22 @@ def main():
 
     elif INSTANCE_TYPE == "compute":
         install_compute_service_scripts()
-
-        hostname = socket.gethostname()
+        setup_slurmd_cronjob()
 
         # Add any additional installation functions here
 
-        subprocess.call(shlex.split('systemctl enable slurmd'))
-        setup_slurmd_cronjob()
+        create_compute_image()
+
+        mount_nfs_vols()
+        start_munge()
+
+        hostname = socket.gethostname()
         subprocess.call(shlex.split('systemctl start slurmd'))
         subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
 
-        # create image
-        subprocess.call("sync")
-        subprocess.call(shlex.split("gcloud compute images "
-                                    "create {}-compute-image "
-                                    "--source-disk {} "
-                                    "--source-disk-zone {} --force".format(
-                                        CLUSTER_NAME, hostname, ZONE)))
+    else: # login nodes
+        mount_nfs_vols()
+        start_munge()
 
     end_motd()
 
