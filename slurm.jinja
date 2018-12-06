@@ -137,6 +137,9 @@ resources:
         - key: slurm_suspend
           value: |
             {{ imports["scripts/suspend.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"]) }}
+        - key: slurm_slurmd_stop
+          value: |
+            {{ imports["scripts/slurmd-stop.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"]) }}
         - key: enable-oslogin
           value: "TRUE"
 

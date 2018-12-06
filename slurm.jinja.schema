@@ -23,6 +23,7 @@ info:
 
 imports:
 - path: scripts/resume.py
+- path: scripts/slurmd-stop.py
 - path: scripts/startup-script.py
 - path: scripts/suspend.py
 

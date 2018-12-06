@@ -663,6 +663,17 @@ def install_suspend_progs():
     f.close()
     os.chmod(scripts_path + "/" + file_name, 0o755)
 
+    # Slurmd stop script
+    file_name = "slurmd-stop.py"
+    req = urllib2.Request(GOOGLE_URL + '/slurm_slurmd_stop')
+    req.add_header('Metadata-Flavor', 'Google')
+    resp = urllib2.urlopen(req)
+
+    f = open(scripts_path + "/" + file_name, 'w')
+    f.write(resp.read())
+    f.close()
+    os.chmod(scripts_path + "/" + file_name, 0o755)
+
 #END install_suspend_progs()
 
 def install_slurm():
@@ -787,6 +798,7 @@ Type=forking
 EnvironmentFile=-/etc/sysconfig/slurmd
 ExecStart={prefix}/sbin/slurmd $SLURMD_OPTIONS
 ExecReload=/bin/kill -HUP $MAINPID
+ExecStop={stop_script}
 PIDFile=/var/run/slurm/slurmd.pid
 KillMode=process
 LimitNOFILE=51200
@@ -795,7 +807,8 @@ LimitSTACK=infinity
 
 [Install]
 WantedBy=multi-user.target
-""".format(prefix = APPS_DIR + "/slurm/current"))
+""".format(prefix = APPS_DIR + "/slurm/current",
+           stop_script = APPS_DIR + "/slurm/scripts/slurmd-stop.py"))
     f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmd.service', 0o644)
