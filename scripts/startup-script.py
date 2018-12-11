@@ -202,7 +202,7 @@ def install_packages():
         time.sleep(5)
 
     if GPU_COUNT and (INSTANCE_TYPE == "compute"):
-        rpm = "cuda-repo-rhel7-9.2.148-1.x86_64.rpm"
+        rpm = "cuda-repo-rhel7-10.0.130-1.x86_64.rpm"
         subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
         subprocess.call(shlex.split("wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/" + rpm))
         subprocess.call(shlex.split("sudo rpm -i " + rpm))
