@@ -205,9 +205,9 @@ def install_packages():
         rpm = "cuda-repo-rhel7-10.0.130-1.x86_64.rpm"
         subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
         subprocess.call(shlex.split("wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/" + rpm))
-        subprocess.call(shlex.split("sudo rpm -i " + rpm))
-        subprocess.call(shlex.split("sudo yum clean all"))
-        subprocess.call(shlex.split("sudo yum -y install cuda"))
+        subprocess.call(shlex.split("rpm -i " + rpm))
+        subprocess.call(shlex.split("yum clean all"))
+        subprocess.call(shlex.split("yum -y install cuda"))
         subprocess.call(shlex.split("nvidia-smi")) # Creates the device files
 
 #END install_packages()
