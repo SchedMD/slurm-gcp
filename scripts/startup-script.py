@@ -46,6 +46,7 @@ NFS_APPS_SERVER   = '@NFS_APPS_SERVER@'
 NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
 CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
 SEC_DISK_DIR      = '/mnt/disks/sec'
+PREEMPTIBLE       = @PREEMPTIBLE@
 
 DEF_PART_NAME   = "debug"
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
@@ -912,6 +913,26 @@ RPCNFSDCOUNT=256
 
 # END setup_nfs_threads()
 
+def setup_preempted_cronjob():
+
+    script_name = "{}/slurm/scripts/clean_preempted.sh".format(APPS_DIR)
+    f = open(script_name, 'w')
+    f.write("""#!/bin/bash
+
+PREEMPTED=( `{prefix}/bin/sinfo | grep down~ | awk '{{print $6}}'` );
+
+if [[ $PREEMPTED ]]; then
+        {prefix}/bin/scontrol update nodename=$PREEMPTED state=idle
+fi
+""".format(prefix = APPS_DIR + "/slurm/current"))
+    f.close()
+
+    os.chmod(script_name, 0o744)
+
+    os.system("echo '*/10 * * * * {}' | crontab -u root -".format(script_name))
+
+# END setup_preempted_cronjob()
+
 def setup_slurmd_cronjob():
     #subprocess.call(shlex.split('crontab < /apps/slurm/scripts/cron'))
     os.system("echo '*/2 * * * * if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then mount -a; systemctl restart slurmd; fi' | crontab -u root -")
@@ -1020,6 +1041,9 @@ def main():
         subprocess.call(shlex.split('systemctl enable nfs-server'))
         subprocess.call(shlex.split('systemctl start nfs-server'))
         setup_nfs_exports()
+
+        if PREEMPTIBLE:
+            setup_preempted_cronjob()
 
         # DOWN partition until image is created.
         subprocess.call(shlex.split(
