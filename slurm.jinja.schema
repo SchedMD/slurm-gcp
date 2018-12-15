@@ -235,7 +235,7 @@ properties:
 
   slurm_version:
     type        : string
-    default     : 17.11.9-2
+    default     : 18.08.4
     description : The Slurm version to install. The version should match link
                   name found at https://www.schedmd.com/downloads.php.
 
