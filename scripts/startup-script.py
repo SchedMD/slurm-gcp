@@ -728,7 +728,7 @@ PIDFile=/var/run/slurm/slurmctld.pid
 
 [Install]
 WantedBy=multi-user.target
-""".format(prefix = SLURM_PREFIX))
+""".format(prefix = APPS_DIR + "/slurm/current"))
     f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmctld.service', 0o644)
