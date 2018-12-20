@@ -46,6 +46,7 @@ NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
 CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
 SEC_DISK_DIR      = '/mnt/disks/sec'
 
+DEF_PART_NAME   = "debug"
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
 
 SLURM_PREFIX  = APPS_DIR + '/slurm/slurm-' + SLURM_VERSION
@@ -533,8 +534,8 @@ NodeName={1}-compute{0}
         conf += "NodeName={0}-compute{1} State=CLOUD".format(CLUSTER_NAME, cloud_range)
 
     conf += """
-PartitionName=debug Nodes={0}-compute[1-{1:d}] Default=YES MaxTime=INFINITE State=UP LLN=yes
-""".format(CLUSTER_NAME, MAX_NODE_COUNT)
+PartitionName={} Nodes={}-compute[1-{}] Default=YES MaxTime=INFINITE State=UP LLN=yes
+""".format(DEF_PART_NAME, CLUSTER_NAME, MAX_NODE_COUNT)
 
     etc_dir = SLURM_PREFIX + '/etc'
     if not os.path.exists(etc_dir):
@@ -999,6 +1000,16 @@ def main():
         subprocess.call(shlex.split('systemctl enable nfs-server'))
         subprocess.call(shlex.split('systemctl start nfs-server'))
         setup_nfs_exports()
+
+        # DOWN partition until image is created.
+        subprocess.call(shlex.split(
+            "{}/bin/scontrol update partitionname={} state=down".format(
+                SLURM_PREFIX, DEF_PART_NAME)))
+        subprocess.call(['wall', '-n', """
+Partition {} has been marked down until the compute image has been created.
+For instances with gpus attached, it could take ~10 mins.
+""".format(DEF_PART_NAME)])
+
         print "ww Done installing controller"
         subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ CONTROL_MACHINE + ' --zone=' + ZONE + ' --keys=startup-script'))
 
@@ -1008,14 +1019,22 @@ def main():
 
         # Add any additional installation functions here
 
-        create_compute_image()
-
         mount_nfs_vols()
         start_munge()
-
         hostname = socket.gethostname()
-        subprocess.call(shlex.split('systemctl start slurmd'))
-        subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
+        if hostname == CLUSTER_NAME + "-compute-image":
+            create_compute_image()
+
+            subprocess.call(shlex.split(
+                "{}/bin/scontrol update partitionname={} state=up".format(
+                    SLURM_PREFIX, DEF_PART_NAME)))
+
+            subprocess.call(shlex.split("gcloud compute instances "
+                                        "delete {} --zone {} --quiet".format(
+                                            hostname, ZONE)))
+        else:
+            subprocess.call(shlex.split('systemctl start slurmd'))
+            subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
 
     else: # login nodes
         mount_nfs_vols()

@@ -249,3 +249,61 @@ resources:
         - key: enable-oslogin
           value: "TRUE"
 {% endfor %}
+
+- name: {{properties["cluster_name"]}}-compute-image
+  type: compute.v1.instance
+  properties:
+    zone: {{ properties["zone"] }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/{{ properties["compute_machine_type"] }}
+  {% if properties ["cpu_platform"] %}
+    minCpuPlatform: {{ properties["cpu_platform"]}}
+  {% endif %}
+  {% if properties["gpu_type"] %}
+    guestAccelerators:
+    - acceleratorType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/acceleratorTypes/{{ properties["gpu_type"] }}
+      acceleratorCount: {{ properties['gpu_count']}}
+    scheduling:
+      onHostMaintenance: TERMINATE
+  {% endif %}
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
+        diskType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["compute_disk_type"] }}
+        diskSizeGb: {{ properties["compute_disk_size_gb"] }}
+  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
+    networkInterfaces:
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+  {% elif properties ['vpc_subnet'] %}
+    networkInterfaces:
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+  {% else %}
+    networkInterfaces:
+    - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
+  {% endif %}
+  {% if properties['external_compute_ips'] or properties['shared_vpc_host_proj'] %}
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+  {% endif %}
+    serviceAccounts:
+      - email: "default"
+        scopes:
+        - "https://www.googleapis.com/auth/cloud-platform"
+    tags:
+      items:
+        - compute
+  {% if properties["labels"] %}
+    labels:
+      {{properties["cluster_name"]}}-compute-image: {{properties["labels"]}}
+  {% endif %}
+    metadata:
+      items:
+        - key: startup-script
+          value: |
+            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","compute")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"]) }}
+        - key: enable-oslogin
+          value: "TRUE"
