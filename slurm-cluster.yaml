@@ -59,6 +59,9 @@ resources:
     #controller_secondary_disk          : True
     #controller_secondary_disk_type     : pd-standard
     #controller_secondary_disk_size_gb  : 300
+    #compute_secondary_disk             : True
+    #compute_secondary_disk_type        : local-ssd
+    #compute_secondary_disk_size_gb     : 750
 
     # Optional GPU configuration fields
     #gpu_type                   : nvidia-tesla-v100
