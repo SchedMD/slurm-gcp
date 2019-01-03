@@ -56,8 +56,9 @@ def create_instance(compute, project, zone, instance_type, instance_name):
     # Get the latest CentOS 7image.
     have_compute_img = False
     try:
-        image_response = compute.images().get(
-            project = PROJECT, image = CLUSTER_NAME + "-compute-image").execute()
+        image_response = compute.images().getFromFamily(
+            project = PROJECT,
+            family = CLUSTER_NAME + "-compute-image-family").execute()
         if image_response['status'] != "READY":
             logging.info("image not ready, using the startup script")
             raise Exception("image not ready")

@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import httplib
 import os
 import shlex
@@ -911,16 +912,18 @@ def create_compute_image():
 
     end_motd(False)
     subprocess.call("sync")
+    time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
     if GPU_COUNT:
         time.sleep(300)
 
     hostname = socket.gethostname()
     subprocess.call(shlex.split("gcloud compute images "
-                                "create {}-compute-image "
-                                "--source-disk {} "
-                                "--source-disk-zone {} --force".format(
-                                    CLUSTER_NAME, hostname, ZONE)))
+                                "create {0}-compute-image-{3} "
+                                "--source-disk {1} "
+                                "--source-disk-zone {2} --force "
+                                "--family {0}-compute-image-family".format(
+                                    CLUSTER_NAME, hostname, ZONE, time)))
 #END create_compute_image()
 
 
