@@ -567,6 +567,7 @@ LogFile={apps_dir}/slurm/log/slurmdbd.log
 PidFile=/var/run/slurm/slurmdbd.pid
 
 SlurmUser=slurm
+StorageUser=slurm
 
 StorageLoc=slurm_acct_db
 
