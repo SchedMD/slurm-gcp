@@ -912,7 +912,7 @@ def create_compute_image():
 
     end_motd(False)
     subprocess.call("sync")
-    time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    ver = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
     if GPU_COUNT:
         time.sleep(300)
@@ -923,7 +923,7 @@ def create_compute_image():
                                 "--source-disk {1} "
                                 "--source-disk-zone {2} --force "
                                 "--family {0}-compute-image-family".format(
-                                    CLUSTER_NAME, hostname, ZONE, time)))
+                                    CLUSTER_NAME, hostname, ZONE, ver)))
 #END create_compute_image()
 
 
