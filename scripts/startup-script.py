@@ -799,7 +799,6 @@ Type=forking
 EnvironmentFile=-/etc/sysconfig/slurmd
 ExecStart={prefix}/sbin/slurmd $SLURMD_OPTIONS
 ExecReload=/bin/kill -HUP $MAINPID
-ExecStop={stop_script}
 PIDFile=/var/run/slurm/slurmd.pid
 KillMode=process
 LimitNOFILE=51200
@@ -808,12 +807,22 @@ LimitSTACK=infinity
 
 [Install]
 WantedBy=multi-user.target
-""".format(prefix = APPS_DIR + "/slurm/current",
-           stop_script = APPS_DIR + "/slurm/scripts/slurmd-stop.py"))
+""".format(prefix = APPS_DIR + "/slurm/current"))
     f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmd.service', 0o644)
     subprocess.call(shlex.split('systemctl enable slurmd'))
+
+    shutdown_service = "/etc/systemd/system/google-shutdown-scripts.service.d"
+    if not os.path.exists(shutdown_service):
+        os.makedirs(shutdown_service)
+    f = open(shutdown_service + "/slurmd.conf", 'w')
+    f.write("""[Unit]
+After=munge.service
+RequiresMountsFor={}
+""".format(APPS_DIR))
+    f.close()
+    subprocess.call(shlex.split('systemctl daemon-reload'))
 
 #END install_compute_service_scripts()
 

@@ -23,55 +23,43 @@ import shlex
 import socket
 import subprocess
 
-import googleapiclient.discovery
-
-PROJECT      = '@PROJECT@'
-ZONE         = '@ZONE@'
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/var/log/slurm/slurmd-stop.log'
 
 def main():
     node_name = socket.gethostname()
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              cache_discovery=False)
     try:
-        instance = compute.instances().get(
-            project=PROJECT, zone=ZONE, instance=node_name,
-            fields='name,status').execute()
-        logging.debug("node {} status: {}".format(
-            node_name, instance['status']))
-        if (instance['status'] == "STOPPING" or
-            instance['status'] == 'TERMINATED'):
+        logging.debug("node is shutting down")
 
-            cmd = "{} -o show nodes {}".format(SCONTROL, node_name)
-            output = subprocess.check_output(shlex.split(cmd))
+        cmd = "{} -o show nodes {}".format(SCONTROL, node_name)
+        output = subprocess.check_output(shlex.split(cmd))
 
-            #  Don't mark down if node is in power save state already --
-            #  meaning that Slurm is tearing down the node because of idle
-            #  time.
-            if re.search("State=\S*POWER\S*\s", output):
-                logging.debug("node in power save state, not marking down")
-                return
+        #  Don't mark down if node is in power save state already --
+        #  meaning that Slurm is tearing down the node because of idle
+        #  time.
+        if re.search("State=\S*POWER\S*\s", output):
+            logging.debug("node in power save state, not marking down")
+            return
 
-            # Only mark cloud nodes for power_down
-            is_cloud = bool(re.search("State=\S*CLOUD\S*\s", output))
-            if is_cloud:
-                logging.debug("marking node for power down")
-                cmd = "{} update node={} state=power_down".format(
-                    SCONTROL, node_name)
-                subprocess.call(shlex.split(cmd))
+        # Only power_down cloud nodes
+        is_cloud = bool(re.search("State=\S*CLOUD\S*\s", output))
+        if is_cloud:
+            logging.debug("marking node for power down")
+            cmd = "{} update node={} state=power_down".format(
+                SCONTROL, node_name)
+            subprocess.call(shlex.split(cmd))
 
-            # Don't mark node as down unless it's not a cloud node or the cloud
-            # node is idle. Otherwise the node could get marked as down after
-            # the node is powered down.
-            is_idle = bool(re.search("State=\S*IDLE\S*\s", output))
-            if not is_cloud or not is_idle:
-                logging.debug("marking node down")
-                cmd = "{} update node={} state=down reason='Instance is {}'".format(
-                    SCONTROL, node_name, instance['status'])
-                subprocess.call(shlex.split(cmd))
+        # Don't mark node as down unless it's not a cloud node or the cloud
+        # node is idle. Otherwise the node could get marked as down after
+        # the node is powered down.
+        is_idle = bool(re.search("State=\S*IDLE\S*\s", output))
+        if not is_cloud or not is_idle:
+            logging.debug("marking node down")
+            cmd = "{} update node={} state=down reason='Instance is stopped/preempted'".format(
+                SCONTROL, node_name)
+            subprocess.call(shlex.split(cmd))
 
-                logging.debug("node marked down")
+            logging.debug("node marked down")
 
     except Exception, e:
         logging.error("something went wrong: ({})".format(str(e)))
