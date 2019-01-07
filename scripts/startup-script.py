@@ -223,11 +223,11 @@ def setup_munge():
     if not NFS_APPS_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(MUNGE_DIR, CONTROL_MACHINE))
     else:
         f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(MUNGE_DIR, NFS_APPS_SERVER))
     f.close()
 
@@ -266,13 +266,13 @@ def setup_nfs_exports():
 
     f = open('/etc/exports', 'w')
     f.write("""
-/home  *(rw,sync,no_subtree_check,no_root_squash)
-%s  *(rw,sync,no_subtree_check,no_root_squash)
-/etc/munge *(rw,sync,no_subtree_check,no_root_squash)
+/home  *(rw,no_subtree_check,no_root_squash)
+%s  *(rw,no_subtree_check,no_root_squash)
+/etc/munge *(rw,no_subtree_check,no_root_squash)
 """ % APPS_DIR)
     if CONTROLLER_SECONDARY_DISK:
         f.write("""
-%s  *(rw,sync,no_subtree_check,no_root_squash)
+%s  *(rw,no_subtree_check,no_root_squash)
 """ % SEC_DISK_DIR)
     f.close()
 
@@ -826,11 +826,11 @@ def setup_nfs_apps_vols():
     if not NFS_APPS_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(APPS_DIR, CONTROL_MACHINE))
     else:
         f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(APPS_DIR, NFS_APPS_SERVER))
     f.close()
 
@@ -842,11 +842,11 @@ def setup_nfs_home_vols():
     if not NFS_HOME_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{0}:/home    /home     nfs      rw,sync,hard,intr  0     0
+{0}:/home    /home     nfs      rw,hard,intr  0     0
 """.format(CONTROL_MACHINE))
     else:
         f.write("""
-{0}:/home    /home     nfs      rw,sync,hard,intr  0     0
+{0}:/home    /home     nfs      rw,hard,intr  0     0
 """.format(NFS_HOME_SERVER))
     f.close()
 
@@ -858,7 +858,7 @@ def setup_nfs_sec_vols():
     if CONTROLLER_SECONDARY_DISK:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(SEC_DISK_DIR, CONTROL_MACHINE))
     f.close()
 
