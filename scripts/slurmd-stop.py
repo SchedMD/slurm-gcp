@@ -29,10 +29,10 @@ LOGFILE      = '/var/log/slurm/slurmd-stop.log'
 def main():
     node_name = socket.gethostname()
     try:
-        logging.debug("node is shutting down")
-
         cmd = "{} -o show nodes {}".format(SCONTROL, node_name)
         output = subprocess.check_output(shlex.split(cmd))
+
+        logging.debug("node is shutting down: " + output)
 
         #  Don't mark down if node is in power save state already --
         #  meaning that Slurm is tearing down the node because of idle
@@ -49,17 +49,12 @@ def main():
                 SCONTROL, node_name)
             subprocess.call(shlex.split(cmd))
 
-        # Don't mark node as down unless it's not a cloud node or the cloud
-        # node is idle. Otherwise the node could get marked as down after
-        # the node is powered down.
-        is_idle = bool(re.search("State=\S*IDLE\S*\s", output))
-        if not is_cloud or not is_idle:
-            logging.debug("marking node down")
-            cmd = "{} update node={} state=down reason='Instance is stopped/preempted'".format(
-                SCONTROL, node_name)
-            subprocess.call(shlex.split(cmd))
+        logging.debug("marking node down")
+        cmd = "{} update node={} state=down reason='Instance is stopped/preempted'".format(
+            SCONTROL, node_name)
+        subprocess.call(shlex.split(cmd))
 
-            logging.debug("node marked down")
+        logging.debug("node marked down")
 
     except Exception, e:
         logging.error("something went wrong: ({})".format(str(e)))
