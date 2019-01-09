@@ -190,7 +190,7 @@ properties:
 
   login_node_count:
     type        : integer
-    default     : 0
+    default     : 1
     description : Number of login nodes in the cluster.
 
   max_node_count:
