@@ -30,35 +30,15 @@ ZONE         = '@ZONE@'
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/suspend.log'
 
-# [START delete_instance]
-def delete_instance(compute, project, zone, node_name):
-    return compute.instances().delete(
-        project=project,
-        zone=zone,
-        instance=node_name).execute()
-# [END delete_instance]
-
-# [START wait_for_operation]
-def wait_for_operation(compute, project, zone, operation):
-    print('Waiting for operation to finish...')
-    while True:
-        result = compute.zoneOperations().get(
-            project=project,
-            zone=zone,
-            operation=operation).execute()
-
-        if result['status'] == 'DONE':
-            print("done.")
-            if 'error' in result:
-                raise Exception(result['error'])
-            return result
-
-        time.sleep(1)
-# [END wait_for_operation]
+# [START removed_instances]
+def removed_instances(request_id, response, exception):
+    if exception is not None:
+        logging.error("exception: " + str(exception))
+# [END removed_instances]
 
 # [START main]
 def main(short_node_list):
-    logging.info("Releasing nodes:" + short_node_list)
+    logging.debug("deleting nodes:" + short_node_list)
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
 
@@ -66,29 +46,18 @@ def main(short_node_list):
     show_hostname_cmd = "%s show hostname %s" % (SCONTROL, short_node_list)
     node_list = subprocess.check_output(shlex.split(show_hostname_cmd))
 
-    operations = {}
+    batch = compute.new_batch_http_request(callback=removed_instances)
     for node_name in node_list.splitlines():
         try:
-            operations[node_name] = delete_instance(compute, PROJECT, ZONE,
-                                                    node_name)
+            batch.add(compute.instances().delete(project=PROJECT, zone=ZONE,
+                                                 instance=node_name))
         except Exception, e:
             logging.exception("error during release of {} ({})".format(
                 node_name, str(e)))
 
-    for node_name in operations:
-        operation = operations[node_name]
-        try:
-            # Do we care if they have completely deleted? Waiting will cause it
-            # to wait for each to be completely deleted befotre the next delete
-            # is made. Could issue all deletes and then wait for the deletes to
-            # finish.
-            wait_for_operation(compute, PROJECT, ZONE, operation['name'])
-            logging.info("deleted instance " + node_name)
-        except Exception, e:
-            logging.exception("error deleting {} ({})".format(
-                node_name, str(e)))
+    batch.execute()
 
-    logging.info("done deleting instances")
+    logging.debug("done deleting instances")
 
 # [END main]
 
@@ -103,6 +72,6 @@ if __name__ == '__main__':
     logging.basicConfig(
         filename=LOGFILE,
         format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-        level=logging.DEBUG)
+        level=logging.ERROR)
 
     main(args.nodes)
