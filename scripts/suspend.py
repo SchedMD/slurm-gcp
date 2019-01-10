@@ -32,11 +32,31 @@ LOGFILE      = '/apps/slurm/log/suspend.log'
 
 TOT_REQ_CNT = 1000
 
+operations = {}
+
 # [START removed_instances]
 def removed_instances(request_id, response, exception):
     if exception is not None:
         logging.error("exception: " + str(exception))
+    else:
+        operations[request_id] = response
 # [END removed_instances]
+
+# [START wait_for_operation]
+def wait_for_operation(compute, project, zone, operation):
+    while True:
+        result = compute.zoneOperations().get(
+            project=project,
+            zone=zone,
+            operation=operation).execute()
+
+        if result['status'] == 'DONE':
+            if 'error' in result:
+                raise Exception(result['error'])
+            return result
+
+        time.sleep(1)
+# [END wait_for_operation]
 
 # [START main]
 def main(short_node_list):
@@ -57,7 +77,8 @@ def main(short_node_list):
         try:
             batch_list[curr_batch].add(
                 compute.instances().delete(project=PROJECT, zone=ZONE,
-                                           instance=node_name))
+                                           instance=node_name),
+                request_id=node_name)
             req_cnt += 1
             if req_cnt >= TOT_REQ_CNT:
                 req_cnt = 0
@@ -75,6 +96,14 @@ def main(short_node_list):
             batch.execute()
     except Exception, e:
         logging.exception("error in batch: " + str(e))
+
+    for node_name in operations:
+        try:
+            operation = operations[node_name]
+            wait_for_operation(compute, PROJECT, ZONE, operation['name'])
+        except Exception, e:
+            logging.debug("{} operation exception: {}".format(
+                node_name, str(e)))
 
     logging.debug("done deleting instances")
 
