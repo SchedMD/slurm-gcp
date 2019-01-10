@@ -55,6 +55,8 @@ GPU_COUNT    = '@GPU_COUNT@'
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/resume.log'
 
+TOT_REQ_CNT = 1000
+
 instances = {}
 operations = {}
 
@@ -231,36 +233,63 @@ def main(short_node_list):
         source_disk_image = image_response['selfLink']
 
     # see if the nodes already exist
-    get_batch = compute.new_batch_http_request(callback=get_instances)
+    get_batch_list = []
+    curr_batch = 0
+    req_cnt = 0
+    get_batch_list.insert(
+        curr_batch, compute.new_batch_http_request(callback=get_instances))
     for node_name in node_list.splitlines():
-        get_batch.add(compute.instances().get(
+        get_batch_list[curr_batch].add(compute.instances().get(
             project=PROJECT, zone=ZONE, instance=node_name,
             fields='name,status'))
+        req_cnt += 1
+        if req_cnt >= TOT_REQ_CNT:
+            req_cnt = 0
+            curr_batch += 1
+            get_batch_list.insert(
+                curr_batch,
+                compute.new_batch_http_request(callback=get_instances))
     try:
-        get_batch.execute()
+        for batch in get_batch_list:
+            batch.execute()
     except Exception, e:
         logging.exception("error in get instances: " + str(e))
+    del get_batch_list
 
-    add_batch = compute.new_batch_http_request(callback=added_instances)
+    add_batch_list = []
+    curr_batch = 0
+    req_cnt = 0
+    add_batch_list.insert(
+        curr_batch, compute.new_batch_http_request(callback=added_instances))
     for node_name in node_list.splitlines():
         if node_name in instances:
             logging.debug("node {} already exists in state {}".format(
                 node_name, instances[node_name]))
             if instances[node_name] != "RUNNING":
-                add_batch.add(
+                add_batch_list[curr_batch].add(
                     compute.instances().start(
                         project=PROJECT, zone=ZONE, instance=node_name),
                     request_id=node_name)
+                req_cnt += 1
         else:
-            add_batch.add(
+            add_batch_list[curr_batch].add(
                 create_instance(
                     compute, PROJECT, ZONE, MACHINE_TYPE, node_name,
                     source_disk_image, have_compute_img),
                 request_id=node_name)
+            req_cnt += 1
+        if req_cnt >= TOT_REQ_CNT:
+            req_cnt = 0
+            curr_batch += 1
+            add_batch_list.insert(
+                curr_batch,
+                compute.new_batch_http_request(callback=added_instances))
     try:
-        add_batch.execute(http=http)
+        for batch in add_batch_list:
+            batch.execute(http=http)
     except Exception, e:
         logging.exception("error in add batch: " + str(e))
+    del add_batch_list
 
     for node_name in operations:
         try:

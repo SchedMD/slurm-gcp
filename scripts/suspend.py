@@ -30,6 +30,8 @@ ZONE         = '@ZONE@'
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/suspend.log'
 
+TOT_REQ_CNT = 1000
+
 # [START removed_instances]
 def removed_instances(request_id, response, exception):
     if exception is not None:
@@ -46,16 +48,33 @@ def main(short_node_list):
     show_hostname_cmd = "%s show hostname %s" % (SCONTROL, short_node_list)
     node_list = subprocess.check_output(shlex.split(show_hostname_cmd))
 
-    batch = compute.new_batch_http_request(callback=removed_instances)
+    batch_list = []
+    curr_batch = 0
+    req_cnt = 0
+    batch_list.insert(
+        curr_batch, compute.new_batch_http_request(callback=removed_instances))
     for node_name in node_list.splitlines():
         try:
-            batch.add(compute.instances().delete(project=PROJECT, zone=ZONE,
-                                                 instance=node_name))
+            batch_list[curr_batch].add(
+                compute.instances().delete(project=PROJECT, zone=ZONE,
+                                           instance=node_name))
+            req_cnt += 1
+            if req_cnt >= TOT_REQ_CNT:
+                req_cnt = 0
+                curr_batch += 1
+                batch_list.insert(
+                    curr_batch,
+                    compute.new_batch_http_request(callback=removed_instances))
+
         except Exception, e:
             logging.exception("error during release of {} ({})".format(
                 node_name, str(e)))
 
-    batch.execute()
+    try:
+        for batch in batch_list:
+            batch.execute()
+    except Exception, e:
+        logging.exception("error in batch: " + str(e))
 
     logging.debug("done deleting instances")
 
