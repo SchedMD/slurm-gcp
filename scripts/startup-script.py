@@ -218,21 +218,16 @@ def install_packages():
 
 #END install_packages()
 
+
 def setup_munge():
 
-    f = open('/etc/fstab', 'a')
-    if not NFS_APPS_SERVER:
-        if ((INSTANCE_TYPE != "controller")):
-            f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
-""".format(MUNGE_DIR, CONTROL_MACHINE))
-    else:
+    if (INSTANCE_TYPE != "controller"):
+        f = open('/etc/fstab', 'a')
         f.write("""
 {1}:{0}    {0}     nfs      rw,hard,intr  0     0
-""".format(MUNGE_DIR, NFS_APPS_SERVER))
-    f.close()
+""".format(MUNGE_DIR, CONTROL_MACHINE))
+        f.close()
 
-    if (INSTANCE_TYPE != "controller"):
         munge_over_path = "/etc/systemd/system/munge.service.d"
         if not os.path.exists(munge_over_path):
             os.makedirs(munge_over_path)
