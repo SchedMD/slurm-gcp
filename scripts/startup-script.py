@@ -261,11 +261,17 @@ def start_munge():
 def setup_nfs_exports():
 
     f = open('/etc/exports', 'w')
-    f.write("""
+    if not NFS_HOME_SERVER:
+        f.write("""
 /home  *(rw,no_subtree_check,no_root_squash)
+""")
+    if not NFS_APPS_SERVER:
+        f.write("""
 %s  *(rw,no_subtree_check,no_root_squash)
-/etc/munge *(rw,no_subtree_check,no_root_squash)
 """ % APPS_DIR)
+    f.write("""
+/etc/munge *(rw,no_subtree_check,no_root_squash)
+""")
     if CONTROLLER_SECONDARY_DISK:
         f.write("""
 %s  *(rw,no_subtree_check,no_root_squash)
