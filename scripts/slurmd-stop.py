@@ -41,13 +41,13 @@ def main():
             logging.debug("node in power save state, not marking down")
             return
 
-        # Only power_down cloud nodes
-        is_cloud = bool(re.search("State=\S*CLOUD\S*\s", output))
-        if is_cloud:
-            logging.debug("marking node for power down")
-            cmd = "{} update node={} state=power_down".format(
-                SCONTROL, node_name)
-            subprocess.call(shlex.split(cmd))
+        ## Only power_down cloud nodes
+        #is_cloud = bool(re.search("State=\S*CLOUD\S*\s", output))
+        #if is_cloud:
+        #    logging.debug("marking node for power down")
+        #    cmd = "{} update node={} state=power_down".format(
+        #        SCONTROL, node_name)
+        #    subprocess.call(shlex.split(cmd))
 
         logging.debug("marking node down")
         cmd = "{} update node={} state=down reason='Instance is stopped/preempted'".format(

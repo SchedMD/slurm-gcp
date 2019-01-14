@@ -491,12 +491,12 @@ SlurmdLogFile=/var/log/slurm/slurmd-%n.log
 SuspendProgram={apps_dir}/slurm/scripts/suspend.py
 ResumeProgram={apps_dir}/slurm/scripts/resume.py
 SuspendTimeout=300
-ResumeTimeout=1800
+ResumeTimeout=600
 ResumeRate=0
 #SuspendExcNodes=
 #SuspendExcParts=
 SuspendRate=0
-SuspendTime=2100
+SuspendTime=120
 #
 #
 # COMPUTE NODES
@@ -938,7 +938,7 @@ fi
 
     os.chmod(script_name, 0o744)
 
-    os.system("echo '*/10 * * * * {}' | crontab -u root -".format(script_name))
+    os.system("echo '*/1 * * * * {}' | crontab -u root -".format(script_name))
 
 # END setup_preempted_cronjob()
 
