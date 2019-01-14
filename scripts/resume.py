@@ -193,7 +193,7 @@ def wait_for_operation(compute, project, zone, operation):
 # [START added_instances]
 def added_instances(request_id, response, exception):
     if exception is not None:
-        logging.debug("add/start exception: " + str(exception))
+        logging.error("add/start exception: " + str(exception))
     else:
         operations[request_id] = response
 # [END added_instances]
