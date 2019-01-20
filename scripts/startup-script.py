@@ -32,6 +32,7 @@ PROJECT           = '@PROJECT@'
 ZONE              = '@ZONE@'
 
 APPS_DIR          = '/apps'
+CURR_SLURM_DIR    = APPS_DIR + '/slurm/current'
 MUNGE_DIR         = "/etc/munge"
 MUNGE_KEY         = '@MUNGE_KEY@'
 SLURM_VERSION     = '@SLURM_VERSION@'
@@ -540,7 +541,7 @@ NodeName={1}-compute{0}
 PartitionName={} Nodes={}-compute[1-{}] Default=YES MaxTime=INFINITE State=UP LLN=yes
 """.format(DEF_PART_NAME, CLUSTER_NAME, MAX_NODE_COUNT)
 
-    etc_dir = SLURM_PREFIX + '/etc'
+    etc_dir = CURR_SLURM_DIR + '/etc'
     if not os.path.exists(etc_dir):
         os.makedirs(etc_dir)
     f = open(etc_dir + '/slurm.conf', 'w')
@@ -585,7 +586,7 @@ StorageType=accounting_storage/mysql
 #StoragePass=shazaam
 
 """.format(apps_dir = APPS_DIR, control_machine = CONTROL_MACHINE)
-    etc_dir = SLURM_PREFIX + '/etc'
+    etc_dir = CURR_SLURM_DIR + '/etc'
     if not os.path.exists(etc_dir):
         os.makedirs(etc_dir)
     f = open(etc_dir + '/slurmdbd.conf', 'w')
@@ -607,7 +608,7 @@ TaskAffinity=no
 ConstrainDevices=yes
 """
 
-    etc_dir = SLURM_PREFIX + '/etc'
+    etc_dir = CURR_SLURM_DIR + '/etc'
     f = open(etc_dir + '/cgroup.conf', 'w')
     f.write(conf)
     f.close()
@@ -693,10 +694,10 @@ def install_slurm():
         os.makedirs('build')
     os.chdir('build')
     subprocess.call(['../configure', '--prefix=%s' % SLURM_PREFIX,
-                     '--sysconfdir=%s/slurm/current/etc' % APPS_DIR])
+                     '--sysconfdir=%s/etc' % CURR_SLURM_DIR])
     subprocess.call(['make', '-j', 'install'])
 
-    subprocess.call(shlex.split("ln -s %s %s/slurm/current" % (SLURM_PREFIX, APPS_DIR)))
+    subprocess.call(shlex.split("ln -s %s %s" % (SLURM_PREFIX, CURR_SLURM_DIR)))
 
     os.chdir(prev_path)
 
@@ -753,7 +754,7 @@ PIDFile=/var/run/slurm/slurmctld.pid
 
 [Install]
 WantedBy=multi-user.target
-""".format(prefix = APPS_DIR + "/slurm/current"))
+""".format(prefix = CURR_SLURM_DIR))
     f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmctld.service', 0o644)
@@ -775,7 +776,7 @@ PIDFile=/var/run/slurm/slurmdbd.pid
 
 [Install]
 WantedBy=multi-user.target
-""".format(prefix = APPS_DIR + "/slurm/current"))
+""".format(prefix = CURR_SLURM_DIR))
     f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmdbd.service', 0o644)
@@ -808,7 +809,7 @@ LimitSTACK=infinity
 
 [Install]
 WantedBy=multi-user.target
-""".format(prefix = APPS_DIR + "/slurm/current"))
+""".format(prefix = CURR_SLURM_DIR))
     f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmd.service', 0o644)
@@ -832,9 +833,9 @@ def setup_bash_profile():
 
     f = open('/etc/profile.d/slurm.sh', 'w')
     f.write("""
-S_PATH=%s/slurm/current
+S_PATH=%s
 PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
-""" % APPS_DIR)
+""" % CURR_SLURM_DIR)
     f.close()
 
     if GPU_COUNT and (INSTANCE_TYPE == "compute"):
@@ -934,7 +935,7 @@ PREEMPTED=( `{prefix}/bin/sinfo | grep down~ | awk '{{print $6}}'` );
 if [[ $PREEMPTED ]]; then
         {prefix}/bin/scontrol update nodename=$PREEMPTED state=idle
 fi
-""".format(prefix = APPS_DIR + "/slurm/current"))
+""".format(prefix = CURR_SLURM_DIR))
     f.close()
 
     os.chmod(script_name, 0o744)
@@ -1040,9 +1041,9 @@ def main():
         for char in oslogin_chars:
             SLURM_USERS = SLURM_USERS.replace(char, '_')
 
-        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add cluster ' + CLUSTER_NAME))
-        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add account ' + DEF_SLURM_ACCT))
-        subprocess.call(shlex.split(SLURM_PREFIX + '/bin/sacctmgr -i add user ' + SLURM_USERS + ' account=' + DEF_SLURM_ACCT))
+        subprocess.call(shlex.split(CURR_SLURM_DIR + '/bin/sacctmgr -i add cluster ' + CLUSTER_NAME))
+        subprocess.call(shlex.split(CURR_SLURM_DIR + '/bin/sacctmgr -i add account ' + DEF_SLURM_ACCT))
+        subprocess.call(shlex.split(CURR_SLURM_DIR + '/bin/sacctmgr -i add user ' + SLURM_USERS + ' account=' + DEF_SLURM_ACCT))
 
         subprocess.call(shlex.split('systemctl enable slurmctld'))
         subprocess.call(shlex.split('systemctl start slurmctld'))
@@ -1058,7 +1059,7 @@ def main():
         # DOWN partition until image is created.
         subprocess.call(shlex.split(
             "{}/bin/scontrol update partitionname={} state=down".format(
-                SLURM_PREFIX, DEF_PART_NAME)))
+                CURR_SLURM_DIR, DEF_PART_NAME)))
         subprocess.call(['wall', '-n', """
 Partition {} has been marked down until the compute image has been created.
 For instances with gpus attached, it could take ~10 mins.
@@ -1081,7 +1082,7 @@ For instances with gpus attached, it could take ~10 mins.
 
             subprocess.call(shlex.split(
                 "{}/bin/scontrol update partitionname={} state=up".format(
-                    SLURM_PREFIX, DEF_PART_NAME)))
+                    CURR_SLURM_DIR, DEF_PART_NAME)))
 
             subprocess.call(shlex.split("gcloud compute instances "
                                         "delete {} --zone {} --quiet".format(
