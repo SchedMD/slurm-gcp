@@ -499,6 +499,7 @@ ResumeRate=0
 SuspendRate=0
 SuspendTime=120
 #
+SlurmctldParameters=cloud_dns
 #
 # COMPUTE NODES
 """.format(apps_dir        = APPS_DIR,
