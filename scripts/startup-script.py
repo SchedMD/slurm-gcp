@@ -52,8 +52,6 @@ PREEMPTIBLE       = @PREEMPTIBLE@
 DEF_PART_NAME   = "debug"
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
 
-SLURM_PREFIX  = APPS_DIR + '/slurm/slurm-' + SLURM_VERSION
-
 MOTD_HEADER = '''
 
                                  SSSSSSS
@@ -168,6 +166,7 @@ def install_packages():
     packages = ['bind-utils',
                 'epel-release',
                 'gcc',
+                'git',
                 'hwloc',
                 'hwloc-devel',
                 'libibmad',
@@ -681,15 +680,34 @@ def install_suspend_progs():
 
 def install_slurm():
 
-    SCHEDMD_URL = 'https://download.schedmd.com/slurm/'
-    file = "slurm-%s.tar.bz2" % SLURM_VERSION
-    urllib.urlretrieve(SCHEDMD_URL + file, '/tmp/' + file)
+    SLURM_PREFIX = "";
 
     prev_path = os.getcwd()
 
-    os.chdir('/tmp')
-    subprocess.call(['tar', '-xvjf', file])
-    os.chdir('/tmp/slurm-' + SLURM_VERSION)
+    SRC_PATH = APPS_DIR + "/slurm/src"
+    if not os.path.exists(SRC_PATH):
+        os.makedirs(SRC_PATH)
+    os.chdir(SRC_PATH)
+
+    use_version = "";
+    if (SLURM_VERSION[0:2] == "b:"):
+        GIT_URL = "https://github.com/SchedMD/slurm.git"
+        use_version = SLURM_VERSION[2:]
+        subprocess.call(
+            shlex.split("git clone -b {0} {1} {0}".format(
+                use_version, GIT_URL)))
+    else:
+        SCHEDMD_URL = 'https://download.schedmd.com/slurm/'
+        file = "slurm-%s.tar.bz2" % SLURM_VERSION
+        urllib.urlretrieve(SCHEDMD_URL + file, SRC_PATH + '/' + file)
+
+        cmd = "tar -xvjf " + file
+        use_version = subprocess.check_output(
+            shlex.split(cmd)).splitlines()[0][:-1]
+
+    os.chdir(use_version)
+    SLURM_PREFIX  = APPS_DIR + '/slurm/' + use_version
+
     if not os.path.exists('build'):
         os.makedirs('build')
     os.chdir('build')

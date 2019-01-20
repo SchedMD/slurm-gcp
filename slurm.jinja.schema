@@ -236,9 +236,12 @@ properties:
 
   slurm_version:
     type        : string
-    default     : 18.08.5-2
+    default     : 18.08-latest
     description : The Slurm version to install. The version should match link
-                  name found at https://www.schedmd.com/downloads.php.
+                  name found at https://www.schedmd.com/downloads.php. The
+                  version can also be in the form "b:<branch name>", where
+                  <branch name> is a branch in
+                  https://github.com/schedmd/slurm.
 
   static_node_count:
     type        : integer
