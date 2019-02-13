@@ -353,7 +353,6 @@ CryptoType=crypto/munge
 #EpilogSlurmctld=
 #FirstJobId=1
 #MaxJobId=999999
-GresTypes=gpu
 #GroupUpdateForce=0
 #GroupUpdateTime=600
 #JobCheckpointDir=/var/slurm/checkpoint
@@ -507,6 +506,9 @@ SlurmctldParameters=cloud_dns
            cluster_name    = CLUSTER_NAME,
            control_machine = CONTROL_MACHINE,
            def_mem_per_cpu = def_mem_per_cpu)
+
+    if GPU_COUNT:
+        conf += "GresTypes=gpu\n"
 
     conf += ' '.join(("NodeName=DEFAULT",
                       "Sockets="        + str(machine['sockets']),
