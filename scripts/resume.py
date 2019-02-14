@@ -276,6 +276,6 @@ if __name__ == '__main__':
     logging.basicConfig(
         filename=LOGFILE,
         format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-        level=logging.ERROR)
+        level=logging.DEBUG)
 
     main(args.nodes)
