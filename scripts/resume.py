@@ -313,6 +313,11 @@ if __name__ == '__main__':
     parser.add_argument('nodes', help='Nodes to burst')
 
     args = parser.parse_args()
+
+    # silence module logging
+    for logger in logging.Logger.manager.loggerDict:
+        logging.getLogger(logger).setLevel(logging.WARNING)
+
     logging.basicConfig(
         filename=LOGFILE,
         format='%(asctime)s %(name)s %(levelname)s: %(message)s',
