@@ -669,9 +669,9 @@ def install_suspend_progs():
     f.close()
     os.chmod(scripts_path + "/" + file_name, 0o755)
 
-    # Slurmd stop script
-    file_name = "slurmd-stop.py"
-    req = urllib2.Request(GOOGLE_URL + '/slurm_slurmd_stop')
+    # Slurm GCP Sync script
+    file_name = "slurm-gcp-sync.py"
+    req = urllib2.Request(GOOGLE_URL + '/slurm-gcp-sync')
     req.add_header('Metadata-Flavor', 'Google')
     resp = urllib2.urlopen(req)
 
@@ -837,17 +837,6 @@ WantedBy=multi-user.target
     os.chmod('/usr/lib/systemd/system/slurmd.service', 0o644)
     subprocess.call(shlex.split('systemctl enable slurmd'))
 
-    shutdown_service = "/etc/systemd/system/google-shutdown-scripts.service.d"
-    if not os.path.exists(shutdown_service):
-        os.makedirs(shutdown_service)
-    f = open(shutdown_service + "/slurmd.conf", 'w')
-    f.write("""[Unit]
-After=munge.service
-RequiresMountsFor={}
-""".format(APPS_DIR))
-    f.close()
-    subprocess.call(shlex.split('systemctl daemon-reload'))
-
 #END install_compute_service_scripts()
 
 
@@ -946,25 +935,11 @@ RPCNFSDCOUNT=256
 
 # END setup_nfs_threads()
 
-def setup_preempted_cronjob():
+def setup_sync_cronjob():
 
-    script_name = "{}/slurm/scripts/clean_preempted.sh".format(APPS_DIR)
-    f = open(script_name, 'w')
-    f.write("""#!/bin/bash
+    os.system("echo '*/1 * * * * {}/slurm/scripts/slurm-gcp-sync.py' | crontab -u root -".format(APPS_DIR))
 
-PREEMPTED=( `{prefix}/bin/sinfo | grep down~ | awk '{{print $6}}'` );
-
-if [[ $PREEMPTED ]]; then
-        {prefix}/bin/scontrol update nodename=$PREEMPTED state=idle
-fi
-""".format(prefix = CURR_SLURM_DIR))
-    f.close()
-
-    os.chmod(script_name, 0o744)
-
-    os.system("echo '*/1 * * * * {}' | crontab -u root -".format(script_name))
-
-# END setup_preempted_cronjob()
+# END setup_sync_cronjob()
 
 def setup_slurmd_cronjob():
     #subprocess.call(shlex.split('crontab < /apps/slurm/scripts/cron'))
@@ -1076,7 +1051,7 @@ def main():
         setup_nfs_exports()
 
         if PREEMPTIBLE:
-            setup_preempted_cronjob()
+            setup_sync_cronjob()
 
         # DOWN partition until image is created.
         subprocess.call(shlex.split(

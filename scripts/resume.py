@@ -119,13 +119,6 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             'value': startup_script
         })
 
-    shutdown_script = open(
-        '/apps/slurm/scripts/slurmd-stop.py', 'r').read()
-    config['metadata']['items'].append({
-        'key': 'shutdown-script',
-        'value': shutdown_script
-    })
-
     if GPU_TYPE:
         accel_type = ("https://www.googleapis.com/compute/v1/"
                       "projects/{}/zones/{}/acceleratorTypes/{}".format(
