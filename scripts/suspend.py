@@ -33,77 +33,72 @@ LOGFILE      = '/apps/slurm/log/suspend.log'
 TOT_REQ_CNT = 1000
 
 operations = {}
+retry_list = []
 
-# [START removed_instances]
-def removed_instances(request_id, response, exception):
+# [START delete_instances_cb]
+def delete_instances_cb(request_id, response, exception):
     if exception is not None:
-        logging.error("exception: " + str(exception))
+        logging.error("delete exception for node {}: {}".format(request_id,
+                                                                str(exception)))
+        if "Rate Limit Exceeded" in str(exception):
+            retry_list.append(request_id)
     else:
         operations[request_id] = response
-# [END removed_instances]
+# [END delete_instances_cb]
 
-# [START wait_for_operation]
-def wait_for_operation(compute, project, zone, operation):
-    while True:
-        result = compute.zoneOperations().get(
-            project=project,
-            zone=zone,
-            operation=operation).execute()
-
-        if result['status'] == 'DONE':
-            if 'error' in result:
-                raise Exception(result['error'])
-            return result
-
-        time.sleep(1)
-# [END wait_for_operation]
-
-# [START main]
-def main(short_node_list):
-    logging.debug("deleting nodes:" + short_node_list)
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              cache_discovery=False)
-
-    # Get node list
-    show_hostname_cmd = "%s show hostname %s" % (SCONTROL, short_node_list)
-    node_list = subprocess.check_output(shlex.split(show_hostname_cmd))
+# [START delete_instances]
+def delete_instances(compute, node_list):
 
     batch_list = []
     curr_batch = 0
     req_cnt = 0
     batch_list.insert(
-        curr_batch, compute.new_batch_http_request(callback=removed_instances))
-    for node_name in node_list.splitlines():
-        try:
-            batch_list[curr_batch].add(
-                compute.instances().delete(project=PROJECT, zone=ZONE,
-                                           instance=node_name),
-                request_id=node_name)
-            req_cnt += 1
-            if req_cnt >= TOT_REQ_CNT:
-                req_cnt = 0
-                curr_batch += 1
-                batch_list.insert(
-                    curr_batch,
-                    compute.new_batch_http_request(callback=removed_instances))
+        curr_batch, compute.new_batch_http_request(callback=delete_instances_cb))
 
-        except Exception, e:
-            logging.exception("error during release of {} ({})".format(
-                node_name, str(e)))
+    for node_name in node_list:
+        if req_cnt >= TOT_REQ_CNT:
+            req_cnt = 0
+            curr_batch += 1
+            batch_list.insert(
+                curr_batch,
+                compute.new_batch_http_request(callback=delete_instances_cb))
+
+        batch_list[curr_batch].add(
+            compute.instances().delete(project=PROJECT, zone=ZONE,
+                                       instance=node_name),
+            request_id=node_name)
+        req_cnt += 1
 
     try:
-        for batch in batch_list:
+        for i, batch in enumerate(batch_list):
             batch.execute()
+            if i < (len(batch_list) - 1):
+                time.sleep(30)
     except Exception, e:
         logging.exception("error in batch: " + str(e))
 
-    for node_name in operations:
-        try:
-            operation = operations[node_name]
-            wait_for_operation(compute, PROJECT, ZONE, operation['name'])
-        except Exception, e:
-            logging.debug("{} operation exception: {}".format(
-                node_name, str(e)))
+# [END delete_instances]
+
+# [START main]
+def main(arg_nodes):
+    logging.debug("deleting nodes:" + arg_nodes)
+    compute = googleapiclient.discovery.build('compute', 'v1',
+                                              cache_discovery=False)
+
+    # Get node list
+    show_hostname_cmd = "%s show hostnames %s" % (SCONTROL, arg_nodes)
+    nodes_str = subprocess.check_output(shlex.split(show_hostname_cmd))
+    node_list = nodes_str.splitlines()
+
+    while True:
+        delete_instances(compute, node_list)
+        if not len(retry_list):
+            break;
+
+        logging.debug("got {} nodes to retry ({})".
+                      format(len(retry_list),",".join(retry_list)))
+        node_list = list(retry_list)
+        del retry_list[:]
 
     logging.debug("done deleting instances")
 

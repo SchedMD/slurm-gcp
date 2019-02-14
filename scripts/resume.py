@@ -59,6 +59,7 @@ TOT_REQ_CNT = 1000
 
 instances = {}
 operations = {}
+retry_list = []
 
 credentials = compute_engine.Credentials()
 
@@ -174,48 +175,62 @@ def create_instance(compute, project, zone, instance_type, instance_name,
         body=config)
 # [END create_instance]
 
-# [START wait_for_operation]
-def wait_for_operation(compute, project, zone, operation):
-    while True:
-        result = compute.zoneOperations().get(
-            project=project,
-            zone=zone,
-            operation=operation).execute()
-
-        if result['status'] == 'DONE':
-            if 'error' in result:
-                raise Exception(result['error'])
-            return result
-
-        time.sleep(1)
-# [END wait_for_operation]
-
-# [START added_instances]
-def added_instances(request_id, response, exception):
+# [START added_instances_cb]
+def added_instances_cb(request_id, response, exception):
     if exception is not None:
-        logging.error("add/start exception: " + str(exception))
+        logging.error("add exception for node {}: {}".format(request_id,
+                                                             str(exception)))
+        if "Rate Limit Exceeded" in str(exception):
+            retry_list.append(request_id)
     else:
         operations[request_id] = response
-# [END added_instances]
+# [END added_instances_cb]
 
-# [START get_instances]
-def get_instances(request_id, response, exception):
-    if exception is not None:
-        logging.debug("get exception: " + str(exception))
-    else:
-        instances[response['name']] = response['status']
-# [END get_instances]
+# [start add_instances]
+def add_instances(compute, source_disk_image, have_compute_img, node_list):
+
+    batch_list = []
+    curr_batch = 0
+    req_cnt = 0
+    batch_list.insert(
+        curr_batch, compute.new_batch_http_request(callback=added_instances_cb))
+
+    for node_name in node_list:
+        if req_cnt >= TOT_REQ_CNT:
+            req_cnt = 0
+            curr_batch += 1
+            batch_list.insert(
+                curr_batch,
+                compute.new_batch_http_request(callback=added_instances_cb))
+
+        batch_list[curr_batch].add(
+            create_instance(
+                compute, PROJECT, ZONE, MACHINE_TYPE, node_name,
+                source_disk_image, have_compute_img),
+            request_id=node_name)
+        req_cnt += 1
+
+    try:
+        for i, batch in enumerate(batch_list):
+            batch.execute(http=http)
+            if i < (len(batch_list) - 1):
+                time.sleep(30)
+    except Exception, e:
+        logging.exception("error in add batch: " + str(e))
+
+# [END add_instances]
 
 # [START main]
-def main(short_node_list):
-    logging.info("Bursting out:" + short_node_list)
+def main(arg_nodes):
+    logging.info("Bursting out:" + arg_nodes)
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=authorized_http,
                                               cache_discovery=False)
 
     # Get node list
-    show_hostname_cmd = "{} show hostname {}".format(SCONTROL, short_node_list)
-    node_list = subprocess.check_output(shlex.split(show_hostname_cmd))
+    show_hostname_cmd = "{} show hostnames {}".format(SCONTROL, arg_nodes)
+    nodes_str = subprocess.check_output(shlex.split(show_hostname_cmd))
+    node_list = nodes_str.splitlines()
 
     have_compute_img = False
     try:
@@ -232,75 +247,15 @@ def main(short_node_list):
             project='centos-cloud', family='centos-7').execute()
         source_disk_image = image_response['selfLink']
 
-    # see if the nodes already exist
-    get_batch_list = []
-    curr_batch = 0
-    req_cnt = 0
-    get_batch_list.insert(
-        curr_batch, compute.new_batch_http_request(callback=get_instances))
-    for node_name in node_list.splitlines():
-        get_batch_list[curr_batch].add(compute.instances().get(
-            project=PROJECT, zone=ZONE, instance=node_name,
-            fields='name,status'))
-        req_cnt += 1
-        if req_cnt >= TOT_REQ_CNT:
-            req_cnt = 0
-            curr_batch += 1
-            get_batch_list.insert(
-                curr_batch,
-                compute.new_batch_http_request(callback=get_instances))
-    try:
-        for batch in get_batch_list:
-            batch.execute()
-    except Exception, e:
-        logging.exception("error in get instances: " + str(e))
-    del get_batch_list
+    while True:
+        add_instances(compute, source_disk_image, have_compute_img, node_list)
+        if not len(retry_list):
+            break;
 
-    add_batch_list = []
-    curr_batch = 0
-    req_cnt = 0
-    add_batch_list.insert(
-        curr_batch, compute.new_batch_http_request(callback=added_instances))
-    for node_name in node_list.splitlines():
-        if node_name in instances:
-            logging.debug("node {} already exists in state {}".format(
-                node_name, instances[node_name]))
-            if instances[node_name] != "RUNNING":
-                add_batch_list[curr_batch].add(
-                    compute.instances().start(
-                        project=PROJECT, zone=ZONE, instance=node_name),
-                    request_id=node_name)
-                req_cnt += 1
-        else:
-            add_batch_list[curr_batch].add(
-                create_instance(
-                    compute, PROJECT, ZONE, MACHINE_TYPE, node_name,
-                    source_disk_image, have_compute_img),
-                request_id=node_name)
-            req_cnt += 1
-        if req_cnt >= TOT_REQ_CNT:
-            req_cnt = 0
-            curr_batch += 1
-            add_batch_list.insert(
-                curr_batch,
-                compute.new_batch_http_request(callback=added_instances))
-    try:
-        for batch in add_batch_list:
-            batch.execute(http=http)
-    except Exception, e:
-        logging.exception("error in add batch: " + str(e))
-    del add_batch_list
-
-    for node_name in operations:
-        try:
-            operation = operations[node_name]
-            wait_for_operation(compute, PROJECT, ZONE, operation['name'])
-        except Exception, e:
-            logging.debug("{} operation exception: {}".format(
-                node_name, str(e)))
-            cmd = "{} update node={} state=down reason='{}'".format(
-                SCONTROL, node_name, str(e))
-            subprocess.call(shlex.split(cmd))
+        logging.debug("got {} nodes to retry ({})".
+                      format(len(retry_list),",".join(retry_list)))
+        node_list = list(retry_list)
+        del retry_list[:]
 
     logging.debug("done adding instances")
 # [END main]
