@@ -215,7 +215,7 @@ def add_instances(compute, source_disk_image, have_compute_img, node_list):
 
 # [START main]
 def main(arg_nodes):
-    logging.info("Bursting out:" + arg_nodes)
+    logging.debug("Bursting out:" + arg_nodes)
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=authorized_http,
                                               cache_discovery=False)
