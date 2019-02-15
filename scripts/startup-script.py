@@ -491,6 +491,7 @@ SlurmdLogFile=/var/log/slurm/slurmd-%n.log
 # POWER SAVE SUPPORT FOR IDLE NODES (optional)
 SuspendProgram={apps_dir}/slurm/scripts/suspend.py
 ResumeProgram={apps_dir}/slurm/scripts/resume.py
+ResumeFailProgram={apps_dir}/slurm/scripts/suspend.py
 SuspendTimeout=300
 ResumeTimeout=600
 ResumeRate=0
