@@ -642,6 +642,8 @@ def install_meta_files():
         {'file': 'resume.py', 'meta': 'slurm_resume'},
         {'file': 'startup-script.py', 'meta': 'startup-script-compute'},
         {'file': 'slurm-gcp-sync.py', 'meta': 'slurm-gcp-sync'},
+        {'file': 'custom-compute-install', 'meta': 'custom-compute-install'},
+        {'file': 'custom-controller-install', 'meta': 'custom-controller-install'},
     ]
 
     for meta in meta_files:
@@ -991,7 +993,12 @@ def main():
         start_munge()
         install_slurm()
 
-        # Add any additional installation functions here
+        try:
+            subprocess.call("{}/slurm/scripts/custom-controller-install"
+                            .format(APPS_DIR))
+        except Exception:
+            # Ignore blank files with no shell magic.
+            pass
 
         install_controller_service_scripts()
 
@@ -1048,11 +1055,16 @@ For instances with gpus attached, it could take ~10 mins.
     elif INSTANCE_TYPE == "compute":
         install_compute_service_scripts()
         setup_slurmd_cronjob()
-
-        # Add any additional installation functions here
-
         mount_nfs_vols()
         start_munge()
+
+        try:
+            subprocess.call("{}/slurm/scripts/custom-compute-install"
+                            .format(APPS_DIR))
+        except Exception:
+            # Ignore blank files with no shell magic.
+            pass
+
         hostname = socket.gethostname()
         if hostname == CLUSTER_NAME + "-compute-image":
             create_compute_image()
@@ -1071,6 +1083,14 @@ For instances with gpus attached, it could take ~10 mins.
     else: # login nodes
         mount_nfs_vols()
         start_munge()
+
+        try:
+            subprocess.call("{}/slurm/scripts/custom-compute-install"
+                            .format(APPS_DIR))
+        except Exception:
+            # Ignore blank files with no shell magic.
+            pass
+
 
     end_motd()
 

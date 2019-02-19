@@ -142,6 +142,12 @@ resources:
             {{ imports["scripts/slurm-gcp-sync.py"]|indent(12)|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"]) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: custom-compute-install
+          value: |
+            {{ imports["scripts/custom-compute-install"]|indent(12) }}
+        - key: custom-controller-install
+          value: |
+            {{ imports["scripts/custom-controller-install"]|indent(12) }}
 
 
 {% for n in range(properties['login_node_count']) %}
