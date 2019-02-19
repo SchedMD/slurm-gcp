@@ -52,7 +52,7 @@ resources:
 
 {% if (not properties['external_compute_ips'] and not properties['shared_vpc_host_proj']) %}
 - name: {{properties["cluster_name"]}}-router
-  type: compute.beta.router
+  type: compute.v1.router
   properties:
   {% if properties['vpc_net'] %}
     network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/{{ properties["vpc_net"]}}
