@@ -492,13 +492,13 @@ SlurmdLogFile=/var/log/slurm/slurmd-%n.log
 SuspendProgram={apps_dir}/slurm/scripts/suspend.py
 ResumeProgram={apps_dir}/slurm/scripts/resume.py
 ResumeFailProgram={apps_dir}/slurm/scripts/suspend.py
-SuspendTimeout=300
+SuspendTimeout=600
 ResumeTimeout=600
 ResumeRate=0
 #SuspendExcNodes=
 #SuspendExcParts=
 SuspendRate=0
-SuspendTime=120
+SuspendTime=300
 #
 SlurmctldParameters=cloud_dns
 #
