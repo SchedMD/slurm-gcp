@@ -629,7 +629,7 @@ ConstrainDevices=yes
 #END install_cgroup_conf()
 
 
-def install_suspend_progs():
+def install_meta_files():
 
     scripts_path = APPS_DIR + '/slurm/scripts'
     if not os.path.exists(scripts_path):
@@ -637,51 +637,30 @@ def install_suspend_progs():
 
     GOOGLE_URL = "http://metadata.google.internal/computeMetadata/v1/instance/attributes"
 
-    # Suspend
-    req = urllib2.Request(GOOGLE_URL + '/slurm_suspend')
-    req.add_header('Metadata-Flavor', 'Google')
-    resp = urllib2.urlopen(req)
+    meta_files = [
+        {'file': 'suspend.py', 'meta': 'slurm_suspend'},
+        {'file': 'resume.py', 'meta': 'slurm_resume'},
+        {'file': 'startup-script.py', 'meta': 'startup-script-compute'},
+        {'file': 'slurm-gcp-sync.py', 'meta': 'slurm-gcp-sync'},
+    ]
 
-    file_name = "suspend.py"
-    f = open(scripts_path + "/" + file_name, 'w')
-    f.write(resp.read())
-    f.close()
-    os.chmod(scripts_path + "/" + file_name, 0o755)
+    for meta in meta_files:
+        file_name = meta['file']
+        meta_name = meta['meta']
 
-    # Resume
-    req = urllib2.Request(GOOGLE_URL + '/slurm_resume')
-    req.add_header('Metadata-Flavor', 'Google')
-    resp = urllib2.urlopen(req)
+        req = urllib2.Request("{}/{}".format(GOOGLE_URL, meta_name))
+        req.add_header('Metadata-Flavor', 'Google')
+        resp = urllib2.urlopen(req)
 
-    file_name = "resume.py"
-    f = open(scripts_path + "/" + file_name, 'w')
-    f.write(resp.read())
-    f.close()
-    os.chmod(scripts_path + "/" + file_name, 0o755)
+        f = open("{}/{}".format(scripts_path, file_name), 'w')
+        f.write(resp.read())
+        f.close()
+        os.chmod("{}/{}".format(scripts_path, file_name), 0o755)
 
-    # Startup script
-    req = urllib2.Request(GOOGLE_URL + '/startup-script-compute')
-    req.add_header('Metadata-Flavor', 'Google')
-    resp = urllib2.urlopen(req)
+        subprocess.call(shlex.split("gcloud compute instances remove-metadata {} --zone={} --keys={}".
+                                    format(CONTROL_MACHINE, ZONE, meta_name)))
 
-    file_name = "startup-script.py"
-    f = open(scripts_path + "/" + file_name, 'w')
-    f.write(resp.read())
-    f.close()
-    os.chmod(scripts_path + "/" + file_name, 0o755)
-
-    # Slurm GCP Sync script
-    file_name = "slurm-gcp-sync.py"
-    req = urllib2.Request(GOOGLE_URL + '/slurm-gcp-sync')
-    req.add_header('Metadata-Flavor', 'Google')
-    resp = urllib2.urlopen(req)
-
-    f = open(scripts_path + "/" + file_name, 'w')
-    f.write(resp.read())
-    f.close()
-    os.chmod(scripts_path + "/" + file_name, 0o755)
-
-#END install_suspend_progs()
+#END install_meta_files()
 
 def install_slurm():
 
@@ -734,7 +713,7 @@ def install_slurm():
     install_slurm_conf()
     install_slurmdbd_conf()
     install_cgroup_conf()
-    install_suspend_progs()
+    install_meta_files()
 
 #END install_slurm()
 
