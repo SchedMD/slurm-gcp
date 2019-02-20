@@ -127,7 +127,7 @@ Steps:
    There are multiple ways to connect to the compute nodes:
    1. If the compute nodes have external IPs you can connect directly to the
       compute nodes. From the GCP Compute Engine page, the SSH drop down next to
-      the compute instances gives severval options for connecting to the compute
+      the compute instances gives several options for connecting to the compute
       nodes.
    2. Whether the compute nodes have external IPs or not, they can be connected
       to from within the cluster. Because /home is mounted on all of the
@@ -394,7 +394,7 @@ following are the steps to do this.
 
 12. Slurm should now be able to burst out into project2.
 
-## Mutli-Cluster / Federation
+## Multi-Cluster / Federation
 Slurm allows you to use a central SlurmdDBD for multiple clusters. By doing this
 it also allows the clusters to be able to communicate with each other. This is
 done by the client commands first checking with the SlurmDBD for the requested
@@ -434,7 +434,7 @@ space (e.g. same uids across all the clusters).
       Priority             : 1000
       Direction of traffic : Ingress
       Action to match      : Allow
-      Tagets               : Specified target tags
+      Targets              : Specified target tags
       Target tags          : controller
       Source Filter        : IP ranges
       Source IP Ranges     : 0.0.0.0/0
@@ -455,7 +455,7 @@ space (e.g. same uids across all the clusters).
       Priority             : 1000
       Direction of traffic : Ingress
       Action to match      : Allow
-      Tagets               : Specified target tags
+      Targets              : Specified target tags
       Target tags          : controller
       Source Filter        : IP ranges
       Source IP Ranges     : 0.0.0.0/0
@@ -494,7 +494,7 @@ space (e.g. same uids across all the clusters).
       Priority             : 1000
       Direction of traffic : Ingress
       Action to match      : Allow
-      Tagets               : Specified target tags
+      Targets              : Specified target tags
       Target tags          : compute
       Source Filter        : IP ranges
       Source IP Ranges     : 0.0.0.0/0
