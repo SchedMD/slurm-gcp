@@ -939,6 +939,7 @@ def create_compute_image():
     if GPU_COUNT:
         time.sleep(300)
 
+    print "Creating compute image..."
     hostname = socket.gethostname()
     subprocess.call(shlex.split("gcloud compute images "
                                 "create {0}-compute-image-{3} "
