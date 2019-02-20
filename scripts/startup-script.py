@@ -928,14 +928,6 @@ def setup_slurmd_cronjob():
     os.system("echo '*/2 * * * * if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then mount -a; systemctl restart slurmd; fi' | crontab -u root -")
 # END setup_slurmd_cronjob()
 
-def format_disk():
-    subprocess.call(shlex.split("sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb"))
-    #subprocess.call(shlex.split("sudo mkdir -p " + SEC_DISK_DIR))
-    subprocess.call(shlex.split("sudo mount -o discard,defaults /dev/sdb " + SEC_DISK_DIR))
-    subprocess.call(shlex.split("sudo chmod a+w " + SEC_DISK_DIR))
-
-# END format_disk()
-
 def create_compute_image():
 
     end_motd(False)
