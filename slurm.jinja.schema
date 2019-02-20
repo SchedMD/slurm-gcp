@@ -65,6 +65,7 @@ optional:
 - nfs_home_server
 - preemptible_bursting
 - shared_vpc_host_proj
+- suspend_time
 - vpc_net
 - vpc_subnet
 
@@ -247,6 +248,12 @@ properties:
   static_node_count:
     type        : integer
     description : Number of initial instances in the cluster.
+
+  suspend_time:
+    type        : integer
+    default     : 300
+    minimum     : 300
+    description : Idle time to wait before nodes go away (in sec)
 
   vpc_net:
     type        : string

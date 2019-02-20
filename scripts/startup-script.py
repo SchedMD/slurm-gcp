@@ -48,6 +48,7 @@ NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
 CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
 SEC_DISK_DIR      = '/mnt/disks/sec'
 PREEMPTIBLE       = @PREEMPTIBLE@
+SUSPEND_TIME      = @SUSPEND_TIME@
 
 DEF_PART_NAME   = "debug"
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
@@ -498,7 +499,7 @@ ResumeRate=0
 #SuspendExcNodes=
 #SuspendExcParts=
 SuspendRate=0
-SuspendTime=300
+SuspendTime={suspend_time}
 #
 SlurmctldParameters=cloud_dns
 #
@@ -506,7 +507,8 @@ SlurmctldParameters=cloud_dns
 """.format(apps_dir        = APPS_DIR,
            cluster_name    = CLUSTER_NAME,
            control_machine = CONTROL_MACHINE,
-           def_mem_per_cpu = def_mem_per_cpu)
+           def_mem_per_cpu = def_mem_per_cpu,
+           suspend_time    = SUSPEND_TIME)
 
     if GPU_COUNT:
         conf += "GresTypes=gpu\n"
