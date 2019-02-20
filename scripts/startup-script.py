@@ -961,6 +961,8 @@ SELINUXTYPE=targeted
 
 def main():
 
+    hostname = socket.gethostname()
+
     setup_selinux()
 
     if INSTANCE_TYPE == "compute":
@@ -1054,8 +1056,6 @@ For instances with gpus attached, it could take ~10 mins.
 """.format(DEF_PART_NAME)])
 
         print "ww Done installing controller"
-        subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ CONTROL_MACHINE + ' --zone=' + ZONE + ' --keys=startup-script'))
-
     elif INSTANCE_TYPE == "compute":
         install_compute_service_scripts()
         setup_slurmd_cronjob()
@@ -1069,7 +1069,6 @@ For instances with gpus attached, it could take ~10 mins.
             # Ignore blank files with no shell magic.
             pass
 
-        hostname = socket.gethostname()
         if hostname == CLUSTER_NAME + "-compute-image":
             create_compute_image()
 
@@ -1082,7 +1081,6 @@ For instances with gpus attached, it could take ~10 mins.
                                             hostname, ZONE)))
         else:
             subprocess.call(shlex.split('systemctl start slurmd'))
-            subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
 
     else: # login nodes
         mount_nfs_vols()
@@ -1098,6 +1096,9 @@ For instances with gpus attached, it could take ~10 mins.
 
     end_motd()
 
+    subprocess.call(shlex.split("gcloud compute instances remove-metadata {} "
+                                "--zone={} --keys=startup-script"
+                                .format(hostname, ZONE)))
 # END main()
 
 
