@@ -955,9 +955,21 @@ def create_compute_image():
 #END create_compute_image()
 
 
-def main():
-    # Disable SELinux
+def setup_selinux():
+
     subprocess.call(shlex.split('setenforce 0'))
+    f = open('/etc/selinux/config', 'w')
+    f.write("""
+SELINUX=permissive
+SELINUXTYPE=targeted
+""")
+    f.close()
+#END setup_selinux()
+
+
+def main():
+
+    setup_selinux()
 
     if INSTANCE_TYPE == "compute":
         while not have_internet():
