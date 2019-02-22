@@ -222,24 +222,42 @@ def install_packages():
 
 def setup_munge():
 
+    munge_service_patch = "/usr/lib/systemd/system/munge.service"
+    f = open(munge_service_patch, 'w')
+    f.write("""
+[Unit]
+Description=MUNGE authentication service
+Documentation=man:munged(8)
+After=network.target
+After=syslog.target
+After=time-sync.target
+""")
+
+    if (INSTANCE_TYPE != "controller"):
+        f.write("RequiresMountsFor={}\n".format(MUNGE_DIR))
+
+    f.write("""
+[Service]
+Type=forking
+ExecStart=/usr/sbin/munged --num-threads=10
+PIDFile=/var/run/munge/munged.pid
+User=munge
+Group=munge
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target""")
+    f.close()
+
+    subprocess.call(['systemctl', 'enable', 'munge'])
+
     if (INSTANCE_TYPE != "controller"):
         f = open('/etc/fstab', 'a')
         f.write("""
 {1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(MUNGE_DIR, CONTROL_MACHINE))
         f.close()
-
-        munge_over_path = "/etc/systemd/system/munge.service.d"
-        if not os.path.exists(munge_over_path):
-            os.makedirs(munge_over_path)
-        f = open(munge_over_path + "/override.conf", 'w')
-        f.write("[Unit]\nRequiresMountsFor={}\n".format(MUNGE_DIR))
-        f.close()
-
-        subprocess.call(['systemctl', 'enable', 'munge'])
         return
-
-    subprocess.call(['systemctl', 'enable', 'munge'])
 
     if MUNGE_KEY:
         f = open(MUNGE_DIR +'/munge.key', 'w')
