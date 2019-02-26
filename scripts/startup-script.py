@@ -520,7 +520,9 @@ ResumeRate=0
 SuspendRate=0
 SuspendTime={suspend_time}
 #
+SchedulerParameters=salloc_wait_nodes
 SlurmctldParameters=cloud_dns
+CommunicationParameters=NoAddrCache
 #
 # COMPUTE NODES
 """.format(apps_dir        = APPS_DIR,
