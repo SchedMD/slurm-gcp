@@ -105,6 +105,20 @@ def add_slurm_user():
 # END add_slurm_user()
 
 
+def setup_modules():
+
+    appsmfs = '/apps/modulefiles'
+
+    if appsmfs not in open('/usr/share/Modules/init/.modulespath').read():
+        if INSTANCE_TYPE == 'controller' and not os.path.isdir(appsmfs):
+            subprocess.call(['mkdir', '-p', appsmfs])
+
+        with open('/usr/share/Modules/init/.modulespath', 'a') as dotmp:
+            dotmp.write(appsmfs)
+
+# END setup_modules
+
+
 def start_motd():
 
     msg = MOTD_HEADER + """
@@ -1020,6 +1034,7 @@ def main():
 
     if INSTANCE_TYPE == "controller":
         mount_nfs_vols()
+        setup_modules()
         start_munge()
         install_slurm()
 
