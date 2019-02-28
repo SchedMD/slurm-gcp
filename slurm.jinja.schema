@@ -238,7 +238,7 @@ properties:
 
   slurm_version:
     type        : string
-    default     : b:cloud_dns
+    default     : b:slurm-18.08
     description : The Slurm version to install. The version should match link
                   name found at https://www.schedmd.com/downloads.php. The
                   version can also be in the form "b:<branch name>", where
