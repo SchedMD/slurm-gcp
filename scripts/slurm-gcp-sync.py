@@ -130,11 +130,13 @@ def main():
                 # This should catch the completing states as well.
                 if ((g_node == None) and ("#" not in s_state)):
                     to_down.append(s_node)
-
-            # find nodes that are down~ in slurm and don't exist in gcp:
-            #   mark idle~
-            if ((g_node == None) and (s_state == "down~")):
-                to_idle.append(s_node)
+            elif (g_node == None):
+                # find nodes that are down~ in slurm and don't exist in gcp:
+                #   mark idle~
+                if (s_state == "down~"):
+                    to_idle.append(s_node)
+                elif ("comp" in s_state):
+                    to_down.append(s_node)
 
         if len(to_down):
             logging.debug("{} stopped/deleted instances ({})".format(
