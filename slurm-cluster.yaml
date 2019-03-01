@@ -67,7 +67,13 @@ resources:
     #slurm_version           : < Current slurm version, e.g. 17.11.8 >
     default_users           : < GCP user email addr, comma separated >
 
-    #labels :
+    #controller_labels :
+    #     key1 : value1
+    #     key2 : value2
+    #compute_labels :
+    #     key1 : value1
+    #     key2 : value2
+    #login_labels :
     #     key1 : value1
     #     key2 : value2
 #  [END cluster_yaml]

@@ -47,8 +47,10 @@ required:
 optional:
 - compute_disk_type
 - compute_disk_size_gb
+- compute_labels
 - controller_disk_type
 - controller_disk_size_gb
+- controller_labels
 - controller_secondary_disk
 - controller_secondary_disk_type
 - controller_secondary_disk_size_gb
@@ -56,9 +58,9 @@ optional:
 - external_compute_ips
 - gpu_count
 - gpu_type
-- labels
 - login_disk_size_gb
 - login_disk_type
+- login_labels
 - login_node_count
 - munge_key
 - nfs_apps_server
@@ -95,6 +97,12 @@ properties:
     maximum     : 2000
     description : Size of disk for compute nodes.
 
+  compute_labels:
+    type        : object
+    default     : {}
+    description : Labels to add to compute instances. List of key key, value
+                  pairs.
+
   controller_machine_type:
     type        : string
     description : Machine type to use for the controller instance.
@@ -111,6 +119,12 @@ properties:
     minimum     : 10
     maximum     : 2000
     description : Size of disk for the controller.
+
+  controller_labels:
+    type        : object
+    default     : {}
+    description : Labels to add to controller instance. List of key key, value
+                  pairs.
 
   controller_secondary_disk:
     type        : boolean
@@ -169,12 +183,6 @@ properties:
     default     : 0
     description : Number of GPUs to attach to each node.
 
-  labels:
-    type        : object
-    default     : {}
-    description : Labels to add to nodes for reporting. List of key key, value
-                  pairs.
-
   login_machine_type:
     type        : string
     description : Machine type to use for login node instances, eg.
@@ -184,6 +192,12 @@ properties:
     enum        : ["pd-ssd", "pd-standard"]
     default     : pd-standard
     description : Disk type (pd-ssd or pd-standard) for login node.
+
+  login_labels:
+    type        : object
+    default     : {}
+    description : Labels to add to login instances. List of key key, value
+                  pairs.
 
   login_disk_size_gb:
     type        : integer
