@@ -198,6 +198,8 @@ properties:
 
   max_node_count:
     type        : integer
+    minimum     : 0
+    maximum     : 5000
     description : Maximum number of instances that the cluster can grow to.
 
   munge_key:
