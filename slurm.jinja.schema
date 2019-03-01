@@ -161,6 +161,7 @@ properties:
                 - nvidia-tesla-p100
                 - nvidia-tesla-v100
                 - nvidia-tesla-p4
+                - nvidia-tesla-t4
     description : GPU Type to attach to static nodes.
 
   gpu_count:
