@@ -48,12 +48,24 @@ resources:
     #external_compute_ips       : False
     #private_google_access      : True
 
-    #compute_disk_type          : pd-standard
-    #compute_disk_size_gb       : 10
     #controller_disk_type       : pd-standard
-    #controller_disk_size_gb    : 100
+    #controller_disk_size_gb    : 50
+    #controller_labels          :
+    #     key1 : value1
+    #     key2 : value2
+
     #login_disk_type            : pd-standard
     #login_disk_size_gb         : 10
+    #login_labels               :
+    #     key1 : value1
+    #     key2 : value2
+
+    #compute_disk_type          : pd-standard
+    #compute_disk_size_gb       : 10
+    #compute_labels             :
+    #     key1 : value1
+    #     key2 : value2
+
     #nfs_apps_server            :
     #nfs_home_server            :
     #controller_secondary_disk          : True
@@ -67,13 +79,4 @@ resources:
     #slurm_version           : < Current slurm version, e.g. 17.11.8 >
     default_users           : < GCP user email addr, comma separated >
 
-    #controller_labels :
-    #     key1 : value1
-    #     key2 : value2
-    #compute_labels :
-    #     key1 : value1
-    #     key2 : value2
-    #login_labels :
-    #     key1 : value1
-    #     key2 : value2
 #  [END cluster_yaml]
