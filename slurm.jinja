@@ -121,7 +121,7 @@ resources:
         - controller
 {% if properties["labels"] %}
     labels:
-      {{properties["cluster_name"]}}-controller: {{properties["labels"]}}
+      {{properties["labels"]}}
 {% endif %}
     metadata:
       items:
@@ -187,7 +187,7 @@ resources:
         - login
   {% if properties["labels"] %}
     labels:
-      {{properties["cluster_name"]}}-login1: {{properties["labels"]}}
+      {{properties["labels"]}}
   {% endif %}
     metadata:
       items:
@@ -248,7 +248,7 @@ resources:
         - compute
   {% if properties["labels"] %}
     labels:
-      {{properties["cluster_name"]}}-compute{{ n + 1}}: {{properties["labels"]}}
+      {{properties["labels"]}}
   {% endif %}
     metadata:
       items:
@@ -307,7 +307,7 @@ resources:
         - compute
   {% if properties["labels"] %}
     labels:
-      {{properties["cluster_name"]}}-compute-image: {{properties["labels"]}}
+      {{properties["labels"]}}
   {% endif %}
     metadata:
       items:

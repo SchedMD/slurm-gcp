@@ -44,7 +44,7 @@ VPC_SUBNET   = '@VPC_SUBNET@'
 DISK_SIZE_GB = '@DISK_SIZE_GB@'
 DISK_TYPE    = '@DISK_TYPE@'
 
-LABELS       = '@LABELS@'
+LABELS       = @LABELS@
 
 NETWORK_TYPE = 'subnetwork'
 NETWORK      = "projects/{}/regions/{}/subnetworks/{}-slurm-subnet".format(PROJECT, REGION, CLUSTER_NAME)
@@ -138,7 +138,7 @@ def create_instance(compute, project, zone, instance_type, instance_name,
         },
 
     if LABELS:
-        config['labels'] = {instance_name: LABELS},
+        config['labels'] = LABELS,
 
     if CPU_PLATFORM:
         config['minCpuPlatform'] = CPU_PLATFORM,

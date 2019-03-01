@@ -170,9 +170,10 @@ properties:
     description : Number of GPUs to attach to each node.
 
   labels:
-    type        : string
-    description : Labels to add to nodes for reporting. Key will be node name
-                  (key,value).
+    type        : object
+    default     : {}
+    description : Labels to add to nodes for reporting. List of key key, value
+                  pairs.
 
   login_machine_type:
     type        : string
