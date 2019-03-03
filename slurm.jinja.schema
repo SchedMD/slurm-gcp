@@ -164,7 +164,7 @@ properties:
 
   external_compute_ips:
     type        : boolean
-    default     : True
+    default     : False
     description : Whether compute nodes are assigned external IPs or not. If set
                   to false, then the compute nodes will get to the internet
                   through a Cloud NAT gateway.
