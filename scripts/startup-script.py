@@ -377,7 +377,7 @@ ControlMachine={control_machine}
 #BackupAddr=
 #
 AuthType=auth/munge
-AuthInfo=cred_expire=600
+AuthInfo=cred_expire=120
 #CheckpointType=checkpoint/none
 CryptoType=crypto/munge
 #DisableRootJobs=NO
