@@ -112,6 +112,8 @@ Steps:
 
    ```
 
+   **NOTE:** For a complete list of available options and their definitions,
+   check out the [schema file](slurm.jinja.schema).
 
 2. Spin up the cluster.
 
@@ -181,6 +183,9 @@ Steps:
    partition will be marked as "down" to prevent jobs from launching until the
    image is created. After the image is created, the partition will be put into
    an "up" state and jobs can then run.
+
+   **NOTE:** When creating a compute image that has gpus attached, the process
+   can take about 10 minutes.
 
    If the compute image needs to be updated, it can be done with the following
    command:
