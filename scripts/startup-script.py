@@ -126,7 +126,11 @@ def start_motd():
 A terminal broadcast will announce when installation and configuration is
 complete.
 
-"""
+Partition {} will be marked down until the compute image has been created.
+For instances with gpus attached, it could take ~10 mins after the controller
+has finished installing.
+
+""".format(DEF_PART_NAME)
 
     if INSTANCE_TYPE != "controller":
         msg += """/home on the controller will be mounted over the existing /home.
@@ -1089,10 +1093,6 @@ def main():
         subprocess.call(shlex.split(
             "{}/bin/scontrol update partitionname={} state=down".format(
                 CURR_SLURM_DIR, DEF_PART_NAME)))
-        subprocess.call(['wall', '-n', """
-Partition {} has been marked down until the compute image has been created.
-For instances with gpus attached, it could take ~10 mins.
-""".format(DEF_PART_NAME)])
 
         print "ww Done installing controller"
     elif INSTANCE_TYPE == "compute":
@@ -1132,6 +1132,16 @@ For instances with gpus attached, it could take ~10 mins.
             # Ignore blank files with no shell magic.
             pass
 
+
+    if hostname != CLUSTER_NAME + "-compute-image":
+        # Wait for the compute image to mark the partition up
+        part_state = subprocess.check_output(shlex.split(
+            "{}/bin/scontrol show part {}".format(
+                CURR_SLURM_DIR, DEF_PART_NAME)))
+        while "State=UP" not in part_state:
+            part_state = subprocess.check_output(shlex.split(
+                "{}/bin/scontrol show part {}".format(
+                    CURR_SLURM_DIR, DEF_PART_NAME)))
 
     end_motd()
 
