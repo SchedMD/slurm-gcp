@@ -44,7 +44,7 @@ def start_instances_cb(request_id, response, exception):
     if exception is not None:
         logging.error("start exception: " + str(exception))
         if "Rate Limit Exceeded" in str(exception):
-            retrys_add.append(request_id)
+            retry_list.append(request_id)
 # [END start_instances_cb]
 
 
