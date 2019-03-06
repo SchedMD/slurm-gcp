@@ -45,6 +45,10 @@ def start_instances_cb(request_id, response, exception):
         logging.error("start exception: " + str(exception))
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
+        elif "was not found" in str(exception):
+            subprocess.Popen(
+                shlex.split("/apps/slurm/scripts/resume.py {}"
+                            .format(request_id)))
 # [END start_instances_cb]
 
 
