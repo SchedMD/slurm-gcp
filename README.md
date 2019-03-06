@@ -15,6 +15,9 @@ cloud environment. [SchedMD Commercial Support](https://www.schedmd.com/support.
 Issues and/or enhancement requests can be submitted to
 [SchedMD's Bugzilla](https://bugs.schedmd.com).
 
+For general feedback, please fill out the following
+[form](https://docs.google.com/forms/d/1STDQZOm96d4qhcWxL6wDsOBx9BsVPKidVUTOnqHNdcw).
+
 ## Stand-alone Cluster in Google Cloud Platform
 
 The supplied scripts can be used to create a stand-alone cluster in Google Cloud
