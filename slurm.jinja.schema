@@ -22,7 +22,10 @@ info:
     Create a Slurm cluster in GCP.
 
 imports:
+- path: scripts/custom-compute-install
+- path: scripts/custom-controller-install
 - path: scripts/resume.py
+- path: scripts/slurm-gcp-sync.py
 - path: scripts/startup-script.py
 - path: scripts/suspend.py
 
@@ -44,8 +47,10 @@ required:
 optional:
 - compute_disk_type
 - compute_disk_size_gb
+- compute_labels
 - controller_disk_type
 - controller_disk_size_gb
+- controller_labels
 - controller_secondary_disk
 - controller_secondary_disk_type
 - controller_secondary_disk_size_gb
@@ -53,15 +58,16 @@ optional:
 - external_compute_ips
 - gpu_count
 - gpu_type
-- labels
 - login_disk_size_gb
 - login_disk_type
+- login_labels
 - login_node_count
 - munge_key
 - nfs_apps_server
 - nfs_home_server
 - preemptible_bursting
 - shared_vpc_host_proj
+- suspend_time
 - vpc_net
 - vpc_subnet
 
@@ -86,10 +92,16 @@ properties:
 
   compute_disk_size_gb:
     type        : integer
-    default     : 100
+    default     : 10
     minimum     : 10
     maximum     : 2000
     description : Size of disk for compute nodes.
+
+  compute_labels:
+    type        : object
+    default     : {}
+    description : Labels to add to compute instances. List of key key, value
+                  pairs.
 
   controller_machine_type:
     type        : string
@@ -103,10 +115,16 @@ properties:
 
   controller_disk_size_gb:
     type        : integer
-    default     : 100
+    default     : 50
     minimum     : 10
     maximum     : 2000
     description : Size of disk for the controller.
+
+  controller_labels:
+    type        : object
+    default     : {}
+    description : Labels to add to controller instance. List of key key, value
+                  pairs.
 
   controller_secondary_disk:
     type        : boolean
@@ -146,7 +164,7 @@ properties:
 
   external_compute_ips:
     type        : boolean
-    default     : True
+    default     : False
     description : Whether compute nodes are assigned external IPs or not. If set
                   to false, then the compute nodes will get to the internet
                   through a Cloud NAT gateway.
@@ -157,18 +175,13 @@ properties:
                 - nvidia-tesla-p100
                 - nvidia-tesla-v100
                 - nvidia-tesla-p4
+                - nvidia-tesla-t4
     description : GPU Type to attach to static nodes.
 
   gpu_count:
     enum        : [0, 1, 2, 4, 8]
     default     : 0
     description : Number of GPUs to attach to each node.
-
-  labels:
-    type        : string
-    default     : slurm-on-gcp
-    description : Labels to add to nodes for reporting. Key will be node name
-                  (key,value).
 
   login_machine_type:
     type        : string
@@ -180,21 +193,30 @@ properties:
     default     : pd-standard
     description : Disk type (pd-ssd or pd-standard) for login node.
 
+  login_labels:
+    type        : object
+    default     : {}
+    description : Labels to add to login instances. List of key key, value
+                  pairs.
+
   login_disk_size_gb:
     type        : integer
-    default     : 100
+    default     : 10
     minimum     : 10
     maximum     : 2000
     description : Size of disk for login node.
 
   login_node_count:
     type        : integer
-    default     : 0
+    default     : 1
     description : Number of login nodes in the cluster.
 
   max_node_count:
     type        : integer
+    minimum     : 0
+    maximum     : 15000
     description : Maximum number of instances that the cluster can grow to.
+                  Consider adding 10% to account for preemptible nodes.
 
   munge_key:
     type        : string
@@ -235,13 +257,22 @@ properties:
 
   slurm_version:
     type        : string
-    default     : 18.08.5-2
+    default     : b:slurm-18.08
     description : The Slurm version to install. The version should match link
-                  name found at https://www.schedmd.com/downloads.php.
+                  name found at https://www.schedmd.com/downloads.php. The
+                  version can also be in the form "b:<branch name>", where
+                  <branch name> is a branch in
+                  https://github.com/schedmd/slurm.
 
   static_node_count:
     type        : integer
     description : Number of initial instances in the cluster.
+
+  suspend_time:
+    type        : integer
+    default     : 300
+    minimum     : 300
+    description : Idle time to wait before nodes go away (in sec)
 
   vpc_net:
     type        : string

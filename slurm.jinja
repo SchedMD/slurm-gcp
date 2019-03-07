@@ -52,7 +52,7 @@ resources:
 
 {% if (not properties['external_compute_ips'] and not properties['shared_vpc_host_proj']) %}
 - name: {{properties["cluster_name"]}}-router
-  type: compute.beta.router
+  type: compute.v1.router
   properties:
   {% if properties['vpc_net'] %}
     network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/{{ properties["vpc_net"]}}
@@ -119,26 +119,35 @@ resources:
     tags:
       items:
         - controller
-{% if properties["labels"] %}
+{% if properties["controller_labels"] %}
     labels:
-      {{properties["cluster_name"]}}-controller: {{properties["labels"]}}
+      {{properties["controller_labels"]}}
 {% endif %}
     metadata:
       items:
         - key: startup-script
           value: |
-            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","controller")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"]) }}
+            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","controller")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"])|replace("@SUSPEND_TIME@",properties["suspend_time"]) }}
         - key: startup-script-compute
           value: |
-            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","compute")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"]) }}
+            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","compute")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"])|replace("@SUSPEND_TIME@",properties["suspend_time"]) }}
         - key: slurm_resume
           value: |
-            {{ imports["scripts/resume.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@REGION@",properties["region"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@DISK_SIZE_GB@",properties["compute_disk_size_gb"])|replace("@DISK_TYPE@",properties["compute_disk_type"])|replace("@LABELS@",properties["labels"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@CPU_PLATFORM@",properties["cpu_platform"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@VPC_SUBNET@",properties["vpc_subnet"])|replace("@SHARED_VPC_HOST_PROJ@",properties["shared_vpc_host_proj"]) }}
+            {{ imports["scripts/resume.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@REGION@",properties["region"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@DISK_SIZE_GB@",properties["compute_disk_size_gb"])|replace("@DISK_TYPE@",properties["compute_disk_type"])|replace("@LABELS@",properties["compute_labels"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@CPU_PLATFORM@",properties["cpu_platform"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@VPC_SUBNET@",properties["vpc_subnet"])|replace("@SHARED_VPC_HOST_PROJ@",properties["shared_vpc_host_proj"]) }}
         - key: slurm_suspend
           value: |
             {{ imports["scripts/suspend.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"]) }}
+        - key: slurm-gcp-sync
+          value: |
+            {{ imports["scripts/slurm-gcp-sync.py"]|indent(12)|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"]) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: custom-compute-install
+          value: |
+            {{ imports["scripts/custom-compute-install"]|indent(12) }}
+        - key: custom-controller-install
+          value: |
+            {{ imports["scripts/custom-controller-install"]|indent(12) }}
 
 
 {% for n in range(properties['login_node_count']) %}
@@ -176,15 +185,15 @@ resources:
     tags:
       items:
         - login
-  {% if properties["labels"] %}
+  {% if properties["login_labels"] %}
     labels:
-      {{properties["cluster_name"]}}-login1: {{properties["labels"]}}
+      {{properties["login_labels"]}}
   {% endif %}
     metadata:
       items:
         - key: startup-script
           value: |
-            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","login")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"]) }}
+            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","login")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"])|replace("@SUSPEND_TIME@",properties["suspend_time"]) }}
         - key: enable-oslogin
           value: "TRUE"
 {% endfor %}
@@ -225,7 +234,7 @@ resources:
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
   {% endif %}
-  {% if properties['external_compute_ips'] or properties['shared_vpc_host_proj'] %}
+  {% if properties['external_compute_ips'] %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
@@ -237,15 +246,15 @@ resources:
     tags:
       items:
         - compute
-  {% if properties["labels"] %}
+  {% if properties["compute_labels"] %}
     labels:
-      {{properties["cluster_name"]}}-compute{{ n + 1}}: {{properties["labels"]}}
+      {{properties["compute_labels"]}}
   {% endif %}
     metadata:
       items:
         - key: startup-script
           value: |
-            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","compute")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"]) }}
+            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","compute")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"])|replace("@SUSPEND_TIME@",properties["suspend_time"]) }}
         - key: enable-oslogin
           value: "TRUE"
 {% endfor %}
@@ -284,7 +293,7 @@ resources:
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
   {% endif %}
-  {% if properties['external_compute_ips'] or properties['shared_vpc_host_proj'] %}
+  {% if properties['external_compute_ips'] %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
@@ -296,14 +305,14 @@ resources:
     tags:
       items:
         - compute
-  {% if properties["labels"] %}
+  {% if properties["compute_labels"] %}
     labels:
-      {{properties["cluster_name"]}}-compute-image: {{properties["labels"]}}
+      {{properties["compute_labels"]}}
   {% endif %}
     metadata:
       items:
         - key: startup-script
           value: |
-            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","compute")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"]) }}
+            {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@ZONE@",properties["zone"])|replace("@INSTANCE_TYPE@","compute")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@STATIC_NODE_COUNT@",properties["static_node_count"])|replace("@MAX_NODE_COUNT@",properties["max_node_count"])|replace("@MACHINE_TYPE@",properties["compute_machine_type"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@GPU_TYPE@",properties["gpu_type"])|replace("@GPU_COUNT@",properties["gpu_count"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|replace("@PREEMPTIBLE@",properties["preemptible_bursting"])|replace("@SUSPEND_TIME@",properties["suspend_time"]) }}
         - key: enable-oslogin
           value: "TRUE"

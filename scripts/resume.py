@@ -44,7 +44,7 @@ VPC_SUBNET   = '@VPC_SUBNET@'
 DISK_SIZE_GB = '@DISK_SIZE_GB@'
 DISK_TYPE    = '@DISK_TYPE@'
 
-LABELS       = '@LABELS@'
+LABELS       = @LABELS@
 
 NETWORK_TYPE = 'subnetwork'
 NETWORK      = "projects/{}/regions/{}/subnetworks/{}-slurm-subnet".format(PROJECT, REGION, CLUSTER_NAME)
@@ -55,29 +55,20 @@ GPU_COUNT    = '@GPU_COUNT@'
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/resume.log'
 
+TOT_REQ_CNT = 1000
+
+instances = {}
+operations = {}
+retry_list = []
+
 credentials = compute_engine.Credentials()
 
 http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
 authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 
 # [START create_instance]
-def create_instance(compute, project, zone, instance_type, instance_name):
-    # Get the latest CentOS 7image.
-    have_compute_img = False
-    try:
-        image_response = compute.images().getFromFamily(
-            project = PROJECT,
-            family = CLUSTER_NAME + "-compute-image-family").execute()
-        if image_response['status'] != "READY":
-            logging.info("image not ready, using the startup script")
-            raise Exception("image not ready")
-        source_disk_image = image_response['selfLink']
-        have_compute_img = True
-    except:
-        image_response = compute.images().getFromFamily(
-            project='centos-cloud', family='centos-7').execute()
-        source_disk_image = image_response['selfLink']
-
+def create_instance(compute, project, zone, instance_type, instance_name,
+                    source_disk_image, have_compute_img):
     # Configure the machine
     machine_type = "zones/{}/machineTypes/{}".format(zone, instance_type)
     disk_type = "projects/{}/zones/{}/diskTypes/{}".format(PROJECT, ZONE,
@@ -147,7 +138,7 @@ def create_instance(compute, project, zone, instance_type, instance_name):
         },
 
     if LABELS:
-        config['labels'] = {instance_name: LABELS},
+        config['labels'] = LABELS,
 
     if CPU_PLATFORM:
         config['minCpuPlatform'] = CPU_PLATFORM,
@@ -166,7 +157,7 @@ def create_instance(compute, project, zone, instance_type, instance_name):
             NETWORK_TYPE : net_type
         }]
 
-    if EXTERNAL_IP or SHARED_VPC_HOST_PROJ:
+    if EXTERNAL_IP:
         config['networkInterfaces'][0]['accessConfigs'] = [
             {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
         ]
@@ -174,83 +165,92 @@ def create_instance(compute, project, zone, instance_type, instance_name):
     return compute.instances().insert(
         project=project,
         zone=zone,
-        body=config).execute()
+        body=config)
 # [END create_instance]
 
-# [START wait_for_operation]
-def wait_for_operation(compute, project, zone, operation):
-    print('Waiting for operation to finish...')
-    while True:
-        result = compute.zoneOperations().get(
-            project=project,
-            zone=zone,
-            operation=operation).execute()
+# [START added_instances_cb]
+def added_instances_cb(request_id, response, exception):
+    if exception is not None:
+        logging.error("add exception for node {}: {}".format(request_id,
+                                                             str(exception)))
+        if "Rate Limit Exceeded" in str(exception):
+            retry_list.append(request_id)
+    else:
+        operations[request_id] = response
+# [END added_instances_cb]
 
-        if result['status'] == 'DONE':
-            print("done.")
-            if 'error' in result:
-                raise Exception(result['error'])
-            return result
+# [start add_instances]
+def add_instances(compute, source_disk_image, have_compute_img, node_list):
 
-        time.sleep(1)
-# [END wait_for_operation]
+    batch_list = []
+    curr_batch = 0
+    req_cnt = 0
+    batch_list.insert(
+        curr_batch, compute.new_batch_http_request(callback=added_instances_cb))
+
+    for node_name in node_list:
+        if req_cnt >= TOT_REQ_CNT:
+            req_cnt = 0
+            curr_batch += 1
+            batch_list.insert(
+                curr_batch,
+                compute.new_batch_http_request(callback=added_instances_cb))
+
+        batch_list[curr_batch].add(
+            create_instance(
+                compute, PROJECT, ZONE, MACHINE_TYPE, node_name,
+                source_disk_image, have_compute_img),
+            request_id=node_name)
+        req_cnt += 1
+
+    try:
+        for i, batch in enumerate(batch_list):
+            batch.execute(http=http)
+            if i < (len(batch_list) - 1):
+                time.sleep(30)
+    except Exception, e:
+        logging.exception("error in add batch: " + str(e))
+
+# [END add_instances]
 
 # [START main]
-def main(short_node_list):
-    logging.info("Bursting out:" + short_node_list)
+def main(arg_nodes):
+    logging.debug("Bursting out:" + arg_nodes)
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=authorized_http,
                                               cache_discovery=False)
 
     # Get node list
-    show_hostname_cmd = "{} show hostname {}".format(SCONTROL, short_node_list)
-    node_list = subprocess.check_output(shlex.split(show_hostname_cmd))
+    show_hostname_cmd = "{} show hostnames {}".format(SCONTROL, arg_nodes)
+    nodes_str = subprocess.check_output(shlex.split(show_hostname_cmd))
+    node_list = nodes_str.splitlines()
 
-    operations = {}
-    for node_name in node_list.splitlines():
-        try:
-            instance = compute.instances().get(
-                      project=PROJECT, zone=ZONE, instance=node_name,
-                      fields='name,status').execute()
-            logging.info("node {} already exists in state {}".format(
-                node_name, instance['status']))
-            operations[node_name] = compute.instances().start(
-                project=PROJECT, zone=ZONE, instance=node_name).execute()
-            logging.info("Sent start instance for " + node_name)
-        except:
-            try:
-                operations[node_name] = create_instance(
-                    compute, PROJECT, ZONE, MACHINE_TYPE, node_name)
-                logging.info("Sent create instance for " + node_name)
-            except Exception, e:
-                logging.exception("Error in creation of {} ({})".format(
-                    node_name, str(e)))
-                cmd = "{} update node={} state=down reason='{}'".format(
-                    SCONTROL, node_name, str(e))
-                subprocess.call(shlex.split(cmd))
+    have_compute_img = False
+    try:
+        image_response = compute.images().getFromFamily(
+            project = PROJECT,
+            family = CLUSTER_NAME + "-compute-image-family").execute()
+        if image_response['status'] != "READY":
+            logging.debug("image not ready, using the startup script")
+            raise Exception("image not ready")
+        source_disk_image = image_response['selfLink']
+        have_compute_img = True
+    except:
+        image_response = compute.images().getFromFamily(
+            project='centos-cloud', family='centos-7').execute()
+        source_disk_image = image_response['selfLink']
 
-    for node_name in operations:
-        try:
-            operation = operations[node_name]
-            # Do this after the instances have been initialized and then wait
-            # for all operations to finish. Then updates their addrs.
-            wait_for_operation(compute, PROJECT, ZONE, operation['name'])
+    while True:
+        add_instances(compute, source_disk_image, have_compute_img, node_list)
+        if not len(retry_list):
+            break;
 
-            my_fields = 'networkInterfaces(name,network,networkIP,subnetwork)'
-            instance_networks = compute.instances().get(
-                project=PROJECT, zone=ZONE, instance=node_name,
-                fields=my_fields).execute()
-            instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
+        logging.debug("got {} nodes to retry ({})".
+                      format(len(retry_list),",".join(retry_list)))
+        node_list = list(retry_list)
+        del retry_list[:]
 
-            node_update_cmd = "{} update node={} nodeaddr={}".format(
-                SCONTROL, node_name, instance_ip)
-            subprocess.call(shlex.split(node_update_cmd))
-
-            logging.info("Instance " + node_name + " is now up")
-        except Exception, e:
-            logging.exception("Error in adding {} to slurm ({})".format(
-                node_name, str(e)))
-
+    logging.debug("done adding instances")
 # [END main]
 
 
@@ -261,6 +261,11 @@ if __name__ == '__main__':
     parser.add_argument('nodes', help='Nodes to burst')
 
     args = parser.parse_args()
+
+    # silence module logging
+    for logger in logging.Logger.manager.loggerDict:
+        logging.getLogger(logger).setLevel(logging.WARNING)
+
     logging.basicConfig(
         filename=LOGFILE,
         format='%(asctime)s %(name)s %(levelname)s: %(message)s',

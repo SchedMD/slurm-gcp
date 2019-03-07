@@ -23,7 +23,7 @@ resources:
 - name: slurm-cluster
   type: slurm.jinja
   properties:
-    cluster_name            : google1
+    cluster_name            : g1
     static_node_count       : 2
     max_node_count          : 10
 
@@ -40,7 +40,7 @@ resources:
     controller_machine_type : n1-standard-2
     compute_machine_type    : n1-standard-2
     login_machine_type      : n1-standard-2
-    #login_node_count        : 1
+    #login_node_count        : 0
 
     # Optional compute configuration fields
     #cpu_platform               : Intel Skylake
@@ -48,12 +48,24 @@ resources:
     #external_compute_ips       : False
     #private_google_access      : True
 
-    #compute_disk_type          : pd-standard
-    #compute_disk_size_gb       : 10
     #controller_disk_type       : pd-standard
-    #controller_disk_size_gb    : 100
+    #controller_disk_size_gb    : 50
+    #controller_labels          :
+    #     key1 : value1
+    #     key2 : value2
+
     #login_disk_type            : pd-standard
     #login_disk_size_gb         : 10
+    #login_labels               :
+    #     key1 : value1
+    #     key2 : value2
+
+    #compute_disk_type          : pd-standard
+    #compute_disk_size_gb       : 10
+    #compute_labels             :
+    #     key1 : value1
+    #     key2 : value2
+
     #nfs_apps_server            :
     #nfs_home_server            :
     #controller_secondary_disk          : True
@@ -64,6 +76,11 @@ resources:
     #gpu_type                   : nvidia-tesla-v100
     #gpu_count                  : 8
 
-    #slurm_version           : < Current slurm version, e.g. 17.11.8 >
+    # Optional timer fields
+    #suspend_time               : 300
+
     default_users           : < GCP user email addr, comma separated >
+    #slurm_version           : 18.08-latest
+    #default_account         : default
+
 #  [END cluster_yaml]
