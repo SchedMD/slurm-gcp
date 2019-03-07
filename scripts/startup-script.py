@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import httplib
 import os
 import shlex
@@ -46,6 +47,7 @@ NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
 CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
 SEC_DISK_DIR      = '/mnt/disks/sec'
 
+DEF_PART_NAME   = "debug"
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
 
 SLURM_PREFIX  = APPS_DIR + '/slurm/slurm-' + SLURM_VERSION
@@ -125,11 +127,14 @@ complete before making changes in your home directory.
 # END start_motd()
 
 
-def end_motd():
+def end_motd(broadcast=True):
 
     f = open('/etc/motd', 'w')
     f.write(MOTD_HEADER)
     f.close()
+
+    if not broadcast:
+        return
 
     subprocess.call(['wall', '-n',
         '*** Slurm ' + INSTANCE_TYPE + ' daemon installation complete ***'])
@@ -218,11 +223,11 @@ def setup_munge():
     if not NFS_APPS_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(MUNGE_DIR, CONTROL_MACHINE))
     else:
         f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(MUNGE_DIR, NFS_APPS_SERVER))
     f.close()
 
@@ -234,7 +239,10 @@ def setup_munge():
         f.write("[Unit]\nRequiresMountsFor={}\n".format(MUNGE_DIR))
         f.close()
 
+        subprocess.call(['systemctl', 'enable', 'munge'])
         return
+
+    subprocess.call(['systemctl', 'enable', 'munge'])
 
     if MUNGE_KEY:
         f = open(MUNGE_DIR +'/munge.key', 'w')
@@ -251,7 +259,6 @@ def setup_munge():
 #END setup_munge ()
 
 def start_munge():
-        subprocess.call(['systemctl', 'enable', 'munge'])
         subprocess.call(['systemctl', 'start', 'munge'])
 #END start_munge()
 
@@ -259,13 +266,13 @@ def setup_nfs_exports():
 
     f = open('/etc/exports', 'w')
     f.write("""
-/home  *(rw,sync,no_subtree_check,no_root_squash)
-%s  *(rw,sync,no_subtree_check,no_root_squash)
-/etc/munge *(rw,sync,no_subtree_check,no_root_squash)
+/home  *(rw,no_subtree_check,no_root_squash)
+%s  *(rw,no_subtree_check,no_root_squash)
+/etc/munge *(rw,no_subtree_check,no_root_squash)
 """ % APPS_DIR)
     if CONTROLLER_SECONDARY_DISK:
         f.write("""
-%s  *(rw,sync,no_subtree_check,no_root_squash)
+%s  *(rw,no_subtree_check,no_root_squash)
 """ % SEC_DISK_DIR)
     f.close()
 
@@ -528,8 +535,8 @@ NodeName={1}-compute{0}
         conf += "NodeName={0}-compute{1} State=CLOUD".format(CLUSTER_NAME, cloud_range)
 
     conf += """
-PartitionName=debug Nodes={0}-compute[1-{1:d}] Default=YES MaxTime=INFINITE State=UP LLN=yes
-""".format(CLUSTER_NAME, MAX_NODE_COUNT)
+PartitionName={} Nodes={}-compute[1-{}] Default=YES MaxTime=INFINITE State=UP LLN=yes
+""".format(DEF_PART_NAME, CLUSTER_NAME, MAX_NODE_COUNT)
 
     etc_dir = SLURM_PREFIX + '/etc'
     if not os.path.exists(etc_dir):
@@ -788,6 +795,7 @@ WantedBy=multi-user.target
     f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmd.service', 0o644)
+    subprocess.call(shlex.split('systemctl enable slurmd'))
 
 #END install_compute_service_scripts()
 
@@ -818,11 +826,11 @@ def setup_nfs_apps_vols():
     if not NFS_APPS_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(APPS_DIR, CONTROL_MACHINE))
     else:
         f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(APPS_DIR, NFS_APPS_SERVER))
     f.close()
 
@@ -834,11 +842,11 @@ def setup_nfs_home_vols():
     if not NFS_HOME_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{0}:/home    /home     nfs      rw,sync,hard,intr  0     0
+{0}:/home    /home     nfs      rw,hard,intr  0     0
 """.format(CONTROL_MACHINE))
     else:
         f.write("""
-{0}:/home    /home     nfs      rw,sync,hard,intr  0     0
+{0}:/home    /home     nfs      rw,hard,intr  0     0
 """.format(NFS_HOME_SERVER))
     f.close()
 
@@ -850,7 +858,7 @@ def setup_nfs_sec_vols():
     if CONTROLLER_SECONDARY_DISK:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{1}:{0}    {0}     nfs      rw,sync,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr  0     0
 """.format(SEC_DISK_DIR, CONTROL_MACHINE))
     f.close()
 
@@ -900,6 +908,25 @@ def format_disk():
 
 # END format_disk()
 
+def create_compute_image():
+
+    end_motd(False)
+    subprocess.call("sync")
+    ver = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+    if GPU_COUNT:
+        time.sleep(300)
+
+    hostname = socket.gethostname()
+    subprocess.call(shlex.split("gcloud compute images "
+                                "create {0}-compute-image-{3} "
+                                "--source-disk {1} "
+                                "--source-disk-zone {2} --force "
+                                "--family {0}-compute-image-family".format(
+                                    CLUSTER_NAME, hostname, ZONE, ver)))
+#END create_compute_image()
+
+
 def main():
     # Disable SELinux
     subprocess.call(shlex.split('setenforce 0'))
@@ -932,12 +959,10 @@ def main():
     setup_nfs_apps_vols()
     setup_nfs_home_vols()
     setup_nfs_sec_vols()
-    mount_nfs_vols()
-
-    start_munge()
 
     if INSTANCE_TYPE == "controller":
-
+        mount_nfs_vols()
+        start_munge()
         install_slurm()
 
         # Add any additional installation functions here
@@ -978,20 +1003,45 @@ def main():
         subprocess.call(shlex.split('systemctl enable nfs-server'))
         subprocess.call(shlex.split('systemctl start nfs-server'))
         setup_nfs_exports()
+
+        # DOWN partition until image is created.
+        subprocess.call(shlex.split(
+            "{}/bin/scontrol update partitionname={} state=down".format(
+                SLURM_PREFIX, DEF_PART_NAME)))
+        subprocess.call(['wall', '-n', """
+Partition {} has been marked down until the compute image has been created.
+For instances with gpus attached, it could take ~10 mins.
+""".format(DEF_PART_NAME)])
+
         print "ww Done installing controller"
         subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ CONTROL_MACHINE + ' --zone=' + ZONE + ' --keys=startup-script'))
 
     elif INSTANCE_TYPE == "compute":
         install_compute_service_scripts()
-
-        hostname = socket.gethostname()
+        setup_slurmd_cronjob()
 
         # Add any additional installation functions here
 
-        subprocess.call(shlex.split('systemctl enable slurmd'))
-        setup_slurmd_cronjob()
-        subprocess.call(shlex.split('systemctl start slurmd'))
-        subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
+        mount_nfs_vols()
+        start_munge()
+        hostname = socket.gethostname()
+        if hostname == CLUSTER_NAME + "-compute-image":
+            create_compute_image()
+
+            subprocess.call(shlex.split(
+                "{}/bin/scontrol update partitionname={} state=up".format(
+                    SLURM_PREFIX, DEF_PART_NAME)))
+
+            subprocess.call(shlex.split("gcloud compute instances "
+                                        "delete {} --zone {} --quiet".format(
+                                            hostname, ZONE)))
+        else:
+            subprocess.call(shlex.split('systemctl start slurmd'))
+            subprocess.call(shlex.split('gcloud compute instances remove-metadata '+ hostname + ' --zone=' + ZONE + ' --keys=startup-script'))
+
+    else: # login nodes
+        mount_nfs_vols()
+        start_munge()
 
     end_motd()
 
