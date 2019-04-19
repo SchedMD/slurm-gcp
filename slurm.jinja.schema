@@ -117,7 +117,7 @@ properties:
     type        : integer
     default     : 50
     minimum     : 10
-    maximum     : 2000
+    maximum     : 6000
     description : Size of disk for the controller.
 
   controller_labels:
