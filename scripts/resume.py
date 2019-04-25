@@ -32,25 +32,16 @@ from googleapiclient.http import set_user_agent
 CLUSTER_NAME = '@CLUSTER_NAME@'
 
 PROJECT      = '@PROJECT@'
-ZONE         = '@ZONE@'
 REGION       = '@REGION@'
-MACHINE_TYPE = '@MACHINE_TYPE@'
-CPU_PLATFORM = '@CPU_PLATFORM@'
-PREEMPTIBLE  = @PREEMPTIBLE@
 EXTERNAL_IP  = @EXTERNAL_COMPUTE_IPS@
 SHARED_VPC_HOST_PROJ = '@SHARED_VPC_HOST_PROJ@'
 VPC_SUBNET   = '@VPC_SUBNET@'
 
-DISK_SIZE_GB = '@DISK_SIZE_GB@'
-DISK_TYPE    = '@DISK_TYPE@'
+PARTITIONS   = @PARTITIONS@
 
-LABELS       = @LABELS@
 
 NETWORK_TYPE = 'subnetwork'
 NETWORK      = "projects/{}/regions/{}/subnetworks/{}-slurm-subnet".format(PROJECT, REGION, CLUSTER_NAME)
-
-GPU_TYPE     = '@GPU_TYPE@'
-GPU_COUNT    = '@GPU_COUNT@'
 
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/resume.log'
@@ -69,10 +60,12 @@ authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 # [START create_instance]
 def create_instance(compute, project, zone, instance_type, instance_name,
                     source_disk_image, have_compute_img):
+
+    pid = int( instance_name[-5:-3] )
     # Configure the machine
     machine_type = "zones/{}/machineTypes/{}".format(zone, instance_type)
-    disk_type = "projects/{}/zones/{}/diskTypes/{}".format(PROJECT, ZONE,
-                                                           DISK_TYPE)
+    disk_type = "projects/{}/zones/{}/diskTypes/{}".format(PROJECT, zone,
+                                                           PARTITIONS[pid]["compute_disk_type"])
     config = {
         'name': instance_name,
         'machineType': machine_type,
@@ -84,7 +77,7 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             'initializeParams': {
                 'sourceImage': source_disk_image,
                 'diskType': disk_type,
-                'diskSizeGb': DISK_SIZE_GB
+                'diskSizeGb': PARTITIONS[pid]["compute_disk_size_gb"]
             }
         }],
 
@@ -119,29 +112,29 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             'value': startup_script
         })
 
-    if GPU_TYPE:
+    if "gpu_type" in PARTITIONS[pid]:
         accel_type = ("https://www.googleapis.com/compute/v1/"
                       "projects/{}/zones/{}/acceleratorTypes/{}".format(
-                          PROJECT, ZONE, GPU_TYPE))
+                          PROJECT, zone, PARTITIONS[pid]["gpu_type"]))
         config['guestAccelerators'] = [{
-            'acceleratorCount': GPU_COUNT,
+            'acceleratorCount': PARTITIONS[pid]["gpu_count"],
             'acceleratorType' : accel_type
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if PREEMPTIBLE:
+    if PARTITIONS[pid]["preemptible_bursting"]:
         config['scheduling'] = {
             "preemptible": True,
             "onHostMaintenance": "TERMINATE",
             "automaticRestart": False
         },
 
-    if LABELS:
-        config['labels'] = LABELS,
+    if "labels" in PARTITIONS[pid]:
+        config['labels'] = PARTITIONS[pid]["labels"],
 
-    if CPU_PLATFORM:
-        config['minCpuPlatform'] = CPU_PLATFORM,
+    if "cpu_platform" in PARTITIONS[pid]:
+        config['minCpuPlatform'] = PARTITIONS["pid"]["cpu_platform"],
 
     if VPC_SUBNET:
         net_type = "projects/{}/regions/{}/subnetworks/{}".format(
@@ -179,8 +172,31 @@ def added_instances_cb(request_id, response, exception):
         operations[request_id] = response
 # [END added_instances_cb]
 
+# [start get_source_image]
+def get_source_image( compute, node_name ):
+  
+    pid = int( node_name[-5:-3] )
+    have_compute_img = False
+    try:
+        image_response = compute.images().getFromFamily(
+            project = PROJECT,
+            family = CLUSTER_NAME + "-compute-image-{0}-family".format(pid)).execute()
+        if image_response['status'] != "READY":
+            logging.debug("image not ready, using the startup script")
+            raise Exception("image not ready")
+        source_disk_image = image_response['selfLink']
+        have_compute_img = True
+    except:
+        image_response = compute.images().getFromFamily(
+            project='centos-cloud', family='centos-7').execute()
+        source_disk_image = image_response['selfLink']
+
+    return source_disk_image, have_compute_img
+
+# [END get_source_image]
+
 # [start add_instances]
-def add_instances(compute, source_disk_image, have_compute_img, node_list):
+def add_instances(compute, node_list):
 
     batch_list = []
     curr_batch = 0
@@ -189,6 +205,7 @@ def add_instances(compute, source_disk_image, have_compute_img, node_list):
         curr_batch, compute.new_batch_http_request(callback=added_instances_cb))
 
     for node_name in node_list:
+
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
             curr_batch += 1
@@ -196,9 +213,12 @@ def add_instances(compute, source_disk_image, have_compute_img, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=added_instances_cb))
 
+        source_disk_image, have_compute_img = get_source_image( compute, node_name )
+
+        pid = int( node_name[-5:-3] )
         batch_list[curr_batch].add(
             create_instance(
-                compute, PROJECT, ZONE, MACHINE_TYPE, node_name,
+                compute, PROJECT, PARTITIONS[pid]["zone"], PARTITIONS[pid]["machine_type"], node_name,
                 source_disk_image, have_compute_img),
             request_id=node_name)
         req_cnt += 1
@@ -225,23 +245,8 @@ def main(arg_nodes):
     nodes_str = subprocess.check_output(shlex.split(show_hostname_cmd))
     node_list = nodes_str.splitlines()
 
-    have_compute_img = False
-    try:
-        image_response = compute.images().getFromFamily(
-            project = PROJECT,
-            family = CLUSTER_NAME + "-compute-image-family").execute()
-        if image_response['status'] != "READY":
-            logging.debug("image not ready, using the startup script")
-            raise Exception("image not ready")
-        source_disk_image = image_response['selfLink']
-        have_compute_img = True
-    except:
-        image_response = compute.images().getFromFamily(
-            project='centos-cloud', family='centos-7').execute()
-        source_disk_image = image_response['selfLink']
-
     while True:
-        add_instances(compute, source_disk_image, have_compute_img, node_list)
+        add_instances(compute, node_list)
         if not len(retry_list):
             break;
 
