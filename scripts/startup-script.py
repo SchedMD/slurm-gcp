@@ -1141,7 +1141,7 @@ def main():
 
             
             subprocess.call(shlex.split("gcloud compute instances "
-                                        "delete {} --zone {} --quiet".format(
+                                        "stop {} --zone {} --quiet".format(
                                             hostname, PARTITIONS[pid]["zone"])))
         else:
             subprocess.call(shlex.split('systemctl start slurmd'))
