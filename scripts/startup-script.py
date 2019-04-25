@@ -1106,9 +1106,6 @@ def main():
         subprocess.call(shlex.split('systemctl start nfs-server'))
         setup_nfs_exports()
 
-        #hostname = socket.gethostname()
-        #pid = int( hostname[-5:-3] )
-        #if PARTITION[pid]["preemptible_bursting"]:
         setup_sync_cronjob()
 
         # DOWN partition until image is created.

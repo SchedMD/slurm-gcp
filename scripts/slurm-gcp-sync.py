@@ -30,6 +30,7 @@ CLUSTER_NAME = '@CLUSTER_NAME@'
 
 PROJECT      = '@PROJECT@'
 ZONE         = '@ZONE@'
+PARTITIONS   = @PARTITIONS@
 
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 SINFO        = '/apps/slurm/current/bin/sinfo'
@@ -70,8 +71,9 @@ def start_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=start_instances_cb))
 
+        pid = int( node[-5:-3] )
         batch_list[curr_batch].add(
-            compute.instances().start(project=PROJECT, zone=ZONE,
+            compute.instances().start(project=PROJECT, zone=PARTITIONS[pid]["zone"],
                                       instance=node),
             request_id=node)
         req_cnt += 1
@@ -99,19 +101,21 @@ def main():
 
         page_token = ""
         g_nodes = []
-        while True:
-            resp = compute.instances().list(
-                      project=PROJECT, zone=ZONE, pageToken=page_token,
-                      filter='name={}-compute*'.format(CLUSTER_NAME)).execute()
-
-            if "items" in resp:
-                g_nodes.extend(resp['items'])
-            if "nextPageToken" in resp:
-                page_token = resp['nextPageToken']
-                continue
-
-            break;
-
+        for i in range( len(PARTITIONS) ):
+            if( PARTITIONS[i]["preemptible_bursting"] ):
+                while True:
+                    resp = compute.instances().list(
+                              project=PROJECT, zone=PARTITIONS[i]['zone'], pageToken=page_token,
+                              filter='name={}-compute*'.format(CLUSTER_NAME)).execute()
+        
+                    if "items" in resp:
+                        g_nodes.extend(resp['items'])
+                    if "nextPageToken" in resp:
+                        page_token = resp['nextPageToken']
+                        continue
+        
+                    break;
+        
         to_down = []
         to_idle = []
         to_start = []
