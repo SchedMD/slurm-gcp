@@ -32,22 +32,16 @@ imports:
 required:
 - cidr
 - cluster_name
-- compute_machine_type
 - controller_machine_type
 - default_account
 - default_users
 - login_machine_type
-- max_node_count
 - private_google_access
 - region
 - slurm_version
-- static_node_count
 - zone
 
 optional:
-- compute_disk_type
-- compute_disk_size_gb
-- compute_labels
 - controller_disk_type
 - controller_disk_size_gb
 - controller_labels
@@ -65,13 +59,13 @@ optional:
 - munge_key
 - nfs_apps_server
 - nfs_home_server
-- preemptible_bursting
 - shared_vpc_host_proj
 - suspend_time
 - vpc_net
 - vpc_subnet
 
 properties:
+
   cidr:
     type        : string
     description : RFC1918 subnet to run instances in, eg. 10.10.0.0/16.
@@ -79,29 +73,6 @@ properties:
   cluster_name:
     type        : string
     description : Name of the cluster
-
-  compute_machine_type:
-    type        : string
-    description : Machine type to use for compute node instances.
-                  eg. n1-standard-4.
-
-  compute_disk_type:
-    enum        : ["pd-ssd", "pd-standard"]
-    default     : pd-standard
-    description : Disk type (pd-ssd or pd-standard) for compute nodes.
-
-  compute_disk_size_gb:
-    type        : integer
-    default     : 10
-    minimum     : 10
-    maximum     : 2000
-    description : Size of disk for compute nodes.
-
-  compute_labels:
-    type        : object
-    default     : {}
-    description : Labels to add to compute instances. List of key key, value
-                  pairs.
 
   controller_machine_type:
     type        : string
@@ -143,14 +114,6 @@ properties:
     maximum     : 64000
     description : Size of disk for the secondary disk.
 
-  cpu_platform:
-    enum        :
-                - Intel Sandy Bridge
-                - Intel Ivy Bridge
-                - Intel Haswell
-                - Intel Broadwell
-                - Intel Skylake
-    description : Minimum Intel Platform for Compute Nodes to Use
 
   default_account:
     type        : string
@@ -168,20 +131,6 @@ properties:
     description : Whether compute nodes are assigned external IPs or not. If set
                   to false, then the compute nodes will get to the internet
                   through a Cloud NAT gateway.
-
-  gpu_type:
-    enum        :
-                - nvidia-tesla-k80
-                - nvidia-tesla-p100
-                - nvidia-tesla-v100
-                - nvidia-tesla-p4
-                - nvidia-tesla-t4
-    description : GPU Type to attach to static nodes.
-
-  gpu_count:
-    enum        : [0, 1, 2, 4, 8]
-    default     : 0
-    description : Number of GPUs to attach to each node.
 
   login_machine_type:
     type        : string
@@ -211,13 +160,6 @@ properties:
     default     : 1
     description : Number of login nodes in the cluster.
 
-  max_node_count:
-    type        : integer
-    minimum     : 0
-    maximum     : 15000
-    description : Maximum number of instances that the cluster can grow to.
-                  Consider adding 10% to account for preemptible nodes.
-
   munge_key:
     type        : string
     description : Specific munge key to use
@@ -231,13 +173,6 @@ properties:
   nfs_home_server:
     type        : string
     description : IP address of NFS server hosting home dir
-
-  preemptible_bursting:
-    type        : boolean
-    default     : False
-    description : Whether bursted compute nodes are preemptible instances or
-                  not. Makre sure to choose a zone that has preemptible
-                  resources.
 
   private_google_access:
     type        : boolean
@@ -264,10 +199,6 @@ properties:
                   <branch name> is a branch in
                   https://github.com/schedmd/slurm.
 
-  static_node_count:
-    type        : integer
-    description : Number of initial instances in the cluster.
-
   suspend_time:
     type        : integer
     default     : 300
@@ -287,3 +218,96 @@ properties:
   zone:
     type        : string
     description : Zone to run the instances in based on Region.
+
+  partitions:
+    type: array
+    description: An array of configurations for specifying multiple machine types residing in their own Slurm partitions.
+    items:
+      type: object
+      required :  
+      - machine_type
+      - name
+      - max_node_count
+      - zone
+      optional :
+      - compute_disk_type
+      - compute_disk_size_gb
+      - compute_labels
+      - cpu_platform
+      - gpu_type
+      - gpu_count
+      - preemptible_bursting
+      - static_node_count
+      - zone
+      properties :
+
+        machine_type:
+          type        : string
+          description : Machine type to use for compute node instances.
+                        eg. n1-standard-4.
+
+        compute_disk_type:
+          enum        : ["pd-ssd", "pd-standard"]
+          default     : pd-standard
+          description : Disk type (pd-ssd or pd-standard) for compute nodes.
+
+        compute_disk_size_gb:
+          type        : integer
+          default     : 10
+          minimum     : 10
+          maximum     : 2000
+          description : Size of disk for compute nodes.
+
+        compute_labels:
+          type        : object
+          default     : {}
+          description : Labels to add to compute instances. List of key key, value
+                        pairs.
+
+        cpu_platform:
+          enum        :
+                      - Intel Sandy Bridge
+                      - Intel Ivy Bridge
+                      - Intel Haswell
+                      - Intel Broadwell
+                      - Intel Skylake
+          description : Minimum Intel Platform for Compute Nodes to Use
+
+        gpu_type:
+          enum        :
+                      - nvidia-tesla-k80
+                      - nvidia-tesla-p100
+                      - nvidia-tesla-v100
+                      - nvidia-tesla-p4
+                      - nvidia-tesla-t4
+          description : GPU Type to attach to static nodes.
+
+        gpu_count:
+          enum        : [0, 1, 2, 4, 8]
+          default     : 0
+          description : Number of GPUs to attach to each node.
+
+        max_node_count:
+          type        : integer
+          minimum     : 0
+          maximum     : 1000
+          description : Maximum number of instances that the cluster can grow to.
+                        Consider adding 10% to account for preemptible nodes.
+
+        name:
+          type        : string
+          description : Name of the compute node partition
+    
+
+        preemptible_bursting:
+          type        : boolean
+          default     : False
+          description : Whether bursted compute nodes are preemptible instances or
+                        not. Make sure to choose a zone that has preemptible
+                        resources.
+
+
+        static_node_count:
+          type        : integer
+          description : Number of initial instances in the cluster.
+          default     : 0
