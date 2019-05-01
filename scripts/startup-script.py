@@ -510,7 +510,7 @@ AccountingStorageType=accounting_storage/slurmdbd
 #AccountingStorageUser=
 AccountingStoreJobComment=YES
 ClusterName={cluster_name}
-DebugFlags=power
+#DebugFlags=powersave
 #JobCompHost=
 #JobCompLoc=
 #JobCompPass=
@@ -539,7 +539,7 @@ SuspendRate=0
 SuspendTime={suspend_time}
 #
 SchedulerParameters=salloc_wait_nodes
-SlurmctldParameters=cloud_dns
+SlurmctldParameters=cloud_dns,idle_on_node_suspend
 CommunicationParameters=NoAddrCache
 #
 # COMPUTE NODES
