@@ -64,7 +64,9 @@ optional:
 - login_labels
 - login_node_count
 - munge_key
+- nfs_apps_dir
 - nfs_apps_server
+- nfs_home_dir
 - nfs_home_server
 - preemptible_bursting
 - shared_vpc_host_proj
@@ -225,9 +227,19 @@ properties:
                   (e.g "date +%s | sha512sum | cut -d' ' -f1"). If not specified
                   then a random key will be generated at deployment creation.
 
+  nfs_apps_dir:
+    type        : string
+    default     : /apps
+    description : location of the nfs_apps directory on the nfs_apps_server.
+
   nfs_apps_server:
     type        : string
     description : IP address of NFS server hosting apps dir
+
+  nfs_home_dir:
+    type        : string
+    default     : /home
+    description : location of the nfs_home directory on the nfs_home_server.
 
   nfs_home_server:
     type        : string

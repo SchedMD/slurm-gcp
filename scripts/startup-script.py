@@ -44,7 +44,9 @@ EXTERNAL_COMPUTE_IPS = @EXTERNAL_COMPUTE_IPS@
 GPU_TYPE          = '@GPU_TYPE@'
 GPU_COUNT         = @GPU_COUNT@
 NFS_APPS_SERVER   = '@NFS_APPS_SERVER@'
+NFS_APPS_DIR      = '@NFS_APPS_DIR@'
 NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
+NFS_HOME_DIR      = '@NFS_HOME_DIR@'
 CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
 SEC_DISK_DIR      = '/mnt/disks/sec'
 PREEMPTIBLE       = @PREEMPTIBLE@
@@ -894,8 +896,8 @@ def setup_nfs_apps_vols():
 """.format(APPS_DIR, CONTROL_MACHINE))
     else:
         f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
-""".format(APPS_DIR, NFS_APPS_SERVER))
+{1}:{2}    {0}     nfs      rw,hard,intr  0     0
+""".format(APPS_DIR, NFS_APPS_SERVER, NFS_APPS_DIR))
     f.close()
 
 #END setup_nfs_apps_vols()
@@ -910,8 +912,8 @@ def setup_nfs_home_vols():
 """.format(CONTROL_MACHINE))
     else:
         f.write("""
-{0}:/home    /home     nfs      rw,hard,intr  0     0
-""".format(NFS_HOME_SERVER))
+{0}:{1}    /home     nfs      rw,hard,intr  0     0
+""".format(NFS_HOME_SERVER, NFS_HOME_DIR))
     f.close()
 
 #END setup_nfs_home_vols()
