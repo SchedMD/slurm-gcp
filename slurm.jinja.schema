@@ -22,6 +22,7 @@ info:
     Create a Slurm cluster in GCP.
 
 imports:
+- path: scripts/compute-shutdown
 - path: scripts/custom-compute-install
 - path: scripts/custom-controller-install
 - path: scripts/resume.py

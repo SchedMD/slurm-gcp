@@ -683,6 +683,7 @@ def install_meta_files():
         {'file': 'resume.py', 'meta': 'slurm_resume'},
         {'file': 'startup-script.py', 'meta': 'startup-script-compute'},
         {'file': 'slurm-gcp-sync.py', 'meta': 'slurm-gcp-sync'},
+        {'file': 'compute-shutdown', 'meta': 'compute-shutdown'},
         {'file': 'custom-compute-install', 'meta': 'custom-compute-install'},
         {'file': 'custom-controller-install', 'meta': 'custom-controller-install'},
     ]
