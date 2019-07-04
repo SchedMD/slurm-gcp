@@ -148,6 +148,9 @@ resources:
         - key: custom-controller-install
           value: |
             {{ imports["scripts/custom-controller-install"]|indent(12) }}
+        - key: compute-shutdown
+          value: |
+            {{ imports["scripts/compute-shutdown"]|indent(12) }}
 
 
 {% for n in range(properties['login_node_count']) %}
@@ -258,6 +261,9 @@ resources:
             {{ imports["scripts/startup-script.py"]|indent(12)|replace("@PROJECT@",env["project"])|replace("@INSTANCE_TYPE@","compute")|replace("@MUNGE_KEY@",properties["munge_key"])|replace("@SLURM_VERSION@",properties["slurm_version"])|replace("@DEF_SLURM_ACCT@",properties["default_account"])|replace("@DEF_SLURM_USERS@",properties["default_users"])|replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|replace("@CLUSTER_NAME@",properties["cluster_name"])|replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|replace("@SUSPEND_TIME@",properties["suspend_time"])|replace("@PARTITIONS@",properties["partitions"]) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: shutdown-script
+          value: |
+            {{ imports["scripts/compute-shutdown"]|indent(12) }}
 {% endfor %}
 {% endfor %}
 

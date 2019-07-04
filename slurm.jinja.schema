@@ -22,6 +22,7 @@ info:
     Create a Slurm cluster in GCP.
 
 imports:
+- path: scripts/compute-shutdown
 - path: scripts/custom-compute-install
 - path: scripts/custom-controller-install
 - path: scripts/resume.py
@@ -57,7 +58,9 @@ optional:
 - login_labels
 - login_node_count
 - munge_key
+- nfs_apps_dir
 - nfs_apps_server
+- nfs_home_dir
 - nfs_home_server
 - shared_vpc_host_proj
 - suspend_time
@@ -166,9 +169,19 @@ properties:
                   (e.g "date +%s | sha512sum | cut -d' ' -f1"). If not specified
                   then a random key will be generated at deployment creation.
 
+  nfs_apps_dir:
+    type        : string
+    default     : /apps
+    description : location of the nfs_apps directory on the nfs_apps_server.
+
   nfs_apps_server:
     type        : string
     description : IP address of NFS server hosting apps dir
+
+  nfs_home_dir:
+    type        : string
+    default     : /home
+    description : location of the nfs_home directory on the nfs_home_server.
 
   nfs_home_server:
     type        : string
@@ -192,7 +205,7 @@ properties:
 
   slurm_version:
     type        : string
-    default     : 18.08-latest
+    default     : 19.05-latest
     description : The Slurm version to install. The version should match link
                   name found at https://www.schedmd.com/downloads.php. The
                   version can also be in the form "b:<branch name>", where

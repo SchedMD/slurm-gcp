@@ -55,7 +55,9 @@ resources:
     #private_google_access      : True
     #
     #nfs_apps_server            :
+    #nfs_apps_dir               : /apps
     #nfs_home_server            :
+    #nfs_home_dir               : /home
     #controller_secondary_disk          : True
     #controller_secondary_disk_type     : pd-standard
     #controller_secondary_disk_size_gb  : 300

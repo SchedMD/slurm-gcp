@@ -124,7 +124,7 @@ def main():
                            if item["name"] == s_node),
                           None)
 
-            if ("~" not in s_state):
+            if (("~" not in s_state) and ("%" not in s_state)):
                 # slurm nodes that aren't in power_save and are stopped in GCP:
                 #   mark down in slurm
                 #   start them in gcp
@@ -142,6 +142,8 @@ def main():
                 # find nodes that are down~ in slurm and don't exist in gcp:
                 #   mark idle~
                 if (s_state == "down~"):
+                    to_idle.append(s_node)
+                elif ("%" in s_state):
                     to_idle.append(s_node)
                 elif ("comp" in s_state):
                     to_down.append(s_node)
@@ -180,7 +182,7 @@ def main():
 
 
         if len(to_idle):
-            logging.debug("{} down~ instances ({})".format(
+            logging.debug("{} instances to resume ({})".format(
                 len(to_idle), ",".join(to_idle)))
 
             # write hosts to a file that can be given to get a slurm
@@ -195,7 +197,7 @@ def main():
             logging.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
-            cmd = "{} update nodename={} state=idle".format(
+            cmd = "{} update nodename={} state=resume".format(
                 SCONTROL, hostlist)
             subprocess.call(shlex.split(cmd))
 
