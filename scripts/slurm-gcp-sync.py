@@ -102,11 +102,12 @@ def main():
         page_token = ""
         g_nodes = []
         for i in range( len(PARTITIONS) ):
+            pid = "%02d" % (i)
             if( PARTITIONS[i]["preemptible_bursting"] ):
                 while True:
                     resp = compute.instances().list(
                               project=PROJECT, zone=PARTITIONS[i]['zone'], pageToken=page_token,
-                              filter='name={}-compute*'.format(CLUSTER_NAME)).execute()
+                              filter='name={}-compute{}*'.format(CLUSTER_NAME,pid)).execute()
         
                     if "items" in resp:
                         g_nodes.extend(resp['items'])
@@ -137,7 +138,15 @@ def main():
                 # resume script.
                 # This should catch the completing states as well.
                 if ((g_node == None) and ("#" not in s_state)):
-                    to_down.append(s_node)
+                    # When g_node == None, it means that no preemptible nodes were found
+                    # to down. However, another non-preemptible partition could end up 
+                    # being downed. To avoid this, we check the preemptible status of the
+                    # partition associated with s_node to determine whether or not to add 
+                    # this to the list
+                    pid = s_node[-5:-3]
+                    if( PARTITIONS[pid]["preemptible_bursting"] ):
+                        to_down.append(s_node)
+
             elif (g_node == None):
                 # find nodes that are down~ in slurm and don't exist in gcp:
                 #   mark idle~
