@@ -143,7 +143,7 @@ def main():
                     # being downed. To avoid this, we check the preemptible status of the
                     # partition associated with s_node to determine whether or not to add 
                     # this to the list
-                    pid = s_node[-5:-3]
+                    pid = int(s_node[-5:-3])
                     if( PARTITIONS[pid]["preemptible_bursting"] ):
                         to_down.append(s_node)
 

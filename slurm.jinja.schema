@@ -214,9 +214,16 @@ properties:
 
   suspend_time:
     type        : integer
-    default     : 300
-    minimum     : 300
+    default     : 600
+    minimum     : 600
     description : Idle time to wait before nodes go away (in sec)
+                  From Slurm Power Save Documentation
+                  Nodes becomes eligible for power saving mode after being 
+                  idle for this number of seconds. For efficient system utilization,
+                  it is recommended that the value of SuspendTime be at least as large
+                  as the sum of SuspendTimeout plus ResumeTimeout. 
+                  For slurm-gcp, note that SuspendTimeout and ResumeTimeout are hard-coded
+                  at 300s in scripts/startup-script.py
 
   vpc_net:
     type        : string

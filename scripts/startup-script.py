@@ -51,6 +51,8 @@ CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
 SEC_DISK_DIR      = '/mnt/disks/sec'
 #PREEMPTIBLE       = @PREEMPTIBLE@
 SUSPEND_TIME      = @SUSPEND_TIME@
+RESUME_TIMEOUT    = 300
+SUSPEND_TIMEOUT   = 300 
 PARTITIONS        = @PARTITIONS@
 
 DEF_PART_NAME   = "debug"
@@ -537,8 +539,8 @@ SlurmdLogFile=/var/log/slurm/slurmd-%n.log
 SuspendProgram={apps_dir}/slurm/scripts/suspend.py
 ResumeProgram={apps_dir}/slurm/scripts/resume.py
 ResumeFailProgram={apps_dir}/slurm/scripts/suspend.py
-SuspendTimeout=600
-ResumeTimeout=600
+SuspendTimeout={suspend_timeout}
+ResumeTimeout={resume_timeout}
 ResumeRate=0
 #SuspendExcNodes=
 #SuspendExcParts=
@@ -553,6 +555,8 @@ CommunicationParameters=NoAddrCache
 """.format(apps_dir        = APPS_DIR,
            cluster_name    = CLUSTER_NAME,
            control_machine = CONTROL_MACHINE,
+           suspend_timeout = SUSPEND_TIMEOUT,
+           resume_timeout  = RESUME_TIMEOUT,
            suspend_time    = SUSPEND_TIME)
 
     for i in range(len(machine)):
