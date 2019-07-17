@@ -228,7 +228,7 @@ Steps:
    With preemptible_bursting on, when a node is found preempted, or stopped,
    the slurm-gcp sync script will mark the node as "down" and will attempt to
    restart the node. If there were any batch jobs on the preempted node, they
-   will be requeued -- interatcive (e.g. srun, salloc) jobs can't be requeued.
+   will be requeued -- interactive (e.g. srun, salloc) jobs can't be requeued.
 
 ## Bursting out from on-premise cluster
 
@@ -337,7 +337,7 @@ following are the steps to do this.
    ZONE         = '<project2 zone>'
 
    # resume.py
-   REGSION      = '<project2 region>'
+   REGION       = '<project2 region>'
 
    # Set to True so that it can install packages from the other network
    EXTERNAL_IP  = True
@@ -383,7 +383,7 @@ following are the steps to do this.
       Priority             : 1000
       Direction of traffic : Ingress
       Action to match      : Allow
-      Tagets               : Specified target tags
+      Targets              : Specified target tags
       Target tags          : controller
       Source Filter        : IP ranges
       Source IP Ranges     : 0.0.0.0/0
@@ -405,7 +405,7 @@ following are the steps to do this.
       Priority             : 1000
       Direction of traffic : Ingress
       Action to match      : Allow
-      Tagets               : Specified target tags
+      Targets              : Specified target tags
       Target tags          : controller
       Source Filter        : IP ranges
       Source IP Ranges     : 0.0.0.0/0
@@ -427,7 +427,7 @@ following are the steps to do this.
        Priority             : 1000
        Direction of traffic : Ingress
        Action to match      : Allow
-       Tagets               : Specified target tags
+       Targets              : Specified target tags
        Target tags          : compute
        Source Filter        : IP ranges
        Source IP Ranges     : 0.0.0.0/0
@@ -460,7 +460,7 @@ following are the steps to do this.
        Priority             : 1000
        Direction of traffic : Ingress
        Action to match      : Allow
-       Tagets               : All instances in the network
+       Targets              : All instances in the network
        Source Filter        : IP ranges
        Source IP Ranges     : 0.0.0.0/0
        Second source filter : none
@@ -472,7 +472,7 @@ following are the steps to do this.
 12. Slurm should now be able to burst out into project2.
 
 ## Multi-Cluster / Federation
-Slurm allows you to use a central SlurmdDBD for multiple clusters. By doing this
+Slurm allows you to use a central SlurmDBD for multiple clusters. By doing this
 it also allows the clusters to be able to communicate with each other. This is
 done by the client commands first checking with the SlurmDBD for the requested
 cluster's IP address and port which the client can then communicate directly
@@ -591,7 +591,7 @@ space (e.g. same uids across all the clusters).
       Priority             : 1000
       Direction of traffic : Ingress
       Action to match      : Allow
-      Tagets               : All instances in the network
+      Targets              : All instances in the network
       Source Filter        : IP ranges
       Source IP Ranges     : 0.0.0.0/0
       Second source filter : none
@@ -638,7 +638,7 @@ space (e.g. same uids across all the clusters).
 
    * When the slurmctld registers with the slurmdbd, the slurmdbd records the
      IP address the slurmctld registered with. This then allows project1 to
-     communicate with project3 and vise versa.
+     communicate with project3 and vice versa.
 
    e.g.
    ```
