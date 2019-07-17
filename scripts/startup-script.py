@@ -1089,8 +1089,7 @@ def main():
         subprocess.call(shlex.split('systemctl start nfs-server'))
         setup_nfs_exports()
 
-        if PREEMPTIBLE:
-            setup_sync_cronjob()
+        setup_sync_cronjob()
 
         # DOWN partition until image is created.
         subprocess.call(shlex.split(
