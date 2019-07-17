@@ -1031,6 +1031,7 @@ def main():
     install_packages()
     setup_munge()
     setup_bash_profile()
+    setup_modules()
 
     if (CONTROLLER_SECONDARY_DISK and (INSTANCE_TYPE == "controller")):
         setup_secondary_disks()
@@ -1041,7 +1042,6 @@ def main():
 
     if INSTANCE_TYPE == "controller":
         mount_nfs_vols()
-        setup_modules()
         start_munge()
         install_slurm()
 
