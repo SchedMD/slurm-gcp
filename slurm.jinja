@@ -268,7 +268,7 @@ resources:
 {% endfor %}
 
 {% for i in range(properties["partitions"]|length) %}
-{% set pid = i*1000 %}
+{% set pid = i*10000 %}
 - name: {{properties["cluster_name"]}}-compute-image-{{ '%06d' % pid }}
   type: compute.v1.instance
   properties:
