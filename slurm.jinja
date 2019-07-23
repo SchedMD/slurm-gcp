@@ -203,8 +203,8 @@ resources:
 
 {% for i in range(properties["partitions"]|length) %}
 {% for n in range(properties["partitions"][i]['static_node_count']) %}
-{% set nid = i*1000 + n %}
-- name: {{properties["cluster_name"]}}-compute-{{ '%06d' % nid }}
+{% set nid = i*10000 + n %}
+- name: {{properties["cluster_name"]}}-compute{{ '%06d' % nid }}
   type: compute.v1.instance
   properties:
     zone: {{ properties["partitions"][i]["zone"] }}
