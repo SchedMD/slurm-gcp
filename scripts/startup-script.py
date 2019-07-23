@@ -57,7 +57,7 @@ PARTITIONS        = @PARTITIONS@
 
 DEF_PART_NAME   = "debug"
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
-MAX_PARTITION_SIZE = 1000
+MAX_PARTITION_SIZE = 10000
 
 MOTD_HEADER = '''
 
@@ -234,7 +234,7 @@ def install_packages():
 
     if INSTANCE_TYPE == "compute" :
         hostname = socket.gethostname()
-        pid = int( hostname[-5:-3] )
+        pid = int( hostname[-6:-4] )
         if PARTITIONS[pid]["gpu_count"]:
             rpm = "cuda-repo-rhel7-10.0.130-1.x86_64.rpm"
             subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
@@ -560,7 +560,7 @@ CommunicationParameters=NoAddrCache
            suspend_time    = SUSPEND_TIME)
 
     for i in range(len(machine)):
-        node_range = "[%05d-%05d]" % ( i*MAX_PARTITION_SIZE, i*MAX_PARTITION_SIZE+PARTITIONS[i]["max_node_count"]-1 )
+        node_range = "[%06d-%06d]" % ( i*MAX_PARTITION_SIZE, i*MAX_PARTITION_SIZE+PARTITIONS[i]["max_node_count"]-1 )
 
         #if GPU_COUNT:
         #    conf += "GresTypes=gpu\n"
@@ -591,13 +591,13 @@ PartitionName={} Nodes={}-compute{} Default=NO MaxTime=INFINITE State=UP LLN=yes
 
         static_range = ""
         if PARTITIONS[i]["static_node_count"] and PARTITIONS[i]["static_node_count"] > 1:
-            static_range = "[%05d-%05d]" % ( i*MAX_PARTITION_SIZE, i*MAX_PARTITION_SIZE+PARTITIONS[i]["static_node_count"]-1 )
+            static_range = "[%06d-%06d]" % ( i*MAX_PARTITION_SIZE, i*MAX_PARTITION_SIZE+PARTITIONS[i]["static_node_count"]-1 )
         elif PARTITIONS[i]["static_node_count"]:
-            static_range = "%05d" % i*MAX_PARTITION_SIZE
+            static_range = "%06d" % i*MAX_PARTITION_SIZE
 
         cloud_range = ""
         if PARTITIONS[i]["max_node_count"] and (PARTITIONS[i]["max_node_count"] != PARTITIONS[i]["static_node_count"]):
-            cloud_range = "[%05d-%05d]" % (PARTITIONS[i]["static_node_count"]+1, PARTITIONS[i]["max_node_count"])
+            cloud_range = "[%06d-%06d]" % (PARTITIONS[i]["static_node_count"]+1, PARTITIONS[i]["max_node_count"])
 
         if static_range:
             conf += """
@@ -897,7 +897,7 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 
     if INSTANCE_TYPE == "compute":
         hostname = socket.gethostname()
-        pid = int( hostname[-5:-3] )
+        pid = int( hostname[-6:-4] )
         if PARTITIONS[pid]["gpu_count"]:
             f = open('/etc/profile.d/cuda.sh', 'w')
             f.write("""
@@ -1002,7 +1002,7 @@ def create_compute_image():
     ver = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
     hostname = socket.gethostname()
-    pid = int( hostname[-5:-3] )
+    pid = int( hostname[-6:-4] )
     if PARTITIONS[pid]["gpu_count"]:
         time.sleep(300)
 
@@ -1138,7 +1138,7 @@ def main():
 
             create_compute_image()
 
-            pid = int( hostname[-5:-3] )
+            pid = int( hostname[-6:-4] )
             subprocess.call(shlex.split(
                 "{}/bin/scontrol update partitionname={} state=up".format(
                     CURR_SLURM_DIR, PARTITIONS[pid]["name"])))
@@ -1175,7 +1175,7 @@ def main():
     end_motd()
 
     if CLUSTER_NAME + "-compute-image" in hostname:
-       pid = int( hostname[-5:-3] )
+       pid = int( hostname[-6:-4] )
        subprocess.call(shlex.split("gcloud compute instances remove-metadata {} "
                                    "--zone={} --keys=startup-script"
                                     .format(hostname, PARTITIONS[pid]["zone"])))

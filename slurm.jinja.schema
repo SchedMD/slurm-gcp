@@ -310,7 +310,7 @@ properties:
         max_node_count:
           type        : integer
           minimum     : 0
-          maximum     : 1000
+          maximum     : 10000
           description : Maximum number of instances that the cluster can grow to.
                         Consider adding 10% to account for preemptible nodes.
 

@@ -61,7 +61,7 @@ authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 def create_instance(compute, project, zone, instance_type, instance_name,
                     source_disk_image, have_compute_img):
 
-    pid = int( instance_name[-5:-3] )
+    pid = int( instance_name[-6:-4] )
     # Configure the machine
     machine_type = "zones/{}/machineTypes/{}".format(zone, instance_type)
     disk_type = "projects/{}/zones/{}/diskTypes/{}".format(PROJECT, zone,
@@ -182,7 +182,7 @@ def added_instances_cb(request_id, response, exception):
 # [start get_source_image]
 def get_source_image( compute, node_name ):
   
-    pid = int( node_name[-5:-3] )
+    pid = int( node_name[-6:-4] )
     have_compute_img = False
     try:
         image_response = compute.images().getFromFamily(
@@ -222,7 +222,7 @@ def add_instances(compute, node_list):
 
         source_disk_image, have_compute_img = get_source_image( compute, node_name )
 
-        pid = int( node_name[-5:-3] )
+        pid = int( node_name[-6:-4] )
         batch_list[curr_batch].add(
             create_instance(
                 compute, PROJECT, PARTITIONS[pid]["zone"], PARTITIONS[pid]["machine_type"], node_name,

@@ -71,7 +71,7 @@ def start_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=start_instances_cb))
 
-        pid = int( node[-5:-3] )
+        pid = int( node[-6:-4] )
         batch_list[curr_batch].add(
             compute.instances().start(project=PROJECT, zone=PARTITIONS[pid]["zone"],
                                       instance=node),
@@ -143,7 +143,7 @@ def main():
                     # being downed. To avoid this, we check the preemptible status of the
                     # partition associated with s_node to determine whether or not to add 
                     # this to the list
-                    pid = int(s_node[-5:-3])
+                    pid = int(s_node[-6:-4])
                     if( PARTITIONS[pid]["preemptible_bursting"] ):
                         to_down.append(s_node)
 
