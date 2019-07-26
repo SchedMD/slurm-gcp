@@ -69,7 +69,7 @@ optional:
 - nfs_home_dir
 - nfs_home_server
 - preemptible_bursting
-- shared_vpc_host_proj
+- shared_vpc_host_project
 - suspend_time
 - vpc_net
 - vpc_subnet
