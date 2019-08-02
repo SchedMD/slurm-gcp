@@ -193,7 +193,7 @@ Steps:
    If the compute image needs to be updated, it can be done with the following
    command:
    ```
-   $ gcloud compute images create <cluster_name>-compute-image-<random> \
+   $ gcloud compute images create <cluster_name>-compute-image-$(date '+%Y-%m-%d-%H-%M-%S') \
                                   --source-disk <instance name> \
                                   --source-disk-zone <zone> --force \
                                   --family <cluster_name>-compute-image-family
