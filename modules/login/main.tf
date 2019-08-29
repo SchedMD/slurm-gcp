@@ -43,7 +43,7 @@ nfs_apps_server = "${var.nfs_apps_server}",
 nfs_home_server = "${var.nfs_home_server}", 
 controller_secondary_disk = "${var.controller_secondary_disk}", 
 suspend_time = "${var.suspend_time}", 
-partitions = "[]"
+partitions = "${var.partitions}"
 })}
 STARTUP
   }
