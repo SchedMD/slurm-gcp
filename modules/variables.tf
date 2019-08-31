@@ -158,5 +158,4 @@ variable "vcp_subnet" {
 
 variable "partitions" {
   description = "Array of partition specifications"
-  default     = "[]"
 }
