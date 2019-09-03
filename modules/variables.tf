@@ -156,6 +156,12 @@ variable "vcp_subnet" {
   default     = ""
 }
 
+variable "partition_id" {
+  type        = number
+  description = "The number used to identify Slurm partition"
+}
+
 variable "partitions" {
+  type        = string
   description = "Array of partition specifications"
 }
