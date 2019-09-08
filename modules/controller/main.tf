@@ -29,45 +29,45 @@ resource "google_compute_instance" "controller_node" {
   }
 
   metadata = {
-    enable-oslogin = "TRUE"
+#     enable-oslogin = "TRUE"
 
-    startup-script = <<STARTUP
-${templatefile("${path.module}/startup-script.tmpl", {
-cluster_name = "${var.cluster_name}", 
-project = "${var.project}", 
-zone = "${var.zone}", 
-instance_type = "controller",
-munge_key = "${var.munge_key}", 
-slurm_version ="${var.slurm_version}", 
-def_slurm_acct = "${var.default_account}", 
-def_slurm_users = "${var.default_users}", 
-external_compute_ips = "${var.external_compute_ips}", 
-nfs_apps_server = "${var.nfs_apps_server}", 
-nfs_home_server = "${var.nfs_home_server}", 
-controller_secondary_disk = "${var.controller_secondary_disk}", 
-suspend_time = "${var.suspend_time}", 
-partitions = "${var.partitions}"
-})}
-STARTUP
-
-    startup-script-compute = <<COMPUTESTARTUP
-${templatefile("${path.module}/startup-script.tmpl", {
-cluster_name = "${var.cluster_name}", 
-project = "${var.project}", 
-zone = "${var.zone}", 
-instance_type = "compute",
-munge_key = "${var.munge_key}", 
-slurm_version ="${var.slurm_version}", 
-def_slurm_acct = "${var.default_account}", 
-def_slurm_users = "${var.default_users}", 
-external_compute_ips = "${var.external_compute_ips}", 
-nfs_apps_server = "${var.nfs_apps_server}", 
-nfs_home_server = "${var.nfs_home_server}", 
-controller_secondary_disk = "${var.controller_secondary_disk}", 
-suspend_time = "${var.suspend_time}", 
-partitions = "${var.partitions}"
-})}
-COMPUTESTARTUP
+#     startup-script = <<STARTUP
+# ${templatefile("${path.module}/startup-script.tmpl", {
+# cluster_name = "${var.cluster_name}", 
+# project = "${var.project}", 
+# zone = "${var.zone}", 
+# instance_type = "controller",
+# munge_key = "${var.munge_key}", 
+# slurm_version ="${var.slurm_version}", 
+# def_slurm_acct = "${var.default_account}", 
+# def_slurm_users = "${var.default_users}", 
+# external_compute_ips = "${var.external_compute_ips}", 
+# nfs_apps_server = "${var.nfs_apps_server}", 
+# nfs_home_server = "${var.nfs_home_server}", 
+# controller_secondary_disk = "${var.controller_secondary_disk}", 
+# suspend_time = "${var.suspend_time}", 
+# partitions = "${var.partitions}"
+# })}
+# STARTUP
+# 
+#     startup-script-compute = <<COMPUTESTARTUP
+# ${templatefile("${path.module}/startup-script.tmpl", {
+# cluster_name = "${var.cluster_name}", 
+# project = "${var.project}", 
+# zone = "${var.zone}", 
+# instance_type = "compute",
+# munge_key = "${var.munge_key}", 
+# slurm_version ="${var.slurm_version}", 
+# def_slurm_acct = "${var.default_account}", 
+# def_slurm_users = "${var.default_users}", 
+# external_compute_ips = "${var.external_compute_ips}", 
+# nfs_apps_server = "${var.nfs_apps_server}", 
+# nfs_home_server = "${var.nfs_home_server}", 
+# controller_secondary_disk = "${var.controller_secondary_disk}", 
+# suspend_time = "${var.suspend_time}", 
+# partitions = "${var.partitions}"
+# })}
+# COMPUTESTARTUP
 
     slurm_resume = <<RESUME
 ${file("${path.module}/resume.py")}
@@ -89,4 +89,97 @@ CUSTOMCOMPUTE
 ${file("${path.module}/custom-controller-install")}
 CUSTOMCONTROLLER
   }
+
+  provisioner "remote-exec" {
+    inline = [ 
+      "sudo yum update -y",
+      "[ ! -d /var/log/slurm ] && sudo mkdir /var/log/slurm",
+      "[ ! -d /tmp/slurm ] && mkdir /tmp/slurm"
+    ]
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/packages.txt"
+    destination = "/tmp/slurm/packages.txt"
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [ 
+      "sudo yum -y install $(cat /tmp/slurm/packages.txt)"
+    ]
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/../shared/functions.sh"
+    destination = "/tmp/slurm/functions.sh"
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/configure.sh"
+    destination = "/tmp/slurm/configure.sh"
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "file" {
+    destination = "/tmp/slurm/slurm.conf"
+    content     = "${templatefile("${path.module}/../tmpl/slurm.conf.tmpl",{
+cluster_name=var.cluster_name,
+control_machine="${var.cluster_name}-controller",
+apps_dir="/apps",
+suspend_time=var.suspend_time
+})}"
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo mkdir -p /apps/slurm/src",
+      "sudo chmod a+x /tmp/slurm/configure.sh",
+      "(cd /tmp/slurm; sudo ./configure.sh ${var.slurm_version})"
+    ]
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+}
+
+output "controller_node_name" {
+  value = google_compute_instance.controller_node.name
 }
