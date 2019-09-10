@@ -18,7 +18,7 @@ module "slurm_cluster_controller" {
   network       = module.slurm_cluster_network.cluster_subnet_self_link
   project       = var.project
   default_users = var.default_users
-  partitions    = "${jsonencode(var.partitions)}"
+  partitions    = var.partitions
 }
 
 module "slurm_cluster_login" {
