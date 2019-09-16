@@ -135,13 +135,3 @@ variable "suspend_time" {
   description = "Idle time (in sec) to wait before nodes go away"
   default     = 300
 }
-
-variable "partition_id" {
-  type        = number
-  description = "The number used to identify Slurm partition"
-}
-
-variable "partitions" {
-  type        = string
-  description = "Array of partition specifications"
-}

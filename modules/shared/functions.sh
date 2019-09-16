@@ -170,14 +170,23 @@ function install_slurm {
     tar -xvjf ${slurm_archive}
     rm ${slurm_archive}
 
-    [ ! -d ${slurm_current} ] && mkdir -p ${slurm_current}/etc
     cd $slurm_srcdir/${which_slurm}
-
     [ ! -d "build" ] && mkdir build
     cd build
 
-    ../configure --prefix=${SLURM_SRCDIR}/${WHICH_SLURM} --sysconfdir=${SLURM_CURRENT}/etc
+    ../configure --prefix=${slurm_rootdir}/${which_slurm} --sysconfdir=${slurm_current}/etc
     make -j install
+
+    ln -s ${slurm_rootdir}/${which_slurm} ${slurm_current}
+
+    [ ! -d ${slurm_current}/etc} ] && mkdir ${slurm_current}/etc
+    cp /tmp/slurm/slurm.conf ${slurm_current}/etc
+
+    [ ! -d ${slurm_rootdir}/state ] && mkdir ${slurm_rootdir}/state
+    chown -R slurm: ${slurm_rootdir}/state
+
+    [ ! -d ${slurm_rootdir}/log ] && mkdir ${slurm_rootdir}/log
+    chown -R slurm: ${slurm_rootdir}/log
 }
 
 ################

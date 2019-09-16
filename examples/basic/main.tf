@@ -8,7 +8,6 @@ module "slurm_cluster_network" {
 
   cluster_name = var.cluster_name
   project      = var.project
-  partitions   = "${jsonencode(var.partitions)}"
 }
 
 module "slurm_cluster_controller" {
@@ -26,10 +25,9 @@ module "slurm_cluster_login" {
 
   cluster_name      = var.cluster_name
   network           = module.slurm_cluster_network.cluster_subnet_self_link
-  login_node_count  = 1
+  node_count        = 1
   project           = var.project
-  default_users     = var.default_users
-  partitions        = "${jsonencode(var.partitions)}"
+  nfs_apps_server   = module.slurm_cluster_controller.controller_node_name
 }
 
 # module "slurm_cluster_compute" {

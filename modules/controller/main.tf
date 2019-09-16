@@ -221,7 +221,7 @@ compute_nodes="${join("", data.template_file.compute_nodes.*.rendered)}"
     inline = [
       "sudo mkdir -p /apps/slurm/src",
       "sudo chmod a+x /tmp/slurm/configure.sh",
-      "(cd /tmp/slurm; sudo ./configure.sh ${var.slurm_version})"
+      "(cd /tmp/slurm; sudo ./configure.sh ${var.slurm_version} | systemd-cat -t configureslurm -p info)"
     ]
     connection {
       private_key = "${file("~/.ssh/google_compute_engine")}"

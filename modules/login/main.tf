@@ -1,7 +1,7 @@
 resource "google_compute_instance" "login_node" {
-  count        = var.login_node_count
+  count        = var.node_count
   name         = "${var.cluster_name}-login${count.index}"
-  machine_type = var.login_machine_type
+  machine_type = var.machine_type
   zone         = var.zone
 
   tags = ["login"]
@@ -9,8 +9,8 @@ resource "google_compute_instance" "login_node" {
   boot_disk {
     initialize_params {
       image = "centos-cloud/centos-7"
-      type  = var.login_boot_disk_type
-      size  = var.login_boot_disk_size
+      type  = var.boot_disk_type
+      size  = var.boot_disk_size
     }
   }
 
@@ -26,26 +26,7 @@ resource "google_compute_instance" "login_node" {
   }
 
   metadata = {
-#     enable-oslogin = "TRUE"
-# 
-#     startup-script = <<STARTUP
-# ${templatefile("${path.module}/startup-script.tmpl", {
-# cluster_name = "${var.cluster_name}", 
-# project = "${var.project}", 
-# zone = "${var.zone}", 
-# instance_type = "login",
-# munge_key = "${var.munge_key}", 
-# slurm_version ="${var.slurm_version}", 
-# def_slurm_acct = "${var.default_account}", 
-# def_slurm_users = "${var.default_users}", 
-# external_compute_ips = "${var.external_compute_ips}", 
-# nfs_apps_server = "${var.nfs_apps_server}", 
-# nfs_home_server = "${var.nfs_home_server}", 
-# controller_secondary_disk = "${var.controller_secondary_disk}", 
-# suspend_time = "${var.suspend_time}", 
-# partitions = "${var.partitions}"
-# })}
-# STARTUP
+    enable-oslogin = "FALSE"
   }
 
   provisioner "remote-exec" {
@@ -111,7 +92,7 @@ resource "google_compute_instance" "login_node" {
   provisioner "remote-exec" {
     inline = [
       "sudo chmod a+x /tmp/slurm/configure.sh",
-      "(cd /tmp/slurm; sudo ./configure.sh /apps)"
+      "(cd /tmp/slurm; sudo ./configure.sh ${var.nfs_apps_server})"
     ]
     connection {
       private_key = "${file("~/.ssh/google_compute_engine")}"
@@ -121,4 +102,3 @@ resource "google_compute_instance" "login_node" {
     }
   }
 }
-
