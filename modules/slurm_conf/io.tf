@@ -14,3 +14,13 @@ variable "partitions" {
               preemptible_bursting = number,
               static_node_count    = number}))
 }
+
+output "content" {
+    value = "${templatefile("${path.module}/slurm.conf.tmpl",{
+cluster_name=var.cluster_name,
+control_machine="${var.cluster_name}-controller",
+apps_dir="/apps",
+suspend_time=300,
+compute_nodes="${join("", data.template_file.compute_nodes.*.rendered)}"
+})}"
+}

@@ -36,6 +36,7 @@ resource "google_compute_instance" "controller_node" {
   }
 
   metadata = {
+    sshKeys = "wkh:${file("~/.ssh/google_compute_engine.pub")}"
 #     enable-oslogin = "TRUE"
 
 #     startup-script = <<STARTUP
@@ -267,8 +268,4 @@ apps_dir="/apps"
       user = "wkh"
     }
   }
-}
-
-output "controller_node_name" {
-  value = google_compute_instance.controller_node.name
 }

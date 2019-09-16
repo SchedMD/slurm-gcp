@@ -1,15 +1,6 @@
-variable "project" {
-  description = "Cloud Platform project that hosts the notebook server(s)"
-}
-
 variable "network" {
   description = "Compute Platform network the notebook server will be connected to"
   default     = "default"
-}
-
-variable "region" {
-  description = "Compute Platform region where the notebook server will be located"
-  default     = "us-central1"
 }
 
 variable "zone" {
@@ -31,11 +22,6 @@ variable "node_count" {
   default     = 1
 }
 
-variable "labels" {
-  description = "Labels to add to login instances (list of key value pairs)"
-  default     = {}
-}
-
 variable "boot_disk_type" {
   description = "Type of boot disk to create for the cluster login node"
   default     = "pd-ssd"
@@ -51,17 +37,10 @@ variable "nfs_apps_server" {
   default     = ""
 }
 
-variable "nfs_home_server" {
-  description = "IP address of the NFS server hosting the home directory"
-  default     = ""
+output "instance_nat_ips" {
+  value = [ "${google_compute_instance.login_node.*.network_interface.0.access_config.0.nat_ip}" ]
 }
 
-variable "vpc_net" {
-  description = "Name of the pre-defined VPC network where nodes will be attached"
-  default     = ""
-}
-
-variable "vcp_subnet" {
-  description = "Name of the pre-defined VPC subnet where nodes will be attached"
-  default     = ""
+output "instance_network_ips" {
+  value = [ "${google_compute_instance.login_node.*.network_interface.0.network_ip}" ]
 }

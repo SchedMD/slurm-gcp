@@ -27,6 +27,7 @@ resource "google_compute_instance" "login_node" {
 
   metadata = {
     enable-oslogin = "FALSE"
+    sshKeys = "wkh:${file("~/.ssh/google_compute_engine.pub")}"
   }
 
   provisioner "remote-exec" {
