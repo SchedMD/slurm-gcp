@@ -1,52 +1,8 @@
-resource "null_resource" "machine_type_cores" {
-    count = "${length(var.partitions)}"
+module "slurm_conf" {
+  source = "../slurm_conf"
 
-    provisioner "local-exec" {
-        command = "gcloud compute machine-types describe ${var.partitions[count.index].machine_type} --format=\"csv[no-heading](guestCpus)\" > ${data.template_file.cores.rendered}.${count.index}"
-    }
-}
-
-resource "null_resource" "machine_type_memory" {
-    count = "${length(var.partitions)}"
-
-    provisioner "local-exec" {
-        command = "gcloud compute machine-types describe ${var.partitions[count.index].machine_type} --format=\"csv[no-heading](memoryMb)\" > ${data.template_file.memory.rendered}.${count.index}"
-    }
-}
-
-data "template_file" "compute_nodes" {
-    depends_on = ["null_resource.machine_type_cores", "null_resource.machine_type_memory"]
-    template   = "${file("${path.module}/partition.tmpl")}"
-    count      = "${length(var.partitions)}"
-    vars       = {
-        cluster_name = var.cluster_name
-        cores        = tonumber(trimspace("${data.local_file.cores[count.index].content}")) / 2
-        memory       = tonumber(trimspace("${data.local_file.memory[count.index].content}")) - (400 + ((tonumber(trimspace("${data.local_file.memory[count.index].content}")) / 1024) * 30))
-        name         = var.partitions[count.index].name
-        is_default   = count.index == 0 ? "YES" : "NO"
-        range_start  = format("%05d", count.index * 1000)
-        range_end    = format("%05d", count.index * 1000 + var.partitions[count.index].max_node_count - 1)
-    }
-}
-
-data "template_file" "cores" {
-    template = "${path.module}/cores.txt"
-}
-
-data "template_file" "memory" {
-    template = "${path.module}/memory.txt"
-}
-
-data "local_file" "cores" {
-    count    = "${length(var.partitions)}"
-    filename = "${data.template_file.cores.rendered}.${count.index}"
-    depends_on = ["null_resource.machine_type_cores"]
-}
-
-data "local_file" "memory" {
-    count    = "${length(var.partitions)}"
-    filename = "${data.template_file.memory.rendered}.${count.index}"
-    depends_on = ["null_resource.machine_type_memory"]
+  cluster_name = var.cluster_name
+  partitions   = var.partitions
 }
 
 resource "google_compute_instance" "controller_node" {
@@ -202,13 +158,66 @@ CUSTOMCONTROLLER
 
   provisioner "file" {
     destination = "/tmp/slurm/slurm.conf"
-    content     = "${templatefile("${path.module}/../tmpl/slurm.conf.tmpl",{
+    content     = module.slurm_conf.content
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "file" {
+    destination = "/tmp/slurm/slurmdbd.conf"
+    content     = "${templatefile("${path.module}/slurmdbd.conf.tmpl",{
 cluster_name=var.cluster_name,
 control_machine="${var.cluster_name}-controller",
-apps_dir="/apps",
-suspend_time=var.suspend_time
-compute_nodes="${join("", data.template_file.compute_nodes.*.rendered)}"
+apps_dir="/apps"
 })}"
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/cgroup.conf"
+    destination = "/tmp/slurm/cgroup.conf"
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/suspend.py"
+    destination = "/tmp/slurm/suspend.py"
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/resume.py"
+    destination = "/tmp/slurm/resume.py"
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/slurm-gcp-sync.py"
+    destination = "/tmp/slurm/slurm-gcp-sync.py"
     connection {
       private_key = "${file("~/.ssh/google_compute_engine")}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
@@ -231,6 +240,33 @@ compute_nodes="${join("", data.template_file.compute_nodes.*.rendered)}"
     }
   }
 
+  provisioner "remote-exec" {
+    inline = [
+      "sudo mkdir -p /apps/slurm/scripts",
+      "sudo mv /tmp/slurm/*.py /apps/slurm/scripts",
+      "sudo chmod -R u=rwx,go=rx /apps/slurm/scripts"
+    ]
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo mv /tmp/slurm/slurmdbd.conf /apps/slurm/current/etc",
+      "sudo mv /tmp/slurm/cgroup.conf /apps/slurm/current/etc",
+      "sudo touch /apps/slurm/current/etc/cgroup_allowed_devices_file.conf"
+    ]
+    connection {
+      private_key = "${file("~/.ssh/google_compute_engine")}"
+      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+      type = "ssh"
+      user = "wkh"
+    }
+  }
 }
 
 output "controller_node_name" {

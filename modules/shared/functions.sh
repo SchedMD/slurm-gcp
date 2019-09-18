@@ -256,3 +256,23 @@ PIDFile=/var/run/slurm/slurmdbd.pid
 WantedBy=multi-user.target
 SLURMDBD
 }
+
+################
+# Starup mariadb and create slurm user and grant privileges
+# Globals:
+#  None
+# Arguments:
+# controller - [optional, defaults to hostname] fqdn or IP address of the slurm controller node
+# Returns:
+#  None
+################
+function setup_mariadb {
+    local controller = ${1:-$(hostname)}
+
+    systemctl enable mariadb
+    systemctl start mariadb
+
+    mysql -u root -e "create user 'slurm'@'localhost';"
+    mysql -u root -e "grant all on slurm_acct_db.* TO 'slurm'@'localhost';"
+    mysql -u root -e "grant all on slurm_acct_db.* TO 'slurm'@'${controller}';"
+}

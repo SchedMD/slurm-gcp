@@ -16,6 +16,10 @@ install_slurm "$@"
 setup_slurm_tmpfile
 setup_slurm_units
 
+setup_mariadb
+systemctl enable slurmdbd
+systemctl start slurmdbd
+
 setup_nfs_threads
 setup_nfs_exports /apps /home /etc/munge
 systemctl enable nfs-server
