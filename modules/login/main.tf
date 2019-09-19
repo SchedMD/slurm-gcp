@@ -27,7 +27,7 @@ resource "google_compute_instance" "login_node" {
 
   metadata = {
     enable-oslogin = "FALSE"
-    sshKeys = "wkh:${file("~/.ssh/google_compute_engine.pub")}"
+    sshKeys = "${var.deploy_user}:${file("${var.deploy_key_path}.pub")}"
   }
 
   provisioner "remote-exec" {
@@ -38,10 +38,10 @@ resource "google_compute_instance" "login_node" {
       "[ ! -d /tmp/slurm ] && mkdir /tmp/slurm"
     ]
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.login_node[0].network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -49,10 +49,10 @@ resource "google_compute_instance" "login_node" {
     source      = "${path.module}/packages.txt"
     destination = "/tmp/slurm/packages.txt"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.login_node[0].network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -61,10 +61,10 @@ resource "google_compute_instance" "login_node" {
       "sudo yum -y install $(cat /tmp/slurm/packages.txt)"
     ]
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.login_node[0].network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -72,10 +72,10 @@ resource "google_compute_instance" "login_node" {
     source      = "${path.module}/../shared/functions.sh"
     destination = "/tmp/slurm/functions.sh"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.login_node[0].network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -83,10 +83,10 @@ resource "google_compute_instance" "login_node" {
     source      = "${path.module}/configure.sh"
     destination = "/tmp/slurm/configure.sh"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.login_node[0].network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -96,10 +96,10 @@ resource "google_compute_instance" "login_node" {
       "(cd /tmp/slurm; sudo ./configure.sh ${var.nfs_apps_server})"
     ]
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.login_node[0].network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 }
