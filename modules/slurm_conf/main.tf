@@ -48,13 +48,3 @@ data "local_file" "memory" {
     filename = "${data.template_file.memory.rendered}.${count.index}"
     depends_on = ["null_resource.machine_type_memory"]
 }
-
-output "content" {
-    value = "${templatefile("${path.module}/slurm.conf.tmpl",{
-cluster_name=var.cluster_name,
-control_machine="${var.cluster_name}-controller",
-apps_dir="/apps",
-suspend_time=300,
-compute_nodes="${join("", data.template_file.compute_nodes.*.rendered)}"
-})}"
-}

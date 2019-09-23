@@ -45,11 +45,3 @@ resource "google_compute_firewall" "cluster_internal_firewall" {
     ports    = ["0-65535"]
   }
 }
-
-output "cluster_subnet_self_link" {
-  value = google_compute_subnetwork.cluster_subnet.self_link
-}
-
-output "cluster_subnet_name" {
-  value = google_compute_subnetwork.cluster_subnet.name
-}
