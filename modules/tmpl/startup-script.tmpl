@@ -271,7 +271,7 @@ WantedBy=multi-user.target""")
     if (INSTANCE_TYPE != "controller"):
         f = open('/etc/fstab', 'a')
         f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr,_netdev  0     0
 """.format(MUNGE_DIR, CONTROL_MACHINE))
         f.close()
         return
@@ -902,11 +902,11 @@ def setup_nfs_apps_vols():
     if not NFS_APPS_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr,_netdev  0     0
 """.format(APPS_DIR, CONTROL_MACHINE))
     else:
         f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr,_netdev  0     0
 """.format(APPS_DIR, NFS_APPS_SERVER))
     f.close()
 
@@ -918,11 +918,11 @@ def setup_nfs_home_vols():
     if not NFS_HOME_SERVER:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{0}:/home    /home     nfs      rw,hard,intr  0     0
+{0}:/home    /home     nfs      rw,hard,intr,_netdev  0     0
 """.format(CONTROL_MACHINE))
     else:
         f.write("""
-{0}:/home    /home     nfs      rw,hard,intr  0     0
+{0}:/home    /home     nfs      rw,hard,intr,_netdev  0     0
 """.format(NFS_HOME_SERVER))
     f.close()
 
@@ -934,7 +934,7 @@ def setup_nfs_sec_vols():
     if CONTROLLER_SECONDARY_DISK:
         if ((INSTANCE_TYPE != "controller")):
             f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
+{1}:{0}    {0}     nfs      rw,hard,intr,_netdev  0     0
 """.format(SEC_DISK_DIR, CONTROL_MACHINE))
     f.close()
 
