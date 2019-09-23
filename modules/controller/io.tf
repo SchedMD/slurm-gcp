@@ -53,6 +53,14 @@ variable "partitions" {
               static_node_count    = number}))
 }
 
+variable "deploy_user" {
+  default     = "slurm_deployer"
+}
+
+variable "deploy_key_path" {
+  default = "~/.ssh/google_compute_engine"
+}
+
 output "controller_node_name" {
   value = google_compute_instance.controller_node.name
 }

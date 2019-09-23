@@ -36,7 +36,7 @@ resource "google_compute_instance" "controller_node" {
   }
 
   metadata = {
-    sshKeys = "wkh:${file("~/.ssh/google_compute_engine.pub")}"
+    sshKeys = "${var.deploy_user}:${file("${var.deploy_key_path}.pub")}"
 #     enable-oslogin = "TRUE"
 
 #     startup-script = <<STARTUP
@@ -105,10 +105,10 @@ CUSTOMCONTROLLER
       "[ ! -d /tmp/slurm ] && mkdir /tmp/slurm"
     ]
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -116,10 +116,10 @@ CUSTOMCONTROLLER
     source      = "${path.module}/packages.txt"
     destination = "/tmp/slurm/packages.txt"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -128,10 +128,10 @@ CUSTOMCONTROLLER
       "sudo yum -y install $(cat /tmp/slurm/packages.txt)"
     ]
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -139,10 +139,10 @@ CUSTOMCONTROLLER
     source      = "${path.module}/../shared/functions.sh"
     destination = "/tmp/slurm/functions.sh"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -150,10 +150,10 @@ CUSTOMCONTROLLER
     source      = "${path.module}/configure.sh"
     destination = "/tmp/slurm/configure.sh"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -161,10 +161,10 @@ CUSTOMCONTROLLER
     destination = "/tmp/slurm/slurm.conf"
     content     = module.slurm_conf.content
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -176,10 +176,10 @@ control_machine="${var.cluster_name}-controller",
 apps_dir="/apps"
 })}"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -187,10 +187,10 @@ apps_dir="/apps"
     source      = "${path.module}/cgroup.conf"
     destination = "/tmp/slurm/cgroup.conf"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -198,10 +198,10 @@ apps_dir="/apps"
     source      = "${path.module}/suspend.py"
     destination = "/tmp/slurm/suspend.py"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -209,10 +209,10 @@ apps_dir="/apps"
     source      = "${path.module}/resume.py"
     destination = "/tmp/slurm/resume.py"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -220,10 +220,10 @@ apps_dir="/apps"
     source      = "${path.module}/slurm-gcp-sync.py"
     destination = "/tmp/slurm/slurm-gcp-sync.py"
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -234,10 +234,10 @@ apps_dir="/apps"
       "(cd /tmp/slurm; sudo ./configure.sh ${var.slurm_version} | systemd-cat -t configureslurm -p info)"
     ]
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -248,10 +248,10 @@ apps_dir="/apps"
       "sudo chmod -R u=rwx,go=rx /apps/slurm/scripts"
     ]
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 
@@ -262,10 +262,10 @@ apps_dir="/apps"
       "sudo touch /apps/slurm/current/etc/cgroup_allowed_devices_file.conf"
     ]
     connection {
-      private_key = "${file("~/.ssh/google_compute_engine")}"
+      private_key = "${file(var.deploy_key_path)}"
       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
       type = "ssh"
-      user = "wkh"
+      user = "${var.deploy_user}"
     }
   }
 }

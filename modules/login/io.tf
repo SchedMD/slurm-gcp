@@ -37,6 +37,14 @@ variable "nfs_apps_server" {
   default     = ""
 }
 
+variable "deploy_user" {
+  default     = "slurm_deployer"
+}
+
+variable "deploy_key_path" {
+  default = "~/.ssh/google_compute_engine"
+}
+
 output "instance_nat_ips" {
   value = [ "${google_compute_instance.login_node.*.network_interface.0.access_config.0.nat_ip}" ]
 }

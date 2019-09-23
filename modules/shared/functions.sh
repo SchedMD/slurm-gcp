@@ -267,7 +267,7 @@ SLURMDBD
 #  None
 ################
 function setup_mariadb {
-    local controller = ${1:-$(hostname)}
+    local controller=${1:-$(hostname)}
 
     systemctl enable mariadb
     systemctl start mariadb
