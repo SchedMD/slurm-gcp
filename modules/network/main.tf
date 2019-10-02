@@ -60,3 +60,26 @@ resource "google_compute_firewall" "cluster_internal_firewall" {
     ports    = ["0-65535"]
   }
 }
+
+resource "google_compute_router" "cluster_router"{
+    name    = "${var.cluster_name}-router"
+    region  = google_compute_subnetwork.cluster_subnet.region
+    network = google_compute_network.cluster_network.self_link
+}
+
+resource "google_compute_router_nat" "cluster_nat" {
+    name                               = "${var.cluster_name}-router-nat"
+    router                             = google_compute_router.cluster_router.name
+    region                             = google_compute_router.cluster_router.region
+    nat_ip_allocate_option             = "AUTO_ONLY"
+    source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
+    subnetwork {
+        name                    = google_compute_subnetwork.cluster_subnet.self_link
+        source_ip_ranges_to_nat = ["PRIMARY_IP_RANGE"]
+    }
+
+    log_config {
+      enable = true
+      filter = "ERRORS_ONLY"
+    }
+}
