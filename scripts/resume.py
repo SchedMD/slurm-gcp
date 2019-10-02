@@ -57,6 +57,9 @@ LOGFILE      = '/apps/slurm/log/resume.log'
 
 TOT_REQ_CNT = 1000
 
+# Set to True if the nodes aren't accessible by dns.
+UPDATE_NODE_ADDRS = False
+
 instances = {}
 operations = {}
 retry_list = []
@@ -65,6 +68,50 @@ credentials = compute_engine.Credentials()
 
 http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
 authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
+
+# [START wait_for_operation]
+def wait_for_operation(compute, project, zone, operation):
+    print('Waiting for operation to finish...')
+    while True:
+        result = compute.zoneOperations().get(
+            project=project,
+            zone=zone,
+            operation=operation).execute()
+
+        if result['status'] == 'DONE':
+            print("done.")
+            if 'error' in result:
+                raise Exception(result['error'])
+            return result
+
+        time.sleep(1)
+# [END wait_for_operation]
+
+# [START update_slurm_node_addrs]
+def update_slurm_node_addrs(compute):
+    for node_name in operations:
+        try:
+            operation = operations[node_name]
+            # Do this after the instances have been initialized and then wait
+            # for all operations to finish. Then updates their addrs.
+            wait_for_operation(compute, PROJECT, ZONE, operation['name'])
+
+            my_fields = 'networkInterfaces(name,network,networkIP,subnetwork)'
+            instance_networks = compute.instances().get(
+                project=PROJECT, zone=ZONE, instance=node_name,
+                fields=my_fields).execute()
+            instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
+
+            node_update_cmd = "{} update node={} nodeaddr={}".format(
+                SCONTROL, node_name, instance_ip)
+            subprocess.call(shlex.split(node_update_cmd))
+
+            logging.info("Instance " + node_name + " is now up")
+        except Exception, e:
+            logging.exception("Error in adding {} to slurm ({})".format(
+                node_name, str(e)))
+# [END update_slurm_node_addrs]
+
 
 # [START create_instance]
 def create_instance(compute, project, zone, instance_type, instance_name,
@@ -110,6 +157,13 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             }]
         }
     }
+
+    shutdown_script = open(
+        '/apps/slurm/scripts/compute-shutdown', 'r').read()
+    config['metadata']['items'].append({
+        'key': 'shutdown-script',
+        'value': shutdown_script
+    })
 
     if not have_compute_img:
         startup_script = open(
@@ -210,6 +264,9 @@ def add_instances(compute, source_disk_image, have_compute_img, node_list):
                 time.sleep(30)
     except Exception, e:
         logging.exception("error in add batch: " + str(e))
+
+    if UPDATE_NODE_ADDRS:
+        update_slurm_node_addrs(compute)
 
 # [END add_instances]
 

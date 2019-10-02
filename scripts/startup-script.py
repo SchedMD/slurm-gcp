@@ -44,7 +44,9 @@ EXTERNAL_COMPUTE_IPS = @EXTERNAL_COMPUTE_IPS@
 GPU_TYPE          = '@GPU_TYPE@'
 GPU_COUNT         = @GPU_COUNT@
 NFS_APPS_SERVER   = '@NFS_APPS_SERVER@'
+NFS_APPS_DIR      = '@NFS_APPS_DIR@'
 NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
+NFS_HOME_DIR      = '@NFS_HOME_DIR@'
 CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
 SEC_DISK_DIR      = '/mnt/disks/sec'
 PREEMPTIBLE       = @PREEMPTIBLE@
@@ -510,7 +512,7 @@ AccountingStorageType=accounting_storage/slurmdbd
 #AccountingStorageUser=
 AccountingStoreJobComment=YES
 ClusterName={cluster_name}
-DebugFlags=power
+#DebugFlags=powersave
 #JobCompHost=
 #JobCompLoc=
 #JobCompPass=
@@ -539,7 +541,7 @@ SuspendRate=0
 SuspendTime={suspend_time}
 #
 SchedulerParameters=salloc_wait_nodes
-SlurmctldParameters=cloud_dns
+SlurmctldParameters=cloud_dns,idle_on_node_suspend
 CommunicationParameters=NoAddrCache
 #
 # COMPUTE NODES
@@ -683,6 +685,7 @@ def install_meta_files():
         {'file': 'resume.py', 'meta': 'slurm_resume'},
         {'file': 'startup-script.py', 'meta': 'startup-script-compute'},
         {'file': 'slurm-gcp-sync.py', 'meta': 'slurm-gcp-sync'},
+        {'file': 'compute-shutdown', 'meta': 'compute-shutdown'},
         {'file': 'custom-compute-install', 'meta': 'custom-compute-install'},
         {'file': 'custom-controller-install', 'meta': 'custom-controller-install'},
     ]
@@ -893,8 +896,8 @@ def setup_nfs_apps_vols():
 """.format(APPS_DIR, CONTROL_MACHINE))
     else:
         f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
-""".format(APPS_DIR, NFS_APPS_SERVER))
+{1}:{2}    {0}     nfs      rw,hard,intr  0     0
+""".format(APPS_DIR, NFS_APPS_SERVER, NFS_APPS_DIR))
     f.close()
 
 #END setup_nfs_apps_vols()
@@ -909,8 +912,8 @@ def setup_nfs_home_vols():
 """.format(CONTROL_MACHINE))
     else:
         f.write("""
-{0}:/home    /home     nfs      rw,hard,intr  0     0
-""".format(NFS_HOME_SERVER))
+{0}:{1}    /home     nfs      rw,hard,intr  0     0
+""".format(NFS_HOME_SERVER, NFS_HOME_DIR))
     f.close()
 
 #END setup_nfs_home_vols()
@@ -1028,6 +1031,7 @@ def main():
     install_packages()
     setup_munge()
     setup_bash_profile()
+    setup_modules()
 
     if (CONTROLLER_SECONDARY_DISK and (INSTANCE_TYPE == "controller")):
         setup_secondary_disks()
@@ -1038,7 +1042,6 @@ def main():
 
     if INSTANCE_TYPE == "controller":
         mount_nfs_vols()
-        setup_modules()
         start_munge()
         install_slurm()
 
@@ -1086,8 +1089,7 @@ def main():
         subprocess.call(shlex.split('systemctl start nfs-server'))
         setup_nfs_exports()
 
-        if PREEMPTIBLE:
-            setup_sync_cronjob()
+        setup_sync_cronjob()
 
         # DOWN partition until image is created.
         subprocess.call(shlex.split(

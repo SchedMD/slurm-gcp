@@ -23,7 +23,7 @@ resources:
 - name: slurm-cluster
   type: slurm.jinja
   properties:
-    cluster_name            : m6
+    cluster_name            : m5
     static_node_count       : 4
     max_node_count          : 32
 
@@ -55,7 +55,9 @@ resources:
     login_disk_type            : pd-standard
     login_disk_size_gb         : 100
     #nfs_apps_server            :
+    #nfs_apps_dir               : /apps
     #nfs_home_server            :
+    #nfs_home_dir               : /home
     controller_secondary_disk          : True
     controller_secondary_disk_type     : pd-standard
     controller_secondary_disk_size_gb  : 5000
@@ -64,6 +66,11 @@ resources:
     #gpu_type                   : nvidia-tesla-v100
     #gpu_count                  : 8
     
-    slurm_version           : 18.08-latest
+    slurm_version           : 19.05-latest
     default_users           : mileschristiansmith@gmail.com
+    default_account         : default
+    
+    # Optional timer fields
+    #suspend_time               : 300
+
 #  [END cluster_yaml]
