@@ -26,14 +26,11 @@ resource "google_compute_subnetwork" "cluster_subnet" {
   private_ip_google_access = var.private_ip_google_access
 }
 
-resource "google_compute_firewall" "cluster_ssh_firewall" {
-  name          = "${var.cluster_name}-allow-ssh"
+resource "google_compute_firewall" "cluster_iap_ssh_firewall" {
+  name          = "${var.cluster_name}-allow-iap"
   network       = google_compute_network.cluster_network.name
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["35.235.240.0/20"]
 
-  allow {
-    protocol = "icmp"
-  }
 
   allow {
     protocol = "tcp"
