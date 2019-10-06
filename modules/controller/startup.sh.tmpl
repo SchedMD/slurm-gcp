@@ -1,0 +1,498 @@
+#!/usr/bin/env bash
+
+###############
+# Create the slurm group and user with gid, uid set to 992
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function add_slurm_user {
+    groupadd -g 992 slurm
+    useradd -m -c "SLURM Workload Manager" -d /var/lib/slurm -u 992 -g slurm -s /bin/bash slurm
+}
+
+#################
+# Turn off SELinux and keep it turned off
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function disable_selinux {
+    setenforce 0
+
+    cat << SELINUXOFF > /etc/selinux/config
+SELINUX=permissive
+SELINUX_TYPE=targeted
+SELINUXOFF
+}
+
+#################
+# Copy the metadata associated with the given key into the specified path
+# Globals:
+#  None
+# Arguments:
+#  key - metadata key associated with the desired content
+#  path - path to the location for the content on the compute instance
+# Returns:
+#  None
+################
+function fetch_metadata {
+    local key=$1
+    local path=$2
+
+    [[ "X$(which curl)" == "X" ]] && yum install -y curl
+
+    curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/$${key} -H "Metadata-Flavor: Google" > $${path}
+}
+
+#################
+# Download and install a specified version of Slurm
+# Globals:
+#  None
+# Arguments:
+#  version - version of Slurm to download and install
+#  appsdir - [optional, defaults to /apps] target install directory
+# Returns:
+#  None
+################
+function install_slurm {
+    local appsdir=$${2:-/apps}
+    local homedir="/home"
+
+    local which_slurm="slurm-$1"
+
+    local slurm_archive="$${which_slurm}.tar.bz2"
+    local slurm_rootdir="$${appsdir}/slurm"
+    local slurm_srcdir="$${slurm_rootdir}/src"
+    local slurm_current="$${slurm_rootdir}/current"
+
+    for d in [ $slurm_rootdir $slurm_srcdir ]; do mkdir -p $d; done
+
+    cd $${slurm_srcdir}
+
+    wget https://download.schedmd.com/slurm/$${slurm_archive}
+    tar -xvjf $${slurm_archive}
+    rm $${slurm_archive}
+
+    cd $slurm_srcdir/$${which_slurm}
+    [ ! -d "build" ] && mkdir build
+    cd build
+
+    ../configure --prefix=$${slurm_rootdir}/$${which_slurm} --sysconfdir=$${slurm_current}/etc
+    make -j install
+
+    ln -s $${slurm_rootdir}/$${which_slurm} $${slurm_current}
+
+    [[ ! -d $${slurm_rootdir}/state ]] && mkdir $${slurm_rootdir}/state
+    chown -R slurm: $${slurm_rootdir}/state
+
+    [[ ! -d $${slurm_rootdir}/log ]] && mkdir $${slurm_rootdir}/log
+    chown -R slurm: $${slurm_rootdir}/log
+
+    [[ ! -d $${slurm_current}/etc} ]] && mkdir $${slurm_current}/etc
+    fetch_metadata slurm_conf $${slurm_current}/etc/slurm.conf
+    fetch_metadata slurmdbd_conf $${slurm_current}/etc/slurmdbd.conf
+    fetch_metadata cgroup_conf $${slurm_current}/etc/cgroup.conf
+
+    [[ ! -d $${slurm_rootdir}/scripts ]] && mkdir $${slurm_rootdir}/scripts
+    fetch_metadata slurm-suspend $${slurm_rootdir}/scripts/suspend.py
+    fetch_metadata slurm-resume $${slurm_rootdir}/scripts/resume.py
+    fetch_metadata startup-script-compute $${slurm_rootdir}/scripts/startup-script.py
+    fetch_metadata slurm-gcp-sync $${slurm_rootdir}/scripts/slurm-gcp-sync.py
+    fetch_metadata custom-compute-install $${slurm_rootdir}/scripts/custom-compute-install
+    fetch_metadata custom-controller-install $${slurm_rootdir}/scripts/custom-controller-install
+}
+
+#################
+# Create the Slurm controller MOTD message
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+#################
+function installed_motd {
+    cat << MOTD_MESSAGE > /etc/motd
+                                 SSSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                        SSSS     SSSSSSS     SSSS
+                       SSSSSS               SSSSSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                        SSSS    SSSSSSSSS    SSSS
+                SSS             SSSSSSSSS             SSS
+               SSSSS    SSSS    SSSSSSSSS    SSSS    SSSSS
+                SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                SSS    SSSSSS               SSSSSS    SSS
+               SSSSS    SSSS     SSSSSSS     SSSS    SSSSS
+          S     SSS             SSSSSSSSS             SSS     S
+         SSS            SSSS    SSSSSSSSS    SSSS            SSS
+          S     SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS     S
+               SSSSS   SSSSSS   SSSSSSSSS   SSSSSS   SSSSS
+          S    SSSSS    SSSS     SSSSSSS     SSSS    SSSSS    S
+    S    SSS    SSS                                   SSS    SSS    S
+    S     S                                                   S     S
+                SSS
+                SSS
+                SSS
+                SSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS    SSSSSSSSS   SSSSSSSSSSSSSSSSSSSS
+SSSSSSSSSSSSS   SSS   SSSS       SSSS   SSSSSSSSSS  SSSSSSSSSSSSSSSSSSSSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSSS   SSS   SSSSSSSSSSSSSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
+
+MOTD_MESSAGE
+}
+
+#################
+# Create the Slurm controller MOTD message
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+#################
+function installing_motd {
+    cat << MOTD_MESSAGE > /etc/motd
+                                 SSSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                        SSSS     SSSSSSS     SSSS
+                       SSSSSS               SSSSSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                        SSSS    SSSSSSSSS    SSSS
+                SSS             SSSSSSSSS             SSS
+               SSSSS    SSSS    SSSSSSSSS    SSSS    SSSSS
+                SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                SSS    SSSSSS               SSSSSS    SSS
+               SSSSS    SSSS     SSSSSSS     SSSS    SSSSS
+          S     SSS             SSSSSSSSS             SSS     S
+         SSS            SSSS    SSSSSSSSS    SSSS            SSS
+          S     SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS     S
+               SSSSS   SSSSSS   SSSSSSSSS   SSSSSS   SSSSS
+          S    SSSSS    SSSS     SSSSSSS     SSSS    SSSSS    S
+    S    SSS    SSS                                   SSS    SSS    S
+    S     S                                                   S     S
+                SSS
+                SSS
+                SSS
+                SSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS    SSSSSSSSS   SSSSSSSSSSSSSSSSSSSS
+SSSSSSSSSSSSS   SSS   SSSS       SSSS   SSSSSSSSSS  SSSSSSSSSSSSSSSSSSSSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSSS   SSS   SSSSSSSSSSSSSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
+
+/home on the controller will be mounted over the existing /home.
+Any changes in /home will be hidden. Please wait until the installation is
+complete before making changes in your home directory.
+MOTD_MESSAGE
+}
+
+#################
+# Add the current slurm installation's bin/ and sbin/ directories to PATH
+# Globals:
+#  PATH
+# Arguments:
+#  current_slurmdir - [optional, defaults to /apps/slurm/current] root of current slurm installation
+# Returns:
+#  None
+################
+function setup_bash_profile { 
+    local current_slurmdir=$${1:-${apps_dir}/slurm/current}
+
+    cat <<PROFILE > /etc/profile.d/slurm.sh
+PATH="$PATH:$${current_slurmdir}/bin:$${current_slurmdir}/sbin"
+PROFILE
+}
+
+#################
+# Starup mariadb and create slurm user and grant privileges
+# Globals:
+#  None
+# Arguments:
+# controller - [optional, defaults to hostname] fqdn or IP address of the slurm controller node
+# Returns:
+#  None
+################
+function setup_mariadb {
+    local controller=$${1:-$(hostname)}
+
+    systemctl enable mariadb
+    systemctl start mariadb
+
+    mysql -u root -e "create user 'slurm'@'localhost';"
+    mysql -u root -e "grant all on slurm_acct_db.* TO 'slurm'@'localhost';"
+    mysql -u root -e "grant all on slurm_acct_db.* TO 'slurm'@'$${controller}';"
+}
+
+#################
+# Configure environment modules
+# Globals:
+#  None
+# Arguments:
+#  modulesdir - [optional, defaults to ${apps_dir}/modulefiles] directory for environment modules modulefiles
+# Returns:
+#  None
+################
+function setup_modules {
+    local modulesdir=$${1:-${apps_dir}/modulefiles}
+
+    [[ ! -d $modulesdir ]] && mkdir $modulesdir
+
+    if [[ -z "$(grep $modulesdir /usr/share/Modules/init/.modulespath)" ]]; then
+        echo $modulesdir >> /usr/share/Modules/init/.modulespath
+    fi
+}
+
+###############
+# Create the systemd munge.service unit file and generate a munge key
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function setup_munge {
+    cat << MUNGE > /usr/lib/systemd/system/munge.service
+[Unit]
+Description=MUNGE authentication service
+Documentation=man:munged(8)
+After=network.target
+After=syslog.target
+After=time-sync.target
+    
+[Service]
+Type=forking
+ExecStart=/usr/sbin/munged --num-threads=10
+PIDFile=/var/run/munge/munged.pid
+User=munge
+Group=munge
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+MUNGE
+
+    create-munge-key
+
+    chown -R munge: /etc/munge /var/log/munge
+}
+
+#################
+# Add /etc/exports entries for NFS volumes
+# Globals:
+#  None
+# Arguments:
+#  directories - list of directories being exported
+# Returns:
+#  None
+################
+function setup_nfs_exports {
+    for dir in  $@
+    do
+        echo -e "$dir\t*(rw,no_subtree_check,no_root_squash)" | cat - >> /etc/exports
+    done
+
+    exportfs -a
+}
+
+#################
+# Increase the number of threads created by the NFS daemon
+# TODO:
+#  /etc/sysconfig/nfs is deprecated as of RHEL 7 should use /etc/nfs.conf instead
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function setup_nfs_threads {
+    cat <<NFSTHREADS >> /etc/sysconfig/nfs
+RPCNFSDCOUNT=256
+NFSTHREADS
+}
+
+################
+# Add /etc/fstab entries for NFS volumes
+# Globals:
+#  None
+# Arguments:
+#  server - name or IP address of the NFS volume host
+#  directories - list of directories to be mounted from server
+# Returns:
+#  None
+################
+function setup_nfs_vols {
+    local server=$1
+    shift
+    for dir in $@
+    do
+        echo -e "$server:$dir\t$dir\tnfs\trw,hard,intr\t0\t0" | cat - >> /etc/fstab
+    done
+}
+
+#################
+# Add slurm.conf to /etc/tmpfiles.d
+# Globals:
+#  None
+# Arguments:
+#  rundir - [optional, defaults to /var/run/slurm] runtime data directory for Slurm
+# Returns:
+#  None
+################
+function setup_slurm_tmpfile {
+    local rundir=$${1:-/var/run/slurm}
+
+    cat <<SLURMCONF > /etc/tmpfiles.d/slurm.conf
+d $${rundir} 0755 slurm slurm -
+SLURMCONF
+
+    [[ ! -d $${rundir} ]] && mkdir $${rundir}
+    chmod 755 $${rundir}
+    chown slurm: $${rundir}
+}
+
+#################
+# Create systemd service unit files for the Slurm daemons
+# Globals:
+#  None
+# Arguments:
+#  current_slurmdir - [optional, defaults to /apps/slurm/current] root of current slurm installation
+# Returns:
+#  None
+################
+function setup_slurm_units {
+    current_slurmdir=$${1:-/apps/slurm/current}
+
+    cat <<SLURMCTLD > /usr/lib/systemd/system/slurmctld.service
+[Unit]
+Description=Slurm controller daemon
+After=network.target munge.service
+ConditionPathExists=$${current_slurmdir}/etc/slurm.conf
+
+[Service]
+Type=forking
+EnvironmentFile=-/etc/sysconfig/slurmctld
+ExecStart=$${current_slurmdir}/sbin/slurmctld $SLURMCTLD_OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/var/run/slurm/slurmctld.pid
+
+[Install]
+WantedBy=multi-user.target
+SLURMCTLD
+
+    chmod 0644 /usr/lib/systemd/system/slurmctld.service
+
+    cat <<SLURMDBD > /usr/lib/systemd/system/slurmdbd.service
+[Unit]
+Description=Slurm DBD accounting daemon
+After=network.target munge.service
+ConditionPathExists=$${current_slurmdir}/etc/slurmdbd.conf
+
+[Service]
+Type=forking
+EnvironmentFile=-/etc/sysconfig/slurmdbd
+ExecStart=$${current_slurmdir}/sbin/slurmdbd $SLURMDBD_OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/var/run/slurm/slurmdbd.pid
+
+[Install]
+WantedBy=multi-user.target
+SLURMDBD
+
+    chmod 644 /usr/lib/systemd/system/slurmdbd.service
+}
+
+#################
+# Setup the Slurm control node
+#################
+yum update -y
+
+disable_selinux
+installing_motd
+
+fetch_metadata packages /var/tmp/packages.txt
+yum -y install $(cat /var/tmp/packages.txt)
+
+[[ ! -d /apps/slurm ]] && mkdir -p /apps/slurm
+[[ ! -d /var/log/slurm ]] && mkdir /var/log/slurm
+
+add_slurm_user
+
+setup_munge
+
+setup_bash_profile
+
+[[ "X${nfs_apps_server}" != "X" ]] && setup_nfs_vols ${apps_dir} ${nfs_apps_server}
+[[ "X${nfs_home_server}" != "X" ]] && setup_nfs_vols /home ${nfs_home_server}
+
+mount -a
+
+setup_modules
+
+systemctl enable munge.service
+systemctl start munge.service
+
+install_slurm ${slurm_version} ${apps_dir}
+
+setup_slurm_tmpfile
+setup_slurm_units
+
+setup_mariadb
+
+while [[ "X$(systemctl is-active mariadb.service)" != "Xactive" ]]; do sleep 2; done
+
+systemctl enable slurmdbd
+systemctl start slurmdbd
+
+while [[ "X$(systemctl is-active slurmdbd.service)" != "Xactive" ]]; do sleep 2; done
+
+sleep 10
+
+${apps_dir}/slurm/current/bin/sacctmgr -i add cluster ${cluster_name}
+${apps_dir}/slurm/current/bin/sacctmgr -i add account ${default_account}
+${apps_dir}/slurm/current/bin/sacctmgr -i add user $(echo ${users} | tr '@.' '_') account=${default_account}
+
+systemctl enable slurmctld.service
+systemctl start slurmctld.service
+
+setup_nfs_threads
+
+systemctl enable nfs-server
+systemctl start nfs-server
+
+setup_nfs_exports ${apps_dir} /home /etc/munge
+
+echo '*/1 * * * * ${apps_dir}/slurm/scripts/slurm-gcp-sync.py' | crontab -u root -
+
+${apps_dir}/slurm/current/bin/scontrol update partitionname=${default_partition} state=down
+
+installed_motd
+
+exit 0

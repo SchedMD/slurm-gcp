@@ -31,25 +31,27 @@ module "slurm_cluster_controller" {
   cluster_name  = var.cluster_name
   network       = module.slurm_cluster_network.cluster_subnet_self_link
   partitions    = var.partitions
+  users         = var.users
 }
 
 module "slurm_cluster_login" {
   source = "../../modules/login"
 
   cluster_name      = var.cluster_name
+  controller_name   = module.slurm_cluster_controller.controller_node_name
   network           = module.slurm_cluster_network.cluster_subnet_self_link
-  node_count        = 1
   nfs_apps_server   = module.slurm_cluster_controller.controller_node_name
-}
+  nfs_home_server   = module.slurm_cluster_controller.controller_node_name
+  node_count        = 1
+ }
 
-# module "slurm_cluster_compute" {
-#   source = "../../modules/compute"
-# 
-#   cluster_name  = var.cluster_name
-#   network       = module.slurm_cluster_network.cluster_subnet_self_link
-#   project       = var.project
-#   default_users = var.default_users
-#   partitions    = "${jsonencode(var.partitions)}"
-#   partition_id  = 0
-# }
+module "slurm_cluster_compute" {
+  source = "../../modules/compute"
+
+  cluster_name      = var.cluster_name
+  network           = module.slurm_cluster_network.cluster_subnet_self_link
+  project           = var.project
+  nfs_apps_server   = module.slurm_cluster_controller.controller_node_name
+  nfs_home_server   = module.slurm_cluster_controller.controller_node_name
+}
 

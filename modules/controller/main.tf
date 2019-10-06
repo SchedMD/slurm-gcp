@@ -20,8 +20,12 @@ module "slurm_conf" {
   partitions   = var.partitions
 }
 
+locals {
+  controller_name = "${var.cluster_name}-controller"
+}
+
 resource "google_compute_instance" "controller_node" {
-  name         = "${var.cluster_name}-controller"
+  name         = local.controller_name
   machine_type = var.controller_machine_type
   zone         = var.zone
 
@@ -51,9 +55,20 @@ resource "google_compute_instance" "controller_node" {
   }
 
   metadata = {
-    sshKeys = "${var.deploy_user}:${file("${var.deploy_key_path}.pub")}"
-#     enable-oslogin = "TRUE"
+    enable-oslogin = "TRUE"
 
+    startup-script = <<STARTUP
+${templatefile("${path.module}/startup.sh.tmpl", {
+apps_dir="${var.apps_dir}",
+cluster_name="${var.cluster_name}",
+default_account="${var.default_account}",
+default_partition="${var.default_partition}",
+nfs_apps_server="${var.nfs_apps_server}",
+nfs_home_server="${var.nfs_home_server}",
+slurm_version="${var.slurm_version}"
+users="${var.users}"
+})}
+STARTUP
 #     startup-script = <<STARTUP
 # ${templatefile("${path.module}/startup-script.tmpl", {
 # cluster_name = "${var.cluster_name}", 
@@ -92,6 +107,23 @@ resource "google_compute_instance" "controller_node" {
 # })}
 # COMPUTESTARTUP
 
+    cgroup_conf = <<CGROUPCONF
+${file("${path.module}/cgroup.conf")}
+CGROUPCONF
+
+    packages = <<PACKAGES
+${file("${path.module}/packages.txt")}
+PACKAGES
+
+    slurm_conf = module.slurm_conf.content
+
+    slurmdbd_conf = <<SLURMDBDCONF
+${templatefile("${path.module}/slurmdbd.conf.tmpl", {
+apps_dir="${var.apps_dir}"
+control_machine=local.controller_name
+})}
+SLURMDBDCONF
+
     slurm_resume = <<RESUME
 ${file("${path.module}/resume.py")}
 RESUME
@@ -113,174 +145,174 @@ ${file("${path.module}/custom-controller-install")}
 CUSTOMCONTROLLER
   }
 
-  provisioner "remote-exec" {
-    inline = [ 
-      "sudo yum update -y",
-      "[ ! -d /var/log/slurm ] && sudo mkdir /var/log/slurm",
-      "[ ! -d /tmp/slurm ] && mkdir /tmp/slurm"
-    ]
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/packages.txt"
-    destination = "/tmp/slurm/packages.txt"
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [ 
-      "sudo yum -y install $(cat /tmp/slurm/packages.txt)"
-    ]
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/../shared/functions.sh"
-    destination = "/tmp/slurm/functions.sh"
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/configure.sh"
-    destination = "/tmp/slurm/configure.sh"
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "file" {
-    destination = "/tmp/slurm/slurm.conf"
-    content     = module.slurm_conf.content
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "file" {
-    destination = "/tmp/slurm/slurmdbd.conf"
-    content     = "${templatefile("${path.module}/slurmdbd.conf.tmpl",{
-cluster_name=var.cluster_name,
-control_machine="${var.cluster_name}-controller",
-apps_dir="/apps"
-})}"
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/cgroup.conf"
-    destination = "/tmp/slurm/cgroup.conf"
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/suspend.py"
-    destination = "/tmp/slurm/suspend.py"
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/resume.py"
-    destination = "/tmp/slurm/resume.py"
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/slurm-gcp-sync.py"
-    destination = "/tmp/slurm/slurm-gcp-sync.py"
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mkdir -p /apps/slurm/src",
-      "sudo chmod a+x /tmp/slurm/configure.sh",
-      "(cd /tmp/slurm; sudo ./configure.sh ${var.slurm_version} | systemd-cat -t configureslurm -p info)"
-    ]
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mkdir -p /apps/slurm/scripts",
-      "sudo mv /tmp/slurm/*.py /apps/slurm/scripts",
-      "sudo chmod -R u=rwx,go=rx /apps/slurm/scripts"
-    ]
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mv /tmp/slurm/slurmdbd.conf /apps/slurm/current/etc",
-      "sudo mv /tmp/slurm/cgroup.conf /apps/slurm/current/etc",
-      "sudo touch /apps/slurm/current/etc/cgroup_allowed_devices_file.conf"
-    ]
-    connection {
-      private_key = "${file(var.deploy_key_path)}"
-      host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
-      type = "ssh"
-      user = "${var.deploy_user}"
-    }
-  }
+#   provisioner "remote-exec" {
+#     inline = [ 
+#       "sudo yum update -y",
+#       "[ ! -d /var/log/slurm ] && sudo mkdir /var/log/slurm",
+#       "[ ! -d /tmp/slurm ] && mkdir /tmp/slurm"
+#     ]
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "file" {
+#     source      = "${path.module}/packages.txt"
+#     destination = "/tmp/slurm/packages.txt"
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "remote-exec" {
+#     inline = [ 
+#       "sudo yum -y install $(cat /tmp/slurm/packages.txt)"
+#     ]
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "file" {
+#     source      = "${path.module}/../shared/functions.sh"
+#     destination = "/tmp/slurm/functions.sh"
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "file" {
+#     source      = "${path.module}/configure.sh"
+#     destination = "/tmp/slurm/configure.sh"
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "file" {
+#     destination = "/tmp/slurm/slurm.conf"
+#     content     = module.slurm_conf.content
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "file" {
+#     destination = "/tmp/slurm/slurmdbd.conf"
+#     content     = "${templatefile("${path.module}/slurmdbd.conf.tmpl",{
+# cluster_name=var.cluster_name,
+# control_machine="${var.cluster_name}-controller",
+# apps_dir="/apps"
+# })}"
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "file" {
+#     source      = "${path.module}/cgroup.conf"
+#     destination = "/tmp/slurm/cgroup.conf"
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "file" {
+#     source      = "${path.module}/suspend.py"
+#     destination = "/tmp/slurm/suspend.py"
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "file" {
+#     source      = "${path.module}/resume.py"
+#     destination = "/tmp/slurm/resume.py"
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "file" {
+#     source      = "${path.module}/slurm-gcp-sync.py"
+#     destination = "/tmp/slurm/slurm-gcp-sync.py"
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "remote-exec" {
+#     inline = [
+#       "sudo mkdir -p /apps/slurm/src",
+#       "sudo chmod a+x /tmp/slurm/configure.sh",
+#       "(cd /tmp/slurm; sudo ./configure.sh ${var.slurm_version} | systemd-cat -t configureslurm -p info)"
+#     ]
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "remote-exec" {
+#     inline = [
+#       "sudo mkdir -p /apps/slurm/scripts",
+#       "sudo mv /tmp/slurm/*.py /apps/slurm/scripts",
+#       "sudo chmod -R u=rwx,go=rx /apps/slurm/scripts"
+#     ]
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
+# 
+#   provisioner "remote-exec" {
+#     inline = [
+#       "sudo mv /tmp/slurm/slurmdbd.conf /apps/slurm/current/etc",
+#       "sudo mv /tmp/slurm/cgroup.conf /apps/slurm/current/etc",
+#       "sudo touch /apps/slurm/current/etc/cgroup_allowed_devices_file.conf"
+#     ]
+#     connection {
+#       private_key = "${file(var.deploy_key_path)}"
+#       host = google_compute_instance.controller_node.network_interface[0].access_config[0].nat_ip
+#       type = "ssh"
+#       user = "${var.deploy_user}"
+#     }
+#   }
 }
