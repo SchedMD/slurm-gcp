@@ -25,7 +25,7 @@ import urllib
 import urllib2
 
 CLUSTER_NAME      = '@CLUSTER_NAME@'
-MACHINE_TYPE      = '@MACHINE_TYPE@' # e.g. n1-standard-1, n1-starndard-2
+MACHINE_TYPE      = '@MACHINE_TYPE@' # e.g. n1-standard-1, n1-standard-2
 INSTANCE_TYPE     = '@INSTANCE_TYPE@' # e.g. controller, login, compute
 
 PROJECT           = '@PROJECT@'
