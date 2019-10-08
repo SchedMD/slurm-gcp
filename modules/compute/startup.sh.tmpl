@@ -1,6 +1,28 @@
 #!/usr/bin/env bash
 
 ###############
+# Create the munge group and user with gid, uid set to 991
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function add_munge_user {
+    local mungeid=991
+
+    if [[ ! $(groupadd -g $${mungeid} munge) ]]; then 
+        groupmod -g $${mungeid} munge 
+    fi
+
+    if [[ ! $(useradd  -m -c "MUNGE Uid 'N' Gid Emporium" -d /var/lib/munge -u $${mungeid} -g munge  -s /sbin/nologin munge) ]]; then
+        usermod -u $${mungeid} -g $${mungeid} munge
+        chown -R munge:munge /var/lib/munge
+    fi
+}
+
+###############
 # Create the slurm group and user with gid, uid set to 992
 # Globals:
 #  None
@@ -320,20 +342,43 @@ function stop_instance {
 }
 
 #################
+# Wait for the specified NFS mount point to become available
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+#################
+function wait_for_mount {
+    local target_dir=$${1:-${apps_dir}}
+
+    echo "Waiting for $${target_dir} "
+    while [[ $(mount -a) ]]
+    do 
+        sleep 5 
+        echo -n "."
+    done
+    echo $${target_dir} mounted
+}
+
+#################
 # Setup a Slurm login node
 #################
 yum update -y
 
 disable_selinux
+
+[[ ! -d /var/log/slurm ]] && mkdir /var/log/slurm
+[[ ! -d ${apps_dir} ]] && mkdir ${apps_dir}
+
 installing_motd
 
+add_munge_user
 add_slurm_user
 
 fetch_metadata packages /var/tmp/packages.txt
 yum -y install $(cat /var/tmp/packages.txt)
-
-[[ ! -d /var/log/slurm ]] && mkdir /var/log/slurm
-[[ ! -d ${apps_dir} ]] && mkdir ${apps_dir}
 
 setup_munge
 
@@ -348,7 +393,8 @@ systemctl enable slurmd.service
 
 setup_slurmd_cronjob
 
-mount -a
+wait_for_mount ${apps_dir}
+wait_for_mount /home
 
 if [[ "$(hostname)" == *"compute-image"* ]]; then
     create_compute_image

@@ -1,6 +1,28 @@
 #!/usr/bin/env bash
 
 ###############
+# Create the munge group and user with gid, uid set to 991
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function add_munge_user {
+    local mungeid=991
+
+    if [[ ! $(groupadd -g $${mungeid} munge) ]]; then 
+        groupmod -g $${mungeid} munge 
+    fi
+
+    if [[ ! $(useradd  -m -c "MUNGE Uid 'N' Gid Emporium" -d /var/lib/munge -u $${mungeid} -g munge  -s /sbin/nologin munge) ]]; then
+        usermod -u $${mungeid} -g $${mungeid} munge
+        chown -R munge:munge /var/lib/munge
+    fi
+}
+
+###############
 # Create the slurm group and user with gid, uid set to 992
 # Globals:
 #  None
@@ -301,6 +323,8 @@ MUNGE
     create-munge-key
 
     chown -R munge: /etc/munge /var/log/munge
+    chmod 400 /etc/munge/munge.key
+    chmod 700 /etc/munge /var/log/munge
 }
 
 #################
@@ -443,6 +467,7 @@ yum -y install $(cat /var/tmp/packages.txt)
 [[ ! -d /apps/slurm ]] && mkdir -p /apps/slurm
 [[ ! -d /var/log/slurm ]] && mkdir /var/log/slurm
 
+add_munge_user
 add_slurm_user
 
 setup_munge
