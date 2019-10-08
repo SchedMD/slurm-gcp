@@ -49,6 +49,7 @@ PACKAGES
     startup-script = <<STARTUP
 ${templatefile("${path.module}/startup.sh.tmpl", {
 cluster_name = "${var.cluster_name}", 
+controller="${var.controller_name}",
 apps_dir="/apps",
 nfs_apps_server = "${var.nfs_apps_server}", 
 nfs_home_server = "${var.nfs_home_server}", 

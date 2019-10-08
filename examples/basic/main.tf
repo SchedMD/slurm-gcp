@@ -49,6 +49,7 @@ module "slurm_cluster_compute" {
   source = "../../modules/compute"
 
   cluster_name      = var.cluster_name
+  controller_name   = module.slurm_cluster_controller.controller_node_name
   network           = module.slurm_cluster_network.cluster_subnet_self_link
   project           = var.project
   nfs_apps_server   = module.slurm_cluster_controller.controller_node_name

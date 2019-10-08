@@ -255,7 +255,7 @@ Restart=on-abort
 WantedBy=multi-user.target
 MUNGE
 
-    create-munge-key
+    echo -e "${controller}:/etc/munge\t/etc/munge\tnfs\trw,hard,intr\t0\t0" | cat - >> /etc/fstab
 }
 
 ################
@@ -363,7 +363,7 @@ function wait_for_mount {
 }
 
 #################
-# Setup a Slurm login node
+# Setup a Slurm compute node
 #################
 yum update -y
 
@@ -395,15 +395,17 @@ setup_slurmd_cronjob
 
 wait_for_mount ${apps_dir}
 wait_for_mount /home
+    
+systemctl enable munge.service
+systemctl start munge.service
 
 if [[ "$(hostname)" == *"compute-image"* ]]; then
     create_compute_image
 
-    ${apps_dir}/slurm/current/bin/scontrol update $(partitionname $(hostname)) state=up
+    ${apps_dir}/slurm/current/bin/scontrol update PartitionName=$(partitionname $(hostname)) state=up
 
     stop_instance
 else
-    systemctl start munge.service
     systemctl start slurmd.service
 
     installed_motd

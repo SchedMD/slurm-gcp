@@ -69,44 +69,17 @@ slurm_version="${var.slurm_version}"
 users="${var.users}"
 })}
 STARTUP
-#     startup-script = <<STARTUP
-# ${templatefile("${path.module}/startup-script.tmpl", {
-# cluster_name = "${var.cluster_name}", 
-# project = "${var.project}", 
-# zone = "${var.zone}", 
-# instance_type = "controller",
-# munge_key = "${var.munge_key}", 
-# slurm_version ="${var.slurm_version}", 
-# def_slurm_acct = "${var.default_account}", 
-# def_slurm_users = "${var.default_users}", 
-# external_compute_ips = "${var.external_compute_ips}", 
-# nfs_apps_server = "${var.nfs_apps_server}", 
-# nfs_home_server = "${var.nfs_home_server}", 
-# controller_secondary_disk = "${var.controller_secondary_disk}", 
-# suspend_time = "${var.suspend_time}", 
-# partitions = "${var.partitions}"
-# })}
-# STARTUP
-# 
-#     startup-script-compute = <<COMPUTESTARTUP
-# ${templatefile("${path.module}/startup-script.tmpl", {
-# cluster_name = "${var.cluster_name}", 
-# project = "${var.project}", 
-# zone = "${var.zone}", 
-# instance_type = "compute",
-# munge_key = "${var.munge_key}", 
-# slurm_version ="${var.slurm_version}", 
-# def_slurm_acct = "${var.default_account}", 
-# def_slurm_users = "${var.default_users}", 
-# external_compute_ips = "${var.external_compute_ips}", 
-# nfs_apps_server = "${var.nfs_apps_server}", 
-# nfs_home_server = "${var.nfs_home_server}", 
-# controller_secondary_disk = "${var.controller_secondary_disk}", 
-# suspend_time = "${var.suspend_time}", 
-# partitions = "${var.partitions}"
-# })}
-# COMPUTESTARTUP
 
+    startup-script-compute = <<COMPUTESTARTUP
+${templatefile("${path.module}/../compute/startup.sh.tmpl", {
+cluster_name = "${var.cluster_name}", 
+controller=local.controller_name,
+apps_dir="/apps",
+nfs_apps_server = "${var.nfs_apps_server}", 
+nfs_home_server = "${var.nfs_home_server}", 
+})}
+COMPUTESTARTUP
+ 
     cgroup_conf = <<CGROUPCONF
 ${file("${path.module}/cgroup.conf")}
 CGROUPCONF

@@ -51,6 +51,10 @@ variable "cluster_name" {
   description = "Name of the Slurm cluster"
 }
 
+variable "controller_name" {
+  description = "FQDN or IP address of the controller node"
+}
+
 variable "machine_type" {
   description = "Compute Platform machine type to use in controller node creation"
   default     = "n1-standard-4"
