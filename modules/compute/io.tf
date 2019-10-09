@@ -51,33 +51,31 @@ variable "cluster_name" {
   description = "Name of the Slurm cluster"
 }
 
+variable "controller_name" {
+  description = "FQDN or IP address of the controller node"
+}
+
+variable "machine_type" {
+  description = "Compute Platform machine type to use in controller node creation"
+  default     = "n1-standard-4"
+}
+
+variable "boot_disk_type" {
+  description = "Type of boot disk to create for the cluster controller node"
+  default     = "pd-ssd"
+}
+
+variable "boot_disk_size" {
+  description = "Size of boot disk to create for the cluster controller node"
+  default     = 64
+}
+
 variable "controller_secondary_disk" {
   description = "Boolean indicating whether or not to allocate a secondary disk on the controller node"
   default     = 0
 }
 
-variable "default_account" {
-  type        = string
-  description = "Default account to setup for accounting"
-  default     = "default"
-}
-
-variable "default_users" {
-  type        = string
-  description = "Default users to add to the account database (added to default_account)"
-}
-
 variable "munge_key" {
   description = "Specific munge key to use (e.g. date +%s | sha512sum | cut -d' ' -f1) generate a random key if none is specified"
   default     = ""
-}
-
-variable "slurm_version" {
-  description = "The Slurm version to install. The version should match the link name found at https://www.schedmd.com/downloads.php"
-  default     = "18.08-latest"
-}
-
-variable "suspend_time" {
-  description = "Idle time (in sec) to wait before nodes go away"
-  default     = 300
 }

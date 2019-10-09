@@ -23,6 +23,11 @@ variable "zone" {
   default     = "us-central1-b"
 }
 
+variable "apps_dir" {
+  description = "Slurm cluster applications directory"
+  default     = "/apps"
+}
+
 variable "cluster_name" {
   description = "Name of the Slurm cluster"
 }
@@ -74,6 +79,30 @@ variable "deploy_user" {
 
 variable "deploy_key_path" {
   default = "~/.ssh/google_compute_engine"
+}
+
+variable "nfs_apps_server" {
+  description = "FQDN or IP address of the NFS server providing the Slurm cluster applications directory mount point"
+  default     = ""
+}
+
+variable "nfs_home_server" {
+  description = "FQDN or IP address of the NFS server providing the Slurm cluster home directory mount point"
+  default     = ""
+}
+
+variable "default_account" {
+  description = "Slurm cluster default account"
+  default     = "default"
+}
+
+variable "default_partition" {
+  description = "Slurm cluster default partition"
+  default     = "debug"
+}
+
+variable "users" {
+  description = "Comma separated list of user email addresses"
 }
 
 output "controller_node_name" {

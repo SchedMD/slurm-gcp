@@ -27,6 +27,10 @@ variable "cluster_name" {
   description = "Name of the Slurm cluster"
 }
 
+variable "controller_name" {
+  description = "FQDN or IP address of the controller node"
+}
+
 variable "machine_type" {
   description = "Compute Platform machine type to use in login node creation"
   default     = "n1-standard-2"
@@ -47,17 +51,19 @@ variable "boot_disk_size" {
   default     = 16
 }
 
+variable "apps_dir" {
+  description = "Slurm cluster applications directory"
+  default     = "/apps"
+}
+
 variable "nfs_apps_server" {
   description = "IP address of the NFS server hosting the apps directory"
   default     = ""
 }
 
-variable "deploy_user" {
-  default     = "slurm_deployer"
-}
-
-variable "deploy_key_path" {
-  default = "~/.ssh/google_compute_engine"
+variable "nfs_home_server" {
+  description = "IP address of the NFS server hosting the home directory"
+  default     = ""
 }
 
 output "instance_nat_ips" {
