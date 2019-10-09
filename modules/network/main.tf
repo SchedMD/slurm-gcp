@@ -26,11 +26,25 @@ resource "google_compute_subnetwork" "cluster_subnet" {
   private_ip_google_access = var.private_ip_google_access
 }
 
+resource "google_compute_firewall" "cluster_ssh_firewall" {
+  count = var.disable_public_ips ? 0 : 1
+
+  name          = "${var.cluster_name}-allow-ssh"
+  network       = google_compute_network.cluster_network.name
+  source_ranges = ["0.0.0.0/0"]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+}
+
 resource "google_compute_firewall" "cluster_iap_ssh_firewall" {
+  count = var.disable_public_ips ? 1 : 0
+  
   name          = "${var.cluster_name}-allow-iap"
   network       = google_compute_network.cluster_network.name
   source_ranges = ["35.235.240.0/20"]
-
 
   allow {
     protocol = "tcp"
@@ -65,6 +79,8 @@ resource "google_compute_router" "cluster_router"{
 }
 
 resource "google_compute_router_nat" "cluster_nat" {
+    count = var.disable_public_ips ? 1 : 0
+
     name                               = "${var.cluster_name}-router-nat"
     router                             = google_compute_router.cluster_router.name
     region                             = google_compute_router.cluster_router.region
