@@ -37,8 +37,16 @@ variable "disable_public_ips" {
   type        = bool
 }
 
+output "cluster_network_self_link" {
+  value = google_compute_network.cluster_network.self_link
+}
+
 output "cluster_subnet_self_link" {
   value = google_compute_subnetwork.cluster_subnet.self_link
+}
+
+output "cluster_network_name" {
+  value = google_compute_network.cluster_network.name
 }
 
 output "cluster_subnet_name" {

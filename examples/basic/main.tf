@@ -21,16 +21,20 @@ provider "google" {
 module "slurm_cluster_network" {
   source = "../../modules/network"
 
-  cluster_name = var.cluster_name
-  region  = var.region
+  cluster_name       = var.cluster_name
+  disable_public_ips = var.disable_public_ips
+  region             = var.region
 }
 
 module "slurm_cluster_controller" {
   source = "../../modules/controller"
 
   cluster_name  = var.cluster_name
-  network       = module.slurm_cluster_network.cluster_subnet_self_link
+  project       = var.project
+  region        = var.region
+  network       = module.slurm_cluster_network.cluster_network_self_link
   partitions    = var.partitions
+  subnet        = module.slurm_cluster_network.cluster_subnet_name
   users         = var.users
 }
 
@@ -39,10 +43,11 @@ module "slurm_cluster_login" {
 
   cluster_name      = var.cluster_name
   controller_name   = module.slurm_cluster_controller.controller_node_name
-  network           = module.slurm_cluster_network.cluster_subnet_self_link
+  network           = module.slurm_cluster_network.cluster_network_self_link
   nfs_apps_server   = module.slurm_cluster_controller.controller_node_name
   nfs_home_server   = module.slurm_cluster_controller.controller_node_name
   node_count        = 1
+  subnet            = module.slurm_cluster_network.cluster_subnet_name
  }
 
 module "slurm_cluster_compute" {
@@ -54,5 +59,6 @@ module "slurm_cluster_compute" {
   project           = var.project
   nfs_apps_server   = module.slurm_cluster_controller.controller_node_name
   nfs_home_server   = module.slurm_cluster_controller.controller_node_name
+  subnet            = module.slurm_cluster_network.cluster_subnet_name
 }
 

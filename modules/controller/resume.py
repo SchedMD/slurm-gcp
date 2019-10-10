@@ -29,15 +29,15 @@ from google.auth import compute_engine
 import google_auth_httplib2
 from googleapiclient.http import set_user_agent
 
-CLUSTER_NAME = '@CLUSTER_NAME@'
+CLUSTER_NAME = '${cluster_name}'
 
-PROJECT      = '@PROJECT@'
-REGION       = '@REGION@'
-EXTERNAL_IP  = @EXTERNAL_COMPUTE_IPS@
-SHARED_VPC_HOST_PROJ = '@SHARED_VPC_HOST_PROJ@'
-VPC_SUBNET   = '@VPC_SUBNET@'
+PROJECT      = '${project}'
+REGION       = '${region}'
+EXTERNAL_IP  = True
+SHARED_VPC_HOST_PROJ = ''
+VPC_SUBNET   = '${subnet}'
 
-PARTITIONS   = @PARTITIONS@
+PARTITIONS   = ${partitions}
 
 
 NETWORK_TYPE = 'subnetwork'
@@ -112,14 +112,14 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             'value': startup_script
         })
 
-    if "gpu_type" in PARTITIONS[pid]:
-        accel_type = ("https://www.googleapis.com/compute/v1/"
-                      "projects/{}/zones/{}/acceleratorTypes/{}".format(
-                          PROJECT, zone, PARTITIONS[pid]["gpu_type"]))
-        config['guestAccelerators'] = [{
-            'acceleratorCount': PARTITIONS[pid]["gpu_count"],
-            'acceleratorType' : accel_type
-        }]
+#    if "gpu_type" in PARTITIONS[pid]:
+#        accel_type = ("https://www.googleapis.com/compute/v1/"
+#                      "projects/{}/zones/{}/acceleratorTypes/{}".format(
+#                          PROJECT, zone, PARTITIONS[pid]["gpu_type"]))
+#        config['guestAccelerators'] = [{
+#            'acceleratorCount': PARTITIONS[pid]["gpu_count"],
+#            'acceleratorType' : accel_type
+#        }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
@@ -134,7 +134,7 @@ def create_instance(compute, project, zone, instance_type, instance_name,
         config['labels'] = PARTITIONS[pid]["labels"],
 
     if "cpu_platform" in PARTITIONS[pid]:
-        config['minCpuPlatform'] = PARTITIONS["pid"]["cpu_platform"],
+        config['minCpuPlatform'] = PARTITIONS[pid]["cpu_platform"],
 
     if VPC_SUBNET:
         net_type = "projects/{}/regions/{}/subnetworks/{}".format(

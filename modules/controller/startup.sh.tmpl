@@ -463,6 +463,7 @@ installing_motd
 
 fetch_metadata packages /var/tmp/packages.txt
 yum -y install $(cat /var/tmp/packages.txt)
+pip install --upgrade google-api-python-client
 
 [[ ! -d /apps/slurm ]] && mkdir -p /apps/slurm
 [[ ! -d /var/log/slurm ]] && mkdir /var/log/slurm

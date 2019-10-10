@@ -26,7 +26,13 @@ variable "zone" {
 
 variable "network" {
   type        = string
-  description = "Compute Platform network the notebook server will be connected to"
+  description = "Compute Platform network the Slurm cluster nodes will be connected to"
+  default     = "default"
+}
+
+variable "subnet" {
+  type        = string
+  description = "Compute Platform network the Slurm cluster nodes will be connected to"
   default     = "default"
 }
 
