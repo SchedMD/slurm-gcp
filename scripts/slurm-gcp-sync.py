@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
 import fcntl
 import httplib2
 import logging
@@ -32,7 +33,6 @@ PROJECT      = '@PROJECT@'
 ZONE         = '@ZONE@'
 
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
-SINFO        = '/apps/slurm/current/bin/sinfo'
 LOGDIR       = '/apps/slurm/log'
 
 TOT_REQ_CNT = 1000
@@ -92,10 +92,25 @@ def main():
 
     try:
         s_nodes = dict()
-        cmd = "{} --noheader -N -o'%N,%t' | uniq".format(SINFO)
+        cmd = ('{} show nodes | '
+               'grep -oP "^NodeName=\K(\S+)|State=\K(\S+)" | '
+               'paste -sd",\n"').format(SCONTROL)
         nodes = subprocess.check_output(cmd, shell=True)
         if nodes:
-            s_nodes = dict(n.split(",") for n in nodes.rstrip().splitlines())
+            # result is a list of tuples like:
+            # (nodename, (base='base_state', flags=<set of state flags>))
+            # from 'nodename,base_state+flag1+flag2'
+            # state flags include: CLOUD, COMPLETING, DRAIN, FAIL, POWER,
+            #   POWERING_DOWN
+            # Modifiers on base state still include: @ (reboot), $ (maint),
+            #   * (nonresponsive), # (powering up)
+            StateTuple = collections.namedtuple('StateTuple', ('base','flags'))
+            make_state_tuple = lambda x: StateTuple(x[0], set(x[1:]))
+            s_nodes = [(node, make_state_tuple(args.split('+')))
+                       for node, args
+                       in map(lambda x: x.split(','),
+                              nodes.rstrip().splitlines())
+                       if 'CLOUD' in args]
 
         page_token = ""
         g_nodes = []
@@ -115,12 +130,13 @@ def main():
         to_down = []
         to_idle = []
         to_start = []
-        for s_node, s_state in s_nodes.iteritems():
+        for s_node, s_state in s_nodes:
             g_node = next((item for item in g_nodes
                            if item["name"] == s_node),
                           None)
 
-            if (("~" not in s_state) and ("%" not in s_state)):
+            if (('POWER' not in s_state.flags) and
+                ('POWERING_DOWN' not in s_state.flags)):
                 # slurm nodes that aren't in power_save and are stopped in GCP:
                 #   mark down in slurm
                 #   start them in gcp
@@ -132,16 +148,16 @@ def main():
                 # is booting because it might not have been created yet by the
                 # resume script.
                 # This should catch the completing states as well.
-                if ((g_node == None) and ("#" not in s_state)):
+                if g_node is None and "#" not in s_state.base:
                     to_down.append(s_node)
-            elif (g_node == None):
+            elif g_node is None:
                 # find nodes that are down~ in slurm and don't exist in gcp:
                 #   mark idle~
-                if (s_state == "down~"):
+                if s_state.base.startswith('DOWN') and 'POWER' in s_state.flags:
                     to_idle.append(s_node)
-                elif ("%" in s_state):
+                elif 'POWERING_DOWN' in s_state.flags:
                     to_idle.append(s_node)
-                elif ("comp" in s_state):
+                elif s_state.base.startswith('COMPLETING'):
                     to_down.append(s_node)
 
         if len(to_down):
