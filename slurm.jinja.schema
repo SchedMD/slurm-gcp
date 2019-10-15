@@ -329,3 +329,7 @@ properties:
           type        : integer
           description : Number of initial instances in the cluster.
           default     : 0
+
+        zone:
+          type        : string
+          description : Zone to run the instances in based on Region.
