@@ -51,8 +51,6 @@ optional:
 - controller_secondary_disk_size_gb
 - cpu_platform
 - external_compute_ips
-- gpu_count
-- gpu_type
 - login_disk_size_gb
 - login_disk_type
 - login_labels
