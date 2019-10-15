@@ -548,6 +548,7 @@ SuspendTime={suspend_time}
 SchedulerParameters=salloc_wait_nodes
 SlurmctldParameters=cloud_dns,idle_on_node_suspend
 CommunicationParameters=NoAddrCache
+GresTypes=gpu
 #
 # COMPUTE NODES
 """.format(apps_dir        = APPS_DIR,
@@ -583,6 +584,8 @@ CommunicationParameters=NoAddrCache
                           "RealMemory="     + str(machine[i]['memory']),
                           "State=UNKNOWN"))
 
+        if PARTITIONS[i]["gpu_count"]:
+            conf += " Gres=gpu:" + str(PARTITIONS[i]["gpu_count"])
         conf += "\n"
 
         # Nodes
@@ -592,9 +595,6 @@ CommunicationParameters=NoAddrCache
 
         if cloud_range:
             conf += "NodeName={} State=CLOUD\n".format(cloud_range)
-        #if GPU_COUNT:
-        #    conf += " Gres=gpu:" + str(GPU_COUNT)
-        #conf += "\n"
 
         # Partitions
         part_nodes = "[{:06}-{:06}]".format(
@@ -694,11 +694,23 @@ ConstrainDevices=yes
     f.write("")
     f.close()
 
-    #if GPU_COUNT:
-    #    f = open(etc_dir + '/gres.conf', 'w')
-    #    f.write("NodeName=%s-compute[1-%d] Name=gpu File=/dev/nvidia[0-%d]"
-    #            % (CLUSTER_NAME, MAX_NODE_COUNT, (GPU_COUNT - 1)))
-    #    f.close()
+    for i in range(len(PARTITIONS)):
+        if not PARTITIONS[i]["gpu_count"]:
+            continue;
+
+        if f.closed:
+            f = open(etc_dir + '/gres.conf', 'w')
+
+        driver_range = "0";
+        if PARTITIONS[i]["gpu_count"] > 1:
+            driver_range = "[0-{}]".format(PARTITIONS[i]["gpu_count"]-1)
+
+        f.write("NodeName={}-compute[{:06}-{:06}] Name=gpu File=/dev/nvidia{}\n"
+                .format(CLUSTER_NAME, i*MAX_PARTITION_SIZE,
+                        i*MAX_PARTITION_SIZE+PARTITIONS[i]["max_node_count"]-1,
+                        driver_range))
+    f.close()
+
 #END install_cgroup_conf()
 
 
