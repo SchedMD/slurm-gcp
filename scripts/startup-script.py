@@ -25,7 +25,7 @@ import urllib
 import urllib2
 
 CLUSTER_NAME      = '@CLUSTER_NAME@'
-MACHINE_TYPE      = '@MACHINE_TYPE@' # e.g. n1-standard-1, n1-starndard-2
+#MACHINE_TYPE      = '@MACHINE_TYPE@' # e.g. n1-standard-1, n1-starndard-2
 INSTANCE_TYPE     = '@INSTANCE_TYPE@' # e.g. controller, login, compute
 
 PROJECT           = '@PROJECT@'
@@ -36,24 +36,28 @@ CURR_SLURM_DIR    = APPS_DIR + '/slurm/current'
 MUNGE_DIR         = "/etc/munge"
 MUNGE_KEY         = '@MUNGE_KEY@'
 SLURM_VERSION     = '@SLURM_VERSION@'
-STATIC_NODE_COUNT = @STATIC_NODE_COUNT@
-MAX_NODE_COUNT    = @MAX_NODE_COUNT@
+#STATIC_NODE_COUNT = @STATIC_NODE_COUNT@
+#MAX_NODE_COUNT    = @MAX_NODE_COUNT@
 DEF_SLURM_ACCT    = '@DEF_SLURM_ACCT@'
 DEF_SLURM_USERS   = '@DEF_SLURM_USERS@'
 EXTERNAL_COMPUTE_IPS = @EXTERNAL_COMPUTE_IPS@
-GPU_TYPE          = '@GPU_TYPE@'
-GPU_COUNT         = @GPU_COUNT@
+#GPU_TYPE          = '@GPU_TYPE@'
+#GPU_COUNT         = @GPU_COUNT@
 NFS_APPS_SERVER   = '@NFS_APPS_SERVER@'
 NFS_APPS_DIR      = '@NFS_APPS_DIR@'
 NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
 NFS_HOME_DIR      = '@NFS_HOME_DIR@'
 CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
 SEC_DISK_DIR      = '/mnt/disks/sec'
-PREEMPTIBLE       = @PREEMPTIBLE@
+#PREEMPTIBLE       = @PREEMPTIBLE@
 SUSPEND_TIME      = @SUSPEND_TIME@
+RESUME_TIMEOUT    = 300
+SUSPEND_TIMEOUT   = 300 
+PARTITIONS        = @PARTITIONS@
 
 DEF_PART_NAME   = "debug"
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
+MAX_PARTITION_SIZE = 10000
 
 MOTD_HEADER = '''
 
@@ -228,14 +232,17 @@ def install_packages():
         print "failed to install google python api client. Trying again 5 seconds."
         time.sleep(5)
 
-    if GPU_COUNT and (INSTANCE_TYPE == "compute"):
-        rpm = "cuda-repo-rhel7-10.0.130-1.x86_64.rpm"
-        subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
-        subprocess.call(shlex.split("wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/" + rpm))
-        subprocess.call(shlex.split("rpm -i " + rpm))
-        subprocess.call(shlex.split("yum clean all"))
-        subprocess.call(shlex.split("yum -y install cuda"))
-        subprocess.call(shlex.split("nvidia-smi")) # Creates the device files
+    if INSTANCE_TYPE == "compute" :
+        hostname = socket.gethostname()
+        pid = int( hostname[-6:-4] )
+        if PARTITIONS[pid]["gpu_count"]:
+            rpm = "cuda-repo-rhel7-10.0.130-1.x86_64.rpm"
+            subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
+            subprocess.call(shlex.split("wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/" + rpm))
+            subprocess.call(shlex.split("rpm -i " + rpm))
+            subprocess.call(shlex.split("yum clean all"))
+            subprocess.call(shlex.split("yum -y install cuda"))
+            subprocess.call(shlex.split("nvidia-smi")) # Creates the device files
 
 #END install_packages()
 
@@ -338,28 +345,29 @@ def expand_machine_type():
 
     # Assume sockets is 1. Currently, no instances with multiple sockets
     # Assume hyper-threading is on and 2 threads per core
-    machine = {'sockets': 1, 'cores': 1, 'threads': 1, 'memory': 1}
+    machine = []
+    for i in range(len(PARTITIONS)):
+        machine.append({'sockets': 1, 'cores': 1, 'threads': 1, 'memory': 1})
+        try:
+            compute = googleapiclient.discovery.build('compute', 'v1',
+                                                      cache_discovery=False)
+            type_resp = compute.machineTypes().get(project=PROJECT, zone=PARTITIONS[i]["zone"],
+                        machineType=PARTITIONS[i]["machine_type"]).execute()
+            if type_resp:
+                tot_cpus = type_resp['guestCpus']
+                if tot_cpus > 1:
+                    machine[i]['cores']   = tot_cpus / 2
+                    machine[i]['threads'] = 2
 
-    try:
-        compute = googleapiclient.discovery.build('compute', 'v1',
-                                                  cache_discovery=False)
-        type_resp = compute.machineTypes().get(project=PROJECT, zone=ZONE,
-                machineType=MACHINE_TYPE).execute()
-        if type_resp:
-            tot_cpus = type_resp['guestCpus']
-            if tot_cpus > 1:
-                machine['cores']   = tot_cpus / 2
-                machine['threads'] = 2
+                # Because the actual memory on the host will be different than what
+                # is configured (e.g. kernel will take it). From experiments, about
+                # 16 MB per GB are used (plus about 400 MB buffer for the first
+                # couple of GB's. Using 30 MB to be safe.
+                gb = type_resp['memoryMb'] / 1024;
+                machine[i]['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
 
-            # Because the actual memory on the host will be different than what
-            # is configured (e.g. kernel will take it). From experiments, about
-            # 16 MB per GB are used (plus about 400 MB buffer for the first
-            # couple of GB's. Using 30 MB to be safe.
-            gb = type_resp['memoryMb'] / 1024;
-            machine['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
-
-    except Exception, e:
-        print "Failed to get MachineType '%s' from google api (%s)" % (MACHINE_TYPE, str(e))
+        except Exception, e:
+            print "Failed to get MachineType '%s' from google api (%s)" % (PARTITIONS[i]["machine_type"], str(e))
 
     return machine
 #END expand_machine_type()
@@ -368,9 +376,9 @@ def expand_machine_type():
 def install_slurm_conf():
 
     machine = expand_machine_type()
-    def_mem_per_cpu = max(100,
-            (machine['memory'] /
-             (machine['threads']*machine['cores']*machine['sockets'])))
+#    def_mem_per_cpu = max(100,
+#            (machine['memory'] /
+#             (machine['threads']*machine['cores']*machine['sockets'])))
 
     conf = """
 # slurm.conf file generated by configurator.html.
@@ -479,7 +487,6 @@ Waittime=0
 #
 # SCHEDULING
 FastSchedule=1
-DefMemPerCPU={def_mem_per_cpu}
 #MaxMemPerCPU=0
 #SchedulerTimeSlice=30
 SchedulerType=sched/backfill
@@ -532,8 +539,8 @@ SlurmdLogFile=/var/log/slurm/slurmd-%n.log
 SuspendProgram={apps_dir}/slurm/scripts/suspend.py
 ResumeProgram={apps_dir}/slurm/scripts/resume.py
 ResumeFailProgram={apps_dir}/slurm/scripts/suspend.py
-SuspendTimeout=600
-ResumeTimeout=600
+SuspendTimeout={suspend_timeout}
+ResumeTimeout={resume_timeout}
 ResumeRate=0
 #SuspendExcNodes=
 #SuspendExcParts=
@@ -548,45 +555,58 @@ CommunicationParameters=NoAddrCache
 """.format(apps_dir        = APPS_DIR,
            cluster_name    = CLUSTER_NAME,
            control_machine = CONTROL_MACHINE,
-           def_mem_per_cpu = def_mem_per_cpu,
+           suspend_timeout = SUSPEND_TIMEOUT,
+           resume_timeout  = RESUME_TIMEOUT,
            suspend_time    = SUSPEND_TIME)
 
-    if GPU_COUNT:
-        conf += "GresTypes=gpu\n"
+    for i in range(len(machine)):
+        node_range = "[%06d-%06d]" % ( i*MAX_PARTITION_SIZE, i*MAX_PARTITION_SIZE+PARTITIONS[i]["max_node_count"]-1 )
 
-    conf += ' '.join(("NodeName=DEFAULT",
-                      "Sockets="        + str(machine['sockets']),
-                      "CoresPerSocket=" + str(machine['cores']),
-                      "ThreadsPerCore=" + str(machine['threads']),
-                      "RealMemory="     + str(machine['memory']),
-                      "State=UNKNOWN"))
+        #if GPU_COUNT:
+        #    conf += "GresTypes=gpu\n"
 
-    if GPU_COUNT:
-        conf += " Gres=gpu:" + str(GPU_COUNT)
-    conf += "\n"
+        conf += ' '.join(("NodeName={0}-compute{1}".format( CLUSTER_NAME, node_range ),
+                          "Sockets="        + str(machine[i]['sockets']),
+                          "CoresPerSocket=" + str(machine[i]['cores']),
+                          "ThreadsPerCore=" + str(machine[i]['threads']),
+                          "RealMemory="     + str(machine[i]['memory']),
+                          "State=CLOUD"))
 
-    static_range = ""
-    if STATIC_NODE_COUNT and STATIC_NODE_COUNT > 1:
-        static_range = "[1-%d]" % STATIC_NODE_COUNT
-    elif STATIC_NODE_COUNT:
-        static_range = "1"
+        # First partition specified is treated as the default partition
+        if i == 0 :
+            conf += """
+PartitionName={} Nodes={}-compute{} Default=YES MaxTime=INFINITE State=UP LLN=yes
+""".format(PARTITIONS[i]["name"], CLUSTER_NAME, node_range)
 
-    cloud_range = ""
-    if MAX_NODE_COUNT and (MAX_NODE_COUNT != STATIC_NODE_COUNT):
-        cloud_range = "[%d-%d]" % (STATIC_NODE_COUNT+1, MAX_NODE_COUNT)
+        else :
 
-    if static_range:
-        conf += """
+            conf += """
+PartitionName={} Nodes={}-compute{} Default=NO MaxTime=INFINITE State=UP LLN=yes
+""".format(PARTITIONS[i]["name"], CLUSTER_NAME, node_range)
+
+
+        #if GPU_COUNT:
+        #    conf += " Gres=gpu:" + str(GPU_COUNT)
+        #conf += "\n"
+
+        static_range = ""
+        if PARTITIONS[i]["static_node_count"] and PARTITIONS[i]["static_node_count"] > 1:
+            static_range = "[%06d-%06d]" % ( i*MAX_PARTITION_SIZE, i*MAX_PARTITION_SIZE+PARTITIONS[i]["static_node_count"]-1 )
+        elif PARTITIONS[i]["static_node_count"]:
+            static_range = "%06d" % i*MAX_PARTITION_SIZE
+
+        cloud_range = ""
+        if PARTITIONS[i]["max_node_count"] and (PARTITIONS[i]["max_node_count"] != PARTITIONS[i]["static_node_count"]):
+            cloud_range = "[%06d-%06d]" % (PARTITIONS[i]["static_node_count"]+1, PARTITIONS[i]["max_node_count"])
+
+        if static_range:
+            conf += """
 SuspendExcNodes={1}-compute{0}
-NodeName={1}-compute{0}
 """.format(static_range, CLUSTER_NAME)
 
-    if cloud_range:
-        conf += "NodeName={0}-compute{1} State=CLOUD".format(CLUSTER_NAME, cloud_range)
+#        if cloud_range:
+#            conf += "NodeName={0}-compute{1} State=CLOUD".format(CLUSTER_NAME, cloud_range)
 
-    conf += """
-PartitionName={} Nodes={}-compute[1-{}] Default=YES MaxTime=INFINITE State=UP LLN=yes
-""".format(DEF_PART_NAME, CLUSTER_NAME, MAX_NODE_COUNT)
 
     etc_dir = CURR_SLURM_DIR + '/etc'
     if not os.path.exists(etc_dir):
@@ -664,11 +684,11 @@ ConstrainDevices=yes
     f.write("")
     f.close()
 
-    if GPU_COUNT:
-        f = open(etc_dir + '/gres.conf', 'w')
-        f.write("NodeName=%s-compute[1-%d] Name=gpu File=/dev/nvidia[0-%d]"
-                % (CLUSTER_NAME, MAX_NODE_COUNT, (GPU_COUNT - 1)))
-        f.close()
+    #if GPU_COUNT:
+    #    f = open(etc_dir + '/gres.conf', 'w')
+    #    f.write("NodeName=%s-compute[1-%d] Name=gpu File=/dev/nvidia[0-%d]"
+    #            % (CLUSTER_NAME, MAX_NODE_COUNT, (GPU_COUNT - 1)))
+    #    f.close()
 #END install_cgroup_conf()
 
 
@@ -875,14 +895,17 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """ % CURR_SLURM_DIR)
     f.close()
 
-    if GPU_COUNT and (INSTANCE_TYPE == "compute"):
-        f = open('/etc/profile.d/cuda.sh', 'w')
-        f.write("""
+    if INSTANCE_TYPE == "compute":
+        hostname = socket.gethostname()
+        pid = int( hostname[-6:-4] )
+        if PARTITIONS[pid]["gpu_count"]:
+            f = open('/etc/profile.d/cuda.sh', 'w')
+            f.write("""
 CUDA_PATH=/usr/local/cuda
 PATH=$CUDA_PATH/bin${PATH:+:${PATH}}
 LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 """)
-        f.close()
+            f.close()
 
 #END setup_bash_profile()
 
@@ -978,17 +1001,18 @@ def create_compute_image():
     subprocess.call("sync")
     ver = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-    if GPU_COUNT:
+    hostname = socket.gethostname()
+    pid = int( hostname[-6:-4] )
+    if PARTITIONS[pid]["gpu_count"]:
         time.sleep(300)
 
     print "Creating compute image..."
-    hostname = socket.gethostname()
     subprocess.call(shlex.split("gcloud compute images "
-                                "create {0}-compute-image-{3} "
+                                "create {0}-compute-image-{4}-{3} "
                                 "--source-disk {1} "
                                 "--source-disk-zone {2} --force "
-                                "--family {0}-compute-image-family".format(
-                                    CLUSTER_NAME, hostname, ZONE, ver)))
+                                "--family {0}-compute-image-{4}-family".format(
+                                    CLUSTER_NAME, hostname, PARTITIONS[pid]["zone"], ver, pid)))
 #END create_compute_image()
 
 
@@ -1110,16 +1134,19 @@ def main():
             # Ignore blank files with no shell magic.
             pass
 
-        if hostname == CLUSTER_NAME + "-compute-image":
+        if CLUSTER_NAME + "-compute-image" in hostname:
+
             create_compute_image()
 
+            pid = int( hostname[-6:-4] )
             subprocess.call(shlex.split(
                 "{}/bin/scontrol update partitionname={} state=up".format(
-                    CURR_SLURM_DIR, DEF_PART_NAME)))
+                    CURR_SLURM_DIR, PARTITIONS[pid]["name"])))
 
+            
             subprocess.call(shlex.split("gcloud compute instances "
-                                        "delete {} --zone {} --quiet".format(
-                                            hostname, ZONE)))
+                                        "stop {} --zone {} --quiet".format(
+                                            hostname, PARTITIONS[pid]["zone"])))
         else:
             subprocess.call(shlex.split('systemctl start slurmd'))
 
@@ -1135,21 +1162,28 @@ def main():
             pass
 
 
-    if hostname != CLUSTER_NAME + "-compute-image":
-        # Wait for the compute image to mark the partition up
-        part_state = subprocess.check_output(shlex.split(
-            "{}/bin/scontrol show part {}".format(
-                CURR_SLURM_DIR, DEF_PART_NAME)))
-        while "State=UP" not in part_state:
-            part_state = subprocess.check_output(shlex.split(
-                "{}/bin/scontrol show part {}".format(
-                    CURR_SLURM_DIR, DEF_PART_NAME)))
+#    if CLUSTER_NAME + "-compute-image" not in hostname:
+#        # Wait for the compute image nodes to mark the partition up
+#        part_state = subprocess.check_output(shlex.split(
+#            "{}/bin/scontrol show part {}".format(
+#                CURR_SLURM_DIR, DEF_PART_NAME)))
+#        while "State=UP" not in part_state:
+#            part_state = subprocess.check_output(shlex.split(
+#                "{}/bin/scontrol show part {}".format(
+#                    CURR_SLURM_DIR, DEF_PART_NAME)))
 
     end_motd()
 
-    subprocess.call(shlex.split("gcloud compute instances remove-metadata {} "
-                                "--zone={} --keys=startup-script"
-                                .format(hostname, ZONE)))
+    if CLUSTER_NAME + "-compute-image" in hostname:
+       pid = int( hostname[-6:-4] )
+       subprocess.call(shlex.split("gcloud compute instances remove-metadata {} "
+                                   "--zone={} --keys=startup-script"
+                                    .format(hostname, PARTITIONS[pid]["zone"])))
+
+    else:
+       subprocess.call(shlex.split("gcloud compute instances remove-metadata {} "
+                                   "--zone={} --keys=startup-script"
+                                    .format(hostname, ZONE)))
 # END main()
 
 

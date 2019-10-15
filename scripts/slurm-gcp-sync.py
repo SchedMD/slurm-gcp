@@ -31,6 +31,7 @@ CLUSTER_NAME = '@CLUSTER_NAME@'
 
 PROJECT      = '@PROJECT@'
 ZONE         = '@ZONE@'
+PARTITIONS   = @PARTITIONS@
 
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGDIR       = '/apps/slurm/log'
@@ -70,8 +71,9 @@ def start_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=start_instances_cb))
 
+        pid = int( node[-6:-4] )
         batch_list[curr_batch].add(
-            compute.instances().start(project=PROJECT, zone=ZONE,
+            compute.instances().start(project=PROJECT, zone=PARTITIONS[pid]["zone"],
                                       instance=node),
             request_id=node)
         req_cnt += 1
@@ -114,19 +116,22 @@ def main():
 
         page_token = ""
         g_nodes = []
-        while True:
-            resp = compute.instances().list(
-                      project=PROJECT, zone=ZONE, pageToken=page_token,
-                      filter='name={}-compute*'.format(CLUSTER_NAME)).execute()
-
-            if "items" in resp:
-                g_nodes.extend(resp['items'])
-            if "nextPageToken" in resp:
-                page_token = resp['nextPageToken']
-                continue
-
-            break;
-
+        for i in range( len(PARTITIONS) ):
+            pid = "%02d" % (i)
+            if( PARTITIONS[i]["preemptible_bursting"] ):
+                while True:
+                    resp = compute.instances().list(
+                              project=PROJECT, zone=PARTITIONS[i]['zone'], pageToken=page_token,
+                              filter='name={}-compute{}*'.format(CLUSTER_NAME,pid)).execute()
+        
+                    if "items" in resp:
+                        g_nodes.extend(resp['items'])
+                    if "nextPageToken" in resp:
+                        page_token = resp['nextPageToken']
+                        continue
+        
+                    break;
+        
         to_down = []
         to_idle = []
         to_start = []
@@ -149,7 +154,15 @@ def main():
                 # resume script.
                 # This should catch the completing states as well.
                 if g_node is None and "#" not in s_state.base:
-                    to_down.append(s_node)
+                    # When g_node == None, it means that no preemptible nodes were found
+                    # to down. However, another non-preemptible partition could end up 
+                    # being downed. To avoid this, we check the preemptible status of the
+                    # partition associated with s_node to determine whether or not to add 
+                    # this to the list
+                    pid = int(s_node[-6:-4])
+                    if( PARTITIONS[pid]["preemptible_bursting"] ):
+                        to_down.append(s_node)
+
             elif g_node is None:
                 # find nodes that are down~ in slurm and don't exist in gcp:
                 #   mark idle~
