@@ -52,7 +52,7 @@ SEC_DISK_DIR      = '/mnt/disks/sec'
 #PREEMPTIBLE       = @PREEMPTIBLE@
 SUSPEND_TIME      = @SUSPEND_TIME@
 RESUME_TIMEOUT    = 300
-SUSPEND_TIMEOUT   = 300 
+SUSPEND_TIMEOUT   = 300
 PARTITIONS        = @PARTITIONS@
 
 DEF_PART_NAME   = "debug"
@@ -351,18 +351,19 @@ def expand_machine_type():
         try:
             compute = googleapiclient.discovery.build('compute', 'v1',
                                                       cache_discovery=False)
-            type_resp = compute.machineTypes().get(project=PROJECT, zone=PARTITIONS[i]["zone"],
-                        machineType=PARTITIONS[i]["machine_type"]).execute()
+            type_resp = compute.machineTypes().get(
+                project=PROJECT, zone=PARTITIONS[i]["zone"],
+                machineType=PARTITIONS[i]["machine_type"]).execute()
             if type_resp:
                 tot_cpus = type_resp['guestCpus']
                 if tot_cpus > 1:
                     machine[i]['cores']   = tot_cpus / 2
                     machine[i]['threads'] = 2
 
-                # Because the actual memory on the host will be different than what
-                # is configured (e.g. kernel will take it). From experiments, about
-                # 16 MB per GB are used (plus about 400 MB buffer for the first
-                # couple of GB's. Using 30 MB to be safe.
+                # Because the actual memory on the host will be different than
+                # what is configured (e.g. kernel will take it). From
+                # experiments, about 16 MB per GB are used (plus about 400 MB
+                # buffer for the first couple of GB's. Using 30 MB to be safe.
                 gb = type_resp['memoryMb'] / 1024;
                 machine[i]['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
 
@@ -1143,7 +1144,7 @@ def main():
                 "{}/bin/scontrol update partitionname={} state=up".format(
                     CURR_SLURM_DIR, PARTITIONS[pid]["name"])))
 
-            
+
             subprocess.call(shlex.split("gcloud compute instances "
                                         "stop {} --zone {} --quiet".format(
                                             hostname, PARTITIONS[pid]["zone"])))
@@ -1176,14 +1177,16 @@ def main():
 
     if CLUSTER_NAME + "-compute-image" in hostname:
        pid = int( hostname[-6:-4] )
-       subprocess.call(shlex.split("gcloud compute instances remove-metadata {} "
-                                   "--zone={} --keys=startup-script"
-                                    .format(hostname, PARTITIONS[pid]["zone"])))
+       subprocess.call(
+           shlex.split("gcloud compute instances remove-metadata {} "
+                       "--zone={} --keys=startup-script"
+                       .format(hostname, PARTITIONS[pid]["zone"])))
 
     else:
-       subprocess.call(shlex.split("gcloud compute instances remove-metadata {} "
-                                   "--zone={} --keys=startup-script"
-                                    .format(hostname, ZONE)))
+       subprocess.call(
+           shlex.split("gcloud compute instances remove-metadata {} "
+                       "--zone={} --keys=startup-script"
+                       .format(hostname, ZONE)))
 # END main()
 
 

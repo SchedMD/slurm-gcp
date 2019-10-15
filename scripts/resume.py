@@ -111,8 +111,8 @@ def create_instance(compute, project, zone, instance_type, instance_name,
     pid = int( instance_name[-6:-4] )
     # Configure the machine
     machine_type = "zones/{}/machineTypes/{}".format(zone, instance_type)
-    disk_type = "projects/{}/zones/{}/diskTypes/{}".format(PROJECT, zone,
-                                                           PARTITIONS[pid]["compute_disk_type"])
+    disk_type = "projects/{}/zones/{}/diskTypes/{}".format(
+        PROJECT, zone, PARTITIONS[pid]["compute_disk_type"])
     config = {
         'name': instance_name,
         'machineType': machine_type,
@@ -228,7 +228,7 @@ def added_instances_cb(request_id, response, exception):
 
 # [start get_source_image]
 def get_source_image( compute, node_name ):
-  
+
     pid = int( node_name[-6:-4] )
     have_compute_img = False
     try:
@@ -272,7 +272,8 @@ def add_instances(compute, node_list):
         pid = int( node_name[-6:-4] )
         batch_list[curr_batch].add(
             create_instance(
-                compute, PROJECT, PARTITIONS[pid]["zone"], PARTITIONS[pid]["machine_type"], node_name,
+                compute, PROJECT, PARTITIONS[pid]["zone"],
+                PARTITIONS[pid]["machine_type"], node_name,
                 source_disk_image, have_compute_img),
             request_id=node_name)
         req_cnt += 1

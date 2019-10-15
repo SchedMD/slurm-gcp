@@ -68,12 +68,12 @@ resources:
     default_users           : < GCP user email addr, comma separated >
     #slurm_version           : 19.05-latest
     #default_account         : default
-    
+
     partitions :
 
            - name           : small-utility
              machine_type   : n1-standard-2
-             max_node_count : 10 
+             max_node_count : 10
              zone           : us-central1-a
              # Optional compute configuration fields
              # cpu_platform               : Intel Skylake
@@ -87,11 +87,11 @@ resources:
              # Optional GPU configuration fields
              # gpu_type                   : nvidia-tesla-v100
              # gpu_count                  : 8
-             
-             
+
+
            - name           : ops-compute
              machine_type   : n1-standard-16
-             max_node_count : 20 
+             max_node_count : 20
              zone           : us-central1-b
              # Optional compute configuration fields
              # cpu_platform               : Intel Skylake
@@ -105,7 +105,7 @@ resources:
              # Optional GPU configuration fields
              # gpu_type                   : nvidia-tesla-v100
              # gpu_count                  : 8
-            
+
 
 
 

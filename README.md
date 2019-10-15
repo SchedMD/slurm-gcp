@@ -26,7 +26,7 @@ Platform. The scripts setup the following scenario:
 * 1 - controller node
 * N - login nodes
 * Multiple partitions with their own machine type, gpu type/count, disk size,
-  disk type, cpu platform, and maximum node count. 
+  disk type, cpu platform, and maximum node count.
 
 
 The default image for the instances is CentOS 7.
