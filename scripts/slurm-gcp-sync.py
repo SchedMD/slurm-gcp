@@ -158,15 +158,7 @@ def main():
                 # This should catch the completing states as well.
                 if (g_node is None and "#" not in s_state.base and
                     not s_state.base.startswith('DOWN')):
-                    # When g_node == None, it means that no preemptible nodes
-                    # were found to down. However, another non-preemptible
-                    # partition could end up being downed. To avoid this, we
-                    # check the preemptible status of the partition associated
-                    # with s_node to determine whether or not to add this to
-                    # the list
-                    pid = int(s_node[-6:-4])
-                    if (PARTITIONS[pid]["preemptible_bursting"]):
-                        to_down.append(s_node)
+                    to_down.append(s_node)
 
             elif g_node is None:
                 # find nodes that are down~ in slurm and don't exist in gcp:
