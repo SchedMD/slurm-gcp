@@ -1179,7 +1179,7 @@ def main():
 
     end_motd()
 
-    if CLUSTER_NAME + "-compute-image" in hostname:
+    if CLUSTER_NAME + "-compute" in hostname:
        pid = int( hostname[-6:-4] )
        subprocess.call(
            shlex.split("gcloud compute instances remove-metadata {} "
