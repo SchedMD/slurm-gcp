@@ -141,6 +141,7 @@ def main():
             g_node = next((item for item in g_nodes
                            if item["name"] == s_node),
                           None)
+            pid = int(s_node[-6:-4])
 
             if (('POWER' not in s_state.flags) and
                 ('POWERING_DOWN' not in s_state.flags)):
@@ -149,7 +150,8 @@ def main():
                 #   start them in gcp
                 if g_node and (g_node['status'] == "TERMINATED"):
                     to_down.append(s_node)
-                    to_start.append(s_node)
+                    if (PARTITIONS[pid]["preemptible_bursting"]):
+                        to_start.append(s_node)
 
                 # can't check if the node doesn't exist in GCP while the node
                 # is booting because it might not have been created yet by the
