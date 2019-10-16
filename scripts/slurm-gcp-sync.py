@@ -156,7 +156,8 @@ def main():
                 # is booting because it might not have been created yet by the
                 # resume script.
                 # This should catch the completing states as well.
-                if g_node is None and "#" not in s_state.base:
+                if (g_node is None and "#" not in s_state.base and
+                    not s_state.base.startswith('DOWN')):
                     # When g_node == None, it means that no preemptible nodes
                     # were found to down. However, another non-preemptible
                     # partition could end up being downed. To avoid this, we
