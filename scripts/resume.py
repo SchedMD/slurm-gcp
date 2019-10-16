@@ -55,6 +55,8 @@ instances = {}
 operations = {}
 retry_list = []
 
+src_disk_images = {}
+
 credentials = compute_engine.Credentials()
 
 http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
@@ -231,21 +233,26 @@ def get_source_image( compute, node_name ):
 
     pid = int( node_name[-6:-4] )
     have_compute_img = False
-    try:
-        image_response = compute.images().getFromFamily(
-            project = PROJECT,
-            family = CLUSTER_NAME + "-compute-image-{0}-family".format(pid)).execute()
-        if image_response['status'] != "READY":
-            logging.debug("image not ready, using the startup script")
-            raise Exception("image not ready")
-        source_disk_image = image_response['selfLink']
-        have_compute_img = True
-    except:
-        image_response = compute.images().getFromFamily(
-            project='centos-cloud', family='centos-7').execute()
-        source_disk_image = image_response['selfLink']
 
-    return source_disk_image, have_compute_img
+    if not pid in src_disk_images:
+        try:
+            image_response = compute.images().getFromFamily(
+                project = PROJECT,
+                family = CLUSTER_NAME + "-compute-image-{0}-family".format(pid)
+            ).execute()
+            if image_response['status'] != "READY":
+                logging.debug("image not ready, using the startup script")
+                raise Exception("image not ready")
+            source_disk_image = image_response['selfLink']
+            have_compute_img = True
+        except:
+            image_response = compute.images().getFromFamily(
+                project='centos-cloud', family='centos-7').execute()
+            source_disk_image = image_response['selfLink']
+
+        src_disk_images[pid] = [source_disk_image, have_compute_img]
+
+    return src_disk_images[pid][0], src_disk_images[pid][1]
 
 # [END get_source_image]
 
