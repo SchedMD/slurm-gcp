@@ -119,21 +119,20 @@ def main():
         g_nodes = []
         for i in range( len(PARTITIONS) ):
             pid = "%02d" % (i)
-            if( PARTITIONS[i]["preemptible_bursting"] ):
-                while True:
-                    resp = compute.instances().list(
-                        project=PROJECT, zone=PARTITIONS[i]['zone'],
-                        pageToken=page_token,
-                        filter='name={}-compute{}*'.format(CLUSTER_NAME,pid)
-                    ).execute()
+            while True:
+                resp = compute.instances().list(
+                    project=PROJECT, zone=PARTITIONS[i]['zone'],
+                    pageToken=page_token,
+                    filter='name={}-compute{}*'.format(CLUSTER_NAME,pid)
+                ).execute()
 
-                    if "items" in resp:
-                        g_nodes.extend(resp['items'])
-                    if "nextPageToken" in resp:
-                        page_token = resp['nextPageToken']
-                        continue
+                if "items" in resp:
+                    g_nodes.extend(resp['items'])
+                if "nextPageToken" in resp:
+                    page_token = resp['nextPageToken']
+                    continue
 
-                    break;
+                break;
 
         to_down = []
         to_idle = []
