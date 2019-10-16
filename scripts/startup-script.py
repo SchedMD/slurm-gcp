@@ -49,7 +49,6 @@ RESUME_TIMEOUT    = 300
 SUSPEND_TIMEOUT   = 300
 PARTITIONS        = @PARTITIONS@
 
-DEF_PART_NAME   = "debug"
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
 MAX_PARTITION_SIZE = 10000
 
@@ -126,11 +125,11 @@ def start_motd():
 A terminal broadcast will announce when installation and configuration is
 complete.
 
-Partition {} will be marked down until the compute image has been created.
+Partitions will be marked down until the compute image has been created.
 For instances with gpus attached, it could take ~10 mins after the controller
 has finished installing.
 
-""".format(DEF_PART_NAME)
+""".format()
 
     if INSTANCE_TYPE != "controller":
         msg += """/home on the controller will be mounted over the existing /home.
@@ -1131,10 +1130,11 @@ def main():
 
         setup_sync_cronjob()
 
-        # DOWN partition until image is created.
-        subprocess.call(shlex.split(
-            "{}/bin/scontrol update partitionname={} state=down".format(
-                CURR_SLURM_DIR, DEF_PART_NAME)))
+        # DOWN partitions until image is created.
+        for i in range(len(PARTITIONS)):
+            subprocess.call(shlex.split(
+                "{}/bin/scontrol update partitionname={} state=down".format(
+                    CURR_SLURM_DIR, PARTITIONS[i]["name"])))
 
         print "ww Done installing controller"
     elif INSTANCE_TYPE == "compute":
@@ -1176,17 +1176,6 @@ def main():
         except Exception:
             # Ignore blank files with no shell magic.
             pass
-
-
-#    if CLUSTER_NAME + "-compute-image" not in hostname:
-#        # Wait for the compute image nodes to mark the partition up
-#        part_state = subprocess.check_output(shlex.split(
-#            "{}/bin/scontrol show part {}".format(
-#                CURR_SLURM_DIR, DEF_PART_NAME)))
-#        while "State=UP" not in part_state:
-#            part_state = subprocess.check_output(shlex.split(
-#                "{}/bin/scontrol show part {}".format(
-#                    CURR_SLURM_DIR, DEF_PART_NAME)))
 
     end_motd()
 
