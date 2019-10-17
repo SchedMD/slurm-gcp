@@ -175,7 +175,9 @@ resources:
                replace("@CLUSTER_NAME@",properties["cluster_name"])|
                replace("@VPC_SUBNET@",properties["vpc_subnet"])|
                replace("@SHARED_VPC_HOST_PROJ@",properties["shared_vpc_host_proj"])|
-               replace("@PARTITIONS@",properties["partitions"])
+               replace("@PARTITIONS@",properties["partitions"])|
+               replace("@SERVICE_ACCOUNT@",properties["compute_node_service_account"])|
+               replace("@SCOPES@",properties["compute_node_scopes"])
                }}
         - key: slurm_suspend
           value: |
@@ -235,9 +237,9 @@ resources:
       - name: External NAT
         type: ONE_TO_ONE_NAT
     serviceAccounts:
-      - email: "default"
+      - email: {{ properties["login_node_service_account"] }}
         scopes:
-        - "https://www.googleapis.com/auth/cloud-platform"
+          {{properties["login_node_scopes"]}}
     tags:
       items:
         - login
@@ -316,9 +318,9 @@ resources:
         type: ONE_TO_ONE_NAT
   {% endif %}
     serviceAccounts:
-      - email: "default"
+      - email: {{ properties["compute_node_service_account"] }}
         scopes:
-        - "https://www.googleapis.com/auth/cloud-platform"
+          {{properties["compute_node_scopes"]}}
     tags:
       items:
         - compute

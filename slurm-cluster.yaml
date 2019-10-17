@@ -49,6 +49,10 @@ resources:
     #     key1 : value1
     #     key2 : value2
     #login_node_count        : 0
+    #login_node_service_account : default
+    #login_node_scopes          :
+    #       -  https://www.googleapis.com/auth/devstorage.read_only
+    #       -  https://www.googleapis.com/auth/logging.write
 
     # Optional compute configuration fields
     #external_compute_ips       : False
@@ -61,6 +65,11 @@ resources:
     #controller_secondary_disk          : True
     #controller_secondary_disk_type     : pd-standard
     #controller_secondary_disk_size_gb  : 300
+
+    #compute_node_service_account : default
+    #compute_node_scopes          :
+    #       -  https://www.googleapis.com/auth/devstorage.read_only
+    #       -  https://www.googleapis.com/auth/logging.write
 
     # Optional timer fields
     #suspend_time               : 300

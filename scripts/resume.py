@@ -39,6 +39,8 @@ VPC_SUBNET   = '@VPC_SUBNET@'
 
 PARTITIONS   = @PARTITIONS@
 
+SERVICE_ACCOUNT = '@SERVICE_ACCOUNT@'
+SCOPES = @SCOPES@
 
 NETWORK_TYPE = 'subnetwork'
 NETWORK      = "projects/{}/regions/{}/subnetworks/{}-slurm-subnet".format(PROJECT, REGION, CLUSTER_NAME)
@@ -137,10 +139,8 @@ def create_instance(compute, project, zone, instance_type, instance_name,
 
         # Allow the instance to access cloud storage and logging.
         'serviceAccounts': [{
-            'email': 'default',
-            'scopes': [
-                'https://www.googleapis.com/auth/cloud-platform'
-            ]
+            'email': SERVICE_ACCOUNT,
+            'scopes': SCOPES
         }],
 
         'tags': {'items': ['compute'] },

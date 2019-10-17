@@ -49,12 +49,16 @@ optional:
 - controller_secondary_disk
 - controller_secondary_disk_type
 - controller_secondary_disk_size_gb
+- compute_node_scopes
+- compute_node_service_account
 - cpu_platform
 - external_compute_ips
 - login_disk_size_gb
 - login_disk_type
 - login_labels
 - login_node_count
+- login_node_scopes
+- login_node_service_account
 - munge_key
 - nfs_apps_dir
 - nfs_apps_server
@@ -115,6 +119,18 @@ properties:
     maximum     : 64000
     description : Size of disk for the secondary disk.
 
+  compute_node_scopes:
+    type        : array
+    default     : []
+    description : Scopes to apply to compute nodes.
+                  e.g. https://www.googleapis.com/auth/devstorage.read_only
+                  https://cloud.google.com/compute/docs/access/service-accounts#accesscopesiam
+
+  compute_node_service_account:
+    type        : string
+    default     : default
+    description : Service Account for compute nodes.
+                  https://cloud.google.com/compute/docs/access/service-accounts
 
   default_account:
     type        : string
@@ -160,6 +176,19 @@ properties:
     type        : integer
     default     : 1
     description : Number of login nodes in the cluster.
+
+  login_node_scopes:
+    type        : array
+    default     : []
+    description : Scopes to apply to login nodes.
+                  e.g. https://www.googleapis.com/auth/devstorage.read_only
+                  https://cloud.google.com/compute/docs/access/service-accounts#accesscopesiam
+
+  login_node_service_account:
+    type        : string
+    default     : default
+    description : Service Account for login nodes.
+                  https://cloud.google.com/compute/docs/access/service-accounts
 
   munge_key:
     type        : string
