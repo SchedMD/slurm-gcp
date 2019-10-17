@@ -180,7 +180,7 @@ def get_source_image( compute, node_name ):
     try:
         image_response = compute.images().getFromFamily(
             project = PROJECT,
-            family = CLUSTER_NAME + "-compute-image-{0}-family".format(pid)).execute()
+            family = CLUSTER_NAME + "-compute-image-{0:02d}-family".format(pid)).execute()
         if image_response['status'] != "READY":
             logging.debug("image not ready, using the startup script")
             raise Exception("image not ready")

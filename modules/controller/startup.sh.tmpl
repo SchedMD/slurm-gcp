@@ -129,6 +129,7 @@ function install_slurm {
     fetch_metadata slurm-gcp-sync $${slurm_rootdir}/scripts/slurm-gcp-sync.py
     fetch_metadata custom-compute-install $${slurm_rootdir}/scripts/custom-compute-install
     fetch_metadata custom-controller-install $${slurm_rootdir}/scripts/custom-controller-install
+    chmod 755 $${slurm_rootdir}/scripts/*
 }
 
 #################
