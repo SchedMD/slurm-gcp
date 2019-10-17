@@ -143,7 +143,8 @@ resources:
                replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
                replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
                replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])
+               replace("@PARTITIONS@",properties["partitions"])|
+               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
                }}
         - key: startup-script-compute
           value: |
@@ -163,7 +164,8 @@ resources:
                replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
                replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
                replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])
+               replace("@PARTITIONS@",properties["partitions"])|
+               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
                }}
         - key: slurm_resume
           value: |
@@ -269,7 +271,8 @@ resources:
                replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
                replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
                replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])
+               replace("@PARTITIONS@",properties["partitions"])|
+               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
                }}
         - key: enable-oslogin
           value: "TRUE"
@@ -348,7 +351,8 @@ resources:
                replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
                replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
                replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])
+               replace("@PARTITIONS@",properties["partitions"])|
+               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
                }}
         - key: enable-oslogin
           value: "TRUE"
@@ -430,7 +434,8 @@ resources:
                replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
                replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
                replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])
+               replace("@PARTITIONS@",properties["partitions"])|
+               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
                }}
         - key: enable-oslogin
           value: "TRUE"

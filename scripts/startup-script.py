@@ -48,6 +48,7 @@ SUSPEND_TIME      = @SUSPEND_TIME@
 RESUME_TIMEOUT    = 300
 SUSPEND_TIMEOUT   = 300
 PARTITIONS        = @PARTITIONS@
+LOGIN_NODE_COUNT  = @LOGIN_NODE_COUNT@
 
 CONTROL_MACHINE = CLUSTER_NAME + '-controller'
 MAX_PARTITION_SIZE = 10000
@@ -1043,6 +1044,43 @@ SELINUXTYPE=targeted
 #END setup_selinux()
 
 
+def remove_startup_scripts(hostname):
+
+    if CLUSTER_NAME + "-compute-image" in hostname:
+       pid = int( hostname[-6:-4] )
+       subprocess.call(
+           shlex.split("gcloud compute instances remove-metadata {} "
+                       "--zone={} --keys=startup-script"
+                       .format(hostname, PARTITIONS[pid]["zone"])))
+
+    elif INSTANCE_TYPE == "controller":
+        # controller
+        subprocess.call(
+            shlex.split("gcloud compute instances remove-metadata {} "
+                        "--zone={} --keys=startup-script"
+                        .format(hostname, ZONE)))
+        # logins
+        for i in range(1, LOGIN_NODE_COUNT + 1):
+            subprocess.call(
+                shlex.split("gcloud compute instances remove-metadata "
+                            "{}-login{} --zone={} --keys=startup-script"
+                            .format(CLUSTER_NAME, i, ZONE)))
+
+        # computes
+        for i in range(len(PARTITIONS)):
+            if not PARTITIONS[i]["static_node_count"]:
+                continue
+            for j in range(PARTITIONS[i]["static_node_count"]):
+                subprocess.call(
+                    shlex.split("gcloud compute instances remove-metadata "
+                                "{}-compute{:06} "
+                                "--zone={} --keys=startup-script"
+                                .format(CLUSTER_NAME,
+                                        i * MAX_PARTITION_SIZE + j,
+                                        PARTITIONS[j]["zone"])))
+#END remove_startup_scripts()
+
+
 def main():
 
     hostname = socket.gethostname()
@@ -1159,6 +1197,7 @@ def main():
                 "{}/bin/scontrol update partitionname={} state=up".format(
                     CURR_SLURM_DIR, PARTITIONS[pid]["name"])))
 
+            remove_startup_scripts(hostname)
 
             subprocess.call(shlex.split("gcloud compute instances "
                                         "stop {} --zone {} --quiet".format(
@@ -1177,20 +1216,10 @@ def main():
             # Ignore blank files with no shell magic.
             pass
 
+    remove_startup_scripts(hostname)
+
     end_motd()
 
-    if CLUSTER_NAME + "-compute" in hostname:
-       pid = int( hostname[-6:-4] )
-       subprocess.call(
-           shlex.split("gcloud compute instances remove-metadata {} "
-                       "--zone={} --keys=startup-script"
-                       .format(hostname, PARTITIONS[pid]["zone"])))
-
-    else:
-       subprocess.call(
-           shlex.split("gcloud compute instances remove-metadata {} "
-                       "--zone={} --keys=startup-script"
-                       .format(hostname, ZONE)))
 # END main()
 
 
