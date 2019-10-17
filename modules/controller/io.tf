@@ -14,8 +14,21 @@
 # limitations under the License.
 
 variable "network" {
-  description = "Compute Platform network the notebook server will be connected to"
+  description = "Compute Platform network the Slurm cluster nodes will be connected to"
   default     = "default"
+}
+
+variable "subnet" {
+  description = "Compute Platform subnetwork the Slurm cluster nodes will be connected to"
+  default     = "default"
+}
+
+variable "project" {
+  description = "Compute Platform project that will host the Slurm cluster"
+}
+
+variable "region" {
+  description = "Compute Platform region where the Slurm cluster will be located"
 }
 
 variable "zone" {

@@ -284,6 +284,7 @@ add_slurm_user
 
 fetch_metadata packages /var/tmp/packages.txt
 yum -y install $(cat /var/tmp/packages.txt)
+pip install --upgrade google-api-python-client
 
 setup_munge
 

@@ -13,11 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-variable "project" {}
-variable "region" {}
 variable "cluster_name" {}
-variable "users" {}
-
+variable "disable_public_ips" {}
 variable "partitions" {
   type = list(object({
               name                 = string,
@@ -33,6 +30,9 @@ variable "partitions" {
               preemptible_bursting = number,
               static_node_count    = number}))
 }
+variable "project" {}
+variable "region" {}
+variable "users" {}
 
 output "controller_nat_ips" {
   value = "${module.slurm_cluster_controller.instance_nat_ips}"

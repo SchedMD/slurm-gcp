@@ -32,7 +32,7 @@ resource "google_compute_instance" "compute_node" {
     access_config {
     }
 
-    subnetwork = var.network
+    subnetwork = var.subnet
   }
 
   service_account {

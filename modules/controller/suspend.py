@@ -25,10 +25,10 @@ import time
 
 import googleapiclient.discovery
 
-PROJECT      = '@PROJECT@'
+PROJECT      = '${project}'
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/suspend.log'
-PARTITIONS   = @PARTITIONS@
+PARTITIONS   = ${partitions}
 
 TOT_REQ_CNT = 1000
 

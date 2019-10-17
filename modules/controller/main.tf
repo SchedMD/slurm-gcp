@@ -47,7 +47,7 @@ resource "google_compute_instance" "controller_node" {
     access_config {
     }
 
-    subnetwork = var.network
+    subnetwork = var.subnet
   }
 
   service_account {
@@ -97,12 +97,21 @@ control_machine=local.controller_name
 })}
 SLURMDBDCONF
 
-    slurm_resume = <<RESUME
-${file("${path.module}/resume.py")}
+    slurm-resume = <<RESUME
+${templatefile("${path.module}/resume.py", {
+cluster_name = "${var.cluster_name}",
+project = "${var.project}",
+region = "${var.region}",
+partitions = "${jsonencode(var.partitions)}"
+subnet = "${var.subnet}"
+})}
 RESUME
 
-    slurm_suspend = <<SUSPEND
-${file("${path.module}/suspend.py")}
+    slurm-suspend = <<SUSPEND
+${templatefile("${path.module}/suspend.py", {
+project = "${var.project}",
+partitions = "${jsonencode(var.partitions)}"
+})}
 SUSPEND
 
     slurm-gcp-sync = <<GCPSYNC
