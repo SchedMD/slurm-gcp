@@ -56,8 +56,6 @@ Steps:
      type: slurm.jinja
      properties:
        cluster_name            : g1
-       static_node_count       : 2
-       max_node_count          : 10
 
        zone                    : us-central1-b
        region                  : us-central1
@@ -70,50 +68,85 @@ Steps:
        #shared_vpc_host_proj    : < my-shared-vpc-project-name >
 
        controller_machine_type : n1-standard-2
-       compute_machine_type    : n1-standard-2
-       login_machine_type      : n1-standard-2
-       #login_node_count        : 0
-
-       # Optional compute configuration fields
-       #cpu_platform               : Intel Skylake
-       #preemptible_bursting       : False
-       #external_compute_ips       : False
-       #private_google_access      : True
-
        #controller_disk_type       : pd-standard
        #controller_disk_size_gb    : 50
        #controller_labels          :
        #     key1 : value1
        #     key2 : value2
-
+       #
+       login_machine_type      : n1-standard-2
        #login_disk_type            : pd-standard
        #login_disk_size_gb         : 10
        #login_labels               :
        #     key1 : value1
        #     key2 : value2
+       #login_node_count        : 0
+       #login_node_service_account : default
+       #login_node_scopes          :
+       #       -  https://www.googleapis.com/auth/devstorage.read_only
+       #       -  https://www.googleapis.com/auth/logging.write
 
-       #compute_disk_type          : pd-standard
-       #compute_disk_size_gb       : 10
-       #compute_labels             :
-       #     key1 : value1
-       #     key2 : value2
-
+       # Optional compute configuration fields
+       #external_compute_ips       : False
+       #private_google_access      : True
+       #
        #nfs_apps_server            :
+       #nfs_apps_dir               : /apps
        #nfs_home_server            :
+       #nfs_home_dir               : /home
        #controller_secondary_disk          : True
        #controller_secondary_disk_type     : pd-standard
        #controller_secondary_disk_size_gb  : 300
 
-       # Optional GPU configuration fields
-       #gpu_type                   : nvidia-tesla-v100
-       #gpu_count                  : 8
+       #compute_node_service_account : default
+       #compute_node_scopes          :
+       #       -  https://www.googleapis.com/auth/devstorage.read_only
+       #       -  https://www.googleapis.com/auth/logging.write
 
        # Optional timer fields
        #suspend_time               : 300
 
-       #slurm_version           : 18.08-latest
        default_users           : < GCP user email addr, comma separated >
+       #slurm_version           : 19.05-latest
+       #default_account         : default
 
+       partitions :
+
+              - name              : debug
+                machine_type      : n1-standard-2
+                static_node_count : 2
+                max_node_count    : 10
+                zone              : us-central1-a
+              #  Optional compute configuration fields
+              #  cpu_platform               : Intel Skylake
+              #  preemptible_bursting       : False
+              #  compute_disk_type          : pd-standard
+              #  compute_disk_size_gb       : 10
+              #  compute_labels             :
+              #       key1 : value1
+              #       key2 : value2
+
+              #  Optional GPU configuration fields
+              #  gpu_type                   : nvidia-tesla-v100
+              #  gpu_count                  : 8
+
+
+              #- name           : partition2
+              #  machine_type   : n1-standard-16
+              #  max_node_count : 20
+              #  zone           : us-central1-b
+              #  Optional compute configuration fields
+              #  cpu_platform               : Intel Skylake
+              #  preemptible_bursting       : False
+              #  compute_disk_type          : pd-standard
+              #  compute_disk_size_gb       : 10
+              #  compute_labels             :
+              #       key1 : value1
+              #       key2 : value2
+
+              #  Optional GPU configuration fields
+              #  gpu_type                   : nvidia-tesla-v100
+              #  gpu_count                  : 8
    ```
 
    **NOTE:** For a complete list of available options and their definitions,
@@ -148,8 +181,8 @@ Steps:
    ...
    [bob@g1-login1 ~]$ sinfo
    PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-   debug*       up   infinite      8  idle~ g1-compute[3-10]
-   debug*       up   infinite      2   idle g1-compute[1-2]
+   debug*       up   infinite      8  idle~ g1-compute[000001-000009]
+   debug*       up   infinite      2   idle g1-compute[000000-000001]
    ```
 
    **NOTE:** By default, Slurm will hide nodes that are in a power_save state --
@@ -163,8 +196,8 @@ Steps:
    [bob@g1-login1 ~]$ sbatch -N2 --wrap="srun hostname"
    Submitted batch job 2
    [bob@g1-login1 ~]$ cat slurm-2.out
-   g1-compute1
-   g1-compute2
+   g1-compute000000
+   g1-compute000001
    ```
 
 5. Tearing down the deployment.
@@ -179,9 +212,9 @@ Steps:
 
 ### Image-based Scaling
    When a deployment is created, the deployment will create a
-   <cluster_name>-compute-image instance that is a temporary compute instance
+   <cluster_name>-compute-image instance that is a base compute instance
    image. When the instance is done installing packages, it then creates a
-   image of itself and then destroys itself. Subsequent bursted compute
+   image of itself and then stops itself. Subsequent bursted compute
    instances will use this image -- shortening the creation and boot time of
    new compute instances. While the compute-image is running, the debug
    partition will be marked as "down" to prevent jobs from launching until the
@@ -194,11 +227,13 @@ Steps:
    If the compute image needs to be updated, it can be done with the following
    command:
    ```
-   $ gcloud compute images create <cluster_name>-compute-image-$(date '+%Y-%m-%d-%H-%M-%S') \
+   $ gcloud compute images create <cluster_name>-compute-image-#-$(date '+%Y-%m-%d-%H-%M-%S') \
                                   --source-disk <instance name> \
                                   --source-disk-zone <zone> --force \
                                   --family <cluster_name>-compute-image-family
    ```
+
+   Where # is the partition index.
 
    Existing images can be viewed on the console's [Images](https://console.cloud.google.com/compute/images)
    page.
@@ -591,11 +626,13 @@ following are the steps to do this.
     # the instance and verify that there are no messages about installing in the
     # motd.
 
-    [slurm@g1-controller scripts]$ gcloud compute images create <cluster_name>-compute-image-$(date '+%Y-%m-%d-%H-%M-%S') \
+    [slurm@g1-controller scripts]$ gcloud compute images create <cluster_name>-compute-image-#-$(date '+%Y-%m-%d-%H-%M-%S') \
                                                                 --source-disk proj2-compute-image \
                                                                 --source-disk-zone <zone> --force \
                                                                 --family <cluster_name>-compute-image-family \
                                                                 --project <project2>
+
+    Where # is the partition index.
 
     # Then either stop or delete the proj2-compute-image instance.
     ```
@@ -786,13 +823,13 @@ space (e.g. same uids across all the clusters).
     [bob@login1 ~]$ sinfo -Mg1,g2
     CLUSTER: g1
     PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-    debug*       up   infinite      8  idle~ g1-compute[3-10]
-    debug*       up   infinite      2   idle g1-compute[1-2]
+    debug*       up   infinite      8  idle~ g1-compute[000002-000009]
+    debug*       up   infinite      2   idle g1-compute[000000-000001]
 
     CLUSTER: g2
     PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-    debug*       up   infinite      8  idle~ g2-compute[3-10]
-    debug*       up   infinite      2   idle g2-compute[1-2]
+    debug*       up   infinite      8  idle~ g2-compute[000002-000009]
+    debug*       up   infinite      2   idle g2-compute[000000-000001]
 
     [bob@login1 ~]$ sbatch -Mg1 --wrap="srun hostname; sleep 300"
     Submitted batch job 17 on cluster g1
@@ -803,9 +840,9 @@ space (e.g. same uids across all the clusters).
     [bob@login1 ~]$ squeue -Mg1,g2
     CLUSTER: g1
                  JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
-                    17     debug     wrap      bob  R       0:31      1 g1-compute1
+                    17     debug     wrap      bob  R       0:31      1 g1-compute000000
 
     CLUSTER: g2
                  JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
-                     8     debug     wrap      bob  R       0:12      1 g2-compute1
+                     8     debug     wrap      bob  R       0:12      1 g2-compute000000
     ```
