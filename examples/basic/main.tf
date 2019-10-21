@@ -53,9 +53,12 @@ module "slurm_cluster_login" {
 module "slurm_cluster_compute" {
   source = "../../modules/compute"
 
+  image_count        = "${length(var.partitions)}"
+
   cluster_name      = var.cluster_name
   controller_name   = module.slurm_cluster_controller.controller_node_name
   network           = module.slurm_cluster_network.cluster_subnet_self_link
+  partitions        = var.partitions
   project           = var.project
   nfs_apps_server   = module.slurm_cluster_controller.controller_node_name
   nfs_home_server   = module.slurm_cluster_controller.controller_node_name

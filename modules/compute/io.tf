@@ -85,3 +85,24 @@ variable "munge_key" {
   description = "Specific munge key to use (e.g. date +%s | sha512sum | cut -d' ' -f1) generate a random key if none is specified"
   default     = ""
 }
+
+variable "image_count" {
+  description = "The number of auto-scaling compute images to create"
+  default     = 1
+}
+
+variable "partitions" {
+  type = list(object({
+              name                 = string,
+              machine_type         = string,
+              max_node_count       = number,
+              zone                 = string,
+              compute_disk_type    = string,
+              compute_disk_size_gb = number,
+              compute_labels       = list(string),
+              cpu_platform         = string,
+              gpu_type             = string,
+              gpu_count            = number,
+              preemptible_bursting = number,
+              static_node_count    = number}))
+}
