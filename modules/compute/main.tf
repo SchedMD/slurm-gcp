@@ -14,9 +14,11 @@
 # limitations under the License.
 
 resource "google_compute_instance" "compute_node" {
-  name         = "${var.cluster_name}-compute-image-00000"
-  machine_type = var.machine_type
-  zone         = var.zone
+  count        = var.image_count
+
+  name         = "${format("%s-compute-image-%02s000", var.cluster_name, count.index)}"
+  machine_type = var.partitions[count.index].machine_type
+  zone         = var.partitions[count.index].zone
 
   tags = ["compute"]
 
