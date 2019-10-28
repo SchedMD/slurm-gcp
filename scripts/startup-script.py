@@ -109,12 +109,12 @@ def setup_modules():
 
     appsmfs = '/apps/modulefiles'
 
-    if appsmfs not in open('/usr/share/Modules/init/.modulespath').read():
-        if INSTANCE_TYPE == 'controller' and not os.path.isdir(appsmfs):
-            subprocess.call(['mkdir', '-p', appsmfs])
-
-        with open('/usr/share/Modules/init/.modulespath', 'a') as dotmp:
-            dotmp.write(appsmfs)
+    with open('/usr/share/Modules/init/.modulespath', 'r+') as dotmp:
+        if appsmfs not in dotmp.read():
+            if INSTANCE_TYPE != 'controller' and not os.path.isdir(appsmfs):
+                subprocess.call(['mkdir', '-p', appsmfs])
+            # after read, file cursor is at end of file
+            dotmp.write('\n' + appsmfs + '\n')
 
 # END setup_modules
 
@@ -139,18 +139,16 @@ complete before making changes in your home directory.
 
 """
 
-    f = open('/etc/motd', 'w')
-    f.write(msg)
-    f.close()
+    with open('/etc/motd', 'w') as f:
+        f.write(msg)
 
 # END start_motd()
 
 
 def end_motd(broadcast=True):
 
-    f = open('/etc/motd', 'w')
-    f.write(MOTD_HEADER)
-    f.close()
+    with open('/etc/motd', 'w') as f:
+        f.write(MOTD_HEADER)
 
     if not broadcast:
         return
@@ -244,20 +242,15 @@ def install_packages():
 def setup_munge():
 
     munge_service_patch = "/usr/lib/systemd/system/munge.service"
-    f = open(munge_service_patch, 'w')
-    f.write("""
+    with open(munge_service_patch, 'w') as f:
+        f.write("""
 [Unit]
 Description=MUNGE authentication service
 Documentation=man:munged(8)
 After=network.target
 After=syslog.target
-After=time-sync.target
-""")
+After=time-sync.target{}
 
-    if (INSTANCE_TYPE != "controller"):
-        f.write("RequiresMountsFor={}\n".format(MUNGE_DIR))
-
-    f.write("""
 [Service]
 Type=forking
 ExecStart=/usr/sbin/munged --num-threads=10
@@ -267,23 +260,21 @@ Group=munge
 Restart=on-abort
 
 [Install]
-WantedBy=multi-user.target""")
-    f.close()
+WantedBy=multi-user.target
+""".format("\nRequiresMountsFor={}".format(MUNGE_DIR)
+           if INSTANCE_TYPE != controller else ''))
 
     subprocess.call(['systemctl', 'enable', 'munge'])
 
     if (INSTANCE_TYPE != "controller"):
-        f = open('/etc/fstab', 'a')
-        f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
-""".format(MUNGE_DIR, CONTROL_MACHINE))
-        f.close()
+        with open('/etc/fstab', 'a') as f:
+            f.write("\n{1}:{0} \t{0} \tnfs \trw,hard,intr \t0 \t0"
+                    .format(MUNGE_DIR, CONTROL_MACHINE))
         return
 
     if MUNGE_KEY:
-        f = open(MUNGE_DIR +'/munge.key', 'w')
-        f.write(MUNGE_KEY)
-        f.close()
+        with open(MUNGE_DIR +'/munge.key', 'w') as f:
+            f.write(MUNGE_KEY)
 
         subprocess.call(['chown', '-R', 'munge:', MUNGE_DIR, '/var/log/munge/'])
         os.chmod(MUNGE_DIR + '/munge.key' ,0o400)
@@ -300,23 +291,14 @@ def start_munge():
 
 def setup_nfs_exports():
 
-    f = open('/etc/exports', 'w')
-    if not NFS_HOME_SERVER:
-        f.write("""
-/home  *(rw,no_subtree_check,no_root_squash)
-""")
-    if not NFS_APPS_SERVER:
-        f.write("""
-%s  *(rw,no_subtree_check,no_root_squash)
-""" % APPS_DIR)
-    f.write("""
-/etc/munge *(rw,no_subtree_check,no_root_squash)
-""")
-    if CONTROLLER_SECONDARY_DISK:
-        f.write("""
-%s  *(rw,no_subtree_check,no_root_squash)
-""" % SEC_DISK_DIR)
-    f.close()
+    with open('/etc/exports', 'w') as f:
+        if not NFS_HOME_SERVER:
+            f.write("\n/home  *(rw,no_subtree_check,no_root_squash)")
+        if not NFS_APPS_SERVER:
+            f.write("\n%s  *(rw,no_subtree_check,no_root_squash)" % APPS_DIR)
+        f.write("/etc/munge *(rw,no_subtree_check,no_root_squash)")
+        if CONTROLLER_SECONDARY_DISK:
+            f.write("\n%s  *(rw,no_subtree_check,no_root_squash)" % SEC_DISK_DIR)
 
     subprocess.call(shlex.split("exportfs -a"))
 
@@ -615,9 +597,8 @@ SuspendExcNodes={}
     etc_dir = CURR_SLURM_DIR + '/etc'
     if not os.path.exists(etc_dir):
         os.makedirs(etc_dir)
-    f = open(etc_dir + '/slurm.conf', 'w')
-    f.write(conf)
-    f.close()
+    with open(etc_dir + '/slurm.conf', 'w') as f:
+        f.write(conf)
 #END install_slurm_conf()
 
 
@@ -660,9 +641,8 @@ StorageType=accounting_storage/mysql
     etc_dir = CURR_SLURM_DIR + '/etc'
     if not os.path.exists(etc_dir):
         os.makedirs(etc_dir)
-    f = open(etc_dir + '/slurmdbd.conf', 'w')
-    f.write(conf)
-    f.close()
+    with open(etc_dir + '/slurmdbd.conf', 'w') as f:
+        f.write(conf)
 
 #END install_slurmdbd_conf()
 
@@ -680,13 +660,11 @@ ConstrainDevices=yes
 """
 
     etc_dir = CURR_SLURM_DIR + '/etc'
-    f = open(etc_dir + '/cgroup.conf', 'w')
-    f.write(conf)
-    f.close()
+    with open(etc_dir + '/cgroup.conf', 'w') as f:
+        f.write(conf)
 
-    f = open(etc_dir + '/cgroup_allowed_devices_file.conf', 'w')
-    f.write("")
-    f.close()
+    with open(etc_dir + '/cgroup_allowed_devices_file.conf', 'w') as f:
+        f.write("")
 
     for i in range(len(PARTITIONS)):
         if not PARTITIONS[i]["gpu_count"]:
@@ -734,9 +712,8 @@ def install_meta_files():
         req.add_header('Metadata-Flavor', 'Google')
         resp = urllib2.urlopen(req)
 
-        f = open("{}/{}".format(scripts_path, file_name), 'w')
-        f.write(resp.read())
-        f.close()
+        with open("{}/{}".format(scripts_path, file_name), 'w') as f:
+            f.write(resp.read())
         os.chmod("{}/{}".format(scripts_path, file_name), 0o755)
 
         subprocess.call(shlex.split("gcloud compute instances remove-metadata {} --zone={} --keys={}".
@@ -805,11 +782,8 @@ def install_slurm_tmpfile():
 
     run_dir = '/var/run/slurm'
 
-    f = open('/etc/tmpfiles.d/slurm.conf', 'w')
-    f.write("""
-d %s 0755 slurm slurm -
-""" % run_dir)
-    f.close()
+    with open('/etc/tmpfiles.d/slurm.conf', 'w') as f:
+        f.write("\nd %s 0755 slurm slurm -" % run_dir)
 
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
@@ -824,8 +798,8 @@ def install_controller_service_scripts():
     install_slurm_tmpfile()
 
     # slurmctld.service
-    f = open('/usr/lib/systemd/system/slurmctld.service', 'w')
-    f.write("""
+    with open('/usr/lib/systemd/system/slurmctld.service', 'w') as f:
+        f.write("""
 [Unit]
 Description=Slurm controller daemon
 After=network.target munge.service
@@ -841,13 +815,12 @@ PIDFile=/var/run/slurm/slurmctld.pid
 [Install]
 WantedBy=multi-user.target
 """.format(prefix = CURR_SLURM_DIR))
-    f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmctld.service', 0o644)
 
     # slurmdbd.service
-    f = open('/usr/lib/systemd/system/slurmdbd.service', 'w')
-    f.write("""
+    with open('/usr/lib/systemd/system/slurmdbd.service', 'w') as f:
+        f.write("""
 [Unit]
 Description=Slurm DBD accounting daemon
 After=network.target munge.service
@@ -863,7 +836,6 @@ PIDFile=/var/run/slurm/slurmdbd.pid
 [Install]
 WantedBy=multi-user.target
 """.format(prefix = CURR_SLURM_DIR))
-    f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmdbd.service', 0o644)
 
@@ -875,8 +847,8 @@ def install_compute_service_scripts():
     install_slurm_tmpfile()
 
     # slurmd.service
-    f = open('/usr/lib/systemd/system/slurmd.service', 'w')
-    f.write("""
+    with open('/usr/lib/systemd/system/slurmd.service', 'w') as f:
+        f.write("""
 [Unit]
 Description=Slurm node daemon
 After=network.target munge.service
@@ -896,7 +868,6 @@ LimitSTACK=infinity
 [Install]
 WantedBy=multi-user.target
 """.format(prefix = CURR_SLURM_DIR))
-    f.close()
 
     os.chmod('/usr/lib/systemd/system/slurmd.service', 0o644)
     subprocess.call(shlex.split('systemctl enable slurmd'))
@@ -906,35 +877,32 @@ WantedBy=multi-user.target
 
 def setup_bash_profile():
 
-    f = open('/etc/profile.d/slurm.sh', 'w')
-    f.write("""
+    with open('/etc/profile.d/slurm.sh', 'w') as f:
+        f.write("""
 S_PATH=%s
 PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """ % CURR_SLURM_DIR)
-    f.close()
 
     if INSTANCE_TYPE == "compute":
         hostname = socket.gethostname()
         pid = int( hostname[-6:-4] )
         if PARTITIONS[pid]["gpu_count"]:
-            f = open('/etc/profile.d/cuda.sh', 'w')
-            f.write("""
+            with open('/etc/profile.d/cuda.sh', 'w') as f:
+                f.write("""
 CUDA_PATH=/usr/local/cuda
 PATH=$CUDA_PATH/bin${PATH:+:${PATH}}
 LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 """)
-            f.close()
 
 #END setup_bash_profile()
 
 def setup_nfs_apps_vols():
 
-    f = open('/etc/fstab', 'a')
-    if not NFS_APPS_SERVER:
-        if ((INSTANCE_TYPE != "controller")):
-            f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
-""".format(APPS_DIR, CONTROL_MACHINE))
+    with open('/etc/fstab', 'a') as f:
+        if not NFS_APPS_SERVER:
+            if ((INSTANCE_TYPE != "controller")):
+                f.write("\n{1}:{0}    {0}     nfs      rw,hard,intr  0     0"
+                        .format(APPS_DIR, CONTROL_MACHINE))
     else:
         f.write("""
 {1}:{2}    {0}     nfs      rw,hard,intr  0     0
@@ -945,41 +913,31 @@ def setup_nfs_apps_vols():
 
 def setup_nfs_home_vols():
 
-    f = open('/etc/fstab', 'a')
-    if not NFS_HOME_SERVER:
-        if ((INSTANCE_TYPE != "controller")):
-            f.write("""
-{0}:/home    /home     nfs      rw,hard,intr  0     0
-""".format(CONTROL_MACHINE))
-    else:
-        f.write("""
-{0}:{1}    /home     nfs      rw,hard,intr  0     0
-""".format(NFS_HOME_SERVER, NFS_HOME_DIR))
-    f.close()
+    with open('/etc/fstab', 'a') as f:
+        if not NFS_HOME_SERVER:
+            if ((INSTANCE_TYPE != "controller")):
+                f.write("\n{0}:/home \t/home \tnfs \trw,hard,intr \t0 \t0"
+                        .format(CONTROL_MACHINE))
+        else:
+            f.write("\t{0}:{1} \t/home \tnfs \trw,hard,intr \t0 \t0"
+                    .format(NFS_HOME_SERVER, NFS_HOME_DIR))
 
 #END setup_nfs_home_vols()
 
 def setup_nfs_sec_vols():
-    f = open('/etc/fstab', 'a')
-
-    if CONTROLLER_SECONDARY_DISK:
-        if ((INSTANCE_TYPE != "controller")):
-            f.write("""
-{1}:{0}    {0}     nfs      rw,hard,intr  0     0
-""".format(SEC_DISK_DIR, CONTROL_MACHINE))
-    f.close()
+    if CONTROLLER_SECONDARY_DISK and (INSTANCE_TYPE != "controller"):
+        with open('/etc/fstab', 'a') as f:
+            f.write("\n{1}:{0} \t{0} \tnfs \trw,hard,intr \t0 \t0"
+                    .format(SEC_DISK_DIR, CONTROL_MACHINE))
 
 #END setup_nfs_sec_vols()
 
 def setup_secondary_disks():
 
     subprocess.call(shlex.split("sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb"))
-    f = open('/etc/fstab', 'a')
-
-    f.write("""
-/dev/sdb    {0}  ext4    discard,defaults,nofail  0  2
-""".format(SEC_DISK_DIR))
-    f.close()
+    with open('/etc/fstab', 'a') as f:
+        f.write("\n/dev/sdb \t{0} \text4 \tdiscard,defaults,nofail \t0 \t2"
+                .format(SEC_DISK_DIR))
 
 #END setup_secondary_disks()
 
@@ -993,12 +951,11 @@ def mount_nfs_vols():
 # Tune the NFS server to support many mounts
 def setup_nfs_threads():
 
-    f = open('/etc/sysconfig/nfs', 'a')
-    f.write("""
+    with open('/etc/sysconfig/nfs', 'a') as f:
+        f.write("""
 # Added by Google
 RPCNFSDCOUNT=256
 """.format(APPS_DIR))
-    f.close()
 
 # END setup_nfs_threads()
 
@@ -1037,12 +994,11 @@ def create_compute_image():
 def setup_selinux():
 
     subprocess.call(shlex.split('setenforce 0'))
-    f = open('/etc/selinux/config', 'w')
-    f.write("""
+    with open('/etc/selinux/config', 'w') as f:
+        f.write("""
 SELINUX=permissive
 SELINUXTYPE=targeted
 """)
-    f.close()
 #END setup_selinux()
 
 
