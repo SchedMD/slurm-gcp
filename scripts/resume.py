@@ -114,9 +114,9 @@ def create_instance(compute, project, zone, instance_type, instance_name,
 
     pid = int( instance_name[-6:-4] )
     # Configure the machine
-    machine_type = "zones/{}/machineTypes/{}".format(zone, instance_type)
-    disk_type = "projects/{}/zones/{}/diskTypes/{}".format(
-        PROJECT, zone, PARTITIONS[pid]["compute_disk_type"])
+    machine_type = 'zones/{}/machineTypes/{}'.format(zone, instance_type)
+    disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
+        PROJECT, zone, PARTITIONS[pid]['compute_disk_type'])
     config = {
         'name': instance_name,
         'machineType': machine_type,
@@ -169,38 +169,38 @@ def create_instance(compute, project, zone, instance_type, instance_name,
         })
 
     if "gpu_type" in PARTITIONS[pid]:
-        accel_type = ("https://www.googleapis.com/compute/v1/"
-                      "projects/{}/zones/{}/acceleratorTypes/{}".format(
-                          PROJECT, zone, PARTITIONS[pid]["gpu_type"]))
+        accel_type = ('https://www.googleapis.com/compute/v1/'
+                      'projects/{}/zones/{}/acceleratorTypes/{}'.format(
+                          PROJECT, zone, PARTITIONS[pid]['gpu_type']))
         config['guestAccelerators'] = [{
-            'acceleratorCount': PARTITIONS[pid]["gpu_count"],
+            'acceleratorCount': PARTITIONS[pid]['gpu_count'],
             'acceleratorType' : accel_type
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if PARTITIONS[pid]["preemptible_bursting"]:
+    if PARTITIONS[pid]['preemptible_bursting']:
         config['scheduling'] = {
-            "preemptible": True,
-            "onHostMaintenance": "TERMINATE",
-            "automaticRestart": False
+            'preemptible': True,
+            'onHostMaintenance': 'TERMINATE',
+            'automaticRestart': False
         },
 
-    if "labels" in PARTITIONS[pid]:
-        config['labels'] = PARTITIONS[pid]["labels"],
+    if 'labels' in PARTITIONS[pid]:
+        config['labels'] = PARTITIONS[pid]['labels'],
 
-    if "cpu_platform" in PARTITIONS[pid]:
-        config['minCpuPlatform'] = PARTITIONS["pid"]["cpu_platform"],
+    if 'cpu_platform' in PARTITIONS[pid]:
+        config['minCpuPlatform'] = PARTITIONS['pid']['cpu_platform'],
 
     if VPC_SUBNET:
-        net_type = "projects/{}/regions/{}/subnetworks/{}".format(
+        net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
             PROJECT, REGION, VPC_SUBNET)
         config['networkInterfaces'] = [{
             NETWORK_TYPE : net_type
         }]
 
     if SHARED_VPC_HOST_PROJ:
-        net_type = "projects/{}/regions/{}/subnetworks/{}".format(
+        net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
             SHARED_VPC_HOST_PROJ, REGION, VPC_SUBNET)
         config['networkInterfaces'] = [{
             NETWORK_TYPE : net_type
@@ -237,10 +237,10 @@ def get_source_image( compute, node_name ):
     if not pid in src_disk_images:
         try:
             image_response = compute.images().getFromFamily(
-                project = PROJECT,
-                family = CLUSTER_NAME + "-compute-image-{0}-family".format(pid)
+                project=PROJECT,
+                family=CLUSTER_NAME + '-compute-image-{0}-family'.format(pid)
             ).execute()
-            if image_response['status'] != "READY":
+            if image_response['status'] != 'READY':
                 logging.debug("image not ready, using the startup script")
                 raise Exception("image not ready")
             source_disk_image = image_response['selfLink']
@@ -279,8 +279,8 @@ def add_instances(compute, node_list):
         pid = int( node_name[-6:-4] )
         batch_list[curr_batch].add(
             create_instance(
-                compute, PROJECT, PARTITIONS[pid]["zone"],
-                PARTITIONS[pid]["machine_type"], node_name,
+                compute, PROJECT, PARTITIONS[pid]['zone'],
+                PARTITIONS[pid]['machine_type'], node_name,
                 source_disk_image, have_compute_img),
             request_id=node_name)
         req_cnt += 1
@@ -316,7 +316,7 @@ def main(arg_nodes):
             break;
 
         logging.debug("got {} nodes to retry ({})".
-                      format(len(retry_list),",".join(retry_list)))
+                      format(len(retry_list), ','.join(retry_list)))
         node_list = list(retry_list)
         del retry_list[:]
 

@@ -38,8 +38,8 @@ retry_list = []
 # [START delete_instances_cb]
 def delete_instances_cb(request_id, response, exception):
     if exception is not None:
-        logging.error("delete exception for node {}: {}".format(request_id,
-                                                                str(exception)))
+        logging.error("delete exception for node {}: {}"
+                      .format(request_id, str(exception)))
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
     else:
@@ -66,7 +66,7 @@ def delete_instances(compute, node_list):
         pid = int( node_name[-6:-4] )
         batch_list[curr_batch].add(
             compute.instances().delete(project=PROJECT,
-                                       zone=PARTITIONS[pid]["zone"],
+                                       zone=PARTITIONS[pid]['zone'],
                                        instance=node_name),
             request_id=node_name)
         req_cnt += 1
@@ -88,7 +88,7 @@ def main(arg_nodes):
                                               cache_discovery=False)
 
     # Get node list
-    show_hostname_cmd = "%s show hostnames %s" % (SCONTROL, arg_nodes)
+    show_hostname_cmd = "{} show hostnames {}".format(SCONTROL, arg_nodes)
     nodes_str = subprocess.check_output(shlex.split(show_hostname_cmd))
     node_list = nodes_str.splitlines()
 
@@ -98,7 +98,7 @@ def main(arg_nodes):
             break;
 
         logging.debug("got {} nodes to retry ({})".
-                      format(len(retry_list),",".join(retry_list)))
+                      format(len(retry_list), ','.join(retry_list)))
         node_list = list(retry_list)
         del retry_list[:]
 

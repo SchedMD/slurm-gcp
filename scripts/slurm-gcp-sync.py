@@ -74,7 +74,7 @@ def start_instances(compute, node_list):
         pid = int( node[-6:-4] )
         batch_list[curr_batch].add(
             compute.instances().start(project=PROJECT,
-                                      zone=PARTITIONS[pid]["zone"],
+                                      zone=PARTITIONS[pid]['zone'],
                                       instance=node),
             request_id=node)
         req_cnt += 1
@@ -189,8 +189,9 @@ def main():
             logging.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
-            cmd = "{} update nodename={} state=down reason='Instance stopped/deleted'".format(
-                SCONTROL, hostlist)
+            cmd = ("{} update nodename={} state=down "
+                   "reason='Instance stopped/deleted'"
+                   .format(SCONTROL, hostlist))
             subprocess.call(shlex.split(cmd))
 
             while True:
@@ -199,14 +200,14 @@ def main():
                     break;
 
                 logging.debug("got {} nodes to retry ({})".
-                              format(len(retry_list),",".join(retry_list)))
+                              format(len(retry_list), ','.join(retry_list)))
                 to_start = list(retry_list)
                 del retry_list[:]
 
 
         if len(to_idle):
             logging.debug("{} instances to resume ({})".format(
-                len(to_idle), ",".join(to_idle)))
+                len(to_idle), ','.join(to_idle)))
 
             # write hosts to a file that can be given to get a slurm
             # hostlist. Since the number of hosts could be large.
@@ -240,7 +241,7 @@ if __name__ == '__main__':
         logging.getLogger(logger).setLevel(logging.WARNING)
 
     logging.basicConfig(
-        filename="{}/{}.log".format(LOGDIR, file_name),
+        filename='{}/{}.log'.format(LOGDIR, file_name),
         format='%(asctime)s %(name)s %(levelname)s: %(message)s',
         level=logging.DEBUG)
 
