@@ -699,19 +699,16 @@ def install_meta_files():
     GOOGLE_URL = 'http://metadata.google.internal/computeMetadata/v1/instance/attributes'
 
     meta_files = [
-        {'file': 'suspend.py', 'meta': 'slurm_suspend'},
-        {'file': 'resume.py', 'meta': 'slurm_resume'},
-        {'file': 'startup-script.py', 'meta': 'startup-script-compute'},
-        {'file': 'slurm-gcp-sync.py', 'meta': 'slurm-gcp-sync'},
-        {'file': 'compute-shutdown', 'meta': 'compute-shutdown'},
-        {'file': 'custom-compute-install', 'meta': 'custom-compute-install'},
-        {'file': 'custom-controller-install', 'meta': 'custom-controller-install'},
+        ('suspend.py', 'slurm_suspend'),
+        ('resume.py', 'slurm_resume'),
+        ('startup-script.py', 'startup-script-compute'),
+        ('slurm-gcp-sync.py', 'slurm-gcp-sync'),
+        ('compute-shutdown', 'compute-shutdown'),
+        ('custom-compute-install', 'custom-compute-install'),
+        ('custom-controller-install', 'custom-controller-install'),
     ]
 
-    for meta in meta_files:
-        file_name = meta['file']
-        meta_name = meta['meta']
-
+    for file_name, meta_name in meta_files:
         req = urllib2.Request("{}/{}".format(GOOGLE_URL, meta_name))
         req.add_header('Metadata-Flavor', 'Google')
         resp = urllib2.urlopen(req)
