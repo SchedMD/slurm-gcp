@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 # Copyright 2017 SchedMD LLC.
 #
@@ -25,7 +25,7 @@ import urllib
 import urllib2
 
 CLUSTER_NAME      = '@CLUSTER_NAME@'
-INSTANCE_TYPE     = '@INSTANCE_TYPE@' # e.g. controller, login, compute
+INSTANCE_TYPE     = '@INSTANCE_TYPE@'  # e.g. controller, login, compute
 
 PROJECT           = '@PROJECT@'
 ZONE              = '@ZONE@'
@@ -102,7 +102,6 @@ def add_slurm_user():
     subprocess.call(shlex.split(
         "useradd -m -c 'SLURM Workload Manager' -d /var/lib/slurm "
         "-u {} -g slurm -s /bin/bash slurm".format(SLURM_UID)))
-
 # END add_slurm_user()
 
 
@@ -116,7 +115,6 @@ def setup_modules():
                 os.makedirs(appsmfs)
             # after read, file cursor is at end of file
             dotmp.write('\n' + appsmfs + '\n')
-
 # END setup_modules
 
 
@@ -142,7 +140,6 @@ complete before making changes in your home directory.
 
     with open('/etc/motd', 'w') as f:
         f.write(msg)
-
 # END start_motd()
 
 
@@ -163,8 +160,7 @@ def end_motd(broadcast=True):
 /home on the controller was mounted over the existing /home.
 Either log out and log back in or cd into ~.
 '"""))
-
-#END start_motd()
+# END start_motd()
 
 
 def have_internet():
@@ -176,8 +172,7 @@ def have_internet():
     except:
         conn.close()
         return False
-
-#END have_internet()
+# END have_internet()
 
 
 def install_packages():
@@ -228,7 +223,7 @@ def install_packages():
 
     if INSTANCE_TYPE == 'compute':
         hostname = socket.gethostname()
-        pid = int( hostname[-6:-4] )
+        pid = int(hostname[-6:-4])
         if PARTITIONS[pid]['gpu_count']:
             rpm = 'cuda-repo-rhel7-10.0.130-1.x86_64.rpm'
             subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
@@ -237,9 +232,9 @@ def install_packages():
             subprocess.call(shlex.split("rpm -i " + rpm))
             subprocess.call(shlex.split("yum clean all"))
             subprocess.call(shlex.split("yum -y install cuda"))
-            subprocess.call(shlex.split("nvidia-smi")) # Creates the device files
-
-#END install_packages()
+            # Creates the device files
+            subprocess.call(shlex.split("nvidia-smi"))
+# END install_packages()
 
 
 def setup_munge():
@@ -276,22 +271,23 @@ WantedBy=multi-user.target
         return
 
     if MUNGE_KEY:
-        with open(MUNGE_DIR +'/munge.key', 'w') as f:
+        with open(MUNGE_DIR + '/munge.key', 'w') as f:
             f.write(MUNGE_KEY)
 
         subprocess.call(shlex.split("chown -R munge: {} /var/log/munge/"
                                     .format(MUNGE_DIR)))
-        os.chmod(MUNGE_DIR + '/munge.key' ,0o400)
-        os.chmod(MUNGE_DIR                ,0o700)
-        os.chmod('/var/log/munge/'        ,0o700)
+        os.chmod(MUNGE_DIR + '/munge.key', 0o400)
+        os.chmod(MUNGE_DIR, 0o700)
+        os.chmod('/var/log/munge/', 0o700)
     else:
         subprocess.call('create-munge-key')
+# END setup_munge ()
 
-#END setup_munge ()
 
 def start_munge():
     subprocess.call(shlex.split("systemctl start munge"))
 # END start_munge()
+
 
 def setup_nfs_exports():
 
@@ -307,8 +303,7 @@ def setup_nfs_exports():
                     .format(SEC_DISK_DIR))
 
     subprocess.call(shlex.split("exportfs -a"))
-
-#END setup_nfs_exports()
+# END setup_nfs_exports()
 
 
 def expand_machine_type():
@@ -327,38 +322,41 @@ def expand_machine_type():
 
     # Assume sockets is 1. Currently, no instances with multiple sockets
     # Assume hyper-threading is on and 2 threads per core
-    machine = []
-    for i in range(len(PARTITIONS)):
-        machine.append({'sockets': 1, 'cores': 1, 'threads': 1, 'memory': 1})
+    machines = []
+    for part in PARTITIONS:
+        machine = {'sockets': 1, 'cores': 1, 'threads': 1, 'memory': 1}
         try:
             compute = googleapiclient.discovery.build('compute', 'v1',
                                                       cache_discovery=False)
             type_resp = compute.machineTypes().get(
-                project=PROJECT, zone=PARTITIONS[i]["zone"],
-                machineType=PARTITIONS[i]["machine_type"]).execute()
+                project=PROJECT, zone=part['zone'],
+                machineType=part['machine_type']).execute()
             if type_resp:
                 tot_cpus = type_resp['guestCpus']
                 if tot_cpus > 1:
-                    machine[i]['cores']   = tot_cpus / 2
-                    machine[i]['threads'] = 2
+                    machine['cores'] = tot_cpus / 2
+                    machine['threads'] = 2
 
                 # Because the actual memory on the host will be different than
                 # what is configured (e.g. kernel will take it). From
                 # experiments, about 16 MB per GB are used (plus about 400 MB
                 # buffer for the first couple of GB's. Using 30 MB to be safe.
-                gb = type_resp['memoryMb'] / 1024;
-                machine[i]['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
+                gb = type_resp['memoryMb'] / 1024
+                machine['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
 
         except Exception, e:
-            print "Failed to get MachineType '%s' from google api (%s)" % (PARTITIONS[i]["machine_type"], str(e))
+            print("Failed to get MachineType '{}' from google api ({})"
+                  .format(part["machine_type"], str(e)))
+        finally:
+            machines.append(machine)
 
-    return machine
-#END expand_machine_type()
+    return machines
+# END expand_machine_type()
 
 
 def install_slurm_conf():
 
-    machine = expand_machine_type()
+    machines = expand_machine_type()
 
     conf = """
 # slurm.conf file generated by configurator.html.
@@ -533,47 +531,50 @@ CommunicationParameters=NoAddrCache
 GresTypes=gpu
 #
 # COMPUTE NODES
-""".format(apps_dir        = APPS_DIR,
-           cluster_name    = CLUSTER_NAME,
-           control_machine = CONTROL_MACHINE,
-           suspend_timeout = SUSPEND_TIMEOUT,
-           resume_timeout  = RESUME_TIMEOUT,
-           suspend_time    = SUSPEND_TIME)
+""".format(apps_dir=APPS_DIR,
+           cluster_name=CLUSTER_NAME,
+           control_machine=CONTROL_MACHINE,
+           suspend_timeout=SUSPEND_TIMEOUT,
+           resume_timeout=RESUME_TIMEOUT,
+           suspend_time=SUSPEND_TIME)
 
     static_nodes = []
-    for i in range(len(machine)):
-        static_range = ""
-        if PARTITIONS[i]["static_node_count"] and PARTITIONS[i]["static_node_count"] > 1:
-            static_range = "{}-compute[{:06}-{:06}]".format(
-                CLUSTER_NAME,
-                i*MAX_PARTITION_SIZE,
-                i*MAX_PARTITION_SIZE+PARTITIONS[i]["static_node_count"]-1)
-        elif PARTITIONS[i]["static_node_count"]:
-            static_range = "{}-compute{:06}".format(CLUSTER_NAME,
-                                                    i*MAX_PARTITION_SIZE)
+    for i, machine in enumerate(machines):
+        part = PARTITIONS[i]
+        static_range = ''
+        if part['static_node_count']:
+            if part['static_node_count'] > 1:
+                static_range = '{}-compute[{:06}-{:06}]'.format(
+                    CLUSTER_NAME,
+                    i*MAX_PARTITION_SIZE,
+                    i*MAX_PARTITION_SIZE + part['static_node_count'] - 1)
+            else:
+                static_range = '{}-compute{:06}'.format(CLUSTER_NAME,
+                                                        i*MAX_PARTITION_SIZE)
 
         cloud_range = ""
-        if PARTITIONS[i]["max_node_count"] and (PARTITIONS[i]["max_node_count"] != PARTITIONS[i]["static_node_count"]):
+        if (part['max_node_count'] and
+                (part['max_node_count'] != part['static_node_count'])):
             cloud_range = "{}-compute[{:06d}-{:06d}]".format(
                 CLUSTER_NAME,
                 i*MAX_PARTITION_SIZE+part['static_node_count'],
                 i*MAX_PARTITION_SIZE+part['max_node_count']-1)
 
         conf += ' '.join(("NodeName=DEFAULT",
-                          "Sockets="        + str(machine[i]['sockets']),
-                          "CoresPerSocket=" + str(machine[i]['cores']),
-                          "ThreadsPerCore=" + str(machine[i]['threads']),
-                          "RealMemory="     + str(machine[i]['memory']),
+                          "Sockets="        + str(machine['sockets']),
+                          "CoresPerSocket=" + str(machine['cores']),
+                          "ThreadsPerCore=" + str(machine['threads']),
+                          "RealMemory="     + str(machine['memory']),
                           "State=UNKNOWN"))
 
-        if PARTITIONS[i]["gpu_count"]:
-            conf += " Gres=gpu:" + str(PARTITIONS[i]["gpu_count"])
-        conf += "\n"
+        if part['gpu_count']:
+            conf += " Gres=gpu:" + str(part['gpu_count'])
+        conf += '\n'
 
         # Nodes
         if static_range:
             static_nodes.append(static_range)
-            conf += "NodeName={}\n".format( static_range)
+            conf += "NodeName={}\n".format(static_range)
 
         if cloud_range:
             conf += "NodeName={} State=CLOUD\n".format(cloud_range)
@@ -581,17 +582,18 @@ GresTypes=gpu
         # Partitions
         part_nodes = "[{:06}-{:06}]".format(
             i*MAX_PARTITION_SIZE,
-            i*MAX_PARTITION_SIZE+PARTITIONS[i]["max_node_count"]-1 )
+            i*MAX_PARTITION_SIZE+part['max_node_count']-1)
 
-        def_mem_per_cpu = max(100,
-                (machine[i]['memory'] /
-                 (machine[i]['threads']*machine[i]['cores']*machine[i]['sockets'])))
+        total_threads = machine['threads']*machine['cores']*machine['sockets']
+        def_mem_per_cpu = max(100, machine['memory'] / total_threads)
 
-        conf += "PartitionName={} Nodes={}-compute{} MaxTime=INFINITE State=UP DefMemPerCPU={} LLN=yes".format(
-            PARTITIONS[i]["name"], CLUSTER_NAME, part_nodes, def_mem_per_cpu)
+        conf += ("PartitionName={} Nodes={}-compute{} MaxTime=INFINITE "
+                 "State=UP DefMemPerCPU={} LLN=yes"
+                 .format(part['name'], CLUSTER_NAME, part_nodes,
+                         def_mem_per_cpu))
 
         # First partition specified is treated as the default partition
-        if i == 0 :
+        if i == 0:
             conf += " Default=YES"
         conf += "\n\n"
 
@@ -603,7 +605,7 @@ GresTypes=gpu
         os.makedirs(etc_dir)
     with open(etc_dir + '/slurm.conf', 'w') as f:
         f.write(conf)
-#END install_slurm_conf()
+# END install_slurm_conf()
 
 
 def install_slurmdbd_conf():
@@ -641,14 +643,14 @@ StorageType=accounting_storage/mysql
 #StorageUser=database_mgr
 #StoragePass=shazaam
 
-""".format(apps_dir = APPS_DIR, control_machine = CONTROL_MACHINE)
+""".format(apps_dir=APPS_DIR, control_machine=CONTROL_MACHINE)
     etc_dir = CURR_SLURM_DIR + '/etc'
     if not os.path.exists(etc_dir):
         os.makedirs(etc_dir)
     with open(etc_dir + '/slurmdbd.conf', 'w') as f:
         f.write(conf)
 
-#END install_slurmdbd_conf()
+# END install_slurmdbd_conf()
 
 
 def install_cgroup_conf():
@@ -670,24 +672,22 @@ ConstrainDevices=yes
     with open(etc_dir + '/cgroup_allowed_devices_file.conf', 'w') as f:
         f.write('')
 
-    for i in range(len(PARTITIONS)):
-        if not PARTITIONS[i]["gpu_count"]:
-            continue;
+    gpu_parts = [(i, x) for i, x in enumerate(PARTITIONS) if x['gpu_count']]
+    gpu_conf = ""
+    for i, part in gpu_parts:
+        driver_range = '0'
+        if part['gpu_count'] > 1:
+            driver_range = '[0-{}]'.format(part['gpu_count']-1)
 
-        if f.closed:
-            f = open(etc_dir + '/gres.conf', 'w')
+        gpu_conf += ("NodeName={}-compute[{:06}-{:06}] Name=gpu File=/dev/nvidia{}\n"
+                     .format(CLUSTER_NAME, i*MAX_PARTITION_SIZE,
+                             i*MAX_PARTITION_SIZE+part['max_node_count']-1,
+                             driver_range))
+    if gpu_conf:
+        with open(etc_dir + '/gres.conf', 'w') as f:
+            f.write(gpu_conf)
 
-        driver_range = "0";
-        if PARTITIONS[i]["gpu_count"] > 1:
-            driver_range = "[0-{}]".format(PARTITIONS[i]["gpu_count"]-1)
-
-        f.write("NodeName={}-compute[{:06}-{:06}] Name=gpu File=/dev/nvidia{}\n"
-                .format(CLUSTER_NAME, i*MAX_PARTITION_SIZE,
-                        i*MAX_PARTITION_SIZE+PARTITIONS[i]["max_node_count"]-1,
-                        driver_range))
-    f.close()
-
-#END install_cgroup_conf()
+# END install_cgroup_conf()
 
 
 def install_meta_files():
@@ -724,7 +724,8 @@ def install_meta_files():
             "gcloud compute instances remove-metadata {} --zone={} --keys={}"
             .format(CONTROL_MACHINE, ZONE, meta_name)))
 
-#END install_meta_files()
+# END install_meta_files()
+
 
 def install_slurm():
 
@@ -753,7 +754,7 @@ def install_slurm():
             shlex.split(cmd)).splitlines()[0][:-1]
 
     os.chdir(use_version)
-    SLURM_PREFIX  = APPS_DIR + '/slurm/' + use_version
+    SLURM_PREFIX = APPS_DIR + '/slurm/' + use_version
 
     if not os.path.exists('build'):
         os.makedirs('build')
@@ -782,7 +783,8 @@ def install_slurm():
     install_cgroup_conf()
     install_meta_files()
 
-#END install_slurm()
+# END install_slurm()
+
 
 def install_slurm_tmpfile():
 
@@ -797,8 +799,8 @@ def install_slurm_tmpfile():
     os.chmod(run_dir, 0o755)
     subprocess.call(shlex.split("chown slurm: " + run_dir))
 
+# END install_slurm_tmpfile()
 
-#END install_slurm_tmpfile()
 
 def install_controller_service_scripts():
 
@@ -821,7 +823,7 @@ PIDFile=/var/run/slurm/slurmctld.pid
 
 [Install]
 WantedBy=multi-user.target
-""".format(prefix = CURR_SLURM_DIR))
+""".format(prefix=CURR_SLURM_DIR))
 
     os.chmod('/usr/lib/systemd/system/slurmctld.service', 0o644)
 
@@ -842,11 +844,11 @@ PIDFile=/var/run/slurm/slurmdbd.pid
 
 [Install]
 WantedBy=multi-user.target
-""".format(prefix = CURR_SLURM_DIR))
+""".format(prefix=CURR_SLURM_DIR))
 
     os.chmod('/usr/lib/systemd/system/slurmdbd.service', 0o644)
 
-#END install_controller_service_scripts()
+# END install_controller_service_scripts()
 
 
 def install_compute_service_scripts():
@@ -874,12 +876,12 @@ LimitSTACK=infinity
 
 [Install]
 WantedBy=multi-user.target
-""".format(prefix = CURR_SLURM_DIR))
+""".format(prefix=CURR_SLURM_DIR))
 
     os.chmod('/usr/lib/systemd/system/slurmd.service', 0o644)
     subprocess.call(shlex.split('systemctl enable slurmd'))
 
-#END install_compute_service_scripts()
+# END install_compute_service_scripts()
 
 
 def setup_bash_profile():
@@ -892,7 +894,7 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 
     if INSTANCE_TYPE == 'compute':
         hostname = socket.gethostname()
-        pid = int( hostname[-6:-4] )
+        pid = int(hostname[-6:-4])
         if PARTITIONS[pid]['gpu_count']:
             with open('/etc/profile.d/cuda.sh', 'w') as f:
                 f.write("""
@@ -901,7 +903,8 @@ PATH=$CUDA_PATH/bin${PATH:+:${PATH}}
 LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 """)
 
-#END setup_bash_profile()
+# END setup_bash_profile()
+
 
 def setup_nfs_apps_vols():
 
@@ -914,8 +917,8 @@ def setup_nfs_apps_vols():
             f.write("\n{1}:{2} \t{0} \tnfs \trw,hard,intr \t0 \t0\n"
                     .format(APPS_DIR, NFS_APPS_SERVER, NFS_APPS_DIR))
 
+# END setup_nfs_apps_vols()
 
-#END setup_nfs_apps_vols()
 
 def setup_nfs_home_vols():
 
@@ -928,7 +931,8 @@ def setup_nfs_home_vols():
             f.write("\t{0}:{1} \t/home \tnfs \trw,hard,intr \t0 \t0"
                     .format(NFS_HOME_SERVER, NFS_HOME_DIR))
 
-#END setup_nfs_home_vols()
+# END setup_nfs_home_vols()
+
 
 def setup_nfs_sec_vols():
     if CONTROLLER_SECONDARY_DISK and (INSTANCE_TYPE != 'controller'):
@@ -936,7 +940,8 @@ def setup_nfs_sec_vols():
             f.write("\n{1}:{0} \t{0} \tnfs \trw,hard,intr \t0 \t0"
                     .format(SEC_DISK_DIR, CONTROL_MACHINE))
 
-#END setup_nfs_sec_vols()
+# END setup_nfs_sec_vols()
+
 
 def setup_secondary_disks():
 
@@ -946,14 +951,16 @@ def setup_secondary_disks():
         f.write("\n/dev/sdb \t{0} \text4 \tdiscard,defaults,nofail \t0 \t2"
                 .format(SEC_DISK_DIR))
 
-#END setup_secondary_disks()
+# END setup_secondary_disks()
+
 
 def mount_nfs_vols():
     while subprocess.call(shlex.split("mount -a")):
         print("Waiting for " + APPS_DIR + " and /home to be mounted")
         time.sleep(5)
 
-#END mount_nfs_vols()
+# END mount_nfs_vols()
+
 
 # Tune the NFS server to support many mounts
 def setup_nfs_threads():
@@ -966,16 +973,22 @@ RPCNFSDCOUNT=256
 
 # END setup_nfs_threads()
 
+
 def setup_sync_cronjob():
 
-    os.system("echo '*/1 * * * * {}/slurm/scripts/slurm-gcp-sync.py' | crontab -u root -".format(APPS_DIR))
+    os.system(("echo '*/1 * * * * {}/slurm/scripts/slurm-gcp-sync.py' "
+              "| crontab -u root -").format(APPS_DIR))
 
 # END setup_sync_cronjob()
 
+
 def setup_slurmd_cronjob():
-    #subprocess.call(shlex.split('crontab < /apps/slurm/scripts/cron'))
-    os.system("echo '*/2 * * * * if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then mount -a; systemctl restart slurmd; fi' | crontab -u root -")
+    # subprocess.call(shlex.split('crontab < /apps/slurm/scripts/cron'))
+    os.system("echo '*/2 * * * * if [ `systemctl status slurmd "
+              "| grep -c inactive` -gt 0 ]; then mount -a; "
+              "systemctl restart slurmd; fi' | crontab -u root -")
 # END setup_slurmd_cronjob()
+
 
 def create_compute_image():
 
@@ -984,7 +997,7 @@ def create_compute_image():
     ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
     hostname = socket.gethostname()
-    pid = int( hostname[-6:-4] )
+    pid = int(hostname[-6:-4])
     if PARTITIONS[pid]['gpu_count']:
         time.sleep(300)
 
@@ -994,7 +1007,7 @@ def create_compute_image():
         "--source-disk {1} --source-disk-zone {2} --force "
         "--family {0}-compute-image-{4}-family"
         .format(CLUSTER_NAME, hostname, PARTITIONS[pid]["zone"], ver, pid)))
-#END create_compute_image()
+# END create_compute_image()
 
 
 def setup_selinux():
@@ -1005,14 +1018,14 @@ def setup_selinux():
 SELINUX=permissive
 SELINUXTYPE=targeted
 """)
-#END setup_selinux()
+# END setup_selinux()
 
 
 def remove_startup_scripts(hostname):
 
     if CLUSTER_NAME + '-compute-image' in hostname:
-       pid = int( hostname[-6:-4] )
-       subprocess.call(shlex.split(
+        pid = int(hostname[-6:-4])
+        subprocess.call(shlex.split(
            "gcloud compute instances remove-metadata {} --zone={} "
            "--keys=startup-script".format(hostname, PARTITIONS[pid]["zone"])))
 
@@ -1029,18 +1042,17 @@ def remove_startup_scripts(hostname):
                 .format(CLUSTER_NAME, i, ZONE)))
 
         # computes
-        for i in range(len(PARTITIONS)):
-            if not PARTITIONS[i]["static_node_count"]:
+        for i, part in enumerate(PARTITIONS):
+            if not part['static_node_count']:
                 continue
-            for j in range(PARTITIONS[i]["static_node_count"]):
-                subprocess.call(
-                    shlex.split("gcloud compute instances remove-metadata "
-                                "{}-compute{:06} "
-                                "--zone={} --keys=startup-script"
-                                .format(CLUSTER_NAME,
-                                        i * MAX_PARTITION_SIZE + j,
-                                        PARTITIONS[j]["zone"])))
-#END remove_startup_scripts()
+            for j in range(part['static_node_count']):
+                subprocess.call(shlex.split(
+                    "gcloud compute instances remove-metadata {}-compute{:06} "
+                    "--zone={} --keys=startup-script"
+                    .format(CLUSTER_NAME, i * MAX_PARTITION_SIZE + j,
+                            part['zone'])))
+# END remove_startup_scripts()
+
 
 def setup_nss_slurm():
 
@@ -1050,7 +1062,7 @@ def setup_nss_slurm():
         .format(CURR_SLURM_DIR)))
     subprocess.call(shlex.split(
         "sed -i 's/\\(^\\(passwd\\|group\\):\\s\\+\\)/\\1slurm /g' /etc/nsswitch.conf"))
-#END setup_nss_slurm()
+# END setup_nss_slurm()
 
 
 def main():
@@ -1144,10 +1156,10 @@ def main():
         setup_sync_cronjob()
 
         # DOWN partitions until image is created.
-        for i in range(len(PARTITIONS)):
+        for part in PARTITIONS:
             subprocess.call(shlex.split(
                 "{}/bin/scontrol update partitionname={} state=down".format(
-                    CURR_SLURM_DIR, PARTITIONS[i]["name"])))
+                    CURR_SLURM_DIR, part['name'])))
 
         print("ww Done installing controller")
     elif INSTANCE_TYPE == 'compute':
@@ -1168,7 +1180,7 @@ def main():
 
             create_compute_image()
 
-            pid = int( hostname[-6:-4] )
+            pid = int(hostname[-6:-4])
             subprocess.call(shlex.split(
                 "{}/bin/scontrol update partitionname={} state=up".format(
                     CURR_SLURM_DIR, PARTITIONS[pid]['name'])))
@@ -1181,7 +1193,7 @@ def main():
         else:
             subprocess.call(shlex.split("systemctl start slurmd"))
 
-    else: # login nodes
+    else:  # login nodes
         mount_nfs_vols()
         start_munge()
 

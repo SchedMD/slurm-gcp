@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 # Copyright 2017 SchedMD LLC.
 # Modified for use with the Slurm Resource Manager.
@@ -64,7 +64,7 @@ credentials = compute_engine.Credentials()
 http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
 authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 
-# [START wait_for_operation]
+
 def wait_for_operation(compute, project, zone, operation):
     print('Waiting for operation to finish...')
     while True:
@@ -82,7 +82,7 @@ def wait_for_operation(compute, project, zone, operation):
         time.sleep(1)
 # [END wait_for_operation]
 
-# [START update_slurm_node_addrs]
+
 def update_slurm_node_addrs(compute):
     for node_name in operations:
         try:
@@ -108,11 +108,10 @@ def update_slurm_node_addrs(compute):
 # [END update_slurm_node_addrs]
 
 
-# [START create_instance]
 def create_instance(compute, project, zone, instance_type, instance_name,
                     source_disk_image, have_compute_img):
 
-    pid = int( instance_name[-6:-4] )
+    pid = int(instance_name[-6:-4])
     # Configure the machine
     machine_type = 'zones/{}/machineTypes/{}'.format(zone, instance_type)
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
@@ -128,13 +127,13 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             'initializeParams': {
                 'sourceImage': source_disk_image,
                 'diskType': disk_type,
-                'diskSizeGb': PARTITIONS[pid]["compute_disk_size_gb"]
+                'diskSizeGb': PARTITIONS[pid]['compute_disk_size_gb']
             }
         }],
 
         # Specify a network interface
         'networkInterfaces': [{
-            NETWORK_TYPE : NETWORK,
+            NETWORK_TYPE: NETWORK,
         }],
 
         # Allow the instance to access cloud storage and logging.
@@ -143,7 +142,7 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             'scopes': SCOPES
         }],
 
-        'tags': {'items': ['compute'] },
+        'tags': {'items': ['compute']},
 
         'metadata': {
             'items': [{
@@ -174,7 +173,7 @@ def create_instance(compute, project, zone, instance_type, instance_name,
                           PROJECT, zone, PARTITIONS[pid]['gpu_type']))
         config['guestAccelerators'] = [{
             'acceleratorCount': PARTITIONS[pid]['gpu_count'],
-            'acceleratorType' : accel_type
+            'acceleratorType': accel_type
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
@@ -196,14 +195,14 @@ def create_instance(compute, project, zone, instance_type, instance_name,
         net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
             PROJECT, REGION, VPC_SUBNET)
         config['networkInterfaces'] = [{
-            NETWORK_TYPE : net_type
+            NETWORK_TYPE: net_type
         }]
 
     if SHARED_VPC_HOST_PROJ:
         net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
             SHARED_VPC_HOST_PROJ, REGION, VPC_SUBNET)
         config['networkInterfaces'] = [{
-            NETWORK_TYPE : net_type
+            NETWORK_TYPE: net_type
         }]
 
     if EXTERNAL_IP:
@@ -217,7 +216,7 @@ def create_instance(compute, project, zone, instance_type, instance_name,
         body=config)
 # [END create_instance]
 
-# [START added_instances_cb]
+
 def added_instances_cb(request_id, response, exception):
     if exception is not None:
         logging.error("add exception for node {}: {}".format(request_id,
@@ -228,13 +227,13 @@ def added_instances_cb(request_id, response, exception):
         operations[request_id] = response
 # [END added_instances_cb]
 
-# [start get_source_image]
-def get_source_image( compute, node_name ):
 
-    pid = int( node_name[-6:-4] )
+def get_source_image(compute, node_name):
+
+    pid = int(node_name[-6:-4])
     have_compute_img = False
 
-    if not pid in src_disk_images:
+    if pid not in src_disk_images:
         try:
             image_response = compute.images().getFromFamily(
                 project=PROJECT,
@@ -256,7 +255,7 @@ def get_source_image( compute, node_name ):
 
 # [END get_source_image]
 
-# [start add_instances]
+
 def add_instances(compute, node_list):
 
     batch_list = []
@@ -274,9 +273,9 @@ def add_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=added_instances_cb))
 
-        source_disk_image, have_compute_img = get_source_image( compute, node_name )
+        source_disk_image, have_compute_img = get_source_image(compute, node_name)
 
-        pid = int( node_name[-6:-4] )
+        pid = int(node_name[-6:-4])
         batch_list[curr_batch].add(
             create_instance(
                 compute, PROJECT, PARTITIONS[pid]['zone'],
@@ -298,7 +297,7 @@ def add_instances(compute, node_list):
 
 # [END add_instances]
 
-# [START main]
+
 def main(arg_nodes):
     logging.debug("Bursting out:" + arg_nodes)
     compute = googleapiclient.discovery.build('compute', 'v1',
@@ -313,7 +312,7 @@ def main(arg_nodes):
     while True:
         add_instances(compute, node_list)
         if not len(retry_list):
-            break;
+            break
 
         logging.debug("got {} nodes to retry ({})".
                       format(len(retry_list), ','.join(retry_list)))

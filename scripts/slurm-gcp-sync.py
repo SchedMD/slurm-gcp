@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 # Copyright 2019 SchedMD LLC.
 #
@@ -40,7 +40,7 @@ TOT_REQ_CNT = 1000
 
 retry_list = []
 
-# [START start_instances_cb]
+
 def start_instances_cb(request_id, response, exception):
     if exception is not None:
         logging.error("start exception: " + str(exception))
@@ -53,7 +53,6 @@ def start_instances_cb(request_id, response, exception):
 # [END start_instances_cb]
 
 
-# [START start_instances]
 def start_instances(compute, node_list):
 
     req_cnt = 0
@@ -71,7 +70,7 @@ def start_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=start_instances_cb))
 
-        pid = int( node[-6:-4] )
+        pid = int(node[-6:-4])
         batch_list[curr_batch].add(
             compute.instances().start(project=PROJECT,
                                       zone=PARTITIONS[pid]['zone'],
@@ -88,7 +87,7 @@ def start_instances(compute, node_list):
 
 # [END start_instances]
 
-# [START main]
+
 def main():
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
@@ -107,8 +106,10 @@ def main():
             #   POWERING_DOWN
             # Modifiers on base state still include: @ (reboot), $ (maint),
             #   * (nonresponsive), # (powering up)
-            StateTuple = collections.namedtuple('StateTuple', ('base','flags'))
-            make_state_tuple = lambda x: StateTuple(x[0], set(x[1:]))
+            StateTuple = collections.namedtuple('StateTuple', 'base,flags')
+
+            def make_state_tuple(state):
+                return StateTuple(state[0], set(state[1:]))
             s_nodes = [(node, make_state_tuple(args.split('+')))
                        for node, args
                        in map(lambda x: x.split(','),
@@ -117,13 +118,13 @@ def main():
 
         page_token = ""
         g_nodes = []
-        for i in range( len(PARTITIONS) ):
-            pid = "%02d" % (i)
+        for i, part in enumerate(PARTITIONS):
+            pid = "{:02d}".format(i)
             while True:
                 resp = compute.instances().list(
-                    project=PROJECT, zone=PARTITIONS[i]['zone'],
+                    project=PROJECT, zone=part['zone'],
                     pageToken=page_token,
-                    filter='name={}-compute{}*'.format(CLUSTER_NAME,pid)
+                    filter='name={}-compute{}*'.format(CLUSTER_NAME, pid)
                 ).execute()
 
                 if "items" in resp:
@@ -132,7 +133,7 @@ def main():
                     page_token = resp['nextPageToken']
                     continue
 
-                break;
+                break
 
         to_down = []
         to_idle = []
@@ -144,7 +145,7 @@ def main():
             pid = int(s_node[-6:-4])
 
             if (('POWER' not in s_state.flags) and
-                ('POWERING_DOWN' not in s_state.flags)):
+                    ('POWERING_DOWN' not in s_state.flags)):
                 # slurm nodes that aren't in power_save and are stopped in GCP:
                 #   mark down in slurm
                 #   start them in gcp
@@ -158,7 +159,7 @@ def main():
                 # resume script.
                 # This should catch the completing states as well.
                 if (g_node is None and "#" not in s_state.base and
-                    not s_state.base.startswith('DOWN')):
+                        not s_state.base.startswith('DOWN')):
                     to_down.append(s_node)
 
             elif g_node is None:
@@ -197,13 +198,12 @@ def main():
             while True:
                 start_instances(compute, to_start)
                 if not len(retry_list):
-                    break;
+                    break
 
                 logging.debug("got {} nodes to retry ({})".
                               format(len(retry_list), ','.join(retry_list)))
                 to_start = list(retry_list)
                 del retry_list[:]
-
 
         if len(to_idle):
             logging.debug("{} instances to resume ({})".format(

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # Copyright 2017 SchedMD LLC.
 # Modified for use with the Slurm Resource Manager.
@@ -35,7 +35,7 @@ TOT_REQ_CNT = 1000
 operations = {}
 retry_list = []
 
-# [START delete_instances_cb]
+
 def delete_instances_cb(request_id, response, exception):
     if exception is not None:
         logging.error("delete exception for node {}: {}"
@@ -46,7 +46,7 @@ def delete_instances_cb(request_id, response, exception):
         operations[request_id] = response
 # [END delete_instances_cb]
 
-# [START delete_instances]
+
 def delete_instances(compute, node_list):
 
     batch_list = []
@@ -63,7 +63,7 @@ def delete_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=delete_instances_cb))
 
-        pid = int( node_name[-6:-4] )
+        pid = int(node_name[-6:-4])
         batch_list[curr_batch].add(
             compute.instances().delete(project=PROJECT,
                                        zone=PARTITIONS[pid]['zone'],
@@ -81,7 +81,7 @@ def delete_instances(compute, node_list):
 
 # [END delete_instances]
 
-# [START main]
+
 def main(arg_nodes):
     logging.debug("deleting nodes:" + arg_nodes)
     compute = googleapiclient.discovery.build('compute', 'v1',
@@ -95,7 +95,7 @@ def main(arg_nodes):
     while True:
         delete_instances(compute, node_list)
         if not len(retry_list):
-            break;
+            break
 
         logging.debug("got {} nodes to retry ({})".
                       format(len(retry_list), ','.join(retry_list)))
