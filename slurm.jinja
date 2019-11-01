@@ -127,7 +127,11 @@ resources:
       items:
         - key: startup-script
           value: |
-            {{ imports["scripts/startup-script.py"]|indent(12)|
+            {{ imports["scripts/startup.sh"]|indent(12) }}
+        - key: setup_script
+          value: |
+            {{ imports["scripts/setup.py"]|
+               indent(12)|
                replace("@PROJECT@",env["project"])|
                replace("@ZONE@",properties["zone"])|
                replace("@INSTANCE_TYPE@","controller")|
@@ -146,11 +150,12 @@ resources:
                replace("@PARTITIONS@",properties["partitions"])|
                replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
                }}
-        - key: startup-script-compute
+        - key: setup_compute_script
           value: |
-            {{ imports["scripts/startup-script.py"]|
+            {{ imports["scripts/setup.py"]|
                indent(12)|
                replace("@PROJECT@",env["project"])|
+               replace("@ZONE@",properties["zone"])|
                replace("@INSTANCE_TYPE@","compute")|
                replace("@MUNGE_KEY@",properties["munge_key"])|
                replace("@SLURM_VERSION@",properties["slurm_version"])|
@@ -253,7 +258,10 @@ resources:
       items:
         - key: startup-script
           value: |
-            {{ imports["scripts/startup-script.py"]|
+            {{ imports["scripts/startup.sh"]|indent(12) }}
+        - key: setup_script
+          value: |
+            {{ imports["scripts/setup.py"]|
                indent(12)|
                replace("@PROJECT@",env["project"])|
                replace("@ZONE@",properties["zone"])|
@@ -335,9 +343,13 @@ resources:
       items:
         - key: startup-script
           value: |
-            {{ imports["scripts/startup-script.py"]|
+            {{ imports["scripts/startup.sh"]|indent(12) }}
+        - key: setup_script
+          value: |
+            {{ imports["scripts/setup.py"]|
                indent(12)|
                replace("@PROJECT@",env["project"])|
+               replace("@ZONE@",properties["zone"])|
                replace("@INSTANCE_TYPE@","compute")|
                replace("@MUNGE_KEY@",properties["munge_key"])|
                replace("@SLURM_VERSION@",properties["slurm_version"])|
@@ -418,9 +430,13 @@ resources:
       items:
         - key: startup-script
           value: |
-            {{ imports["scripts/startup-script.py"]|
+            {{ imports["scripts/startup.sh"]|indent(12) }}
+        - key: setup_script
+          value: |
+            {{ imports["scripts/setup.py"]|
                indent(12)|
                replace("@PROJECT@",env["project"])|
+               replace("@ZONE@",properties["zone"])|
                replace("@INSTANCE_TYPE@","compute")|
                replace("@MUNGE_KEY@",properties["munge_key"])|
                replace("@SLURM_VERSION@",properties["slurm_version"])|

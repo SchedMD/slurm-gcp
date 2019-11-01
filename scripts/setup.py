@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import datetime
-import httplib
 import os
 import shlex
 import socket
@@ -163,63 +162,7 @@ Either log out and log back in or cd into ~.
 # END start_motd()
 
 
-def have_internet():
-    conn = httplib.HTTPConnection("www.google.com", timeout=1)
-    try:
-        conn.request("HEAD", "/")
-        conn.close()
-        return True
-    except:
-        conn.close()
-        return False
-# END have_internet()
-
-
 def install_packages():
-
-    packages = ['bind-utils',
-                'epel-release',
-                'gcc',
-                'git',
-                'hwloc',
-                'hwloc-devel',
-                'libibmad',
-                'libibumad',
-                'lua',
-                'lua-devel',
-                'man2html',
-                'mariadb',
-                'mariadb-devel',
-                'mariadb-server',
-                'munge',
-                'munge-devel',
-                'munge-libs',
-                'ncurses-devel',
-                'nfs-utils',
-                'numactl',
-                'numactl-devel',
-                'openssl-devel',
-                'pam-devel',
-                'perl-ExtUtils-MakeMaker',
-                'python-pip',
-                'readline-devel',
-                'rpm-build',
-                'rrdtool-devel',
-                'vim',
-                'wget',
-                'tmux',
-                'pdsh',
-                'openmpi'
-                ]
-
-    while subprocess.call(shlex.split("yum install -y") + packages):
-        print("yum failed to install packages. Trying again in 5 seconds")
-        time.sleep(5)
-
-    while subprocess.call(shlex.split(
-            "pip install --upgrade google-api-python-client")):
-        print("failed to install google python api client. Trying again 5 seconds.")
-        time.sleep(5)
 
     if INSTANCE_TYPE == 'compute':
         hostname = socket.gethostname()
@@ -701,8 +644,8 @@ def install_meta_files():
     meta_files = [
         ('suspend.py', 'slurm_suspend'),
         ('resume.py', 'slurm_resume'),
-        ('startup-script.py', 'startup-script-compute'),
         ('slurm-gcp-sync.py', 'slurm-gcp-sync'),
+        ('setup-compute.py', 'setup_compute_script'),
         ('compute-shutdown', 'compute-shutdown'),
         ('custom-compute-install', 'custom-compute-install'),
         ('custom-controller-install', 'custom-controller-install'),
@@ -1067,10 +1010,6 @@ def main():
     hostname = socket.gethostname()
 
     setup_selinux()
-
-    if INSTANCE_TYPE == 'compute':
-        while not have_internet():
-            print("Waiting for internet connection")
 
     if not os.path.exists(APPS_DIR + '/slurm'):
         os.makedirs(APPS_DIR + '/slurm')
