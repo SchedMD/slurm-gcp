@@ -107,6 +107,7 @@ ${templatefile("${path.module}/resume.py", {
 cluster_name = "${var.cluster_name}",
 project = "${var.project}",
 region = "${var.region}",
+external_ip = title("${!var.disable_compute_public_ips}"),
 partitions = "${jsonencode(var.partitions)}"
 subnet = "${var.subnet}"
 })}

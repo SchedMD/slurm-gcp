@@ -38,6 +38,7 @@ module "slurm_cluster_controller" {
   zone          = var.zone
   network       = module.slurm_cluster_network.cluster_network_self_link
   disable_controller_public_ips = var.disable_controller_public_ips
+  disable_compute_public_ips = var.disable_compute_public_ips
   partitions    = var.partitions
   subnet        = module.slurm_cluster_network.cluster_subnet_name
   users         = var.users
