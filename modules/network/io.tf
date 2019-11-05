@@ -32,9 +32,19 @@ variable "private_ip_google_access" {
   default     = true
 }
 
-variable "disable_public_ips" {
+variable "disable_login_public_ips" {
   description = "If set to true, create Cloud NAT gateway and enable IAP FW rules"
-  type        = bool
+  default     = false
+}
+
+variable "disable_controller_public_ips" {
+  description = "If set to true, create Cloud NAT gateway and enable IAP FW rules"
+  default     = false
+}
+
+variable "disable_compute_public_ips" {
+  description = "If set to true, create Cloud NAT gateway and enable IAP FW rules"
+  default     = false
 }
 
 output "cluster_network_self_link" {

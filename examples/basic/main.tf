@@ -22,7 +22,10 @@ module "slurm_cluster_network" {
   source = "../../modules/network"
 
   cluster_name       = var.cluster_name
-  disable_public_ips = var.disable_public_ips
+  disable_login_public_ips = var.disable_login_public_ips
+  disable_controller_public_ips = var.disable_controller_public_ips
+  disable_compute_public_ips = var.disable_compute_public_ips
+
   region             = var.region
 }
 
@@ -32,7 +35,9 @@ module "slurm_cluster_controller" {
   cluster_name  = var.cluster_name
   project       = var.project
   region        = var.region
+  zone          = var.zone
   network       = module.slurm_cluster_network.cluster_network_self_link
+  disable_controller_public_ips = var.disable_controller_public_ips
   partitions    = var.partitions
   subnet        = module.slurm_cluster_network.cluster_subnet_name
   users         = var.users
@@ -43,7 +48,9 @@ module "slurm_cluster_login" {
 
   cluster_name      = var.cluster_name
   controller_name   = module.slurm_cluster_controller.controller_node_name
+  zone              = var.zone
   network           = module.slurm_cluster_network.cluster_network_self_link
+  disable_login_public_ips = var.disable_login_public_ips
   nfs_apps_server   = module.slurm_cluster_controller.controller_node_name
   nfs_home_server   = module.slurm_cluster_controller.controller_node_name
   node_count        = 1
@@ -58,6 +65,7 @@ module "slurm_cluster_compute" {
   cluster_name      = var.cluster_name
   controller_name   = module.slurm_cluster_controller.controller_node_name
   network           = module.slurm_cluster_network.cluster_subnet_self_link
+  disable_compute_public_ips = var.disable_compute_public_ips
   partitions        = var.partitions
   project           = var.project
   nfs_apps_server   = module.slurm_cluster_controller.controller_node_name

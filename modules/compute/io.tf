@@ -30,6 +30,11 @@ variable "network" {
   default     = "default"
 }
 
+variable "disable_compute_public_ips" {
+  description = "If set to true, create Cloud NAT gateway and enable IAP FW rules"
+  default     = false
+}
+
 variable "subnet" {
   type        = string
   description = "Compute Platform network the Slurm cluster nodes will be connected to"

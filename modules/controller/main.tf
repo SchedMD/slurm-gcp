@@ -25,6 +25,7 @@ locals {
 }
 
 resource "google_compute_instance" "controller_node" {
+    
   name         = local.controller_name
   machine_type = var.controller_machine_type
   zone         = var.zone
@@ -44,11 +45,15 @@ resource "google_compute_instance" "controller_node" {
   }
 
   network_interface {
-    access_config {
+    dynamic "access_config" {
+        for_each = var.disable_controller_public_ips == true ? [] : [1]
+        content {}
     }
 
     subnetwork = var.subnet
   }
+
+ 
 
   service_account {
     scopes = ["cloud-platform"]

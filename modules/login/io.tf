@@ -18,6 +18,11 @@ variable "network" {
   default     = "default"
 }
 
+variable "disable_login_public_ips" {
+  description = "If set to true, create Cloud NAT gateway and enable IAP FW rules"
+  default     = false
+}
+
 variable "subnet" {
   description = "Compute Platform subnetwork the Slurm cluster nodes will be connected to"
   default     = "default"
@@ -69,10 +74,6 @@ variable "nfs_apps_server" {
 variable "nfs_home_server" {
   description = "IP address of the NFS server hosting the home directory"
   default     = ""
-}
-
-output "instance_nat_ips" {
-  value = [ "${google_compute_instance.login_node.*.network_interface.0.access_config.0.nat_ip}" ]
 }
 
 output "instance_network_ips" {
