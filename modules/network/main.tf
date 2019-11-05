@@ -27,7 +27,7 @@ resource "google_compute_subnetwork" "cluster_subnet" {
 }
 
 resource "google_compute_firewall" "cluster_ssh_firewall" {
-  count = var.disable_login_public_ips || var.disable_controller_public_ips || var.disable_compute_public_ips ? 0 : 1
+  count = var.disable_login_public_ips && var.disable_controller_public_ips && var.disable_compute_public_ips ? 0 : 1
 
   name          = "${var.cluster_name}-allow-ssh"
   network       = google_compute_network.cluster_network.name
