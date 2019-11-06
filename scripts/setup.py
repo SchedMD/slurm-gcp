@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # Copyright 2017 SchedMD LLC.
 #
@@ -20,8 +20,7 @@ import shlex
 import socket
 import subprocess
 import time
-import urllib
-import urllib2
+import urllib.request
 
 CLUSTER_NAME      = '@CLUSTER_NAME@'
 INSTANCE_TYPE     = '@INSTANCE_TYPE@'  # e.g. controller, login, compute
@@ -277,17 +276,17 @@ def expand_machine_type():
             if type_resp:
                 tot_cpus = type_resp['guestCpus']
                 if tot_cpus > 1:
-                    machine['cores'] = tot_cpus / 2
+                    machine['cores'] = tot_cpus // 2
                     machine['threads'] = 2
 
                 # Because the actual memory on the host will be different than
                 # what is configured (e.g. kernel will take it). From
                 # experiments, about 16 MB per GB are used (plus about 400 MB
                 # buffer for the first couple of GB's. Using 30 MB to be safe.
-                gb = type_resp['memoryMb'] / 1024
+                gb = type_resp['memoryMb'] // 1024
                 machine['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
 
-        except Exception, e:
+        except Exception as e:
             print("Failed to get MachineType '{}' from google api ({})"
                   .format(part["machine_type"], str(e)))
         finally:
@@ -528,7 +527,7 @@ GresTypes=gpu
             i*MAX_PARTITION_SIZE+part['max_node_count']-1)
 
         total_threads = machine['threads']*machine['cores']*machine['sockets']
-        def_mem_per_cpu = max(100, machine['memory'] / total_threads)
+        def_mem_per_cpu = max(100, machine['memory'] // total_threads)
 
         conf += ("PartitionName={} Nodes={}-compute{} MaxTime=INFINITE "
                  "State=UP DefMemPerCPU={} LLN=yes"
@@ -652,12 +651,12 @@ def install_meta_files():
     ]
 
     for file_name, meta_name in meta_files:
-        req = urllib2.Request("{}/{}".format(GOOGLE_URL, meta_name))
+        req = urllib.request.Request("{}/{}".format(GOOGLE_URL, meta_name))
         req.add_header('Metadata-Flavor', 'Google')
-        resp = urllib2.urlopen(req)
+        resp = urllib.request.urlopen(req)
 
         with open("{}/{}".format(scripts_path, file_name), 'w') as f:
-            f.write(resp.read())
+            f.write(resp.read().decode())
         os.chmod("{}/{}".format(scripts_path, file_name), 0o755)
 
         subprocess.call(shlex.split(
@@ -687,11 +686,11 @@ def install_slurm():
     else:
         SCHEDMD_URL = 'https://download.schedmd.com/slurm/'
         file = 'slurm-{}.tar.bz2'.format(SLURM_VERSION)
-        urllib.urlretrieve(SCHEDMD_URL + file, SRC_PATH + '/' + file)
+        urllib.request.urlretrieve(SCHEDMD_URL + file, SRC_PATH + '/' + file)
 
         cmd = "tar -xvjf " + file
         use_version = subprocess.check_output(
-            shlex.split(cmd)).splitlines()[0][:-1]
+            shlex.split(cmd)).decode().splitlines()[0][:-1]
 
     os.chdir(use_version)
     SLURM_PREFIX = APPS_DIR + '/slurm/' + use_version

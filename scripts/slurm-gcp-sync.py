@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # Copyright 2019 SchedMD LLC.
 #
@@ -82,7 +82,7 @@ def start_instances(compute, node_list):
             batch.execute()
             if i < (len(batch_list) - 1):
                 time.sleep(30)
-    except Exception, e:
+    except Exception as e:
         logging.exception("error in start batch: " + str(e))
 
 # [END start_instances]
@@ -97,7 +97,7 @@ def main():
         cmd = ('{} show nodes | '
                'grep -oP "^NodeName=\K(\S+)|State=\K(\S+)" | '
                'paste -sd",\n"').format(SCONTROL)
-        nodes = subprocess.check_output(cmd, shell=True)
+        nodes = subprocess.check_output(cmd, shell=True).decode()
         if nodes:
             # result is a list of tuples like:
             # (nodename, (base='base_state', flags=<set of state flags>))
@@ -186,7 +186,7 @@ def main():
             logging.debug("tmp_file = {}".format(tmp_file.name))
 
             cmd = "{} show hostlist {}".format(SCONTROL, tmp_file.name)
-            hostlist = subprocess.check_output(shlex.split(cmd))
+            hostlist = subprocess.check_output(shlex.split(cmd)).decode()
             logging.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
@@ -217,7 +217,7 @@ def main():
             logging.debug("tmp_file = {}".format(tmp_file.name))
 
             cmd = "{} show hostlist {}".format(SCONTROL, tmp_file.name)
-            hostlist = subprocess.check_output(shlex.split(cmd))
+            hostlist = subprocess.check_output(shlex.split(cmd)).decode()
             logging.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
@@ -226,7 +226,7 @@ def main():
             subprocess.call(shlex.split(cmd))
 
 
-    except Exception, e:
+    except Exception as e:
         logging.error("failed to sync instances ({})".format(str(e)))
 
 # [END main]

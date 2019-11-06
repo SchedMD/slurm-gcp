@@ -27,7 +27,6 @@ PACKAGES=(
         'perl-ExtUtils-MakeMaker'
         'python3'
         'python3-pip'
-        'python-pip'
         'readline-devel'
         'rpm-build'
         'rrdtool-devel'
@@ -54,8 +53,8 @@ until ( yum install -y ${PACKAGES[*]} ) ; do
     sleep 5
 done
 
-until ( pip install --upgrade ${PY_PACKAGES[*]} ) ; do
-    echo "pip failed to install python packages. Trying again in 5 seconds"
+until ( pip3 install --upgrade ${PY_PACKAGES[*]} ) ; do
+    echo "pip3 failed to install python packages. Trying again in 5 seconds"
     sleep 5
 done
 
@@ -70,4 +69,4 @@ if ! ( wget --header $HEADER $URL -O $DIR/$SETUP_SCRIPT ) ; then
 fi
 
 echo "running python cluster setup script"
-/usr/bin/env python2 $DIR/$SETUP_SCRIPT
+/usr/bin/env python3 $DIR/$SETUP_SCRIPT
