@@ -700,9 +700,9 @@ def install_slurm():
     os.chdir('build')
     subprocess.call(shlex.split("../configure --prefix={} --sysconfdir={}/etc"
                     .format(SLURM_PREFIX, CURR_SLURM_DIR)))
-    subprocess.call(shlex.split("make -j install"))
+    subprocess.call(shlex.split("make -j install"), stdout=subprocess.DEVNULL)
     os.chdir('contribs')
-    subprocess.call(shlex.split("make -j install"))
+    subprocess.call(shlex.split("make -j install"), stdout=subprocess.DEVNULL)
 
     subprocess.call(shlex.split("ln -s {} {}".format(SLURM_PREFIX,
                                                      CURR_SLURM_DIR)))
