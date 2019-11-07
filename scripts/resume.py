@@ -40,7 +40,7 @@ NETWORK      = ("projects/{}/regions/{}/subnetworks/{}-slurm-subnet".
                 format(cfg.project, cfg.region, cfg.cluster_name))
 
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
-LOGFILE      = '/apps/slurm/log/resume.log'
+LOGFILE      = '/var/log/slurm/resume.log'
 
 TOT_REQ_CNT = 1000
 

@@ -32,7 +32,7 @@ import util
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
 SCONTROL = '/apps/slurm/current/bin/scontrol'
-LOGDIR = Path('/apps/slurm/log')
+LOGDIR = Path('/var/log/slurm')
 
 TOT_REQ_CNT = 1000
 

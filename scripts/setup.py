@@ -18,6 +18,7 @@ import datetime
 import importlib
 import os
 import shlex
+import shutil
 import socket
 import subprocess
 import sys
@@ -55,6 +56,7 @@ cfg = util.Config.new_config(
 APPS_DIR = Path('/apps')
 CURR_SLURM_DIR = APPS_DIR/'slurm/current'
 MUNGE_DIR = Path('/etc/munge')
+SLURM_LOG = Path('/var/log/slurm')
 
 SEC_DISK_DIR = Path('/mnt/disks/sec')
 RESUME_TIMEOUT = 300
@@ -450,9 +452,9 @@ JobCompType=jobcomp/none
 JobAcctGatherFrequency=30
 JobAcctGatherType=jobacct_gather/linux
 SlurmctldDebug=info
-SlurmctldLogFile={APPS_DIR}/slurm/log/slurmctld.log
+SlurmctldLogFile={SLURM_LOG}/slurmctld.log
 SlurmdDebug=debug
-SlurmdLogFile=/var/log/slurm/slurmd-%n.log
+SlurmdLogFile={SLURM_LOG}/slurmd-%n.log
 #
 #
 # POWER SAVE SUPPORT FOR IDLE NODES (optional)
@@ -547,7 +549,7 @@ GresTypes=gpu
 
 def install_slurmdbd_conf():
 
-    conf = """
+    conf = f"""
 #ArchiveEvents=yes
 #ArchiveJobs=yes
 #ArchiveResvs=yes
@@ -557,7 +559,7 @@ def install_slurmdbd_conf():
 #ArchiveUsage=no
 
 AuthType=auth/munge
-DbdHost={control_machine}
+DbdHost={CONTROL_MACHINE}
 DebugLevel=debug2
 
 #PurgeEventAfter=1month
@@ -568,7 +570,7 @@ DebugLevel=debug2
 #PurgeTXNAfter=12month
 #PurgeUsageAfter=24month
 
-LogFile={apps_dir}/slurm/log/slurmdbd.log
+LogFile={SLURM_LOG}/slurmdbd.log
 PidFile=/var/run/slurm/slurmdbd.pid
 
 SlurmUser=slurm
@@ -580,7 +582,7 @@ StorageType=accounting_storage/mysql
 #StorageUser=database_mgr
 #StoragePass=shazaam
 
-""".format(apps_dir=APPS_DIR, control_machine=CONTROL_MACHINE)
+"""
     etc_dir = CURR_SLURM_DIR/'etc'
     if not etc_dir.exists():
         etc_dir.mkdir(parents=True)
@@ -718,10 +720,6 @@ def install_slurm():
     if not state_dir.exists():
         state_dir.mkdir(parents=True)
         subprocess.call(shlex.split("chown -R slurm: {}".format(state_dir)))
-    log_dir = APPS_DIR/'slurm/log'
-    if not log_dir.exists():
-        log_dir.mkdir(parents=True)
-        subprocess.call(shlex.split("chown -R slurm: {}".format(log_dir)))
 
     install_slurm_conf()
     install_slurmdbd_conf()
@@ -852,6 +850,35 @@ LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 """)
 
 # END setup_bash_profile()
+
+
+def setup_logrotate():
+    with open('/etc/logrotate.d/slurm', 'w') as f:
+        f.write("""
+##
+# Slurm Logrotate Configuration
+##
+/var/log/slurm/*.log {
+        compress
+        missingok
+        nocopytruncate
+        nodelaycompress
+        nomail
+        notifempty
+        noolddir
+        rotate 5
+        sharedscripts
+        size=5M
+        create 640 slurm root
+        postrotate
+                pkill -x --signal SIGUSR2 slurmctld
+                pkill -x --signal SIGUSR2 slurmd
+                pkill -x --signal SIGUSR2 slurmdbd
+                exit 0
+        endscript
+}
+""")
+# END setup_logrotate()
 
 
 def setup_nfs_apps_vols():
@@ -1029,10 +1056,6 @@ def main():
 
     start_motd()
 
-    varlog = Path('/var/log/slurm')
-    if not varlog.exists():
-        varlog.mkdir(parents=True)
-
     add_slurm_user()
     install_packages()
     setup_munge()
@@ -1046,6 +1069,10 @@ def main():
     setup_nfs_apps_vols()
     setup_nfs_home_vols()
     setup_nfs_sec_vols()
+
+    if not SLURM_LOG.exists():
+        SLURM_LOG.mkdir(parents=True)
+    shutil.chown(SLURM_LOG, user='slurm', group='slurm')
 
     if cfg.instance_type == 'controller':
         mount_nfs_vols()
@@ -1153,6 +1180,7 @@ def main():
             pass
 
     remove_startup_scripts(hostname)
+    setup_logrotate()
 
     end_motd()
 
