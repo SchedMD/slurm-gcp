@@ -31,7 +31,9 @@ resource "google_compute_instance" "compute_node" {
   }
 
   network_interface {
-    access_config {
+    dynamic "access_config" {
+        for_each = var.disable_compute_public_ips == true ? [] : [1]
+        content{}
     }
 
     subnetwork = var.subnet

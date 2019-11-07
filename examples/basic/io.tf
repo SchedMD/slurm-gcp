@@ -14,7 +14,10 @@
 # limitations under the License.
 
 variable "cluster_name" {}
-variable "disable_public_ips" {}
+variable "disable_login_public_ips" {}
+variable "disable_controller_public_ips" {}
+variable "disable_compute_public_ips" {}
+
 variable "partitions" {
   type = list(object({
               name                 = string,
@@ -32,18 +35,12 @@ variable "partitions" {
 }
 variable "project" {}
 variable "region" {}
+variable "zone" {}
 variable "users" {}
 
-output "controller_nat_ips" {
-  value = "${module.slurm_cluster_controller.instance_nat_ips}"
-}
 
 output "controller_network_ips" {
   value = "${module.slurm_cluster_controller.instance_network_ips}"
-}
-
-output "login_nat_ips" {
-  value = "${module.slurm_cluster_login.instance_nat_ips}"
 }
 
 output "login_network_ips" {

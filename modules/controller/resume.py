@@ -33,7 +33,7 @@ CLUSTER_NAME = '${cluster_name}'
 
 PROJECT      = '${project}'
 REGION       = '${region}'
-EXTERNAL_IP  = True
+EXTERNAL_IP  = ${external_ip}
 SHARED_VPC_HOST_PROJ = ''
 VPC_SUBNET   = '${subnet}'
 

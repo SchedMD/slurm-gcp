@@ -25,6 +25,7 @@ locals {
 }
 
 resource "google_compute_instance" "controller_node" {
+    
   name         = local.controller_name
   machine_type = var.controller_machine_type
   zone         = var.zone
@@ -44,11 +45,15 @@ resource "google_compute_instance" "controller_node" {
   }
 
   network_interface {
-    access_config {
+    dynamic "access_config" {
+        for_each = var.disable_controller_public_ips == true ? [] : [1]
+        content {}
     }
 
     subnetwork = var.subnet
   }
+
+ 
 
   service_account {
     scopes = ["cloud-platform"]
@@ -102,6 +107,7 @@ ${templatefile("${path.module}/resume.py", {
 cluster_name = "${var.cluster_name}",
 project = "${var.project}",
 region = "${var.region}",
+external_ip = title("${!var.disable_compute_public_ips}"),
 partitions = "${jsonencode(var.partitions)}"
 subnet = "${var.subnet}"
 })}

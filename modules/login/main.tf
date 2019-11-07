@@ -30,7 +30,9 @@ resource "google_compute_instance" "login_node" {
   }
 
   network_interface {
-    access_config {
+    dynamic "access_config" {
+        for_each = var.disable_login_public_ips == true ? [] : [1]
+        content{}
     }
 
     subnetwork = var.subnet
