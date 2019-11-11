@@ -643,7 +643,6 @@ def install_meta_files():
         ('resume.py', 'slurm_resume'),
         ('slurm-gcp-sync.py', 'slurm-gcp-sync'),
         ('util.py', 'util_script'),
-        ('setup-compute.py', 'setup_compute_script'),
         ('compute-shutdown', 'compute-shutdown'),
         ('custom-compute-install', 'custom-compute-install'),
         ('custom-controller-install', 'custom-controller-install'),

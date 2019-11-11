@@ -138,9 +138,6 @@ resources:
         - key: setup_script
           value: |
             {{ imports["scripts/setup.py"]|indent(12) }}
-        - key: setup_compute_script
-          value: |
-            {{ imports["scripts/setup.py"]|indent(12) }}
         - key: slurm_resume
           value: |
             {{ imports["scripts/resume.py"]|indent(12) }}

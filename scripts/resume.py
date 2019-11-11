@@ -22,6 +22,7 @@ import httplib2
 import logging
 import shlex
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -103,8 +104,8 @@ def update_slurm_node_addrs(compute):
 # [END update_slurm_node_addrs]
 
 
-def create_instance(compute, zone, machine_type, instance_name, source_disk_image,
-                    have_compute_img):
+def create_instance(compute, zone, machine_type, instance_name,
+                    source_disk_image):
 
     pid = int(instance_name[-6:-4])
     # Configure the machine
@@ -153,14 +154,6 @@ def create_instance(compute, zone, machine_type, instance_name, source_disk_imag
         'key': 'shutdown-script',
         'value': shutdown_script
     })
-
-    if not have_compute_img:
-        startup_script = open(
-            '/apps/slurm/scripts/setup-compute.py', 'r').read()
-        config['metadata']['items'].append({
-            'key': 'setup_script',
-            'value': startup_script
-        })
 
     if "gpu_type" in cfg.partitions[pid]:
         accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
@@ -226,7 +219,6 @@ def added_instances_cb(request_id, response, exception):
 def get_source_image(compute, node_name):
 
     pid = int(node_name[-6:-4])
-    have_compute_img = False
 
     if pid not in src_disk_images:
         try:
@@ -238,15 +230,13 @@ def get_source_image(compute, node_name):
                 logging.debug("image not ready, using the startup script")
                 raise Exception("image not ready")
             source_disk_image = image_response['selfLink']
-            have_compute_img = True
         except:
-            image_response = compute.images().getFromFamily(
-                project='centos-cloud', family='centos-7').execute()
-            source_disk_image = image_response['selfLink']
+            logging.error("No image found.")
+            sys.exit()
 
-        src_disk_images[pid] = [source_disk_image, have_compute_img]
+        src_disk_images[pid] = source_disk_image
 
-    return src_disk_images[pid][0], src_disk_images[pid][1]
+    return src_disk_images[pid]
 
 # [END get_source_image]
 
@@ -268,13 +258,13 @@ def add_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=added_instances_cb))
 
-        source_disk_image, have_compute_img = get_source_image(compute, node_name)
+        source_disk_image = get_source_image(compute, node_name)
 
         pid = int(node_name[-6:-4])
         batch_list[curr_batch].add(
             create_instance(compute, cfg.partitions[pid]['zone'],
                             cfg.partitions[pid]['machine_type'], node_name,
-                            source_disk_image, have_compute_img),
+                            source_disk_image),
             request_id=node_name)
         req_cnt += 1
 
