@@ -42,10 +42,9 @@ resource "google_compute_instance" "controller_node" {
       content {}
     }
 
-    subnetwork = var.subnet
+    subnetwork         = var.subnet
+    subnetwork_project = var.shared_vpc_host_project
   }
-
-
 
   service_account {
     scopes = ["cloud-platform"]
@@ -84,7 +83,7 @@ ${jsonencode({
     shared_vpc_host_proj         = var.shared_vpc_host_project,
     slurm_version                = var.slurm_version,
     suspend_time                 = var.suspend_time,
-    vpc_subnet                   = var.vpc_subnet,
+    vpc_subnet                   = var.subnetwork_name,
     zone                         = var.zone,
 })}
 EOF

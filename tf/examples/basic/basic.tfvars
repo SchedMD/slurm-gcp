@@ -32,3 +32,4 @@ partitions = [
   }
 ]
 
+#shared_vpc_host_project = "<vpc host project>"

@@ -65,12 +65,6 @@ variable "munge_key" {
   default     = ""
 }
 
-variable "network" {
-  type        = string
-  description = "Compute Platform network the Slurm cluster nodes will be connected to"
-  default     = "default"
-}
-
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
@@ -125,6 +119,11 @@ variable "service_account" {
   description = "Service Account for compute nodes."
   type        = string
   default     = "default"
+}
+
+variable "shared_vpc_host_project" {
+  type    = string
+  default = null
 }
 
 variable "subnet" {

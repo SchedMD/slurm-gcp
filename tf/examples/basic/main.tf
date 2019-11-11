@@ -29,8 +29,12 @@ module "slurm_cluster_network" {
   disable_login_public_ips      = var.disable_login_public_ips
   disable_controller_public_ips = var.disable_controller_public_ips
   disable_compute_public_ips    = var.disable_compute_public_ips
+  network_name                  = var.network_name
+  shared_vpc_host_project       = var.shared_vpc_host_project
+  subnetwork_name               = var.subnetwork_name
 
-  region = local.region
+  project = var.project
+  region  = local.region
 }
 
 module "slurm_cluster_controller" {
@@ -45,7 +49,6 @@ module "slurm_cluster_controller" {
   login_network_storage         = var.login_network_storage
   login_node_count              = var.login_node_count
   munge_key                     = var.munge_key
-  network                       = module.slurm_cluster_network.cluster_network_self_link
   network_storage               = var.network_storage
   ompi_version                  = var.ompi_version
   partitions                    = var.partitions
@@ -53,9 +56,9 @@ module "slurm_cluster_controller" {
   region                        = local.region
   shared_vpc_host_project       = var.shared_vpc_host_project
   slurm_version                 = var.slurm_version
-  subnet                        = module.slurm_cluster_network.cluster_subnet_name
+  subnet                        = module.slurm_cluster_network.cluster_subnet_self_link
   suspend_time                  = var.suspend_time
-  vpc_subnet                    = var.vpc_subnet
+  subnetwork_name               = var.subnetwork_name
   zone                          = var.zone
 }
 
@@ -71,10 +74,10 @@ module "slurm_cluster_login" {
   scopes                    = var.login_node_scopes
   service_account           = var.login_node_service_account
   munge_key                 = var.munge_key
-  network                   = module.slurm_cluster_network.cluster_network_self_link
   network_storage           = var.network_storage
   ompi_version              = var.ompi_version
-  subnet                    = module.slurm_cluster_network.cluster_subnet_name
+  shared_vpc_host_project   = var.shared_vpc_host_project
+  subnet                    = module.slurm_cluster_network.cluster_subnet_self_link
   zone                      = var.zone
 }
 
@@ -88,13 +91,13 @@ module "slurm_cluster_compute" {
   compute_image_machine_type = var.compute_image_machine_type
   controller_name            = module.slurm_cluster_controller.controller_node_name
   disable_compute_public_ips = var.disable_compute_public_ips
-  network                    = module.slurm_cluster_network.cluster_subnet_self_link
   network_storage            = var.network_storage
   partitions                 = var.partitions
   project                    = var.project
   scopes                     = var.compute_node_scopes
   service_account            = var.compute_node_service_account
-  subnet                     = module.slurm_cluster_network.cluster_subnet_name
+  shared_vpc_host_project    = var.shared_vpc_host_project
+  subnet                     = module.slurm_cluster_network.cluster_subnet_self_link
   zone                       = var.zone
 }
 

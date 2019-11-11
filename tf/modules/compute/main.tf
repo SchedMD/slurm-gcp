@@ -73,7 +73,8 @@ resource "google_compute_instance" "compute_node" {
       content {}
     }
 
-    subnetwork = var.subnet
+    subnetwork         = var.subnet
+    subnetwork_project = var.shared_vpc_host_project
   }
 
   service_account {
