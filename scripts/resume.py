@@ -23,27 +23,21 @@ import logging
 import shlex
 import subprocess
 import time
+from pathlib import Path
 
 import googleapiclient.discovery
 from google.auth import compute_engine
 import google_auth_httplib2
 from googleapiclient.http import set_user_agent
 
-CLUSTER_NAME = '@CLUSTER_NAME@'
+import util
 
-PROJECT      = '@PROJECT@'
-REGION       = '@REGION@'
-EXTERNAL_IP  = @EXTERNAL_COMPUTE_IPS@
-SHARED_VPC_HOST_PROJ = '@SHARED_VPC_HOST_PROJ@'
-VPC_SUBNET   = '@VPC_SUBNET@'
 
-PARTITIONS   = @PARTITIONS@
-
-SERVICE_ACCOUNT = '@SERVICE_ACCOUNT@'
-SCOPES = @SCOPES@
+cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
 NETWORK_TYPE = 'subnetwork'
-NETWORK      = "projects/{}/regions/{}/subnetworks/{}-slurm-subnet".format(PROJECT, REGION, CLUSTER_NAME)
+NETWORK      = ("projects/{}/regions/{}/subnetworks/{}-slurm-subnet".
+                format(cfg.project, cfg.region, cfg.cluster_name))
 
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/resume.log'
@@ -89,11 +83,12 @@ def update_slurm_node_addrs(compute):
             operation = operations[node_name]
             # Do this after the instances have been initialized and then wait
             # for all operations to finish. Then updates their addrs.
-            wait_for_operation(compute, PROJECT, ZONE, operation['name'])
+            wait_for_operation(compute, cfg.project, cfg.zone,
+                               operation['name'])
 
             my_fields = 'networkInterfaces(name,network,networkIP,subnetwork)'
             instance_networks = compute.instances().get(
-                project=PROJECT, zone=ZONE, instance=node_name,
+                project=cfg.project, zone=cfg.zone, instance=node_name,
                 fields=my_fields).execute()
             instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
 
@@ -108,17 +103,17 @@ def update_slurm_node_addrs(compute):
 # [END update_slurm_node_addrs]
 
 
-def create_instance(compute, project, zone, instance_type, instance_name,
-                    source_disk_image, have_compute_img):
+def create_instance(compute, zone, machine_type, instance_name, source_disk_image,
+                    have_compute_img):
 
     pid = int(instance_name[-6:-4])
     # Configure the machine
-    machine_type = 'zones/{}/machineTypes/{}'.format(zone, instance_type)
+    machine_type_path = f'zones/{zone}/machineTypes/{machine_type}'
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
-        PROJECT, zone, PARTITIONS[pid]['compute_disk_type'])
+        cfg.project, zone, cfg.partitions[pid]['compute_disk_type'])
     config = {
         'name': instance_name,
-        'machineType': machine_type,
+        'machineType': machine_type_path,
 
         # Specify the boot disk and the image to use as a source.
         'disks': [{
@@ -127,7 +122,7 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             'initializeParams': {
                 'sourceImage': source_disk_image,
                 'diskType': disk_type,
-                'diskSizeGb': PARTITIONS[pid]['compute_disk_size_gb']
+                'diskSizeGb': cfg.partitions[pid]['compute_disk_size_gb']
             }
         }],
 
@@ -138,8 +133,8 @@ def create_instance(compute, project, zone, instance_type, instance_name,
 
         # Allow the instance to access cloud storage and logging.
         'serviceAccounts': [{
-            'email': SERVICE_ACCOUNT,
-            'scopes': SCOPES
+            'email': cfg.compute_node_service_account,
+            'scopes': cfg.compute_node_scopes
         }],
 
         'tags': {'items': ['compute']},
@@ -167,51 +162,51 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             'value': startup_script
         })
 
-    if "gpu_type" in PARTITIONS[pid]:
-        accel_type = ('https://www.googleapis.com/compute/v1/'
-                      'projects/{}/zones/{}/acceleratorTypes/{}'.format(
-                          PROJECT, zone, PARTITIONS[pid]['gpu_type']))
+    if "gpu_type" in cfg.partitions[pid]:
+        accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
+                      .format(cfg.project, zone,
+                              cfg.partitions[pid]['gpu_type']))
         config['guestAccelerators'] = [{
-            'acceleratorCount': PARTITIONS[pid]['gpu_count'],
+            'acceleratorCount': cfg.partitions[pid]['gpu_count'],
             'acceleratorType': accel_type
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if PARTITIONS[pid]['preemptible_bursting']:
+    if cfg.partitions[pid]['preemptible_bursting']:
         config['scheduling'] = {
             'preemptible': True,
             'onHostMaintenance': 'TERMINATE',
             'automaticRestart': False
         },
 
-    if 'labels' in PARTITIONS[pid]:
-        config['labels'] = PARTITIONS[pid]['labels'],
+    if 'labels' in cfg.partitions[pid]:
+        config['labels'] = cfg.partitions[pid]['labels'],
 
-    if 'cpu_platform' in PARTITIONS[pid]:
-        config['minCpuPlatform'] = PARTITIONS['pid']['cpu_platform'],
+    if 'cpu_platform' in cfg.partitions[pid]:
+        config['minCpuPlatform'] = cfg.partitions[pid]['cpu_platform'],
 
-    if VPC_SUBNET:
+    if cfg.vpc_subnet:
         net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
-            PROJECT, REGION, VPC_SUBNET)
+            cfg.project, cfg.region, cfg.vpc_subnet)
         config['networkInterfaces'] = [{
             NETWORK_TYPE: net_type
         }]
 
-    if SHARED_VPC_HOST_PROJ:
+    if cfg.shared_vpc_host_proj:
         net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
-            SHARED_VPC_HOST_PROJ, REGION, VPC_SUBNET)
+            cfg.shared_vpc_host_proj, cfg.region, cfg.vpc_subnet)
         config['networkInterfaces'] = [{
             NETWORK_TYPE: net_type
         }]
 
-    if EXTERNAL_IP:
+    if cfg.external_compute_ips:
         config['networkInterfaces'][0]['accessConfigs'] = [
             {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
         ]
 
     return compute.instances().insert(
-        project=project,
+        project=cfg.project,
         zone=zone,
         body=config)
 # [END create_instance]
@@ -236,8 +231,8 @@ def get_source_image(compute, node_name):
     if pid not in src_disk_images:
         try:
             image_response = compute.images().getFromFamily(
-                project=PROJECT,
-                family=CLUSTER_NAME + '-compute-image-{0}-family'.format(pid)
+                project=cfg.project,
+                family=cfg.cluster_name + f'-compute-image-{pid}-family'
             ).execute()
             if image_response['status'] != 'READY':
                 logging.debug("image not ready, using the startup script")
@@ -277,10 +272,9 @@ def add_instances(compute, node_list):
 
         pid = int(node_name[-6:-4])
         batch_list[curr_batch].add(
-            create_instance(
-                compute, PROJECT, PARTITIONS[pid]['zone'],
-                PARTITIONS[pid]['machine_type'], node_name,
-                source_disk_image, have_compute_img),
+            create_instance(compute, cfg.partitions[pid]['zone'],
+                            cfg.partitions[pid]['machine_type'], node_name,
+                            source_disk_image, have_compute_img),
             request_id=node_name)
         req_cnt += 1
 

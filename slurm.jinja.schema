@@ -30,6 +30,7 @@ imports:
 - path: scripts/startup.sh
 - path: scripts/setup.py
 - path: scripts/suspend.py
+- path: scripts/util.py
 
 required:
 - cidr

@@ -16,7 +16,6 @@
 
 import collections
 import fcntl
-import httplib2
 import logging
 import os
 import shlex
@@ -24,17 +23,16 @@ import subprocess
 import sys
 import time
 import tempfile
+from pathlib import Path
 
 import googleapiclient.discovery
 
-CLUSTER_NAME = '@CLUSTER_NAME@'
+import util
 
-PROJECT      = '@PROJECT@'
-ZONE         = '@ZONE@'
-PARTITIONS   = @PARTITIONS@
+cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
-SCONTROL     = '/apps/slurm/current/bin/scontrol'
-LOGDIR       = '/apps/slurm/log'
+SCONTROL = '/apps/slurm/current/bin/scontrol'
+LOGDIR = Path('/apps/slurm/log')
 
 TOT_REQ_CNT = 1000
 
@@ -72,8 +70,8 @@ def start_instances(compute, node_list):
 
         pid = int(node[-6:-4])
         batch_list[curr_batch].add(
-            compute.instances().start(project=PROJECT,
-                                      zone=PARTITIONS[pid]['zone'],
+            compute.instances().start(project=cfg.project,
+                                      zone=cfg.partitions[pid]['zone'],
                                       instance=node),
             request_id=node)
         req_cnt += 1
@@ -118,13 +116,13 @@ def main():
 
         page_token = ""
         g_nodes = []
-        for i, part in enumerate(PARTITIONS):
+        for i, part in enumerate(cfg.partitions):
             pid = "{:02d}".format(i)
             while True:
                 resp = compute.instances().list(
-                    project=PROJECT, zone=part['zone'],
+                    project=cfg.project, zone=part['zone'],
                     pageToken=page_token,
-                    filter='name={}-compute{}*'.format(CLUSTER_NAME, pid)
+                    filter='name={}-compute{}*'.format(cfg.cluster_name, pid)
                 ).execute()
 
                 if "items" in resp:
@@ -151,7 +149,7 @@ def main():
                 #   start them in gcp
                 if g_node and (g_node['status'] == "TERMINATED"):
                     to_down.append(s_node)
-                    if (PARTITIONS[pid]["preemptible_bursting"]):
+                    if (cfg.partitions[pid]["preemptible_bursting"]):
                         to_start.append(s_node)
 
                 # can't check if the node doesn't exist in GCP while the node
@@ -233,15 +231,14 @@ def main():
 
 
 if __name__ == '__main__':
-    base = os.path.basename(__file__)
-    file_name = os.path.splitext(base)[0]
+    file_name = os.path.basename(__file__)
 
     # silence module logging
     for logger in logging.Logger.manager.loggerDict:
         logging.getLogger(logger).setLevel(logging.WARNING)
 
     logging.basicConfig(
-        filename='{}/{}.log'.format(LOGDIR, file_name),
+        filename=(LOGDIR/file_name).with_suffix('.log'),
         format='%(asctime)s %(name)s %(levelname)s: %(message)s',
         level=logging.DEBUG)
 

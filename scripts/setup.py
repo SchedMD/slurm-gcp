@@ -15,41 +15,53 @@
 # limitations under the License.
 
 import datetime
+import importlib
 import os
 import shlex
 import socket
 import subprocess
+import sys
 import time
 import urllib.request
+from contextlib import contextmanager
+from pathlib import Path
 
-CLUSTER_NAME      = '@CLUSTER_NAME@'
-INSTANCE_TYPE     = '@INSTANCE_TYPE@'  # e.g. controller, login, compute
+import googleapiclient.discovery
+import requests
+import yaml
 
-PROJECT           = '@PROJECT@'
-ZONE              = '@ZONE@'
+# get util.py from metadata
+UTIL_FILE = Path('/tmp/util.py')
+try:
+    resp = requests.get('http://metadata.google.internal/computeMetadata/v1/instance/attributes/util_script',
+                        headers={'Metadata-Flavor': 'Google'})
+    resp.raise_for_status()
+    UTIL_FILE.write_text(resp.text)
+except requests.exceptions.RequestException:
+    print("util.py script not found in metadata")
+    if not UTIL_FILE.exists():
+        print(f"{UTIL_FILE} also does not exist, aborting")
+        sys.exit(1)
 
-APPS_DIR          = '/apps'
-CURR_SLURM_DIR    = APPS_DIR + '/slurm/current'
-MUNGE_DIR         = "/etc/munge"
-MUNGE_KEY         = '@MUNGE_KEY@'
-SLURM_VERSION     = '@SLURM_VERSION@'
-DEF_SLURM_ACCT    = '@DEF_SLURM_ACCT@'
-DEF_SLURM_USERS   = '@DEF_SLURM_USERS@'
-EXTERNAL_COMPUTE_IPS = @EXTERNAL_COMPUTE_IPS@
-NFS_APPS_SERVER   = '@NFS_APPS_SERVER@'
-NFS_APPS_DIR      = '@NFS_APPS_DIR@'
-NFS_HOME_SERVER   = '@NFS_HOME_SERVER@'
-NFS_HOME_DIR      = '@NFS_HOME_DIR@'
-CONTROLLER_SECONDARY_DISK = @CONTROLLER_SECONDARY_DISK@
-SEC_DISK_DIR      = '/mnt/disks/sec'
-SUSPEND_TIME      = @SUSPEND_TIME@
-RESUME_TIMEOUT    = 300
-SUSPEND_TIMEOUT   = 300
-PARTITIONS        = @PARTITIONS@
-LOGIN_NODE_COUNT  = @LOGIN_NODE_COUNT@
+spec = importlib.util.spec_from_file_location('util', UTIL_FILE)
+util = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = util
+spec.loader.exec_module(util)
 
-CONTROL_MACHINE = CLUSTER_NAME + '-controller'
+# get setup config from metadata
+cfg = util.Config.new_config(
+    yaml.safe_load(yaml.safe_load(util.get_metadata('attributes/config'))))
+
+APPS_DIR = Path('/apps')
+CURR_SLURM_DIR = APPS_DIR/'slurm/current'
+MUNGE_DIR = Path('/etc/munge')
+
+SEC_DISK_DIR = Path('/mnt/disks/sec')
+RESUME_TIMEOUT = 300
+SUSPEND_TIMEOUT = 300
 MAX_PARTITION_SIZE = 10000
+
+CONTROL_MACHINE = cfg.cluster_name + '-controller'
 
 MOTD_HEADER = """
 
@@ -105,14 +117,14 @@ def add_slurm_user():
 
 def setup_modules():
 
-    appsmfs = '/apps/modulefiles'
+    appsmfs = Path('/apps/modulefiles')
 
     with open('/usr/share/Modules/init/.modulespath', 'r+') as dotmp:
-        if appsmfs not in dotmp.read():
-            if INSTANCE_TYPE != 'controller' and not os.path.isdir(appsmfs):
-                os.makedirs(appsmfs)
+        if str(appsmfs) not in dotmp.read():
+            if cfg.instance_type != 'controller' and not appsmfs.is_dir():
+                appsmfs.mkdir(parents=True)
             # after read, file cursor is at end of file
-            dotmp.write('\n' + appsmfs + '\n')
+            dotmp.write(f'\n{appsmfs}\n')
 # END setup_modules
 
 
@@ -129,7 +141,7 @@ has finished installing.
 
 """
 
-    if INSTANCE_TYPE != "controller":
+    if cfg.instance_type != "controller":
         msg += """/home on the controller will be mounted over the existing /home.
 Any changes in /home will be hidden. Please wait until the installation is
 complete before making changes in your home directory.
@@ -151,9 +163,9 @@ def end_motd(broadcast=True):
 
     subprocess.call(shlex.split(
         "wall -n '*** Slurm {} daemon installation complete ***'"
-        .format(INSTANCE_TYPE)))
+        .format(cfg.instance_type)))
 
-    if INSTANCE_TYPE != 'controller':
+    if cfg.instance_type != 'controller':
         subprocess.call(shlex.split("""wall -n '
 /home on the controller was mounted over the existing /home.
 Either log out and log back in or cd into ~.
@@ -163,10 +175,10 @@ Either log out and log back in or cd into ~.
 
 def install_packages():
 
-    if INSTANCE_TYPE == 'compute':
+    if cfg.instance_type == 'compute':
         hostname = socket.gethostname()
         pid = int(hostname[-6:-4])
-        if PARTITIONS[pid]['gpu_count']:
+        if cfg.partitions[pid]['gpu_count']:
             rpm = 'cuda-repo-rhel7-10.0.130-1.x86_64.rpm'
             subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
             subprocess.call(shlex.split(
@@ -181,8 +193,8 @@ def install_packages():
 
 def setup_munge():
 
-    munge_service_patch = '/usr/lib/systemd/system/munge.service'
-    with open(munge_service_patch, 'w') as f:
+    munge_service_patch = Path('/usr/lib/systemd/system/munge.service')
+    with munge_service_patch.open('w') as f:
         f.write("""
 [Unit]
 Description=MUNGE authentication service
@@ -201,26 +213,27 @@ Restart=on-abort
 
 [Install]
 WantedBy=multi-user.target
-""".format("\nRequiresMountsFor=" + MUNGE_DIR
-           if INSTANCE_TYPE != 'controller' else ''))
+""".format(f"\nRequiresMountsFor={MUNGE_DIR}"
+           if cfg.instance_type != 'controller' else ''))
 
     subprocess.call(shlex.split("systemctl enable munge"))
 
-    if (INSTANCE_TYPE != 'controller'):
+    if (cfg.instance_type != 'controller'):
         with open('/etc/fstab', 'a') as f:
             f.write("\n{1}:{0} \t{0} \tnfs \trw,hard,intr \t0 \t0"
                     .format(MUNGE_DIR, CONTROL_MACHINE))
         return
 
-    if MUNGE_KEY:
-        with open(MUNGE_DIR + '/munge.key', 'w') as f:
-            f.write(MUNGE_KEY)
+    if cfg.munge_key:
+        with (MUNGE_DIR/'munge.key').open('w') as f:
+            f.write(cfg.munge_key)
 
-        subprocess.call(shlex.split("chown -R munge: {} /var/log/munge/"
-                                    .format(MUNGE_DIR)))
-        os.chmod(MUNGE_DIR + '/munge.key', 0o400)
-        os.chmod(MUNGE_DIR, 0o700)
-        os.chmod('/var/log/munge/', 0o700)
+        subprocess.call(shlex.split(
+            f"chown -R munge: {MUNGE_DIR} /var/log/munge/"))
+
+        (MUNGE_DIR/'munge_key').chmod(0o400)
+        MUNGE_DIR.chmod(0o700)
+        Path('var/log/munge/').chmod(0o700)
     else:
         subprocess.call('create-munge-key')
 # END setup_munge ()
@@ -234,13 +247,12 @@ def start_munge():
 def setup_nfs_exports():
 
     with open('/etc/exports', 'w') as f:
-        if not NFS_HOME_SERVER:
+        if not cfg.nfs_home_server:
             f.write("\n/home  *(rw,no_subtree_check,no_root_squash)")
-        if not NFS_APPS_SERVER:
-            f.write("\n{}  *(rw,no_subtree_check,no_root_squash)"
-                    .format(APPS_DIR))
+        if not cfg.nfs_apps_server:
+            f.write(f"\n{APPS_DIR}  *(rw,no_subtree_check,no_root_squash)")
         f.write("\n/etc/munge *(rw,no_subtree_check,no_root_squash)")
-        if CONTROLLER_SECONDARY_DISK:
+        if cfg.controller_secondary_disk:
             f.write("\n{} *(rw,no_subtree_check,no_root_squash)"
                     .format(SEC_DISK_DIR))
 
@@ -250,28 +262,16 @@ def setup_nfs_exports():
 
 def expand_machine_type():
 
-    # Force re-evaluation of site-packages so that namespace packages (such
-    # as google-auth) are importable. This is needed because we install the
-    # packages while this script is running and do not have the benefit of
-    # restarting the interpreter for it to do it's usual startup sequence to
-    # configure import magic.
-    import sys
-    import site
-    for path in [x for x in sys.path if 'site-packages' in x]:
-        site.addsitedir(path)
-
-    import googleapiclient.discovery
-
     # Assume sockets is 1. Currently, no instances with multiple sockets
     # Assume hyper-threading is on and 2 threads per core
     machines = []
-    for part in PARTITIONS:
+    compute = googleapiclient.discovery.build('compute', 'v1',
+                                              cache_discovery=False)
+    for part in cfg.partitions:
         machine = {'sockets': 1, 'cores': 1, 'threads': 1, 'memory': 1}
         try:
-            compute = googleapiclient.discovery.build('compute', 'v1',
-                                                      cache_discovery=False)
             type_resp = compute.machineTypes().get(
-                project=PROJECT, zone=part['zone'],
+                project=cfg.project, zone=part['zone'],
                 machineType=part['machine_type']).execute()
             if type_resp:
                 tot_cpus = type_resp['guestCpus']
@@ -300,12 +300,12 @@ def install_slurm_conf():
 
     machines = expand_machine_type()
 
-    conf = """
+    conf = f"""
 # slurm.conf file generated by configurator.html.
 # Put this file on all nodes of your cluster.
 # See the slurm.conf man page for more information.
 #
-ControlMachine={control_machine}
+ControlMachine={CONTROL_MACHINE}
 #ControlAddr=
 #BackupController=
 #BackupAddr=
@@ -371,7 +371,7 @@ SlurmUser=slurm
 #SlurmdUser=root
 #SrunEpilog=
 #SrunProlog=
-StateSaveLocation={apps_dir}/slurm/state
+StateSaveLocation={APPS_DIR}/slurm/state
 SwitchType=switch/none
 #TaskEpilog=
 TaskPlugin=task/affinity,task/cgroup
@@ -431,14 +431,14 @@ SelectTypeParameters=CR_Core_Memory
 #
 # LOGGING AND ACCOUNTING
 AccountingStorageEnforce=associations,limits,qos,safe
-AccountingStorageHost={control_machine}
+AccountingStorageHost={CONTROL_MACHINE}
 #AccountingStorageLoc=
 #AccountingStoragePass=
 #AccountingStoragePort=
 AccountingStorageType=accounting_storage/slurmdbd
 #AccountingStorageUser=
 AccountingStoreJobComment=YES
-ClusterName={cluster_name}
+ClusterName={cfg.cluster_name}
 #DebugFlags=powersave
 #JobCompHost=
 #JobCompLoc=
@@ -450,22 +450,22 @@ JobCompType=jobcomp/none
 JobAcctGatherFrequency=30
 JobAcctGatherType=jobacct_gather/linux
 SlurmctldDebug=info
-SlurmctldLogFile={apps_dir}/slurm/log/slurmctld.log
+SlurmctldLogFile={APPS_DIR}/slurm/log/slurmctld.log
 SlurmdDebug=debug
 SlurmdLogFile=/var/log/slurm/slurmd-%n.log
 #
 #
 # POWER SAVE SUPPORT FOR IDLE NODES (optional)
-SuspendProgram={apps_dir}/slurm/scripts/suspend.py
-ResumeProgram={apps_dir}/slurm/scripts/resume.py
-ResumeFailProgram={apps_dir}/slurm/scripts/suspend.py
-SuspendTimeout={suspend_timeout}
-ResumeTimeout={resume_timeout}
+SuspendProgram={APPS_DIR}/slurm/scripts/suspend.py
+ResumeProgram={APPS_DIR}/slurm/scripts/resume.py
+ResumeFailProgram={APPS_DIR}/slurm/scripts/suspend.py
+SuspendTimeout={SUSPEND_TIMEOUT}
+ResumeTimeout={RESUME_TIMEOUT}
 ResumeRate=0
 #SuspendExcNodes=
 #SuspendExcParts=
 SuspendRate=0
-SuspendTime={suspend_time}
+SuspendTime={cfg.suspend_time}
 #
 SchedulerParameters=salloc_wait_nodes
 SlurmctldParameters=cloud_dns,idle_on_node_suspend
@@ -473,32 +473,27 @@ CommunicationParameters=NoAddrCache
 GresTypes=gpu
 #
 # COMPUTE NODES
-""".format(apps_dir=APPS_DIR,
-           cluster_name=CLUSTER_NAME,
-           control_machine=CONTROL_MACHINE,
-           suspend_timeout=SUSPEND_TIMEOUT,
-           resume_timeout=RESUME_TIMEOUT,
-           suspend_time=SUSPEND_TIME)
+"""
 
     static_nodes = []
     for i, machine in enumerate(machines):
-        part = PARTITIONS[i]
+        part = cfg.partitions[i]
         static_range = ''
         if part['static_node_count']:
             if part['static_node_count'] > 1:
                 static_range = '{}-compute[{:06}-{:06}]'.format(
-                    CLUSTER_NAME,
+                    cfg.cluster_name,
                     i*MAX_PARTITION_SIZE,
                     i*MAX_PARTITION_SIZE + part['static_node_count'] - 1)
             else:
-                static_range = '{}-compute{:06}'.format(CLUSTER_NAME,
+                static_range = '{}-compute{:06}'.format(cfg.cluster_name,
                                                         i*MAX_PARTITION_SIZE)
 
         cloud_range = ""
         if (part['max_node_count'] and
                 (part['max_node_count'] != part['static_node_count'])):
             cloud_range = "{}-compute[{:06d}-{:06d}]".format(
-                CLUSTER_NAME,
+                cfg.cluster_name,
                 i*MAX_PARTITION_SIZE+part['static_node_count'],
                 i*MAX_PARTITION_SIZE+part['max_node_count']-1)
 
@@ -531,7 +526,7 @@ GresTypes=gpu
 
         conf += ("PartitionName={} Nodes={}-compute{} MaxTime=INFINITE "
                  "State=UP DefMemPerCPU={} LLN=yes"
-                 .format(part['name'], CLUSTER_NAME, part_nodes,
+                 .format(part['name'], cfg.cluster_name, part_nodes,
                          def_mem_per_cpu))
 
         # First partition specified is treated as the default partition
@@ -542,10 +537,10 @@ GresTypes=gpu
     if len(static_nodes):
         conf += "\nSuspendExcNodes={}\n".format(','.join(static_nodes))
 
-    etc_dir = CURR_SLURM_DIR + '/etc'
-    if not os.path.exists(etc_dir):
-        os.makedirs(etc_dir)
-    with open(etc_dir + '/slurm.conf', 'w') as f:
+    etc_dir = CURR_SLURM_DIR/'etc'
+    if not etc_dir.exists():
+        etc_dir.mkdir(parents=True)
+    with (etc_dir/'slurm.conf').open('w') as f:
         f.write(conf)
 # END install_slurm_conf()
 
@@ -586,10 +581,10 @@ StorageType=accounting_storage/mysql
 #StoragePass=shazaam
 
 """.format(apps_dir=APPS_DIR, control_machine=CONTROL_MACHINE)
-    etc_dir = CURR_SLURM_DIR + '/etc'
-    if not os.path.exists(etc_dir):
-        os.makedirs(etc_dir)
-    with open(etc_dir + '/slurmdbd.conf', 'w') as f:
+    etc_dir = CURR_SLURM_DIR/'etc'
+    if not etc_dir.exists():
+        etc_dir.mkdir(parents=True)
+    with (etc_dir/'slurmdbd.conf').open('w') as f:
         f.write(conf)
 
 # END install_slurmdbd_conf()
@@ -607,14 +602,15 @@ TaskAffinity=no
 ConstrainDevices=yes
 """
 
-    etc_dir = CURR_SLURM_DIR + '/etc'
-    with open(etc_dir + '/cgroup.conf', 'w') as f:
+    etc_dir = CURR_SLURM_DIR/'etc'
+    with (etc_dir/'cgroup.conf').open('w') as f:
         f.write(conf)
 
-    with open(etc_dir + '/cgroup_allowed_devices_file.conf', 'w') as f:
+    with (etc_dir/'cgroup_allowed_devices_file.conf').open('w') as f:
         f.write('')
 
-    gpu_parts = [(i, x) for i, x in enumerate(PARTITIONS) if x['gpu_count']]
+    gpu_parts = [(i, x) for i, x in enumerate(cfg.partitions)
+                 if x['gpu_count']]
     gpu_conf = ""
     for i, part in gpu_parts:
         driver_range = '0'
@@ -622,11 +618,11 @@ ConstrainDevices=yes
             driver_range = '[0-{}]'.format(part['gpu_count']-1)
 
         gpu_conf += ("NodeName={}-compute[{:06}-{:06}] Name=gpu File=/dev/nvidia{}\n"
-                     .format(CLUSTER_NAME, i*MAX_PARTITION_SIZE,
+                     .format(cfg.cluster_name, i*MAX_PARTITION_SIZE,
                              i*MAX_PARTITION_SIZE+part['max_node_count']-1,
                              driver_range))
     if gpu_conf:
-        with open(etc_dir + '/gres.conf', 'w') as f:
+        with (etc_dir/'gres.conf').open('w') as f:
             f.write(gpu_conf)
 
 # END install_cgroup_conf()
@@ -634,16 +630,17 @@ ConstrainDevices=yes
 
 def install_meta_files():
 
-    scripts_path = APPS_DIR + '/slurm/scripts'
-    if not os.path.exists(scripts_path):
-        os.makedirs(scripts_path)
+    scripts_path = APPS_DIR/'slurm/scripts'
+    if not scripts_path.exists():
+        scripts_path.mkdir(parents=True)
 
-    GOOGLE_URL = 'http://metadata.google.internal/computeMetadata/v1/instance/attributes'
+    cfg.save_config(scripts_path/'config.yaml')
 
     meta_files = [
         ('suspend.py', 'slurm_suspend'),
         ('resume.py', 'slurm_resume'),
         ('slurm-gcp-sync.py', 'slurm-gcp-sync'),
+        ('util.py', 'util_script'),
         ('setup-compute.py', 'setup_compute_script'),
         ('compute-shutdown', 'compute-shutdown'),
         ('custom-compute-install', 'custom-compute-install'),
@@ -651,70 +648,79 @@ def install_meta_files():
     ]
 
     for file_name, meta_name in meta_files:
-        req = urllib.request.Request("{}/{}".format(GOOGLE_URL, meta_name))
-        req.add_header('Metadata-Flavor', 'Google')
-        resp = urllib.request.urlopen(req)
+        text = util.get_metadata('attributes/' + meta_name)
+        if not text:
+            continue
 
-        with open("{}/{}".format(scripts_path, file_name), 'w') as f:
-            f.write(resp.read().decode())
-        os.chmod("{}/{}".format(scripts_path, file_name), 0o755)
+        with (scripts_path/file_name).open('w') as f:
+            f.write(text)
+        (scripts_path/file_name).chmod(0o755)
 
-        subprocess.call(shlex.split(
-            "gcloud compute instances remove-metadata {} --zone={} --keys={}"
-            .format(CONTROL_MACHINE, ZONE, meta_name)))
+    subprocess.call(shlex.split(
+        "gcloud compute instances remove-metadata {} --zone={} --keys={}"
+        .format(CONTROL_MACHINE, cfg.zone,
+                ','.join([x[1] for x in meta_files]))))
 
 # END install_meta_files()
 
 
+@contextmanager
+def cd(path):
+    """ Change working directory for context """
+    prev = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev)
+
+
 def install_slurm():
 
-    SLURM_PREFIX = ''
+    src_path = APPS_DIR/'slurm/src'
+    if not src_path.exists():
+        src_path.mkdir(parents=True)
 
-    prev_path = os.getcwd()
+    with cd(src_path):
+        use_version = ''
+        if (cfg.slurm_version[0:2] == 'b:'):
+            GIT_URL = 'https://github.com/SchedMD/slurm.git'
+            use_version = cfg.slurm_version[2:]
+            subprocess.call(shlex.split(
+                "git clone -b {0} {1} {0}".format(use_version, GIT_URL)))
+        else:
+            file = 'slurm-{}.tar.bz2'.format(cfg.slurm_version)
+            slurm_url = 'https://download.schedmd.com/slurm/' + file
+            urllib.request.urlretrieve(slurm_url, src_path/file)
 
-    SRC_PATH = APPS_DIR + '/slurm/src'
-    if not os.path.exists(SRC_PATH):
-        os.makedirs(SRC_PATH)
-    os.chdir(SRC_PATH)
+            use_version = subprocess.check_output(shlex.split(
+                "tar -xvjf " + file)).decode().splitlines()[0][:-1]
 
-    use_version = ''
-    if (SLURM_VERSION[0:2] == 'b:'):
-        GIT_URL = 'https://github.com/SchedMD/slurm.git'
-        use_version = SLURM_VERSION[2:]
+    SLURM_PREFIX = APPS_DIR/'slurm'/use_version
+
+    build_dir = src_path/use_version/'build'
+    if not build_dir.exists():
+        build_dir.mkdir(parents=True)
+
+    with cd(build_dir):
         subprocess.call(shlex.split(
-            "git clone -b {0} {1} {0}".format(use_version, GIT_URL)))
-    else:
-        SCHEDMD_URL = 'https://download.schedmd.com/slurm/'
-        file = 'slurm-{}.tar.bz2'.format(SLURM_VERSION)
-        urllib.request.urlretrieve(SCHEDMD_URL + file, SRC_PATH + '/' + file)
+            "../configure --prefix={} --sysconfdir={}/etc"
+            .format(SLURM_PREFIX, CURR_SLURM_DIR)), stdout=subprocess.DEVNULL)
+        subprocess.call(shlex.split("make -j install"),
+                        stdout=subprocess.DEVNULL)
+    with cd(build_dir/'contribs'):
+        subprocess.call(shlex.split("make -j install"),
+                        stdout=subprocess.DEVNULL)
 
-        cmd = "tar -xvjf " + file
-        use_version = subprocess.check_output(
-            shlex.split(cmd)).decode().splitlines()[0][:-1]
+    os.symlink(SLURM_PREFIX, CURR_SLURM_DIR)
 
-    os.chdir(use_version)
-    SLURM_PREFIX = APPS_DIR + '/slurm/' + use_version
-
-    if not os.path.exists('build'):
-        os.makedirs('build')
-    os.chdir('build')
-    subprocess.call(shlex.split("../configure --prefix={} --sysconfdir={}/etc"
-                    .format(SLURM_PREFIX, CURR_SLURM_DIR)))
-    subprocess.call(shlex.split("make -j install"), stdout=subprocess.DEVNULL)
-    os.chdir('contribs')
-    subprocess.call(shlex.split("make -j install"), stdout=subprocess.DEVNULL)
-
-    subprocess.call(shlex.split("ln -s {} {}".format(SLURM_PREFIX,
-                                                     CURR_SLURM_DIR)))
-    os.chdir(prev_path)
-
-    state_dir = APPS_DIR + '/slurm/state'
-    if not os.path.exists(state_dir):
-        os.makedirs(state_dir)
+    state_dir = APPS_DIR/'slurm/state'
+    if not state_dir.exists():
+        state_dir.mkdir(parents=True)
         subprocess.call(shlex.split("chown -R slurm: {}".format(state_dir)))
-    log_dir = APPS_DIR + '/slurm/log'
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    log_dir = APPS_DIR/'slurm/log'
+    if not log_dir.exists():
+        log_dir.mkdir(parents=True)
         subprocess.call(shlex.split("chown -R slurm: {}".format(log_dir)))
 
     install_slurm_conf()
@@ -727,16 +733,16 @@ def install_slurm():
 
 def install_slurm_tmpfile():
 
-    run_dir = '/var/run/slurm'
+    run_dir = Path('/var/run/slurm')
 
     with open('/etc/tmpfiles.d/slurm.conf', 'w') as f:
-        f.write("\nd {} 0755 slurm slurm -".format(run_dir))
+        f.write(f"\nd {run_dir} 0755 slurm slurm -")
 
-    if not os.path.exists(run_dir):
-        os.makedirs(run_dir)
+    if not run_dir.exists():
+        run_dir.mkdir(parents=True)
+    run_dir.chmod(0o755)
 
-    os.chmod(run_dir, 0o755)
-    subprocess.call(shlex.split("chown slurm: " + run_dir))
+    subprocess.call(shlex.split(f"chown slurm: {run_dir}"))
 
 # END install_slurm_tmpfile()
 
@@ -746,7 +752,8 @@ def install_controller_service_scripts():
     install_slurm_tmpfile()
 
     # slurmctld.service
-    with open('/usr/lib/systemd/system/slurmctld.service', 'w') as f:
+    ctld_service = Path('/usr/lib/systemd/system/slurmctld.service')
+    with ctld_service.open('w') as f:
         f.write("""
 [Unit]
 Description=Slurm controller daemon
@@ -764,10 +771,11 @@ PIDFile=/var/run/slurm/slurmctld.pid
 WantedBy=multi-user.target
 """.format(prefix=CURR_SLURM_DIR))
 
-    os.chmod('/usr/lib/systemd/system/slurmctld.service', 0o644)
+    ctld_service.chmod(0o644)
 
     # slurmdbd.service
-    with open('/usr/lib/systemd/system/slurmdbd.service', 'w') as f:
+    dbd_service = Path('/usr/lib/systemd/system/slurmdbd.service')
+    with dbd_service.open('w') as f:
         f.write("""
 [Unit]
 Description=Slurm DBD accounting daemon
@@ -785,7 +793,7 @@ PIDFile=/var/run/slurm/slurmdbd.pid
 WantedBy=multi-user.target
 """.format(prefix=CURR_SLURM_DIR))
 
-    os.chmod('/usr/lib/systemd/system/slurmdbd.service', 0o644)
+    dbd_service.chmod(0o644)
 
 # END install_controller_service_scripts()
 
@@ -795,7 +803,8 @@ def install_compute_service_scripts():
     install_slurm_tmpfile()
 
     # slurmd.service
-    with open('/usr/lib/systemd/system/slurmd.service', 'w') as f:
+    slurmd_service = Path('/usr/lib/systemd/system/slurmd.service')
+    with slurmd_service.open('w') as f:
         f.write("""
 [Unit]
 Description=Slurm node daemon
@@ -817,7 +826,7 @@ LimitSTACK=infinity
 WantedBy=multi-user.target
 """.format(prefix=CURR_SLURM_DIR))
 
-    os.chmod('/usr/lib/systemd/system/slurmd.service', 0o644)
+    slurmd_service.chmod(0o644)
     subprocess.call(shlex.split('systemctl enable slurmd'))
 
 # END install_compute_service_scripts()
@@ -831,10 +840,10 @@ S_PATH={}
 PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """.format(CURR_SLURM_DIR))
 
-    if INSTANCE_TYPE == 'compute':
+    if cfg.instance_type == 'compute':
         hostname = socket.gethostname()
         pid = int(hostname[-6:-4])
-        if PARTITIONS[pid]['gpu_count']:
+        if cfg.partitions[pid]['gpu_count']:
             with open('/etc/profile.d/cuda.sh', 'w') as f:
                 f.write("""
 CUDA_PATH=/usr/local/cuda
@@ -848,13 +857,14 @@ LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 def setup_nfs_apps_vols():
 
     with open('/etc/fstab', 'a') as f:
-        if not NFS_APPS_SERVER:
-            if INSTANCE_TYPE != 'controller':
+        if not cfg.nfs_apps_server:
+            if cfg.instance_type != 'controller':
                 f.write("\n{1}:{0} \t{0} \tnfs \trw,hard,intr \t0 \t0"
                         .format(APPS_DIR, CONTROL_MACHINE))
         else:
             f.write("\n{1}:{2} \t{0} \tnfs \trw,hard,intr \t0 \t0\n"
-                    .format(APPS_DIR, NFS_APPS_SERVER, NFS_APPS_DIR))
+                    .format(APPS_DIR, cfg.nfs_apps_server,
+                            cfg.nfs_apps_dir))
 
 # END setup_nfs_apps_vols()
 
@@ -862,19 +872,20 @@ def setup_nfs_apps_vols():
 def setup_nfs_home_vols():
 
     with open('/etc/fstab', 'a') as f:
-        if not NFS_HOME_SERVER:
-            if ((INSTANCE_TYPE != 'controller')):
+        if not cfg.nfs_home_server:
+            if ((cfg.instance_type != 'controller')):
                 f.write("\n{0}:/home \t/home \tnfs \trw,hard,intr \t0 \t0"
                         .format(CONTROL_MACHINE))
         else:
             f.write("\t{0}:{1} \t/home \tnfs \trw,hard,intr \t0 \t0"
-                    .format(NFS_HOME_SERVER, NFS_HOME_DIR))
+                    .format(cfg.nfs_home_server, cfg.nfs_home_dir))
 
 # END setup_nfs_home_vols()
 
 
 def setup_nfs_sec_vols():
-    if CONTROLLER_SECONDARY_DISK and (INSTANCE_TYPE != 'controller'):
+    if (cfg.controller_secondary_disk and
+            (cfg.instance_type != 'controller')):
         with open('/etc/fstab', 'a') as f:
             f.write("\n{1}:{0} \t{0} \tnfs \trw,hard,intr \t0 \t0"
                     .format(SEC_DISK_DIR, CONTROL_MACHINE))
@@ -895,7 +906,7 @@ def setup_secondary_disks():
 
 def mount_nfs_vols():
     while subprocess.call(shlex.split("mount -a")):
-        print("Waiting for " + APPS_DIR + " and /home to be mounted")
+        print("Waiting for " + str(APPS_DIR) + " and /home to be mounted")
         time.sleep(5)
 
 # END mount_nfs_vols()
@@ -937,7 +948,7 @@ def create_compute_image():
 
     hostname = socket.gethostname()
     pid = int(hostname[-6:-4])
-    if PARTITIONS[pid]['gpu_count']:
+    if cfg.partitions[pid]['gpu_count']:
         time.sleep(300)
 
     print("Creating compute image...")
@@ -945,7 +956,8 @@ def create_compute_image():
         "gcloud compute images create {0}-compute-image-{4}-{3} "
         "--source-disk {1} --source-disk-zone {2} --force "
         "--family {0}-compute-image-{4}-family"
-        .format(CLUSTER_NAME, hostname, PARTITIONS[pid]["zone"], ver, pid)))
+        .format(cfg.cluster_name, hostname, cfg.partitions[pid]["zone"],
+                ver, pid)))
 # END create_compute_image()
 
 
@@ -962,34 +974,32 @@ SELINUXTYPE=targeted
 
 def remove_startup_scripts(hostname):
 
-    if CLUSTER_NAME + '-compute-image' in hostname:
-        pid = int(hostname[-6:-4])
+    cmd = "gcloud compute instances remove-metadata"
+    keys = "startup-script,setup_script,util_script,config"
+    if f"{cfg.cluster_name}-compute-image" in hostname:
         subprocess.call(shlex.split(
-           "gcloud compute instances remove-metadata {} --zone={} "
-           "--keys=startup-script".format(hostname, PARTITIONS[pid]["zone"])))
+            f"{cmd} {hostname} --zone={cfg.zone} --keys={keys}"))
 
-    elif INSTANCE_TYPE == 'controller':
+    elif cfg.instance_type == 'controller':
         # controller
         subprocess.call(shlex.split(
-            "gcloud compute instances remove-metadata {} --zone={} "
-            "--keys=startup-script".format(hostname, ZONE)))
+            f"{cmd} {hostname} --zone={cfg.zone} --keys={keys}"))
+
         # logins
-        for i in range(1, LOGIN_NODE_COUNT + 1):
+        for i in range(1, cfg.login_node_count + 1):
             subprocess.call(shlex.split(
-                "gcloud compute instances remove-metadata {}-login{} "
-                "--zone={} --keys=startup-script"
-                .format(CLUSTER_NAME, i, ZONE)))
+                "{} {}-login{} --zone={} --keys={}"
+                .format(cmd, cfg.cluster_name, i, cfg.zone, keys)))
 
         # computes
-        for i, part in enumerate(PARTITIONS):
+        for i, part in enumerate(cfg.partitions):
             if not part['static_node_count']:
                 continue
             for j in range(part['static_node_count']):
                 subprocess.call(shlex.split(
-                    "gcloud compute instances remove-metadata {}-compute{:06} "
-                    "--zone={} --keys=startup-script"
-                    .format(CLUSTER_NAME, i * MAX_PARTITION_SIZE + j,
-                            part['zone'])))
+                    "{} {}-compute{:06} --zone={} --keys={}"
+                    .format(cmd, cfg.cluster_name, i * MAX_PARTITION_SIZE + j,
+                            part['zone'], keys)))
 # END remove_startup_scripts()
 
 
@@ -1005,23 +1015,23 @@ def setup_nss_slurm():
 
 
 def main():
-
     hostname = socket.gethostname()
 
     setup_selinux()
 
-    if not os.path.exists(APPS_DIR + '/slurm'):
-        os.makedirs(APPS_DIR + '/slurm')
+    if not (APPS_DIR/'slurm').exists():
+        (APPS_DIR/'slurm').mkdir(parents=True)
         print("ww Created Slurm Folders")
 
-    if CONTROLLER_SECONDARY_DISK:
-        if not os.path.exists(SEC_DISK_DIR):
-            os.makedirs(SEC_DISK_DIR)
+    if cfg.controller_secondary_disk:
+        if not SEC_DISK_DIR.exists():
+            SEC_DISK_DIR.mkdir(parents=True)
 
     start_motd()
 
-    if not os.path.exists('/var/log/slurm'):
-        os.makedirs('/var/log/slurm')
+    varlog = Path('/var/log/slurm')
+    if not varlog.exists():
+        varlog.mkdir(parents=True)
 
     add_slurm_user()
     install_packages()
@@ -1029,14 +1039,15 @@ def main():
     setup_bash_profile()
     setup_modules()
 
-    if CONTROLLER_SECONDARY_DISK and (INSTANCE_TYPE == 'controller'):
+    if (cfg.controller_secondary_disk and
+            (cfg.instance_type == 'controller')):
         setup_secondary_disks()
 
     setup_nfs_apps_vols()
     setup_nfs_home_vols()
     setup_nfs_sec_vols()
 
-    if INSTANCE_TYPE == 'controller':
+    if cfg.instance_type == 'controller':
         mount_nfs_vols()
         start_munge()
         install_slurm()
@@ -1069,16 +1080,19 @@ def main():
 
         oslogin_chars = ['@', '.']
 
-        SLURM_USERS = DEF_SLURM_USERS
+        SLURM_USERS = cfg.default_users
 
         for char in oslogin_chars:
             SLURM_USERS = SLURM_USERS.replace(char, '_')
 
-        sacctmgr = CURR_SLURM_DIR + "/bin/sacctmgr -i"
-        subprocess.call(shlex.split(sacctmgr + " add cluster " + CLUSTER_NAME))
-        subprocess.call(shlex.split(sacctmgr + " add account " + DEF_SLURM_ACCT))
-        subprocess.call(shlex.split(sacctmgr + " add user {} account={}"
-                                    .format(SLURM_USERS, DEF_SLURM_ACCT)))
+        sacctmgr = f"{CURR_SLURM_DIR}/bin/sacctmgr -i"
+        subprocess.call(shlex.split(
+            sacctmgr + " add cluster " + cfg.cluster_name))
+        subprocess.call(shlex.split(
+            sacctmgr + " add account " + cfg.default_account))
+        subprocess.call(shlex.split(
+            sacctmgr + " add user {} account={}"
+            .format(SLURM_USERS, cfg.default_account)))
 
         subprocess.call(shlex.split("systemctl enable slurmctld"))
         subprocess.call(shlex.split("systemctl start slurmctld"))
@@ -1091,13 +1105,13 @@ def main():
         setup_sync_cronjob()
 
         # DOWN partitions until image is created.
-        for part in PARTITIONS:
+        for part in cfg.partitions:
             subprocess.call(shlex.split(
                 "{}/bin/scontrol update partitionname={} state=down".format(
                     CURR_SLURM_DIR, part['name'])))
 
         print("ww Done installing controller")
-    elif INSTANCE_TYPE == 'compute':
+    elif cfg.instance_type == 'compute':
         install_compute_service_scripts()
         setup_slurmd_cronjob()
         mount_nfs_vols()
@@ -1105,26 +1119,25 @@ def main():
         setup_nss_slurm()
 
         try:
-            subprocess.call('{}/slurm/scripts/custom-compute-install'
-                            .format(APPS_DIR))
+            subprocess.call(APPS_DIR/'slurm/scripts/custom-compute-install')
         except Exception:
             # Ignore blank files with no shell magic.
             pass
 
-        if CLUSTER_NAME + '-compute-image' in hostname:
+        if cfg.cluster_name + '-compute-image' in hostname:
 
             create_compute_image()
 
             pid = int(hostname[-6:-4])
             subprocess.call(shlex.split(
                 "{}/bin/scontrol update partitionname={} state=up".format(
-                    CURR_SLURM_DIR, PARTITIONS[pid]['name'])))
+                    CURR_SLURM_DIR, cfg.partitions[pid]['name'])))
 
             remove_startup_scripts(hostname)
 
             subprocess.call(shlex.split(
                 "gcloud compute instances stop {} --zone {} --quiet"
-                .format(hostname, PARTITIONS[pid]['zone'])))
+                .format(hostname, cfg.partitions[pid]['zone'])))
         else:
             subprocess.call(shlex.split("systemctl start slurmd"))
 

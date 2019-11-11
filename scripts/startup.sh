@@ -39,6 +39,7 @@ PACKAGES=(
 
 PY_PACKAGES=(
         'pyyaml'
+        'requests'
         'google-api-python-client'
     )
 
@@ -69,4 +70,5 @@ if ! ( wget --header $HEADER $URL -O $DIR/$SETUP_SCRIPT ) ; then
 fi
 
 echo "running python cluster setup script"
-/usr/bin/env python3 $DIR/$SETUP_SCRIPT
+chmod +x $DIR/$SETUP_SCRIPT
+$DIR/$SETUP_SCRIPT

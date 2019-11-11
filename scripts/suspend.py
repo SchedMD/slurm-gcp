@@ -22,13 +22,16 @@ import logging
 import shlex
 import subprocess
 import time
+from pathlib import Path
 
 import googleapiclient.discovery
 
-PROJECT      = '@PROJECT@'
+import util
+
+cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
+
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/apps/slurm/log/suspend.log'
-PARTITIONS   = @PARTITIONS@
 
 TOT_REQ_CNT = 1000
 
@@ -65,8 +68,8 @@ def delete_instances(compute, node_list):
 
         pid = int(node_name[-6:-4])
         batch_list[curr_batch].add(
-            compute.instances().delete(project=PROJECT,
-                                       zone=PARTITIONS[pid]['zone'],
+            compute.instances().delete(project=cfg.project,
+                                       zone=cfg.partitions[pid]['zone'],
                                        instance=node_name),
             request_id=node_name)
         req_cnt += 1

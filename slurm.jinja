@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+{% set ignored = properties.__setitem__('project', env['project'].encode('ascii')) %}
 resources:
 {% if not properties['vpc_subnet'] %}
 - name: {{properties["cluster_name"]}}-slurm-network
@@ -128,80 +129,27 @@ resources:
         - key: startup-script
           value: |
             {{ imports["scripts/startup.sh"]|indent(12) }}
+        - key: util_script
+          value: |
+            {{ imports["scripts/util.py"]|indent(12) }}
+        - key: config
+          value: |
+            {{ properties|safe|tojson(2)|indent(12) }}
         - key: setup_script
           value: |
-            {{ imports["scripts/setup.py"]|
-               indent(12)|
-               replace("@PROJECT@",env["project"])|
-               replace("@ZONE@",properties["zone"])|
-               replace("@INSTANCE_TYPE@","controller")|
-               replace("@MUNGE_KEY@",properties["munge_key"])|
-               replace("@SLURM_VERSION@",properties["slurm_version"])|
-               replace("@DEF_SLURM_ACCT@",properties["default_account"])|
-               replace("@DEF_SLURM_USERS@",properties["default_users"])|
-               replace("@CLUSTER_NAME@",properties["cluster_name"])|
-               replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|
-               replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|
-               replace("@NFS_HOME_DIR@",properties["nfs_home_dir"])|
-               replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|
-               replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
-               replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
-               replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])|
-               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
-               }}
+            {{ imports["scripts/setup.py"]|indent(12) }}
         - key: setup_compute_script
           value: |
-            {{ imports["scripts/setup.py"]|
-               indent(12)|
-               replace("@PROJECT@",env["project"])|
-               replace("@ZONE@",properties["zone"])|
-               replace("@INSTANCE_TYPE@","compute")|
-               replace("@MUNGE_KEY@",properties["munge_key"])|
-               replace("@SLURM_VERSION@",properties["slurm_version"])|
-               replace("@DEF_SLURM_ACCT@",properties["default_account"])|
-               replace("@DEF_SLURM_USERS@",properties["default_users"])|
-               replace("@CLUSTER_NAME@",properties["cluster_name"])|
-               replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|
-               replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|
-               replace("@NFS_HOME_DIR@",properties["nfs_home_dir"])|
-               replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|
-               replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
-               replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
-               replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])|
-               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
-               }}
+            {{ imports["scripts/setup.py"]|indent(12) }}
         - key: slurm_resume
           value: |
-            {{ imports["scripts/resume.py"]|
-               indent(12)|
-               replace("@PROJECT@",env["project"])|
-               replace("@REGION@",properties["region"])|
-               replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|
-               replace("@CLUSTER_NAME@",properties["cluster_name"])|
-               replace("@VPC_SUBNET@",properties["vpc_subnet"])|
-               replace("@SHARED_VPC_HOST_PROJ@",properties["shared_vpc_host_proj"])|
-               replace("@PARTITIONS@",properties["partitions"])|
-               replace("@SERVICE_ACCOUNT@",properties["compute_node_service_account"])|
-               replace("@SCOPES@",properties["compute_node_scopes"])
-               }}
+            {{ imports["scripts/resume.py"]|indent(12) }}
         - key: slurm_suspend
           value: |
-            {{ imports["scripts/suspend.py"]|
-               indent(12)|
-               replace("@PROJECT@",env["project"])|
-               replace("@PARTITIONS@",properties["partitions"])
-               }}
+            {{ imports["scripts/suspend.py"]|indent(12) }}
         - key: slurm-gcp-sync
           value: |
-            {{ imports["scripts/slurm-gcp-sync.py"]|
-               indent(12)|
-               replace("@CLUSTER_NAME@",properties["cluster_name"])|
-               replace("@PROJECT@",env["project"])|
-               replace("@ZONE@",properties["zone"])|
-               replace("@PARTITIONS@",properties["partitions"])
-               }}
+            {{ imports["scripts/slurm-gcp-sync.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
         - key: custom-compute-install
@@ -259,29 +207,15 @@ resources:
         - key: startup-script
           value: |
             {{ imports["scripts/startup.sh"]|indent(12) }}
+        - key: util_script
+          value: |
+            {{ imports["scripts/util.py"]|indent(12) }}
+        - key: config
+          value: |
+            {{ properties|safe|tojson(2)|indent(12) }}
         - key: setup_script
           value: |
-            {{ imports["scripts/setup.py"]|
-               indent(12)|
-               replace("@PROJECT@",env["project"])|
-               replace("@ZONE@",properties["zone"])|
-               replace("@INSTANCE_TYPE@","login")|
-               replace("@MUNGE_KEY@",properties["munge_key"])|
-               replace("@SLURM_VERSION@",properties["slurm_version"])|
-               replace("@DEF_SLURM_ACCT@",properties["default_account"])|
-               replace("@DEF_SLURM_USERS@",properties["default_users"])|
-               replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|
-               replace("@CLUSTER_NAME@",properties["cluster_name"])|
-               replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|
-               replace("@NFS_HOME_DIR@",properties["nfs_home_dir"])|
-               replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|
-               replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
-               replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
-               replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
-               replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])|
-               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
-               }}
+            {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
 {% endfor %}
@@ -344,28 +278,15 @@ resources:
         - key: startup-script
           value: |
             {{ imports["scripts/startup.sh"]|indent(12) }}
+        - key: util_script
+          value: |
+            {{ imports["scripts/util.py"]|indent(12) }}
+        - key: config
+          value: |
+            {{ properties|safe|tojson(2)|indent(12) }}
         - key: setup_script
           value: |
-            {{ imports["scripts/setup.py"]|
-               indent(12)|
-               replace("@PROJECT@",env["project"])|
-               replace("@ZONE@",properties["zone"])|
-               replace("@INSTANCE_TYPE@","compute")|
-               replace("@MUNGE_KEY@",properties["munge_key"])|
-               replace("@SLURM_VERSION@",properties["slurm_version"])|
-               replace("@DEF_SLURM_ACCT@",properties["default_account"])|
-               replace("@DEF_SLURM_USERS@",properties["default_users"])|
-               replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|
-               replace("@CLUSTER_NAME@",properties["cluster_name"])|
-               replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|
-               replace("@NFS_HOME_DIR@",properties["nfs_home_dir"])|
-               replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|
-               replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
-               replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
-               replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])|
-               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
-               }}
+            {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
         - key: shutdown-script
@@ -431,28 +352,15 @@ resources:
         - key: startup-script
           value: |
             {{ imports["scripts/startup.sh"]|indent(12) }}
+        - key: util_script
+          value: |
+            {{ imports["scripts/util.py"]|indent(12) }}
+        - key: config
+          value: |
+            {{ properties|safe|tojson(2)|indent(12) }}
         - key: setup_script
           value: |
-            {{ imports["scripts/setup.py"]|
-               indent(12)|
-               replace("@PROJECT@",env["project"])|
-               replace("@ZONE@",properties["zone"])|
-               replace("@INSTANCE_TYPE@","compute")|
-               replace("@MUNGE_KEY@",properties["munge_key"])|
-               replace("@SLURM_VERSION@",properties["slurm_version"])|
-               replace("@DEF_SLURM_ACCT@",properties["default_account"])|
-               replace("@DEF_SLURM_USERS@",properties["default_users"])|
-               replace("@EXTERNAL_COMPUTE_IPS@",properties["external_compute_ips"])|
-               replace("@CLUSTER_NAME@",properties["cluster_name"])|
-               replace("@NFS_HOME_SERVER@",properties["nfs_home_server"])|
-               replace("@NFS_HOME_DIR@",properties["nfs_home_dir"])|
-               replace("@NFS_APPS_SERVER@",properties["nfs_apps_server"])|
-               replace("@NFS_APPS_DIR@",properties["nfs_apps_dir"])|
-               replace("@CONTROLLER_SECONDARY_DISK@",properties["controller_secondary_disk"])|
-               replace("@SUSPEND_TIME@",properties["suspend_time"])|
-               replace("@PARTITIONS@",properties["partitions"])|
-               replace("@LOGIN_NODE_COUNT@",properties["login_node_count"])
-               }}
+            {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
 {% endfor %}
