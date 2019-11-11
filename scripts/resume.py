@@ -180,8 +180,8 @@ def create_instance(compute, zone, machine_type, instance_name, source_disk_imag
             'automaticRestart': False
         },
 
-    if 'labels' in cfg.partitions[pid]:
-        config['labels'] = cfg.partitions[pid]['labels'],
+    if 'compute_labels' in cfg.partitions[pid]:
+        config['labels'] = cfg.partitions[pid]['compute_labels'],
 
     if 'cpu_platform' in cfg.partitions[pid]:
         config['minCpuPlatform'] = cfg.partitions[pid]['cpu_platform'],
