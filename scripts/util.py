@@ -20,9 +20,9 @@ def get_metadata(path):
     return resp.text
 
 def get_pid(node_name):
-    """Convert <prefix>-XXYYYY"""
+    """Convert <prefix>-<pid>-<nid>"""
 
-    return int(node_name[-6:-4])
+    return int(node_name.split('-')[-2])
 
 class Config:
 

@@ -117,12 +117,11 @@ def main():
         page_token = ""
         g_nodes = []
         for i, part in enumerate(cfg.partitions):
-            pid = "{:02d}".format(i)
             while True:
                 resp = compute.instances().list(
                     project=cfg.project, zone=part['zone'],
                     pageToken=page_token,
-                    filter='name={}-compute{}*'.format(cfg.cluster_name, pid)
+                    filter='name={}-compute-{}-*'.format(cfg.cluster_name, i)
                 ).execute()
 
                 if "items" in resp:

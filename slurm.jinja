@@ -219,8 +219,7 @@ resources:
 
 {% for i in range(properties["partitions"]|length) %}
 {% for n in range(properties["partitions"][i]['static_node_count']) %}
-{% set nid = i*10000 + n %}
-- name: {{properties["cluster_name"]}}-compute{{ '%06d' % nid }}
+- name: {{properties["cluster_name"]}}-compute-{{i}}-{{n}}
   type: compute.v1.instance
   properties:
     zone: {{ properties["partitions"][i]["zone"] }}
@@ -293,8 +292,7 @@ resources:
 {% endfor %}
 
 {% for i in range(properties["partitions"]|length) %}
-{% set pid = i*10000 %}
-- name: {{properties["cluster_name"]}}-compute-image-{{ '%06d' % pid }}
+- name: {{properties["cluster_name"]}}-compute-image-{{i}}-0
   type: compute.v1.instance
   properties:
     zone: {{ properties["partitions"][i]["zone"] }}

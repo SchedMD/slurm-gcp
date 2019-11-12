@@ -61,7 +61,6 @@ SLURM_LOG = Path('/var/log/slurm')
 SEC_DISK_DIR = Path('/mnt/disks/sec')
 RESUME_TIMEOUT = 300
 SUSPEND_TIMEOUT = 300
-MAX_PARTITION_SIZE = 10000
 
 CONTROL_MACHINE = cfg.cluster_name + '-controller'
 
@@ -482,21 +481,17 @@ GresTypes=gpu
         static_range = ''
         if part['static_node_count']:
             if part['static_node_count'] > 1:
-                static_range = '{}-compute[{:06}-{:06}]'.format(
-                    cfg.cluster_name,
-                    i*MAX_PARTITION_SIZE,
-                    i*MAX_PARTITION_SIZE + part['static_node_count'] - 1)
+                static_range = '{}-compute-{}-[0-{}]'.format(
+                    cfg.cluster_name, i, part['static_node_count'] - 1)
             else:
-                static_range = '{}-compute{:06}'.format(cfg.cluster_name,
-                                                        i*MAX_PARTITION_SIZE)
+                static_range = f"{cfg.cluster_name}-compute-{i}-0"
 
         cloud_range = ""
         if (part['max_node_count'] and
                 (part['max_node_count'] != part['static_node_count'])):
-            cloud_range = "{}-compute[{:06d}-{:06d}]".format(
-                cfg.cluster_name,
-                i*MAX_PARTITION_SIZE+part['static_node_count'],
-                i*MAX_PARTITION_SIZE+part['max_node_count']-1)
+            cloud_range = "{}-compute-{}-[{}-{}]".format(
+                cfg.cluster_name, i, part['static_node_count'],
+                part['max_node_count'] - 1)
 
         conf += ' '.join(("NodeName=DEFAULT",
                           "Sockets="        + str(machine['sockets']),
@@ -518,9 +513,7 @@ GresTypes=gpu
             conf += "NodeName={} State=CLOUD\n".format(cloud_range)
 
         # Partitions
-        part_nodes = "[{:06}-{:06}]".format(
-            i*MAX_PARTITION_SIZE,
-            i*MAX_PARTITION_SIZE+part['max_node_count']-1)
+        part_nodes = f"-{i}-[0-{part['max_node_count'] - 1}]"
 
         total_threads = machine['threads']*machine['cores']*machine['sockets']
         def_mem_per_cpu = max(100, machine['memory'] // total_threads)
@@ -618,9 +611,8 @@ ConstrainDevices=yes
         if part['gpu_count'] > 1:
             driver_range = '[0-{}]'.format(part['gpu_count']-1)
 
-        gpu_conf += ("NodeName={}-compute[{:06}-{:06}] Name=gpu File=/dev/nvidia{}\n"
-                     .format(cfg.cluster_name, i*MAX_PARTITION_SIZE,
-                             i*MAX_PARTITION_SIZE+part['max_node_count']-1,
+        gpu_conf += ("NodeName={}-compute-{}-[0-{}] Name=gpu File=/dev/nvidia{}\n"
+                     .format(cfg.cluster_name, i, part['max_node_count'] - 1,
                              driver_range))
     if gpu_conf:
         with (etc_dir/'gres.conf').open('w') as f:
@@ -1021,9 +1013,9 @@ def remove_startup_scripts(hostname):
                 continue
             for j in range(part['static_node_count']):
                 subprocess.call(shlex.split(
-                    "{} {}-compute{:06} --zone={} --keys={}"
-                    .format(cmd, cfg.cluster_name, i * MAX_PARTITION_SIZE + j,
-                            part['zone'], keys)))
+                    "{} {}-compute-{}-{} --zone={} --keys={}"
+                    .format(cmd, cfg.cluster_name, i, j, part['zone'],
+                            keys)))
 # END remove_startup_scripts()
 
 
