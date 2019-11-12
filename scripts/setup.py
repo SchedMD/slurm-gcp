@@ -177,8 +177,7 @@ Either log out and log back in or cd into ~.
 def install_packages():
 
     if cfg.instance_type == 'compute':
-        pid = util.get_pid(socket.gethostname())
-        if cfg.partitions[pid]['gpu_count']:
+        if next((part for part in cfg.partitions if part['gpu_count']), None):
             rpm = 'cuda-repo-rhel7-10.0.130-1.x86_64.rpm'
             subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
             subprocess.call(shlex.split(
@@ -963,17 +962,14 @@ def create_compute_image():
     ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
     hostname = socket.gethostname()
-    pid = util.get_pid(hostname)
-    if cfg.partitions[pid]['gpu_count']:
+    if next((part for part in cfg.partitions if part['gpu_count']), None):
         time.sleep(300)
 
     print("Creating compute image...")
     subprocess.call(shlex.split(
-        "gcloud compute images create {0}-compute-image-{4}-{3} "
-        "--source-disk {1} --source-disk-zone {2} --force "
-        "--family {0}-compute-image-{4}-family"
-        .format(cfg.cluster_name, hostname, cfg.partitions[pid]["zone"],
-                ver, pid)))
+        f"gcloud compute images create {cfg.cluster_name}-compute-image-{ver} "
+        f"--source-disk {hostname} --source-disk-zone {cfg.zone} --force "
+        f"--family {cfg.cluster_name}-compute-image-family"))
 # END create_compute_image()
 
 
@@ -1144,16 +1140,16 @@ def main():
 
             create_compute_image()
 
-            pid = util.get_pid(hostname)
-            subprocess.call(shlex.split(
-                "{}/bin/scontrol update partitionname={} state=up".format(
-                    CURR_SLURM_DIR, cfg.partitions[pid]['name'])))
+            for part in cfg.partitions:
+                subprocess.call(shlex.split(
+                    "{}/bin/scontrol update partitionname={} state=up".format(
+                        CURR_SLURM_DIR, part['name'])))
 
             remove_startup_scripts(hostname)
 
             subprocess.call(shlex.split(
-                "gcloud compute instances stop {} --zone {} --quiet"
-                .format(hostname, cfg.partitions[pid]['zone'])))
+                f"gcloud compute instances stop {hostname} "
+                f"--zone {cfg.zone} --quiet"))
         else:
             subprocess.call(shlex.split("systemctl start slurmd"))
 

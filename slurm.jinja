@@ -291,22 +291,11 @@ resources:
 {% endfor %}
 {% endfor %}
 
-{% for i in range(properties["partitions"]|length) %}
-- name: {{properties["cluster_name"]}}-compute-image-{{i}}-0
+- name: {{properties["cluster_name"]}}-compute-image-0-0
   type: compute.v1.instance
   properties:
-    zone: {{ properties["partitions"][i]["zone"] }}
-    machineType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["partitions"][i]["zone"] }}/machineTypes/{{ properties["partitions"][i]["machine_type"] }}
-  {% if properties["partitions"][i]["cpu_platform"] %}
-    minCpuPlatform: {{ properties["cpu_platform"]}}
-  {% endif %}
-  {% if properties["partitions"][i]["gpu_type"] %}
-    guestAccelerators:
-    - acceleratorType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["partitions"][i]["zone"] }}/acceleratorTypes/{{ properties["partitions"][i]["gpu_type"] }}
-      acceleratorCount: {{ properties["partitions"][i]['gpu_count']}}
-    scheduling:
-      onHostMaintenance: TERMINATE
-  {% endif %}
+    zone: {{ properties["zone"] }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/machineTypes/{{ properties["compute_image_machine_type"] }}
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -314,7 +303,7 @@ resources:
       autoDelete: true
       initializeParams:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
-        diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["partitions"][i]["zone"] }}/diskTypes/{{ properties["partitions"][i]["compute_disk_type"] }}
+        diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["compute_image_disk_type"] }}
         diskSizeGb: 10
   {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
     networkInterfaces:
@@ -338,10 +327,10 @@ resources:
     tags:
       items:
         - compute
-  {% if properties["partitions"][i]["compute_labels"] %}
+{% if properties["compute_image_labels"] %}
     labels:
-      {{properties["partitions"][i]["compute_labels"]}}
-  {% endif %}
+      {{properties["compute_image_labels"]}}
+{% endif %}
     metadata:
       items:
         - key: startup-script
@@ -358,4 +347,3 @@ resources:
             {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
-{% endfor %}

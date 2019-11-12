@@ -52,8 +52,6 @@ instances = {}
 operations = {}
 retry_list = []
 
-src_disk_images = {}
-
 credentials = compute_engine.Credentials()
 
 http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
@@ -216,31 +214,26 @@ def added_instances_cb(request_id, response, exception):
 # [END added_instances_cb]
 
 
-def get_source_image(compute, node_name):
+def get_source_image(compute):
 
-    pid = util.get_pid(node_name)
-    if pid not in src_disk_images:
-        try:
-            image_response = compute.images().getFromFamily(
-                project=cfg.project,
-                family=cfg.cluster_name + f'-compute-image-{pid}-family'
-            ).execute()
-            if image_response['status'] != 'READY':
-                logging.debug("image not ready, using the startup script")
-                raise Exception("image not ready")
-            source_disk_image = image_response['selfLink']
-        except:
-            logging.error("No image found.")
-            sys.exit()
+    try:
+        image_response = compute.images().getFromFamily(
+            project=cfg.project,
+            family=cfg.cluster_name + '-compute-image-family'
+        ).execute()
+        if image_response['status'] != 'READY':
+            logging.debug("image not ready, using the startup script")
+            raise Exception("image not ready")
+        source_disk_image = image_response['selfLink']
+    except:
+        logging.error("No image found.")
+        sys.exit()
 
-        src_disk_images[pid] = source_disk_image
-
-    return src_disk_images[pid]
-
+    return source_disk_image
 # [END get_source_image]
 
 
-def add_instances(compute, node_list):
+def add_instances(compute, source_disk_image, node_list):
 
     batch_list = []
     curr_batch = 0
@@ -256,8 +249,6 @@ def add_instances(compute, node_list):
             batch_list.insert(
                 curr_batch,
                 compute.new_batch_http_request(callback=added_instances_cb))
-
-        source_disk_image = get_source_image(compute, node_name)
 
         pid = util.get_pid(node_name)
         batch_list[curr_batch].add(
@@ -293,8 +284,10 @@ def main(arg_nodes):
         show_hostname_cmd)).decode()
     node_list = nodes_str.splitlines()
 
+    source_disk_image = get_source_image(compute)
+
     while True:
-        add_instances(compute, node_list)
+        add_instances(compute, source_disk_image, node_list)
         if not len(retry_list):
             break
 
