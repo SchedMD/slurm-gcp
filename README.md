@@ -112,9 +112,7 @@ Steps:
        # Optional timer fields
        #suspend_time               : 300
 
-       default_users           : < GCP user email addr, comma separated >
        #slurm_version           : 19.05-latest
-       #default_account         : default
 
        partitions :
 

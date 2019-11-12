@@ -37,8 +37,6 @@ required:
 - cluster_name
 - controller_machine_type
 - compute_image_machine_type
-- default_account
-- default_users
 - login_machine_type
 - private_google_access
 - region
@@ -160,16 +158,6 @@ properties:
     default     : default
     description : Service Account for compute nodes.
                   https://cloud.google.com/compute/docs/access/service-accounts
-
-  default_account:
-    type        : string
-    default     : default
-    description : Default account to setup in accounting.
-
-  default_users:
-    type        : string
-    description : Default users to add to accounting. Added to default_account.
-                  Users can be added later using sacctmgr.
 
   external_compute_ips:
     type        : boolean

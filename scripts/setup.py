@@ -429,7 +429,7 @@ SelectTypeParameters=CR_Core_Memory
 #
 #
 # LOGGING AND ACCOUNTING
-AccountingStorageEnforce=associations,limits,qos,safe
+#AccountingStorageEnforce=associations,limits,qos,safe
 AccountingStorageHost={CONTROL_MACHINE}
 #AccountingStorageLoc=
 #AccountingStoragePass=
@@ -1090,21 +1090,9 @@ def main():
         # Wait for slurmdbd to come up
         time.sleep(5)
 
-        oslogin_chars = ['@', '.']
-
-        SLURM_USERS = cfg.default_users
-
-        for char in oslogin_chars:
-            SLURM_USERS = SLURM_USERS.replace(char, '_')
-
         sacctmgr = f"{CURR_SLURM_DIR}/bin/sacctmgr -i"
-        subprocess.call(shlex.split(
-            sacctmgr + " add cluster " + cfg.cluster_name))
-        subprocess.call(shlex.split(
-            sacctmgr + " add account " + cfg.default_account))
-        subprocess.call(shlex.split(
-            sacctmgr + " add user {} account={}"
-            .format(SLURM_USERS, cfg.default_account)))
+        subprocess.call(
+            shlex.split(sacctmgr + " add cluster " + cfg.cluster_name))
 
         subprocess.call(shlex.split("systemctl enable slurmctld"))
         subprocess.call(shlex.split("systemctl start slurmctld"))
