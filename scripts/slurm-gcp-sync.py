@@ -147,7 +147,8 @@ def main():
                 #   mark down in slurm
                 #   start them in gcp
                 if g_node and (g_node['status'] == "TERMINATED"):
-                    to_down.append(s_node)
+                    if not s_state.base.startswith('DOWN'):
+                        to_down.append(s_node)
                     if (cfg.partitions[pid]["preemptible_bursting"]):
                         to_start.append(s_node)
 
