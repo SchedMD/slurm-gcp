@@ -178,8 +178,7 @@ Either log out and log back in or cd into ~.
 def install_packages():
 
     if cfg.instance_type == 'compute':
-        hostname = socket.gethostname()
-        pid = int(hostname[-6:-4])
+        pid = util.get_pid(socket.gethostname())
         if cfg.partitions[pid]['gpu_count']:
             rpm = 'cuda-repo-rhel7-10.0.130-1.x86_64.rpm'
             subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
@@ -838,8 +837,7 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """.format(CURR_SLURM_DIR))
 
     if cfg.instance_type == 'compute':
-        hostname = socket.gethostname()
-        pid = int(hostname[-6:-4])
+        pid = util.get_pid(socket.gethostname())
         if cfg.partitions[pid]['gpu_count']:
             with open('/etc/profile.d/cuda.sh', 'w') as f:
                 f.write("""
@@ -973,7 +971,7 @@ def create_compute_image():
     ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
     hostname = socket.gethostname()
-    pid = int(hostname[-6:-4])
+    pid = util.get_pid(hostname)
     if cfg.partitions[pid]['gpu_count']:
         time.sleep(300)
 
@@ -1154,7 +1152,7 @@ def main():
 
             create_compute_image()
 
-            pid = int(hostname[-6:-4])
+            pid = util.get_pid(hostname)
             subprocess.call(shlex.split(
                 "{}/bin/scontrol update partitionname={} state=up".format(
                     CURR_SLURM_DIR, cfg.partitions[pid]['name'])))

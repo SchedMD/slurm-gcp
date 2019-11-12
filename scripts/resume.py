@@ -107,7 +107,7 @@ def update_slurm_node_addrs(compute):
 def create_instance(compute, zone, machine_type, instance_name,
                     source_disk_image):
 
-    pid = int(instance_name[-6:-4])
+    pid = util.get_pid(instance_name)
     # Configure the machine
     machine_type_path = f'zones/{zone}/machineTypes/{machine_type}'
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
@@ -218,8 +218,7 @@ def added_instances_cb(request_id, response, exception):
 
 def get_source_image(compute, node_name):
 
-    pid = int(node_name[-6:-4])
-
+    pid = util.get_pid(node_name)
     if pid not in src_disk_images:
         try:
             image_response = compute.images().getFromFamily(
@@ -260,7 +259,7 @@ def add_instances(compute, node_list):
 
         source_disk_image = get_source_image(compute, node_name)
 
-        pid = int(node_name[-6:-4])
+        pid = util.get_pid(node_name)
         batch_list[curr_batch].add(
             create_instance(compute, cfg.partitions[pid]['zone'],
                             cfg.partitions[pid]['machine_type'], node_name,

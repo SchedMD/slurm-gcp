@@ -68,7 +68,7 @@ def start_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=start_instances_cb))
 
-        pid = int(node[-6:-4])
+        pid = util.get_pid(node)
         batch_list[curr_batch].add(
             compute.instances().start(project=cfg.project,
                                       zone=cfg.partitions[pid]['zone'],
@@ -140,7 +140,7 @@ def main():
             g_node = next((item for item in g_nodes
                            if item["name"] == s_node),
                           None)
-            pid = int(s_node[-6:-4])
+            pid = util.get_pid(s_node)
 
             if (('POWER' not in s_state.flags) and
                     ('POWERING_DOWN' not in s_state.flags)):
