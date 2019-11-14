@@ -219,7 +219,7 @@ def get_source_image(compute):
     try:
         image_response = compute.images().getFromFamily(
             project=cfg.project,
-            family=cfg.cluster_name + '-compute-image-family'
+            family=f"{cfg.compute_node_prefix}-image-family"
         ).execute()
         if image_response['status'] != 'READY':
             logging.debug("image not ready, using the startup script")

@@ -121,7 +121,7 @@ def main():
                 resp = compute.instances().list(
                     project=cfg.project, zone=part['zone'],
                     pageToken=page_token,
-                    filter='name={}-compute-{}-*'.format(cfg.cluster_name, i)
+                    filter=f"name={cfg.compute_node_prefix}-{i}-*"
                 ).execute()
 
                 if "items" in resp:

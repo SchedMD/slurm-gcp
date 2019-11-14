@@ -16,6 +16,7 @@
 # limitations under the License.
 
 {% set ignored = properties.__setitem__('project', env['project'].encode('ascii')) %}
+{% set ignored = properties.__setitem__('compute_node_prefix', (properties["cluster_name"] ~ "-compute").encode('ascii')) %}
 {% set ignored = properties.__setitem__('cluster_network', (properties["cluster_name"] ~ "-slurm-network").encode('ascii')) %}
 {% set ignored = properties.__setitem__('cluster_subnet', (properties["cluster_name"] ~ "-slurm-subnet").encode('ascii')) %}
 
@@ -222,7 +223,7 @@ resources:
 
 {% for i in range(properties["partitions"]|length) %}
 {% for n in range(properties["partitions"][i]['static_node_count']) %}
-- name: {{properties["cluster_name"]}}-compute-{{i}}-{{n}}
+- name: {{properties["compute_node_prefix"]}}-{{i}}-{{n}}
   type: compute.v1.instance
   properties:
     zone: {{ properties["partitions"][i]["zone"] }}
@@ -291,7 +292,7 @@ resources:
 {% endfor %}
 {% endfor %}
 
-- name: {{properties["cluster_name"]}}-compute-image-0-0
+- name: {{properties["compute_node_prefix"]}}-image-0-0
   type: compute.v1.instance
   properties:
     zone: {{ properties["zone"] }}

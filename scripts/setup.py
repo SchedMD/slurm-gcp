@@ -480,16 +480,16 @@ GresTypes=gpu
         static_range = ''
         if part['static_node_count']:
             if part['static_node_count'] > 1:
-                static_range = '{}-compute-{}-[0-{}]'.format(
-                    cfg.cluster_name, i, part['static_node_count'] - 1)
+                static_range = '{}-{}-[0-{}]'.format(
+                    cfg.compute_node_prefix, i, part['static_node_count'] - 1)
             else:
-                static_range = f"{cfg.cluster_name}-compute-{i}-0"
+                static_range = f"{cfg.compute_node_prefix}-{i}-0"
 
         cloud_range = ""
         if (part['max_node_count'] and
                 (part['max_node_count'] != part['static_node_count'])):
-            cloud_range = "{}-compute-{}-[{}-{}]".format(
-                cfg.cluster_name, i, part['static_node_count'],
+            cloud_range = "{}-{}-[{}-{}]".format(
+                cfg.compute_node_prefix, i, part['static_node_count'],
                 part['max_node_count'] - 1)
 
         conf += ' '.join(("NodeName=DEFAULT",
@@ -610,9 +610,9 @@ ConstrainDevices=yes
         if part['gpu_count'] > 1:
             driver_range = '[0-{}]'.format(part['gpu_count']-1)
 
-        gpu_conf += ("NodeName={}-compute-{}-[0-{}] Name=gpu File=/dev/nvidia{}\n"
-                     .format(cfg.cluster_name, i, part['max_node_count'] - 1,
-                             driver_range))
+        gpu_conf += ("NodeName={}-{}-[0-{}] Name=gpu File=/dev/nvidia{}\n"
+                     .format(cfg.compute_node_prefix, i,
+                             part['max_node_count'] - 1, driver_range))
     if gpu_conf:
         with (etc_dir/'gres.conf').open('w') as f:
             f.write(gpu_conf)
@@ -967,9 +967,9 @@ def create_compute_image():
 
     print("Creating compute image...")
     subprocess.call(shlex.split(
-        f"gcloud compute images create {cfg.cluster_name}-compute-image-{ver} "
+        f"gcloud compute images create {cfg.compute_node_prefix}-image-{ver} "
         f"--source-disk {hostname} --source-disk-zone {cfg.zone} --force "
-        f"--family {cfg.cluster_name}-compute-image-family"))
+        f"--family {cfg.compute_node_prefix}-image-family"))
 # END create_compute_image()
 
 
@@ -988,7 +988,7 @@ def remove_startup_scripts(hostname):
 
     cmd = "gcloud compute instances remove-metadata"
     keys = "startup-script,setup_script,util_script,config"
-    if f"{cfg.cluster_name}-compute-image" in hostname:
+    if f"{cfg.compute_node_prefix}-image" in hostname:
         subprocess.call(shlex.split(
             f"{cmd} {hostname} --zone={cfg.zone} --keys={keys}"))
 
@@ -1009,8 +1009,8 @@ def remove_startup_scripts(hostname):
                 continue
             for j in range(part['static_node_count']):
                 subprocess.call(shlex.split(
-                    "{} {}-compute-{}-{} --zone={} --keys={}"
-                    .format(cmd, cfg.cluster_name, i, j, part['zone'],
+                    "{} {}-{}-{} --zone={} --keys={}"
+                    .format(cmd, cfg.compute_node_prefix, i, j, part['zone'],
                             keys)))
 # END remove_startup_scripts()
 
@@ -1124,7 +1124,7 @@ def main():
             # Ignore blank files with no shell magic.
             pass
 
-        if cfg.cluster_name + '-compute-image' in hostname:
+        if f"{cfg.compute_node_prefix}-image" in hostname:
 
             create_compute_image()
 

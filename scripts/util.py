@@ -38,6 +38,7 @@ class Config:
                    'cluster_subnet',
                    'vpc_subnet',
                    'shared_vpc_host_proj',
+                   'compute_node_prefix',
                    'compute_node_service_account',
                    'compute_node_scopes',
                    'partitions',
