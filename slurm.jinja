@@ -285,9 +285,6 @@ resources:
             {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
-        - key: shutdown-script
-          value: |
-            {{ imports["scripts/compute-shutdown"]|indent(12) }}
 {% endfor %}
 {% endfor %}
 
