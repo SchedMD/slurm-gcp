@@ -40,8 +40,8 @@ NETWORK_TYPE = 'subnetwork'
 NETWORK      = ("projects/{}/regions/{}/subnetworks/{}"
                 .format(cfg.project, cfg.region, cfg.cluster_subnet))
 
-SCONTROL     = '/apps/slurm/current/bin/scontrol'
-LOGFILE      = '/var/log/slurm/resume.log'
+SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
+LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 
 TOT_REQ_CNT = 1000
 

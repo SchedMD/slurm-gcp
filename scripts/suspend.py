@@ -30,8 +30,8 @@ import util
 
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
-SCONTROL     = '/apps/slurm/current/bin/scontrol'
-LOGFILE      = '/var/log/slurm/suspend.log'
+SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
+LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 
 TOT_REQ_CNT = 1000
 

@@ -31,8 +31,8 @@ import util
 
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
-SCONTROL = '/apps/slurm/current/bin/scontrol'
-LOGDIR = Path('/var/log/slurm')
+SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
+LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 
 TOT_REQ_CNT = 1000
 
@@ -231,23 +231,22 @@ def main():
 
 
 if __name__ == '__main__':
-    file_name = os.path.basename(__file__)
 
     # silence module logging
     for logger in logging.Logger.manager.loggerDict:
         logging.getLogger(logger).setLevel(logging.WARNING)
 
     logging.basicConfig(
-        filename=(LOGDIR/file_name).with_suffix('.log'),
+        filename=(LOGFILE),
         format='%(asctime)s %(name)s %(levelname)s: %(message)s',
         level=logging.DEBUG)
 
     # only run one instance at a time
-    pid_file = '/tmp/{}.pid'.format(file_name)
-    fp = open(pid_file, 'w')
-    try:
-        fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        sys.exit(0)
+    pid_file = (Path('/tmp')/Path(__file__).name).with_suffix('.pid')
+    with pid_file.open('w') as fp:
+        try:
+            fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError:
+            sys.exit(0)
 
     main()

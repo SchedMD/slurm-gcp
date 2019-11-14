@@ -41,6 +41,8 @@ class Config:
                    'compute_node_prefix',
                    'compute_node_service_account',
                    'compute_node_scopes',
+                   'slurm_cmd_path',
+                   'log_dir',
                    'partitions',
                    )
     PROPERTIES = (*SAVED_PROPS,

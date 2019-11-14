@@ -626,6 +626,9 @@ def install_meta_files():
     if not scripts_path.exists():
         scripts_path.mkdir(parents=True)
 
+    cfg.slurm_cmd_path = str(CURR_SLURM_DIR/'bin')
+    cfg.log_dir = str(SLURM_LOG)
+
     cfg.save_config(scripts_path/'config.yaml')
 
     meta_files = [
