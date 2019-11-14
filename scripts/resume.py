@@ -153,12 +153,13 @@ def create_instance(compute, zone, machine_type, instance_name,
         }
     }
 
-    shutdown_script = open(
-        '/apps/slurm/scripts/compute-shutdown', 'r').read()
-    config['metadata']['items'].append({
-        'key': 'shutdown-script',
-        'value': shutdown_script
-    })
+    shutdown_script_path = Path('/apps/slurm/scripts/compute-shutdown')
+    if shutdown_script_path.exists():
+        with shutdown_script_path.open() as f:
+            config['metadata']['items'].append({
+                'key': 'shutdown-script',
+                'value': f.read()
+            })
 
     if "gpu_type" in cfg.partitions[pid]:
         accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
