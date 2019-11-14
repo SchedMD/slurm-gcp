@@ -19,6 +19,7 @@
 
 import argparse
 import logging
+import os
 import shlex
 import subprocess
 import time
@@ -38,6 +39,8 @@ TOT_REQ_CNT = 1000
 operations = {}
 retry_list = []
 
+if cfg.google_app_cred_path:
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
 def delete_instances_cb(request_id, response, exception):
     if exception is not None:

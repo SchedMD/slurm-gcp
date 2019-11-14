@@ -20,6 +20,7 @@
 import argparse
 import httplib2
 import logging
+import os
 import shlex
 import subprocess
 import sys
@@ -52,10 +53,16 @@ instances = {}
 operations = {}
 retry_list = []
 
+if cfg.google_app_cred_path:
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
+
 credentials = compute_engine.Credentials()
 
-http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
-authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
+http = None
+authorized_http = None
+if not cfg.google_app_cred_path:
+    http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
+    authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 
 
 def wait_for_operation(compute, project, zone, operation):

@@ -43,6 +43,7 @@ class Config:
                    'compute_node_scopes',
                    'slurm_cmd_path',
                    'log_dir',
+                   'google_app_cred_path',
                    'partitions',
                    )
     PROPERTIES = (*SAVED_PROPS,

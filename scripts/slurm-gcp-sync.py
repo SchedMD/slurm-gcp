@@ -38,6 +38,8 @@ TOT_REQ_CNT = 1000
 
 retry_list = []
 
+if cfg.google_app_cred_path:
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
 def start_instances_cb(request_id, response, exception):
     if exception is not None:
