@@ -35,6 +35,7 @@ class Config:
                    'slurm_version',
                    'cluster_name',
                    'external_compute_ips',
+                   'cluster_subnet',
                    'vpc_subnet',
                    'shared_vpc_host_proj',
                    'compute_node_service_account',

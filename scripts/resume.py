@@ -37,8 +37,8 @@ import util
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
 NETWORK_TYPE = 'subnetwork'
-NETWORK      = ("projects/{}/regions/{}/subnetworks/{}-slurm-subnet".
-                format(cfg.project, cfg.region, cfg.cluster_name))
+NETWORK      = ("projects/{}/regions/{}/subnetworks/{}"
+                .format(cfg.project, cfg.region, cfg.cluster_subnet))
 
 SCONTROL     = '/apps/slurm/current/bin/scontrol'
 LOGFILE      = '/var/log/slurm/resume.log'

@@ -16,13 +16,16 @@
 # limitations under the License.
 
 {% set ignored = properties.__setitem__('project', env['project'].encode('ascii')) %}
+{% set ignored = properties.__setitem__('cluster_network', (properties["cluster_name"] ~ "-slurm-network").encode('ascii')) %}
+{% set ignored = properties.__setitem__('cluster_subnet', (properties["cluster_name"] ~ "-slurm-subnet").encode('ascii')) %}
+
 resources:
 {% if not properties['vpc_subnet'] %}
-- name: {{properties["cluster_name"]}}-slurm-network
+- name: {{properties["cluster_network"]}}
   type: compute.v1.network
   properties:
     autoCreateSubnetworks: false
-- name: {{properties["cluster_name"]}}-slurm-subnet
+- name: {{properties["cluster_subnet"]}}
   type: compute.v1.subnetwork
   properties:
     network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
