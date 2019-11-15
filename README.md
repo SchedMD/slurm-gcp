@@ -266,7 +266,7 @@ Steps:
 
 ### Preemptible VMs
    With preemptible_bursting on, when a node is found preempted, or stopped,
-   the slurm-gcp sync script will mark the node as "down" and will attempt to
+   the slurmsync script will mark the node as "down" and will attempt to
    restart the node. If there were any batch jobs on the preempted node, they
    will be requeued -- interactive (e.g. srun, salloc) jobs can't be requeued.
 
@@ -370,14 +370,14 @@ following are the steps to do this.
    7. Select the **Compute Admin** and **Service Account User** roles.
    8. Click ADD
 
-6. Modify *resume.py*, *slurm-gcp-sync.py* and *suspend.py* in the
+6. Modify *resume.py*, *slurmsync.py* and *suspend.py* in the
    /apps/slurm/scripts directory on project1's controller instance to
    communicate with project2.
 
    Modify the following fields with the appropriate values:
    e.g.
    ```
-   # resume.py, suspend.py, slurm-gcp-sync.py
+   # resume.py, suspend.py, slurmsync.py
    PROJECT      = '<project2 id>'
    ZONE         = '<project2 zone>'
 

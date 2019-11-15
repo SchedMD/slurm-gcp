@@ -148,9 +148,9 @@ resources:
         - key: slurm_suspend
           value: |
             {{ imports["scripts/suspend.py"]|indent(12) }}
-        - key: slurm-gcp-sync
+        - key: slurmsync
           value: |
-            {{ imports["scripts/slurm-gcp-sync.py"]|indent(12) }}
+            {{ imports["scripts/slurmsync.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
         - key: custom-compute-install

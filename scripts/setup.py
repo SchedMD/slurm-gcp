@@ -634,7 +634,7 @@ def install_meta_files():
     meta_files = [
         ('suspend.py', 'slurm_suspend'),
         ('resume.py', 'slurm_resume'),
-        ('slurm-gcp-sync.py', 'slurm-gcp-sync'),
+        ('slurmsync.py', 'slurmsync'),
         ('util.py', 'util_script'),
         ('compute-shutdown', 'compute-shutdown'),
         ('custom-compute-install', 'custom-compute-install'),
@@ -944,7 +944,7 @@ RPCNFSDCOUNT=256
 
 def setup_sync_cronjob():
 
-    os.system(("echo '*/1 * * * * {}/slurm/scripts/slurm-gcp-sync.py' "
+    os.system(("echo '*/1 * * * * {}/slurm/scripts/slurmsync.py' "
               "| crontab -u root -").format(APPS_DIR))
 
 # END setup_sync_cronjob()

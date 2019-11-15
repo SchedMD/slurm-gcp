@@ -26,7 +26,7 @@ imports:
 - path: scripts/custom-compute-install
 - path: scripts/custom-controller-install
 - path: scripts/resume.py
-- path: scripts/slurm-gcp-sync.py
+- path: scripts/slurmsync.py
 - path: scripts/startup.sh
 - path: scripts/setup.py
 - path: scripts/suspend.py
