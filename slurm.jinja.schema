@@ -39,7 +39,6 @@ required:
 - compute_image_machine_type
 - login_machine_type
 - private_google_access
-- region
 - slurm_version
 - zone
 
@@ -235,10 +234,6 @@ properties:
     type        : boolean
     default     : True
     description : Private Google Access is Enabled (True/False).
-
-  region:
-    type        : string
-    description : Region to run the instances in.
 
   shared_vpc_host_project:
     type        : string
