@@ -2,6 +2,7 @@
 
 PACKAGES=(
         'bind-utils'
+        'environment-modules'
         'epel-release'
         'gcc'
         'git'
