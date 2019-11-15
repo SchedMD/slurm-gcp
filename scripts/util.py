@@ -55,6 +55,7 @@ class Config:
                   'nfs_home_dir',
                   'nfs_apps_server',
                   'nfs_apps_dir',
+                  'ompi_version',
                   'controller_secondary_disk',
                   'suspend_time',
                   'login_node_count',

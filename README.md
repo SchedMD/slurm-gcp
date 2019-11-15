@@ -112,6 +112,7 @@ Steps:
        #suspend_time               : 300
 
        #slurm_version           : 19.05-latest
+       #ompi_version            : v3.1.x
 
        partitions :
 

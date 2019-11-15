@@ -67,6 +67,7 @@ optional:
 - nfs_apps_server
 - nfs_home_dir
 - nfs_home_server
+- ompi_version
 - shared_vpc_host_project
 - suspend_time
 - vpc_net
@@ -229,6 +230,12 @@ properties:
   nfs_home_server:
     type        : string
     description : IP address of NFS server hosting home dir
+
+  ompi_version  :
+    type        : string
+    enum        : ["v3.1.x"]
+    description : Version/branch of OpenMPI to install with Slurm/PMI support.
+                  Allows mpi programs to be run with srun.
 
   private_google_access:
     type        : boolean
