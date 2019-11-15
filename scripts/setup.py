@@ -230,13 +230,7 @@ WantedBy=multi-user.target
 
     subprocess.call(shlex.split("systemctl enable munge"))
 
-    if (cfg.instance_type != 'controller'):
-        with open('/etc/fstab', 'a') as f:
-            f.write("\n{1}:{0} \t{0} \tnfs \trw,hard,intr \t0 \t0"
-                    .format(MUNGE_DIR, CONTROL_MACHINE))
-        return
-
-    if cfg.munge_key:
+    if cfg.munge_key and instance_type != 'controller':
         with (MUNGE_DIR/'munge.key').open('w') as f:
             f.write(cfg.munge_key)
 
@@ -258,15 +252,25 @@ def start_munge():
 
 def setup_nfs_exports():
 
-    with open('/etc/exports', 'w') as f:
-        if not cfg.nfs_home_server:
+    if EXTERNAL_MOUNT_HOME == 0:
+        os.system("sed -i '/\/home/d' /etc/exports")
+        with open('/etc/exports', 'w') as f:
             f.write("\n/home  *(rw,no_subtree_check,no_root_squash)")
-        if not cfg.nfs_apps_server:
+
+    if EXTERNAL_MOUNT_APPS == 0:
+        os.system(f"sed -i '/\{APPS_DIR}/d' /etc/exports")
+        with open('/etc/exports', 'a') as f:
             f.write(f"\n{APPS_DIR}  *(rw,no_subtree_check,no_root_squash)")
-        f.write("\n/etc/munge *(rw,no_subtree_check,no_root_squash)")
-        if cfg.controller_secondary_disk:
-            f.write("\n{} *(rw,no_subtree_check,no_root_squash)"
-                    .format(SEC_DISK_DIR))
+
+    if EXTERNAL_MOUNT_MUNGE == 0:
+        os.system("sed -i '/\/etc\/munge/d' /etc/exports")
+        with open('/etc/exports', 'a') as f:
+            f.write("\n/etc/munge *(rw,no_subtree_check,no_root_squash)")
+
+    if cfg.controller_secondary_disk:
+        os.system(f"sed -i '/{SEC_DISK_DIR}/d' /etc/exports")
+        with open('/etc/exports', 'a') as f:
+            f.write(f"\n{SEC_DISK_DIR} *(rw,no_subtree_check,no_root_squash)")
 
     subprocess.call(shlex.split("exportfs -a"))
 # END setup_nfs_exports()
@@ -817,7 +821,7 @@ def install_compute_service_scripts():
         f.write("""
 [Unit]
 Description=Slurm node daemon
-After=network.target munge.service
+After=network.target munge.service home.mount apps.mount etc-munge.mount
 ConditionPathExists={prefix}/etc/slurm.conf
 
 [Service]
@@ -859,6 +863,24 @@ LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
 # END setup_bash_profile()
 
+def cleanup_mounts():
+
+    print("ww Cleaning up mounts")
+    ## Clean up any old entries for /apps, /home, or /etc/munge from the provided image.
+    ## Any such configurations should be provided in the YAML network_storage field.
+    os.system("umount $(cat /etc/fstab | grep -v '#' | grep -v 'UUID' | awk '{print $2}')")
+    #os.system("sed -i '/{}:\//d' /etc/fstab".format(CONTROL_MACHINE))
+    #os.system("sed -i '/:{}/d' /etc/fstab".format(APPS_DIR))
+    #os.system("sed -i '/:\/apps/d' /etc/fstab")
+    #os.system("sed -i '/:\/home/d' /etc/fstab")
+    #os.system("sed -i '/:{}/d' /etc/fstab".format(MUNGE_DIR))
+    #os.system("sed -i '/:\/etc\/munge/d' /etc/fstab")
+    ('/etc/fstab')
+    if os.path.exists('/etc/fstab'):
+        os.remove('/etc/fstab')
+
+#END cleanup_mounts()
+
 
 def setup_ompi_bash_profile():
     if not cfg.ompi_version:
@@ -897,33 +919,95 @@ def setup_logrotate():
 # END setup_logrotate()
 
 
-def setup_nfs_apps_vols():
+def setup_network_storage(mounts):
+    print("ww Set up network storage")
 
-    with open('/etc/fstab', 'a') as f:
-        if not cfg.nfs_apps_server:
-            if cfg.instance_type != 'controller':
-                f.write("\n{1}:{0} \t{0} \tnfs \trw,hard,intr \t0 \t0"
-                        .format(APPS_DIR, CONTROL_MACHINE))
-        else:
-            f.write("\n{1}:{2} \t{0} \tnfs \trw,hard,intr \t0 \t0\n"
-                    .format(APPS_DIR, cfg.nfs_apps_server,
-                            cfg.nfs_apps_dir))
+    global EXTERNAL_MOUNT_APPS
+    global EXTERNAL_MOUNT_HOME
+    global EXTERNAL_MOUNT_MUNGE
 
-# END setup_nfs_apps_vols()
+    EXTERNAL_MOUNT_APPS = 0
+    EXTERNAL_MOUNT_HOME = 0
+    EXTERNAL_MOUNT_MUNGE = 0
+    cifs_installed = 0
 
+    fstab_path = Path('/etc/fstab')
 
-def setup_nfs_home_vols():
+#   hostname = socket.gethostname()
+    #if "controller" not in hostname:
+#    if cfg.instance_type == "compute":
+#        pid = int( hostname[-6:-4] )
+    for i in range(len(mounts)):
+        if not os.path.exists(mounts[i]["local_mount"]):
+            os.makedirs(mounts[i]["local_mount"])
+        # Check if we're going to overlap with what's normally hosted on the
+        # controller (/apps, /home, /etc/munge).
+        # If so delete the entries pointing to the controller, and tell the
+        # nodes.
+        if mounts[i]["local_mount"] == APPS_DIR:
+            EXTERNAL_MOUNT_APPS = 1
+        elif mounts[i]["local_mount"] == "/home":
+            EXTERNAL_MOUNT_HOME = 1
+        elif mounts[i]["local_mount"] == MUNGE_DIR:
+            EXTERNAL_MOUNT_MUNGE = 1
 
-    with open('/etc/fstab', 'a') as f:
-        if not cfg.nfs_home_server:
-            if ((cfg.instance_type != 'controller')):
-                f.write("\n{0}:/home \t/home \tnfs \trw,hard,intr \t0 \t0"
-                        .format(CONTROL_MACHINE))
-        else:
-            f.write("\t{0}:{1} \t/home \tnfs \trw,hard,intr \t0 \t0"
-                    .format(cfg.nfs_home_server, cfg.nfs_home_dir))
+        if ((mounts[i]["fs_type"] == "cifs") and (cifs_installed == 0)):
+            subprocess.call('sudo yum install -y cifs-utils')
+            cifs_installed = 1
+        elif ((mounts[i]["fs_type"] == "lustre") and (not os.path.exists('/sys/module/lustre'))):
+            os.makedirs("/tmp/lustre")
+            subprocess.call("sudo yum update -y", shell=True)
+            subprocess.call("sudo yum install -y wget libyaml", shell=True)
+            subprocess.call('for j in "kmod-lustre-client-2*.rpm" "lustre-client-2*.rpm"; do wget -r -l1 --no-parent -A "$j" "https://downloads.whamcloud.com/public/lustre/latest-release/el7.7.1908/client/RPMS/x86_64/" -P /tmp/lustre; done', shell=True)
+            subprocess.call('find /tmp/lustre -name "*.rpm" | xargs sudo rpm -ivh', shell=True)
+            subprocess.call("rm -rf /tmp/lustre", shell=True)
+            subprocess.call("modprobe lustre", shell=True)
+        elif ((mounts[i]["fs_type"] == "gcsfuse") and (not os.path.exists('/etc/yum.repos.d/gcsfuse.repo'))):
+            g = open('/etc/yum.repos.d/gcsfuse.repo', 'a')
+            g.write("""
+[gcsfuse]
+name=gcsfuse (packages.cloud.google.com)
+baseurl=https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg""")
+            g.close()
+            subprocess.call("sudo yum update -y", shell=True)
+            subprocess.call("sudo yum install -y gcsfuse", shell=True)
 
-# END setup_nfs_home_vols()
+        with fstab_path.open('a') as f:
+            remote_mount = mounts[i]["remote_mount"]
+            if (remote_mount[0] == "/"):
+                remote_mount = remote_mount[1:]
+
+            if ((mounts[i]["fs_type"] == "gcsfuse")):
+                mount_options = mounts[i]["mount_options"]
+                if (("nonempty" not in mounts[i]["mount_options"])):
+                    mount_options = mount_options + ",nonempty"
+
+                f.write("\n{0}    {1}     {2}      {3}  0     0"
+                        .format(remote_mount, mounts[i]["local_mount"],
+                                mounts[i]["fs_type"], mount_options))
+            else:
+                f.write("\n{0}:/{1}    {2}     {3}      {4}  0     0"
+                        .format(mounts[i]["server_ip"], remote_mount,
+                                mounts[i]["local_mount"], mounts[i]["fs_type"],
+                                mounts[i]["mount_options"]))
+
+    with fstab_path.open('a') as f:
+        if ((EXTERNAL_MOUNT_APPS == 0) and (cfg.instance_type != "controller")):
+            f.write("\n{0}:{1}    {1}     nfs      rw,hard,intr,_netdev  0     0"
+                    .format(CONTROL_MACHINE, APPS_DIR))
+        if ((EXTERNAL_MOUNT_HOME == 0) and (cfg.instance_type != "controller")):
+            f.write("\n{0}:/home    /home     nfs      rw,hard,intr,_netdev  0     0"
+                    .format(CONTROL_MACHINE))
+        if ((cfg.instance_type != "controller") and (EXTERNAL_MOUNT_MUNGE == 0)):
+            f.write("\n{1}:{0}    {0}     nfs      rw,hard,intr,_netdev  0     0"
+                    .format(MUNGE_DIR, CONTROL_MACHINE))
+
+#END setup_network_storage()
 
 
 def setup_nfs_sec_vols():
@@ -948,11 +1032,54 @@ def setup_secondary_disks():
 
 
 def mount_nfs_vols():
-    while subprocess.call(shlex.split("mount -a")):
-        print("Waiting for " + str(APPS_DIR) + " and /home to be mounted")
-        time.sleep(5)
 
-# END mount_nfs_vols()
+    if ((cfg.instance_type == "controller") and
+            (EXTERNAL_MOUNT_HOME == 0) and
+            (EXTERNAL_MOUNT_APPS == 0) and
+            (EXTERNAL_MOUNT_MUNGE == 0)):
+        subprocess.Popen(["mount","-a"])
+#    if ((cfg.instance_type != "controller") and ((EXTERNAL_MOUNT_HOME == 1) or (EXTERNAL_MOUNT_APPS == 1) or (EXTERNAL_MOUNT_MUNGE == 1))):
+    elif ((cfg.instance_type == "controller")):
+        while ((EXTERNAL_MOUNT_HOME == 1) and (not os.path.ismount("/home"))):
+            print("Waiting for /home to be mounted")
+            subprocess.Popen(["mount","/home"])
+            time.sleep(5)
+
+        while ((EXTERNAL_MOUNT_APPS == 1) and (not os.path.ismount(APPS_DIR))):
+            print(f"Waiting for {APPS_DIR} to be mounted")
+            subprocess.Popen(["mount",APPS_DIR])
+            #subprocess.call(['mount', '-a'])
+            time.sleep(5)
+
+        while ((EXTERNAL_MOUNT_MUNGE == 1) and (not os.path.ismount(MUNGE_DIR))):
+            print(f"Waiting for {MUNGE_DIR} to be mounted")
+            subprocess.Popen(["mount",MUNGE_DIR])
+            #subprocess.call(['mount', '-a'])
+            time.sleep(5)
+    else:
+        while (not os.path.ismount("/home")):
+            print("Waiting for /home to be mounted")
+            subprocess.Popen(["mount","/home"])
+            time.sleep(5)
+
+        while (not os.path.ismount(APPS_DIR)):
+            print(f"Waiting for {APPS_DIR} to be mounted")
+            subprocess.Popen(["mount",APPS_DIR])
+            #subprocess.call(['mount', '-a'])
+            time.sleep(5)
+
+        while (not os.path.ismount(MUNGE_DIR)):
+            print(f"Waiting for {MUNGE_DIR} to be mounted")
+            subprocess.Popen(["mount",MUNGE_DIR])
+            #subprocess.call(['mount', '-a'])
+            time.sleep(5)
+
+    subprocess.Popen(["mount","-a"])
+    #while subprocess.call(['mount', '-a']):
+    #    print("Waiting for all entries in /etc/fstab to be mounted")
+    #    time.sleep(5)
+
+#END mount_nfs_vols()
 
 
 # Tune the NFS server to support many mounts
@@ -979,6 +1106,7 @@ def setup_slurmd_cronjob():
     # subprocess.call(shlex.split('crontab < /apps/slurm/scripts/cron'))
     os.system("echo '*/2 * * * * if [ `systemctl status slurmd "
               "| grep -c inactive` -gt 0 ]; then mount -a; "
+              "systemctl restart munge; "
               "systemctl restart slurmd; fi' | crontab -u root -")
 # END setup_slurmd_cronjob()
 
@@ -1136,8 +1264,11 @@ def main():
             (cfg.instance_type == 'controller')):
         setup_secondary_disks()
 
-    setup_nfs_apps_vols()
-    setup_nfs_home_vols()
+    if cfg.instance_type == "compute":
+        pid = util.get_pid(hostname)
+        setup_network_storage(cfg.partitions[pid]["network_storage"])
+    else:
+        setup_network_storage(cfg.login_network_storage)
     setup_nfs_sec_vols()
 
     if not SLURM_LOG.exists():
@@ -1146,6 +1277,7 @@ def main():
 
     if cfg.instance_type == 'controller':
         mount_nfs_vols()
+        time.sleep(5)
         start_munge()
         install_slurm()
         install_ompi()
@@ -1201,10 +1333,10 @@ def main():
         print("Done installing controller")
     elif cfg.instance_type == 'compute':
         install_compute_service_scripts()
-        setup_slurmd_cronjob()
         mount_nfs_vols()
         start_munge()
         setup_nss_slurm()
+        setup_slurmd_cronjob()
 
         try:
             subprocess.call(APPS_DIR/'slurm/scripts/custom-compute-install')

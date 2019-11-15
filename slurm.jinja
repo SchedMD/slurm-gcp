@@ -20,6 +20,7 @@
 {% set ignored = properties.__setitem__('compute_node_prefix', (properties["cluster_name"] ~ "-compute").encode('ascii')) %}
 {% set ignored = properties.__setitem__('cluster_network', (properties["cluster_name"] ~ "-slurm-network").encode('ascii')) %}
 {% set ignored = properties.__setitem__('cluster_subnet', (properties["cluster_name"] ~ "-slurm-subnet").encode('ascii')) %}
+{% set ignored = properties.__setitem__('login_network_storage', properties["login_network_storage"]) %}
 
 resources:
 {% if not properties['vpc_subnet'] %}

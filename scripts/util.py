@@ -58,6 +58,7 @@ class Config:
                   'ompi_version',
                   'controller_secondary_disk',
                   'suspend_time',
+                  'login_network_storage',
                   'login_node_count',
                   )
 
