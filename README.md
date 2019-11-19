@@ -217,7 +217,7 @@ Steps:
       options for connecting to the compute nodes.
    2. Whether the compute nodes have external IPs or not, they can be connected
       to from within the cluster. By default, the instances are setup with
-      GCP's OSLogin.For information on managing access to instances see the
+      GCP's OSLogin. For information on managing access to instances see the
       [OSLogin documentation](https://cloud.google.com/compute/docs/instances/managing-instance-access).
 
       In general, you can click the "SSH" button next to the instance with an
