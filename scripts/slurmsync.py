@@ -116,9 +116,9 @@ def main():
                               nodes.rstrip().splitlines())
                        if 'CLOUD' in args]
 
-        page_token = ""
         g_nodes = []
         for i, part in enumerate(cfg.partitions):
+            page_token = ""
             while True:
                 resp = compute.instances().list(
                     project=cfg.project, zone=part['zone'],
