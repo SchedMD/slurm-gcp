@@ -184,11 +184,11 @@ def install_packages():
                  next((part for part in cfg.partitions if part['gpu_count']),
                       None))):
             subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
-            subprocess.call(shlex.split(
-                "wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/" + rpm))
-            subprocess.call(shlex.split("rpm -i " + rpm))
+            repo = 'http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo'
+            subprocess.call(shlex.split("yum-config-manager --add-repo " + repo))
             subprocess.call(shlex.split("yum clean all"))
-            subprocess.call(shlex.split("yum -y install cuda"))
+            subprocess.call(shlex.split("yum -y install nvidia-driver-latest-dkms cuda"))
+            subprocess.call(shlex.split("yum -y install cuda-drivers"))
             # Creates the device files
             subprocess.call(shlex.split("nvidia-smi"))
 # END install_packages()

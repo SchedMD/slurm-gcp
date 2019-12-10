@@ -36,6 +36,7 @@ PACKAGES=(
         'tmux'
         'pdsh'
         'openmpi'
+        'yum-utils'
     )
 
 PY_PACKAGES=(
