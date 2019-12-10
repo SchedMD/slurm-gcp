@@ -510,12 +510,12 @@ GresTypes=gpu
                 cfg.compute_node_prefix, i, part['static_node_count'],
                 part['max_node_count'] - 1)
 
-        conf += ' '.join(("NodeName=DEFAULT",
-                          "Sockets="        + str(machine['sockets']),
-                          "CoresPerSocket=" + str(machine['cores']),
-                          "ThreadsPerCore=" + str(machine['threads']),
-                          "RealMemory="     + str(machine['memory']),
-                          "State=UNKNOWN"))
+        conf += ("NodeName=DEFAULT "
+                 f"Sockets={machine['sockets']} "
+                 f"CoresPerSocket={machine['cores']} "
+                 f"ThreadsPerCore={machine['threads']} "
+                 f"RealMemory={machine['memory']} "
+                 "State=UNKNOWN")
 
         if part['gpu_count']:
             conf += " Gres=gpu:" + str(part['gpu_count'])
@@ -864,7 +864,7 @@ def setup_ompi_bash_profile():
         return
     with open(f'/etc/profile.d/ompi-{cfg.ompi_version}.sh', 'w') as f:
         f.write(f"PATH={APPS_DIR}/ompi/{cfg.ompi_version}/bin:$PATH")
-#END setup_ompi_bash_profile()
+# END setup_ompi_bash_profile()
 
 
 def setup_logrotate():
@@ -1026,6 +1026,7 @@ SELINUXTYPE=targeted
 """)
 # END setup_selinux()
 
+
 def install_ompi():
 
     if not cfg.ompi_version:
@@ -1058,7 +1059,8 @@ def install_ompi():
                         stdout=subprocess.DEVNULL)
         subprocess.call(shlex.split("make -j install"),
                         stdout=subprocess.DEVNULL)
-#END install_ompi()
+# END install_ompi()
+
 
 def remove_startup_scripts(hostname):
 
