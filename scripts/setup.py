@@ -981,19 +981,35 @@ def setup_slurmd_cronjob():
 
 def create_compute_image():
 
-    end_motd(False)
-    subprocess.call('sync')
-    ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    compute = googleapiclient.discovery.build('compute', 'v1',
+                                              cache_discovery=False)
+    try:
+        while True:
+            resp = compute.instances().get(
+                project=cfg.project, zone=cfg.zone, fields="status",
+                instance=f"{cfg.compute_node_prefix}-image-0-0").execute()
+            if resp['status'] == 'TERMINATED':
+                break
+            print("waiting for compute image to be stopped (status: {})"
+                  .format(resp['status']))
+            time.sleep(30)
 
-    hostname = socket.gethostname()
-    if next((part for part in cfg.partitions if part['gpu_count']), None):
-        time.sleep(300)
+        print("Creating compute image...")
+        ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        subprocess.call(shlex.split(
+            f"gcloud compute images create "
+            f"{cfg.compute_node_prefix}-image-{ver} "
+            f"--source-disk {cfg.compute_node_prefix}-image-0-0 "
+            f"--source-disk-zone {cfg.zone} --force "
+            f"--family {cfg.compute_node_prefix}-image-family"))
 
-    print("Creating compute image...")
-    subprocess.call(shlex.split(
-        f"gcloud compute images create {cfg.compute_node_prefix}-image-{ver} "
-        f"--source-disk {hostname} --source-disk-zone {cfg.zone} --force "
-        f"--family {cfg.compute_node_prefix}-image-family"))
+        for part in cfg.partitions:
+            subprocess.call(shlex.split(
+                "{}/bin/scontrol update partitionname={} state=up".format(
+                    CURR_SLURM_DIR, part['name'])))
+
+    except Exception as e:
+        print("compute image not found: " + str(e))
 # END create_compute_image()
 
 
@@ -1053,6 +1069,10 @@ def remove_startup_scripts(hostname):
         # controller
         subprocess.call(shlex.split(
             f"{cmd} {hostname} --zone={cfg.zone} --keys={keys}"))
+
+        # compute image
+        subprocess.call(shlex.split(
+            f"{cmd} {cfg.compute_node_prefix}-image-0-0 --zone={cfg.zone} --keys={keys}"))
 
         # logins
         for i in range(1, cfg.login_node_count + 1):
@@ -1169,6 +1189,8 @@ def main():
                 "{}/bin/scontrol update partitionname={} state=down".format(
                     CURR_SLURM_DIR, part['name'])))
 
+        create_compute_image()
+
         print("ww Done installing controller")
     elif cfg.instance_type == 'compute':
         install_compute_service_scripts()
@@ -1184,16 +1206,8 @@ def main():
             pass
 
         if f"{cfg.compute_node_prefix}-image" in hostname:
-
-            create_compute_image()
-
-            for part in cfg.partitions:
-                subprocess.call(shlex.split(
-                    "{}/bin/scontrol update partitionname={} state=up".format(
-                        CURR_SLURM_DIR, part['name'])))
-
-            remove_startup_scripts(hostname)
-
+            end_motd(False)
+            subprocess.call('sync')
             subprocess.call(shlex.split(
                 f"gcloud compute instances stop {hostname} "
                 f"--zone {cfg.zone} --quiet"))
