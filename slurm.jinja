@@ -293,7 +293,7 @@ resources:
 {% endfor %}
 {% endfor %}
 
-- name: {{properties["compute_node_prefix"]}}-image-0-0
+- name: {{properties["compute_node_prefix"]}}-image
   type: compute.v1.instance
   properties:
     zone: {{ properties["zone"] }}

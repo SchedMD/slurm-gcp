@@ -174,23 +174,32 @@ Either log out and log back in or cd into ~.
 # END start_motd()
 
 
+def have_gpus(hostname):
+
+    if f"{cfg.compute_node_prefix}-image" in hostname:
+        if next((part for part in cfg.partitions if part['gpu_count']), None):
+            return True
+    else:
+        pid = util.get_pid(hostname)
+        if cfg.partitions[pid]['gpu_count']:
+            return True
+
+    return False
+# END have_gpus()
+
+
 def install_packages():
 
-    if cfg.instance_type == 'compute':
-        hostname = socket.gethostname()
-        pid = util.get_pid(hostname)
-        if (cfg.partitions[pid]['gpu_count'] or
-                (f"{cfg.compute_node_prefix}-image" in hostname and
-                 next((part for part in cfg.partitions if part['gpu_count']),
-                      None))):
-            subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
-            repo = 'http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo'
-            subprocess.call(shlex.split("yum-config-manager --add-repo " + repo))
-            subprocess.call(shlex.split("yum clean all"))
-            subprocess.call(shlex.split("yum -y install nvidia-driver-latest-dkms cuda"))
-            subprocess.call(shlex.split("yum -y install cuda-drivers"))
-            # Creates the device files
-            subprocess.call(shlex.split("nvidia-smi"))
+    if cfg.instance_type == 'compute' and have_gpus(socket.gethostname()):
+        subprocess.call("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)", shell=True)
+        repo = 'http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo'
+        subprocess.call(shlex.split("yum-config-manager --add-repo " + repo))
+        subprocess.call(shlex.split("yum clean all"))
+        subprocess.call(shlex.split(
+            "yum -y install nvidia-driver-latest-dkms cuda"))
+        subprocess.call(shlex.split("yum -y install cuda-drivers"))
+        # Creates the device files
+        subprocess.call(shlex.split("nvidia-smi"))
 # END install_packages()
 
 
@@ -839,15 +848,9 @@ S_PATH={}
 PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """.format(CURR_SLURM_DIR))
 
-    if cfg.instance_type == 'compute':
-        hostname = socket.gethostname()
-        pid = util.get_pid(hostname)
-        if (cfg.partitions[pid]['gpu_count'] or
-                (f"{cfg.compute_node_prefix}-image" in hostname and
-                 next((part for part in cfg.partitions if part['gpu_count']),
-                      None))):
-            with open('/etc/profile.d/cuda.sh', 'w') as f:
-                f.write("""
+    if cfg.instance_type == 'compute' and have_gpus(socket.gethostname()):
+        with open('/etc/profile.d/cuda.sh', 'w') as f:
+            f.write("""
 CUDA_PATH=/usr/local/cuda
 PATH=$CUDA_PATH/bin${PATH:+:${PATH}}
 LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
@@ -987,7 +990,7 @@ def create_compute_image():
         while True:
             resp = compute.instances().get(
                 project=cfg.project, zone=cfg.zone, fields="status",
-                instance=f"{cfg.compute_node_prefix}-image-0-0").execute()
+                instance=f"{cfg.compute_node_prefix}-image").execute()
             if resp['status'] == 'TERMINATED':
                 break
             print("waiting for compute image to be stopped (status: {})"
@@ -999,7 +1002,7 @@ def create_compute_image():
         subprocess.call(shlex.split(
             f"gcloud compute images create "
             f"{cfg.compute_node_prefix}-image-{ver} "
-            f"--source-disk {cfg.compute_node_prefix}-image-0-0 "
+            f"--source-disk {cfg.compute_node_prefix}-image "
             f"--source-disk-zone {cfg.zone} --force "
             f"--family {cfg.compute_node_prefix}-image-family"))
 
@@ -1072,7 +1075,8 @@ def remove_startup_scripts(hostname):
 
         # compute image
         subprocess.call(shlex.split(
-            f"{cmd} {cfg.compute_node_prefix}-image-0-0 --zone={cfg.zone} --keys={keys}"))
+            f"{cmd} {cfg.compute_node_prefix}-image --zone={cfg.zone} "
+            f"--keys={keys}"))
 
         # logins
         for i in range(1, cfg.login_node_count + 1):
