@@ -260,8 +260,8 @@ properties:
 
   suspend_time:
     type        : integer
-    default     : 600
-    minimum     : 600
+    default     : 300
+    minimum     : 300
     description : Idle time to wait before nodes go away (in sec)
                   From Slurm Power Save Documentation
                   Nodes become eligible for power saving mode after being idle
