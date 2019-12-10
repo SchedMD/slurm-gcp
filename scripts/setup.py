@@ -840,8 +840,12 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """.format(CURR_SLURM_DIR))
 
     if cfg.instance_type == 'compute':
-        pid = util.get_pid(socket.gethostname())
-        if cfg.partitions[pid]['gpu_count']:
+        hostname = socket.gethostname()
+        pid = util.get_pid(hostname)
+        if (cfg.partitions[pid]['gpu_count'] or
+                (f"{cfg.compute_node_prefix}-image" in hostname and
+                 next((part for part in cfg.partitions if part['gpu_count']),
+                      None))):
             with open('/etc/profile.d/cuda.sh', 'w') as f:
                 f.write("""
 CUDA_PATH=/usr/local/cuda
