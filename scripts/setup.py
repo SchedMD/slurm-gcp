@@ -1116,7 +1116,7 @@ def main():
 
     if not (APPS_DIR/'slurm').exists():
         (APPS_DIR/'slurm').mkdir(parents=True)
-        print("ww Created Slurm Folders")
+        print("Created Slurm Folders")
 
     if cfg.controller_secondary_disk:
         if not SEC_DISK_DIR.exists():
@@ -1197,7 +1197,7 @@ def main():
 
         create_compute_image()
 
-        print("ww Done installing controller")
+        print("Done installing controller")
     elif cfg.instance_type == 'compute':
         install_compute_service_scripts()
         setup_slurmd_cronjob()
