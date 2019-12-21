@@ -597,6 +597,7 @@ StorageType=accounting_storage/mysql
         etc_dir.mkdir(parents=True)
     with (etc_dir/'slurmdbd.conf').open('w') as f:
         f.write(conf)
+    (etc_dir/'slurmdbd.conf').chmod(0o600)
 
 # END install_slurmdbd_conf()
 
