@@ -224,7 +224,7 @@ def install_packages():
         time.sleep(5)
 
     while subprocess.call(['pip', 'install', '--upgrade',
-        'google-api-python-client']):
+        'cachetools==3.1.1', 'google-api-python-client']):
         print "failed to install google python api client. Trying again 5 seconds."
         time.sleep(5)
 
