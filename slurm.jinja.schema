@@ -59,7 +59,7 @@ optional:
 - login_disk_size_gb
 - login_disk_type
 - login_labels
-  login_network_storage
+- login_network_storage
 - login_node_count
 - login_node_scopes
 - login_node_service_account
