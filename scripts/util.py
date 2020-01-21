@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
-import yaml
-import requests
+import os
+import subprocess
+import time
 from pathlib import Path
+from contextlib import contextmanager
 
+import requests
+import yaml
 
 def get_metadata(path):
     """ Get metadata relative to metadata/computeMetadata/v1/instance/ """
@@ -19,10 +23,45 @@ def get_metadata(path):
         return None
     return resp.text
 
+
+def run(*args, wait=0, quiet=False, getoutput=False,
+        shell=True, universal_newlines=True, **kwargs):
+    """ run in subprocess, defaulting to shell. Optional wait after return. """
+    if not quiet:
+        log.debug(args[0])
+    if getoutput:
+        kwargs['stdout'] = subprocess.PIPE
+    ret = subprocess.run(*args, shell=shell,
+                         universal_newlines=universal_newlines,
+                         **kwargs)
+    if wait:
+        time.sleep(wait)
+    return ret
+
+
+def spawn(*args, quiet=False, shell=True, **kwargs):
+    """ nonblocking spawn of subprocess, default to shell """
+    if not quiet:
+        log.debug(args[0])
+    return subprocess.Popen(*args, shell=shell, **kwargs)
+
+
 def get_pid(node_name):
     """Convert <prefix>-<pid>-<nid>"""
 
     return int(node_name.split('-')[-2])
+
+
+@contextmanager
+def cd(path):
+    """ Change working directory for context """
+    prev = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev)
+
 
 class Config:
 

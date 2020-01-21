@@ -18,11 +18,9 @@ import collections
 import fcntl
 import logging
 import os
-import shlex
-import subprocess
 import sys
-import time
 import tempfile
+import time
 from pathlib import Path
 
 import googleapiclient.discovery
@@ -47,9 +45,7 @@ def start_instances_cb(request_id, response, exception):
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
         elif "was not found" in str(exception):
-            subprocess.Popen(
-                shlex.split("/apps/slurm/scripts/resume.py {}"
-                            .format(request_id)))
+            util.spawn(f"/apps/slurm/scripts/resume.py {request_id}")
 # [END start_instances_cb]
 
 
@@ -94,10 +90,10 @@ def main():
 
     try:
         s_nodes = dict()
-        cmd = ('{} show nodes | '
-               'grep -oP "^NodeName=\K(\S+)|State=\K(\S+)" | '
-               'paste -sd",\n"').format(SCONTROL)
-        nodes = subprocess.check_output(cmd, shell=True).decode()
+        cmd = (f"{SCONTROL} show nodes | "
+               "grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
+               "paste -sd',\n'")
+        nodes = util.run(cmd, check=True, getoutput=True).stdout
         if nodes:
             # result is a list of tuples like:
             # (nodename, (base='base_state', flags=<set of state flags>))
@@ -111,9 +107,8 @@ def main():
             def make_state_tuple(state):
                 return StateTuple(state[0], set(state[1:]))
             s_nodes = [(node, make_state_tuple(args.split('+')))
-                       for node, args
-                       in map(lambda x: x.split(','),
-                              nodes.rstrip().splitlines())
+                       for node, args in
+                       map(lambda x: x.split(','), nodes.rstrip().splitlines())
                        if 'CLOUD' in args]
 
         g_nodes = []
@@ -185,15 +180,12 @@ def main():
             tmp_file.close()
             logging.debug("tmp_file = {}".format(tmp_file.name))
 
-            cmd = "{} show hostlist {}".format(SCONTROL, tmp_file.name)
-            hostlist = subprocess.check_output(shlex.split(cmd)).decode()
+            hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
             logging.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
-            cmd = ("{} update nodename={} state=down "
-                   "reason='Instance stopped/deleted'"
-                   .format(SCONTROL, hostlist))
-            subprocess.call(shlex.split(cmd))
+            util.run(f"{SCONTROL} update nodename={hostlist} state=down "
+                     "reason='Instance stopped/deleted'")
 
             while True:
                 start_instances(compute, to_start)
@@ -216,15 +208,11 @@ def main():
             tmp_file.close()
             logging.debug("tmp_file = {}".format(tmp_file.name))
 
-            cmd = "{} show hostlist {}".format(SCONTROL, tmp_file.name)
-            hostlist = subprocess.check_output(shlex.split(cmd)).decode()
+            hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
             logging.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
-            cmd = "{} update nodename={} state=resume".format(
-                SCONTROL, hostlist)
-            subprocess.call(shlex.split(cmd))
-
+            util.run(f"{SCONTROL} update nodename={hostlist} state=resume")
 
     except Exception as e:
         logging.error("failed to sync instances ({})".format(str(e)))

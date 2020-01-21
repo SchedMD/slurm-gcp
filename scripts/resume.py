@@ -21,8 +21,6 @@ import argparse
 import httplib2
 import logging
 import os
-import shlex
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -98,9 +96,8 @@ def update_slurm_node_addrs(compute):
                 fields=my_fields).execute()
             instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
 
-            node_update_cmd = "{} update node={} nodeaddr={}".format(
-                SCONTROL, node_name, instance_ip)
-            subprocess.call(shlex.split(node_update_cmd))
+            util.run(
+                f"{SCONTROL} update node={node_name} nodeaddr={instance_ip}")
 
             logging.info("Instance " + node_name + " is now up")
         except Exception as e:
@@ -287,9 +284,8 @@ def main(arg_nodes):
                                               cache_discovery=False)
 
     # Get node list
-    show_hostname_cmd = "{} show hostnames {}".format(SCONTROL, arg_nodes)
-    nodes_str = subprocess.check_output(shlex.split(
-        show_hostname_cmd)).decode()
+    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
+                         check=True, getoutput=True).stdout
     node_list = nodes_str.splitlines()
 
     source_disk_image = get_source_image(compute)

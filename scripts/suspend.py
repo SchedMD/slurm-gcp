@@ -20,8 +20,6 @@
 import argparse
 import logging
 import os
-import shlex
-import subprocess
 import time
 from pathlib import Path
 
@@ -94,9 +92,8 @@ def main(arg_nodes):
                                               cache_discovery=False)
 
     # Get node list
-    show_hostname_cmd = "{} show hostnames {}".format(SCONTROL, arg_nodes)
-    nodes_str = subprocess.check_output(shlex.split(
-        show_hostname_cmd)).decode()
+    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
+                         check=True, getoutput=True).stdout
     node_list = nodes_str.splitlines()
 
     while True:
