@@ -17,6 +17,7 @@
 import datetime
 import importlib
 import itertools as it
+import logging
 import os
 import shutil
 import socket
@@ -29,6 +30,7 @@ from subprocess import DEVNULL
 import googleapiclient.discovery
 import requests
 import yaml
+
 
 # get util.py from metadata
 UTIL_FILE = Path('/tmp/util.py')
@@ -48,6 +50,9 @@ util = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = util
 spec.loader.exec_module(util)
 cd = util.cd  # import util.cd into local namespace
+
+util.config_root_logger()
+log = logging.getLogger(Path(__file__).name)
 
 # get setup config from metadata
 cfg = util.Config.new_config(
@@ -302,9 +307,9 @@ def expand_machine_type():
                 gb = type_resp['memoryMb'] // 1024
                 machine['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
 
-        except Exception as e:
-            print("Failed to get MachineType '{}' from google api ({})"
-                  .format(part["machine_type"], str(e)))
+        except Exception:
+            log.exception("Failed to get MachineType '{}' from google api"
+                          .format(part["machine_type"]))
         finally:
             machines.append(machine)
 
@@ -888,7 +893,7 @@ def setup_logrotate():
 
 
 def setup_network_storage(mounts):
-    print("Set up network storage")
+    log.info("Set up network storage")
 
     global EXTERNAL_MOUNT_APPS
     global EXTERNAL_MOUNT_HOME
@@ -1023,7 +1028,7 @@ def mount_nfs_vols():
     # For non-controller instances, mount all of them
     for path in it.compress(mount_paths, external_mounts):
         while not os.path.ismount(path):
-            print(f"Waiting for {path} to be mounted")
+            log.info(f"Waiting for {path} to be mounted")
             util.run(f"mount {path}", wait=5)
     util.run("mount -a", wait=1)
 
@@ -1074,11 +1079,11 @@ def create_compute_image():
                 instance=f"{cfg.compute_node_prefix}-image").execute()
             if resp['status'] == 'TERMINATED':
                 break
-            print("waiting for compute image to be stopped (status: {})"
-                  .format(resp['status']))
+            log.info("waiting for compute image to be stopped (status: {})"
+                     .format(resp['status']))
             time.sleep(30)
 
-        print("Creating compute image...")
+        log.info("Creating compute image...")
         ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
         util.run(f"gcloud compute images create "
                  f"{cfg.compute_node_prefix}-image-{ver} "
@@ -1090,8 +1095,8 @@ def create_compute_image():
             util.run("{}/bin/scontrol update partitionname={} state=up"
                      .format(CURR_SLURM_DIR, part['name']))
 
-    except Exception as e:
-        print("compute image not found: " + str(e))
+    except Exception:
+        log.exception("compute image not found: ")
 # END create_compute_image()
 
 
@@ -1186,7 +1191,7 @@ def main():
 
     if not (APPS_DIR/'slurm').exists():
         (APPS_DIR/'slurm').mkdir(parents=True)
-        print("Created Slurm Folders")
+        log.info("Created Slurm Folders")
 
     if cfg.controller_secondary_disk:
         if not SEC_DISK_DIR.exists():
@@ -1267,8 +1272,7 @@ def main():
                      .format(CURR_SLURM_DIR, part['name']))
 
         create_compute_image()
-
-        print("Done installing controller")
+        log.info("Done installing controller")
     elif cfg.instance_type == 'compute':
         install_compute_service_scripts()
         mount_nfs_vols()

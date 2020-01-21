@@ -27,6 +27,7 @@ import googleapiclient.discovery
 
 import util
 
+
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
 SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
@@ -36,12 +37,16 @@ TOT_REQ_CNT = 1000
 
 retry_list = []
 
+util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
+log = logging.getLogger(Path(__file__).name)
+
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
+
 def start_instances_cb(request_id, response, exception):
     if exception is not None:
-        logging.error("start exception: " + str(exception))
+        log.error("start exception: " + str(exception))
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
         elif "was not found" in str(exception):
@@ -78,8 +83,8 @@ def start_instances(compute, node_list):
             batch.execute()
             if i < (len(batch_list) - 1):
                 time.sleep(30)
-    except Exception as e:
-        logging.exception("error in start batch: " + str(e))
+    except Exception:
+        log.exception("error in start batch: ")
 
 # [END start_instances]
 
@@ -168,9 +173,9 @@ def main():
                     to_down.append(s_node)
 
         if len(to_down):
-            logging.debug("{} stopped/deleted instances ({})".format(
+            log.info("{} stopped/deleted instances ({})".format(
                 len(to_down), ",".join(to_down)))
-            logging.debug("{} instances to start ({})".format(
+            log.info("{} instances to start ({})".format(
                 len(to_start), ",".join(to_start)))
 
             # write hosts to a file that can be given to get a slurm
@@ -178,10 +183,11 @@ def main():
             tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
             tmp_file.writelines("\n".join(to_down))
             tmp_file.close()
-            logging.debug("tmp_file = {}".format(tmp_file.name))
+            log.debug("tmp_file = {}".format(tmp_file.name))
 
             hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-            logging.debug("hostlist = {}".format(hostlist))
+                                check=True, getoutput=True).stdout
+            log.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
             util.run(f"{SCONTROL} update nodename={hostlist} state=down "
@@ -192,13 +198,13 @@ def main():
                 if not len(retry_list):
                     break
 
-                logging.debug("got {} nodes to retry ({})".
-                              format(len(retry_list), ','.join(retry_list)))
+                log.debug("got {} nodes to retry ({})".
+                         format(len(retry_list), ','.join(retry_list)))
                 to_start = list(retry_list)
                 del retry_list[:]
 
         if len(to_idle):
-            logging.debug("{} instances to resume ({})".format(
+            log.info("{} instances to resume ({})".format(
                 len(to_idle), ','.join(to_idle)))
 
             # write hosts to a file that can be given to get a slurm
@@ -206,30 +212,22 @@ def main():
             tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
             tmp_file.writelines("\n".join(to_idle))
             tmp_file.close()
-            logging.debug("tmp_file = {}".format(tmp_file.name))
+            log.debug("tmp_file = {}".format(tmp_file.name))
 
             hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-            logging.debug("hostlist = {}".format(hostlist))
+                                check=True, getoutput=True).stdout
+            log.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
             util.run(f"{SCONTROL} update nodename={hostlist} state=resume")
 
-    except Exception as e:
-        logging.error("failed to sync instances ({})".format(str(e)))
+    except Exception:
+        log.exception("failed to sync instances")
 
 # [END main]
 
 
 if __name__ == '__main__':
-
-    # silence module logging
-    for logger in logging.Logger.manager.loggerDict:
-        logging.getLogger(logger).setLevel(logging.WARNING)
-
-    logging.basicConfig(
-        filename=(LOGFILE),
-        format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-        level=logging.DEBUG)
 
     # only run one instance at a time
     pid_file = (Path('/tmp')/Path(__file__).name).with_suffix('.pid')

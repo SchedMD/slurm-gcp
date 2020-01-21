@@ -37,13 +37,17 @@ TOT_REQ_CNT = 1000
 operations = {}
 retry_list = []
 
+util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
+log = logging.getLogger(Path(__file__).name)
+
+
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
+
 def delete_instances_cb(request_id, response, exception):
     if exception is not None:
-        logging.error("delete exception for node {}: {}"
-                      .format(request_id, str(exception)))
+        log.error("delete exception for node {request_id}: {exception}")
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
     else:
@@ -80,14 +84,14 @@ def delete_instances(compute, node_list):
             batch.execute()
             if i < (len(batch_list) - 1):
                 time.sleep(30)
-    except Exception as e:
-        logging.exception("error in batch: " + str(e))
+    except Exception:
+        log.exception("error in batch:")
 
 # [END delete_instances]
 
 
 def main(arg_nodes):
-    logging.debug("deleting nodes:" + arg_nodes)
+    log.info("deleting nodes:" + arg_nodes)
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
 
@@ -101,12 +105,12 @@ def main(arg_nodes):
         if not len(retry_list):
             break
 
-        logging.debug("got {} nodes to retry ({})".
-                      format(len(retry_list), ','.join(retry_list)))
+        log.debug("got {} nodes to retry ({})"
+                  .format(len(retry_list), ','.join(retry_list)))
         node_list = list(retry_list)
         del retry_list[:]
 
-    logging.debug("done deleting instances")
+    log.debug("done deleting instances")
 
 # [END main]
 
@@ -118,14 +122,5 @@ if __name__ == '__main__':
     parser.add_argument('nodes', help='Nodes to release')
 
     args = parser.parse_args()
-
-    # silence module logging
-    for logger in logging.Logger.manager.loggerDict:
-        logging.getLogger(logger).setLevel(logging.WARNING)
-
-    logging.basicConfig(
-        filename=LOGFILE,
-        format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-        level=logging.DEBUG)
 
     main(args.nodes)

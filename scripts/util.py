@@ -1,13 +1,63 @@
 #!/usr/bin/env python3
 
+import logging
+import logging.config
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 from contextlib import contextmanager
 
 import requests
 import yaml
+
+
+log = logging.getLogger(__name__)
+
+
+def config_root_logger(level='DEBUG', util_level=None, file=None):
+    if not util_level:
+        util_level = level
+    handler = 'file_handler' if file else 'stdout_handler'
+    config = {
+        'version': 1,
+        'disable_existing_loggers': True,
+        'formatters': {
+            'standard': {
+                'format': '',
+            },
+            'stamp': {
+                'format': '%(asctime)s %(name)s %(levelname)s: %(message)s',
+            },
+        },
+        'handlers': {
+            'stdout_handler': {
+                'level': 'DEBUG',
+                'formatter': 'standard',
+                'class': 'logging.StreamHandler',
+                'stream': sys.stdout,
+            },
+        },
+        'loggers': {
+            '': {
+                'handlers': [handler],
+                'level': level,
+            },
+            __name__: {  # enable util.py logging
+                'level': util_level,
+            }
+        },
+    }
+    if file:
+        config['handlers']['file_handler'] = {
+            'level': 'DEBUG',
+            'formatter': 'stamp',
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': file,
+        }
+    logging.config.dictConfig(config)
+
 
 def get_metadata(path):
     """ Get metadata relative to metadata/computeMetadata/v1/instance/ """

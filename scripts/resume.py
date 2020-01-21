@@ -51,6 +51,10 @@ instances = {}
 operations = {}
 retry_list = []
 
+util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
+log = logging.getLogger(Path(__file__).name)
+
+
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
@@ -99,10 +103,9 @@ def update_slurm_node_addrs(compute):
             util.run(
                 f"{SCONTROL} update node={node_name} nodeaddr={instance_ip}")
 
-            logging.info("Instance " + node_name + " is now up")
-        except Exception as e:
-            logging.exception("Error in adding {} to slurm ({})".format(
-                node_name, str(e)))
+            log.info("Instance " + node_name + " is now up")
+        except Exception:
+            log.exception(f"Error in adding {node_name} to slurm")
 # [END update_slurm_node_addrs]
 
 
@@ -210,8 +213,7 @@ def create_instance(compute, zone, machine_type, instance_name,
 
 def added_instances_cb(request_id, response, exception):
     if exception is not None:
-        logging.error("add exception for node {}: {}".format(request_id,
-                                                             str(exception)))
+        log.error("add exception for node {request_id}: {exception}")
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
     else:
@@ -227,11 +229,11 @@ def get_source_image(compute):
             family=f"{cfg.compute_node_prefix}-image-family"
         ).execute()
         if image_response['status'] != 'READY':
-            logging.debug("image not ready, using the startup script")
+            log.debug("image not ready, using the startup script")
             raise Exception("image not ready")
         source_disk_image = image_response['selfLink']
-    except:
-        logging.error("No image found.")
+    except Exception:
+        log.error("No image found.")
         sys.exit()
 
     return source_disk_image
@@ -268,8 +270,8 @@ def add_instances(compute, source_disk_image, node_list):
             batch.execute(http=http)
             if i < (len(batch_list) - 1):
                 time.sleep(30)
-    except Exception as e:
-        logging.exception("error in add batch: " + str(e))
+    except Exception:
+        log.exception("error in add batch")
 
     if UPDATE_NODE_ADDRS:
         update_slurm_node_addrs(compute)
@@ -278,7 +280,7 @@ def add_instances(compute, source_disk_image, node_list):
 
 
 def main(arg_nodes):
-    logging.debug("Bursting out:" + arg_nodes)
+    log.info("Bursting out:" + arg_nodes)
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=authorized_http,
                                               cache_discovery=False)
@@ -295,12 +297,12 @@ def main(arg_nodes):
         if not len(retry_list):
             break
 
-        logging.debug("got {} nodes to retry ({})".
-                      format(len(retry_list), ','.join(retry_list)))
+        log.debug("got {} nodes to retry ({})"
+                  .format(len(retry_list), ','.join(retry_list)))
         node_list = list(retry_list)
         del retry_list[:]
 
-    logging.debug("done adding instances")
+    log.debug("done adding instances")
 # [END main]
 
 
@@ -311,14 +313,5 @@ if __name__ == '__main__':
     parser.add_argument('nodes', help='Nodes to burst')
 
     args = parser.parse_args()
-
-    # silence module logging
-    for logger in logging.Logger.manager.loggerDict:
-        logging.getLogger(logger).setLevel(logging.WARNING)
-
-    logging.basicConfig(
-        filename=LOGFILE,
-        format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-        level=logging.DEBUG)
 
     main(args.nodes)
