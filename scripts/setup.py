@@ -259,20 +259,14 @@ def start_munge():
 def setup_nfs_exports():
 
     export_paths = (
-        HOME_DIR,
-        APPS_DIR,
-        MUNGE_DIR,
-        SEC_DISK_DIR,
-    )
-    select_exports = (
-        not EXTERNAL_MOUNT_HOME,
-        not EXTERNAL_MOUNT_APPS,
-        not EXTERNAL_MOUNT_MUNGE,
-        cfg.controller_secondary_disk,
+        (HOME_DIR, not EXTERNAL_MOUNT_HOME),
+        (APPS_DIR, not EXTERNAL_MOUNT_APPS),
+        (MUNGE_DIR, not EXTERNAL_MOUNT_MUNGE),
+        (SEC_DISK_DIR, cfg.controller_secondary_disk),
     )
 
     # export path if corresponding selector boolean is True
-    for path in it.compress(export_paths, select_exports):
+    for path in it.compress(*zip(*export_paths)):
         util.run(rf"sed -i '\#{path}#d' /etc/exports")
         with open('/etc/exports', 'a') as f:
             f.write(f"\n{path}  *(rw,no_subtree_check,no_root_squash)")
@@ -892,7 +886,7 @@ def setup_logrotate():
 # END setup_logrotate()
 
 
-def setup_network_storage(mounts):
+def setup_network_storage():
     log.info("Set up network storage")
 
     global EXTERNAL_MOUNT_APPS
@@ -904,14 +898,51 @@ def setup_network_storage(mounts):
     EXTERNAL_MOUNT_MUNGE = False
     cifs_installed = False
 
-    fstab_path = Path('/etc/fstab')
+    # create dict of mounts, local_mount: mount_info
+    if cfg.instance_type == 'controller':
+        ext_mounts = {}
+    else:  # on non-controller instances, low priority mount these
+        CONTROL_NFS = {
+            'server_ip': CONTROL_MACHINE,
+            'remote_mount': 'none',
+            'local_mount': 'none',
+            'fs_type': 'nfs',
+            'mount_options': 'defaults,hard,intr',
+        }
+        ext_mounts = {
+            HOME_DIR: dict(CONTROL_NFS, remote_mount=HOME_DIR,
+                           local_mount=HOME_DIR),
+            APPS_DIR: dict(CONTROL_NFS, remote_mount=APPS_DIR,
+                           local_mount=APPS_DIR),
+            MUNGE_DIR: dict(CONTROL_NFS, remote_mount=MUNGE_DIR,
+                            local_mount=MUNGE_DIR),
+        }
+        if cfg.controller_secondary_disk:
+            ext_mounts[SEC_DISK_DIR] = dict(CONTROL_NFS,
+                                            remote_mount=SEC_DISK_DIR,
+                                            local_mount=SEC_DISK_DIR)
 
-#   hostname = socket.gethostname()
-    #if "controller" not in hostname:
-#    if cfg.instance_type == "compute":
-#        pid = int( hostname[-6:-4] )
-    for mount in mounts:
-        local_mount = Path(mount['local_mount'])
+    # convert network_storage list of mounts to dict of mounts,
+    #   local_mount as key
+    def listtodict(mountlist):
+        return {Path(d['local_mount']).resolve(): d for d in mountlist}
+
+    ext_mounts.update(listtodict(cfg.network_storage))
+    if cfg.instance_type == 'compute':
+        pid = util.get_pid(socket.gethostname())
+        ext_mounts.update(listtodict(cfg.partitions[pid]['network_storage']))
+    else:
+        ext_mounts.update(listtodict(cfg.login_network_storage))
+
+    # Install lustre, cifs, and/or gcsfuse as needed and write mount to fstab
+    fstab_entries = []
+    for local_mount, mount in ext_mounts.items():
+        remote_mount = mount['remote_mount']
+        fs_type = mount['fs_type']
+        server_ip = mount['server_ip']
+        log.info("Setting up mount ({}) {}{} to {}".format(
+            fs_type, server_ip+':' if fs_type != 'gcsfuse' else "",
+            remote_mount, local_mount))
         if not local_mount.exists():
             local_mount.mkdir(parents=True)
         # Check if we're going to overlap with what's normally hosted on the
@@ -922,16 +953,16 @@ def setup_network_storage(mounts):
             EXTERNAL_MOUNT_APPS = True
         elif local_mount == HOME_DIR:
             EXTERNAL_MOUNT_HOME = True
-        elif mount['local_mount'] == MUNGE_DIR:
+        elif local_mount == MUNGE_DIR:
             EXTERNAL_MOUNT_MUNGE = True
 
         lustre_path = Path('/sys/module/lustre')
         gcsf_path = Path('/etc/yum.repos.d/gcsfuse.repo')
 
-        if mount['fs_type'] == 'cifs' and not cifs_installed:
+        if fs_type == 'cifs' and not cifs_installed:
             util.run("sudo yum install -y cifs-utils")
             cifs_installed = True
-        elif mount['fs_type'] == 'lustre' and not lustre_path.exists():
+        elif fs_type == 'lustre' and not lustre_path.exists():
             lustre_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7.7.1908/client/RPMS/x86_64/'
             lustre_tmp = Path('/tmp/lustre')
             lustre_tmp.mkdir(parents=True)
@@ -944,7 +975,7 @@ def setup_network_storage(mounts):
                 f"find {lustre_tmp} -name '*.rpm' -execdir rpm -ivh {{}} ';'")
             util.run(f"rm -rf {lustre_tmp}")
             util.run("modprobe lustre")
-        elif mount['fs_type'] == 'gcsfuse' and not gcsf_path.exists():
+        elif fs_type == 'gcsfuse' and not gcsf_path.exists():
             with gcsf_path.open('a') as f:
                 f.write("""
 [gcsfuse]
@@ -958,51 +989,30 @@ https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg""")
             util.run("sudo yum update -y")
             util.run("sudo yum install -y gcsfuse")
 
-        with fstab_path.open('a') as f:
-            remote_mount = mount['remote_mount']
-            if (remote_mount[0] == "/"):
-                remote_mount = remote_mount[1:]
+        mount_options = mount['mount_options']
+        if fs_type == 'gcsfuse':
+            if 'nonempty' not in mount['mount_options']:
+                mount_options += ",nonempty"
+            fstab_entries.append(
+                "\n{0}   {1}     {2}     {3}     0 0"
+                .format(remote_mount, local_mount, fs_type, mount_options))
+        else:
+            remote_mount = Path(remote_mount).resolve()
+            fstab_entries.append(
+                "\n{0}:{1}    {2}     {3}      {4}  0 0"
+                .format(server_ip, remote_mount, local_mount,
+                        fs_type, mount_options))
 
-            if ((mount['fs_type'] == 'gcsfuse')):
-                mount_options = mount['mount_options']
-                if (('nonempty' not in mount['mount_options'])):
-                    mount_options = mount_options + ",nonempty"
-
-                f.write("\n{0}    {1}     {2}      {3}  0     0"
-                        .format(remote_mount, mount['local_mount'],
-                                mount["fs_type"], mount_options))
-            else:
-                f.write("\n{0}:/{1}    {2}     {3}      {4}  0     0"
-                        .format(mount['server_ip'], remote_mount,
-                                mount['local_mount'], mount["fs_type"],
-                                mount['mount_options']))
-
-    if cfg.instance_type != 'controller':
-        FSTAB_NFS = """
-{host}:{path}   {path}  nfs rw,hard,intr,_netdev    0   0"""
-        with fstab_path.open('a') as f:
-            if not EXTERNAL_MOUNT_APPS:
-                f.write(FSTAB_NFS.format(host=CONTROL_MACHINE, path=APPS_DIR))
-            if not EXTERNAL_MOUNT_HOME:
-                f.write(FSTAB_NFS.format(host=CONTROL_MACHINE, path=HOME_DIR))
-            if not EXTERNAL_MOUNT_MUNGE:
-                f.write(FSTAB_NFS.format(host=CONTROL_MACHINE, path=MUNGE_DIR))
-
+    with open('/etc/fstab', 'a') as f:
+        for entry in fstab_entries:
+            f.write(entry)
 # END setup_network_storage()
-
-
-def setup_nfs_sec_vols():
-    if (cfg.controller_secondary_disk and
-            (cfg.instance_type != 'controller')):
-        with open('/etc/fstab', 'a') as f:
-            f.write("\n{1}:{0}  {0}     nfs     rw,hard,intr    0 0"
-                    .format(SEC_DISK_DIR, CONTROL_MACHINE))
-
-# END setup_nfs_sec_vols()
 
 
 def setup_secondary_disks():
 
+    if not SEC_DISK_DIR.exists():
+        SEC_DISK_DIR.mkdir(parents=True)
     util.run(
         "sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb")
     with open('/etc/fstab', 'a') as f:
@@ -1015,18 +1025,15 @@ def setup_secondary_disks():
 
 def mount_nfs_vols():
 
-    mount_paths = (HOME_DIR, APPS_DIR, MUNGE_DIR)
-    if cfg.instance_type == 'controller':
-        external_mounts = (EXTERNAL_MOUNT_HOME,
-                           EXTERNAL_MOUNT_APPS,
-                           EXTERNAL_MOUNT_MUNGE)
-    else:
-        external_mounts = it.repeat(True)
+    mount_paths = (
+        (HOME_DIR, EXTERNAL_MOUNT_HOME),
+        (APPS_DIR, EXTERNAL_MOUNT_APPS),
+        (MUNGE_DIR, EXTERNAL_MOUNT_MUNGE),
+    )
     # compress yields values from the first arg that are matched with True
-    # in the second arg. The result is the mount_paths filtered by the
-    # booleans in external_mounts.
-    # For non-controller instances, mount all of them
-    for path in it.compress(mount_paths, external_mounts):
+    # in the second arg. The result is the paths filtered by the booleans.
+    # For non-controller instances, all three are always external nfs
+    for path in it.compress(*zip(*mount_paths)):
         while not os.path.ismount(path):
             log.info(f"Waiting for {path} to be mounted")
             util.run(f"mount {path}", wait=5)
@@ -1193,10 +1200,6 @@ def main():
         (APPS_DIR/'slurm').mkdir(parents=True)
         log.info("Created Slurm Folders")
 
-    if cfg.controller_secondary_disk:
-        if not SEC_DISK_DIR.exists():
-            SEC_DISK_DIR.mkdir(parents=True)
-
     start_motd()
 
     add_slurm_user()
@@ -1206,16 +1209,9 @@ def main():
     setup_ompi_bash_profile()
     setup_modules()
 
-    if (cfg.controller_secondary_disk and
-            (cfg.instance_type == 'controller')):
+    if cfg.controller_secondary_disk and cfg.instance_type == 'controller':
         setup_secondary_disks()
-
-    if cfg.instance_type == 'compute':
-        pid = util.get_pid(hostname)
-        setup_network_storage(cfg.partitions[pid]['network_storage'])
-    else:
-        setup_network_storage(cfg.login_network_storage)
-    setup_nfs_sec_vols()
+    setup_network_storage()
 
     if not SLURM_LOG.exists():
         SLURM_LOG.mkdir(parents=True)

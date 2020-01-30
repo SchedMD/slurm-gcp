@@ -147,13 +147,15 @@ class Config:
                   'ompi_version',
                   'controller_secondary_disk',
                   'suspend_time',
+                  'network_storage',
                   'login_network_storage',
                   'login_node_count',
                   )
 
     def __init__(self, properties):
         # Add all properties to object namespace
-        [setattr(self, k, v) for k, v in properties.items()]
+        for k, v in properties.items():
+            setattr(self, k, v)
 
     @classmethod
     def new_config(cls, properties):

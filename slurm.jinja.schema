@@ -64,6 +64,7 @@ optional:
 - login_node_scopes
 - login_node_service_account
 - munge_key
+- network_storage
 - ompi_version
 - shared_vpc_host_project
 - suspend_time
@@ -184,7 +185,7 @@ properties:
     default     : []
     description : An array of network attached storage mounts to be configured
                   on the login and controller instances.
-    items:
+    items:  &network_storage_items
       type: object
       required :
       - server_ip
@@ -255,6 +256,14 @@ properties:
     description : Specific munge key to use
                   (e.g "date +%s | sha512sum | cut -d' ' -f1"). If not specified
                   then a random key will be generated at deployment creation.
+
+  network_storage:
+    type        : array
+    default     : []
+    description : An array of network attached storage mounts to be configured
+                  on all instances.
+    items:
+      *network_storage_items
 
   ompi_version  :
     type        : string
@@ -414,41 +423,4 @@ properties:
           description : An array of network attached storage mounts to be
                         configured on this partition's instances.
           items:
-            type: object
-            required :
-            - server_ip
-            - remote_mount
-            - local_mount
-            - fs_type
-            optional :
-            - mount_options
-            properties :
-
-              server_ip:
-                type          : string
-                default       : blank
-                description   : IP of the remote file server.
-
-              remote_mount:
-                type          : string
-                description   : Remote mount directory of the remote file
-                                server. Do not include a leading /.
-
-              local_mount:
-                type          : string
-                description   : Local mount directory on the instances.
-
-              fs_type:
-                enum          :
-                              - nfs
-                              - cifs
-                              - lustre
-                              - gcsfuse
-                description   : Filesystem type of the remote file server.
-                                Supported currently are NFS, CIFS, and Lustre.
-
-              mount_options:
-                type          : string
-                default       : defaults,_netdev
-                description   : Filesystem mount options for this mount.
-                                Defaults are defaults and _netdev.
+            *network_storage_items
