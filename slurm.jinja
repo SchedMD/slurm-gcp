@@ -102,9 +102,6 @@ resources:
         diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["controller_secondary_disk_type"] }}
         diskSizeGb: {{properties["controller_secondary_disk_size_gb"]}}
 {% endif %}
-{% if not properties['external_compute_ips'] %}
-    canIpForward: true
-{% endif %}
 {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
