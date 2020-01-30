@@ -84,6 +84,17 @@ Steps:
        #login_node_scopes          :
        #       -  https://www.googleapis.com/auth/devstorage.read_only
        #       -  https://www.googleapis.com/auth/logging.write
+       #login_network_storage:
+       #   - server_ip: storage_host
+       #     remote_mount: /storage
+       #     local_mount: /storage
+       #     fs_type: nfs
+       #network_storage:
+       #   - server_ip: none
+       #     remote_mount: cluster-bucket
+       #     local_mount: /bucket
+       #     fs_type: gcsfuse
+       #     mount_options: file_mode=700,dir_mode=750,allow_other
        compute_image_machine_type  : n1-standard-2
        #compute_image_disk_type    : pd-standard
        #compute_image_disk_size_gb : 10
@@ -124,6 +135,12 @@ Steps:
               #  Optional compute configuration fields
               #  cpu_platform               : Intel Skylake
               #  preemptible_bursting       : False
+
+              #  network_storage:
+              #      - server_ip: homeserver
+              #        remote_mount: /home
+              #        local_mount: /home
+              #        fs_type: nfs
               #  compute_disk_type          : pd-standard
               #  compute_disk_size_gb       : 10
               #  compute_labels             :
