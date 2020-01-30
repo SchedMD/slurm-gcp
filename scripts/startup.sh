@@ -64,11 +64,13 @@ until ( ping -q -w1 -c1 $PING_HOST > /dev/null ) ; do
     sleep .5
 done
 
-until ( yum install -y ${PACKAGES[*]} ) ; do
+echo "yum install -y ${PACKAGES[*]}"
+until ( yum install -y ${PACKAGES[*]} > /dev/null ) ; do
     echo "yum failed to install packages. Trying again in 5 seconds"
     sleep 5
 done
 
+echo   "pip3 install --upgrade ${PY_PACKAGES[*]}"
 until ( pip3 install --upgrade ${PY_PACKAGES[*]} ) ; do
     echo "pip3 failed to install python packages. Trying again in 5 seconds"
     sleep 5
@@ -79,7 +81,8 @@ SETUP_META="setup_script"
 DIR="/tmp"
 URL="http://metadata.google.internal/computeMetadata/v1/instance/attributes/$SETUP_META"
 HEADER="Metadata-Flavor:Google"
-if ! ( wget --header $HEADER $URL -O $DIR/$SETUP_SCRIPT ) ; then
+echo  "wget -nv --header $HEADER $URL -O $DIR/$SETUP_SCRIPT"
+if ! ( wget -nv --header $HEADER $URL -O $DIR/$SETUP_SCRIPT ) ; then
     echo "Failed to fetch $SETUP_META:$SETUP_SCRIPT from metadata"
     exit 1
 fi
