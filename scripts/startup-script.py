@@ -800,6 +800,7 @@ EnvironmentFile=-/etc/sysconfig/slurmctld
 ExecStart={prefix}/sbin/slurmctld $SLURMCTLD_OPTIONS
 ExecReload=/bin/kill -HUP $MAINPID
 PIDFile=/var/run/slurm/slurmctld.pid
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
@@ -822,6 +823,7 @@ EnvironmentFile=-/etc/sysconfig/slurmdbd
 ExecStart={prefix}/sbin/slurmdbd $SLURMDBD_OPTIONS
 ExecReload=/bin/kill -HUP $MAINPID
 PIDFile=/var/run/slurm/slurmdbd.pid
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
@@ -842,7 +844,7 @@ def install_compute_service_scripts():
     f.write("""
 [Unit]
 Description=Slurm node daemon
-After=network.target munge.service
+After=munge.service network.target remote-fs.target
 ConditionPathExists={prefix}/etc/slurm.conf
 
 [Service]
@@ -852,9 +854,10 @@ ExecStart={prefix}/sbin/slurmd $SLURMD_OPTIONS
 ExecReload=/bin/kill -HUP $MAINPID
 PIDFile=/var/run/slurm/slurmd.pid
 KillMode=process
-LimitNOFILE=51200
+LimitNOFILE=131072
 LimitMEMLOCK=infinity
 LimitSTACK=infinity
+Delegate=yes
 
 [Install]
 WantedBy=multi-user.target
