@@ -1,0 +1,415 @@
+#!/usr/bin/env bash
+
+###############
+# Create the munge group and user with gid, uid set to 991
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function add_munge_user {
+    local mungeid=991
+
+    if [[ ! $(groupadd -g $${mungeid} munge) ]]; then 
+        groupmod -g $${mungeid} munge 
+    fi
+
+    if [[ ! $(useradd  -m -c "MUNGE Uid 'N' Gid Emporium" -d /var/lib/munge -u $${mungeid} -g munge  -s /sbin/nologin munge) ]]; then
+        usermod -u $${mungeid} -g $${mungeid} munge
+        chown -R munge:munge /var/lib/munge
+    fi
+}
+
+###############
+# Create the slurm group and user with gid, uid set to 992
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function add_slurm_user {
+    groupadd -g 992 slurm
+    useradd -m -c "SLURM Workload Manager" -d /var/lib/slurm -u 992 -g slurm -s /bin/bash slurm
+}
+
+###############
+# Create a GCP image from this instance
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function create_compute_image {
+    sync
+
+    pid=$(echo $(hostname) | cut -d'-' -f4 | cut -c1-2)
+    ver=$(date +%Y-%m-%d-%H-%M-%S)
+    zone=$(gcloud compute instances list --filter="(name=$(hostname))" --format="value(zone)")
+
+    gcloud compute images \
+        create ${cluster_name}-compute-image-$${pid}-$${ver} \
+        --source-disk $(hostname) \
+        --source-disk-zone $${zone} --force \
+        --family ${cluster_name}-compute-image-$${pid}-family
+}
+
+#################
+# Turn off SELinux and keep it turned off
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function disable_selinux {
+    setenforce 0
+
+    cat << SELINUXOFF > /etc/selinux/config
+SELINUX=permissive
+SELINUX_TYPE=targeted
+SELINUXOFF
+}
+
+#################
+# Copy the metadata associated with the given key into the specified path
+# Globals:
+#  None
+# Arguments:
+#  key - metadata key associated with the desired content
+#  path - path to the location for the content on the compute instance
+# Returns:
+#  None
+################
+function fetch_metadata {
+    local key=$1
+    local path=$2
+
+    [[ "X$(which curl)" == "X" ]] && yum install -y curl
+
+    curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/$${key} -H "Metadata-Flavor: Google" > $${path}
+}
+
+#################
+# Create the Slurm installing motd message
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+#################
+function installed_motd {
+    cat << MOTD_MESSAGE > /etc/motd
+                                 SSSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                        SSSS     SSSSSSS     SSSS
+                       SSSSSS               SSSSSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                        SSSS    SSSSSSSSS    SSSS
+                SSS             SSSSSSSSS             SSS
+               SSSSS    SSSS    SSSSSSSSS    SSSS    SSSSS
+                SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                SSS    SSSSSS               SSSSSS    SSS
+               SSSSS    SSSS     SSSSSSS     SSSS    SSSSS
+          S     SSS             SSSSSSSSS             SSS     S
+         SSS            SSSS    SSSSSSSSS    SSSS            SSS
+          S     SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS     S
+               SSSSS   SSSSSS   SSSSSSSSS   SSSSSS   SSSSS
+          S    SSSSS    SSSS     SSSSSSS     SSSS    SSSSS    S
+    S    SSS    SSS                                   SSS    SSS    S
+    S     S                                                   S     S
+                SSS
+                SSS
+                SSS
+                SSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS    SSSSSSSSS   SSSSSSSSSSSSSSSSSSSS
+SSSSSSSSSSSSS   SSS   SSSS       SSSS   SSSSSSSSSS  SSSSSSSSSSSSSSSSSSSSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSSS   SSS   SSSSSSSSSSSSSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
+
+MOTD_MESSAGE
+}
+
+#################
+# Create the Slurm installing motd message
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+#################
+function installing_motd {
+    cat << MOTD_MESSAGE > /etc/motd
+                                 SSSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                                SSSSSSSSS
+                        SSSS     SSSSSSS     SSSS
+                       SSSSSS               SSSSSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                        SSSS    SSSSSSSSS    SSSS
+                SSS             SSSSSSSSS             SSS
+               SSSSS    SSSS    SSSSSSSSS    SSSS    SSSSS
+                SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS
+                       SSSSSS    SSSSSSS    SSSSSS
+                SSS    SSSSSS               SSSSSS    SSS
+               SSSSS    SSSS     SSSSSSS     SSSS    SSSSS
+          S     SSS             SSSSSSSSS             SSS     S
+         SSS            SSSS    SSSSSSSSS    SSSS            SSS
+          S     SSS    SSSSSS   SSSSSSSSS   SSSSSS    SSS     S
+               SSSSS   SSSSSS   SSSSSSSSS   SSSSSS   SSSSS
+          S    SSSSS    SSSS     SSSSSSS     SSSS    SSSSS    S
+    S    SSS    SSS                                   SSS    SSS    S
+    S     S                                                   S     S
+                SSS
+                SSS
+                SSS
+                SSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS    SSSSSSSSS   SSSSSSSSSSSSSSSSSSSS
+SSSSSSSSSSSSS   SSS   SSSS       SSSS   SSSSSSSSSS  SSSSSSSSSSSSSSSSSSSSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSS            SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+ SSSSSSSSSSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+         SSSS   SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSSS   SSS   SSSSSSSSSSSSSSS   SSSS        SSSS     SSSS     SSSS
+SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
+
+/home on the controller will be mounted over the existing /home.
+Any changes in /home will be hidden. Please wait until the installation is
+complete before making changes in your home directory.
+MOTD_MESSAGE
+}
+
+function partitionname {
+    local hnm=$${1:-$(hostname)}
+
+    pid=$(echo $hnm | cut -d'-' -f4 | cut -c1-2)
+    pnm=$(egrep "${cluster_name}-compute\[$${pid}" ${apps_dir}/slurm/current/etc/slurm.conf | grep PartitionName | awk -F' ' '{print $1}' | cut -d'=' -f2) 
+    echo $${pnm}
+ }
+
+#################
+# Add the current slurm installation's bin/ and sbin/ directories to PATH
+# Globals:
+#  PATH
+# Arguments:
+#  current_slurmdir - [optional, defaults to /apps/slurm/current] root of current slurm installation
+# Returns:
+#  None
+################
+function setup_bash_profile { 
+    local current_slurmdir=$${1:-${apps_dir}/slurm/current}
+
+    cat <<PROFILE > /etc/profile.d/slurm.sh
+PATH="$PATH:$${current_slurmdir}/bin:$${current_slurmdir}/sbin"
+PROFILE
+}
+
+###############
+# Create the systemd munge.service unit file and generate a munge key
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function setup_munge {
+    cat << MUNGE > /usr/lib/systemd/system/munge.service
+[Unit]
+Description=MUNGE authentication service
+Documentation=man:munged(8)
+After=network.target
+After=syslog.target
+After=time-sync.target
+RequiresMountsFor=/etc/munge
+    
+[Service]
+Type=forking
+ExecStart=/usr/sbin/munged --num-threads=10
+PIDFile=/var/run/munge/munged.pid
+User=munge
+Group=munge
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+MUNGE
+
+    echo -e "${controller}:/etc/munge\t/etc/munge\tnfs\trw,hard,intr\t0\t0" | cat - >> /etc/fstab
+}
+
+################
+# Add /etc/fstab entries for NFS volumes
+# Globals:
+#  None
+# Arguments:
+#  server - name or IP address of the NFS volume host
+#  directories - list of directories to be mounted from server
+# Returns:
+#  None
+################
+function setup_nfs_vols {
+    local server=$1
+    shift
+    for dir in $@
+    do
+        echo -e "$server:$dir\t$dir\tnfs\trw,hard,intr\t0\t0" | cat - >> /etc/fstab
+    done
+}
+
+#################
+# Setup a cron job to restart slurmd as necessary
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function setup_slurmd_cronjob {
+    echo '*/2 * * * * if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then mount -a; systemctl restart slurmd; fi' | crontab -u root -
+}
+
+#################
+# Create systemd service unit files for the Slurm daemon
+# Globals:
+#  None
+# Arguments:
+#  current_slurmdir - [optional, defaults to ${apps_dir}/slurm/current] root of current slurm installation
+# Returns:
+#  None
+################
+function setup_slurmd_unit {
+    current_slurmdir=$${1:-${apps_dir}/slurm/current}
+
+    cat <<SLURMD > /usr/lib/systemd/system/slurmd.service
+[Unit]
+Description=Slurm node daemon
+After=network.target munge.service
+ConditionPathExists=$${current_slurmdir}/etc/slurm.conf
+
+[Service]
+Type=forking
+EnvironmentFile=-/etc/sysconfig/slurmd
+ExecStart=$${current_slurmdir}/sbin/slurmd $SLURMD_OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/var/run/slurm/slurmd.pid
+KillMode=process
+LimitNOFILE=51200
+LimitMEMLOCK=infinity
+LimitSTACK=infinity
+
+[Install]
+WantedBy=multi-user.target
+SLURMD
+
+    chmod 0644 /usr/lib/systemd/system/slurmd.service
+}
+
+#################
+# Stop this instance using the gcloud CLI
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+################
+function stop_instance {
+    zone=$(gcloud compute instances list --filter="(name=$(hostname))" --format="value(zone)")
+
+    gcloud compute instances stop $(hostname) --zone $${zone} --quiet
+}
+
+#################
+# Wait for the specified NFS mount point to become available
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:
+#  None
+#################
+function wait_for_mount {
+    local target_dir=$${1:-${apps_dir}}
+
+    echo "Waiting for $${target_dir} "
+    while [[ $(mount -a) ]]
+    do 
+        sleep 5 
+        echo -n "."
+    done
+    echo $${target_dir} mounted
+}
+
+#################
+# Setup a Slurm compute node
+#################
+yum update -y
+
+disable_selinux
+
+[[ ! -d /var/log/slurm ]] && mkdir /var/log/slurm
+[[ ! -d ${apps_dir} ]] && mkdir ${apps_dir}
+
+installing_motd
+
+add_munge_user
+add_slurm_user
+
+fetch_metadata packages /var/tmp/packages.txt
+yum -y install $(cat /var/tmp/packages.txt)
+pip install --upgrade google-api-python-client
+
+setup_munge
+
+setup_bash_profile
+
+[[ "X${nfs_apps_server}" != "X" ]] && setup_nfs_vols ${nfs_apps_server} ${apps_dir} 
+[[ "X${nfs_home_server}" != "X" ]] && setup_nfs_vols ${nfs_home_server} /home
+
+setup_slurmd_unit
+
+systemctl enable slurmd.service
+
+setup_slurmd_cronjob
+
+wait_for_mount ${apps_dir}
+wait_for_mount /home
+    
+systemctl enable munge.service
+systemctl start munge.service
+
+if [[ "$(hostname)" == *"compute-image"* ]]; then
+    create_compute_image
+
+    ${apps_dir}/slurm/current/bin/scontrol update PartitionName=$(partitionname $(hostname)) state=up
+
+    stop_instance
+else
+    systemctl start slurmd.service
+
+    installed_motd
+fi
+
+exit 0
