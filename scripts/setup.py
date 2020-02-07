@@ -180,15 +180,8 @@ Either log out and log back in or cd into ~.
 
 def have_gpus(hostname):
 
-    if f"{cfg.compute_node_prefix}-image" in hostname:
-        if next((part for part in cfg.partitions if part['gpu_count']), None):
-            return True
-    else:
-        pid = util.get_pid(hostname)
-        if cfg.partitions[pid]['gpu_count']:
-            return True
-
-    return False
+    pid = util.get_pid(hostname)
+    return cfg.partitions[pid]['gpu_count'] > 0
 # END have_gpus()
 
 
@@ -1075,35 +1068,38 @@ def setup_slurmd_cronjob():
 # END setup_slurmd_cronjob()
 
 
-def create_compute_image():
+def create_compute_images():
 
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
-    try:
+
+    def create_compute_image(instance, partition):
         while True:
             resp = compute.instances().get(
                 project=cfg.project, zone=cfg.zone, fields="status",
-                instance=f"{cfg.compute_node_prefix}-image").execute()
+                instance=instance).execute()
             if resp['status'] == 'TERMINATED':
                 break
-            log.info("waiting for compute image to be stopped (status: {})"
-                     .format(resp['status']))
+            log.info("waiting for {instance} to be stopped (status: {status})"
+                     .format(instance=instance, status=resp['status']))
             time.sleep(30)
 
-        log.info("Creating compute image...")
+        log.info("Creating image of {}...".format(instance))
         ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
         util.run(f"gcloud compute images create "
-                 f"{cfg.compute_node_prefix}-image-{ver} "
-                 f"--source-disk {cfg.compute_node_prefix}-image "
+                 f"{instance}-{ver} --source-disk {instance} "
                  f"--source-disk-zone {cfg.zone} --force "
-                 f"--family {cfg.compute_node_prefix}-image-family")
+                 f"--family {instance}-family")
 
-        for part in cfg.partitions:
-            util.run("{}/bin/scontrol update partitionname={} state=up"
-                     .format(CURR_SLURM_DIR, part['name']))
+        util.run("{}/bin/scontrol update partitionname={} state=up"
+                 .format(CURR_SLURM_DIR, partition['name']))
 
-    except Exception:
-        log.exception("compute image not found: ")
+    for i, part in enumerate(cfg.partitions):
+        instance = f"{cfg.compute_node_prefix}-{i}-image"
+        try:
+            create_compute_image(instance, part)
+        except Exception:
+            log.exception(f"{instance} not found: ")
 # END create_compute_image()
 
 
@@ -1154,29 +1150,24 @@ def remove_startup_scripts(hostname):
 
     cmd = "gcloud compute instances remove-metadata"
     keys = "startup-script,setup_script,util_script,config"
-    if f"{cfg.compute_node_prefix}-image" in hostname:
-        util.run(f"{cmd} {hostname} --zone={cfg.zone} --keys={keys}")
+    # controller
+    util.run(f"{cmd} {hostname} --zone={cfg.zone} --keys={keys}")
 
-    elif cfg.instance_type == 'controller':
-        # controller
-        util.run(f"{cmd} {hostname} --zone={cfg.zone} --keys={keys}")
-
-        # compute image
-        util.run(f"{cmd} {cfg.compute_node_prefix}-image --zone={cfg.zone} "
-                 f"--keys={keys}")
-
-        # logins
-        for i in range(1, cfg.login_node_count + 1):
-            util.run("{} {}-login{} --zone={} --keys={}"
-                     .format(cmd, cfg.cluster_name, i, cfg.zone, keys))
-        # computes
-        for i, part in enumerate(cfg.partitions):
-            if not part['static_node_count']:
-                continue
-            for j in range(part['static_node_count']):
-                util.run("{} {}-{}-{} --zone={} --keys={}"
-                         .format(cmd, cfg.compute_node_prefix, i, j,
-                                 part['zone'], keys))
+    # logins
+    for i in range(1, cfg.login_node_count + 1):
+        util.run("{} {}-login{} --zone={} --keys={}"
+                 .format(cmd, cfg.cluster_name, i, cfg.zone, keys))
+    # computes
+    for i, part in enumerate(cfg.partitions):
+        # partition compute image
+        util.run(f"{cmd} {cfg.compute_node_prefix}-{i}-image "
+                 f"--zone={cfg.zone} --keys={keys}")
+        if not part['static_node_count']:
+            continue
+        for j in range(part['static_node_count']):
+            util.run("{} {}-{}-{} --zone={} --keys={}"
+                     .format(cmd, cfg.compute_node_prefix, i, j,
+                             part['zone'], keys))
 # END remove_startup_scripts()
 
 
@@ -1267,7 +1258,8 @@ def main():
             util.run("{}/bin/scontrol update partitionname={} state=down"
                      .format(CURR_SLURM_DIR, part['name']))
 
-        create_compute_image()
+        create_compute_images()
+        remove_startup_scripts(hostname)
         log.info("Done installing controller")
     elif cfg.instance_type == 'compute':
         install_compute_service_scripts()
@@ -1282,7 +1274,7 @@ def main():
             # Ignore blank files with no shell magic.
             pass
 
-        if f"{cfg.compute_node_prefix}-image" in hostname:
+        if hostname.endswith('-image'):
             end_motd(False)
             util.run("sync")
             util.run(f"gcloud compute instances stop {hostname} "
@@ -1300,7 +1292,6 @@ def main():
             # Ignore blank files with no shell magic.
             pass
 
-    remove_startup_scripts(hostname)
     setup_logrotate()
 
     end_motd()

@@ -113,6 +113,18 @@ def cd(path):
         os.chdir(prev)
 
 
+def static_vars(**kwargs):
+    """
+    Add variables to the function namespace.
+    @static_vars(var=init): var must be referenced func.var
+    """
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
+
+
 class Config:
 
     TYPES = set(('compute', 'login', 'controller'))

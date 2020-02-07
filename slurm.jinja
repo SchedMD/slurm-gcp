@@ -293,7 +293,8 @@ resources:
 {% endfor %}
 {% endfor %}
 
-- name: {{properties["compute_node_prefix"]}}-image
+{% for i in range(properties["partitions"]|length) %}
+- name: {{properties["compute_node_prefix"]}}-{{i}}-image
   type: compute.v1.instance
   properties:
     zone: {{ properties["zone"] }}
@@ -306,7 +307,7 @@ resources:
       initializeParams:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
         diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["compute_image_disk_type"] }}
-        diskSizeGb: 10
+        diskSizeGb: {{ properties["compute_image_disk_size_gb"] }}
   {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
@@ -329,10 +330,10 @@ resources:
     tags:
       items:
         - compute
-{% if properties["compute_image_labels"] %}
+  {% if properties["compute_image_labels"] %}
     labels:
       {{properties["compute_image_labels"]}}
-{% endif %}
+  {% endif %}
     metadata:
       items:
         - key: startup-script
@@ -349,3 +350,4 @@ resources:
             {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
+{% endfor %}

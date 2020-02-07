@@ -221,26 +221,31 @@ def added_instances_cb(request_id, response, exception):
 # [END added_instances_cb]
 
 
-def get_source_image(compute):
+@util.static_vars(images={})
+def get_source_image(compute, node_name):
 
-    try:
-        image_response = compute.images().getFromFamily(
-            project=cfg.project,
-            family=f"{cfg.compute_node_prefix}-image-family"
-        ).execute()
-        if image_response['status'] != 'READY':
-            log.debug("image not ready, using the startup script")
-            raise Exception("image not ready")
-        source_disk_image = image_response['selfLink']
-    except Exception:
-        log.error("No image found.")
-        sys.exit()
+    images = get_source_image.images
+    pid = util.get_pid(node_name)
+    if pid not in images:
+        image_name = f"{cfg.compute_node_prefix}-{pid}-image"
+        try:
+            image_response = compute.images().getFromFamily(
+                project=cfg.project, family=f"{image_name}-family"
+            ).execute()
+            if image_response['status'] != 'READY':
+                log.debug("image not ready, using the startup script")
+                raise Exception("image not ready")
+            source_disk_image = image_response['selfLink']
+        except Exception:
+            log.error("No image found.")
+            sys.exit()
 
-    return source_disk_image
+        images[pid] = source_disk_image
+    return images[pid]
 # [END get_source_image]
 
 
-def add_instances(compute, source_disk_image, node_list):
+def add_instances(compute, node_list):
 
     batch_list = []
     curr_batch = 0
@@ -256,6 +261,8 @@ def add_instances(compute, source_disk_image, node_list):
             batch_list.insert(
                 curr_batch,
                 compute.new_batch_http_request(callback=added_instances_cb))
+
+        source_disk_image = get_source_image(compute, node_name)
 
         pid = util.get_pid(node_name)
         batch_list[curr_batch].add(
@@ -290,10 +297,8 @@ def main(arg_nodes):
                          check=True, getoutput=True).stdout
     node_list = nodes_str.splitlines()
 
-    source_disk_image = get_source_image(compute)
-
     while True:
-        add_instances(compute, source_disk_image, node_list)
+        add_instances(compute, node_list)
         if not len(retry_list):
             break
 
