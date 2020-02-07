@@ -553,6 +553,19 @@ GresTypes=gpu
 
 
 def install_slurmdbd_conf():
+    if cfg.cloudsql:
+        db_name = cfg.cloudsql['db_name']
+        db_user = cfg.cloudsql['user']
+        db_pass = cfg.cloudsql['password']
+        db_host_str = cfg.cloudsql['server_ip'].split(':')
+        db_host = db_host_str[0]
+        db_port = db_host_str[1] if len(db_host_str) >= 2 else '3306'
+    else:
+        db_name = f"{cfg.cluster_name}-slurm_acct_db"
+        db_user = 'slurm'
+        db_pass = '""'
+        db_host = 'localhost'
+        db_port = '3306'
 
     conf = f"""
 #ArchiveEvents=yes
@@ -579,11 +592,14 @@ LogFile={SLURM_LOG}/slurmdbd.log
 PidFile=/var/run/slurm/slurmdbd.pid
 
 SlurmUser=slurm
-StorageUser=slurm
 
-StorageLoc=slurm_acct_db
+StorageLoc={db_name}
 
 StorageType=accounting_storage/mysql
+StorageHost={db_host}
+StoragePort={db_port}
+StorageUser={db_user}
+StoragePass={db_pass}
 #StorageUser=database_mgr
 #StoragePass=shazaam
 
@@ -591,8 +607,7 @@ StorageType=accounting_storage/mysql
     etc_dir = CURR_SLURM_DIR/'etc'
     if not etc_dir.exists():
         etc_dir.mkdir(parents=True)
-    with (etc_dir/'slurmdbd.conf').open('w') as f:
-        f.write(conf)
+    (etc_dir/'slurmdbd.conf').write_text(conf)
     (etc_dir/'slurmdbd.conf').chmod(0o600)
 
 # END install_slurmdbd_conf()
@@ -1223,16 +1238,17 @@ def main():
 
         install_controller_service_scripts()
 
-        util.run('systemctl enable mariadb')
-        util.run('systemctl start mariadb')
+        if not cfg.cloudsql:
+            util.run('systemctl enable mariadb')
+            util.run('systemctl start mariadb')
 
-        mysql = "mysql -u root -e"
-        util.run(
-            f"""{mysql} "create user 'slurm'@'localhost'";""")
-        util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""")
-        util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
+            mysql = "mysql -u root -e"
+            util.run(
+                f"""{mysql} "create user 'slurm'@'localhost'";""")
+            util.run(
+                f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""")
+            util.run(
+                f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
 
         util.run("systemctl enable slurmdbd")
         util.run("systemctl start slurmdbd")

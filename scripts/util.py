@@ -179,6 +179,7 @@ class Config:
                   'network_storage',
                   'login_network_storage',
                   'login_node_count',
+                  'cloudsql',
                   )
 
     def __init__(self, properties):

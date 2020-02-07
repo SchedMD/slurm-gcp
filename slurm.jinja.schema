@@ -43,6 +43,7 @@ required:
 - zone
 
 optional:
+- cloudsql
 - controller_disk_type
 - controller_disk_size_gb
 - controller_labels
@@ -80,6 +81,38 @@ properties:
   cluster_name:
     type        : string
     description : Name of the cluster
+
+  cloudsql:
+    type: object
+    default: {}
+    description: Define an existing CloudSQL instance to use instead of instance-local MySQL
+    required :
+    - server_ip
+    - user
+    - password
+    optional :
+    - db_name
+
+    properties :
+
+      server_ip:
+        type          : string
+        default       : blank
+        description   : IP of the CloudSQL instance, optionally followed by [:PORT]
+
+      user:
+        type          : string
+        description   : Database user for CloudSQL instance
+
+      password:
+        type          : string
+        description   : Password for database access
+
+      db_name:
+        type          : string
+        default       : blank
+        description   : Database name, defaults to <cluster_name>-slurm_acct_db
+
 
   controller_machine_type:
     type        : string
