@@ -3,6 +3,7 @@
 import logging
 import logging.config
 import os
+import shlex
 import subprocess
 import sys
 import time
@@ -74,14 +75,16 @@ def get_metadata(path):
     return resp.text
 
 
-def run(*args, wait=0, quiet=False, getoutput=False,
-        shell=True, universal_newlines=True, **kwargs):
-    """ run in subprocess, defaulting to shell. Optional wait after return. """
+def run(cmd, wait=0, quiet=False, get_stdout=False,
+        shell=False, universal_newlines=True, **kwargs):
+    """ run in subprocess. Optional wait after return. """
     if not quiet:
-        log.debug(args[0])
-    if getoutput:
+        log.debug(f"run: {cmd}")
+    if get_stdout:
         kwargs['stdout'] = subprocess.PIPE
-    ret = subprocess.run(*args, shell=shell,
+
+    args = cmd if shell else shlex.split(cmd)
+    ret = subprocess.run(args, shell=shell,
                          universal_newlines=universal_newlines,
                          **kwargs)
     if wait:
@@ -89,11 +92,12 @@ def run(*args, wait=0, quiet=False, getoutput=False,
     return ret
 
 
-def spawn(*args, quiet=False, shell=True, **kwargs):
-    """ nonblocking spawn of subprocess, default to shell """
+def spawn(cmd, quiet=False, shell=False, **kwargs):
+    """ nonblocking spawn of subprocess """
     if not quiet:
-        log.debug(args[0])
-    return subprocess.Popen(*args, shell=shell, **kwargs)
+        log.debug(f"spawn: {cmd}")
+    args = cmd if shell else shlex.split(cmd)
+    return subprocess.Popen(args, shell=shell, **kwargs)
 
 
 def get_pid(node_name):

@@ -692,7 +692,7 @@ def install_slurm():
             urllib.request.urlretrieve(slurm_url, src_path/file)
 
             use_version = util.run(f"tar -xvjf {file}", check=True,
-                                   getoutput=True).stdout.splitlines()[0][:-1]
+                                   get_stdout=True).stdout.splitlines()[0][:-1]
 
     SLURM_PREFIX = APPS_DIR/'slurm'/use_version
 

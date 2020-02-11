@@ -97,7 +97,7 @@ def main(arg_nodes):
 
     # Get node list
     nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
-                         check=True, getoutput=True).stdout
+                         check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
     while True:

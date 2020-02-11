@@ -287,14 +287,14 @@ def add_instances(compute, node_list):
 
 
 def main(arg_nodes):
-    log.info("Bursting out:" + arg_nodes)
+    log.info(f"Bursting out: {arg_nodes}")
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=authorized_http,
                                               cache_discovery=False)
 
     # Get node list
     nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
-                         check=True, getoutput=True).stdout
+                         check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
     while True:
