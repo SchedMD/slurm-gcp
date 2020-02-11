@@ -146,7 +146,7 @@ class Config:
 
     TYPES = set(('compute', 'login', 'controller'))
     # PROPERTIES defines which properties in slurm.jinja.schema are included
-    #   in the config file. A tuple indicates a change of dict key.
+    #   in the config file. SAVED_PROPS are saved to file via save_config.
     SAVED_PROPS = ('project',
                    'zone',
                    'region',

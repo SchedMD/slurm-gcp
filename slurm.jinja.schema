@@ -97,7 +97,6 @@ properties:
 
       server_ip:
         type          : string
-        default       : blank
         description   : IP of the CloudSQL instance, optionally followed by [:PORT]
 
       user:
@@ -110,7 +109,6 @@ properties:
 
       db_name:
         type          : string
-        default       : blank
         description   : Database name, defaults to <cluster_name>-slurm_acct_db
 
 
