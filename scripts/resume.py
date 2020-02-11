@@ -228,16 +228,18 @@ def get_source_image(compute, node_name):
     pid = util.get_pid(node_name)
     if pid not in images:
         image_name = f"{cfg.compute_node_prefix}-{pid}-image"
+        family = cfg.partitions[pid].get('compute_image_family')
+        if not family:
+            family = f"{image_name}-family"
         try:
             image_response = compute.images().getFromFamily(
-                project=cfg.project, family=f"{image_name}-family"
+                project=cfg.project, family=family
             ).execute()
             if image_response['status'] != 'READY':
-                log.debug("image not ready, using the startup script")
-                raise Exception("image not ready")
+                raise Exception("Image not ready")
             source_disk_image = image_response['selfLink']
-        except Exception:
-            log.error("No image found.")
+        except Exception as e:
+            log.error(f"Image {family} unavailable: {e}")
             sys.exit()
 
         images[pid] = source_disk_image

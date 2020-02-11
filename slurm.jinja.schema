@@ -363,6 +363,7 @@ properties:
       - compute_disk_type
       - compute_disk_size_gb
       - compute_labels
+      - compute_image_family
       - cpu_platform
       - gpu_type
       - gpu_count
@@ -394,6 +395,12 @@ properties:
           default     : {}
           description : Labels to add to compute instances. List of key key, value
                         pairs.
+
+        compute_image_family:
+          type        : string
+          description : Image family name to use to find the base image for instances
+                        from this partition. Specify when using an alternate image to
+                        the generated one.
 
         cpu_platform:
           enum        :
