@@ -59,14 +59,12 @@ optional:
 - login_disk_size_gb
 - login_disk_type
 - login_labels
+- login_network_storage
 - login_node_count
 - login_node_scopes
 - login_node_service_account
 - munge_key
-- nfs_apps_dir
-- nfs_apps_server
-- nfs_home_dir
-- nfs_home_server
+- network_storage
 - ompi_version
 - shared_vpc_host_project
 - suspend_time
@@ -182,6 +180,52 @@ properties:
     description : Labels to add to login instances. List of key key, value
                   pairs.
 
+  login_network_storage:
+    type        : array
+    default     : []
+    description : An array of network attached storage mounts to be configured
+                  on the login and controller instances.
+    items:  &network_storage_items
+      type: object
+      required :
+      - server_ip
+      - remote_mount
+      - local_mount
+      - fs_type
+      optional :
+      - mount_options
+
+      properties :
+
+        server_ip:
+          type          : string
+          default       : blank
+          description   : IP of the remote file server.
+
+        remote_mount:
+          type          : string
+          description   : Remote mount directory of the remote file server.
+                          Do not include a leading /.
+
+        local_mount:
+          type          : string
+          description   : Local mount directory on the instances.
+
+        fs_type:
+          enum          :
+                        - nfs
+                        - cifs
+                        - lustre
+                        - gcsfuse
+          description   : Filesystem type of the remote file server.
+                          Supported currently are NFS, CIFS, gcsfuse, Lustre.
+
+        mount_options:
+          type          : string
+          default       : defaults,_netdev
+          description   : Filesystem mount options for this mount. Defaults are
+                          defaults and _netdev.
+
   login_disk_size_gb:
     type        : integer
     default     : 10
@@ -213,23 +257,13 @@ properties:
                   (e.g "date +%s | sha512sum | cut -d' ' -f1"). If not specified
                   then a random key will be generated at deployment creation.
 
-  nfs_apps_dir:
-    type        : string
-    default     : /apps
-    description : location of the nfs_apps directory on the nfs_apps_server.
-
-  nfs_apps_server:
-    type        : string
-    description : IP address of NFS server hosting apps dir
-
-  nfs_home_dir:
-    type        : string
-    default     : /home
-    description : location of the nfs_home directory on the nfs_home_server.
-
-  nfs_home_server:
-    type        : string
-    description : IP address of NFS server hosting home dir
+  network_storage:
+    type        : array
+    default     : []
+    description : An array of network attached storage mounts to be configured
+                  on all instances.
+    items:
+      *network_storage_items
 
   ompi_version  :
     type        : string
@@ -305,6 +339,7 @@ properties:
       - preemptible_bursting
       - static_node_count
       - zone
+      - network_storage
       properties :
 
         machine_type:
@@ -381,3 +416,11 @@ properties:
         zone:
           type        : string
           description : Zone to run the instances in based on Region.
+
+        network_storage:
+          type        : array
+          default     : []
+          description : An array of network attached storage mounts to be
+                        configured on this partition's instances.
+          items:
+            *network_storage_items

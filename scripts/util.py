@@ -1,8 +1,63 @@
 #!/usr/bin/env python3
 
-import yaml
-import requests
+import logging
+import logging.config
+import os
+import shlex
+import subprocess
+import sys
+import time
 from pathlib import Path
+from contextlib import contextmanager
+
+import requests
+import yaml
+
+
+log = logging.getLogger(__name__)
+
+
+def config_root_logger(level='DEBUG', util_level=None, file=None):
+    if not util_level:
+        util_level = level
+    handler = 'file_handler' if file else 'stdout_handler'
+    config = {
+        'version': 1,
+        'disable_existing_loggers': True,
+        'formatters': {
+            'standard': {
+                'format': '',
+            },
+            'stamp': {
+                'format': '%(asctime)s %(name)s %(levelname)s: %(message)s',
+            },
+        },
+        'handlers': {
+            'stdout_handler': {
+                'level': 'DEBUG',
+                'formatter': 'standard',
+                'class': 'logging.StreamHandler',
+                'stream': sys.stdout,
+            },
+        },
+        'loggers': {
+            '': {
+                'handlers': [handler],
+                'level': level,
+            },
+            __name__: {  # enable util.py logging
+                'level': util_level,
+            }
+        },
+    }
+    if file:
+        config['handlers']['file_handler'] = {
+            'level': 'DEBUG',
+            'formatter': 'stamp',
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': file,
+        }
+    logging.config.dictConfig(config)
 
 
 def get_metadata(path):
@@ -19,10 +74,60 @@ def get_metadata(path):
         return None
     return resp.text
 
+
+def run(cmd, wait=0, quiet=False, get_stdout=False,
+        shell=False, universal_newlines=True, **kwargs):
+    """ run in subprocess. Optional wait after return. """
+    if not quiet:
+        log.debug(f"run: {cmd}")
+    if get_stdout:
+        kwargs['stdout'] = subprocess.PIPE
+
+    args = cmd if shell else shlex.split(cmd)
+    ret = subprocess.run(args, shell=shell,
+                         universal_newlines=universal_newlines,
+                         **kwargs)
+    if wait:
+        time.sleep(wait)
+    return ret
+
+
+def spawn(cmd, quiet=False, shell=False, **kwargs):
+    """ nonblocking spawn of subprocess """
+    if not quiet:
+        log.debug(f"spawn: {cmd}")
+    args = cmd if shell else shlex.split(cmd)
+    return subprocess.Popen(args, shell=shell, **kwargs)
+
+
 def get_pid(node_name):
     """Convert <prefix>-<pid>-<nid>"""
 
     return int(node_name.split('-')[-2])
+
+
+@contextmanager
+def cd(path):
+    """ Change working directory for context """
+    prev = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev)
+
+
+def static_vars(**kwargs):
+    """
+    Add variables to the function namespace.
+    @static_vars(var=init): var must be referenced func.var
+    """
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
+
 
 class Config:
 
@@ -58,12 +163,15 @@ class Config:
                   'ompi_version',
                   'controller_secondary_disk',
                   'suspend_time',
+                  'network_storage',
+                  'login_network_storage',
                   'login_node_count',
                   )
 
     def __init__(self, properties):
         # Add all properties to object namespace
-        [setattr(self, k, v) for k, v in properties.items()]
+        for k, v in properties.items():
+            setattr(self, k, v)
 
     @classmethod
     def new_config(cls, properties):

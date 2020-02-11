@@ -21,8 +21,6 @@ import argparse
 import httplib2
 import logging
 import os
-import shlex
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -52,6 +50,10 @@ UPDATE_NODE_ADDRS = False
 instances = {}
 operations = {}
 retry_list = []
+
+util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
+log = logging.getLogger(Path(__file__).name)
+
 
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
@@ -98,14 +100,12 @@ def update_slurm_node_addrs(compute):
                 fields=my_fields).execute()
             instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
 
-            node_update_cmd = "{} update node={} nodeaddr={}".format(
-                SCONTROL, node_name, instance_ip)
-            subprocess.call(shlex.split(node_update_cmd))
+            util.run(
+                f"{SCONTROL} update node={node_name} nodeaddr={instance_ip}")
 
-            logging.info("Instance " + node_name + " is now up")
-        except Exception as e:
-            logging.exception("Error in adding {} to slurm ({})".format(
-                node_name, str(e)))
+            log.info("Instance " + node_name + " is now up")
+        except Exception:
+            log.exception(f"Error in adding {node_name} to slurm")
 # [END update_slurm_node_addrs]
 
 
@@ -213,8 +213,7 @@ def create_instance(compute, zone, machine_type, instance_name,
 
 def added_instances_cb(request_id, response, exception):
     if exception is not None:
-        logging.error("add exception for node {}: {}".format(request_id,
-                                                             str(exception)))
+        log.error("add exception for node {request_id}: {exception}")
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
     else:
@@ -222,26 +221,31 @@ def added_instances_cb(request_id, response, exception):
 # [END added_instances_cb]
 
 
-def get_source_image(compute):
+@util.static_vars(images={})
+def get_source_image(compute, node_name):
 
-    try:
-        image_response = compute.images().getFromFamily(
-            project=cfg.project,
-            family=f"{cfg.compute_node_prefix}-image-family"
-        ).execute()
-        if image_response['status'] != 'READY':
-            logging.debug("image not ready, using the startup script")
-            raise Exception("image not ready")
-        source_disk_image = image_response['selfLink']
-    except:
-        logging.error("No image found.")
-        sys.exit()
+    images = get_source_image.images
+    pid = util.get_pid(node_name)
+    if pid not in images:
+        image_name = f"{cfg.compute_node_prefix}-{pid}-image"
+        try:
+            image_response = compute.images().getFromFamily(
+                project=cfg.project, family=f"{image_name}-family"
+            ).execute()
+            if image_response['status'] != 'READY':
+                log.debug("image not ready, using the startup script")
+                raise Exception("image not ready")
+            source_disk_image = image_response['selfLink']
+        except Exception:
+            log.error("No image found.")
+            sys.exit()
 
-    return source_disk_image
+        images[pid] = source_disk_image
+    return images[pid]
 # [END get_source_image]
 
 
-def add_instances(compute, source_disk_image, node_list):
+def add_instances(compute, node_list):
 
     batch_list = []
     curr_batch = 0
@@ -258,6 +262,8 @@ def add_instances(compute, source_disk_image, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=added_instances_cb))
 
+        source_disk_image = get_source_image(compute, node_name)
+
         pid = util.get_pid(node_name)
         batch_list[curr_batch].add(
             create_instance(compute, cfg.partitions[pid]['zone'],
@@ -271,8 +277,8 @@ def add_instances(compute, source_disk_image, node_list):
             batch.execute(http=http)
             if i < (len(batch_list) - 1):
                 time.sleep(30)
-    except Exception as e:
-        logging.exception("error in add batch: " + str(e))
+    except Exception:
+        log.exception("error in add batch")
 
     if UPDATE_NODE_ADDRS:
         update_slurm_node_addrs(compute)
@@ -281,30 +287,27 @@ def add_instances(compute, source_disk_image, node_list):
 
 
 def main(arg_nodes):
-    logging.debug("Bursting out:" + arg_nodes)
+    log.info(f"Bursting out: {arg_nodes}")
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=authorized_http,
                                               cache_discovery=False)
 
     # Get node list
-    show_hostname_cmd = "{} show hostnames {}".format(SCONTROL, arg_nodes)
-    nodes_str = subprocess.check_output(shlex.split(
-        show_hostname_cmd)).decode()
+    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
+                         check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
-    source_disk_image = get_source_image(compute)
-
     while True:
-        add_instances(compute, source_disk_image, node_list)
+        add_instances(compute, node_list)
         if not len(retry_list):
             break
 
-        logging.debug("got {} nodes to retry ({})".
-                      format(len(retry_list), ','.join(retry_list)))
+        log.debug("got {} nodes to retry ({})"
+                  .format(len(retry_list), ','.join(retry_list)))
         node_list = list(retry_list)
         del retry_list[:]
 
-    logging.debug("done adding instances")
+    log.debug("done adding instances")
 # [END main]
 
 
@@ -315,14 +318,5 @@ if __name__ == '__main__':
     parser.add_argument('nodes', help='Nodes to burst')
 
     args = parser.parse_args()
-
-    # silence module logging
-    for logger in logging.Logger.manager.loggerDict:
-        logging.getLogger(logger).setLevel(logging.WARNING)
-
-    logging.basicConfig(
-        filename=LOGFILE,
-        format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-        level=logging.DEBUG)
 
     main(args.nodes)
