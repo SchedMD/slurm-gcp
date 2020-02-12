@@ -23,6 +23,7 @@ import shutil
 import socket
 import sys
 import time
+import threading
 import urllib.request
 from pathlib import Path
 from subprocess import DEVNULL
@@ -1089,32 +1090,40 @@ def create_compute_images():
                                               cache_discovery=False)
 
     def create_compute_image(instance, partition):
-        while True:
-            resp = compute.instances().get(
-                project=cfg.project, zone=cfg.zone, fields="status",
-                instance=instance).execute()
-            if resp['status'] == 'TERMINATED':
-                break
-            log.info("waiting for {instance} to be stopped (status: {status})"
-                     .format(instance=instance, status=resp['status']))
-            time.sleep(30)
-
-        log.info("Creating image of {}...".format(instance))
-        ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-        util.run(f"gcloud compute images create "
-                 f"{instance}-{ver} --source-disk {instance} "
-                 f"--source-disk-zone {cfg.zone} --force "
-                 f"--family {instance}-family")
-
-        util.run("{}/bin/scontrol update partitionname={} state=up"
-                 .format(CURR_SLURM_DIR, partition['name']))
-
-    for i, part in enumerate(cfg.partitions):
-        instance = f"{cfg.compute_node_prefix}-{i}-image"
         try:
-            create_compute_image(instance, part)
+            while True:
+                resp = compute.instances().get(
+                    project=cfg.project, zone=cfg.zone, fields="status",
+                    instance=instance).execute()
+                if resp['status'] == 'TERMINATED':
+                    break
+                log.info("waiting for {instance} to be stopped (status: {status})"
+                         .format(instance=instance, status=resp['status']))
+                time.sleep(30)
+
+            log.info("Creating image of {}...".format(instance))
+            ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+            util.run(f"gcloud compute images create "
+                     f"{instance}-{ver} --source-disk {instance} "
+                     f"--source-disk-zone {cfg.zone} --force "
+                     f"--family {instance}-family")
+
+            util.run("{}/bin/scontrol update partitionname={} state=up"
+                     .format(CURR_SLURM_DIR, partition['name']))
         except Exception:
             log.exception(f"{instance} not found: ")
+
+    threads = []
+    for i, part in enumerate(cfg.partitions):
+        instance = f"{cfg.compute_node_prefix}-{i}-image"
+        thread = threading.Thread(target=create_compute_image,
+                                  args=(instance, part))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
 # END create_compute_image()
 
 
