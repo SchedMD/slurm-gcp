@@ -84,7 +84,6 @@ properties:
 
   cloudsql:
     type: object
-    default: {}
     description: Define an existing CloudSQL instance to use instead of instance-local MySQL
     required :
     - server_ip

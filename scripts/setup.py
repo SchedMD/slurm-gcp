@@ -561,7 +561,7 @@ def install_slurmdbd_conf():
         db_host = db_host_str[0]
         db_port = db_host_str[1] if len(db_host_str) >= 2 else '3306'
     else:
-        db_name = f"{cfg.cluster_name}-slurm_acct_db"
+        db_name = "slurm_acct_db"
         db_user = 'slurm'
         db_pass = '""'
         db_host = 'localhost'
