@@ -22,6 +22,7 @@ import sys
 import time
 from pathlib import Path
 from contextlib import contextmanager
+from collections import OrderedDict
 
 import requests
 import yaml
@@ -142,7 +143,8 @@ def static_vars(**kwargs):
     return decorate
 
 
-class Config:
+class Config(OrderedDict):
+    """ Loads config from yaml and holds values in nested namespaces """
 
     TYPES = set(('compute', 'login', 'controller'))
     # PROPERTIES defines which properties in slurm.jinja.schema are included
@@ -182,10 +184,22 @@ class Config:
                   'cloudsql',
                   )
 
-    def __init__(self, properties):
-        # Add all properties to object namespace
-        for k, v in properties.items():
-            setattr(self, k, v)
+    def __init__(self, *args, **kwargs):
+        def from_nested(value):
+            """ If value is dict, convert to Config. Also recurse lists. """
+            if isinstance(value, dict):
+                return Config({k: from_nested(v) for k, v in value.items()})
+            elif isinstance(value, list):
+                return [from_nested(v) for v in value]
+            else:
+                return value
+
+        super(Config, self).__init__(*args, **kwargs)
+        self.__dict__ = self  # all properties are member attributes
+
+        # Convert nested dicts to Configs
+        for k, v in self.items():
+            self[k] = from_nested(v)
 
     @classmethod
     def new_config(cls, properties):
@@ -198,8 +212,8 @@ class Config:
         return cls(config)
 
     def save_config(self, path):
-        with Path(path).open('w') as f:
-            yaml.safe_dump({k: getattr(self, k) for k in self.SAVED_PROPS}, f)
+        save_dict = {k: self[k] for k in self.SAVED_PROPS}
+        Path(path).write_text(yaml.dump(save_dict, Dumper=self.Dumper))
 
     @property
     def instance_type(self):
@@ -211,3 +225,13 @@ class Config:
             # TODO what to default to if no match found.
             self._instance_type = next(iter(set(tags) & self.TYPES), None)
             return self._instance_type
+
+    class Dumper(yaml.SafeDumper):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.add_representer(Config, self.represent_config)
+
+        @staticmethod
+        def represent_config(dumper, data):
+            return dumper.represent_mapping('tag:yaml.org,2002:map',
+                                            data.items())
