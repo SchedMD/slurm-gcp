@@ -82,14 +82,18 @@ module "slurm_cluster_compute" {
   source = "../../modules/compute"
 
   cluster_name               = var.cluster_name
-  scopes                     = var.compute_node_scopes
-  service_account            = var.compute_node_service_account
+  compute_image_disk_size_gb = var.compute_image_disk_size_gb
+  compute_image_disk_type    = var.compute_image_disk_type
+  compute_image_labels       = var.compute_image_labels
+  compute_image_machine_type = var.compute_image_machine_type
   controller_name            = module.slurm_cluster_controller.controller_node_name
   disable_compute_public_ips = var.disable_compute_public_ips
   network                    = module.slurm_cluster_network.cluster_subnet_self_link
   network_storage            = var.network_storage
   partitions                 = var.partitions
   project                    = var.project
+  scopes                     = var.compute_node_scopes
+  service_account            = var.compute_node_service_account
   subnet                     = module.slurm_cluster_network.cluster_subnet_name
   zone                       = var.zone
 }

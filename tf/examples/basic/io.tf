@@ -28,6 +28,28 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "compute_image_disk_size_gb" {
+  description = "Size of disk for compute node image."
+  default     = 10
+}
+
+variable "compute_image_disk_type" {
+  description = "Disk type (pd-ssd or pd-standard) for compute node image."
+  type        = string
+  default     = "pd-standard"
+}
+
+variable "compute_image_labels" {
+  description = "Labels to add to the compute node image. List of key key, value pairs."
+  type        = list(string)
+  default     = []
+}
+
+variable "compute_image_machine_type" {
+  type    = string
+  default = "n1-standard-2"
+}
+
 variable "compute_node_scopes" {
   description = "Scopes to apply to compute nodes."
   type        = list(string)

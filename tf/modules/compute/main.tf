@@ -15,21 +15,55 @@
 
 locals {
   compute_node_prefix = "${var.cluster_name}-compute"
+
+  image_list = flatten([
+    for pid in range(length(var.partitions)) : [{
+      name           = "${local.compute_node_prefix}-${pid}-image"
+      boot_disk_size = var.compute_image_disk_size_gb
+      boot_disk_type = var.compute_image_disk_type
+      machine_type   = var.compute_image_machine_type
+      sa_email       = "default"
+      sa_scopes      = ["cloud-platform"]
+      zone           = var.zone
+    }]
+  ])
+
+  static_list = flatten([
+    for pid in range(length(var.partitions)) : [
+      for n in range(var.partitions[pid].static_node_count) : {
+        name           = "${local.compute_node_prefix}-${pid}-${n}"
+        boot_disk_size = var.partitions[pid].compute_disk_size_gb
+        boot_disk_type = var.partitions[pid].compute_disk_type
+        machine_type   = var.partitions[pid].machine_type
+        sa_email       = var.service_account
+        sa_scopes      = var.scopes
+        zone           = var.partitions[pid].zone
+      }
+    ]
+  ])
+
+  combo_list = flatten([local.image_list, local.static_list])
+
+  compute_map = {
+    for static in local.combo_list : "${static.name}" => static
+  }
 }
 
-resource "google_compute_instance" "compute_image" {
-  count        = length(var.partitions)
-  name         = "${local.compute_node_prefix}-${count.index}-image"
-  machine_type = var.compute_image_machine_type
-  zone         = var.zone
+
+resource "google_compute_instance" "compute_node" {
+  for_each = local.compute_map
+
+  name         = each.value.name
+  machine_type = each.value.machine_type
+  zone         = each.value.zone
 
   tags = ["compute"]
 
   boot_disk {
     initialize_params {
       image = "centos-cloud/centos-7"
-      type  = var.compute_image_disk_type
-      size  = var.compute_image_disk_size_gb
+      type  = each.value.boot_disk_type
+      size  = each.value.boot_disk_size
     }
   }
 
@@ -43,8 +77,8 @@ resource "google_compute_instance" "compute_image" {
   }
 
   service_account {
-    email  = "default"
-    scopes = ["cloud-platform"]
+    email  = each.value.sa_email
+    scopes = each.value.sa_scopes
   }
 
   metadata = {
