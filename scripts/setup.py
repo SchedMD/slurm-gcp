@@ -926,10 +926,6 @@ def setup_network_storage():
             MUNGE_DIR: dict(CONTROL_NFS, remote_mount=MUNGE_DIR,
                             local_mount=MUNGE_DIR),
         }
-        if cfg.controller_secondary_disk:
-            ext_mounts[SEC_DISK_DIR] = dict(CONTROL_NFS,
-                                            remote_mount=SEC_DISK_DIR,
-                                            local_mount=SEC_DISK_DIR)
 
     # convert network_storage list of mounts to dict of mounts,
     #   local_mount as key
