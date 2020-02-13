@@ -167,8 +167,6 @@ class Config(OrderedDict):
                    )
     PROPERTIES = (*SAVED_PROPS,
                   'munge_key',
-                  'default_account',
-                  'default_users',
                   'external_compute_ips',
                   'nfs_home_server',
                   'nfs_home_dir',
