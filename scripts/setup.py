@@ -1209,7 +1209,7 @@ def remove_startup_scripts(hostname):
     util.run(f"{cmd} {hostname} --zone={cfg.zone} --keys={keys}")
 
     # logins
-    for i in range(1, cfg.login_node_count + 1):
+    for i in range(0, cfg.login_node_count):
         util.run("{} {}-login{} --zone={} --keys={}"
                  .format(cmd, cfg.cluster_name, i, cfg.zone, keys))
     # computes

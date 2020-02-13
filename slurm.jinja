@@ -185,7 +185,7 @@ resources:
 
 
 {% for n in range(properties['login_node_count']) %}
-- name: {{properties["cluster_name"]}}-login{{ n + 1 }}
+- name: {{properties["cluster_name"]}}-login{{ n }}
   type: compute.v1.instance
   properties:
     zone: {{ properties["zone"] }}
