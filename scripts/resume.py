@@ -161,7 +161,7 @@ def create_instance(compute, zone, machine_type, instance_name,
                 'value': f.read()
             })
 
-    if "gpu_type" in cfg.partitions[pid]:
+    if "gpu_type" in cfg.partitions[pid] and cfg.partitions[pid]['gpu_type']:
         accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
                       .format(cfg.project, zone,
                               cfg.partitions[pid]['gpu_type']))
@@ -179,10 +179,12 @@ def create_instance(compute, zone, machine_type, instance_name,
             'automaticRestart': False
         },
 
-    if 'compute_labels' in cfg.partitions[pid]:
+    if ('compute_labels' in cfg.partitions[pid] and
+            cfg.partitions[pid]['compute_labels']):
         config['labels'] = cfg.partitions[pid]['compute_labels'],
 
-    if 'cpu_platform' in cfg.partitions[pid]:
+    if ('cpu_platform' in cfg.partitions[pid] and
+            cfg.partitions[pid]['cpu_platform']):
         config['minCpuPlatform'] = cfg.partitions[pid]['cpu_platform'],
 
     if cfg.vpc_subnet:
