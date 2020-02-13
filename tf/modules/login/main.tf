@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+locals {
+  compute_node_prefix = "${var.cluster_name}-compute"
+}
+
 resource "google_compute_instance" "login_node" {
   count        = var.node_count
   name         = "${var.cluster_name}-login${count.index}"
@@ -31,32 +35,46 @@ resource "google_compute_instance" "login_node" {
 
   network_interface {
     dynamic "access_config" {
-        for_each = var.disable_login_public_ips == true ? [] : [1]
-        content{}
+      for_each = var.disable_login_public_ips == true ? [] : [1]
+      content {}
     }
 
     subnetwork = var.subnet
   }
 
   service_account {
-    scopes = ["cloud-platform"]
+    email  = var.service_account
+    scopes = var.scopes
   }
 
   metadata = {
-    terraform = "TRUE"
+    terraform      = "TRUE"
     enable-oslogin = "TRUE"
 
-    startup-script = <<STARTUP
-${templatefile("${path.module}/startup.sh.tmpl",{
-apps_dir="${var.apps_dir}",
-controller="${var.controller_name}",
-nfs_apps_server="${var.nfs_apps_server}",
-nfs_home_server="${var.nfs_home_server}"
-})}
-STARTUP
+    startup-script = <<EOF
+${file("${path.module}/../../../scripts/startup.sh")}
+EOF
 
-    packages = <<PACKAGES
-${file("${path.module}/packages.txt")}
-PACKAGES
+    util_script = <<EOF
+${file("${path.module}/../../../scripts/util.py")}
+EOF
+
+    config = <<EOF
+${jsonencode({
+    cluster_name              = var.cluster_name,
+    cluster_subnet            = var.subnet,
+    compute_node_prefix       = local.compute_node_prefix,
+    controller_secondary_disk = var.controller_secondary_disk,
+    munge_key                 = var.munge_key,
+    ompi_version              = var.ompi_version
+    login_network_storage     = var.login_network_storage
+    network_storage           = var.network_storage
+})}
+EOF
+
+    setup_script = <<EOF
+${file("${path.module}/../../../scripts/setup.py")}
+EOF
+
   }
 }

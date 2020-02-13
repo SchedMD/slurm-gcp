@@ -13,14 +13,94 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-variable "network" {
-  description = "Compute Platform network the Slurm cluster nodes will be connected to"
-  default     = "default"
+variable "boot_disk_size" {
+  description = "Size of boot disk to create for the cluster login node"
+  default     = 10
+}
+
+variable "boot_disk_type" {
+  description = "Type of boot disk to create for the cluster login node"
+  default     = "pd-standard"
+}
+
+variable "cluster_name" {
+  description = "Name of the cluster"
+  type        = string
+}
+
+variable "controller_name" {
+  description = "FQDN or IP address of the controller node"
+  type        = string
+}
+
+variable "controller_secondary_disk" {
+  description = "Create secondary disk mounted to controller node"
+  type        = bool
+  default     = false
 }
 
 variable "disable_login_public_ips" {
   description = "If set to true, create Cloud NAT gateway and enable IAP FW rules"
   default     = false
+}
+
+variable "login_network_storage" {
+  description = "An array of network attached storage mounts to be configured on the login and controller instances."
+  type = list(object({
+    server_ip    = string,
+    remote_mount = string,
+    local_mout   = string,
+    fs_type      = string,
+  mount_options = string }))
+  default = []
+}
+
+variable "machine_type" {
+  description = "Compute Platform machine type to use in login node creation"
+  default     = "n1-standard-2"
+}
+
+variable "munge_key" {
+  description = "Specific munge key to use"
+  default     = null
+}
+
+variable "network" {
+  description = "Compute Platform network the Slurm cluster nodes will be connected to"
+  default     = "default"
+}
+
+variable "network_storage" {
+  description = " An array of network attached storage mounts to be configured on all instances."
+  type = list(object({
+    server_ip    = string,
+    remote_mount = string,
+    local_mout   = string,
+    fs_type      = string,
+  mount_options = string }))
+  default = []
+}
+
+variable "node_count" {
+  description = "Number of login nodes in the cluster"
+  default     = 1
+}
+
+variable "ompi_version" {
+  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
+  default     = null
+}
+
+variable "scopes" {
+  description = "Scopes to apply to login nodes."
+  type        = list(string)
+  default     = []
+}
+
+variable "service_account" {
+  description = "Service Account for compute nodes."
+  type        = string
+  default     = "default"
 }
 
 variable "subnet" {
@@ -33,49 +113,6 @@ variable "zone" {
   default     = "us-central1-b"
 }
 
-variable "cluster_name" {
-  description = "Name of the Slurm cluster"
-}
-
-variable "controller_name" {
-  description = "FQDN or IP address of the controller node"
-}
-
-variable "machine_type" {
-  description = "Compute Platform machine type to use in login node creation"
-  default     = "n1-standard-2"
-}
-
-variable "node_count" {
-  description = "The number of cluster login nodes to create"
-  default     = 1
-}
-
-variable "boot_disk_type" {
-  description = "Type of boot disk to create for the cluster login node"
-  default     = "pd-ssd"
-}
-
-variable "boot_disk_size" {
-  description = "Size of boot disk to create for the cluster login node"
-  default     = 16
-}
-
-variable "apps_dir" {
-  description = "Slurm cluster applications directory"
-  default     = "/apps"
-}
-
-variable "nfs_apps_server" {
-  description = "IP address of the NFS server hosting the apps directory"
-  default     = ""
-}
-
-variable "nfs_home_server" {
-  description = "IP address of the NFS server hosting the home directory"
-  default     = ""
-}
-
 output "instance_network_ips" {
-  value = [ "${google_compute_instance.login_node.*.network_interface.0.network_ip}" ]
+  value = ["${google_compute_instance.login_node.*.network_interface.0.network_ip}"]
 }

@@ -13,19 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module "slurm_conf" {
-  source = "../slurm_conf"
-
-  cluster_name = var.cluster_name
-  partitions   = var.partitions
-}
-
 locals {
   controller_name = "${var.cluster_name}-controller"
 }
 
+locals {
+  compute_node_prefix = "${var.cluster_name}-compute"
+}
+
 resource "google_compute_instance" "controller_node" {
-    
   name         = local.controller_name
   machine_type = var.controller_machine_type
   zone         = var.zone
@@ -40,97 +36,90 @@ resource "google_compute_instance" "controller_node" {
     }
   }
 
-  // Local SSD disk
-  scratch_disk {
-  }
-
   network_interface {
     dynamic "access_config" {
-        for_each = var.disable_controller_public_ips == true ? [] : [1]
-        content {}
+      for_each = var.disable_controller_public_ips == true ? [] : [1]
+      content {}
     }
 
     subnetwork = var.subnet
   }
 
- 
+
 
   service_account {
     scopes = ["cloud-platform"]
   }
 
   metadata = {
-    terraform = "TRUE"
+    terraform      = "TRUE"
     enable-oslogin = "TRUE"
 
-    startup-script = <<STARTUP
-${templatefile("${path.module}/startup.sh.tmpl", {
-apps_dir="${var.apps_dir}",
-cluster_name="${var.cluster_name}",
-default_account="${var.default_account}",
-default_partition="${var.default_partition}",
-nfs_apps_server="${var.nfs_apps_server}",
-nfs_home_server="${var.nfs_home_server}",
-slurm_version="${var.slurm_version}"
-users="${var.users}"
+    startup-script = <<EOF
+${file("${path.module}/../../../scripts/startup.sh")}
+EOF
+
+    util_script = <<EOF
+${file("${path.module}/../../../scripts/util.py")}
+EOF
+
+    config = <<EOF
+${jsonencode({
+    cloudsql                     = var.cloudsql
+    cluster_name                 = var.cluster_name,
+    cluster_subnet               = var.subnet,
+    compute_node_prefix          = local.compute_node_prefix,
+    compute_node_scopes          = var.compute_node_scopes,
+    compute_node_service_account = var.compute_node_service_account,
+    controller_secondary_disk    = var.controller_secondary_disk,
+    external_compute_ips         = title("${!var.disable_compute_public_ips}"),
+    login_network_storage        = var.login_network_storage,
+    login_node_count             = var.login_node_count
+    munge_key                    = var.munge_key,
+    network_storage              = var.network_storage,
+    ompi_version                 = var.ompi_version,
+    partitions                   = var.partitions,
+    project                      = var.project,
+    region                       = var.region,
+    shared_vpc_host_proj         = var.shared_vpc_host_project,
+    slurm_version                = var.slurm_version,
+    suspend_time                 = var.suspend_time,
+    vpc_subnet                   = var.vpc_subnet,
+    zone                         = var.zone,
 })}
-STARTUP
+EOF
 
-    startup-script-compute = <<COMPUTESTARTUP
-${templatefile("${path.module}/../compute/startup.sh.tmpl", {
-cluster_name = "${var.cluster_name}", 
-controller=local.controller_name,
-apps_dir="/apps",
-nfs_apps_server = "${var.nfs_apps_server}", 
-nfs_home_server = "${var.nfs_home_server}", 
-})}
-COMPUTESTARTUP
- 
-    cgroup_conf = <<CGROUPCONF
-${file("${path.module}/cgroup.conf")}
-CGROUPCONF
+    setup_script = <<EOF
+${file("${path.module}/../../../scripts/setup.py")}
+EOF
 
-    packages = <<PACKAGES
-${file("${path.module}/packages.txt")}
-PACKAGES
+    slurm_resume = <<EOF
+${file("${path.module}/../../../scripts/resume.py")}
+EOF
 
-    slurm_conf = module.slurm_conf.content
+    slurm_suspend = <<EOF
+${file("${path.module}/../../../scripts/suspend.py")}
+EOF
 
-    slurmdbd_conf = <<SLURMDBDCONF
-${templatefile("${path.module}/slurmdbd.conf.tmpl", {
-apps_dir="${var.apps_dir}"
-control_machine=local.controller_name
-})}
-SLURMDBDCONF
+    slurmsync = <<EOF
+${file("${path.module}/../../../scripts/slurmsync.py")}
+EOF
 
-    slurm-resume = <<RESUME
-${templatefile("${path.module}/resume.py", {
-cluster_name = "${var.cluster_name}",
-project = "${var.project}",
-region = "${var.region}",
-external_ip = title("${!var.disable_compute_public_ips}"),
-partitions = "${jsonencode(var.partitions)}"
-subnet = "${var.subnet}"
-})}
-RESUME
+    slurmsync = <<EOF
+${file("${path.module}/../../../scripts/slurmsync.py")}
+EOF
 
-    slurm-suspend = <<SUSPEND
-${templatefile("${path.module}/suspend.py", {
-project = "${var.project}",
-partitions = "${jsonencode(var.partitions)}"
-})}
-SUSPEND
+    custom-compute-install = <<EOF
+${file("${path.module}/../../../scripts/custom-compute-install")}
+EOF
 
-    slurm-gcp-sync = <<GCPSYNC
-${file("${path.module}/slurm-gcp-sync.py")}
-GCPSYNC
+    custom-controller-install = <<EOF
+${file("${path.module}/../../../scripts/custom-controller-install")}
+EOF
 
-    custom-compute-install = <<CUSTOMCOMPUTE
-${file("${path.module}/custom-compute-install")}
-CUSTOMCOMPUTE
+    compute-shutdown = <<EOF
+${file("${path.module}/../../../scripts/compute-shutdown")}
+EOF
 
-    custom-controller-install = <<CUSTOMCONTROLLER
-${file("${path.module}/custom-controller-install")}
-CUSTOMCONTROLLER
   }
 }

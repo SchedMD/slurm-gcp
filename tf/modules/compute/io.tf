@@ -13,15 +13,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-variable "project" {
-  type        = string
-  description = "Cloud Platform project that hosts the notebook server(s)"
+variable "compute_image_disk_size_gb" {
+  description = "Size of disk for compute node image."
+  default     = 10
 }
 
-variable "zone" {
+variable "compute_image_disk_type" {
+  description = "Disk type (pd-ssd or pd-standard) for compute node image."
   type        = string
-  description = "Compute Platform zone where the notebook server will be located"
-  default     = "us-central1-b"
+  default     = "pd-standard"
+}
+
+variable "compute_image_labels" {
+  description = "Labels to add to the compute node image. List of key key, value pairs."
+  type        = list(string)
+  default     = []
+}
+
+variable "compute_image_machine_type" {
+  type    = string
+  default = "n1-standard-2"
+}
+
+variable "controller_name" {
+  type        = string
+  description = "FQDN or IP address of the controller node"
+}
+
+variable "controller_secondary_disk" {
+  description = "Boolean indicating whether or not to allocate a secondary disk on the controller node"
+  default     = 0
+}
+
+variable "cluster_name" {
+  type        = string
+  description = "Name of the Slurm cluster"
+}
+
+variable "disable_compute_public_ips" {
+  description = "If set to true, create Cloud NAT gateway and enable IAP FW rules"
+  default     = false
+}
+
+variable "machine_type" {
+  description = "Compute Platform machine type to use in controller node creation"
+  default     = "n1-standard-4"
+}
+
+variable "munge_key" {
+  description = "Specific munge key to use (e.g. date +%s | sha512sum | cut -d' ' -f1) generate a random key if none is specified"
+  default     = ""
 }
 
 variable "network" {
@@ -30,84 +71,70 @@ variable "network" {
   default     = "default"
 }
 
-variable "disable_compute_public_ips" {
-  description = "If set to true, create Cloud NAT gateway and enable IAP FW rules"
-  default     = false
+variable "network_storage" {
+  description = " An array of network attached storage mounts to be configured on all instances."
+  type = list(object({
+    server_ip    = string,
+    remote_mount = string,
+    local_mout   = string,
+    fs_type      = string,
+  mount_options = string }))
+  default = []
 }
 
-variable "subnet" {
-  type        = string
-  description = "Compute Platform network the Slurm cluster nodes will be connected to"
-  default     = "default"
-}
-
-variable "nfs_apps_server" {
-  description = "IP address of the NFS server hosting the apps directory"
-  default     = ""
-}
-
-variable "nfs_home_server" {
-  description = "IP address of the NFS server hosting the home directory"
-  default     = ""
-}
-
-variable "external_compute_ips" {
-  type        = number
-  description = "Boolean indicating whether or not compute nodes are assigned external IPs"
-  default     = 0 
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "Name of the Slurm cluster"
-}
-
-variable "controller_name" {
-  description = "FQDN or IP address of the controller node"
-}
-
-variable "machine_type" {
-  description = "Compute Platform machine type to use in controller node creation"
-  default     = "n1-standard-4"
-}
-
-variable "boot_disk_type" {
-  description = "Type of boot disk to create for the cluster controller node"
-  default     = "pd-ssd"
-}
-
-variable "boot_disk_size" {
-  description = "Size of boot disk to create for the cluster controller node"
-  default     = 64
-}
-
-variable "controller_secondary_disk" {
-  description = "Boolean indicating whether or not to allocate a secondary disk on the controller node"
-  default     = 0
-}
-
-variable "munge_key" {
-  description = "Specific munge key to use (e.g. date +%s | sha512sum | cut -d' ' -f1) generate a random key if none is specified"
-  default     = ""
-}
-
-variable "image_count" {
-  description = "The number of auto-scaling compute images to create"
-  default     = 1
+variable "ompi_version" {
+  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
+  default     = null
 }
 
 variable "partitions" {
+  description = "An array of configurations for specifying multiple machine types residing in their own Slurm partitions."
   type = list(object({
-              name                 = string,
-              machine_type         = string,
-              max_node_count       = number,
-              zone                 = string,
-              compute_disk_type    = string,
-              compute_disk_size_gb = number,
-              compute_labels       = list(string),
-              cpu_platform         = string,
-              gpu_type             = string,
-              gpu_count            = number,
-              preemptible_bursting = number,
-              static_node_count    = number}))
+    name                 = string,
+    machine_type         = string,
+    max_node_count       = number,
+    zone                 = string,
+    compute_disk_type    = string,
+    compute_disk_size_gb = number,
+    compute_labels       = list(string),
+    cpu_platform         = string,
+    gpu_type             = string,
+    gpu_count            = number,
+    network_storage = list(object({
+      server_ip    = string,
+      remote_mount = string,
+      local_mout   = string,
+      fs_type      = string,
+    mount_options = string })),
+    preemptible_bursting = bool,
+  static_node_count = number }))
+}
+
+variable "project" {
+  description = "Cloud Platform project that hosts the notebook server(s)"
+  type        = string
+}
+
+variable "scopes" {
+  description = "Scopes to apply to compute nodes."
+  type        = list(string)
+  default     = []
+}
+
+variable "service_account" {
+  description = "Service Account for compute nodes."
+  type        = string
+  default     = "default"
+}
+
+variable "subnet" {
+  description = "Compute Platform network the Slurm cluster nodes will be connected to"
+  type        = string
+  default     = "default"
+}
+
+variable "zone" {
+  type        = string
+  description = "Compute Platform zone where the notebook server will be located"
+  default     = "us-central1-b"
 }
