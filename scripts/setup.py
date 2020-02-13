@@ -56,8 +56,10 @@ util.config_root_logger()
 log = logging.getLogger(Path(__file__).name)
 
 # get setup config from metadata
-cfg = util.Config.new_config(
-    yaml.safe_load(yaml.safe_load(util.get_metadata('attributes/config'))))
+config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
+if not util.get_metadata('attributes/terraform'):
+    config_yaml = yaml.safe_load(config_yaml)
+cfg = util.Config.new_config(config_yaml)
 
 HOME_DIR = Path('/home')
 APPS_DIR = Path('/apps')

@@ -60,6 +60,7 @@ resource "google_compute_instance" "controller_node" {
   }
 
   metadata = {
+    terraform = "TRUE"
     enable-oslogin = "TRUE"
 
     startup-script = <<STARTUP

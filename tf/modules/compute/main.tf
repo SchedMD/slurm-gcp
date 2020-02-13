@@ -44,6 +44,7 @@ resource "google_compute_instance" "compute_node" {
   }
 
   metadata = {
+    terraform = "TRUE"
     enable-oslogin = "TRUE"
 
     packages = <<PACKAGES
