@@ -1082,11 +1082,11 @@ def setup_slurmd_cronjob():
 
 def create_compute_images():
 
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              cache_discovery=False)
-
     def create_compute_image(instance, partition):
         try:
+            compute = googleapiclient.discovery.build('compute', 'v1',
+                                                      cache_discovery=False)
+
             while True:
                 resp = compute.instances().get(
                     project=cfg.project, zone=cfg.zone, fields="status",
@@ -1106,8 +1106,8 @@ def create_compute_images():
 
             util.run("{}/bin/scontrol update partitionname={} state=up"
                      .format(CURR_SLURM_DIR, partition['name']))
-        except Exception:
-            log.exception(f"{instance} not found: ")
+        except Exception as e:
+            log.exception(f"{instance} not found: {e}")
 
     threads = []
     for i, part in enumerate(cfg.partitions):
