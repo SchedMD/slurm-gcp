@@ -513,18 +513,18 @@ GresTypes=gpu
                  f"ThreadsPerCore={machine['threads']} "
                  f"RealMemory={machine['memory']} "
                  "State=UNKNOWN")
-
-        if part['gpu_count']:
-            conf += " Gres=gpu:" + str(part['gpu_count'])
         conf += '\n'
 
         # Nodes
+        gres = ""
+        if part['gpu_count']:
+            gres = " Gres=gpu:" + str(part['gpu_count'])
         if static_range:
             static_nodes.append(static_range)
-            conf += "NodeName={}\n".format(static_range)
+            conf += f"NodeName={static_range}{gres}\n"
 
         if cloud_range:
-            conf += "NodeName={} State=CLOUD\n".format(cloud_range)
+            conf += f"NodeName={cloud_range} State=CLOUD{gres}\n"
 
         # Partitions
         part_nodes = f"-{i}-[0-{part['max_node_count'] - 1}]"
