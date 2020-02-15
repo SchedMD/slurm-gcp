@@ -189,7 +189,8 @@ def have_gpus(hostname):
 def install_packages():
 
     if cfg.instance_type == 'compute' and have_gpus(socket.gethostname()):
-        util.run("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)")
+        util.run("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)",
+                 shell=True)
         repo = 'http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo'
         util.run(f"yum-config-manager --add-repo {repo}")
         util.run("yum clean all")
