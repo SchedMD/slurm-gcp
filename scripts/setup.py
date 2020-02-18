@@ -188,6 +188,38 @@ def have_gpus(hostname):
 
 def install_packages():
 
+    # install stackdriver monitoring and logging
+    host = "packages.cloud.google.com"
+    repo = "google-cloud-monitoring-el7-$basearch"
+    Path('/etc/yum.repos.d/google-cloud-monitoring.repo').write_text(f"""
+[google-cloud-monitoring]
+name=Google Cloud Monitoring Agent Repository
+baseurl=https://{host}/yum/repos/{repo}
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://{host}/yum/doc/yum-key.gpg
+       https://{host}/yum/doc/rpm-package-key.gpg
+""")
+
+    repo = "google-cloud-logging-el7-$basearch"
+    Path('/etc/yum.repos.d/google-cloud-logging.repo').write_text(f"""
+[google-cloud-logging]
+name=Google Cloud Logging Agent Repository
+baseurl=https://{host}/yum/repos/{repo}
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://{host}/yum/doc/yum-key.gpg
+       https://{host}/yum/doc/rpm-package-key.gpg
+""")
+
+    util.run(
+        "yum -y install stackdriver-agent google-fluentd-catch-all-config")
+    util.run("systemctl enable stackdriver-agent google-fluentd")
+    util.run("systemctl start stackdriver-agent google-fluentd")
+
+    # install cuda if needed
     if cfg.instance_type == 'compute' and have_gpus(socket.gethostname()):
         util.run("yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)",
                  shell=True)
