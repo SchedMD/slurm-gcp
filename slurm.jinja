@@ -34,7 +34,10 @@ resources:
     ipCidrRange: {{ properties["cidr"]}}
     region: {{ properties["region"] }}
     privateIpGoogleAccess: {{ properties["private_google_access"]}}
-- name: {{properties["cluster_name"]}}-ssh-firewall-rule
+{% if not (properties['external_compute_ips'] or
+           properties['external_login_ips'] or
+           properties['external_controller_ip']) %}
+- name: {{properties["cluster_name"]}}-allow-ssh
   type: compute.v1.firewall
   properties:
     network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
@@ -43,6 +46,20 @@ resources:
     - IPProtocol: TCP
       ports: ["22"]
     - IPProtocol: ICMP
+{% endif %}
+{% if (properties['external_compute_ips'] and
+       properties['external_login_ips'] and
+       properties['external_controller_ip']) %}
+- name: {{properties["cluster_name"]}}-allow-iap
+  type: compute.v1.firewall
+  properties:
+    network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
+    sourceRanges: ["35.235.240.0/20"]
+    allowed:
+    - IPProtocol: TCP
+      ports: ["22"]
+    - IPProtocol: ICMP
+{% endif %}
 - name: {{properties["cluster_name"]}}-all-internal-firewall-rule
   type: compute.v1.firewall
   properties:
@@ -56,7 +73,10 @@ resources:
     - IPProtocol: ICMP
 {% endif %}
 
-{% if (not properties['external_compute_ips'] and not properties['shared_vpc_host_proj']) %}
+{% if (not properties['shared_vpc_host_proj']) and
+       not (properties['external_compute_ips'] and
+            properties['external_login_ips'] and
+            properties['external_controller_ip']) %}
 - name: {{properties["cluster_name"]}}-router
   type: compute.v1.router
   properties:
@@ -187,9 +207,11 @@ resources:
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
   {% endif %}
+{% if properties['external_controller_ip'] %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
+{% endif %}
     serviceAccounts:
       - email: {{ properties["login_node_service_account"] }}
         scopes:
