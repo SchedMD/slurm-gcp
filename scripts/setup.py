@@ -1242,10 +1242,6 @@ def main():
 
     setup_selinux()
 
-    if not (APPS_DIR/'slurm').exists():
-        (APPS_DIR/'slurm').mkdir(parents=True)
-        log.info("Created Slurm Folders")
-
     start_motd()
 
     add_slurm_user()
