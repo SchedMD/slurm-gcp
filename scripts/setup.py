@@ -130,7 +130,7 @@ def setup_modules():
 
     with open('/usr/share/Modules/init/.modulespath', 'r+') as dotmp:
         if str(appsmfs) not in dotmp.read():
-            if cfg.instance_type != 'controller' and not appsmfs.is_dir():
+            if cfg.instance_type == 'controller' and not appsmfs.is_dir():
                 appsmfs.mkdir(parents=True)
             # after read, file cursor is at end of file
             dotmp.write(f'\n{appsmfs}\n')
