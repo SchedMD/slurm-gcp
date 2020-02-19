@@ -117,10 +117,7 @@ SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
 
 def add_slurm_user():
 
-    SLURM_UID = str(992)
-    util.run(f"groupadd -g {SLURM_UID} slurm")
-    util.run("useradd -m -c 'SLURM Workload Manager' -d /var/lib/slurm "
-             f"-u {SLURM_UID} -g slurm -s /bin/bash slurm")
+    util.run("useradd -m -c SlurmUser -d /var/lib/slurm -U -r slurm")
 # END add_slurm_user()
 
 
