@@ -215,7 +215,7 @@ def create_instance(compute, zone, machine_type, instance_name,
 
 def added_instances_cb(request_id, response, exception):
     if exception is not None:
-        log.error("add exception for node {request_id}: {exception}")
+        log.error(f"add exception for node {request_id}: {exception}")
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
     else:
