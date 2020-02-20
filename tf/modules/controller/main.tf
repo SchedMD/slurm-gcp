@@ -70,7 +70,7 @@ ${jsonencode({
     compute_node_scopes          = var.compute_node_scopes,
     compute_node_service_account = var.compute_node_service_account,
     controller_secondary_disk    = var.controller_secondary_disk,
-    external_compute_ips         = title("${!var.disable_compute_public_ips}"),
+    external_compute_ips         = !var.disable_compute_public_ips,
     login_network_storage        = var.login_network_storage,
     login_node_count             = var.login_node_count
     munge_key                    = var.munge_key,
