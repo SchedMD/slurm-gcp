@@ -66,7 +66,6 @@ EOF
 ${jsonencode({
     cloudsql                     = var.cloudsql
     cluster_name                 = var.cluster_name,
-    cluster_subnet               = var.subnet,
     compute_node_prefix          = local.compute_node_prefix,
     compute_node_scopes          = var.compute_node_scopes,
     compute_node_service_account = var.compute_node_service_account,
