@@ -132,9 +132,11 @@ resources:
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
 {% endif %}
+{% if properties['external_controller_ip'] %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
+{% endif %}
     serviceAccounts:
       - email: "default"
         scopes:
@@ -207,7 +209,7 @@ resources:
     networkInterfaces:
     - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
   {% endif %}
-{% if properties['external_controller_ip'] %}
+{% if properties['external_login_ips'] %}
       accessConfigs:
       - name: External NAT
         type: ONE_TO_ONE_NAT
