@@ -22,7 +22,7 @@
 {% set ignored = properties.__setitem__('cluster_subnet', (properties["cluster_name"] ~ "-slurm-subnet")) %}
 
 resources:
-{% if not properties['vpc_subnet'] %}
+{% if not properties['vpc_subnet'] and not properties['shared_vpc_host_proj'] %}
 - name: {{properties["cluster_network"]}}
   type: compute.v1.network
   properties:
@@ -34,9 +34,9 @@ resources:
     ipCidrRange: {{ properties["cidr"]}}
     region: {{ properties["region"] }}
     privateIpGoogleAccess: {{ properties["private_google_access"]}}
-{% if not (properties['external_compute_ips'] or
-           properties['external_login_ips'] or
-           properties['external_controller_ip']) %}
+{% if (properties['external_compute_ips'] or
+       properties['external_login_ips'] or
+       properties['external_controller_ip']) %}
 - name: {{properties["cluster_name"]}}-allow-ssh
   type: compute.v1.firewall
   properties:
@@ -47,9 +47,9 @@ resources:
       ports: ["22"]
     - IPProtocol: ICMP
 {% endif %}
-{% if (properties['external_compute_ips'] and
-       properties['external_login_ips'] and
-       properties['external_controller_ip']) %}
+{% if not (properties['external_compute_ips'] or
+           properties['external_login_ips'] or
+           properties['external_controller_ip']) %}
 - name: {{properties["cluster_name"]}}-allow-iap
   type: compute.v1.firewall
   properties:
