@@ -65,7 +65,7 @@ Steps:
       # READ slurm.jinja.schema for prerequisites
         # vpc_net                   : < my-vpc >
         # vpc_subnet                : < my-subnet >
-        # shared_vpc_host_proj      : < my-shared-vpc-project-name >
+        # shared_vpc_host_project    : < my-shared-vpc-project-name >
     
         controller_machine_type : n1-standard-2
         # controller_disk_type      : pd-standard

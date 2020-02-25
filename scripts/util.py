@@ -156,7 +156,7 @@ class Config(OrderedDict):
                    'external_compute_ips',
                    'cluster_subnet',
                    'vpc_subnet',
-                   'shared_vpc_host_proj',
+                   'shared_vpc_host_project',
                    'compute_node_prefix',
                    'compute_node_service_account',
                    'compute_node_scopes',

@@ -22,7 +22,7 @@
 {% set ignored = properties.__setitem__('cluster_subnet', (properties["cluster_name"] ~ "-slurm-subnet")) %}
 
 resources:
-{% if not properties['vpc_subnet'] and not properties['shared_vpc_host_proj'] %}
+{% if not properties['vpc_subnet'] and not properties['shared_vpc_host_project'] %}
 - name: {{properties["cluster_network"]}}
   type: compute.v1.network
   properties:
@@ -73,7 +73,7 @@ resources:
     - IPProtocol: ICMP
 {% endif %}
 
-{% if (not properties['shared_vpc_host_proj']) and
+{% if (not properties['shared_vpc_host_project']) and
        not (properties['external_compute_ips'] and
             properties['external_login_ips'] and
             properties['external_controller_ip']) %}
@@ -122,9 +122,9 @@ resources:
         diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["controller_secondary_disk_type"] }}
         diskSizeGb: {{properties["controller_secondary_disk_size_gb"]}}
 {% endif %}
-{% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
+{% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
 {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
@@ -199,9 +199,9 @@ resources:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
         diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["login_disk_type"] }}
         diskSizeGb: {{ properties["login_disk_size_gb"] }}
-  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
+  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
@@ -269,9 +269,9 @@ resources:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
         diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["partitions"][i]["zone"] }}/diskTypes/{{ properties["partitions"][i]["compute_disk_type"] }}
         diskSizeGb: {{ properties["partitions"][i]["compute_disk_size_gb"] }}
-  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
+  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
@@ -329,9 +329,9 @@ resources:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
         diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["compute_image_disk_type"] }}
         diskSizeGb: {{ properties["compute_image_disk_size_gb"] }}
-  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_proj'])  %}
+  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_proj"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}

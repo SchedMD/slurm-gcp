@@ -192,9 +192,9 @@ def create_instance(compute, zone, machine_type, instance_name,
             NETWORK_TYPE: net_type
         }]
 
-    if cfg.shared_vpc_host_proj:
+    if cfg.shared_vpc_host_project:
         net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
-            cfg.shared_vpc_host_proj, cfg.region, cfg.vpc_subnet)
+            cfg.shared_vpc_host_project, cfg.region, cfg.vpc_subnet)
         config['networkInterfaces'] = [{
             NETWORK_TYPE: net_type
         }]
