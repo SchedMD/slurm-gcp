@@ -18,19 +18,19 @@
 {% set ignored = properties.__setitem__('project', env['project']) %}
 {% set ignored = properties.__setitem__('region', '-'.join(properties['zone'].split('-')[:-1])) %}
 {% set ignored = properties.__setitem__('compute_node_prefix', (properties["cluster_name"] ~ "-compute")) %}
-{% set ignored = properties.__setitem__('cluster_network', (properties["cluster_name"] ~ "-slurm-network")) %}
-{% set ignored = properties.__setitem__('cluster_subnet', (properties["cluster_name"] ~ "-slurm-subnet")) %}
+{% set def_network_name = properties["cluster_name"] ~ "-network" %}
+{% set def_subnet_name = properties["cluster_name"] ~ "-subnet" %}
 
 resources:
 {% if not properties['vpc_subnet'] and not properties['shared_vpc_host_project'] %}
-- name: {{properties["cluster_network"]}}
+- name: {{def_network_name}}
   type: compute.v1.network
   properties:
     autoCreateSubnetworks: false
-- name: {{properties["cluster_subnet"]}}
+- name: {{def_subnet_name}}
   type: compute.v1.subnetwork
   properties:
-    network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
+    network: $(ref.{{def_network_name}}.selfLink)
     ipCidrRange: {{ properties["cidr"]}}
     region: {{ properties["region"] }}
     privateIpGoogleAccess: {{ properties["private_google_access"]}}
@@ -40,7 +40,7 @@ resources:
 - name: {{properties["cluster_name"]}}-allow-ssh
   type: compute.v1.firewall
   properties:
-    network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
+    network: $(ref.{{def_network_name}}.selfLink)
     sourceRanges: ["0.0.0.0/0"]
     allowed:
     - IPProtocol: TCP
@@ -53,7 +53,7 @@ resources:
 - name: {{properties["cluster_name"]}}-allow-iap
   type: compute.v1.firewall
   properties:
-    network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
+    network: $(ref.{{def_network_name}}.selfLink)
     sourceRanges: ["35.235.240.0/20"]
     allowed:
     - IPProtocol: TCP
@@ -63,7 +63,7 @@ resources:
 - name: {{properties["cluster_name"]}}-all-internal-firewall-rule
   type: compute.v1.firewall
   properties:
-    network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
+    network: $(ref.{{def_network_name}}.selfLink)
     sourceRanges: [{{properties["cidr"]}}]
     allowed:
     - IPProtocol: TCP
@@ -83,7 +83,7 @@ resources:
   {% if properties['vpc_net'] %}
     network: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/global/networks/{{ properties["vpc_net"]}}
   {% else %}
-    network: $(ref.{{properties["cluster_name"]}}-slurm-network.selfLink)
+    network: $(ref.{{def_network_name}}.selfLink)
   {% endif %}
     region: {{ properties["region"] }}
     nats:
@@ -94,7 +94,7 @@ resources:
   {% if properties['vpc_net'] %}
       - name: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% else %}
-      - name: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
+      - name: $(ref.{{def_subnet_name}}.selfLink)
   {% endif %}
         sourceIpRangesToNat: ["PRIMARY_IP_RANGE"]
 {% endif %}
@@ -130,7 +130,7 @@ resources:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
 {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
+    - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
 {% endif %}
 {% if properties['external_controller_ip'] %}
       accessConfigs:
@@ -185,7 +185,7 @@ resources:
 
 
 {% for n in range(properties['login_node_count']) %}
-- name: {{properties["cluster_name"]}}-login{{ n + 1 }}
+- name: {{properties["cluster_name"]}}-login{{ n }}
   type: compute.v1.instance
   properties:
     zone: {{ properties["zone"] }}
@@ -207,7 +207,7 @@ resources:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
+    - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
   {% endif %}
 {% if properties['external_login_ips'] %}
       accessConfigs:
@@ -277,7 +277,7 @@ resources:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
+    - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
   {% endif %}
   {% if properties['external_compute_ips'] %}
       accessConfigs:
@@ -337,7 +337,7 @@ resources:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{properties["cluster_name"]}}-slurm-subnet.selfLink)
+    - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
   {% endif %}
   {% if properties['external_compute_ips'] %}
       accessConfigs:

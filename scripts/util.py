@@ -154,7 +154,6 @@ class Config(OrderedDict):
                    'slurm_version',
                    'cluster_name',
                    'external_compute_ips',
-                   'cluster_subnet',
                    'vpc_subnet',
                    'shared_vpc_host_project',
                    'compute_node_prefix',
@@ -167,8 +166,6 @@ class Config(OrderedDict):
                    )
     PROPERTIES = (*SAVED_PROPS,
                   'munge_key',
-                  'default_account',
-                  'default_users',
                   'external_compute_ips',
                   'nfs_home_server',
                   'nfs_home_dir',

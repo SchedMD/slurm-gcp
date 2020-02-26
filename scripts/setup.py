@@ -56,8 +56,10 @@ util.config_root_logger()
 log = logging.getLogger(Path(__file__).name)
 
 # get setup config from metadata
-cfg = util.Config.new_config(
-    yaml.safe_load(yaml.safe_load(util.get_metadata('attributes/config'))))
+config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
+if not util.get_metadata('attributes/terraform'):
+    config_yaml = yaml.safe_load(config_yaml)
+cfg = util.Config.new_config(config_yaml)
 
 HOME_DIR = Path('/home')
 APPS_DIR = Path('/apps')
@@ -1207,7 +1209,7 @@ def remove_startup_scripts(hostname):
     util.run(f"{cmd} {hostname} --zone={cfg.zone} --keys={keys}")
 
     # logins
-    for i in range(1, cfg.login_node_count + 1):
+    for i in range(0, cfg.login_node_count):
         util.run("{} {}-login{} --zone={} --keys={}"
                  .format(cmd, cfg.cluster_name, i, cfg.zone, keys))
     # computes
