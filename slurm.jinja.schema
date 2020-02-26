@@ -47,6 +47,8 @@ optional:
 - controller_disk_type
 - controller_disk_size_gb
 - controller_labels
+- controller_scopes
+- controller_service_account
 - controller_secondary_disk
 - controller_secondary_disk_type
 - controller_secondary_disk_size_gb
@@ -133,6 +135,19 @@ properties:
     default     : {}
     description : Labels to add to controller instance. List of key key, value
                   pairs.
+
+  controller_scopes:
+    type        : array
+    default     : ["https://www.googleapis.com/auth/cloud-platform"]
+    description : Scopes to apply to the controller.
+                  e.g. https://www.googleapis.com/auth/devstorage.read_only
+                  https://cloud.google.com/compute/docs/access/service-accounts#accesscopesiam
+
+  controller_service_account:
+    type        : string
+    default     : default
+    description : Service Account for the controller.
+                  https://cloud.google.com/compute/docs/access/service-accounts
 
   controller_secondary_disk:
     type        : boolean

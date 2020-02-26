@@ -138,9 +138,8 @@ resources:
         type: ONE_TO_ONE_NAT
 {% endif %}
     serviceAccounts:
-      - email: "default"
-        scopes:
-        - "https://www.googleapis.com/auth/cloud-platform"
+      - email: {{ properties["controller_service_account"] }}
+        scopes: {{ properties["controller_scopes"] }}
     tags:
       items:
         - controller

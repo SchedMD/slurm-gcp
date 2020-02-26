@@ -68,6 +68,18 @@ variable "controller_secondary_disk" {
   default     = false
 }
 
+variable "controller_scopes" {
+  description = "Scopes to apply to the controller"
+  type        = list(string)
+  default     = ["https://www.googleapis.com/auth/cloud-platform"]
+}
+
+variable "controller_service_account" {
+  description = "Service Account for the controller"
+  type        = string
+  default     = "default"
+}
+
 variable "disable_login_public_ips" {
   type    = bool
   default = true

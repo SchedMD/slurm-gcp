@@ -41,6 +41,9 @@ resources:
     # controller_labels         :
     #   key1 : value1
     #   key2 : value2
+    # controller_service_account: default
+    # controller_scopes         :
+    # - https://www.googleapis.com/auth/cloud-platform
     # cloudsql                  :
     #   server_ip: <cloudsql ip>;
     #   user: slurm

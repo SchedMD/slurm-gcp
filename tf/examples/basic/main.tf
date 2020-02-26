@@ -56,6 +56,8 @@ module "slurm_cluster_controller" {
   region                        = local.region
   shared_vpc_host_project       = var.shared_vpc_host_project
   slurm_version                 = var.slurm_version
+  scopes                        = var.controller_scopes
+  service_account               = var.controller_service_account
   subnet                        = module.slurm_cluster_network.cluster_subnet_self_link
   suspend_time                  = var.suspend_time
   subnetwork_name               = var.subnetwork_name

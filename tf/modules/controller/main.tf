@@ -47,7 +47,8 @@ resource "google_compute_instance" "controller_node" {
   }
 
   service_account {
-    scopes = ["cloud-platform"]
+    email  = var.service_account
+    scopes = var.scopes
   }
 
   metadata = {

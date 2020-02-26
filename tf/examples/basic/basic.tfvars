@@ -1,6 +1,10 @@
 cluster_name = "g1"
 project      = "<project>"
 zone         = "us-west1-b"
+
+# controller_service_account = "default"
+# controller_scopes          = ["https://www.googleapis.com/auth/cloud-platform"]
+
 partitions = [
   { name                 = "debug"
     machine_type         = "n1-standard-2"

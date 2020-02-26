@@ -140,6 +140,18 @@ variable "region" {
   type        = string
 }
 
+variable "scopes" {
+  description = "Scopes to apply to the controller"
+  type        = list(string)
+  default     = ["https://www.googleapis.com/auth/cloud-platform"]
+}
+
+variable "service_account" {
+  description = "Service Account for the controller"
+  type        = string
+  default     = "default"
+}
+
 variable "shared_vpc_host_project" {
   type    = string
   default = null
