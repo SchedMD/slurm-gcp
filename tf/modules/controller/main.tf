@@ -79,7 +79,7 @@ ${jsonencode({
     partitions                   = var.partitions,
     project                      = var.project,
     region                       = var.region,
-    shared_vpc_host_proj         = var.shared_vpc_host_project,
+    shared_vpc_host_project      = var.shared_vpc_host_project,
     slurm_version                = var.slurm_version,
     suspend_time                 = var.suspend_time,
     vpc_subnet                   = var.subnetwork_name,
