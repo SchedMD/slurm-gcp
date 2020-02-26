@@ -43,7 +43,6 @@ module "slurm_cluster_controller" {
   cluster_name                  = var.cluster_name
   compute_node_scopes           = var.compute_node_scopes
   compute_node_service_account  = var.compute_node_service_account
-  controller_secondary_disk     = var.controller_secondary_disk
   disable_compute_public_ips    = var.disable_compute_public_ips
   disable_controller_public_ips = var.disable_controller_public_ips
   login_network_storage         = var.login_network_storage
@@ -54,6 +53,9 @@ module "slurm_cluster_controller" {
   partitions                    = var.partitions
   project                       = var.project
   region                        = local.region
+  secondary_disk                = var.controller_secondary_disk
+  secondary_disk_size           = var.controller_secondary_disk_size
+  secondary_disk_type           = var.controller_secondary_disk_type
   shared_vpc_host_project       = var.shared_vpc_host_project
   slurm_version                 = var.slurm_version
   scopes                        = var.controller_scopes

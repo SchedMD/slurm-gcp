@@ -39,25 +39,35 @@ variable "compute_node_service_account" {
   default     = "default"
 }
 
-variable "controller_boot_disk_size" {
+variable "boot_disk_size" {
   description = "Size of boot disk to create for the cluster controller node"
   default     = 50
 }
 
-variable "controller_boot_disk_type" {
+variable "boot_disk_type" {
   description = "Type of boot disk to create for the cluster controller node"
   default     = "pd-ssd"
 }
 
-variable "controller_machine_type" {
+variable "machine_type" {
   description = "Compute Platform machine type to use in controller node creation"
   default     = "n1-standard-4"
 }
 
-variable "controller_secondary_disk" {
+variable "secondary_disk" {
   description = "Create secondary disk mounted to controller node"
   type        = bool
   default     = false
+}
+
+variable "secondary_disk_size" {
+  description = "Size of disk for the secondary disk"
+  default     = 100
+}
+
+variable "secondary_disk_type" {
+  description = "Disk type (pd-ssd or pd-standard) for secondary disk"
+  default     = "pd-ssd"
 }
 
 variable "disable_controller_public_ips" {

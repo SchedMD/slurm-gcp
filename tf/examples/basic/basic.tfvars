@@ -2,6 +2,10 @@ cluster_name = "g1"
 project      = "<project>"
 zone         = "us-west1-b"
 
+# controller_secondary_disk      = false
+# controller_secondary_disk_size = 100
+# controller_secondary_disk_type = "pd-ssd"
+
 # controller_service_account = "default"
 # controller_scopes          = ["https://www.googleapis.com/auth/cloud-platform"]
 

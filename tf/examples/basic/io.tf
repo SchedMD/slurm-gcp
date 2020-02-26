@@ -68,6 +68,16 @@ variable "controller_secondary_disk" {
   default     = false
 }
 
+variable "controller_secondary_disk_size" {
+  description = "Size of disk for the secondary disk"
+  default     = 100
+}
+
+variable "controller_secondary_disk_type" {
+  description = "Disk type (pd-ssd or pd-standard) for secondary disk"
+  default     = "pd-ssd"
+}
+
 variable "controller_scopes" {
   description = "Scopes to apply to the controller"
   type        = list(string)

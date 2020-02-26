@@ -21,9 +21,18 @@ locals {
   compute_node_prefix = "${var.cluster_name}-compute"
 }
 
+resource "google_compute_disk" "secondary" {
+  count = var.secondary_disk ? 1 : 0
+
+  name = "secondary"
+  size = var.secondary_disk_size
+  type = var.secondary_disk_type
+  zone = var.zone
+}
+
 resource "google_compute_instance" "controller_node" {
   name         = local.controller_name
-  machine_type = var.controller_machine_type
+  machine_type = var.machine_type
   zone         = var.zone
 
   tags = ["controller"]
@@ -31,8 +40,15 @@ resource "google_compute_instance" "controller_node" {
   boot_disk {
     initialize_params {
       image = "centos-cloud/centos-7"
-      type  = var.controller_boot_disk_type
-      size  = var.controller_boot_disk_size
+      type  = var.boot_disk_type
+      size  = var.boot_disk_size
+    }
+  }
+
+  dynamic "attached_disk" {
+    for_each = google_compute_disk.secondary
+    content {
+      source = google_compute_disk.secondary[0].self_link
     }
   }
 
@@ -70,7 +86,7 @@ ${jsonencode({
     compute_node_prefix          = local.compute_node_prefix,
     compute_node_scopes          = var.compute_node_scopes,
     compute_node_service_account = var.compute_node_service_account,
-    controller_secondary_disk    = var.controller_secondary_disk,
+    controller_secondary_disk    = var.secondary_disk,
     external_compute_ips         = !var.disable_compute_public_ips,
     login_network_storage        = var.login_network_storage,
     login_node_count             = var.login_node_count
