@@ -25,6 +25,8 @@ locals {
       sa_email       = "default"
       sa_scopes      = ["cloud-platform"]
       zone           = var.zone
+      gpu_type       = ""
+      gpu_count      = 0
     }]
   ])
 
@@ -38,6 +40,8 @@ locals {
         sa_email       = var.service_account
         sa_scopes      = var.scopes
         zone           = var.partitions[pid].zone
+        gpu_type       = var.partitions[pid].gpu_type
+        gpu_count      = var.partitions[pid].gpu_count
       }
     ]
   ])
@@ -67,13 +71,24 @@ resource "google_compute_instance" "compute_node" {
     }
   }
 
+  guest_accelerator {
+    count = each.value.gpu_count
+
+    type = each.value.gpu_type
+  }
+
   network_interface {
     dynamic "access_config" {
       for_each = var.disable_compute_public_ips == true ? [] : [1]
       content {}
     }
 
-    subnetwork = var.subnet
+    subnetwork         = var.subnet
+    subnetwork_project = var.shared_vpc_host_project
+  }
+
+  scheduling {
+    on_host_maintenance = each.value.gpu_count > 0 ? "TERMINATE" : ""
   }
 
   service_account {

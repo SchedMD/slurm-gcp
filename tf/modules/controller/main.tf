@@ -42,10 +42,9 @@ resource "google_compute_instance" "controller_node" {
       content {}
     }
 
-    subnetwork = var.subnet
+    subnetwork         = var.subnet
+    subnetwork_project = var.shared_vpc_host_project
   }
-
-
 
   service_account {
     scopes = ["cloud-platform"]
@@ -67,12 +66,11 @@ EOF
 ${jsonencode({
     cloudsql                     = var.cloudsql
     cluster_name                 = var.cluster_name,
-    cluster_subnet               = var.subnet,
     compute_node_prefix          = local.compute_node_prefix,
     compute_node_scopes          = var.compute_node_scopes,
     compute_node_service_account = var.compute_node_service_account,
     controller_secondary_disk    = var.controller_secondary_disk,
-    external_compute_ips         = title("${!var.disable_compute_public_ips}"),
+    external_compute_ips         = !var.disable_compute_public_ips,
     login_network_storage        = var.login_network_storage,
     login_node_count             = var.login_node_count
     munge_key                    = var.munge_key,
@@ -81,10 +79,10 @@ ${jsonencode({
     partitions                   = var.partitions,
     project                      = var.project,
     region                       = var.region,
-    shared_vpc_host_proj         = var.shared_vpc_host_project,
+    shared_vpc_host_project      = var.shared_vpc_host_project,
     slurm_version                = var.slurm_version,
     suspend_time                 = var.suspend_time,
-    vpc_subnet                   = var.vpc_subnet,
+    vpc_subnet                   = var.subnetwork_name,
     zone                         = var.zone,
 })}
 EOF

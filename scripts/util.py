@@ -154,7 +154,6 @@ class Config(OrderedDict):
                    'slurm_version',
                    'cluster_name',
                    'external_compute_ips',
-                   'cluster_subnet',
                    'vpc_subnet',
                    'shared_vpc_host_project',
                    'compute_node_prefix',

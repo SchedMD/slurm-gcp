@@ -91,11 +91,6 @@ variable "munge_key" {
   default     = null
 }
 
-variable "network" {
-  description = "Compute Platform network the Slurm cluster nodes will be connected to"
-  default     = "default"
-}
-
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
@@ -160,15 +155,15 @@ variable "subnet" {
   default     = "default"
 }
 
+variable "subnetwork_name" {
+  description = "The name of the pre-defined VPC subnet you want the nodes to attach to based on Region."
+  default     = null
+  type        = string
+}
+
 variable "suspend_time" {
   description = "Idle time (in sec) to wait before nodes go away"
   default     = 300
-}
-
-variable "vpc_subnet" {
-  description = "The name of the pre-defined VPC subnet you want the nodes to attach to based on Region."
-  type        = string
-  default     = null
 }
 
 variable "zone" {

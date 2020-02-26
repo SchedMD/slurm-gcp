@@ -47,18 +47,37 @@ variable "disable_compute_public_ips" {
   default     = false
 }
 
+variable "network_name" {
+  type    = string
+  default = null
+}
+
+variable "shared_vpc_host_project" {
+  type    = string
+  default = null
+}
+
+variable "project" {
+  description = "Name of project"
+}
+
+variable "subnetwork_name" {
+  type    = string
+  default = null
+}
+
 output "cluster_network_self_link" {
-  value = google_compute_network.cluster_network.self_link
+  value = (var.network_name == null) ? google_compute_network.cluster_network[0].self_link : var.network_name
 }
 
 output "cluster_subnet_self_link" {
-  value = google_compute_subnetwork.cluster_subnet.self_link
+  value = (var.network_name == null) ? google_compute_subnetwork.cluster_subnet[0].self_link : "projects/${(var.shared_vpc_host_project != null ? var.shared_vpc_host_project : var.project)}/regions/${var.region}/subnetworks/${var.subnetwork_name}"
 }
 
 output "cluster_network_name" {
-  value = google_compute_network.cluster_network.name
+  value = (var.network_name == null) ? google_compute_network.cluster_network[0].name : var.network_name
 }
 
 output "cluster_subnet_name" {
-  value = google_compute_subnetwork.cluster_subnet.name
+  value = (var.network_name == null) ? google_compute_subnetwork.cluster_subnet[0].self_link : var.subnetwork_name
 }
