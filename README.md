@@ -74,7 +74,7 @@ Steps:
         #   key1 : value1
         #   key2 : value2
         # cloudsql                  :
-        #   server_ip: <cloudsql ip>;
+        #   server_ip: <cloudsql ip>
         #   user: slurm
         #   password: verysecure
         #   # Optional
@@ -96,12 +96,12 @@ Steps:
       # network_storage is mounted on all instances
       # login_network_storage is mounted on controller and login instances
         # network_storage           :
-        #   - server_ip <storage host>;
+        #   - server_ip: <storage host>
         #     remote_mount: /home
         #     local_mount: /home
         #     fs_type: nfs
         # login_network_storage     :
-        #   - server_ip: <storage host>;
+        #   - server_ip: <storage host>
         #     remote_mount: /net_storage
         #     local_mount: /shared
         #     fs_type: nfs
