@@ -26,6 +26,7 @@ module "slurm_cluster_network" {
   source = "../../modules/network"
 
   cluster_name                  = var.cluster_name
+  cluster_network_cidr_range    = var.cluster_network_cidr_range
   disable_login_public_ips      = var.disable_login_public_ips
   disable_controller_public_ips = var.disable_controller_public_ips
   disable_compute_public_ips    = var.disable_compute_public_ips
@@ -40,13 +41,17 @@ module "slurm_cluster_network" {
 module "slurm_cluster_controller" {
   source = "../../modules/controller"
 
+  boot_disk_size                = var.controller_disk_size_gb
+  boot_disk_type                = var.controller_disk_type
   cluster_name                  = var.cluster_name
   compute_node_scopes           = var.compute_node_scopes
   compute_node_service_account  = var.compute_node_service_account
   disable_compute_public_ips    = var.disable_compute_public_ips
   disable_controller_public_ips = var.disable_controller_public_ips
+  labels                        = var.controller_labels
   login_network_storage         = var.login_network_storage
   login_node_count              = var.login_node_count
+  machine_type                  = var.controller_machine_type
   munge_key                     = var.munge_key
   network_storage               = var.network_storage
   ompi_version                  = var.ompi_version
@@ -69,11 +74,15 @@ module "slurm_cluster_controller" {
 module "slurm_cluster_login" {
   source = "../../modules/login"
 
+  boot_disk_size            = var.login_disk_size_gb
+  boot_disk_type            = var.login_disk_type
   cluster_name              = var.cluster_name
   controller_name           = module.slurm_cluster_controller.controller_node_name
   controller_secondary_disk = var.controller_secondary_disk
   disable_login_public_ips  = var.disable_login_public_ips
+  labels                    = var.login_labels
   login_network_storage     = var.login_network_storage
+  machine_type              = var.login_machine_type
   node_count                = var.login_node_count
   scopes                    = var.login_node_scopes
   service_account           = var.login_node_service_account

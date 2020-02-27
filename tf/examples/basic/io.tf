@@ -19,13 +19,18 @@ variable "cloudsql" {
     server_ip = string,
     user      = string,
     password  = string,
-  db_name = string })
+    db_name   = string})
   default = null
 }
 
 variable "cluster_name" {
   description = "Name of the cluster"
   type        = string
+}
+
+variable "cluster_network_cidr_range" {
+  description = "CIDR range for cluster network"
+  default     = "10.10.0.0/16"
 }
 
 variable "compute_image_disk_size_gb" {
@@ -41,8 +46,8 @@ variable "compute_image_disk_type" {
 
 variable "compute_image_labels" {
   description = "Labels to add to the compute node image. List of key key, value pairs."
-  type        = list(string)
-  default     = []
+  type        = any
+  default     = {}
 }
 
 variable "compute_image_machine_type" {
@@ -53,13 +58,40 @@ variable "compute_image_machine_type" {
 variable "compute_node_scopes" {
   description = "Scopes to apply to compute nodes."
   type        = list(string)
-  default     = []
+  default     = [
+    "https://www.googleapis.com/auth/monitoring.write",
+    "https://www.googleapis.com/auth/logging.write"
+  ]
 }
 
 variable "compute_node_service_account" {
   description = "Service Account for compute nodes."
   type        = string
   default     = "default"
+}
+
+variable "controller_machine_type" {
+  description = "Machine type to use for the controller instance"
+  type        = string
+  default     = "n1-standard-2"
+}
+
+variable "controller_disk_type" {
+  description = "Disk type (pd-ssd or pd-standard) for controller."
+  type        = string
+  default     = "pd-standard"
+}
+
+variable "controller_disk_size_gb" {
+  description = "Size of disk for the controller."
+  type        = number
+  default     = 50
+}
+
+variable "controller_labels" {
+  description = "Labels to add to controller instance. List of key key, value pairs."
+  type        = any
+  default     = {}
 }
 
 variable "controller_secondary_disk" {
@@ -105,21 +137,48 @@ variable "disable_compute_public_ips" {
   default = true
 }
 
+variable "login_disk_type" {
+  description = "Disk type (pd-ssd or pd-standard) for login nodes."
+  type        = string
+  default     = "pd-standard"
+}
+
+variable "login_disk_size_gb" {
+  description = "Size of disk for login nodes."
+  type        = number
+  default     = 10
+}
+
+variable "login_labels" {
+  description = "Labels to add to login instances. List of key key, value pairs."
+  type        = any
+  default     = {}
+}
+
+variable "login_machine_type" {
+  description = "Machine type to use for login node instances."
+  type        = string
+  default     = "n1-standard-2"
+}
+
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mout   = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string,
+    remote_mount  = string,
+    local_mout    = string,
+    fs_type       = string,
+    mount_options = string}))
   default = []
 }
 
 variable "login_node_scopes" {
   description = "Scopes to apply to login nodes."
   type        = list(string)
-  default     = []
+  default     = [
+    "https://www.googleapis.com/auth/monitoring.write",
+    "https://www.googleapis.com/auth/logging.write"
+  ]
 }
 
 variable "login_node_service_account" {
@@ -146,11 +205,11 @@ variable "network_name" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mout   = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string,
+    remote_mount  = string,
+    local_mout    = string,
+    fs_type       = string,
+    mount_options = string}))
   default = []
 }
 
@@ -168,16 +227,16 @@ variable "partitions" {
     zone                 = string,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
-    compute_labels       = list(string),
+    compute_labels       = any,
     cpu_platform         = string,
     gpu_type             = string,
     gpu_count            = number,
     network_storage = list(object({
-      server_ip    = string,
-      remote_mount = string,
-      local_mout   = string,
-      fs_type      = string,
-    mount_options = string })),
+      server_ip     = string,
+      remote_mount  = string,
+      local_mout    = string,
+      fs_type       = string,
+      mount_options = string})),
     preemptible_bursting = bool,
   static_node_count = number }))
 }

@@ -21,6 +21,7 @@ locals {
       name           = "${local.compute_node_prefix}-${pid}-image"
       boot_disk_size = var.compute_image_disk_size_gb
       boot_disk_type = var.compute_image_disk_type
+      labels         = var.compute_image_labels
       machine_type   = var.compute_image_machine_type
       sa_email       = "default"
       sa_scopes      = ["cloud-platform"]
@@ -36,6 +37,7 @@ locals {
         name           = "${local.compute_node_prefix}-${pid}-${n}"
         boot_disk_size = var.partitions[pid].compute_disk_size_gb
         boot_disk_type = var.partitions[pid].compute_disk_type
+        labels         = var.partitions[pid].compute_labels
         machine_type   = var.partitions[pid].machine_type
         sa_email       = var.service_account
         sa_scopes      = var.scopes
@@ -70,6 +72,8 @@ resource "google_compute_instance" "compute_node" {
       size  = each.value.boot_disk_size
     }
   }
+
+  labels = each.value.labels
 
   guest_accelerator {
     count = each.value.gpu_count

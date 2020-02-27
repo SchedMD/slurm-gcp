@@ -46,12 +46,18 @@ variable "boot_disk_size" {
 
 variable "boot_disk_type" {
   description = "Type of boot disk to create for the cluster controller node"
-  default     = "pd-ssd"
+  default     = "pd-standard"
+}
+
+variable "labels" {
+  description = "Labels to add to controller instance. List of key key, value pairs."
+  type        = any
+  default     = {}
 }
 
 variable "machine_type" {
   description = "Compute Platform machine type to use in controller node creation"
-  default     = "n1-standard-4"
+  default     = "n1-standard-2"
 }
 
 variable "secondary_disk" {
@@ -83,11 +89,11 @@ variable "disable_compute_public_ips" {
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mout   = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string,
+    remote_mount  = string,
+    local_mout    = string,
+    fs_type       = string,
+    mount_options = string}))
   default = []
 }
 
@@ -104,11 +110,11 @@ variable "munge_key" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mout   = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string,
+    remote_mount  = string,
+    local_mout    = string,
+    fs_type       = string,
+    mount_options = string}))
   default = []
 }
 
@@ -126,16 +132,16 @@ variable "partitions" {
     zone                 = string,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
-    compute_labels       = list(string),
+    compute_labels       = any,
     cpu_platform         = string,
     gpu_type             = string,
     gpu_count            = number,
     network_storage = list(object({
-      server_ip    = string,
-      remote_mount = string,
-      local_mout   = string,
-      fs_type      = string,
-    mount_options = string })),
+      server_ip     = string,
+      remote_mount  = string,
+      local_mout    = string,
+      fs_type       = string,
+      mount_options = string})),
     preemptible_bursting = bool,
   static_node_count = number }))
 }

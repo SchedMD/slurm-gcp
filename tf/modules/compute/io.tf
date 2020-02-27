@@ -26,8 +26,8 @@ variable "compute_image_disk_type" {
 
 variable "compute_image_labels" {
   description = "Labels to add to the compute node image. List of key key, value pairs."
-  type        = list(string)
-  default     = []
+  type        = any
+  default     = {}
 }
 
 variable "compute_image_machine_type" {
@@ -68,11 +68,11 @@ variable "munge_key" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mout   = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string,
+    remote_mount  = string,
+    local_mout    = string,
+    fs_type       = string,
+    mount_options = string}))
   default = []
 }
 
@@ -90,16 +90,16 @@ variable "partitions" {
     zone                 = string,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
-    compute_labels       = list(string),
+    compute_labels       = any,
     cpu_platform         = string,
     gpu_type             = string,
     gpu_count            = number,
     network_storage = list(object({
-      server_ip    = string,
-      remote_mount = string,
-      local_mout   = string,
-      fs_type      = string,
-    mount_options = string })),
+      server_ip     = string,
+      remote_mount  = string,
+      local_mout    = string,
+      fs_type       = string,
+      mount_options = string})),
     preemptible_bursting = bool,
   static_node_count = number }))
 }
@@ -112,7 +112,10 @@ variable "project" {
 variable "scopes" {
   description = "Scopes to apply to compute nodes."
   type        = list(string)
-  default     = []
+  default     = [
+    "https://www.googleapis.com/auth/monitoring.write",
+    "https://www.googleapis.com/auth/logging.write"
+  ]
 }
 
 variable "service_account" {

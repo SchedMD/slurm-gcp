@@ -33,6 +33,8 @@ resource "google_compute_instance" "login_node" {
     }
   }
 
+  labels = var.labels
+
   network_interface {
     dynamic "access_config" {
       for_each = var.disable_login_public_ips == true ? [] : [1]

@@ -44,19 +44,25 @@ variable "disable_login_public_ips" {
   default     = false
 }
 
+variable "labels" {
+  description = "Labels to add to login instances. List of key key, value pairs."
+  type        = any
+  default     = {}
+}
+
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mout   = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string,
+    remote_mount  = string,
+    local_mout    = string,
+    fs_type       = string,
+    mount_options = string}))
   default = []
 }
 
 variable "machine_type" {
-  description = "Compute Platform machine type to use in login node creation"
+  description = "Machine type to use for login node instances."
   default     = "n1-standard-2"
 }
 
@@ -68,11 +74,11 @@ variable "munge_key" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mout   = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string,
+    remote_mount  = string,
+    local_mout    = string,
+    fs_type       = string,
+    mount_options = string}))
   default = []
 }
 
@@ -89,7 +95,10 @@ variable "ompi_version" {
 variable "scopes" {
   description = "Scopes to apply to login nodes."
   type        = list(string)
-  default     = []
+  default     = [
+    "https://www.googleapis.com/auth/monitoring.write",
+    "https://www.googleapis.com/auth/logging.write"
+  ]
 }
 
 variable "service_account" {
