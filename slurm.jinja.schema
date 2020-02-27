@@ -57,7 +57,6 @@ optional:
 - compute_image_disk_size_gb
 - compute_image_disk_type
 - compute_image_labels
-- cpu_platform
 - external_compute_ips
 - login_disk_size_gb
 - login_disk_type
