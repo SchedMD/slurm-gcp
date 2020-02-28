@@ -497,7 +497,7 @@ JobAcctGatherFrequency=30
 JobAcctGatherType=jobacct_gather/linux
 SlurmctldDebug=info
 SlurmctldLogFile={SLURM_LOG}/slurmctld.log
-SlurmdDebug=debug
+SlurmdDebug=info
 SlurmdLogFile={SLURM_LOG}/slurmd-%n.log
 #
 #
@@ -611,7 +611,7 @@ def install_slurmdbd_conf():
 
 AuthType=auth/munge
 DbdHost={CONTROL_MACHINE}
-DebugLevel=debug2
+DebugLevel=debug
 
 #PurgeEventAfter=1month
 #PurgeJobAfter=12month
