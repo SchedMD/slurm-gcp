@@ -185,6 +185,117 @@ def have_gpus(hostname):
 # END have_gpus()
 
 
+def install_slurmlog_conf():
+    """ Install fluentd config for slurm logs """
+
+    slurm_time_format = r'%Y-%m-%dT%H:%M:%S.%N'
+    slurm_regex = r'/^\[(?<time>[^\]]*)\] (?<message>(?<severity>\w*).*)$/'
+    python_time_format = r'%Y-%m-%d %H:%M:%S,%N'
+    python_regex = r'/^(?<time>.* .*) (?<message>.* (?<severity>\w*).*)$/'
+
+    # This filter goes with all of the slurm sources. It maps slurm log levels
+    # to logging api severity levels and prepends the tag to the log message.
+    common_filter = r"""
+<filter slurmctld slurmdbd slurmd>
+  @type record_transformer
+  enable_ruby true
+  <record>
+    severity ${ {'debug'=>'DEBUG', 'debug2'=>'DEBUG', 'debug3'=>'DEBUG', 'debug4'=>'DEBUG', 'debug5'=>'DEBUG', 'error'=>'ERROR', 'fatal'=>'CRITICAL'}.tap{|map| map.default='INFO'}[record['severity']] }
+    message ${tag + " " + record['message']}
+  </record>
+</filter>
+"""
+
+    log_configs = {
+        'controller': f"""
+{common_filter}
+<source>
+  @type tail
+  tag slurmctld
+  path /var/log/slurm/slurmctld.log
+  pos_file /var/lib/google-fluentd/pos/slurm_slurmctld.log.pos
+  read_from_head true
+  <parse>
+    @type regexp
+    expression {slurm_regex}
+    time_format {slurm_time_format}
+  </parse>
+</source>
+
+<source>
+  @type tail
+  tag slurmdbd
+  path /var/log/slurm/slurmdbd.log
+  pos_file /var/lib/google-fluentd/pos/slurm_slurmdbd.log.pos
+  read_from_head true
+  <parse>
+    @type regexp
+    expression {slurm_regex}
+    time_format {slurm_time_format}
+  </parse>
+</source>
+
+<source>
+  @type tail
+  tag resume
+  path /var/log/slurm/resume.log
+  pos_file /var/lib/google-fluentd/pos/slurm_resume.log.pos
+  read_from_head true
+  <parse>
+    @type regexp
+    expression {python_regex}
+    time_format {python_time_format}
+  </parse>
+</source>
+
+<source>
+  @type tail
+  tag suspend
+  path /var/log/slurm/suspend.log
+  pos_file /var/lib/google-fluentd/pos/slurm_suspend.log.pos
+  read_from_head true
+  <parse>
+    @type regexp
+    expression {python_regex}
+    time_format {python_time_format}
+  </parse>
+</source>
+
+<source>
+  @type tail
+  tag slurmsync
+  path /var/log/slurm/slurmsync.log
+  pos_file /var/lib/google-fluentd/pos/slurm_slurmsync.log.pos
+  read_from_head true
+  <parse>
+    @type regexp
+    expression {python_regex}
+    time_format {python_time_format}
+  </parse>
+</source>
+""",
+        'compute': f"""
+{common_filter}
+<source>
+  @type tail
+  tag slurmd
+  path /var/log/slurm/slurmd*.log
+  pos_file /var/lib/google-fluentd/pos/slurm_slurmd.log.pos
+  read_from_head true
+  <parse>
+    @type regexp
+    expression {slurm_regex}
+    time_format {slurm_time_format}
+  </parse>
+</source>
+"""}
+
+    slurmlog_config = log_configs.get(cfg.instance_type)
+    if slurmlog_config:
+        Path('/etc/google-fluentd/config.d/slurmlogs.conf').write_text(
+            slurmlog_config)
+
+
 def install_packages():
 
     # install stackdriver monitoring and logging
@@ -198,6 +309,7 @@ def install_packages():
     add_log_url = f'https://dl.google.com/cloudagents/{add_log_script.name}'
     urllib.request.urlretrieve(add_log_url, add_log_script)
     util.run(f"bash {add_log_script}")
+    install_slurmlog_conf()
 
     util.run("systemctl enable stackdriver-agent google-fluentd")
     util.run("systemctl start stackdriver-agent google-fluentd")
