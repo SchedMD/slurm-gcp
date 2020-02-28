@@ -15,8 +15,9 @@ cloud environment. [SchedMD Commercial Support](https://www.schedmd.com/support.
 Issues and/or enhancement requests can be submitted to
 [SchedMD's Bugzilla](https://bugs.schedmd.com).
 
-For general feedback, please fill out the following
-[form](https://docs.google.com/forms/d/1STDQZOm96d4qhcWxL6wDsOBx9BsVPKidVUTOnqHNdcw).
+Also, join comunity discussions on either the
+[Slurm User mailing list](https://slurm.schedmd.com/mail.html) or the
+[Google Cloud & Slurm Community Discussion Group](https://groups.google.com/forum/#!forum/google-cloud-slurm-discuss).
 
 ## Stand-alone Cluster in Google Cloud Platform
 
@@ -36,6 +37,9 @@ On the controller node, slurm is installed in:
 with the symlink /apps/slurm/current pointing to /apps/slurm/<slurm_version>.
 
 The login nodes mount /apps and /home from the controller node.
+
+
+### Install using Deployment Manager
 
 To deploy, you must have a GCP account and either have the
 [GCP Cloud SDK](https://cloud.google.com/sdk/downloads)
@@ -73,6 +77,9 @@ Steps:
         # controller_labels         :
         #   key1 : value1
         #   key2 : value2
+        # controller_service_account: default
+        # controller_scopes         :
+        # - https://www.googleapis.com/auth/cloud-platform
         # cloudsql                  :
         #   server_ip: <cloudsql ip>
         #   user: slurm
@@ -212,12 +219,12 @@ Steps:
    (e.g. /bin/bash) to get the correct bash profile.
 
    ```
-   $ gcloud compute [--project=<project id>] ssh [--zone=<zone>] g1-login1
+   $ gcloud compute [--project=<project id>] ssh [--zone=<zone>] g1-login0
    ...
-   [bob@g1-login1 ~]$ sinfo
+   [bob@g1-login0 ~]$ sinfo
    PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-   debug*       up   infinite      8  idle~ g1-compute[000001-000009]
-   debug*       up   infinite      2   idle g1-compute[000000-000001]
+   debug*       up   infinite      8  idle~ g1-compute-0-[1-9]
+   debug*       up   infinite      2   idle g1-compute-0-[0-1]
    ```
 
    **NOTE:** By default, Slurm will hide nodes that are in a power_save state --
@@ -228,11 +235,11 @@ Steps:
 4. Submit jobs on the cluster.
 
    ```
-   [bob@g1-login1 ~]$ sbatch -N2 --wrap="srun hostname"
+   [bob@g1-login0 ~]$ sbatch -N2 --wrap="srun hostname"
    Submitted batch job 2
-   [bob@g1-login1 ~]$ cat slurm-2.out
-   g1-compute000000
-   g1-compute000001
+   [bob@g1-login0 ~]$ cat slurm-2.out
+   g1-compute-0-0
+   g1-compute-0-1
    ```
 
 5. Tearing down the deployment.
@@ -245,16 +252,42 @@ Steps:
    than the ones created from the default deployment then they will need to be
    destroyed before deployment can be removed.
 
+### Install using Terraform
+
+To deploy, you must have a GCP account and either have the
+[GCP Cloud SDK](https://cloud.google.com/sdk/downloads) and
+[Terraform](https://www.terraform.io/downloads.html)
+installed on your computer or use the GCP
+[Cloud Shell](https://cloud.google.com/shell/).
+
+Steps:
+1. cd to tf/examples/basic
+2. Edit the `basic.tfvars` file and specify the required values
+3. Deploy the cluster
+   ```
+   $ terraform init
+   $ terraform apply -var-file=basic.tfvars
+   ```
+4. Tearing down the cluster
+
+   ```
+   $ terraform destroy -var-file=basic.tfvars
+   ```
+
+   **NOTE:** If additional resources (instances, networks) are created other
+   than the ones created from the default deployment then they will need to be
+   destroyed before deployment can be removed.
+
 ### Image-based Scaling
-   When a deployment is created, the deployment will create a
-   <cluster_name>-compute-image instance that is a base compute instance
-   image. When the instance is done installing packages, it then creates a
-   image of itself and then stops itself. Subsequent bursted compute
-   instances will use this image -- shortening the creation and boot time of
-   new compute instances. While the compute-image is running, the debug
-   partition will be marked as "down" to prevent jobs from launching until the
-   image is created. After the image is created, the partition will be put into
-   an "up" state and jobs can then run.
+   The deployment will create a <cluster_name>-compute-\#-image instance, where
+   \# is the index in the array of partitions, for each partition that is a base
+   compute instance image. After installing necessary packages, the instance
+   will be stopped and an image of the instance will be created. Subsequent
+   bursted compute instances will use this image -- shortening the creation and
+   boot time of new compute instances. While the compute image is running, the
+   respective partitions will be marked as "down" to prevent jobs from
+   launching until the image is created. After the image is created, the
+   partition will be put into an "up" state and jobs can then run.
 
    **NOTE:** When creating a compute image that has gpus attached, the process
    can take about 10 minutes.
@@ -262,13 +295,11 @@ Steps:
    If the compute image needs to be updated, it can be done with the following
    command:
    ```
-   $ gcloud compute images create <cluster_name>-compute-image-#-$(date '+%Y-%m-%d-%H-%M-%S') \
+   $ gcloud compute images create <cluster_name>-compute-#-image-$(date '+%Y-%m-%d-%H-%M-%S') \
                                   --source-disk <instance name> \
                                   --source-disk-zone <zone> --force \
-                                  --family <cluster_name>-compute-image-family
+                                  --family <cluster_name>-compute-#-image-family
    ```
-
-   Where # is the partition index.
 
    Existing images can be viewed on the console's [Images](https://console.cloud.google.com/compute/images)
    page.
@@ -295,6 +326,8 @@ Steps:
       external IP on the [VM Instances](https://console.cloud.google.com/compute/instances)
       page. From this node you can ssh to compute nodes.
 
+### OSLogin
+
 ### Preemptible VMs
    With preemptible_bursting on, when a node is found preempted, or stopped,
    the slurmsync script will mark the node as "down" and will attempt to
@@ -310,6 +343,80 @@ be modified and used create new compute instances in a GCP project. See the
 [Slurm Elastic Computing](https://slurm.schedmd.com/elastic_computing.html) for
 more information.
 
+Pre-reqs:
+1. VPN between on-prem and GCP
+2. bidirectional DNS between on-premise and GCP
+3. Open ports to on-premise
+   1. slurmctld
+   2. slurmdbd
+   3. SrunPortRange
+
+
+Steps:
+1. Create a base instance
+
+   Create a bare image and install and configure the packages (including Slurm)
+   that you are used to for a Slurm compute node. Then take create an image
+   from it creating a family either in the form
+   "<cluster_name>-compute-#-image-family" or in a name of your choosing.
+
+
+2. Create a service account that will have access to create and delete
+   instances in the remote project.
+
+3. Install scripts
+
+   Install the *resume.py*, *suspend.py*, *slurmsync.py* and
+   *config.yaml.example* from the slurm-gcp repository's scripts directory to a
+   location on the slurmctld. Rename config.yaml.example to config.yaml and
+   modify the approriate values.
+   
+   Add the compute_image_family to each partition if different than the nameing
+   schema, "<cluster_name>-compute-#-image-family".
+
+
+4. Modify slurm.conf:
+
+   ```
+   PrivateData=cloud
+   
+   SuspendProgram=/path/to/suspend.py
+   ResumeProgram=/path/to/resume.py
+   ResumeFailProgram=/path/to/suspend.py
+   SuspendTimeout=600
+   ResumeTimeout=600
+   ResumeRate=0
+   SuspendRate=0
+   SuspendTime=300
+   
+   # Tell Slurm to not power off nodes. By default, it will want to power
+   # everything off. SuspendExcParts will probably be the easiest one to use.
+   #SuspendExcNodes=
+   #SuspendExcParts=
+   
+   SchedulerParameters=salloc_wait_nodes
+   SlurmctldParameters=cloud_dns,idle_on_node_suspend
+   CommunicationParameters=NoAddrCache
+   LaunchParameters=enable_nss_slurm
+   
+   SrunPortRange=60001-63000
+   ```
+
+5. Add a cronjob/crontab to call slurmsync.py
+
+   e.g.
+   ```
+   */1 * * * * /path/to/slurmsync.py
+   ```
+
+6. Test
+
+   Try creating and deleting instances in GCP by calling the commands directly as SlurmUser.
+   ```
+   ./resume.py g1-compute-0-0
+   ./suspend.py g1-compute-0-0
+   ```
+
 ### Bursting out playground
 
 You can use the deployment scripts to create a playground to test bursting from
@@ -318,7 +425,7 @@ setting up a gateway-to-gateway VPN in GCP between the two projects. The
 following are the steps to do this.
 
 1. Create two projects in GCP (e.g. project1, project2).
-2. Create a slurm cluster in project1 using the deployments scripts.
+2. Create a slurm cluster in both projects using the deployments scripts.
 
    e.g.
    ```
@@ -334,24 +441,24 @@ following are the steps to do this.
        ....
 
    $ gcloud deployment-manager --project=<project1> deployments create slurm --config slurm-cluster.yaml
+
+   $ cat slurm-cluster.yaml
+   resources:
+   - name: slurm-cluster
+     type: slurm.jinja
+     properties:
+       ...
+       cluster_name            : g1
+       ...
+       cidr                    : 10.20.0.0/16
+       ....
+
+   $ gcloud deployment-manager --project=<project2> deployments create slurm --config slurm-cluster.yaml
    ```
 
-3. Create a network in project2.
-   1. From the GCP console, navigate to VPC Network->VPC Networks->CREATE VPC
-      NETWORK
-   2. Fill in the following fields:
-      ```
-      Name                  : slurm-network2
-      Subnets:
-      Subnet creation mode  : custom
-      Name                  : slurm-subnetwork2
-      Region                : choose a region
-      IP address range      : 10.20.0.0/16
-      Private Google Access : On
-      Flow logs             : Off
-      Dynamic routing mode  : Regional
-      DNS server policy     : No server policy
-      ```
+   We use the deployment scripts to setup the network and compute image. Once
+   project2 is up, all instances except the compute-image in project2 should be
+   deleted.
 
 4. Setup a gateway-to-gateway VPN.
 
@@ -365,7 +472,7 @@ following are the steps to do this.
    Gateway:
    Name       : slurm-vpn
    Network    : choose project's network
-   Region     : choose same region as slurm-network2's
+   Region     : choose same region as project2's
    IP Address : choose or create a static IP
 
    Tunnels:
@@ -375,7 +482,7 @@ following are the steps to do this.
    Shared secret            : string used by both vpns
    Routing options          : Policy-based
    Remote network IP ranges : IP range of network of other project (Enter 10.20.0.0/16 for project1 and 10.10.0.0/16 for project2)
-   Local subnetworks        : For project1 choose "slurm-network" and for project2 choose "slurm-network2"
+   Local subnetworks        : Choose networks for each project.
    Local IP ranges          : Should be filled in with the subnetwork's IP range.
    ```
    Then click Create.
@@ -383,42 +490,21 @@ following are the steps to do this.
    If all goes well then the VPNs should show a green check mark for the VPN
    tunnels.
 
-5. Add permissions for project1 to create instances in project2.
-
-   By default, GCE will create a service account in the instances that are
-   created. We need to get this account name and give it permissions in
-   project2.
-   1. gcloud compute ssh to controller in project1
-     * $ gcloud compute [--project=<project1>] ssh [--zone=<zone>] g1-controller
-   2. Run:
-      ```
-      gcloud config list
-      ```
-   3. Grab the account name.
-   4. From project2's GCP Console, navigate to: IAM & Admin.
-   5. Click ADD at the top.
-   6. Add the account name to the Members field.
-   7. Select the **Compute Admin** and **Service Account User** roles.
-   8. Click ADD
-
-6. Modify *resume.py*, *slurmsync.py* and *suspend.py* in the
+6. Modify *config.yaml* in the
    /apps/slurm/scripts directory on project1's controller instance to
-   communicate with project2.
+   communicate with project2 information.
 
    Modify the following fields with the appropriate values:
    e.g.
    ```
-   # resume.py, suspend.py, slurmsync.py
-   PROJECT      = '<project2 id>'
-   ZONE         = '<project2 zone>'
+   project: slurm-184304
+   region: us-west1
+   zone: us-west1-b
+   cluster_subnet: slurm-subnetwork2
 
-   # resume.py
-   REGION       = '<project2 region>'
-   NETWORK      = "projects/{}/regions/{}/subnetworks/slurm-subnetwork2".format(PROJECT, REGION)"
-
-   # Set to True so that it can install packages from the internet
-   EXTERNAL_IP  = True
+   google_app_cred_path: /path/to/<file>.json
    ```
+
 7. By default, project1 won't be able to resolve the instances in project2.
    here are two ways to work around this.
 
@@ -646,7 +732,7 @@ following are the steps to do this.
 
 14. Image-based nodes on project2.
 
-    Because deployment manager created an image in the project1, project2 will
+    Because deployment manager created an image in project1, project2 will
     install from scratch for every bursted-out compute node. In order to create
     a base image for bursting, the following can be done.
 
@@ -661,15 +747,15 @@ following are the steps to do this.
     # the instance and verify that there are no messages about installing in the
     # motd.
 
-    [slurm@g1-controller scripts]$ gcloud compute images create <cluster_name>-compute-image-#-$(date '+%Y-%m-%d-%H-%M-%S') \
+    [slurm@g1-controller scripts]$ gcloud compute images create <cluster_name>-compute-#-image-$(date '+%Y-%m-%d-%H-%M-%S') \
                                                                 --source-disk proj2-compute-image \
                                                                 --source-disk-zone <zone> --force \
-                                                                --family <cluster_name>-compute-image-family \
+                                                                --family <cluster_name>-compute-#-image-family \
                                                                 --project <project2>
 
     Where # is the partition index.
 
-    # Then either stop or delete the proj2-compute-image instance.
+    # Then either stop or delete the proj2-compute-#-image instance.
     ```
 
     Once the image is created, EXTERNAL_IP can be set to False in resume.py.
@@ -855,29 +941,29 @@ space (e.g. same uids across all the clusters).
 
     e.g.
     ```
-    [bob@login1 ~]$ sinfo -Mg1,g2
+    [bob@login0 ~]$ sinfo -Mg1,g2
     CLUSTER: g1
     PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-    debug*       up   infinite      8  idle~ g1-compute[000002-000009]
-    debug*       up   infinite      2   idle g1-compute[000000-000001]
+    debug*       up   infinite      8  idle~ g1-compute-0-[2-9]
+    debug*       up   infinite      2   idle g1-compute-0-[0-1]
 
     CLUSTER: g2
     PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-    debug*       up   infinite      8  idle~ g2-compute[000002-000009]
-    debug*       up   infinite      2   idle g2-compute[000000-000001]
+    debug*       up   infinite      8  idle~ g2-compute-0-[2-9]
+    debug*       up   infinite      2   idle g2-compute-0-[0-1]
 
-    [bob@login1 ~]$ sbatch -Mg1 --wrap="srun hostname; sleep 300"
+    [bob@login0 ~]$ sbatch -Mg1 --wrap="srun hostname; sleep 300"
     Submitted batch job 17 on cluster g1
 
-    [bob@login1 ~]$ sbatch -Mg2 --wrap="srun hostname; sleep 300"
+    [bob@login0 ~]$ sbatch -Mg2 --wrap="srun hostname; sleep 300"
     Submitted batch job 8 on cluster g2
 
-    [bob@login1 ~]$ squeue -Mg1,g2
+    [bob@login0 ~]$ squeue -Mg1,g2
     CLUSTER: g1
                  JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
-                    17     debug     wrap      bob  R       0:31      1 g1-compute000000
+                    17     debug     wrap      bob  R       0:31      1   g1-compute-0-0
 
     CLUSTER: g2
                  JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
-                     8     debug     wrap      bob  R       0:12      1 g2-compute000000
+                     8     debug     wrap      bob  R       0:12      1   g2-compute-0-0
     ```
