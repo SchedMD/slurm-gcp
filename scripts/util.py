@@ -208,7 +208,7 @@ class Config(OrderedDict):
         return cls(config)
 
     def save_config(self, path):
-        save_dict = {k: self[k] for k in self.SAVED_PROPS}
+        save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
         Path(path).write_text(yaml.dump(save_dict, Dumper=self.Dumper))
 
     @property
