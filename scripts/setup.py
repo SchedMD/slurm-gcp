@@ -188,33 +188,17 @@ def have_gpus(hostname):
 def install_packages():
 
     # install stackdriver monitoring and logging
-    host = "packages.cloud.google.com"
-    repo = "google-cloud-monitoring-el7-$basearch"
-    Path('/etc/yum.repos.d/google-cloud-monitoring.repo').write_text(f"""
-[google-cloud-monitoring]
-name=Google Cloud Monitoring Agent Repository
-baseurl=https://{host}/yum/repos/{repo}
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://{host}/yum/doc/yum-key.gpg
-       https://{host}/yum/doc/rpm-package-key.gpg
-""")
+    add_mon_script = Path('/tmp/add-monitoring-agent-repo.sh')
+    add_mon_url = f'https://dl.google.com/cloudagents/{add_mon_script.name}'
+    urllib.request.urlretrieve(add_mon_url, add_mon_script)
+    util.run(f"bash {add_mon_script}")
+    util.run("yum install -y stackdriver-agent")
 
-    repo = "google-cloud-logging-el7-$basearch"
-    Path('/etc/yum.repos.d/google-cloud-logging.repo').write_text(f"""
-[google-cloud-logging]
-name=Google Cloud Logging Agent Repository
-baseurl=https://{host}/yum/repos/{repo}
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://{host}/yum/doc/yum-key.gpg
-       https://{host}/yum/doc/rpm-package-key.gpg
-""")
+    add_log_script = Path('/tmp/install-logging-agent.sh')
+    add_log_url = f'https://dl.google.com/cloudagents/{add_log_script.name}'
+    urllib.request.urlretrieve(add_log_url, add_log_script)
+    util.run(f"bash {add_log_script}")
 
-    util.run(
-        "yum -y install stackdriver-agent google-fluentd-catch-all-config")
     util.run("systemctl enable stackdriver-agent google-fluentd")
     util.run("systemctl start stackdriver-agent google-fluentd")
 
