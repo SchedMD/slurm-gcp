@@ -12,7 +12,6 @@ shared_vpc_host_project: null
 vpc_subnet: null
 
 slurm_cmd_path: /apps/slurm/current/bin
-slurm_version: 19.05-latest
 log_dir: /var/log/slurm
 
 compute_node_prefix: <compute_node_prefix>

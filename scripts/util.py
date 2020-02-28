@@ -166,7 +166,6 @@ class Config(OrderedDict):
     #   in the config file. SAVED_PROPS are saved to file via save_config.
     SAVED_PROPS = ('project',
                    'zone',
-                   'slurm_version',
                    'cluster_name',
                    'external_compute_ips',
                    'shared_vpc_host_project',
@@ -187,6 +186,7 @@ class Config(OrderedDict):
                   'nfs_apps_dir',
                   'ompi_version',
                   'controller_secondary_disk',
+                  'slurm_version',
                   'suspend_time',
                   'network_storage',
                   'login_network_storage',
