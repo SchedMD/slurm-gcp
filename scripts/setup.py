@@ -862,7 +862,7 @@ RPCNFSDCOUNT=256
 
 def setup_sync_cronjob():
 
-    util.run("crontab -u root -", input=(
+    util.run("crontab -u slurm -", input=(
         f"*/1 * * * * {APPS_DIR}/slurm/scripts/slurmsync.py\n"))
 
 # END setup_sync_cronjob()
