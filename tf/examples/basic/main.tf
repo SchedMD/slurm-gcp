@@ -98,10 +98,6 @@ module "slurm_cluster_compute" {
   source = "../../modules/compute"
 
   cluster_name               = var.cluster_name
-  compute_image_disk_size_gb = var.compute_image_disk_size_gb
-  compute_image_disk_type    = var.compute_image_disk_type
-  compute_image_labels       = var.compute_image_labels
-  compute_image_machine_type = var.compute_image_machine_type
   controller_name            = module.slurm_cluster_controller.controller_node_name
   disable_compute_public_ips = var.disable_compute_public_ips
   network_storage            = var.network_storage
