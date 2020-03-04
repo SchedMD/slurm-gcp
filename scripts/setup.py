@@ -297,22 +297,17 @@ def setup_nfs_exports():
 
 def expand_machine_type():
 
-    # Assume sockets is 1. Currently, no instances with multiple sockets
-    # Assume hyper-threading is on and 2 threads per core
     machines = []
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
     for part in cfg.partitions:
-        machine = {'sockets': 1, 'cores': 1, 'threads': 1, 'memory': 1}
+        machine = {'cpus': 1, 'memory': 1}
         try:
             type_resp = compute.machineTypes().get(
                 project=cfg.project, zone=part['zone'],
                 machineType=part['machine_type']).execute()
             if type_resp:
-                tot_cpus = type_resp['guestCpus']
-                if tot_cpus > 1:
-                    machine['cores'] = tot_cpus // 2
-                    machine['threads'] = 2
+                machine['cpus'] = type_resp['guestCpus']
 
                 # Because the actual memory on the host will be different than
                 # what is configured (e.g. kernel will take it). From
@@ -362,9 +357,7 @@ def install_slurm_conf():
                 part['max_node_count'] - 1)
 
         conf += ("NodeName=DEFAULT "
-                 f"Sockets={machine['sockets']} "
-                 f"CoresPerSocket={machine['cores']} "
-                 f"ThreadsPerCore={machine['threads']} "
+                 f"CPUs={machine['cpus']} "
                  f"RealMemory={machine['memory']} "
                  "State=UNKNOWN")
         conf += '\n'
@@ -383,8 +376,7 @@ def install_slurm_conf():
         # Partitions
         part_nodes = f"-{i}-[0-{part['max_node_count'] - 1}]"
 
-        total_threads = machine['threads']*machine['cores']*machine['sockets']
-        def_mem_per_cpu = max(100, machine['memory'] // total_threads)
+        def_mem_per_cpu = max(100, machine['memory'] // machine['cpus'])
 
         conf += ("PartitionName={} Nodes={}-compute{} MaxTime=INFINITE "
                  "State=UP DefMemPerCPU={} LLN=yes"
