@@ -138,5 +138,16 @@ EOF
 ${file("${path.module}/../../../scripts/compute-shutdown")}
 EOF
 
+    slurm_conf_tpl = <<EOF
+${file("${path.module}/../../../etc/slurm.conf.tpl")}
+EOF
+
+    slurmdbd_conf_tpl = <<EOF
+${file("${path.module}/../../../etc/slurmdbd.conf.tpl")}
+EOF
+
+    cgroup_conf_tpl = <<EOF
+${file("${path.module}/../../../etc/cgroup.conf.tpl")}
+EOF
   }
 }

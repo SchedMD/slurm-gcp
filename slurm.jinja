@@ -181,6 +181,15 @@ resources:
         - key: compute-shutdown
           value: |
             {{ imports["scripts/compute-shutdown"]|indent(12) }}
+        - key: slurm_conf_tpl
+          value: |
+            {{ imports["etc/slurm.conf.tpl"]|indent(12) }}
+        - key: slurmdbd_conf_tpl
+          value: |
+            {{ imports["etc/slurmdbd.conf.tpl"]|indent(12) }}
+        - key: cgroup_conf_tpl
+          value: |
+            {{ imports["etc/cgroup.conf.tpl"]|indent(12) }}
 
 
 {% for n in range(properties['login_node_count']) %}

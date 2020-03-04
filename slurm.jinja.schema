@@ -31,6 +31,9 @@ imports:
 - path: scripts/setup.py
 - path: scripts/suspend.py
 - path: scripts/util.py
+- path: etc/slurm.conf.tpl
+- path: etc/slurmdbd.conf.tpl
+- path: etc/cgroup.conf.tpl
 
 required:
 - cidr
