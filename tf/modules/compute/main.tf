@@ -130,5 +130,9 @@ EOF
 ${file("${path.module}/../../../scripts/setup.py")}
 EOF
 
+    fluentd_conf_tpl = <<EOF
+${file("${path.module}/../../../etc/compute-fluentd.conf.tpl")}
+EOF
+
   }
 }

@@ -34,6 +34,8 @@ imports:
 - path: etc/slurm.conf.tpl
 - path: etc/slurmdbd.conf.tpl
 - path: etc/cgroup.conf.tpl
+- path: etc/controller-fluentd.conf.tpl
+- path: etc/compute-fluentd.conf.tpl
 
 required:
 - cidr

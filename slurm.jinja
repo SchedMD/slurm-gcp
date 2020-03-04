@@ -190,6 +190,9 @@ resources:
         - key: cgroup_conf_tpl
           value: |
             {{ imports["etc/cgroup.conf.tpl"]|indent(12) }}
+        - key: fluentd_conf_tpl
+          value: |
+            {{ imports["etc/controller-fluentd.conf.tpl"]|indent(12) }}
 
 
 {% for n in range(properties['login_node_count']) %}
@@ -319,6 +322,9 @@ resources:
             {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: fluentd_conf_tpl
+          value: |
+            {{ imports["etc/compute-fluentd.conf.tpl"]|indent(12) }}
 {% endfor %}
 {% endfor %}
 
@@ -379,4 +385,7 @@ resources:
             {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: fluentd_conf_tpl
+          value: |
+            {{ imports["etc/compute-fluentd.conf.tpl"]|indent(12) }}
 {% endfor %}

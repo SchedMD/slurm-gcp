@@ -188,109 +188,7 @@ def have_gpus(hostname):
 def install_slurmlog_conf():
     """ Install fluentd config for slurm logs """
 
-    slurm_time_format = r'%Y-%m-%dT%H:%M:%S.%N'
-    slurm_regex = r'/^\[(?<time>[^\]]*)\] (?<message>(?<severity>\w*).*)$/'
-    python_time_format = r'%Y-%m-%d %H:%M:%S,%N'
-    python_regex = r'/^(?<time>.* .*) (?<message>.* (?<severity>\w*).*)$/'
-
-    # This filter goes with all of the slurm sources. It maps slurm log levels
-    # to logging api severity levels and prepends the tag to the log message.
-    common_filter = r"""
-<filter slurmctld slurmdbd slurmd>
-  @type record_transformer
-  enable_ruby true
-  <record>
-    severity ${ {'debug'=>'DEBUG', 'debug2'=>'DEBUG', 'debug3'=>'DEBUG', 'debug4'=>'DEBUG', 'debug5'=>'DEBUG', 'error'=>'ERROR', 'fatal'=>'CRITICAL'}.tap{|map| map.default='INFO'}[record['severity']] }
-    message ${tag + " " + record['message']}
-  </record>
-</filter>
-"""
-
-    log_configs = {
-        'controller': f"""
-{common_filter}
-<source>
-  @type tail
-  tag slurmctld
-  path /var/log/slurm/slurmctld.log
-  pos_file /var/lib/google-fluentd/pos/slurm_slurmctld.log.pos
-  read_from_head true
-  <parse>
-    @type regexp
-    expression {slurm_regex}
-    time_format {slurm_time_format}
-  </parse>
-</source>
-
-<source>
-  @type tail
-  tag slurmdbd
-  path /var/log/slurm/slurmdbd.log
-  pos_file /var/lib/google-fluentd/pos/slurm_slurmdbd.log.pos
-  read_from_head true
-  <parse>
-    @type regexp
-    expression {slurm_regex}
-    time_format {slurm_time_format}
-  </parse>
-</source>
-
-<source>
-  @type tail
-  tag resume
-  path /var/log/slurm/resume.log
-  pos_file /var/lib/google-fluentd/pos/slurm_resume.log.pos
-  read_from_head true
-  <parse>
-    @type regexp
-    expression {python_regex}
-    time_format {python_time_format}
-  </parse>
-</source>
-
-<source>
-  @type tail
-  tag suspend
-  path /var/log/slurm/suspend.log
-  pos_file /var/lib/google-fluentd/pos/slurm_suspend.log.pos
-  read_from_head true
-  <parse>
-    @type regexp
-    expression {python_regex}
-    time_format {python_time_format}
-  </parse>
-</source>
-
-<source>
-  @type tail
-  tag slurmsync
-  path /var/log/slurm/slurmsync.log
-  pos_file /var/lib/google-fluentd/pos/slurm_slurmsync.log.pos
-  read_from_head true
-  <parse>
-    @type regexp
-    expression {python_regex}
-    time_format {python_time_format}
-  </parse>
-</source>
-""",
-        'compute': f"""
-{common_filter}
-<source>
-  @type tail
-  tag slurmd
-  path /var/log/slurm/slurmd*.log
-  pos_file /var/lib/google-fluentd/pos/slurm_slurmd.log.pos
-  read_from_head true
-  <parse>
-    @type regexp
-    expression {slurm_regex}
-    time_format {slurm_time_format}
-  </parse>
-</source>
-"""}
-
-    slurmlog_config = log_configs.get(cfg.instance_type)
+    slurmlog_config = util.get_metadata('attributes/fluentd_conf_tpl')
     if slurmlog_config:
         Path('/etc/google-fluentd/config.d/slurmlogs.conf').write_text(
             slurmlog_config)
@@ -1080,27 +978,29 @@ def install_ompi():
 def remove_startup_scripts(hostname):
 
     cmd = "gcloud compute instances remove-metadata"
-    keys = "startup-script,setup_script,util_script,config"
-    conf_keys = "slurm_conf_tpl,slurmdbd_conf_tpl,cgroup_conf_tpl"
+    common_keys = "startup-script,setup_script,util_script,config"
+    controller_keys = (f"{common_keys},"
+                       "slurm_conf_tpl,slurmdbd_conf_tpl,cgroup_conf_tpl")
+    compute_keys = f"{common_keys},slurm_fluentd_log_tpl"
 
     # controller
-    util.run(f"{cmd} {hostname} --zone={cfg.zone} --keys={keys},{conf_keys}")
+    util.run(f"{cmd} {hostname} --zone={cfg.zone} --keys={controller_keys}")
 
     # logins
     for i in range(0, cfg.login_node_count):
         util.run("{} {}-login{} --zone={} --keys={}"
-                 .format(cmd, cfg.cluster_name, i, cfg.zone, keys))
+                 .format(cmd, cfg.cluster_name, i, cfg.zone, common_keys))
     # computes
     for i, part in enumerate(cfg.partitions):
         # partition compute image
         util.run(f"{cmd} {cfg.compute_node_prefix}-{i}-image "
-                 f"--zone={cfg.zone} --keys={keys}")
+                 f"--zone={cfg.zone} --keys={compute_keys}")
         if not part['static_node_count']:
             continue
         for j in range(part['static_node_count']):
             util.run("{} {}-{}-{} --zone={} --keys={}"
                      .format(cmd, cfg.compute_node_prefix, i, j,
-                             part['zone'], keys))
+                             part['zone'], compute_keys))
 # END remove_startup_scripts()
 
 

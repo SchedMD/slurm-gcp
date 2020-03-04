@@ -149,5 +149,9 @@ EOF
     cgroup_conf_tpl = <<EOF
 ${file("${path.module}/../../../etc/cgroup.conf.tpl")}
 EOF
+
+    fluentd_conf_tpl = <<EOF
+${file("${path.module}/../../../etc/controller-fluentd.conf.tpl")}
+EOF
   }
 }
