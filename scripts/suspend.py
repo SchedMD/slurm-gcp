@@ -61,7 +61,8 @@ def delete_instances(compute, node_list):
     curr_batch = 0
     req_cnt = 0
     batch_list.insert(
-        curr_batch, compute.new_batch_http_request(callback=delete_instances_cb))
+        curr_batch,
+        compute.new_batch_http_request(callback=delete_instances_cb))
 
     for node_name in node_list:
         if req_cnt >= TOT_REQ_CNT:

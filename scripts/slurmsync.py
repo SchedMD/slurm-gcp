@@ -96,7 +96,7 @@ def main():
     try:
         s_nodes = dict()
         cmd = (f"{SCONTROL} show nodes | "
-               "grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
+               r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
                "paste -sd',\n'")
         nodes = util.run(cmd, shell=True, check=True, get_stdout=True).stdout
         if nodes:
@@ -198,8 +198,8 @@ def main():
                 if not len(retry_list):
                     break
 
-                log.debug("got {} nodes to retry ({})".
-                         format(len(retry_list), ','.join(retry_list)))
+                log.debug("got {} nodes to retry ({})"
+                          .format(len(retry_list), ','.join(retry_list)))
                 to_start = list(retry_list)
                 del retry_list[:]
 
