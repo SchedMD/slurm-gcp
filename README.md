@@ -339,7 +339,7 @@ Steps:
 Bursting out from an on-premise cluster is done by configuring the
 **ResumeProgram** and the **SuspendProgram** in the slurm.conf. The scripts
 *resume.py*, *suspend.py* and *startup-script.py* in the scripts directory can
-be modified and used create new compute instances in a GCP project. See the
+be modified and used to create new compute instances in a GCP project. See the
 [Slurm Elastic Computing](https://slurm.schedmd.com/elastic_computing.html) for
 more information.
 
@@ -356,7 +356,7 @@ Steps:
 1. Create a base instance
 
    Create a bare image and install and configure the packages (including Slurm)
-   that you are used to for a Slurm compute node. Then take create an image
+   that you are used to for a Slurm compute node. Then create an image
    from it creating a family either in the form
    "<cluster_name>-compute-#-image-family" or in a name of your choosing.
 
@@ -371,7 +371,7 @@ Steps:
    location on the slurmctld. Rename config.yaml.example to config.yaml and
    modify the approriate values.
    
-   Add the compute_image_family to each partition if different than the nameing
+   Add the compute_image_family to each partition if different than the naming
    schema, "<cluster_name>-compute-#-image-family".
 
 
@@ -457,7 +457,7 @@ following are the steps to do this.
    ```
 
    We use the deployment scripts to setup the network and compute image. Once
-   project2 is up, all instances except the compute-image in project2 should be
+   project2 is up, all instances except the compute images in project2 should be
    deleted.
 
 4. Setup a gateway-to-gateway VPN.
