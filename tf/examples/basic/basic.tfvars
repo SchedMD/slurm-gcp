@@ -68,6 +68,14 @@ zone         = "us-west1-b"
 #   mount_options = ""
 # }]
 
+# compute_image_machine_type = "n1-standard-2"
+# compute_image_disk_type    = "pd-standard"
+# compute_image_disk_size_gb = 10
+# compute_image_labels = {
+#   key1 = "val1"
+#   key2 = "val2"
+# }
+
 # compute_node_service_account = "default"
 # compute_node_scopes          = [
 #   "https://www.googleapis.com/auth/monitoring.write",

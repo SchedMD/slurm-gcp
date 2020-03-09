@@ -890,7 +890,7 @@ def create_compute_images():
 
             while True:
                 resp = compute.instances().get(
-                    project=cfg.project, zone=partition.zone, fields="status",
+                    project=cfg.project, zone=cfg.zone, fields="status",
                     instance=instance).execute()
                 if resp['status'] == 'TERMINATED':
                     break
@@ -902,7 +902,7 @@ def create_compute_images():
             ver = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
             util.run(f"gcloud compute images create "
                      f"{instance}-{ver} --source-disk {instance} "
-                     f"--source-disk-zone {partition.zone} --force "
+                     f"--source-disk-zone {cfg.zone} --force "
                      f"--family {instance}-family")
 
             util.run("{}/bin/scontrol update partitionname={} state=up"
@@ -986,13 +986,13 @@ def remove_startup_scripts(hostname):
     for i, part in enumerate(cfg.partitions):
         # partition compute image
         util.run(f"{cmd} {cfg.compute_node_prefix}-{i}-image "
-                 f"--zone={part.zone} --keys={compute_keys}")
+                 f"--zone={cfg.zone} --keys={compute_keys}")
         if not part['static_node_count']:
             continue
         for j in range(part['static_node_count']):
             util.run("{} {}-{}-{} --zone={} --keys={}"
                      .format(cmd, cfg.compute_node_prefix, i, j,
-                             part.zone, compute_keys))
+                             part['zone'], compute_keys))
 # END remove_startup_scripts()
 
 
@@ -1099,9 +1099,8 @@ def main():
         if hostname.endswith('-image'):
             end_motd(False)
             util.run("sync")
-            pid = util.get_pid(hostname)
             util.run(f"gcloud compute instances stop {hostname} "
-                     f"--zone {cfg.partitions[pid].zone} --quiet")
+                     f"--zone {cfg.zone} --quiet")
         else:
             util.run("systemctl start slurmd")
 

@@ -332,8 +332,8 @@ resources:
 - name: {{properties["compute_node_prefix"]}}-{{i}}-image
   type: compute.v1.instance
   properties:
-    zone: {{ properties["partitions"][i]["zone"] }}
-    machineType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["partitions"][i]["zone"] }}/machineTypes/{{ properties["partitions"][i]["machine_type"] }}
+    zone: {{ properties["zone"] }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/machineTypes/{{ properties["compute_image_machine_type"] }}
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -341,8 +341,8 @@ resources:
       autoDelete: true
       initializeParams:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
-        diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["partitions"][i]["zone"] }}/diskTypes/{{ properties["partitions"][i]["compute_disk_type"] }}
-        diskSizeGb: {{ properties["partitions"][i]["compute_disk_size_gb"] }}
+        diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["compute_image_disk_type"] }}
+        diskSizeGb: {{ properties["compute_image_disk_size_gb"] }}
   {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
@@ -365,9 +365,9 @@ resources:
     tags:
       items:
         - compute
-  {% if properties["partitions"][i]["compute_labels"] %}
+  {% if properties["compute_image_labels"] %}
     labels:
-      {{properties["partitions"][i]["compute_labels"]}}
+      {{properties["compute_image_labels"]}}
   {% endif %}
     metadata:
       items:

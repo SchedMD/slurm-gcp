@@ -77,6 +77,13 @@ resources:
     #     local_mount: /shared
     #     fs_type: nfs
 
+    compute_image_machine_type  : n1-standard-2
+    # compute_image_disk_type   : pd-standard
+    # compute_image_disk_size_gb: 10
+    # compute_image_labels      :
+    #   key1 : value1
+    #   key2 : value2
+
   # Optional compute configuration fields
     # external_compute_ips      : False
     # private_google_access     : True

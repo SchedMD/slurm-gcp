@@ -19,13 +19,13 @@ locals {
   image_list = flatten([
     for pid in range(length(var.partitions)) : [{
       name           = "${local.compute_node_prefix}-${pid}-image"
-      boot_disk_size = var.partitions[pid].compute_disk_size_gb
-      boot_disk_type = var.partitions[pid].compute_disk_type
-      labels         = var.partitions[pid].compute_labels
-      machine_type   = var.partitions[pid].machine_type
+      boot_disk_size = var.compute_image_disk_size_gb
+      boot_disk_type = var.compute_image_disk_type
+      labels         = var.compute_image_labels
+      machine_type   = var.compute_image_machine_type
       sa_email       = "default"
       sa_scopes      = ["cloud-platform"]
-      zone           = var.partitions[pid].zone
+      zone           = var.zone
       gpu_type       = ""
       gpu_count      = 0
     }]
