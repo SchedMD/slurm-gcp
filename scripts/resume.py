@@ -35,10 +35,6 @@ import util
 
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
-NETWORK_TYPE = 'subnetwork'
-NETWORK = ("projects/{}/regions/{}/subnetworks/{}-subnet"
-           .format(cfg.project, cfg.region, cfg.cluster_name))
-
 SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
 LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 
@@ -117,6 +113,12 @@ def create_instance(compute, zone, machine_type, instance_name,
     machine_type_path = f'zones/{zone}/machineTypes/{machine_type}'
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
         cfg.project, zone, cfg.partitions[pid]['compute_disk_type'])
+
+    region = '-'.join(cfg.partitions[pid].zone.split('-')[:-1])
+    NETWORK_TYPE = 'subnetwork'
+    NETWORK = ("projects/{}/regions/{}/subnetworks/{}-{}"
+               .format(cfg.project, region, cfg.cluster_name, region))
+
     config = {
         'name': instance_name,
         'machineType': machine_type_path,
@@ -189,7 +191,7 @@ def create_instance(compute, zone, machine_type, instance_name,
 
     if cfg.vpc_subnet:
         net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
-            cfg.project, cfg.region, cfg.vpc_subnet)
+            cfg.project, region, cfg.vpc_subnet)
         config['networkInterfaces'] = [{
             NETWORK_TYPE: net_type
         }]

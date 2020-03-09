@@ -31,6 +31,7 @@ module "slurm_cluster_network" {
   disable_controller_public_ips = var.disable_controller_public_ips
   disable_compute_public_ips    = var.disable_compute_public_ips
   network_name                  = var.network_name
+  partitions                    = var.partitions
   shared_vpc_host_project       = var.shared_vpc_host_project
   subnetwork_name               = var.subnetwork_name
 

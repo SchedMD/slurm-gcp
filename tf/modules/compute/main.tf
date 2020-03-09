@@ -28,6 +28,7 @@ locals {
       zone           = var.zone
       gpu_type       = ""
       gpu_count      = 0
+      subnet         = var.subnet
     }]
   ])
 
@@ -44,6 +45,7 @@ locals {
         zone           = var.partitions[pid].zone
         gpu_type       = var.partitions[pid].gpu_type
         gpu_count      = var.partitions[pid].gpu_count
+        subnet         = "${var.cluster_name}-${join("-", slice(split("-", var.partitions[pid].zone), 0, 2))}"
       }
     ]
   ])
@@ -87,7 +89,7 @@ resource "google_compute_instance" "compute_node" {
       content {}
     }
 
-    subnetwork         = var.subnet
+    subnetwork         = each.value.subnet
     subnetwork_project = var.shared_vpc_host_project
   }
 
