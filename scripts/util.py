@@ -150,7 +150,6 @@ class Config(OrderedDict):
     #   in the config file. SAVED_PROPS are saved to file via save_config.
     SAVED_PROPS = ('project',
                    'zone',
-                   'region',
                    'slurm_version',
                    'cluster_name',
                    'external_compute_ips',
@@ -221,6 +220,13 @@ class Config(OrderedDict):
             # TODO what to default to if no match found.
             self._instance_type = next(iter(set(tags) & self.TYPES), None)
             return self._instance_type
+
+    @property
+    def region(self):
+        if 'zone' in self:
+            return '-'.join(self.zone.split('-')[:-1])
+        else:
+            return None
 
     class Dumper(yaml.SafeDumper):
         def __init__(self, *args, **kwargs):

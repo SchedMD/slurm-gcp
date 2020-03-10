@@ -16,8 +16,8 @@
 # limitations under the License.
 
 {% set ignored = properties.__setitem__('project', env['project']) %}
-{% set ignored = properties.__setitem__('region', '-'.join(properties['zone'].split('-')[:-1])) %}
 {% set ignored = properties.__setitem__('compute_node_prefix', (properties["cluster_name"] ~ "-compute")) %}
+{% set region =  '-'.join(properties['zone'].split('-')[:-1]) %}
 {% set def_network_name = properties["cluster_name"] ~ "-network" %}
 {% set def_subnet_name = properties["cluster_name"] ~ "-subnet" %}
 
@@ -32,7 +32,7 @@ resources:
   properties:
     network: $(ref.{{def_network_name}}.selfLink)
     ipCidrRange: {{ properties["cidr"]}}
-    region: {{ properties["region"] }}
+    region: {{region}}
     privateIpGoogleAccess: {{ properties["private_google_access"]}}
 {% if (properties['external_compute_ips'] or
        properties['external_login_ips'] or
@@ -85,14 +85,14 @@ resources:
   {% else %}
     network: $(ref.{{def_network_name}}.selfLink)
   {% endif %}
-    region: {{ properties["region"] }}
+    region: {{region}}
     nats:
     - name: {{properties["cluster_name"]}}-nat
       natIpAllocateOption: "AUTO_ONLY"
       sourceSubnetworkIpRangesToNat: "LIST_OF_SUBNETWORKS"
       subnetworks:
   {% if properties['vpc_net'] %}
-      - name: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+      - name: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{region}}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% else %}
       - name: $(ref.{{def_subnet_name}}.selfLink)
   {% endif %}
@@ -124,10 +124,10 @@ resources:
 {% endif %}
 {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{region}}/subnetworks/{{ properties ["vpc_subnet"] }}
 {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{region}}/subnetworks/{{ properties ["vpc_subnet"] }}
 {% else %}
     networkInterfaces:
     - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
@@ -212,10 +212,10 @@ resources:
         diskSizeGb: {{ properties["login_disk_size_gb"] }}
   {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{region}}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{region}}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% else %}
     networkInterfaces:
     - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
@@ -282,10 +282,10 @@ resources:
         diskSizeGb: {{ properties["partitions"][i]["compute_disk_size_gb"] }}
   {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{region}}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{region}}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% else %}
     networkInterfaces:
     - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
@@ -345,10 +345,10 @@ resources:
         diskSizeGb: {{ properties["compute_image_disk_size_gb"] }}
   {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{region}}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% elif properties ['vpc_subnet'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{region}}/subnetworks/{{ properties ["vpc_subnet"] }}
   {% else %}
     networkInterfaces:
     - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
