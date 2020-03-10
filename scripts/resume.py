@@ -114,10 +114,10 @@ def create_instance(compute, zone, machine_type, instance_name,
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
         cfg.project, zone, cfg.partitions[pid]['compute_disk_type'])
 
-    region = '-'.join(cfg.partitions[pid].zone.split('-')[:-1])
-    NETWORK_TYPE = 'subnetwork'
-    NETWORK = ("projects/{}/regions/{}/subnetworks/{}-{}"
-               .format(cfg.project, region, cfg.cluster_name, region))
+    network_type = 'subnetwork'
+    network = ("projects/{}/regions/{}/subnetworks/{}"
+               .format(cfg.project, cfg.partitions[pid].region,
+                       cfg.partitions[pid].vpc_subnet))
 
     config = {
         'name': instance_name,
@@ -136,7 +136,7 @@ def create_instance(compute, zone, machine_type, instance_name,
 
         # Specify a network interface
         'networkInterfaces': [{
-            NETWORK_TYPE: NETWORK,
+            network_type: network,
         }],
 
         # Allow the instance to access cloud storage and logging.
@@ -191,16 +191,16 @@ def create_instance(compute, zone, machine_type, instance_name,
 
     if cfg.vpc_subnet:
         net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
-            cfg.project, region, cfg.vpc_subnet)
+            cfg.project, cfg.partitions[pid].region, cfg.vpc_subnet)
         config['networkInterfaces'] = [{
-            NETWORK_TYPE: net_type
+            network_type: net_type
         }]
 
     if cfg.shared_vpc_host_project:
         net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
             cfg.shared_vpc_host_project, cfg.region, cfg.vpc_subnet)
         config['networkInterfaces'] = [{
-            NETWORK_TYPE: net_type
+            network_type: net_type
         }]
 
     if cfg.external_compute_ips:

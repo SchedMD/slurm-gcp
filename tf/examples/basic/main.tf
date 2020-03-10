@@ -15,6 +15,8 @@
 
 locals {
   region = join("-", slice(split("-", var.zone), 0, 2))
+  mod_parts = [for part in var.partitions :
+               merge(part, {"vpc_subnet" : length(part.vpc_subnet) > 0 ? part.vpc_subnet : "${var.cluster_name}-${join("-", slice(split("-", part.zone), 0, 2))}"})]
 }
 
 provider "google" {
@@ -30,7 +32,7 @@ module "slurm_cluster_network" {
   disable_controller_public_ips = var.disable_controller_public_ips
   disable_compute_public_ips    = var.disable_compute_public_ips
   network_name                  = var.network_name
-  partitions                    = var.partitions
+  partitions                    = local.mod_parts
   shared_vpc_host_project       = var.shared_vpc_host_project
   subnetwork_name               = var.subnetwork_name
 
@@ -55,7 +57,7 @@ module "slurm_cluster_controller" {
   munge_key                     = var.munge_key
   network_storage               = var.network_storage
   ompi_version                  = var.ompi_version
-  partitions                    = var.partitions
+  partitions                    = local.mod_parts
   project                       = var.project
   region                        = local.region
   secondary_disk                = var.controller_secondary_disk
@@ -105,7 +107,7 @@ module "slurm_cluster_compute" {
   controller_name            = module.slurm_cluster_controller.controller_node_name
   disable_compute_public_ips = var.disable_compute_public_ips
   network_storage            = var.network_storage
-  partitions                 = var.partitions
+  partitions                 = local.mod_parts
   project                    = var.project
   scopes                     = var.compute_node_scopes
   service_account            = var.compute_node_service_account
