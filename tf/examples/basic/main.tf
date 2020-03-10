@@ -26,7 +26,6 @@ module "slurm_cluster_network" {
   source = "../../modules/network"
 
   cluster_name                  = var.cluster_name
-  cluster_network_cidr_range    = var.cluster_network_cidr_range
   disable_login_public_ips      = var.disable_login_public_ips
   disable_controller_public_ips = var.disable_controller_public_ips
   disable_compute_public_ips    = var.disable_compute_public_ips

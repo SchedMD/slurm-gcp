@@ -2,8 +2,6 @@ cluster_name = "g1"
 project      = "<project>"
 zone         = "us-west1-b"
 
-# cluster_network_cidr_range = "10.10.0.0/16"
-
 # network_name            = "<existing network name>"
 # subnetwork_name         = "<existing subnetwork name>"
 # shared_vpc_host_project = "<vpc host project>"

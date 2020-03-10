@@ -28,11 +28,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "cluster_network_cidr_range" {
-  description = "CIDR range for cluster network"
-  default     = "10.10.0.0/16"
-}
-
 variable "compute_image_disk_size_gb" {
   description = "Size of disk for compute node image."
   default     = 10

@@ -38,7 +38,6 @@ imports:
 - path: etc/compute-fluentd.conf.tpl
 
 required:
-- cidr
 - cluster_name
 - controller_machine_type
 - compute_image_machine_type
@@ -79,10 +78,6 @@ optional:
 - vpc_subnet
 
 properties:
-
-  cidr:
-    type        : string
-    description : RFC1918 subnet to run instances in, eg. 10.10.0.0/16.
 
   cluster_name:
     type        : string
