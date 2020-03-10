@@ -15,9 +15,6 @@
 
 locals {
   controller_name = "${var.cluster_name}-controller"
-}
-
-locals {
   compute_node_prefix = "${var.cluster_name}-compute"
 }
 

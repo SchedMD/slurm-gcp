@@ -37,7 +37,10 @@ resource "google_compute_subnetwork" "cluster_subnet" {
 }
 
 resource "google_compute_firewall" "cluster_ssh_firewall" {
-  count = (var.disable_login_public_ips && var.disable_controller_public_ips && var.disable_compute_public_ips) || (var.shared_vpc_host_project != null) ? 0 : 1
+  count = ((var.disable_login_public_ips &&
+            var.disable_controller_public_ips &&
+            var.disable_compute_public_ips) ||
+           (var.shared_vpc_host_project != null)) ? 0 : 1
 
   name          = "${var.cluster_name}-allow-ssh"
   network       = google_compute_network.cluster_network[0].name
@@ -50,7 +53,10 @@ resource "google_compute_firewall" "cluster_ssh_firewall" {
 }
 
 resource "google_compute_firewall" "cluster_iap_ssh_firewall" {
-  count = (var.disable_login_public_ips && var.disable_controller_public_ips && var.disable_compute_public_ips && var.shared_vpc_host_project == null) ? 1 : 0
+  count = (var.disable_login_public_ips &&
+           var.disable_controller_public_ips &&
+           var.disable_compute_public_ips &&
+           var.shared_vpc_host_project == null) ? 1 : 0
 
   name          = "${var.cluster_name}-allow-iap"
   network       = google_compute_network.cluster_network[0].name
@@ -86,7 +92,8 @@ resource "google_compute_firewall" "cluster_internal_firewall" {
 }
 
 resource "google_compute_router" "cluster_router" {
-  count = (var.network_name == null && var.shared_vpc_host_project == null) ? length(local.region_list) : 0
+  count = (var.network_name == null &&
+           var.shared_vpc_host_project == null) ? length(local.region_list) : 0
 
   name = "${var.cluster_name}-${local.region_list[count.index]}-router"
 
@@ -95,8 +102,11 @@ resource "google_compute_router" "cluster_router" {
 }
 
 resource "google_compute_router_nat" "cluster_nat" {
-  count = (var.disable_login_public_ips || var.disable_controller_public_ips ||
-var.disable_compute_public_ips) && var.network_name == null && var.shared_vpc_host_project == null ? length(local.region_list) : 0
+  count = ((var.disable_login_public_ips ||
+            var.disable_controller_public_ips ||
+            var.disable_compute_public_ips) &&
+           var.network_name == null &&
+           var.shared_vpc_host_project == null) ? length(local.region_list) : 0
 
   name = "${var.cluster_name}-${local.region_list[count.index]}-router-nat"
 
@@ -114,4 +124,3 @@ var.disable_compute_public_ips) && var.network_name == null && var.shared_vpc_ho
     filter = "ERRORS_ONLY"
   }
 }
-
