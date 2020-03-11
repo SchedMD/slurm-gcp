@@ -19,6 +19,23 @@ Also, join comunity discussions on either the
 [Slurm User mailing list](https://slurm.schedmd.com/mail.html) or the
 [Google Cloud & Slurm Community Discussion Group](https://groups.google.com/forum/#!forum/google-cloud-slurm-discuss).
 
+
+# Contents
+
+* [Stand-alone Cluster in Google Cloud Platform](#stand-alone-cluster-in-google-cloud-platform)
+  * [Install using Deployment Manager](#install-using-deployment-manager)
+  * [Install using Terraform](#install-using-terraform)
+  * [Image-based Scaling](#image-based-scaling)
+  * [Installing Custom Packages](#installing-custom-packages)
+  * [Accessing Compute Nodes](#accessing-compute-nodes)
+  * [OS Login](#os-login)
+  * [Preemptible VMs](#preemptible-vms)
+* [Bursting out from on-premise cluster](#bursting-out-from-on-premise-cluster)
+  * [Bursting out playground](#bursting-out-playground)
+* [Multi-Cluster / Federation](#multi-cluster-federation)
+  * [Playground](#playground)
+
+
 ## Stand-alone Cluster in Google Cloud Platform
 
 The supplied scripts can be used to create a stand-alone cluster in Google Cloud
@@ -342,23 +359,23 @@ Steps:
    recommended:
 
    1. Create a group for all users in admin.google.com.
-   2. At the project level in IAM, grant the *Compute Viewer* and *Service
-      Account User* roles to the group.
-   3. At the instance level for each login node, grant the *Compute OS Login*
+   2. At the project level in IAM, grant the **Compute Viewer** and **Service
+      Account User** roles to the group.
+   3. At the instance level for each login node, grant the **Compute OS Login**
       role to the group.
-      1. Make sure the *Info Panel* is shown on the right.
+      1. Make sure the **Info Panel** is shown on the right.
       2. On the compute instances page, select the boxes to the left of the
          login nodes.
-      3. Click *Add Members* and add the roles to the group.
-   4. At the organization level, grant the *Compute OS Login External User*
+      3. Click **Add Members** and add the **Compute OS Login** role to the group.
+   4. At the organization level, grant the **Compute OS Login External User**
       role to the group if the users are not part of the organization.
    5. To allow ssh to login nodes without external IPs, configure IAP for the
       group.
       1. Go to the [Identity-Aware Proxy page](https://console.cloud.google.com/security/iap?_ga=2.207343252.68494128.1583777071-470618229.1575301916)
       2. Select project
-      3. Click *SSH AND TCP RESOURCES* tab
+      3. Click **SSH AND TCP RESOURCES** tab
       4. Select boxes for login nodes
-      5. Add group as a member with the *IAP-secured Tunnel User* role
+      5. Add group as a member with the **IAP-secured Tunnel User** role
       6. Reference: https://cloud.google.com/iap/docs/enabling-compute-howto
 
    This allows users to access the cluster only through the login nodes.
