@@ -326,7 +326,42 @@ Steps:
       external IP on the [VM Instances](https://console.cloud.google.com/compute/instances)
       page. From this node you can ssh to compute nodes.
 
-### OSLogin
+### OS Login
+
+   By default, all instances are configured with
+   [OS Login](https://cloud.google.com/compute/docs/oslogin).
+
+   > OS Login lets you use Compute Engine IAM roles to manage SSH access to
+   > Linux instances and is an alternative to manually managing instance access
+   > by adding and removing SSH keys in metadata.
+   > https://cloud.google.com/compute/docs/instances/managing-instance-access
+
+   This allows user uid and gids to be consistent across all instances.
+
+   When sharing a cluster with non-admin users, the following IAM rules are
+   recommended:
+
+   1. Create a group for all users in admin.google.com.
+   2. At the project level in IAM, grant the *Compute Viewer* and *Service
+      Account User* roles to the group.
+   3. At the instance level for each login node, grant the *Compute OS Login*
+      role to the group.
+      1. Make sure the *Info Panel* is shown on the right.
+      2. On the compute instances page, select the boxes to the left of the
+         login nodes.
+      3. Click *Add Members* and add the roles to the group.
+   4. At the organization level, grant the *Compute OS Login External User*
+      role to the group if the users are not part of the organization.
+   5. To allow ssh to login nodes without external IPs, configure IAP for the
+      group.
+      1. Go to the [Identity-Aware Proxy page](https://console.cloud.google.com/security/iap?_ga=2.207343252.68494128.1583777071-470618229.1575301916)
+      2. Select project
+      3. Click *SSH AND TCP RESOURCES* tab
+      4. Select boxes for login nodes
+      5. Add group as a member with the *IAP-secured Tunnel User* role
+      6. Reference: https://cloud.google.com/iap/docs/enabling-compute-howto
+
+   This allows users to access the cluster only through the login nodes.
 
 ### Preemptible VMs
    With preemptible_bursting on, when a node is found preempted, or stopped,
