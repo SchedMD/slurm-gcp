@@ -181,7 +181,7 @@ Either log out and log back in or cd into ~.
 def have_gpus(hostname):
 
     pid = util.get_pid(hostname)
-    return cfg.partitions[pid]['gpu_count'] > 0
+    return cfg.partitions[pid].gpu_count > 0
 # END have_gpus()
 
 
@@ -304,8 +304,8 @@ def expand_machine_type():
         machine = {'cpus': 1, 'memory': 1}
         try:
             type_resp = compute.machineTypes().get(
-                project=cfg.project, zone=part['zone'],
-                machineType=part['machine_type']).execute()
+                project=cfg.project, zone=part.zone,
+                machineType=part.machine_type).execute()
             if type_resp:
                 machine['cpus'] = type_resp['guestCpus']
 
@@ -318,7 +318,7 @@ def expand_machine_type():
 
         except Exception:
             log.exception("Failed to get MachineType '{}' from google api"
-                          .format(part["machine_type"]))
+                          .format(part.machine_type))
         finally:
             machines.append(machine)
 
@@ -342,19 +342,19 @@ def install_slurm_conf():
     for i, machine in enumerate(machines):
         part = cfg.partitions[i]
         static_range = ''
-        if part['static_node_count']:
-            if part['static_node_count'] > 1:
+        if part.static_node_count:
+            if part.static_node_count > 1:
                 static_range = '{}-{}-[0-{}]'.format(
-                    cfg.compute_node_prefix, i, part['static_node_count'] - 1)
+                    cfg.compute_node_prefix, i, part.static_node_count - 1)
             else:
                 static_range = f"{cfg.compute_node_prefix}-{i}-0"
 
         cloud_range = ""
-        if (part['max_node_count'] and
-                (part['max_node_count'] != part['static_node_count'])):
+        if (part.max_node_count and
+                (part.max_node_count != part.static_node_count)):
             cloud_range = "{}-{}-[{}-{}]".format(
-                cfg.compute_node_prefix, i, part['static_node_count'],
-                part['max_node_count'] - 1)
+                cfg.compute_node_prefix, i, part.static_node_count,
+                part.max_node_count - 1)
 
         conf += ("NodeName=DEFAULT "
                  f"CPUs={machine['cpus']} "
@@ -364,8 +364,8 @@ def install_slurm_conf():
 
         # Nodes
         gres = ""
-        if part['gpu_count']:
-            gres = " Gres=gpu:" + str(part['gpu_count'])
+        if part.gpu_count:
+            gres = " Gres=gpu:" + str(part.gpu_count)
         if static_range:
             static_nodes.append(static_range)
             conf += f"NodeName={static_range}{gres}\n"
@@ -374,13 +374,13 @@ def install_slurm_conf():
             conf += f"NodeName={cloud_range} State=CLOUD{gres}\n"
 
         # Partitions
-        part_nodes = f"-{i}-[0-{part['max_node_count'] - 1}]"
+        part_nodes = f'-{i}-[0-{part.max_node_count - 1}]'
 
         def_mem_per_cpu = max(100, machine['memory'] // machine['cpus'])
 
         conf += ("PartitionName={} Nodes={}-compute{} MaxTime=INFINITE "
                  "State=UP DefMemPerCPU={} LLN=yes"
-                 .format(part['name'], cfg.cluster_name, part_nodes,
+                 .format(part.name, cfg.cluster_name, part_nodes,
                          def_mem_per_cpu))
 
         # First partition specified is treated as the default partition
@@ -435,16 +435,16 @@ def install_cgroup_conf():
         f.write(conf)
 
     gpu_parts = [(i, x) for i, x in enumerate(cfg.partitions)
-                 if x['gpu_count']]
+                 if x.gpu_count]
     gpu_conf = ""
     for i, part in gpu_parts:
         driver_range = '0'
-        if part['gpu_count'] > 1:
-            driver_range = '[0-{}]'.format(part['gpu_count']-1)
+        if part.gpu_count > 1:
+            driver_range = '[0-{}]'.format(part.gpu_count-1)
 
         gpu_conf += ("NodeName={}-{}-[0-{}] Name=gpu File=/dev/nvidia{}\n"
                      .format(cfg.compute_node_prefix, i,
-                             part['max_node_count'] - 1, driver_range))
+                             part.max_node_count - 1, driver_range))
     if gpu_conf:
         with (etc_dir/'gres.conf').open('w') as f:
             f.write(gpu_conf)
@@ -736,7 +736,7 @@ def setup_network_storage():
     ext_mounts.update(listtodict(cfg.network_storage))
     if cfg.instance_type == 'compute':
         pid = util.get_pid(socket.gethostname())
-        ext_mounts.update(listtodict(cfg.partitions[pid]['network_storage']))
+        ext_mounts.update(listtodict(cfg.partitions[pid].network_storage))
     else:
         ext_mounts.update(listtodict(cfg.login_network_storage))
 
@@ -906,7 +906,7 @@ def create_compute_images():
                      f"--family {instance}-family")
 
             util.run("{}/bin/scontrol update partitionname={} state=up"
-                     .format(CURR_SLURM_DIR, partition['name']))
+                     .format(CURR_SLURM_DIR, partition.name))
         except Exception as e:
             log.exception(f"{instance} not found: {e}")
 
@@ -987,12 +987,12 @@ def remove_startup_scripts(hostname):
         # partition compute image
         util.run(f"{cmd} {cfg.compute_node_prefix}-{i}-image "
                  f"--zone={cfg.zone} --keys={compute_keys}")
-        if not part['static_node_count']:
+        if not part.static_node_count:
             continue
-        for j in range(part['static_node_count']):
+        for j in range(part.static_node_count):
             util.run("{} {}-{}-{} --zone={} --keys={}"
                      .format(cmd, cfg.compute_node_prefix, i, j,
-                             part['zone'], compute_keys))
+                             part.zone, compute_keys))
 # END remove_startup_scripts()
 
 
@@ -1078,7 +1078,7 @@ def main():
         # DOWN partitions until image is created.
         for part in cfg.partitions:
             util.run("{}/bin/scontrol update partitionname={} state=down"
-                     .format(CURR_SLURM_DIR, part['name']))
+                     .format(CURR_SLURM_DIR, part.name))
 
         create_compute_images()
         remove_startup_scripts(hostname)

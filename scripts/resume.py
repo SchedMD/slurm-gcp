@@ -112,7 +112,7 @@ def create_instance(compute, zone, machine_type, instance_name,
     # Configure the machine
     machine_type_path = f'zones/{zone}/machineTypes/{machine_type}'
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
-        cfg.project, zone, cfg.partitions[pid]['compute_disk_type'])
+        cfg.project, zone, cfg.partitions[pid].compute_disk_type)
 
     network_type = 'subnetwork'
     network = ("projects/{}/regions/{}/subnetworks/{}"
@@ -130,7 +130,7 @@ def create_instance(compute, zone, machine_type, instance_name,
             'initializeParams': {
                 'sourceImage': source_disk_image,
                 'diskType': disk_type,
-                'diskSizeGb': cfg.partitions[pid]['compute_disk_size_gb']
+                'diskSizeGb': cfg.partitions[pid].compute_disk_size_gb
             }
         }],
 
@@ -157,51 +157,34 @@ def create_instance(compute, zone, machine_type, instance_name,
 
     shutdown_script_path = Path('/apps/slurm/scripts/compute-shutdown')
     if shutdown_script_path.exists():
-        with shutdown_script_path.open() as f:
-            config['metadata']['items'].append({
-                'key': 'shutdown-script',
-                'value': f.read()
-            })
+        config['metadata']['items'].append({
+            'key': 'shutdown-script',
+            'value': shutdown_script_path.read_text()
+        })
 
-    if "gpu_type" in cfg.partitions[pid] and cfg.partitions[pid]['gpu_type']:
+    if cfg.partitions[pid].gpu_type:
         accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
                       .format(cfg.project, zone,
-                              cfg.partitions[pid]['gpu_type']))
+                              cfg.partitions[pid].gpu_type))
         config['guestAccelerators'] = [{
-            'acceleratorCount': cfg.partitions[pid]['gpu_count'],
+            'acceleratorCount': cfg.partitions[pid].gpu_count,
             'acceleratorType': accel_type
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if cfg.partitions[pid]['preemptible_bursting']:
+    if cfg.partitions[pid].preemptible_bursting:
         config['scheduling'] = {
             'preemptible': True,
             'onHostMaintenance': 'TERMINATE',
             'automaticRestart': False
         },
 
-    if ('compute_labels' in cfg.partitions[pid] and
-            cfg.partitions[pid]['compute_labels']):
-        config['labels'] = cfg.partitions[pid]['compute_labels'],
+    if cfg.partitions[pid].compute_labels:
+        config['labels'] = cfg.partitions[pid].compute_labels,
 
-    if ('cpu_platform' in cfg.partitions[pid] and
-            cfg.partitions[pid]['cpu_platform']):
-        config['minCpuPlatform'] = cfg.partitions[pid]['cpu_platform'],
-
-    if cfg.vpc_subnet:
-        net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
-            cfg.project, cfg.partitions[pid].region, cfg.vpc_subnet)
-        config['networkInterfaces'] = [{
-            network_type: net_type
-        }]
-
-    if cfg.shared_vpc_host_project:
-        net_type = 'projects/{}/regions/{}/subnetworks/{}'.format(
-            cfg.shared_vpc_host_project, cfg.region, cfg.vpc_subnet)
-        config['networkInterfaces'] = [{
-            network_type: net_type
-        }]
+    if cfg.partitions[pid].cpu_platform:
+        config['minCpuPlatform'] = cfg.partitions[pid].cpu_platform,
 
     if cfg.external_compute_ips:
         config['networkInterfaces'][0]['accessConfigs'] = [
@@ -232,9 +215,8 @@ def get_source_image(compute, node_name):
     pid = util.get_pid(node_name)
     if pid not in images:
         image_name = f"{cfg.compute_node_prefix}-{pid}-image"
-        family = cfg.partitions[pid].get('compute_image_family')
-        if not family:
-            family = f"{image_name}-family"
+        family = (cfg.partitions[pid].compute_image_family
+                  or f"{image_name}-family")
         try:
             image_response = compute.images().getFromFamily(
                 project=cfg.project, family=family
@@ -272,8 +254,8 @@ def add_instances(compute, node_list):
 
         pid = util.get_pid(node_name)
         batch_list[curr_batch].add(
-            create_instance(compute, cfg.partitions[pid]['zone'],
-                            cfg.partitions[pid]['machine_type'], node_name,
+            create_instance(compute, cfg.partitions[pid].zone,
+                            cfg.partitions[pid].machine_type, node_name,
                             source_disk_image),
             request_id=node_name)
         req_cnt += 1

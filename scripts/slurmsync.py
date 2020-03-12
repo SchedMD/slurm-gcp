@@ -74,7 +74,7 @@ def start_instances(compute, node_list):
         pid = util.get_pid(node)
         batch_list[curr_batch].add(
             compute.instances().start(project=cfg.project,
-                                      zone=cfg.partitions[pid]['zone'],
+                                      zone=cfg.partitions[pid].zone,
                                       instance=node),
             request_id=node)
         req_cnt += 1
@@ -121,7 +121,7 @@ def main():
             page_token = ""
             while True:
                 resp = compute.instances().list(
-                    project=cfg.project, zone=part['zone'],
+                    project=cfg.project, zone=part.zone,
                     pageToken=page_token,
                     filter=f"name={cfg.compute_node_prefix}-{i}-*"
                 ).execute()
@@ -151,7 +151,7 @@ def main():
                 if g_node and (g_node['status'] == "TERMINATED"):
                     if not s_state.base.startswith('DOWN'):
                         to_down.append(s_node)
-                    if (cfg.partitions[pid]["preemptible_bursting"]):
+                    if (cfg.partitions[pid].preemptible_bursting):
                         to_start.append(s_node)
 
                 # can't check if the node doesn't exist in GCP while the node
