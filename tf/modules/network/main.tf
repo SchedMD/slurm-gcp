@@ -69,12 +69,12 @@ resource "google_compute_firewall" "cluster_iap_ssh_firewall" {
 }
 
 resource "google_compute_firewall" "cluster_internal_firewall" {
-  count = var.shared_vpc_host_project != null ? 0 : length(local.region_list)
+  count = var.shared_vpc_host_project != null ? 0 : 1
 
-  name = "${var.cluster_name}-${local.region_list[count.index]}-allow-internal"
+  name = "${var.cluster_name}-allow-internal"
 
   network       = google_compute_network.cluster_network[0].name
-  source_ranges = ["10.${count.index}.0.0/16"]
+  source_ranges = ["10.0.0.0/8"]
 
   allow {
     protocol = "icmp"
