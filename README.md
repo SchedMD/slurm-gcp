@@ -1,5 +1,9 @@
 # Slurm on Google Cloud Platform
 
+**NOTE: This will be the last release supporting Deployment Manager. Please
+migrate your workflows to Terraform (found in the tf folder). All future
+features / functionality will be integrated with Terraform.**
+
 The following describes setting up a Slurm cluster using [Google Cloud
 Platform](https://cloud.google.com), bursting out from an on-premise cluster to
 nodes in Google Cloud Platform and setting a multi-cluster/federated setup with
