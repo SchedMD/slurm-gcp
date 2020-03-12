@@ -94,7 +94,7 @@ partitions = [
     gpu_type             = ""
     network_storage      = []
     preemptible_bursting = true
-    vpc_subnet           = ""
+    vpc_subnet           = null
   },
 #  { name                 = "partition2"
 #    machine_type         = "n1-standard-16"
@@ -118,6 +118,6 @@ partitions = [
 #      mount_options = "file_mode=664,dir_mode=775,allow_other"
 #    }]
 #    preemptible_bursting = true
-#    vpc_subnet           = "" # set if you know what you are doing
+#    vpc_subnet           = null
 ]
 
