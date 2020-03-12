@@ -38,6 +38,7 @@ Also, join comunity discussions on either the
   * [Bursting out playground](#bursting-out-playground)
 * [Multi-Cluster / Federation](#multi-cluster-federation)
   * [Playground](#playground)
+* [Troubleshooting](#troubleshooting)
 
 
 ## Stand-alone Cluster in Google Cloud Platform
@@ -1023,3 +1024,34 @@ space (e.g. same uids across all the clusters).
                  JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
                      8     debug     wrap      bob  R       0:12      1   g2-compute-0-0
     ```
+
+
+## Troubleshooting
+1. Nodes aren't bursting?
+   1. Check /var/log/slurm/resume.log for any errors
+   2. Try creating nodes manually by calling resume.py manually **as the
+      "slurm" user**.
+      * **NOTE:** If you run resume.py manually with root, subsequent calls to
+	resume.py by the "slurm" user may fail because resume.py's log file
+	will be owned by root.
+   3. Check the slurmctld logs
+      * /var/log/slurm/slurmctld.log
+      * Turn on the *PowerSave* debug flag to get more information.
+        e.g.
+        ```
+        $ scontrol setdebugflags +powersave
+        ...
+        $ scontrol setdebugflags -powersave
+        ```
+2. Cluster environment not fully coming up  
+   For example:
+   * Slurm not being installed
+   * Compute images never being stopped
+   * etc.
+
+   1. Check syslog (/var/log/messages) on instances for any errors. **HINT:**
+      search for last mention of "startup-script."
+3. General debugging
+   * check /var/log/messages
+   * check /var/log/slurm/*.log
+   * check GCP quotas
