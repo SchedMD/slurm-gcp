@@ -142,6 +142,22 @@ def static_vars(**kwargs):
     return decorate
 
 
+class cached_property:
+    """
+    Descriptor for creating a property that is computed once and cached
+    """
+    def __init__(self, factory):
+        self._attr_name = factory.__name__
+        self._factory = factory
+
+    def __get__(self, instance, owner=None):
+        if instance is None:  # only if invoked from class
+            return self
+        attr = self._factory(instance)
+        setattr(instance, self._attr_name, attr)
+        return attr
+
+
 class Config(OrderedDict):
     """ Loads config from yaml and holds values in nested namespaces """
 
@@ -153,7 +169,6 @@ class Config(OrderedDict):
                    'slurm_version',
                    'cluster_name',
                    'external_compute_ips',
-                   'vpc_subnet',
                    'shared_vpc_host_project',
                    'compute_node_prefix',
                    'compute_node_service_account',
@@ -210,23 +225,20 @@ class Config(OrderedDict):
         save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
         Path(path).write_text(yaml.dump(save_dict, Dumper=self.Dumper))
 
-    @property
+    @cached_property
     def instance_type(self):
-        try:
-            return self._instance_type
-        except AttributeError:
-            # get tags, intersect with possible types, get the first or none
-            tags = yaml.safe_load(get_metadata('tags'))
-            # TODO what to default to if no match found.
-            self._instance_type = next(iter(set(tags) & self.TYPES), None)
-            return self._instance_type
+        # get tags, intersect with possible types, get the first or none
+        tags = yaml.safe_load(get_metadata('tags'))
+        # TODO what to default to if no match found.
+        return next(iter(set(tags) & self.TYPES), None)
 
     @property
     def region(self):
-        if 'zone' in self:
-            return '-'.join(self.zone.split('-')[:-1])
-        else:
-            return None
+        return self.zone and '-'.join(self.zone.split('-')[:-1])
+
+    def __getattr__(self, item):
+        """ only called if item is not found in self """
+        return None
 
     class Dumper(yaml.SafeDumper):
         def __init__(self, *args, **kwargs):
