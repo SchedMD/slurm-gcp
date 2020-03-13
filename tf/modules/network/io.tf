@@ -61,20 +61,8 @@ variable "subnetwork_name" {
   default = null
 }
 
-output "cluster_network_self_link" {
-  value = (var.network_name == null) ? google_compute_network.cluster_network[0].self_link : var.network_name
-}
-
-output "cluster_subnet_self_link" {
-  value = (var.network_name == null) ? google_compute_subnetwork.cluster_subnet[0].self_link : "projects/${(var.shared_vpc_host_project != null ? var.shared_vpc_host_project : var.project)}/regions/${var.region}/subnetworks/${var.subnetwork_name}"
-}
-
-output "cluster_network_name" {
-  value = (var.network_name == null) ? google_compute_network.cluster_network[0].name : var.network_name
-}
-
-output "cluster_subnet_name" {
-  value = (var.network_name == null) ? google_compute_subnetwork.cluster_subnet[0].self_link : var.subnetwork_name
+output "subnet_depend" {
+  value = length(google_compute_subnetwork.cluster_subnet) > 0 ? google_compute_subnetwork.cluster_subnet[0].self_link : ""
 }
 
 variable "partitions" {

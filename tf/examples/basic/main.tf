@@ -65,9 +65,9 @@ module "slurm_cluster_controller" {
   slurm_version                 = var.slurm_version
   scopes                        = var.controller_scopes
   service_account               = var.controller_service_account
-  subnet                        = module.slurm_cluster_network.cluster_subnet_self_link
-  suspend_time                  = var.suspend_time
+  subnet_depend                 = module.slurm_cluster_network.subnet_depend
   subnetwork_name               = var.subnetwork_name
+  suspend_time                  = var.suspend_time
   zone                          = var.zone
 }
 
@@ -84,13 +84,15 @@ module "slurm_cluster_login" {
   login_network_storage     = var.login_network_storage
   machine_type              = var.login_machine_type
   node_count                = var.login_node_count
+  region                    = local.region
   scopes                    = var.login_node_scopes
   service_account           = var.login_node_service_account
   munge_key                 = var.munge_key
   network_storage           = var.network_storage
   ompi_version              = var.ompi_version
   shared_vpc_host_project   = var.shared_vpc_host_project
-  subnet                    = module.slurm_cluster_network.cluster_subnet_self_link
+  subnet_depend             = module.slurm_cluster_network.subnet_depend
+  subnetwork_name           = var.subnetwork_name
   zone                      = var.zone
 }
 
@@ -107,10 +109,12 @@ module "slurm_cluster_compute" {
   network_storage            = var.network_storage
   partitions                 = var.partitions
   project                    = var.project
+  region                     = local.region
   scopes                     = var.compute_node_scopes
   service_account            = var.compute_node_service_account
   shared_vpc_host_project    = var.shared_vpc_host_project
-  subnet                     = module.slurm_cluster_network.cluster_subnet_self_link
+  subnet_depend              = module.slurm_cluster_network.subnet_depend
+  subnetwork_name            = var.subnetwork_name
   zone                       = var.zone
 }
 

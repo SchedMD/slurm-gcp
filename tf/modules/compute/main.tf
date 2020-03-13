@@ -26,9 +26,11 @@ locals {
       sa_email       = "default"
       sa_scopes      = ["cloud-platform"]
       zone           = var.zone
-      gpu_type       = ""
+      gpu_type       = null
       gpu_count      = 0
-      subnet         = var.subnet
+      subnet         = (var.subnetwork_name != null
+                        ? var.subnetwork_name
+                        : "${var.cluster_name}-${var.region}")
     }]
   ])
 
@@ -45,7 +47,9 @@ locals {
         zone           = var.partitions[pid].zone
         gpu_type       = var.partitions[pid].gpu_type
         gpu_count      = var.partitions[pid].gpu_count
-        subnet         = "${var.cluster_name}-${join("-", slice(split("-", var.partitions[pid].zone), 0, 2))}"
+        subnet         = (var.partitions[pid].vpc_subnet != null
+                          ? var.partitions[pid].vpc_subnet
+                          : "${var.cluster_name}-${join("-", slice(split("-", var.partitions[pid].zone), 0, 2))}")
       }
     ]
   ])
@@ -60,6 +64,8 @@ locals {
 
 resource "google_compute_instance" "compute_node" {
   for_each = local.compute_map
+
+  depends_on = [var.subnet_depend]
 
   name         = each.value.name
   machine_type = each.value.machine_type
@@ -89,6 +95,11 @@ resource "google_compute_instance" "compute_node" {
       content {}
     }
 
+    # Subnet order:
+    # 1. shared_vpc_host_project / var.subnetwork_name|part.vpc_subnet
+    #   a. subnetwork_project isn't set when shared_vpc_host_project is null
+    # 2. var.project / part.vpc_subnet
+    # 3. var.project / {cluster_name}-{region}
     subnetwork         = each.value.subnet
     subnetwork_project = var.shared_vpc_host_project
   }

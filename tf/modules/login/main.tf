@@ -18,7 +18,10 @@ locals {
 }
 
 resource "google_compute_instance" "login_node" {
-  count        = var.node_count
+  count = var.node_count
+
+  depends_on = [var.subnet_depend]
+
   name         = "${var.cluster_name}-login${count.index}"
   machine_type = var.machine_type
   zone         = var.zone
@@ -41,7 +44,15 @@ resource "google_compute_instance" "login_node" {
       content {}
     }
 
-    subnetwork         = var.subnet
+    # Subnet order:
+    # 1. shared_vpc_host_project / var.subnetwork_name
+    #   a. subnetwork_project isn't set when shared_vpc_host_project is null
+    # 2. var.project / var.subnetwork_name
+    # 3. var.project / {cluster_name}-{region}
+    subnetwork = (var.subnetwork_name != null
+                  ? var.subnetwork_name
+                  : "${var.cluster_name}-${var.region}")
+
     subnetwork_project = var.shared_vpc_host_project
   }
 

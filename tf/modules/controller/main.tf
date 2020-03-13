@@ -28,6 +28,8 @@ resource "google_compute_disk" "secondary" {
 }
 
 resource "google_compute_instance" "controller_node" {
+  depends_on = [var.subnet_depend]
+
   name         = local.controller_name
   machine_type = var.machine_type
   zone         = var.zone
@@ -57,7 +59,15 @@ resource "google_compute_instance" "controller_node" {
       content {}
     }
 
-    subnetwork         = var.subnet
+    # Subnet order:
+    # 1. shared_vpc_host_project / var.subnetwork_name
+    #   a. subnetwork_project isn't set when shared_vpc_host_project is null
+    # 2. var.project / var.subnetwork_name
+    # 3. var.project / {cluster_name}-{region}
+    subnetwork = (var.subnetwork_name != null
+                  ? var.subnetwork_name
+                  : "${var.cluster_name}-${var.region}")
+
     subnetwork_project = var.shared_vpc_host_project
   }
 

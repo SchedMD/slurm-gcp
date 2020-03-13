@@ -110,6 +110,11 @@ variable "project" {
   type        = string
 }
 
+variable "region" {
+  description = "Compute Platform region where the Slurm cluster will be located"
+  type        = string
+}
+
 variable "scopes" {
   description = "Scopes to apply to compute nodes."
   type        = list(string)
@@ -130,10 +135,16 @@ variable "shared_vpc_host_project" {
   default = null
 }
 
-variable "subnet" {
-  description = "Compute Platform network the Slurm cluster nodes will be connected to"
+variable "subnet_depend" {
+  description = "Used as a dependency between the network and instances"
   type        = string
-  default     = "default"
+  default     = ""
+}
+
+variable "subnetwork_name" {
+  description = "The name of the pre-defined VPC subnet you want the nodes to attach to based on Region."
+  default     = null
+  type        = string
 }
 
 variable "zone" {
