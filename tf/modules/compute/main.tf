@@ -86,7 +86,7 @@ resource "google_compute_instance" "compute_node" {
   guest_accelerator {
     count = each.value.gpu_count
 
-    type = each.value.gpu_type
+    type = each.value.gpu_type != null ? each.value.gpu_type : ""
   }
 
   network_interface {

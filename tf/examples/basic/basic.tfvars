@@ -10,7 +10,7 @@ zone         = "us-west1-b"
 # disable_login_public_ips      = true
 # disable_compute_public_ips    = true
 
-# ompi_version  = "" # e.g. v3.1.x
+# ompi_version  = null # e.g. v3.1.x
 # slurm_version = "19.05-latest"
 # suspend_time  = 300
 
@@ -55,7 +55,7 @@ zone         = "us-west1-b"
 #   remote_mount  = "/home"
 #   local_mount   = "/home"
 #   fs_type       = "nfs"
-#   mount_options = ""
+#   mount_options = null
 # }]
 #
 # login_network_storage = [{
@@ -63,7 +63,7 @@ zone         = "us-west1-b"
 #   remote_mount  = "/net_storage"
 #   local_mount   = "/shared"
 #   fs_type       = "nfs"
-#   mount_options = ""
+#   mount_options = null
 # }]
 
 # compute_image_machine_type = "n1-standard-2"
@@ -89,9 +89,9 @@ partitions = [
     compute_disk_type    = "pd-standard"
     compute_disk_size_gb = 10
     compute_labels       = {}
-    cpu_platform         = ""
+    cpu_platform         = null
     gpu_count            = 0
-    gpu_type             = ""
+    gpu_type             = null
     network_storage      = []
     preemptible_bursting = true
     vpc_subnet           = null
