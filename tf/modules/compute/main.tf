@@ -117,7 +117,6 @@ EOF
     config = <<EOF
 ${jsonencode({
     cluster_name              = var.cluster_name,
-    cluster_subnet            = var.subnet,
     compute_node_prefix       = local.compute_node_prefix,
     controller_secondary_disk = var.controller_secondary_disk,
     munge_key                 = var.munge_key,
