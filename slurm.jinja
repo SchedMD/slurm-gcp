@@ -22,37 +22,47 @@
 {% set cluster_region =  '-'.join(properties['zone'].split('-')[:-1]) %}
 {% set def_network_name = properties["cluster_name"] ~ "-network" %}
 
-{% set regions = {} %}
-{% set _ = regions.update({cluster_region: properties['cluster_name']~'-'~cluster_region})
-            if not properties['vpc_subnet'] else None %}
+{% set regions = {
+          cluster_region: 
+            (properties['vpc_subnet'] or (properties['cluster_name']~'-'~cluster_region),
+             properties['vpc_subnet'])
+        } %}
 {% for part in properties['partitions'] %}
 {% set region = '-'.join(part['zone'].split('-')[:-1]) %}
-{% set _ = regions.update({region: properties['cluster_name']~'-'~region})
-            if not part['vpc_subnet']
-            else None %}
+{% set _ = regions.update({region:
+            (part['vpc_subnet'] or properties['cluster_name']~'-'~region,
+             regions.get(region, None)[1] or part['vpc_subnet'])
+          }) %}
 {% set _ = part.update({'region': region}) %}
 {% endfor %}
 
 resources:
 {% if not properties['shared_vpc_host_project'] %}
+{% if not properties['vpc_net'] %}
 - name: {{def_network_name}}
   type: compute.v1.network
   properties:
     autoCreateSubnetworks: false
+{% endif %}
 
-{% for region in regions %}
-- name: {{regions[region]}}
+{% for region, (subnet, existing) in regions.items() if not existing %}
+- name: {{subnet}}
   type: compute.v1.subnetwork
   properties:
+  {% if properties['vpc_net'] %}
+    network: https://www.googleapis.com/compute/v1/projects/{{properties['project']}}/global/networks/{{properties['vpc_net']}}
+  {% else %}
     network: $(ref.{{def_network_name}}.selfLink)
+  {% endif %}
     ipCidrRange: {{ "10.{}.0.0/16".format(loop.index0) }}
     region: {{region}}
     privateIpGoogleAccess: {{ properties["private_google_access"]}}
 {% endfor %}
 
-{% if (properties['external_compute_ips'] or
-       properties['external_login_ips'] or
-       properties['external_controller_ip']) %}
+{% if not properties['vpc_net'] %}
+{% if (properties['external_compute_ips']
+       or properties['external_login_ips']
+       or properties['external_controller_ip']) %}
 - name: {{properties["cluster_name"]}}-allow-ssh
   type: compute.v1.firewall
   properties:
@@ -62,10 +72,7 @@ resources:
     - IPProtocol: TCP
       ports: ["22"]
     - IPProtocol: ICMP
-{% endif %}
-{% if not (properties['external_compute_ips'] or
-           properties['external_login_ips'] or
-           properties['external_controller_ip']) %}
+{% else %}
 - name: {{properties["cluster_name"]}}-allow-iap
   type: compute.v1.firewall
   properties:
@@ -93,7 +100,7 @@ resources:
        not (properties['external_compute_ips'] and
             properties['external_login_ips'] and
             properties['external_controller_ip']) %}
-{% for region in regions %}
+{% for region, (subnet, existing) in regions.items() %}
 - name: {{properties["cluster_name"]}}-{{region}}-router
   type: compute.v1.router
   properties:
@@ -108,11 +115,15 @@ resources:
       natIpAllocateOption: "AUTO_ONLY"
       sourceSubnetworkIpRangesToNat: "LIST_OF_SUBNETWORKS"
       subnetworks:
-      - name: $(ref.{{regions[region]}}.selfLink)
+    {% if existing %}
+      - name: https://www.googleapis.com/compute/v1/projects/{{properties['project']}}/regions/{{region}}/subnetworks/{{subnet}}
+    {% else %}
+      - name: $(ref.{{subnet}}.selfLink)
+    {% endif %}
         sourceIpRangesToNat: ["PRIMARY_IP_RANGE"]
 {% endfor %}
 {% endif %}
-
+{% endif %}
 
 - name: {{properties["cluster_name"]}}-controller
   type: compute.v1.instance
@@ -144,7 +155,7 @@ resources:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}
 {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{regions[cluster_region]}}.selfLink)
+    - subnetwork: $(ref.{{regions[cluster_region][0]}}.selfLink)
 {% endif %}
 {% if properties['external_controller_ip'] %}
       accessConfigs:
@@ -232,7 +243,7 @@ resources:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}
   {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{regions[cluster_region]}}.selfLink)
+    - subnetwork: $(ref.{{regions[cluster_region][0]}}.selfLink)
   {% endif %}
 {% if properties['external_login_ips'] %}
       accessConfigs:
@@ -304,7 +315,7 @@ resources:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{region}}/subnetworks/{{ properties['partitions'][i]['vpc_subnet'] }}
   {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{regions[region]}}.selfLink)
+    - subnetwork: $(ref.{{regions[region][0]}}.selfLink)
   {% endif %}
   {% if properties['external_compute_ips'] %}
       accessConfigs:
@@ -367,7 +378,7 @@ resources:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}
   {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{regions[cluster_region]}}.selfLink)
+    - subnetwork: $(ref.{{regions[cluster_region][0]}}.selfLink)
   {% endif %}
   {% if properties['external_compute_ips'] %}
       accessConfigs:
