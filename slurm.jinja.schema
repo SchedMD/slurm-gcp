@@ -340,7 +340,7 @@ properties:
 
   slurm_version:
     type        : string
-    default     : 19.05-latest
+    default     : 20.02-latest
     description : The Slurm version to install. The version should match link
                   name found at https://www.schedmd.com/downloads.php. The
                   version can also be in the form "b:<branch name>", where
