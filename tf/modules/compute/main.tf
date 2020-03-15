@@ -19,15 +19,18 @@ locals {
   image_list = flatten([
     for pid in range(length(var.partitions)) : [{
       name           = "${local.compute_node_prefix}-${pid}-image"
-      boot_disk_size = var.partitions[pid].compute_disk_size_gb
-      boot_disk_type = var.partitions[pid].compute_disk_type
-      labels         = var.partitions[pid].compute_labels
-      machine_type   = var.partitions[pid].machine_type
+      boot_disk_size = var.compute_image_disk_size_gb
+      boot_disk_type = var.compute_image_disk_type
+      labels         = var.compute_image_labels
+      machine_type   = var.compute_image_machine_type
       sa_email       = "default"
       sa_scopes      = ["cloud-platform"]
-      zone           = var.partitions[pid].zone
-      gpu_type       = ""
+      zone           = var.zone
+      gpu_type       = null
       gpu_count      = 0
+      subnet         = (var.subnetwork_name != null
+                        ? var.subnetwork_name
+                        : "${var.cluster_name}-${var.region}")
     }]
   ])
 
@@ -44,6 +47,9 @@ locals {
         zone           = var.partitions[pid].zone
         gpu_type       = var.partitions[pid].gpu_type
         gpu_count      = var.partitions[pid].gpu_count
+        subnet         = (var.partitions[pid].vpc_subnet != null
+                          ? var.partitions[pid].vpc_subnet
+                          : "${var.cluster_name}-${join("-", slice(split("-", var.partitions[pid].zone), 0, 2))}")
       }
     ]
   ])
@@ -58,6 +64,8 @@ locals {
 
 resource "google_compute_instance" "compute_node" {
   for_each = local.compute_map
+
+  depends_on = [var.subnet_depend]
 
   name         = each.value.name
   machine_type = each.value.machine_type
@@ -78,7 +86,7 @@ resource "google_compute_instance" "compute_node" {
   guest_accelerator {
     count = each.value.gpu_count
 
-    type = each.value.gpu_type
+    type = each.value.gpu_type != null ? each.value.gpu_type : ""
   }
 
   network_interface {
@@ -87,7 +95,12 @@ resource "google_compute_instance" "compute_node" {
       content {}
     }
 
-    subnetwork         = var.subnet
+    # Subnet order:
+    # 1. shared_vpc_host_project / var.subnetwork_name|part.vpc_subnet
+    #   a. subnetwork_project isn't set when shared_vpc_host_project is null
+    # 2. var.project / part.vpc_subnet
+    # 3. var.project / {cluster_name}-{region}
+    subnetwork         = each.value.subnet
     subnetwork_project = var.shared_vpc_host_project
   }
 
@@ -115,7 +128,6 @@ EOF
     config = <<EOF
 ${jsonencode({
     cluster_name              = var.cluster_name,
-    cluster_subnet            = var.subnet,
     compute_node_prefix       = local.compute_node_prefix,
     controller_secondary_disk = var.controller_secondary_disk,
     munge_key                 = var.munge_key,

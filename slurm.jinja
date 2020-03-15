@@ -15,28 +15,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{% set ignored = properties.__setitem__('project', env['project']) %}
-{% set ignored = properties.__setitem__('region', '-'.join(properties['zone'].split('-')[:-1])) %}
-{% set ignored = properties.__setitem__('compute_node_prefix', (properties["cluster_name"] ~ "-compute")) %}
+{% set _ = properties.update({
+    'project': env['project'],
+    'compute_node_prefix': properties["cluster_name"] ~ "-compute",
+    }) %}
+{% set cluster_region =  '-'.join(properties['zone'].split('-')[:-1]) %}
 {% set def_network_name = properties["cluster_name"] ~ "-network" %}
-{% set def_subnet_name = properties["cluster_name"] ~ "-subnet" %}
+
+{% set regions = {
+          cluster_region: 
+            (properties['vpc_subnet'] or (properties['cluster_name']~'-'~cluster_region),
+             properties['vpc_subnet'])
+        } %}
+{% for part in properties['partitions'] %}
+{% set region = '-'.join(part['zone'].split('-')[:-1]) %}
+{% set _ = regions.update({region:
+            (part['vpc_subnet'] or properties['cluster_name']~'-'~region,
+             regions.get(region, None)[1] or part['vpc_subnet'])
+          }) %}
+{% set _ = part.update({'region': region}) %}
+{% endfor %}
 
 resources:
-{% if not properties['vpc_subnet'] and not properties['shared_vpc_host_project'] %}
+{% if not properties['shared_vpc_host_project'] %}
+{% if not properties['vpc_net'] %}
 - name: {{def_network_name}}
   type: compute.v1.network
   properties:
     autoCreateSubnetworks: false
-- name: {{def_subnet_name}}
+{% endif %}
+
+{% for region, (subnet, existing) in regions.items() if not existing %}
+- name: {{subnet}}
   type: compute.v1.subnetwork
   properties:
+  {% if properties['vpc_net'] %}
+    network: https://www.googleapis.com/compute/v1/projects/{{properties['project']}}/global/networks/{{properties['vpc_net']}}
+  {% else %}
     network: $(ref.{{def_network_name}}.selfLink)
-    ipCidrRange: {{ properties["cidr"]}}
-    region: {{ properties["region"] }}
+  {% endif %}
+    ipCidrRange: {{ "10.{}.0.0/16".format(loop.index0) }}
+    region: {{region}}
     privateIpGoogleAccess: {{ properties["private_google_access"]}}
-{% if (properties['external_compute_ips'] or
-       properties['external_login_ips'] or
-       properties['external_controller_ip']) %}
+{% endfor %}
+
+{% if not properties['vpc_net'] %}
+{% if (properties['external_compute_ips']
+       or properties['external_login_ips']
+       or properties['external_controller_ip']) %}
 - name: {{properties["cluster_name"]}}-allow-ssh
   type: compute.v1.firewall
   properties:
@@ -46,10 +72,7 @@ resources:
     - IPProtocol: TCP
       ports: ["22"]
     - IPProtocol: ICMP
-{% endif %}
-{% if not (properties['external_compute_ips'] or
-           properties['external_login_ips'] or
-           properties['external_controller_ip']) %}
+{% else %}
 - name: {{properties["cluster_name"]}}-allow-iap
   type: compute.v1.firewall
   properties:
@@ -64,7 +87,7 @@ resources:
   type: compute.v1.firewall
   properties:
     network: $(ref.{{def_network_name}}.selfLink)
-    sourceRanges: [{{properties["cidr"]}}]
+    sourceRanges: ["10.0.0.0/8"]
     allowed:
     - IPProtocol: TCP
       ports: ["0-65535"]
@@ -77,7 +100,8 @@ resources:
        not (properties['external_compute_ips'] and
             properties['external_login_ips'] and
             properties['external_controller_ip']) %}
-- name: {{properties["cluster_name"]}}-router
+{% for region, (subnet, existing) in regions.items() %}
+- name: {{properties["cluster_name"]}}-{{region}}-router
   type: compute.v1.router
   properties:
   {% if properties['vpc_net'] %}
@@ -85,20 +109,21 @@ resources:
   {% else %}
     network: $(ref.{{def_network_name}}.selfLink)
   {% endif %}
-    region: {{ properties["region"] }}
+    region: {{region}}
     nats:
     - name: {{properties["cluster_name"]}}-nat
       natIpAllocateOption: "AUTO_ONLY"
       sourceSubnetworkIpRangesToNat: "LIST_OF_SUBNETWORKS"
       subnetworks:
-  {% if properties['vpc_net'] %}
-      - name: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-  {% else %}
-      - name: $(ref.{{def_subnet_name}}.selfLink)
-  {% endif %}
+    {% if existing %}
+      - name: https://www.googleapis.com/compute/v1/projects/{{properties['project']}}/regions/{{region}}/subnetworks/{{subnet}}
+    {% else %}
+      - name: $(ref.{{subnet}}.selfLink)
+    {% endif %}
         sourceIpRangesToNat: ["PRIMARY_IP_RANGE"]
+{% endfor %}
 {% endif %}
-
+{% endif %}
 
 - name: {{properties["cluster_name"]}}-controller
   type: compute.v1.instance
@@ -122,15 +147,15 @@ resources:
         diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["controller_secondary_disk_type"] }}
         diskSizeGb: {{properties["controller_secondary_disk_size_gb"]}}
 {% endif %}
-{% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
+{% if properties ['shared_vpc_host_project'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-{% elif properties ['vpc_subnet'] %}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}
+{% elif properties['vpc_subnet'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}
 {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
+    - subnetwork: $(ref.{{regions[cluster_region][0]}}.selfLink)
 {% endif %}
 {% if properties['external_controller_ip'] %}
       accessConfigs:
@@ -210,15 +235,15 @@ resources:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
         diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["login_disk_type"] }}
         diskSizeGb: {{ properties["login_disk_size_gb"] }}
-  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
+  {% if properties ['shared_vpc_host_project'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-  {% elif properties ['vpc_subnet'] %}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}
+  {% elif properties['vpc_subnet'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}
   {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
+    - subnetwork: $(ref.{{regions[cluster_region][0]}}.selfLink)
   {% endif %}
 {% if properties['external_login_ips'] %}
       accessConfigs:
@@ -255,6 +280,8 @@ resources:
 {% endfor %}
 
 {% for i in range(properties["partitions"]|length) %}
+{% set region = properties['partitions'][i]['region'] %}
+
 {% for n in range(properties["partitions"][i]['static_node_count']) %}
 - name: {{properties["compute_node_prefix"]}}-{{i}}-{{n}}
   type: compute.v1.instance
@@ -280,15 +307,15 @@ resources:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
         diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["partitions"][i]["zone"] }}/diskTypes/{{ properties["partitions"][i]["compute_disk_type"] }}
         diskSizeGb: {{ properties["partitions"][i]["compute_disk_size_gb"] }}
-  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
+  {% if properties['shared_vpc_host_project']  %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-  {% elif properties ['vpc_subnet'] %}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{region}}/subnetworks/{{ properties['partitions'][i]['vpc_subnet'] }}
+  {% elif properties['partitions'][i]['vpc_subnet'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{region}}/subnetworks/{{ properties['partitions'][i]['vpc_subnet'] }}
   {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
+    - subnetwork: $(ref.{{regions[region][0]}}.selfLink)
   {% endif %}
   {% if properties['external_compute_ips'] %}
       accessConfigs:
@@ -332,8 +359,8 @@ resources:
 - name: {{properties["compute_node_prefix"]}}-{{i}}-image
   type: compute.v1.instance
   properties:
-    zone: {{ properties["partitions"][i]["zone"] }}
-    machineType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["partitions"][i]["zone"] }}/machineTypes/{{ properties["partitions"][i]["machine_type"] }}
+    zone: {{ properties["zone"] }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/machineTypes/{{ properties["compute_image_machine_type"] }}
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -341,17 +368,17 @@ resources:
       autoDelete: true
       initializeParams:
         sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-7
-        diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["partitions"][i]["zone"] }}/diskTypes/{{ properties["partitions"][i]["compute_disk_type"] }}
-        diskSizeGb: {{ properties["partitions"][i]["compute_disk_size_gb"] }}
-  {% if (properties ['vpc_subnet'] and properties ['shared_vpc_host_project'])  %}
+        diskType: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/zones/{{ properties["zone"] }}/diskTypes/{{ properties["compute_image_disk_type"] }}
+        diskSizeGb: {{ properties["compute_image_disk_size_gb"] }}
+  {% if properties ['shared_vpc_host_project'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
-  {% elif properties ['vpc_subnet'] %}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['partitions'][i]['vpc_subnet'] }}
+  {% elif properties['vpc_subnet'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{ properties["region"] }}/subnetworks/{{ properties ["vpc_subnet"] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}
   {% else %}
     networkInterfaces:
-    - subnetwork: $(ref.{{def_subnet_name}}.selfLink)
+    - subnetwork: $(ref.{{regions[cluster_region][0]}}.selfLink)
   {% endif %}
   {% if properties['external_compute_ips'] %}
       accessConfigs:
@@ -365,9 +392,9 @@ resources:
     tags:
       items:
         - compute
-  {% if properties["partitions"][i]["compute_labels"] %}
+  {% if properties["compute_image_labels"] %}
     labels:
-      {{properties["partitions"][i]["compute_labels"]}}
+      {{properties["compute_image_labels"]}}
   {% endif %}
     metadata:
       items:

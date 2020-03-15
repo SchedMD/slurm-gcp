@@ -26,11 +26,11 @@ module "slurm_cluster_network" {
   source = "../../modules/network"
 
   cluster_name                  = var.cluster_name
-  cluster_network_cidr_range    = var.cluster_network_cidr_range
   disable_login_public_ips      = var.disable_login_public_ips
   disable_controller_public_ips = var.disable_controller_public_ips
   disable_compute_public_ips    = var.disable_compute_public_ips
   network_name                  = var.network_name
+  partitions                    = var.partitions
   shared_vpc_host_project       = var.shared_vpc_host_project
   subnetwork_name               = var.subnetwork_name
 
@@ -65,9 +65,9 @@ module "slurm_cluster_controller" {
   slurm_version                 = var.slurm_version
   scopes                        = var.controller_scopes
   service_account               = var.controller_service_account
-  subnet                        = module.slurm_cluster_network.cluster_subnet_self_link
-  suspend_time                  = var.suspend_time
+  subnet_depend                 = module.slurm_cluster_network.subnet_depend
   subnetwork_name               = var.subnetwork_name
+  suspend_time                  = var.suspend_time
   zone                          = var.zone
 }
 
@@ -84,13 +84,15 @@ module "slurm_cluster_login" {
   login_network_storage     = var.login_network_storage
   machine_type              = var.login_machine_type
   node_count                = var.login_node_count
+  region                    = local.region
   scopes                    = var.login_node_scopes
   service_account           = var.login_node_service_account
   munge_key                 = var.munge_key
   network_storage           = var.network_storage
   ompi_version              = var.ompi_version
   shared_vpc_host_project   = var.shared_vpc_host_project
-  subnet                    = module.slurm_cluster_network.cluster_subnet_self_link
+  subnet_depend             = module.slurm_cluster_network.subnet_depend
+  subnetwork_name           = var.subnetwork_name
   zone                      = var.zone
 }
 
@@ -98,15 +100,21 @@ module "slurm_cluster_compute" {
   source = "../../modules/compute"
 
   cluster_name               = var.cluster_name
+  compute_image_disk_size_gb = var.compute_image_disk_size_gb
+  compute_image_disk_type    = var.compute_image_disk_type
+  compute_image_labels       = var.compute_image_labels
+  compute_image_machine_type = var.compute_image_machine_type
   controller_name            = module.slurm_cluster_controller.controller_node_name
   disable_compute_public_ips = var.disable_compute_public_ips
   network_storage            = var.network_storage
   partitions                 = var.partitions
   project                    = var.project
+  region                     = local.region
   scopes                     = var.compute_node_scopes
   service_account            = var.compute_node_service_account
   shared_vpc_host_project    = var.shared_vpc_host_project
-  subnet                     = module.slurm_cluster_network.cluster_subnet_self_link
+  subnet_depend              = module.slurm_cluster_network.subnet_depend
+  subnetwork_name            = var.subnetwork_name
   zone                       = var.zone
 }
 

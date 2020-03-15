@@ -92,6 +92,11 @@ variable "ompi_version" {
   default     = null
 }
 
+variable "region" {
+  description = "Compute Platform region where the Slurm cluster will be located"
+  type        = string
+}
+
 variable "scopes" {
   description = "Scopes to apply to login nodes."
   type        = list(string)
@@ -112,9 +117,16 @@ variable "shared_vpc_host_project" {
   default = null
 }
 
-variable "subnet" {
-  description = "Compute Platform subnetwork the Slurm cluster nodes will be connected to"
-  default     = "default"
+variable "subnet_depend" {
+  description = "Used as a dependency between the network and instances"
+  type        = string
+  default     = ""
+}
+
+variable "subnetwork_name" {
+  description = "The name of the pre-defined VPC subnet you want the nodes to attach to based on Region."
+  default     = null
+  type        = string
 }
 
 variable "zone" {

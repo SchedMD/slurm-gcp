@@ -13,6 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+variable "compute_image_disk_size_gb" {
+  description = "Size of disk for compute node image."
+  default     = 10
+}
+
+variable "compute_image_disk_type" {
+  description = "Disk type (pd-ssd or pd-standard) for compute node image."
+  type        = string
+  default     = "pd-standard"
+}
+
+variable "compute_image_labels" {
+  description = "Labels to add to the compute node image. List of key key, value pairs."
+  type        = any
+  default     = {}
+}
+
+variable "compute_image_machine_type" {
+  type    = string
+  default = "n1-standard-2"
+}
+
 variable "controller_name" {
   type        = string
   description = "FQDN or IP address of the controller node"
@@ -79,11 +101,17 @@ variable "partitions" {
       fs_type       = string,
       mount_options = string})),
     preemptible_bursting = bool,
+    vpc_subnet           = string,
   static_node_count = number }))
 }
 
 variable "project" {
   description = "Cloud Platform project that hosts the notebook server(s)"
+  type        = string
+}
+
+variable "region" {
+  description = "Compute Platform region where the Slurm cluster will be located"
   type        = string
 }
 
@@ -107,10 +135,16 @@ variable "shared_vpc_host_project" {
   default = null
 }
 
-variable "subnet" {
-  description = "Compute Platform network the Slurm cluster nodes will be connected to"
+variable "subnet_depend" {
+  description = "Used as a dependency between the network and instances"
   type        = string
-  default     = "default"
+  default     = ""
+}
+
+variable "subnetwork_name" {
+  description = "The name of the pre-defined VPC subnet you want the nodes to attach to based on Region."
+  default     = null
+  type        = string
 }
 
 variable "zone" {

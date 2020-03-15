@@ -26,7 +26,6 @@ resources:
     cluster_name            : g1
 
     zone                    : us-central1-b
-    region                  : us-central1
     cidr                    : 10.10.0.0/16
 
   # Optional network configuration fields
@@ -76,6 +75,13 @@ resources:
     #     remote_mount: /net_storage
     #     local_mount: /shared
     #     fs_type: nfs
+
+    compute_image_machine_type  : n1-standard-2
+    # compute_image_disk_type   : pd-standard
+    # compute_image_disk_size_gb: 10
+    # compute_image_labels      :
+    #   key1 : value1
+    #   key2 : value2
 
   # Optional compute configuration fields
     # external_compute_ips      : False

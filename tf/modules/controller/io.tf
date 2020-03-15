@@ -143,6 +143,7 @@ variable "partitions" {
       fs_type       = string,
       mount_options = string})),
     preemptible_bursting = bool,
+    vpc_subnet           = string,
   static_node_count = number }))
 }
 
@@ -178,9 +179,10 @@ variable "slurm_version" {
   default     = "19.05-latest"
 }
 
-variable "subnet" {
-  description = "Compute Platform subnetwork the Slurm cluster nodes will be connected to"
-  default     = "default"
+variable "subnet_depend" {
+  description = "Used as a dependency between the network and instances"
+  type        = string
+  default     = ""
 }
 
 variable "subnetwork_name" {

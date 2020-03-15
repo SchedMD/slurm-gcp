@@ -2,8 +2,6 @@ cluster_name = "g1"
 project      = "<project>"
 zone         = "us-west1-b"
 
-# cluster_network_cidr_range = "10.10.0.0/16"
-
 # network_name            = "<existing network name>"
 # subnetwork_name         = "<existing subnetwork name>"
 # shared_vpc_host_project = "<vpc host project>"
@@ -12,7 +10,7 @@ zone         = "us-west1-b"
 # disable_login_public_ips      = true
 # disable_compute_public_ips    = true
 
-# ompi_version  = "" # e.g. v3.1.x
+# ompi_version  = null # e.g. v3.1.x
 # slurm_version = "19.05-latest"
 # suspend_time  = 300
 
@@ -57,7 +55,7 @@ zone         = "us-west1-b"
 #   remote_mount  = "/home"
 #   local_mount   = "/home"
 #   fs_type       = "nfs"
-#   mount_options = ""
+#   mount_options = null
 # }]
 #
 # login_network_storage = [{
@@ -65,8 +63,16 @@ zone         = "us-west1-b"
 #   remote_mount  = "/net_storage"
 #   local_mount   = "/shared"
 #   fs_type       = "nfs"
-#   mount_options = ""
+#   mount_options = null
 # }]
+
+# compute_image_machine_type = "n1-standard-2"
+# compute_image_disk_type    = "pd-standard"
+# compute_image_disk_size_gb = 10
+# compute_image_labels = {
+#   key1 = "val1"
+#   key2 = "val2"
+# }
 
 # compute_node_service_account = "default"
 # compute_node_scopes          = [
@@ -83,11 +89,12 @@ partitions = [
     compute_disk_type    = "pd-standard"
     compute_disk_size_gb = 10
     compute_labels       = {}
-    cpu_platform         = ""
+    cpu_platform         = null
     gpu_count            = 0
-    gpu_type             = ""
+    gpu_type             = null
     network_storage      = []
     preemptible_bursting = true
+    vpc_subnet           = null
   },
 #  { name                 = "partition2"
 #    machine_type         = "n1-standard-16"
@@ -111,5 +118,6 @@ partitions = [
 #      mount_options = "file_mode=664,dir_mode=775,allow_other"
 #    }]
 #    preemptible_bursting = true
+#    vpc_subnet           = null
 ]
 
