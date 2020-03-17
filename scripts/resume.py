@@ -149,10 +149,12 @@ def create_instance(compute, zone, machine_type, instance_name,
         'tags': {'items': ['compute']},
 
         'metadata': {
-            'items': [{
-                'key': 'enable-oslogin',
-                'value': 'TRUE'
-            }]
+            'items': [
+                {'key': 'enable-oslogin',
+                 'value': 'TRUE'},
+                {'key': 'VmDnsSetting',
+                 'value': 'GlobalOnly'}
+            ]
         }
     }
 

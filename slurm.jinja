@@ -197,6 +197,8 @@ resources:
             {{ imports["scripts/slurmsync.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: VmDnsSetting
+          value: GlobalOnly
         - key: custom-compute-install
           value: |
             {{ imports["scripts/custom-compute-install"]|indent(12) }}
@@ -277,6 +279,8 @@ resources:
             {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: VmDnsSetting
+          value: GlobalOnly
 {% endfor %}
 
 {% for i in range(properties["partitions"]|length) %}
@@ -349,6 +353,8 @@ resources:
             {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: VmDnsSetting
+          value: GlobalOnly
         - key: fluentd_conf_tpl
           value: |
             {{ imports["etc/compute-fluentd.conf.tpl"]|indent(12) }}
@@ -412,6 +418,8 @@ resources:
             {{ imports["scripts/setup.py"]|indent(12) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: VmDnsSetting
+          value: GlobalOnly
         - key: fluentd_conf_tpl
           value: |
             {{ imports["etc/compute-fluentd.conf.tpl"]|indent(12) }}

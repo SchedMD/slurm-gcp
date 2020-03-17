@@ -116,6 +116,7 @@ resource "google_compute_instance" "compute_node" {
   metadata = {
     terraform      = "TRUE"
     enable-oslogin = "TRUE"
+    VmDnsSetting   = "GlobalOnly"
 
     startup-script = <<EOF
 ${file("${path.module}/../../../scripts/startup.sh")}
