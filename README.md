@@ -37,7 +37,6 @@ Also, join comunity discussions on either the
 * [Bursting out from on-premise cluster](#bursting-out-from-on-premise-cluster)
   * [Playground](#playground)
 * [Multi-Cluster / Federation](#multi-cluster-federation)
-  * [Playground](#playground-1)
 * [Troubleshooting](#troubleshooting)
 
 
@@ -816,212 +815,47 @@ following are the steps to do this.
     Once the image is created, EXTERNAL_IP can be set to False in resume.py.
 
 ## Multi-Cluster / Federation
-Slurm allows you to use a central SlurmDBD for multiple clusters. By doing this
-it also allows the clusters to be able to communicate with each other. This is
-done by the client commands first checking with the SlurmDBD for the requested
-cluster's IP address and port which the client can then communicate directly
-with the cluster.
+Slurm allows the use of a central SlurmDBD for multiple clusters. By doing
+this, it also allows the clusters to be able to communicate with each other.
+This is done by the client commands first checking with the SlurmDBD for the
+requested cluster's IP address and port which the client then uses to
+communicate directly with the cluster.
+
+Some possible scenarios:
+* An on-premise cluster and a cluster in GCP sharing a single SlurmDBD.
+* An on-premise cluster and a cluster in GCP each with their own SlurmDBD but
+  having each SlurmDBD know about each other using
+  [AccountingStorageExternalHost](https://slurm.schedmd.com/slurm.conf.html#OPT_AccountingStorageExternalHost)
+  in each slurm.conf.
+
+The following considerations are needed for these scenarios:
+* Regardless of location for the SlurmDBD, both clusters need to be able to
+  talk to the each SlurmDBD and controller.
+  * A VPN is recommended for traffic between on-premise and the cloud.
+* In order for interactive jobs (srun, salloc) to work from the login nodes to
+  each cluster, the compute nodes must be accessible from the login nodes on
+  each cluster.
+  * It may be easier to only support batch jobs between clusters.
+    * Once a batch job is on a cluster, srun functions normally.
+* If a firewall exists, srun communications most likely need to be allowed
+  through it. Configure SrunPortRange to define a range for ports for srun
+  communications.
+* Consider how to present file systems and data movement between clusters.
+* **NOTE:** All clusters attached to a single SlurmDBD must share the same user
+  space (e.g. same uids across all the clusters).
+* **NOTE:** Either all clusters and the SlurmDBD must share the same MUNGE key
+  or use a separate MUNGE key for each cluster and another key for use between
+  each cluster and the SlurmDBD. In order for cross-cluster interactive jobs to
+  work, the clusters must share the same MUNGE key. See the following for more
+  information:  
+  [Multi-Cluster Operation](https://slurm.schedmd.com/multi_cluster.html)  
+  [Accounting and Resource Limits](https://slurm.schedmd.com/accounting.html)
+
 
 For more information see:  
 [Multi-Cluster Operation](https://slurm.schedmd.com/multi_cluster.html)  
 [Federated Scheduling Guide](https://slurm.schedmd.com/federation.html)
 
-**NOTE:** Either all clusters and the SlurmDBD must share the same MUNGE key
-or use a separate MUNGE key for each cluster and another key for use between
-each cluster and the SlurmDBD. In order for cross-cluster interactive jobs to
-work, the clusters must share the same MUNGE key. See the following for more
-information:  
-[Multi-Cluster Operation](https://slurm.schedmd.com/multi_cluster.html)  
-[Accounting and Resource Limits](https://slurm.schedmd.com/accounting.html)
-
-**NOTE:** All clusters attached to a single SlurmDBD must share the same user
-space (e.g. same uids across all the clusters).
-
-### Playground
-
-1. Create another project in GCP (e.g. project3) and create another Slurm
-   cluster using the deployment scripts -- except with a different cluster name
-   (e.g. g2) and possible IP range.
-
-2. Open ports on project1 so that project3 can communicate with project1's
-   slurmctld (tcp:6820) and slurmdbd (tcp:6819).
-
-   1. On project1's GCP Console, navigate to VPC network->Firewall rules
-   2. Click CREATE FIREWALL RULE at the top of the page.
-   3. Fill in the following fields:
-      ```
-      Name                 : slurm
-      Network              : slurm-network
-      Priority             : 1000
-      Direction of traffic : Ingress
-      Action to match      : Allow
-      Targets              : Specified target tags
-      Target tags          : controller
-      Source Filter        : IP ranges
-      Source IP Ranges     : 0.0.0.0/0
-      Second source filter : none
-      Protocols and ports  : Specified protocols and ports
-      tcp:6820,6819
-      ```
-   4. Click Create
-
-3. In project3 open up ports for slurmctld (tcp:6820) so that project1 can
-   communicate with project3's slurmctld.
-   1. On project3's GCP Console, navigate to VPC network->Firewall rules
-   2. Click CREATE FIREWALL RULE at the top of the page.
-   3. Fill in the following fields:
-      ```
-      Name                 : slurm
-      Network              : slurm-network
-      Priority             : 1000
-      Direction of traffic : Ingress
-      Action to match      : Allow
-      Targets              : Specified target tags
-      Target tags          : controller
-      Source Filter        : IP ranges
-      Source IP Ranges     : 0.0.0.0/0
-      Second source filter : none
-      Protocols and ports  : Specified protocols and ports
-      tcp:6820
-      ```
-   4. Click Create
-
-4. Optional ports for interactive jobs.
-
-   If you plan to use srun to submit jobs from one cluster to another, then
-   ports need to be opened up for srun to be able to communicate with the
-   slurmds on the remote cluster and ports need to be opened for the
-   slurmds to be able to talk back to the login nodes on the remote cluster.
-   srun open's several ephemeral ports for communications. It's recommended to
-   define which ports srun can use when using a firewall. This is done by
-   defining SrunPortRange=<IP Range> in the slurm.conf.
-
-   e.g.
-   ```
-   SrunPortRange=60001-63000
-   ```
-
-   **NOTE:** In order for cross-cluster interactive jobs to work, the compute
-   nodes must be accessible from the login nodes on each cluster
-   (e.g. a vpn connection between project1 and project3).
-
-   slurmd ports:  
-   1. On project1 and project3's GCP Console, navigate to VPC network->Firewall rules
-   2. Click CREATE FIREWALL RULE at the top of the page.
-   3. Fill in the following fields:
-      ```
-      Name                 : slurmd
-      Network              : slurm-network
-      Priority             : 1000
-      Direction of traffic : Ingress
-      Action to match      : Allow
-      Targets              : Specified target tags
-      Target tags          : compute
-      Source Filter        : IP ranges
-      Source IP Ranges     : 0.0.0.0/0
-      Second source filter : none
-      Protocols and ports  : Specified protocols and ports
-      tcp:6818
-      ```
-   4. Click Create
-
-   srun ports:  
-   1. On project1 and project3's GCP Consoles, navigate to VPC network->Firewall rules
-   2. Click CREATE FIREWALL RULE at the top of the page.
-   3. Fill in the following fields:
-      ```
-      Name                 : srun
-      Network              : slurm-network
-      Priority             : 1000
-      Direction of traffic : Ingress
-      Action to match      : Allow
-      Targets              : All instances in the network
-      Source Filter        : IP ranges
-      Source IP Ranges     : 0.0.0.0/0
-      Second source filter : none
-      Protocols and ports  : Specified protocols and ports
-      tcp:60001-63000
-      ```
-   4. Click Create
-
-5. Modify both project1 and project3's slurm.confs to talk to the slurmdbd
-   on project1's external IP.
-
-   e.g.
-   ```
-   AccountingStorageHost=<external IP of project1's controller instance>
-   ```
-
-6. Add the cluster to project1's database.
-
-   e.g.
-   ```
-   $ sacctmgr add cluster g2
-   ```
-
-7. Add user and account associations to the g2 cluster.
-
-   In order for a user to run a job on a cluster, the user must have an
-   association on the given cluster.
-
-   e.g.
-   ```
-   $ sacctmgr add account <default account> [cluster=<cluster name>]
-   $ sacctmgr add user <user> account=<default account> [cluster=<cluster name>]
-   ```
-
-8. Restart the slurmctld on both controllers.
-
-   e.g.
-   ```
-   $ systemctl restart slurmctld
-   ```
-
-9. Verify that the slurmdbd shows both slurmctld's have registered with their
-   external IP addresses.
-
-   * When the slurmctld registers with the slurmdbd, the slurmdbd records the
-     IP address the slurmctld registered with. This then allows project1 to
-     communicate with project3 and vice versa.
-
-   e.g.
-   ```
-   $ sacctmgr show clusters format=cluster,controlhost,controlport
-      Cluster     ControlHost  ControlPort
-   ---------- --------------- ------------
-           g1 ###.###.###.###         6820
-           g2 ###.###.###.###         6820
-   ```
-10. Now you can communicate with each cluster from the other side.
-
-    e.g.
-    ```
-    [bob@login0 ~]$ sinfo -Mg1,g2
-    CLUSTER: g1
-    PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-    debug*       up   infinite      8  idle~ g1-compute-0-[2-9]
-    debug*       up   infinite      2   idle g1-compute-0-[0-1]
-
-    CLUSTER: g2
-    PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-    debug*       up   infinite      8  idle~ g2-compute-0-[2-9]
-    debug*       up   infinite      2   idle g2-compute-0-[0-1]
-
-    [bob@login0 ~]$ sbatch -Mg1 --wrap="srun hostname; sleep 300"
-    Submitted batch job 17 on cluster g1
-
-    [bob@login0 ~]$ sbatch -Mg2 --wrap="srun hostname; sleep 300"
-    Submitted batch job 8 on cluster g2
-
-    [bob@login0 ~]$ squeue -Mg1,g2
-    CLUSTER: g1
-                 JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
-                    17     debug     wrap      bob  R       0:31      1   g1-compute-0-0
-
-    CLUSTER: g2
-                 JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
-                     8     debug     wrap      bob  R       0:12      1   g2-compute-0-0
-    ```
 
 
 ## Troubleshooting
