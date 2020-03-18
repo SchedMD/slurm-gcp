@@ -247,7 +247,7 @@ variable "shared_vpc_host_project" {
 }
 
 variable "slurm_version" {
-  default = "20.02-latest"
+  default = "19.05-latest"
 }
 
 variable "subnetwork_name" {
