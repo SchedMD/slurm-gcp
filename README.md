@@ -34,8 +34,9 @@ Also, join comunity discussions on either the
   * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
   * [OS Login](#os-login)
   * [Preemptible VMs](#preemptible-vms)
-* [Bursting out from on-premise cluster](#bursting-out-from-on-premise-cluster)
-  * [Playground](#playground)
+* [Hybrid Cluster for Bursting from On-Premise](#hybrid-cluster-for-bursting-from-on-premise)
+  * [Node Addressing](#node-addressing)
+  * [Configuration Steps](#configuration-steps)
 * [Multi-Cluster / Federation](#multi-cluster-federation)
 * [Troubleshooting](#troubleshooting)
 
@@ -388,25 +389,46 @@ Steps:
    restart the node. If there were any batch jobs on the preempted node, they
    will be requeued -- interactive (e.g. srun, salloc) jobs can't be requeued.
 
-## Bursting out from on-premise cluster
+## Hybrid Cluster for Bursting from On-Premise
 
 Bursting out from an on-premise cluster is done by configuring the
-**ResumeProgram** and the **SuspendProgram** in the slurm.conf. The scripts
-*resume.py*, *suspend.py* and *startup-script.py* in the scripts directory can
-be modified and used to create new compute instances in a GCP project. See the
-[Slurm Elastic Computing](https://slurm.schedmd.com/elastic_computing.html) for
-more information.
+**ResumeProgram** and the **SuspendProgram** in the slurm.conf to 
+*resume.py*, *suspend.py* in the scripts directory. *config.yaml* should
+be configured so that the scripts can create and destroy compute instances in a
+GCP project. 
+See [Slurm Elastic Computing](https://slurm.schedmd.com/elastic_computing.html)
+for more information.
 
 Pre-reqs:
-1. VPN between on-prem and GCP
+1. VPN between on-premise and GCP
 2. bidirectional DNS between on-premise and GCP
 3. Open ports to on-premise
    1. slurmctld
    2. slurmdbd
    3. SrunPortRange
+4. Open ports in GCP for NFS from on-premise
 
+### Node Addressing  
+There are two options: 1) setup DNS between the on-premise network and the GCP
+network or 2) configure Slurm to use NodeAddr to communicate with cloud compute
+nodes. In the end, the slurmctld and any login nodes should be able to
+communicate with cloud compute nodes, and the cloud compute nodes should be
+able to communicate with the controller.
 
-Steps:
+* Configure DNS peering  
+   1. GCP instances need to be resolvable by name from the controller and any
+      login nodes.
+   2. The controller needs to be resolvable by name from GCP instances, or the
+      controller ip address needs to be added to /etc/hosts.
+   https://cloud.google.com/dns/zones/#peering-zones  
+
+* Use IP addresses with NodeAddr
+   1. disable cloud_dns in *slurm.conf*
+   2. disable hierarchical communication in *slurm.conf*: `TreeWidth=65533`
+   3. edit *resume.py* to UPDATE_NODE_ADDRS
+   4. add controller's ip address to /etc/hosts on compute image
+
+### Configuration Steps
 1. Create a base instance
 
    Create a bare image and install and configure the packages (including Slurm)
@@ -414,16 +436,18 @@ Steps:
    from it creating a family either in the form
    "<cluster_name>-compute-#-image-family" or in a name of your choosing.
 
-
-2. Create a service account that will have access to create and delete
-   instances in the remote project.
+2. Create a [service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
+   and [service account key](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account)
+   that will have access to create and delete instances in the remote project.
 
 3. Install scripts
 
    Install the *resume.py*, *suspend.py*, *slurmsync.py* and
    *config.yaml.example* from the slurm-gcp repository's scripts directory to a
-   location on the slurmctld. Rename config.yaml.example to config.yaml and
-   modify the approriate values.
+   location on the slurmctld. Rename *config.yaml.example* to *config.yaml* and
+   modify the approriate values.  
+
+   Add the path of the service account key to *google_app_cred_path* in *config.yaml*.
    
    Add the compute_image_family to each partition if different than the naming
    schema, "<cluster_name>-compute-#-image-family".
@@ -456,7 +480,7 @@ Steps:
    SrunPortRange=60001-63000
    ```
 
-5. Add a cronjob/crontab to call slurmsync.py
+5. Add a cronjob/crontab to call slurmsync.py to be called by SlurmUser.
 
    e.g.
    ```
@@ -470,349 +494,6 @@ Steps:
    ./resume.py g1-compute-0-0
    ./suspend.py g1-compute-0-0
    ```
-
-### Playground
-
-You can use the deployment scripts to create a playground to test bursting from
-an on-premise cluster by using two separate projects in GCP. This requires
-setting up a gateway-to-gateway VPN in GCP between the two projects. The
-following are the steps to do this.
-
-1. Create two projects in GCP (e.g. project1, project2).
-2. Create a slurm cluster in both projects using the deployments scripts.
-
-   e.g.
-   ```
-   $ cat slurm-cluster.yaml
-   resources:
-   - name: slurm-cluster
-     type: slurm.jinja
-     properties:
-       ...
-       cluster_name            : g1
-       ...
-       cidr                    : 10.10.0.0/16
-       ....
-
-   $ gcloud deployment-manager --project=<project1> deployments create slurm --config slurm-cluster.yaml
-
-   $ cat slurm-cluster.yaml
-   resources:
-   - name: slurm-cluster
-     type: slurm.jinja
-     properties:
-       ...
-       cluster_name            : g1
-       ...
-       cidr                    : 10.20.0.0/16
-       ....
-
-   $ gcloud deployment-manager --project=<project2> deployments create slurm --config slurm-cluster.yaml
-   ```
-
-   We use the deployment scripts to setup the network and compute image. Once
-   project2 is up, all instances except the compute images in project2 should be
-   deleted.
-
-4. Setup a gateway-to-gateway VPN.
-
-   For each project, from the GCP console, create a VPN by going to
-   Hybrid Connectivity->VPN->Create VPN connection.
-
-   Choose Classic VPN.
-
-   Fill in the following fields:
-   ```
-   Gateway:
-   Name       : slurm-vpn
-   Network    : choose project's network
-   Region     : choose same region as project2's
-   IP Address : choose or create a static IP
-
-   Tunnels:
-   Name                     : slurm-vpn-tunnel
-   Remote peer IP Address   : static IP of other project
-   IKE version              : IKEv2
-   Shared secret            : string used by both vpns
-   Routing options          : Policy-based
-   Remote network IP ranges : IP range of network of other project (Enter 10.20.0.0/16 for project1 and 10.10.0.0/16 for project2)
-   Local subnetworks        : Choose networks for each project.
-   Local IP ranges          : Should be filled in with the subnetwork's IP range.
-   ```
-   Then click Create.
-
-   If all goes well then the VPNs should show a green check mark for the VPN
-   tunnels.
-
-6. Modify *config.yaml* in the
-   /apps/slurm/scripts directory on project1's controller instance to
-   communicate with project2 information.
-
-   Modify the following fields with the appropriate values:
-   e.g.
-   ```
-   project: slurm-184304
-   region: us-west1
-   zone: us-west1-b
-   cluster_subnet: slurm-subnetwork2
-
-   google_app_cred_path: /path/to/<file>.json
-   ```
-
-7. By default, project1 won't be able to resolve the instances in project2.
-   here are two ways to work around this.
-
-   **DNS Peering**
-
-   DNS Peering can be set up so that project1 can resolve instances in
-   project2 and vice versa.
-
-   https://cloud.google.com/dns/zones/#peering-zones
-
-   1. On project1's GCP Console, navigate to Network service->Cloud DNS
-   2. Create zone
-   3. Fill in the following fields:
-   ```
-   Zone type    : Private
-   Zone name    : project1
-   DNS Name     : <suffix on DNS zone in project2. e.g "c.<project2>.internal">
-   Options      : DNS Peering
-   Networks     : slurm-network
-   Peer project : <project2>
-   Peer network : slurm-network2
-   ```
-   4. Create
-
-   Now from project1, you should be able to resolve hostnames in project2.
-
-   e.g.
-   ```
-   [root@g1-controller ~]$ nslookup <instance>.c.<project2>.internal
-   ```
-
-   In order for Slurm to be able to reference the nodes by the short name, the
-   DNS search path of project2 needs to be added to the controller and each
-   login node's /etc/resolve.conf.
-
-   e.g.
-   ```
-   /etc/resolve.conf
-   # Generated by NetworkManager
-   search c.<project1>.internal google.internal
-   search c.<project2>.internal google.internal
-   nameserver 169.254.169.254
-   ```
-
-   The same steps can be followed to create a peering zone from project2 to
-   project1. This avoids the need to add the controller to /etc/hosts.
-
-   **NodeAddrs**
-
-   Without hostname resolution, Slurm needs the IP address' of the compute
-   nodes to communicate with them. The following configuration changes need to
-   be done for this setup:
-
-   1. cloud_dns needs to be removed from SlurmctldParameters.
-   2. Hierarchical node communications need to be disabled by setting
-      TreeWidth to 65533.
-   3. Update resume.py to notify controller of instance's IP address.
-
-   e.g.
-   ```
-   # slurm.conf
-   TreeWidth=65533
-   #SlurmctldParameters=cloud_dns,idle_on_node_suspend
-   SlurmctldParameters=idle_on_node_suspend
-
-   # resume.py
-   UPDATE_NODE_ADDRS = True
-   ```
-
-   Then restart slurmctld and all slurmd's.
-
-8. Configure the instances to be able to find the controller node.
-
-   If project2 has been set up with DNS peering back to project1, then
-   project1's DNS search path of project1 needs to be added to the compute nodes in
-   project2. Otherwise the controller's IP address can be added to instance's
-   /etc/hosts. You can find the controller's internal IP address by navigating
-   to Compute Engine in project1's GCP Console.
-
-   To do this modify *startup-script.py* (/apps/slurm/scripts/startup-script.py.
-
-   e.g.
-   ```
-   diff --git a/scripts/startup-script.py b/scripts/startup-script.py
-   index 4933efa..481ad4b 100644
-   --- a/scripts/startup-script.py
-   +++ b/scripts/startup-script.py
-   @@ -1006,6 +1006,12 @@ SELINUXTYPE=targeted
-
-    def main():
-
-   +    f = open('/etc/resolv.conf', 'a')
-   +    f.write("""
-   +search c.<project1>.internal google.internal
-   +""")
-   +    f.close()
-   +
-        hostname = socket.gethostname()
-
-        setup_selinux()
-   ```
-
-   or
-
-   ```
-   diff --git a/scripts/startup-script.py b/scripts/startup-script.py
-   index 4933efa..a31cdf4 100644
-   --- a/scripts/startup-script.py
-   +++ b/scripts/startup-script.py
-   @@ -1006,6 +1006,12 @@ SELINUXTYPE=targeted
-
-    def main():
-
-   +    f = open('/etc/hosts', 'a')
-   +    f.write("""
-   +<controller ip> <controller hostname>
-   +""")
-   +    f.close()
-   +
-        hostname = socket.gethostname()
-
-        setup_selinux()
-   ```
-
-9. Since the scripts rely on getting the Slurm configuration and binaries
-   from the shared /apps file system, the firewall on the project1 must be
-   modified to allow NFS through.
-
-   1. On project1's GCP Console, navigate to VPC network->Firewall rules
-   2. Click CREATE FIREWALL RULE at the top of the page.
-   3. Fill in the following fields:
-      ```
-      Name                 : nfs
-      Network              : slurm-network
-      Priority             : 1000
-      Direction of traffic : Ingress
-      Action to match      : Allow
-      Targets              : Specified target tags
-      Target tags          : controller
-      Source Filter        : IP ranges
-      Source IP Ranges     : 0.0.0.0/0
-      Second source filter : none
-      Protocols and ports  : Specified protocols and ports
-      tcp:2049,1110,4045; udp:2049,1110,4045
-      ```
-   4. Click Create
-
-10. Open ports on project1 for project2 to be able to contact the slurmctld
-    (tcp:6819-6830) and the slurmdbd (tcp:6819) on project1.
-
-    1. On project1's GCP Console, navigate to VPC network->Firewall rules
-    2. Click CREATE FIREWALL RULE at the top of the page.
-    3. Fill in the following fields:
-       ```
-       Name                 : slurm
-       Network              : slurm-network
-       Priority             : 1000
-       Direction of traffic : Ingress
-       Action to match      : Allow
-       Targets              : Specified target tags
-       Target tags          : controller
-       Source Filter        : IP ranges
-       Source IP Ranges     : 0.0.0.0/0
-       Second source filter : none
-       Protocols and ports  : Specified protocols and ports
-       tcp:6819-6830
-       ```
-    4. Click Create
-
-11. Open ports on project2 for project1 to be able to contact the slurmd's
-    (tcp:6818) in project2.
-
-    1. On project2's GCP Console, navigate to VPC network->Firewall rules
-    2. Click CREATE FIREWALL RULE at the top of the page.
-    3. Fill in the following fields:
-       ```
-       Name                 : slurmd
-       Network              : project2-network
-       Priority             : 1000
-       Direction of traffic : Ingress
-       Action to match      : Allow
-       Targets              : Specified target tags
-       Target tags          : compute
-       Source Filter        : IP ranges
-       Source IP Ranges     : 0.0.0.0/0
-       Second source filter : none
-       Protocols and ports  : Specified protocols and ports
-       tcp:6818
-       ```
-    4. Click Create
-
-12. If you plan to use srun to submit jobs from the login nodes to the compute
-    nodes in project2, then ports need to be opened up for the compute nodes to
-    be able to talk back to the login nodes. srun open's several ephemeral ports
-    for communications. It's recommended to define which ports srun can use when
-    using a firewall. This is done by defining SrunPortRange=<IP Range> in the
-    slurm.conf.
-
-    e.g.
-    ```
-    SrunPortRange=60001-63000
-    ```
-
-    These ports need to opened up in project1 and project2's firewalls.
-
-    1. On project1 and project2's GCP Consoles, navigate to VPC network->Firewall rules
-    2. Click CREATE FIREWALL RULE at the top of the page.
-    3. Fill in the following fields:
-       ```
-       Name                 : srun
-       Network              : slurm-network
-       Priority             : 1000
-       Direction of traffic : Ingress
-       Action to match      : Allow
-       Targets              : All instances in the network
-       Source Filter        : IP ranges
-       Source IP Ranges     : 0.0.0.0/0
-       Second source filter : none
-       Protocols and ports  : Specified protocols and ports
-       tcp:60001-63000
-       ```
-    4. Click Create
-
-13. Slurm should now be able to burst out into project2.
-
-14. Image-based nodes on project2.
-
-    Because deployment manager created an image in project1, project2 will
-    install from scratch for every bursted-out compute node. In order to create
-    a base image for bursting, the following can be done.
-
-    e.g.
-    From the controller:
-    ```
-    [root@g1-controller scripts]# sudo su - slurm
-    [slurm@g1-controller ~]$ cd /apps/slurm/scripts/
-    [slurm@g1-controller scripts]$ ./resume.py proj2-compute-image
-
-    # Wait until the instance is fully installed. You can verify this by ssh'ing to
-    # the instance and verify that there are no messages about installing in the
-    # motd.
-
-    [slurm@g1-controller scripts]$ gcloud compute images create <cluster_name>-compute-#-image-$(date '+%Y-%m-%d-%H-%M-%S') \
-                                                                --source-disk proj2-compute-image \
-                                                                --source-disk-zone <zone> --force \
-                                                                --family <cluster_name>-compute-#-image-family \
-                                                                --project <project2>
-
-    Where # is the partition index.
-
-    # Then either stop or delete the proj2-compute-#-image instance.
-    ```
-
-    Once the image is created, EXTERNAL_IP can be set to False in resume.py.
 
 ## Multi-Cluster / Federation
 Slurm allows the use of a central SlurmDBD for multiple clusters. By doing
