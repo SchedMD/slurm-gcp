@@ -35,9 +35,9 @@ Also, join comunity discussions on either the
   * [OS Login](#os-login)
   * [Preemptible VMs](#preemptible-vms)
 * [Bursting out from on-premise cluster](#bursting-out-from-on-premise-cluster)
-  * [Bursting out playground](#bursting-out-playground)
-* [Multi-Cluster / Federation](#multi-cluster-federation)
   * [Playground](#playground)
+* [Multi-Cluster / Federation](#multi-cluster-federation)
+  * [Playground](#playground-1)
 * [Troubleshooting](#troubleshooting)
 
 
@@ -472,7 +472,7 @@ Steps:
    ./suspend.py g1-compute-0-0
    ```
 
-### Bursting out playground
+### Playground
 
 You can use the deployment scripts to create a playground to test bursting from
 an on-premise cluster by using two separate projects in GCP. This requires
