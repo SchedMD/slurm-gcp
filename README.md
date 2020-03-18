@@ -84,7 +84,6 @@ Steps:
         cluster_name            : g1
     
         zone                    : us-central1-b
-        region                  : us-central1
     
       # Optional network configuration fields
       # READ slurm.jinja.schema for prerequisites
