@@ -31,7 +31,7 @@ Also, join comunity discussions on either the
   * [Install using Terraform](#install-using-terraform)
   * [Image-based Scaling](#image-based-scaling)
   * [Installing Custom Packages](#installing-custom-packages)
-  * [Accessing Compute Nodes](#accessing-compute-nodes)
+  * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
   * [OS Login](#os-login)
   * [Preemptible VMs](#preemptible-vms)
 * [Bursting out from on-premise cluster](#bursting-out-from-on-premise-cluster)
@@ -325,26 +325,26 @@ Steps:
    page.
 
 ### Installing Custom Packages
-   There are two files: custom-controller-install, custom-compute-install in
+   There are two files, *custom-controller-install* and *custom-compute-install*, in
    the scripts directory that can be used to add custom installations for the
    given instance type. The files will be executed during startup of the
    instance types.
 
-### Accessing Compute Nodes
+### Accessing Compute Nodes Directly
 
    There are multiple ways to connect to the compute nodes:
    1. If the compute nodes have external IPs you can connect directly to the
       compute nodes. From the [VM Instances](https://console.cloud.google.com/compute/instances)
       page, the SSH drop down next to the compute instances gives several
       options for connecting to the compute nodes.
-   2. Whether the compute nodes have external IPs or not, they can be connected
-      to from within the cluster. By default, the instances are setup with
-      GCP's OSLogin.For information on managing access to instances see the
-      [OSLogin documentation](https://cloud.google.com/compute/docs/instances/managing-instance-access).
-
-      In general, you can click the "SSH" button next to the instance with an
-      external IP on the [VM Instances](https://console.cloud.google.com/compute/instances)
-      page. From this node you can ssh to compute nodes.
+   2. With IAP configured, you can SSH to the nodes regardless of external IPs or not.
+      See https://cloud.google.com/iap/docs/enabling-compute-howto.
+   3. Use Slurm to get an allocation on the nodes.
+      ```
+      $ srun --pty $SHELL
+      [g1-login0 ~]$ srun --pty $SHELL
+      [g1-compute-0-0 ~]$
+      ```
 
 ### OS Login
 
