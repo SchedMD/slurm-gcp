@@ -85,7 +85,6 @@ Steps:
     
         zone                    : us-central1-b
         region                  : us-central1
-        cidr                    : 10.10.0.0/16
     
       # Optional network configuration fields
       # READ slurm.jinja.schema for prerequisites
