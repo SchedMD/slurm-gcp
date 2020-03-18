@@ -1050,6 +1050,8 @@ space (e.g. same uids across all the clusters).
    1. Check syslog (/var/log/messages) on instances for any errors. **HINT:**
       search for last mention of "startup-script."
 3. General debugging
-   * check /var/log/messages
-   * check /var/log/slurm/*.log
+   * check logs
+     * /var/log/messages
+     * /var/log/slurm/*.log
+     * **NOTE:** syslog and all Slurm logs can be viewed in [GCP Console's Logs Viewer](https://console.cloud.google.com/logs/viewer).
    * check GCP quotas
