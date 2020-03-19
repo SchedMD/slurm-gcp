@@ -104,7 +104,6 @@ resources:
     partitions :
       - name              : debug
         machine_type      : n1-standard-2
-        static_node_count : 2
         max_node_count    : 10
         zone              : us-central1-a
 
