@@ -378,7 +378,7 @@ resources:
         diskSizeGb: {{ properties["compute_image_disk_size_gb"] }}
   {% if properties ['shared_vpc_host_project'] %}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['partitions'][i]['vpc_subnet'] }}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["shared_vpc_host_project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}
   {% elif properties['vpc_subnet'] %}
     networkInterfaces:
     - subnetwork: https://www.googleapis.com/compute/v1/projects/{{ properties["project"] }}/regions/{{cluster_region}}/subnetworks/{{ properties['vpc_subnet'] }}

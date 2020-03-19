@@ -26,12 +26,11 @@ resources:
     cluster_name            : g1
 
     zone                    : us-central1-b
-    cidr                    : 10.10.0.0/16
 
   # Optional network configuration fields
   # READ slurm.jinja.schema for prerequisites
-    # vpc_net                   : < my-vpc >
-    # vpc_subnet                : < my-subnet >
+    # vpc_net                   : default
+    # vpc_subnet                : default
     # shared_vpc_host_project   : < my-shared-vpc-project-name >
 
     controller_machine_type : n1-standard-2
@@ -105,9 +104,9 @@ resources:
     partitions :
       - name              : debug
         machine_type      : n1-standard-2
-        static_node_count : 2
         max_node_count    : 10
         zone              : us-central1-a
+
     # Optional compute configuration fields
 
         # cpu_platform           : Intel Skylake
@@ -118,6 +117,10 @@ resources:
         #   key1 : value1
         #   key2 : value2
         # compute_image_family   : custom-image
+
+    # Optional network configuration fields
+        # vpc_subnet                : default
+
     # Optional GPU configuration fields
 
         # gpu_type               : nvidia-tesla-v100
@@ -130,6 +133,7 @@ resources:
         # machine_type   : n1-standard-16
         # max_node_count : 20
         # zone           : us-central1-b
+
     # Optional compute configuration fields
 
         # cpu_platform           : Intel Skylake
@@ -147,6 +151,9 @@ resources:
         #     fs_type: gcsfuse
         #     mount_options: file_mode=664,dir_mode=775,allow_other
         #
+
+    # Optional network configuration fields
+        # vpc_subnet                : my-subnet
 
     # Optional GPU configuration fields
         # gpu_type               : nvidia-tesla-v100

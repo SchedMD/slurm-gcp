@@ -55,7 +55,7 @@ variable "login_network_storage" {
   type = list(object({
     server_ip     = string,
     remote_mount  = string,
-    local_mout    = string,
+    local_mount   = string,
     fs_type       = string,
     mount_options = string}))
   default = []
@@ -76,7 +76,7 @@ variable "network_storage" {
   type = list(object({
     server_ip     = string,
     remote_mount  = string,
-    local_mout    = string,
+    local_mount   = string,
     fs_type       = string,
     mount_options = string}))
   default = []
