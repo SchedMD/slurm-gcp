@@ -40,9 +40,6 @@ LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 
 TOT_REQ_CNT = 1000
 
-# Set to True if the nodes aren't accessible by dns.
-UPDATE_NODE_ADDRS = False
-
 instances = {}
 operations = {}
 retry_list = []
@@ -271,7 +268,7 @@ def add_instances(compute, node_list):
     except Exception:
         log.exception("error in add batch")
 
-    if UPDATE_NODE_ADDRS:
+    if cfg.update_node_addrs:
         update_slurm_node_addrs(compute)
 
 # [END add_instances]

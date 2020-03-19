@@ -175,6 +175,7 @@ class Config(OrderedDict):
                    'slurm_cmd_path',
                    'log_dir',
                    'google_app_cred_path',
+                   'update_node_addrs',
                    'partitions',
                    )
     PROPERTIES = (*SAVED_PROPS,
