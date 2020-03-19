@@ -26,85 +26,91 @@ imports:
 - path: scripts/custom-compute-install
 - path: scripts/custom-controller-install
 - path: scripts/resume.py
-- path: scripts/slurm-gcp-sync.py
-- path: scripts/startup-script.py
+- path: scripts/slurmsync.py
+- path: scripts/startup.sh
+- path: scripts/setup.py
 - path: scripts/suspend.py
+- path: scripts/util.py
+- path: etc/slurm.conf.tpl
+- path: etc/slurmdbd.conf.tpl
+- path: etc/cgroup.conf.tpl
+- path: etc/controller-fluentd.conf.tpl
+- path: etc/compute-fluentd.conf.tpl
 
 required:
-- cidr
 - cluster_name
-- compute_machine_type
 - controller_machine_type
-- default_account
-- default_users
+- compute_image_machine_type
 - login_machine_type
-- max_node_count
 - private_google_access
-- region
 - slurm_version
-- static_node_count
 - zone
 
 optional:
-- compute_disk_type
-- compute_disk_size_gb
-- compute_labels
+- cloudsql
 - controller_disk_type
 - controller_disk_size_gb
 - controller_labels
+- controller_scopes
+- controller_service_account
 - controller_secondary_disk
 - controller_secondary_disk_type
 - controller_secondary_disk_size_gb
-- cpu_platform
+- compute_node_scopes
+- compute_node_service_account
+- compute_image_disk_size_gb
+- compute_image_disk_type
+- compute_image_labels
 - external_compute_ips
-- gpu_count
-- gpu_type
 - login_disk_size_gb
 - login_disk_type
 - login_labels
+- login_network_storage
 - login_node_count
+- login_node_scopes
+- login_node_service_account
 - munge_key
-- nfs_apps_dir
-- nfs_apps_server
-- nfs_home_dir
-- nfs_home_server
-- preemptible_bursting
+- network_storage
+- ompi_version
 - shared_vpc_host_project
 - suspend_time
 - vpc_net
 - vpc_subnet
 
 properties:
-  cidr:
-    type        : string
-    description : RFC1918 subnet to run instances in, eg. 10.10.0.0/16.
 
   cluster_name:
     type        : string
     description : Name of the cluster
 
-  compute_machine_type:
-    type        : string
-    description : Machine type to use for compute node instances.
-                  eg. n1-standard-4.
+  cloudsql:
+    type: object
+    description: Define an existing CloudSQL instance to use instead of instance-local MySQL
+    required :
+    - server_ip
+    - user
+    - password
+    optional :
+    - db_name
 
-  compute_disk_type:
-    enum        : ["pd-ssd", "pd-standard"]
-    default     : pd-standard
-    description : Disk type (pd-ssd or pd-standard) for compute nodes.
+    properties :
 
-  compute_disk_size_gb:
-    type        : integer
-    default     : 10
-    minimum     : 10
-    maximum     : 2000
-    description : Size of disk for compute nodes.
+      server_ip:
+        type          : string
+        description   : IP of the CloudSQL instance, optionally followed by [:PORT]
 
-  compute_labels:
-    type        : object
-    default     : {}
-    description : Labels to add to compute instances. List of key key, value
-                  pairs.
+      user:
+        type          : string
+        description   : Database user for CloudSQL instance
+
+      password:
+        type          : string
+        description   : Password for database access
+
+      db_name:
+        type          : string
+        description   : Database name, defaults to <cluster_name>-slurm_acct_db
+
 
   controller_machine_type:
     type        : string
@@ -129,6 +135,19 @@ properties:
     description : Labels to add to controller instance. List of key key, value
                   pairs.
 
+  controller_scopes:
+    type        : array
+    default     : ["https://www.googleapis.com/auth/cloud-platform"]
+    description : Scopes to apply to the controller.
+                  e.g. https://www.googleapis.com/auth/devstorage.read_only
+                  https://cloud.google.com/compute/docs/access/service-accounts#accesscopesiam
+
+  controller_service_account:
+    type        : string
+    default     : default
+    description : Service Account for the controller.
+                  https://cloud.google.com/compute/docs/access/service-accounts
+
   controller_secondary_disk:
     type        : boolean
     default     : False
@@ -146,45 +165,59 @@ properties:
     maximum     : 64000
     description : Size of disk for the secondary disk.
 
-  cpu_platform:
-    enum        :
-                - Intel Sandy Bridge
-                - Intel Ivy Bridge
-                - Intel Haswell
-                - Intel Broadwell
-                - Intel Skylake
-    description : Minimum Intel Platform for Compute Nodes to Use
+  compute_image_machine_type:
+    type        : string
+    description : Machine type to use for compute node image instance.
+                  eg. n1-standard-4.
 
-  default_account:
+  compute_image_disk_type:
+    enum        : ["pd-ssd", "pd-standard"]
+    default     : pd-standard
+    description : Disk type (pd-ssd or pd-standard) for compute node image.
+
+  compute_image_disk_size_gb:
+    type        : integer
+    default     : 10
+    minimum     : 10
+    maximum     : 2000
+    description : Size of disk for compute node image.
+
+  compute_image_labels:
+    type        : object
+    default     : {}
+    description : Labels to add to the compute node image. List of key key,
+                  value pairs.
+
+  compute_node_scopes:
+    type        : array
+    default     : ["https://www.googleapis.com/auth/monitoring.write", "https://www.googleapis.com/auth/logging.write"]
+    description : Scopes to apply to compute nodes.
+                  e.g. https://www.googleapis.com/auth/devstorage.read_only
+                  https://cloud.google.com/compute/docs/access/service-accounts#accesscopesiam
+
+  compute_node_service_account:
     type        : string
     default     : default
-    description : Default account to setup in accounting.
+    description : Service Account for compute nodes.
+                  https://cloud.google.com/compute/docs/access/service-accounts
 
-  default_users:
-    type        : string
-    description : Default users to add to accounting. Added to default_account.
-                  Users can be added later using sacctmgr.
+  external_controller_ip:
+    type        : boolean
+    default     : False
+    description : Whether the controller instance is assigned an external ip or not.
+                  Sets up Cloud NAT gateway if false.
+
+  external_login_ips:
+    type        : boolean
+    default     : False
+    description : Whether login instances are assigned external IPS or not. Sets up Cloud NAT
+                  gateway if false.
 
   external_compute_ips:
     type        : boolean
     default     : False
-    description : Whether compute nodes are assigned external IPs or not. If set
-                  to false, then the compute nodes will get to the internet
-                  through a Cloud NAT gateway.
-
-  gpu_type:
-    enum        :
-                - nvidia-tesla-k80
-                - nvidia-tesla-p100
-                - nvidia-tesla-v100
-                - nvidia-tesla-p4
-                - nvidia-tesla-t4
-    description : GPU Type to attach to static nodes.
-
-  gpu_count:
-    enum        : [0, 1, 2, 4, 8]
-    default     : 0
-    description : Number of GPUs to attach to each node.
+    description : Whether compute nodes are assigned external IPs or not. Sets up Cloud NAT
+                  if false.
 
   login_machine_type:
     type        : string
@@ -202,6 +235,52 @@ properties:
     description : Labels to add to login instances. List of key key, value
                   pairs.
 
+  login_network_storage:
+    type        : array
+    default     : []
+    description : An array of network attached storage mounts to be configured
+                  on the login and controller instances.
+    items:  &network_storage_items
+      type: object
+      required :
+      - server_ip
+      - remote_mount
+      - local_mount
+      - fs_type
+      optional :
+      - mount_options
+
+      properties :
+
+        server_ip:
+          type          : string
+          default       : blank
+          description   : IP of the remote file server.
+
+        remote_mount:
+          type          : string
+          description   : Remote mount directory of the remote file server.
+                          Do not include a leading /.
+
+        local_mount:
+          type          : string
+          description   : Local mount directory on the instances.
+
+        fs_type:
+          enum          :
+                        - nfs
+                        - cifs
+                        - lustre
+                        - gcsfuse
+          description   : Filesystem type of the remote file server.
+                          Supported currently are NFS, CIFS, gcsfuse, Lustre.
+
+        mount_options:
+          type          : string
+          default       : defaults,_netdev
+          description   : Filesystem mount options for this mount. Defaults are
+                          defaults and _netdev.
+
   login_disk_size_gb:
     type        : integer
     default     : 10
@@ -214,12 +293,18 @@ properties:
     default     : 1
     description : Number of login nodes in the cluster.
 
-  max_node_count:
-    type        : integer
-    minimum     : 0
-    maximum     : 15000
-    description : Maximum number of instances that the cluster can grow to.
-                  Consider adding 10% to account for preemptible nodes.
+  login_node_scopes:
+    type        : array
+    default     : ["https://www.googleapis.com/auth/monitoring.write", "https://www.googleapis.com/auth/logging.write"]
+    description : Scopes to apply to login nodes.
+                  e.g. https://www.googleapis.com/auth/devstorage.read_only
+                  https://cloud.google.com/compute/docs/access/service-accounts#accesscopesiam
+
+  login_node_service_account:
+    type        : string
+    default     : default
+    description : Service Account for login nodes.
+                  https://cloud.google.com/compute/docs/access/service-accounts
 
   munge_key:
     type        : string
@@ -227,39 +312,24 @@ properties:
                   (e.g "date +%s | sha512sum | cut -d' ' -f1"). If not specified
                   then a random key will be generated at deployment creation.
 
-  nfs_apps_dir:
-    type        : string
-    default     : /apps
-    description : location of the nfs_apps directory on the nfs_apps_server.
+  network_storage:
+    type        : array
+    default     : []
+    description : An array of network attached storage mounts to be configured
+                  on all instances.
+    items:
+      *network_storage_items
 
-  nfs_apps_server:
+  ompi_version  :
     type        : string
-    description : IP address of NFS server hosting apps dir
-
-  nfs_home_dir:
-    type        : string
-    default     : /home
-    description : location of the nfs_home directory on the nfs_home_server.
-
-  nfs_home_server:
-    type        : string
-    description : IP address of NFS server hosting home dir
-
-  preemptible_bursting:
-    type        : boolean
-    default     : False
-    description : Whether bursted compute nodes are preemptible instances or
-                  not. Makre sure to choose a zone that has preemptible
-                  resources.
+    enum        : ["v3.1.x"]
+    description : Version/branch of OpenMPI to install with Slurm/PMI support.
+                  Allows mpi programs to be run with srun.
 
   private_google_access:
     type        : boolean
     default     : True
     description : Private Google Access is Enabled (True/False).
-
-  region:
-    type        : string
-    description : Region to run the instances in.
 
   shared_vpc_host_project:
     type        : string
@@ -277,15 +347,18 @@ properties:
                   <branch name> is a branch in
                   https://github.com/schedmd/slurm.
 
-  static_node_count:
-    type        : integer
-    description : Number of initial instances in the cluster.
-
   suspend_time:
     type        : integer
     default     : 300
     minimum     : 300
     description : Idle time to wait before nodes go away (in sec)
+                  From Slurm Power Save Documentation
+                  Nodes become eligible for power saving mode after being idle
+                  for this number of seconds. For efficient system utilization,
+                  it is recommended that the value of SuspendTime be at least
+                  as large as the sum of SuspendTimeout plus ResumeTimeout. For
+                  slurm-gcp, note that SuspendTimeout and ResumeTimeout are
+                  hard-coded at 300s in scripts/startup-script.py
 
   vpc_net:
     type        : string
@@ -300,3 +373,116 @@ properties:
   zone:
     type        : string
     description : Zone to run the instances in based on Region.
+
+  partitions:
+    type: array
+    description: An array of configurations for specifying multiple machine types residing in their own Slurm partitions.
+    items:
+      type: object
+      required :
+      - machine_type
+      - name
+      - max_node_count
+      - zone
+      optional :
+      - compute_disk_type
+      - compute_disk_size_gb
+      - compute_labels
+      - compute_image_family
+      - cpu_platform
+      - gpu_type
+      - gpu_count
+      - preemptible_bursting
+      - static_node_count
+      - zone
+      - network_storage
+      properties :
+
+        machine_type:
+          type        : string
+          description : Machine type to use for compute node instances.
+                        eg. n1-standard-4.
+
+        compute_disk_type:
+          enum        : ["pd-ssd", "pd-standard"]
+          default     : pd-standard
+          description : Disk type (pd-ssd or pd-standard) for compute nodes.
+
+        compute_disk_size_gb:
+          type        : integer
+          default     : 10
+          minimum     : 10
+          maximum     : 2000
+          description : Size of disk for compute nodes.
+
+        compute_labels:
+          type        : object
+          default     : {}
+          description : Labels to add to compute instances. List of key key, value
+                        pairs.
+
+        compute_image_family:
+          type        : string
+          description : Image family name to use to find the base image for instances
+                        from this partition. Specify when using an alternate image to
+                        the generated one.
+
+        cpu_platform:
+          enum        :
+                      - Intel Sandy Bridge
+                      - Intel Ivy Bridge
+                      - Intel Haswell
+                      - Intel Broadwell
+                      - Intel Skylake
+          description : Minimum Intel Platform for Compute Nodes to Use
+
+        gpu_type:
+          enum        :
+                      - nvidia-tesla-k80
+                      - nvidia-tesla-p100
+                      - nvidia-tesla-v100
+                      - nvidia-tesla-p4
+                      - nvidia-tesla-t4
+          description : GPU Type to attach to static nodes.
+
+        gpu_count:
+          enum        : [0, 1, 2, 4, 8]
+          default     : 0
+          description : Number of GPUs to attach to each node.
+
+        max_node_count:
+          type        : integer
+          minimum     : 0
+          maximum     : 10000
+          description : Maximum number of instances that the cluster can grow to.
+                        Consider adding 10% to account for preemptible nodes.
+
+        name:
+          type        : string
+          description : Name of the compute node partition
+
+
+        preemptible_bursting:
+          type        : boolean
+          default     : False
+          description : Whether bursted compute nodes are preemptible instances or
+                        not. Make sure to choose a zone that has preemptible
+                        resources.
+
+
+        static_node_count:
+          type        : integer
+          description : Number of initial instances in the cluster.
+          default     : 0
+
+        zone:
+          type        : string
+          description : Zone to run the instances in based on Region.
+
+        network_storage:
+          type        : array
+          default     : []
+          description : An array of network attached storage mounts to be
+                        configured on this partition's instances.
+          items:
+            *network_storage_items

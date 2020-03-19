@@ -24,65 +24,139 @@ resources:
   type: slurm.jinja
   properties:
     cluster_name            : g1
-    static_node_count       : 2
-    max_node_count          : 10
 
     zone                    : us-central1-b
-    region                  : us-central1
-    cidr                    : 10.10.0.0/16
 
-    # Optional network configuration fields
-    # READ slurm.jinja.schema for prerequisites
-    #vpc_net                 : < my-vpc >
-    #vpc_subnet              : < my-subnet >
-    #shared_vpc_host_proj    : < my-shared-vpc-project-name >
+  # Optional network configuration fields
+  # READ slurm.jinja.schema for prerequisites
+    # vpc_net                   : default
+    # vpc_subnet                : default
+    # shared_vpc_host_project   : < my-shared-vpc-project-name >
 
     controller_machine_type : n1-standard-2
-    compute_machine_type    : n1-standard-2
-    login_machine_type      : n1-standard-2
-    #login_node_count        : 0
+    # controller_disk_type      : pd-standard
+    # controller_disk_size_gb   : 50
+    # controller_labels         :
+    #   key1 : value1
+    #   key2 : value2
+    # controller_service_account: default
+    # controller_scopes         :
+    # - https://www.googleapis.com/auth/cloud-platform
+    # cloudsql                  :
+    #   server_ip: <cloudsql ip>
+    #   user: slurm
+    #   password: verysecure
+    #   # Optional
+    #   db_name: slurm_accounting
 
-    # Optional compute configuration fields
-    #cpu_platform               : Intel Skylake
-    #preemptible_bursting       : False
-    #external_compute_ips       : False
-    #private_google_access      : True
+    login_machine_type        : n1-standard-2
+    # login_disk_type           : pd-standard
+    # login_disk_size_gb        : 10
+    # login_labels              :
+    #   key1 : value1
+    #   key2 : value2
+    # login_node_count          : 0
+    # login_node_service_account: default
+    # login_node_scopes         :
+    # - https://www.googleapis.com/auth/devstorage.read_only
+    # - https://www.googleapis.com/auth/logging.write
 
-    #controller_disk_type       : pd-standard
-    #controller_disk_size_gb    : 50
-    #controller_labels          :
-    #     key1 : value1
-    #     key2 : value2
+  # Optional network storage fields
+  # network_storage is mounted on all instances
+  # login_network_storage is mounted on controller and login instances
+    # network_storage           :
+    #   - server_ip: <storage host>
+    #     remote_mount: /home
+    #     local_mount: /home
+    #     fs_type: nfs
+    # login_network_storage     :
+    #   - server_ip: <storage host>
+    #     remote_mount: /net_storage
+    #     local_mount: /shared
+    #     fs_type: nfs
 
-    #login_disk_type            : pd-standard
-    #login_disk_size_gb         : 10
-    #login_labels               :
-    #     key1 : value1
-    #     key2 : value2
+    compute_image_machine_type  : n1-standard-2
+    # compute_image_disk_type   : pd-standard
+    # compute_image_disk_size_gb: 10
+    # compute_image_labels      :
+    #   key1 : value1
+    #   key2 : value2
 
-    #compute_disk_type          : pd-standard
-    #compute_disk_size_gb       : 10
-    #compute_labels             :
-    #     key1 : value1
-    #     key2 : value2
+  # Optional compute configuration fields
+    # external_compute_ips      : False
+    # private_google_access     : True
 
-    #nfs_apps_server            :
-    #nfs_apps_dir               : /apps
-    #nfs_home_server            :
-    #nfs_home_dir               : /home
-    #controller_secondary_disk          : True
-    #controller_secondary_disk_type     : pd-standard
-    #controller_secondary_disk_size_gb  : 300
+    # controller_secondary_disk         : True
+    # controller_secondary_disk_type    : pd-standard
+    # controller_secondary_disk_size_gb : 300
 
-    # Optional GPU configuration fields
-    #gpu_type                   : nvidia-tesla-v100
-    #gpu_count                  : 8
+    # compute_node_service_account : default
+    # compute_node_scopes          :
+    #   -  https://www.googleapis.com/auth/devstorage.read_only
+    #   -  https://www.googleapis.com/auth/logging.write
 
     # Optional timer fields
-    #suspend_time               : 300
+    # suspend_time              : 300
 
-    default_users           : < GCP user email addr, comma separated >
-    #slurm_version           : 19.05-latest
-    #default_account         : default
+    # slurm_version             : 19.05-latest
+    # ompi_version              : v3.1.x
+
+    partitions :
+      - name              : debug
+        machine_type      : n1-standard-2
+        max_node_count    : 10
+        zone              : us-central1-a
+
+    # Optional compute configuration fields
+
+        # cpu_platform           : Intel Skylake
+        # preemptible_bursting   : False
+        # compute_disk_type      : pd-standard
+        # compute_disk_size_gb   : 10
+        # compute_labels         :
+        #   key1 : value1
+        #   key2 : value2
+        # compute_image_family   : custom-image
+
+    # Optional network configuration fields
+        # vpc_subnet                : default
+
+    # Optional GPU configuration fields
+
+        # gpu_type               : nvidia-tesla-v100
+        # gpu_count              : 8
+
+
+    # Additional partition
+
+      # - name           : partition2
+        # machine_type   : n1-standard-16
+        # max_node_count : 20
+        # zone           : us-central1-b
+
+    # Optional compute configuration fields
+
+        # cpu_platform           : Intel Skylake
+        # preemptible_bursting   : False
+        # compute_disk_type      : pd-standard
+        # compute_disk_size_gb   : 10
+        # compute_labels         :
+        #   key1 : value1
+        #   key2 : value2
+        # compute_image_family   : custom-image
+        # network_storage        :
+        #   - server_ip: none
+        #     remote_mount: <gcs bucket name>
+        #     local_mount: /data
+        #     fs_type: gcsfuse
+        #     mount_options: file_mode=664,dir_mode=775,allow_other
+        #
+
+    # Optional network configuration fields
+        # vpc_subnet                : my-subnet
+
+    # Optional GPU configuration fields
+        # gpu_type               : nvidia-tesla-v100
+        # gpu_count              : 8
 
 #  [END cluster_yaml]

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Copyright 2017 SchedMD LLC.
 # Modified for use with the Slurm Resource Manager.
@@ -20,56 +20,46 @@
 import argparse
 import httplib2
 import logging
-import shlex
-import subprocess
+import os
+import sys
 import time
+from pathlib import Path
 
 import googleapiclient.discovery
 from google.auth import compute_engine
 import google_auth_httplib2
 from googleapiclient.http import set_user_agent
 
-CLUSTER_NAME = '@CLUSTER_NAME@'
+import util
 
-PROJECT      = '@PROJECT@'
-ZONE         = '@ZONE@'
-REGION       = '@REGION@'
-MACHINE_TYPE = '@MACHINE_TYPE@'
-CPU_PLATFORM = '@CPU_PLATFORM@'
-PREEMPTIBLE  = @PREEMPTIBLE@
-EXTERNAL_IP  = @EXTERNAL_COMPUTE_IPS@
-SHARED_VPC_HOST_PROJ = '@SHARED_VPC_HOST_PROJ@'
-VPC_SUBNET   = '@VPC_SUBNET@'
 
-DISK_SIZE_GB = '@DISK_SIZE_GB@'
-DISK_TYPE    = '@DISK_TYPE@'
+cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
-LABELS       = @LABELS@
-
-NETWORK_TYPE = 'subnetwork'
-NETWORK      = "projects/{}/regions/{}/subnetworks/{}-slurm-subnet".format(PROJECT, REGION, CLUSTER_NAME)
-
-GPU_TYPE     = '@GPU_TYPE@'
-GPU_COUNT    = '@GPU_COUNT@'
-
-SCONTROL     = '/apps/slurm/current/bin/scontrol'
-LOGFILE      = '/apps/slurm/log/resume.log'
+SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
+LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 
 TOT_REQ_CNT = 1000
-
-# Set to True if the nodes aren't accessible by dns.
-UPDATE_NODE_ADDRS = False
 
 instances = {}
 operations = {}
 retry_list = []
 
+util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
+log = logging.getLogger(Path(__file__).name)
+
+
+if cfg.google_app_cred_path:
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
+
 credentials = compute_engine.Credentials()
 
-http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
-authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
+http = None
+authorized_http = None
+if not cfg.google_app_cred_path:
+    http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
+    authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 
-# [START wait_for_operation]
+
 def wait_for_operation(compute, project, zone, operation):
     print('Waiting for operation to finish...')
     while True:
@@ -87,42 +77,43 @@ def wait_for_operation(compute, project, zone, operation):
         time.sleep(1)
 # [END wait_for_operation]
 
-# [START update_slurm_node_addrs]
+
 def update_slurm_node_addrs(compute):
     for node_name in operations:
         try:
             operation = operations[node_name]
             # Do this after the instances have been initialized and then wait
             # for all operations to finish. Then updates their addrs.
-            wait_for_operation(compute, PROJECT, ZONE, operation['name'])
+            wait_for_operation(compute, cfg.project, cfg.zone,
+                               operation['name'])
 
             my_fields = 'networkInterfaces(name,network,networkIP,subnetwork)'
             instance_networks = compute.instances().get(
-                project=PROJECT, zone=ZONE, instance=node_name,
+                project=cfg.project, zone=cfg.zone, instance=node_name,
                 fields=my_fields).execute()
             instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
 
-            node_update_cmd = "{} update node={} nodeaddr={}".format(
-                SCONTROL, node_name, instance_ip)
-            subprocess.call(shlex.split(node_update_cmd))
+            util.run(
+                f"{SCONTROL} update node={node_name} nodeaddr={instance_ip}")
 
-            logging.info("Instance " + node_name + " is now up")
-        except Exception, e:
-            logging.exception("Error in adding {} to slurm ({})".format(
-                node_name, str(e)))
+            log.info("Instance " + node_name + " is now up")
+        except Exception:
+            log.exception(f"Error in adding {node_name} to slurm")
 # [END update_slurm_node_addrs]
 
 
-# [START create_instance]
-def create_instance(compute, project, zone, instance_type, instance_name,
-                    source_disk_image, have_compute_img):
+def create_instance(compute, zone, machine_type, instance_name,
+                    source_disk_image):
+
+    pid = util.get_pid(instance_name)
     # Configure the machine
-    machine_type = "zones/{}/machineTypes/{}".format(zone, instance_type)
-    disk_type = "projects/{}/zones/{}/diskTypes/{}".format(PROJECT, ZONE,
-                                                           DISK_TYPE)
+    machine_type_path = f'zones/{zone}/machineTypes/{machine_type}'
+    disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
+        cfg.project, zone, cfg.partitions[pid].compute_disk_type)
+
     config = {
         'name': instance_name,
-        'machineType': machine_type,
+        'machineType': machine_type_path,
 
         # Specify the boot disk and the image to use as a source.
         'disks': [{
@@ -131,110 +122,118 @@ def create_instance(compute, project, zone, instance_type, instance_name,
             'initializeParams': {
                 'sourceImage': source_disk_image,
                 'diskType': disk_type,
-                'diskSizeGb': DISK_SIZE_GB
+                'diskSizeGb': cfg.partitions[pid].compute_disk_size_gb
             }
         }],
 
         # Specify a network interface
         'networkInterfaces': [{
-            NETWORK_TYPE : NETWORK,
+            'subnetwork': (
+                "projects/{}/regions/{}/subnetworks/{}".format(
+                    cfg.shared_vpc_host_project or cfg.project,
+                    cfg.partitions[pid].region,
+                    (cfg.partitions[pid].vpc_subnet
+                     or f'{cfg.cluster_name}-{cfg.partitions[pid].region}'))
+            ),
         }],
 
         # Allow the instance to access cloud storage and logging.
         'serviceAccounts': [{
-            'email': 'default',
-            'scopes': [
-                'https://www.googleapis.com/auth/cloud-platform'
-            ]
+            'email': cfg.compute_node_service_account,
+            'scopes': cfg.compute_node_scopes
         }],
 
-        'tags': {'items': ['compute'] },
+        'tags': {'items': ['compute']},
 
         'metadata': {
-            'items': [{
-                'key': 'enable-oslogin',
-                'value': 'TRUE'
-            }]
+            'items': [
+                {'key': 'enable-oslogin',
+                 'value': 'TRUE'},
+                {'key': 'VmDnsSetting',
+                 'value': 'GlobalOnly'}
+            ]
         }
     }
 
-    shutdown_script = open(
-        '/apps/slurm/scripts/compute-shutdown', 'r').read()
-    config['metadata']['items'].append({
-        'key': 'shutdown-script',
-        'value': shutdown_script
-    })
-
-    if not have_compute_img:
-        startup_script = open(
-            '/apps/slurm/scripts/startup-script.py', 'r').read()
+    shutdown_script_path = Path('/apps/slurm/scripts/compute-shutdown')
+    if shutdown_script_path.exists():
         config['metadata']['items'].append({
-            'key': 'startup-script',
-            'value': startup_script
+            'key': 'shutdown-script',
+            'value': shutdown_script_path.read_text()
         })
 
-    if GPU_TYPE:
-        accel_type = ("https://www.googleapis.com/compute/v1/"
-                      "projects/{}/zones/{}/acceleratorTypes/{}".format(
-                          PROJECT, ZONE, GPU_TYPE))
+    if cfg.partitions[pid].gpu_type:
+        accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
+                      .format(cfg.project, zone,
+                              cfg.partitions[pid].gpu_type))
         config['guestAccelerators'] = [{
-            'acceleratorCount': GPU_COUNT,
-            'acceleratorType' : accel_type
+            'acceleratorCount': cfg.partitions[pid].gpu_count,
+            'acceleratorType': accel_type
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if PREEMPTIBLE:
+    if cfg.partitions[pid].preemptible_bursting:
         config['scheduling'] = {
-            "preemptible": True,
-            "onHostMaintenance": "TERMINATE",
-            "automaticRestart": False
+            'preemptible': True,
+            'onHostMaintenance': 'TERMINATE',
+            'automaticRestart': False
         },
 
-    if LABELS:
-        config['labels'] = LABELS,
+    if cfg.partitions[pid].compute_labels:
+        config['labels'] = cfg.partitions[pid].compute_labels,
 
-    if CPU_PLATFORM:
-        config['minCpuPlatform'] = CPU_PLATFORM,
+    if cfg.partitions[pid].cpu_platform:
+        config['minCpuPlatform'] = cfg.partitions[pid].cpu_platform,
 
-    if VPC_SUBNET:
-        net_type = "projects/{}/regions/{}/subnetworks/{}".format(
-            PROJECT, REGION, VPC_SUBNET)
-        config['networkInterfaces'] = [{
-            NETWORK_TYPE : net_type
-        }]
-
-    if SHARED_VPC_HOST_PROJ:
-        net_type = "projects/{}/regions/{}/subnetworks/{}".format(
-            SHARED_VPC_HOST_PROJ, REGION, VPC_SUBNET)
-        config['networkInterfaces'] = [{
-            NETWORK_TYPE : net_type
-        }]
-
-    if EXTERNAL_IP:
+    if cfg.external_compute_ips:
         config['networkInterfaces'][0]['accessConfigs'] = [
             {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
         ]
 
     return compute.instances().insert(
-        project=project,
+        project=cfg.project,
         zone=zone,
         body=config)
 # [END create_instance]
 
-# [START added_instances_cb]
+
 def added_instances_cb(request_id, response, exception):
     if exception is not None:
-        logging.error("add exception for node {}: {}".format(request_id,
-                                                             str(exception)))
+        log.error(f"add exception for node {request_id}: {exception}")
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
     else:
         operations[request_id] = response
 # [END added_instances_cb]
 
-# [start add_instances]
-def add_instances(compute, source_disk_image, have_compute_img, node_list):
+
+@util.static_vars(images={})
+def get_source_image(compute, node_name):
+
+    images = get_source_image.images
+    pid = util.get_pid(node_name)
+    if pid not in images:
+        image_name = f"{cfg.compute_node_prefix}-{pid}-image"
+        family = (cfg.partitions[pid].compute_image_family
+                  or f"{image_name}-family")
+        try:
+            image_response = compute.images().getFromFamily(
+                project=cfg.project, family=family
+            ).execute()
+            if image_response['status'] != 'READY':
+                raise Exception("Image not ready")
+            source_disk_image = image_response['selfLink']
+        except Exception as e:
+            log.error(f"Image {family} unavailable: {e}")
+            sys.exit()
+
+        images[pid] = source_disk_image
+    return images[pid]
+# [END get_source_image]
+
+
+def add_instances(compute, node_list):
 
     batch_list = []
     curr_batch = 0
@@ -243,6 +242,7 @@ def add_instances(compute, source_disk_image, have_compute_img, node_list):
         curr_batch, compute.new_batch_http_request(callback=added_instances_cb))
 
     for node_name in node_list:
+
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
             curr_batch += 1
@@ -250,10 +250,13 @@ def add_instances(compute, source_disk_image, have_compute_img, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=added_instances_cb))
 
+        source_disk_image = get_source_image(compute, node_name)
+
+        pid = util.get_pid(node_name)
         batch_list[curr_batch].add(
-            create_instance(
-                compute, PROJECT, ZONE, MACHINE_TYPE, node_name,
-                source_disk_image, have_compute_img),
+            create_instance(compute, cfg.partitions[pid].zone,
+                            cfg.partitions[pid].machine_type, node_name,
+                            source_disk_image),
             request_id=node_name)
         req_cnt += 1
 
@@ -262,52 +265,37 @@ def add_instances(compute, source_disk_image, have_compute_img, node_list):
             batch.execute(http=http)
             if i < (len(batch_list) - 1):
                 time.sleep(30)
-    except Exception, e:
-        logging.exception("error in add batch: " + str(e))
+    except Exception:
+        log.exception("error in add batch")
 
-    if UPDATE_NODE_ADDRS:
+    if cfg.update_node_addrs:
         update_slurm_node_addrs(compute)
 
 # [END add_instances]
 
-# [START main]
+
 def main(arg_nodes):
-    logging.debug("Bursting out:" + arg_nodes)
+    log.info(f"Bursting out: {arg_nodes}")
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=authorized_http,
                                               cache_discovery=False)
 
     # Get node list
-    show_hostname_cmd = "{} show hostnames {}".format(SCONTROL, arg_nodes)
-    nodes_str = subprocess.check_output(shlex.split(show_hostname_cmd))
+    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
+                         check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
-    have_compute_img = False
-    try:
-        image_response = compute.images().getFromFamily(
-            project = PROJECT,
-            family = CLUSTER_NAME + "-compute-image-family").execute()
-        if image_response['status'] != "READY":
-            logging.debug("image not ready, using the startup script")
-            raise Exception("image not ready")
-        source_disk_image = image_response['selfLink']
-        have_compute_img = True
-    except:
-        image_response = compute.images().getFromFamily(
-            project='centos-cloud', family='centos-7').execute()
-        source_disk_image = image_response['selfLink']
-
     while True:
-        add_instances(compute, source_disk_image, have_compute_img, node_list)
+        add_instances(compute, node_list)
         if not len(retry_list):
-            break;
+            break
 
-        logging.debug("got {} nodes to retry ({})".
-                      format(len(retry_list),",".join(retry_list)))
+        log.debug("got {} nodes to retry ({})"
+                  .format(len(retry_list), ','.join(retry_list)))
         node_list = list(retry_list)
         del retry_list[:]
 
-    logging.debug("done adding instances")
+    log.debug("done adding instances")
 # [END main]
 
 
@@ -318,14 +306,5 @@ if __name__ == '__main__':
     parser.add_argument('nodes', help='Nodes to burst')
 
     args = parser.parse_args()
-
-    # silence module logging
-    for logger in logging.Logger.manager.loggerDict:
-        logging.getLogger(logger).setLevel(logging.WARNING)
-
-    logging.basicConfig(
-        filename=LOGFILE,
-        format='%(asctime)s %(name)s %(levelname)s: %(message)s',
-        level=logging.DEBUG)
 
     main(args.nodes)
