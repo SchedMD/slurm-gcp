@@ -107,6 +107,7 @@ resources:
         static_node_count : 2
         max_node_count    : 10
         zone              : us-central1-a
+
     # Optional compute configuration fields
 
         # cpu_platform           : Intel Skylake
@@ -117,6 +118,10 @@ resources:
         #   key1 : value1
         #   key2 : value2
         # compute_image_family   : custom-image
+
+    # Optional network configuration fields
+        # vpc_subnet                : < my-subnet >
+
     # Optional GPU configuration fields
 
         # gpu_type               : nvidia-tesla-v100
@@ -129,6 +134,7 @@ resources:
         # machine_type   : n1-standard-16
         # max_node_count : 20
         # zone           : us-central1-b
+
     # Optional compute configuration fields
 
         # cpu_platform           : Intel Skylake
@@ -146,6 +152,9 @@ resources:
         #     fs_type: gcsfuse
         #     mount_options: file_mode=664,dir_mode=775,allow_other
         #
+
+    # Optional network configuration fields
+        # vpc_subnet                : < my-subnet >
 
     # Optional GPU configuration fields
         # gpu_type               : nvidia-tesla-v100
