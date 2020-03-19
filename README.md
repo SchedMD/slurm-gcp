@@ -285,7 +285,7 @@ able to communicate with the controller.
 * Use IP addresses with NodeAddr
    1. disable cloud_dns in *slurm.conf*
    2. disable hierarchical communication in *slurm.conf*: `TreeWidth=65533`
-   3. edit *resume.py* to UPDATE_NODE_ADDRS
+   3. set `update_node_addrs` to `true` in *config.yaml*
    4. add controller's ip address to /etc/hosts on compute image
 
 ### Configuration Steps
