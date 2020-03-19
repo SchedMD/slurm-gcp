@@ -256,7 +256,7 @@ Bursting out from an on-premise cluster is done by configuring the
 *resume.py*, *suspend.py* in the scripts directory. *config.yaml* should
 be configured so that the scripts can create and destroy compute instances in a
 GCP project. 
-See [Slurm Elastic Computing](https://slurm.schedmd.com/elastic_computing.html)
+See [Cloud Scheduling Guide](https://slurm.schedmd.com/elastic_computing.html)
 for more information.
 
 Pre-reqs:
