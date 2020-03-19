@@ -28,7 +28,7 @@ Also, join comunity discussions on either the
 
 * [Stand-alone Cluster in Google Cloud Platform](#stand-alone-cluster-in-google-cloud-platform)
   * [Install using Deployment Manager](#install-using-deployment-manager)
-  * [Install using Terraform](#install-using-terraform)
+  * [Install using Terraform (Beta)](#install-using-terraform-beta)
   * [Image-based Scaling](#image-based-scaling)
   * [Installing Custom Packages](#installing-custom-packages)
   * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
@@ -132,7 +132,7 @@ Steps:
    than the ones created from the default deployment then they will need to be
    destroyed before deployment can be removed.
 
-### Install using Terraform
+### Install using Terraform (Beta)
 
 To deploy, you must have a GCP account and either have the
 [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) and
