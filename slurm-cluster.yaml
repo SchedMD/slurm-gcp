@@ -29,8 +29,8 @@ resources:
 
   # Optional network configuration fields
   # READ slurm.jinja.schema for prerequisites
-    # vpc_net                   : < my-vpc >
-    # vpc_subnet                : < my-subnet >
+    # vpc_net                   : default
+    # vpc_subnet                : default
     # shared_vpc_host_project   : < my-shared-vpc-project-name >
 
     controller_machine_type : n1-standard-2
@@ -119,7 +119,7 @@ resources:
         # compute_image_family   : custom-image
 
     # Optional network configuration fields
-        # vpc_subnet                : < my-subnet >
+        # vpc_subnet                : default
 
     # Optional GPU configuration fields
 
@@ -153,7 +153,7 @@ resources:
         #
 
     # Optional network configuration fields
-        # vpc_subnet                : < my-subnet >
+        # vpc_subnet                : my-subnet
 
     # Optional GPU configuration fields
         # gpu_type               : nvidia-tesla-v100
