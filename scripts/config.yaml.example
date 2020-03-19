@@ -34,6 +34,7 @@ partitions:
   static_node_count: 2
   network_storage: []
   # compute_image_family: <image family name>
+  # vpc_subnet:
 # - name: gpu
 #   compute_disk_size_gb: 10
 #   compute_disk_type: pd-standard
@@ -47,3 +48,4 @@ partitions:
 #   static_node_count: 0
 #   zone: us-west1-b
 #   compute_image_family: <image family name>
+#   vpc_subnet:
