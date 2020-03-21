@@ -28,6 +28,7 @@ locals {
       zone           = var.zone
       gpu_type       = null
       gpu_count      = 0
+      preemptible_bursting = null
       subnet         = (var.subnetwork_name != null
                         ? var.subnetwork_name
                         : "${var.cluster_name}-${var.region}")
@@ -47,6 +48,7 @@ locals {
         zone           = var.partitions[pid].zone
         gpu_type       = var.partitions[pid].gpu_type
         gpu_count      = var.partitions[pid].gpu_count
+        preemptible_bursting = var.partitions[pid].preemptible_bursting
         subnet         = (var.partitions[pid].vpc_subnet != null
                           ? var.partitions[pid].vpc_subnet
                           : "${var.cluster_name}-${join("-", slice(split("-", var.partitions[pid].zone), 0, 2))}")
@@ -106,6 +108,8 @@ resource "google_compute_instance" "compute_node" {
 
   scheduling {
     on_host_maintenance = each.value.gpu_count > 0 ? "TERMINATE" : ""
+    preemptible = each.value.preemptible_bursting
+    automatic_restart = each.value.preemptible_bursting == true ? false : true
   }
 
   service_account {
