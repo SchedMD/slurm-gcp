@@ -1037,7 +1037,7 @@ def main():
         install_ompi()
 
         try:
-            util.run(APPS_DIR/'slurm/scripts/custom-controller-install')
+            util.run(str(APPS_DIR/'slurm/scripts/custom-controller-install'))
         except Exception:
             # Ignore blank files with no shell magic.
             pass
@@ -1091,7 +1091,7 @@ def main():
         setup_slurmd_cronjob()
 
         try:
-            util.run(APPS_DIR/'slurm/scripts/custom-compute-install')
+            util.run(str(APPS_DIR/'slurm/scripts/custom-compute-install'))
         except Exception:
             # Ignore blank files with no shell magic.
             pass
@@ -1109,7 +1109,7 @@ def main():
         start_munge()
 
         try:
-            util.run(APPS_DIR/"slurm/scripts/custom-compute-install")
+            util.run(str(APPS_DIR/"slurm/scripts/custom-compute-install"))
         except Exception:
             # Ignore blank files with no shell magic.
             pass
