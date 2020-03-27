@@ -894,7 +894,7 @@ def create_compute_images():
                     instance=instance).execute()
                 if resp['status'] == 'TERMINATED':
                     break
-                log.info("waiting for {instance} to be stopped (status: {status})"
+                log.info(f"waiting for {instance} to be stopped (status: {resp['status']})"
                          .format(instance=instance, status=resp['status']))
                 time.sleep(30)
 
