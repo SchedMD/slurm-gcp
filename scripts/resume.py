@@ -60,13 +60,24 @@ if not cfg.google_app_cred_path:
     authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
 
 
-def wait_for_operation(compute, project, zone, operation):
+def wait_for_operation(compute, project, operation):
     print('Waiting for operation to finish...')
     while True:
-        result = compute.zoneOperations().get(
-            project=project,
-            zone=zone,
-            operation=operation).execute()
+        result = None
+        if 'zone' in operation:
+            result = compute.zoneOperations().get(
+                project=project,
+                zone=operation['zone'].split('/')[-1],
+                operation=operation['name']).execute()
+        elif 'region' in operation:
+            result = compute.regionOperations().get(
+                project=project,
+                region=operation['region'].split('/')[-1],
+                operation=operation['name']).execute()
+        else:
+            result = compute.globalOperations().get(
+                project=project,
+                operation=operation['name']).execute()
 
         if result['status'] == 'DONE':
             print("done.")
@@ -79,18 +90,17 @@ def wait_for_operation(compute, project, zone, operation):
 
 
 def update_slurm_node_addrs(compute):
-    for node_name in operations:
+    for node_name, operation in operations.items():
         try:
-            operation = operations[node_name]
             # Do this after the instances have been initialized and then wait
             # for all operations to finish. Then updates their addrs.
-            wait_for_operation(compute, cfg.project, cfg.zone,
-                               operation['name'])
+            wait_for_operation(compute, cfg.project, operation)
 
+            pid = util.get_pid(node_name)
             my_fields = 'networkInterfaces(name,network,networkIP,subnetwork)'
             instance_networks = compute.instances().get(
-                project=cfg.project, zone=cfg.zone, instance=node_name,
-                fields=my_fields).execute()
+                project=cfg.project, zone=cfg.partitions[pid].zone,
+                instance=node_name, fields=my_fields).execute()
             instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
 
             util.run(
