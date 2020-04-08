@@ -15,7 +15,7 @@
 
 variable "boot_disk_size" {
   description = "Size of boot disk to create for the cluster login node"
-  default     = 10
+  default     = 20
 }
 
 variable "boot_disk_type" {

@@ -30,7 +30,7 @@ variable "cluster_name" {
 
 variable "compute_image_disk_size_gb" {
   description = "Size of disk for compute node image."
-  default     = 10
+  default     = 20
 }
 
 variable "compute_image_disk_type" {
@@ -141,7 +141,7 @@ variable "login_disk_type" {
 variable "login_disk_size_gb" {
   description = "Size of disk for login nodes."
   type        = number
-  default     = 10
+  default     = 20
 }
 
 variable "login_labels" {
