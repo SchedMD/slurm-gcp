@@ -83,6 +83,8 @@ resources:
     #   key2 : value2
 
   # Optional compute configuration fields
+    # external_controller_ip    : False
+    # external_login_ips        : False
     # external_compute_ips      : False
     # private_google_access     : True
 
