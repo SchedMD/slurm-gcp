@@ -37,6 +37,7 @@ Also, join comunity discussions on either the
 * [Hybrid Cluster for Bursting from On-Premise](#hybrid-cluster-for-bursting-from-on-premise)
   * [Node Addressing](#node-addressing)
   * [Configuration Steps](#configuration-steps)
+  * [Users and Groups in a Hybrid Cluster](#users-and-groups-in-a-hybrid-cluster)
 * [Multi-Cluster / Federation](#multi-cluster-federation)
 * [Troubleshooting](#troubleshooting)
 
@@ -354,6 +355,17 @@ able to communicate with the controller.
    ./resume.py g1-compute-0-0
    ./suspend.py g1-compute-0-0
    ```
+
+### Users and Groups in a Hybrid Cluster
+The simplest way to handle user synchronization in a hybrid cluster is to use
+`nss_slurm`. This permits passwd and group resolution for a job on the compute
+node to be serviced by the local slurmstepd process rather than some other
+network-based service. User information is sent from the controller for each
+job and served by the slurm step daemon. `nss_slurm` needs to be installed on
+the compute node image, which it is when the image is created with deployment
+manager or Terraform. For details on how to configure `nss_slurm`, see
+<https://slurm.schedmd.com/nss_slurm.html>
+
 
 ## Multi-Cluster / Federation
 Slurm allows the use of a central SlurmDBD for multiple clusters. By doing
