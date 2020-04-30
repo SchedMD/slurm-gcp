@@ -903,6 +903,7 @@ def create_compute_images():
             util.run(f"gcloud compute images create "
                      f"{instance}-{ver} --source-disk {instance} "
                      f"--source-disk-zone {cfg.zone} --force "
+                     f"--storage-location {partition.region} "
                      f"--family {instance}-family")
 
             util.run("{}/bin/scontrol update partitionname={} state=up"
