@@ -364,7 +364,7 @@ network-based service. User information is sent from the controller for each
 job and served by the slurm step daemon. `nss_slurm` needs to be installed on
 the compute node image, which it is when the image is created with deployment
 manager or Terraform. For details on how to configure `nss_slurm`, see
-<https://slurm.schedmd.com/nss_slurm.html>
+<https://slurm.schedmd.com/nss_slurm.html>.
 
 
 ## Multi-Cluster / Federation
