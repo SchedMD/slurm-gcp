@@ -36,6 +36,7 @@ resources:
     controller_machine_type : n1-standard-2
     # controller_disk_type      : pd-standard
     # controller_disk_size_gb   : 50
+    # external_controller_ip    : False
     # controller_labels         :
     #   key1 : value1
     #   key2 : value2
@@ -52,6 +53,7 @@ resources:
     login_machine_type        : n1-standard-2
     # login_disk_type           : pd-standard
     # login_disk_size_gb        : 20
+    # external_login_ips        : False
     # login_labels              :
     #   key1 : value1
     #   key2 : value2
@@ -83,8 +85,6 @@ resources:
     #   key2 : value2
 
   # Optional compute configuration fields
-    # external_controller_ip    : False
-    # external_login_ips        : False
     # external_compute_ips      : False
     # private_google_access     : True
 
