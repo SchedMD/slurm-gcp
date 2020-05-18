@@ -322,7 +322,7 @@ properties:
 
   ompi_version  :
     type        : string
-    enum        : ["v3.1.x"]
+    enum        : ["v3.1.x", "v4.0.x"]
     description : Version/branch of OpenMPI to install with Slurm/PMI support.
                   Allows mpi programs to be run with srun.
 
