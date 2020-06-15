@@ -769,7 +769,7 @@ def setup_network_storage():
             util.run("sudo yum install -y cifs-utils")
             cifs_installed = True
         elif fs_type == 'lustre' and not lustre_path.exists():
-            lustre_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7.7.1908/client/RPMS/x86_64/'
+            lustre_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/RPMS/x86_64/'
             lustre_tmp = Path('/tmp/lustre')
             lustre_tmp.mkdir(parents=True)
             util.run('sudo yum update -y')
