@@ -103,7 +103,6 @@ Waittime=0
 #
 #
 # SCHEDULING
-FastSchedule=1
 #MaxMemPerCPU=0
 #SchedulerTimeSlice=30
 SchedulerType=sched/backfill
