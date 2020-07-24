@@ -54,6 +54,7 @@ module "slurm_cluster_controller" {
   login_node_count              = var.login_node_count
   machine_type                  = var.controller_machine_type
   munge_key                     = var.munge_key
+  jwt_key						= var.jwt_key
   network_storage               = var.network_storage
   partitions                    = var.partitions
   project                       = var.project

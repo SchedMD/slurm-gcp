@@ -101,6 +101,7 @@ ${jsonencode({
     login_network_storage        = var.login_network_storage,
     login_node_count             = var.login_node_count
     munge_key                    = var.munge_key,
+    jwt_key					     = var.jwt_key,
     network_storage              = var.network_storage,
     partitions                   = var.partitions,
     project                      = var.project,

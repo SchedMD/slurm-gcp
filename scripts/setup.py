@@ -528,6 +528,19 @@ def setup_sync_cronjob():
 # END setup_sync_cronjob()
 
 
+def setup_jwt_key():
+    jwt_key = slurmdirs.state/'jwt_hs256.key'
+
+    if cfg.jwt_key:
+        with (jwt_key).open('w') as f:
+            f.write(cfg.jwt_key)
+    else:
+        util.run("dd if=/dev/urandom bs=32 count=1 >"+str(jwt_key), shell=True)
+
+    util.run(f"chown -R slurm:slurm {jwt_key}")
+    jwt_key.chmod(0o400)
+
+
 def setup_slurmd_cronjob():
     """ Create cronjob for keeping slurmd service up """
     util.run(
@@ -599,6 +612,7 @@ def setup_controller():
     install_cgroup_conf()
     install_slurm_conf()
     install_slurmdbd_conf()
+    setup_jwt_key()
 
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
@@ -634,6 +648,9 @@ def setup_controller():
 
     util.run("systemctl enable slurmctld")
     util.run("systemctl start slurmctld")
+
+    util.run("systemctl enable slurmrestd")
+    util.run("systemctl start slurmrestd")
 
     # Export at the end to signal that everything is up
     util.run("systemctl enable nfs-server")

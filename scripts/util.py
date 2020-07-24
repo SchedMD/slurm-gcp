@@ -205,6 +205,7 @@ class Config(NSDict):
                    )
     PROPERTIES = (*SAVED_PROPS,
                   'munge_key',
+                  'jwt_key',
                   'external_compute_ips',
                   'controller_secondary_disk',
                   'suspend_time',

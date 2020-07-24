@@ -204,6 +204,11 @@ variable "munge_key" {
   default     = null
 }
 
+variable "jwt_key" {
+  description = "Specific libjwt key to use"
+  default     = null
+}
+
 variable "network_name" {
   default = null
   type    = string

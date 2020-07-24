@@ -1,4 +1,5 @@
 autoconf
+automake
 bind-utils
 cifs-utils
 environment-modules
@@ -11,6 +12,7 @@ hdf5-devel
 http-parser-devel
 hwloc
 hwloc-devel
+jansson-devel
 json-c-devel
 kernel-devel
 kernel-headers

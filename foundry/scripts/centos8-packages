@@ -1,3 +1,5 @@
+autoconf
+automake
 bind-utils
 cifs-utils
 dnf-utils
@@ -9,10 +11,12 @@ hdf5-devel
 http-parser-devel
 hwloc
 hwloc-devel
+jansson-devel
 json-c-devel
 libcurl-devel
 libibmad
 libibumad
+libtool
 libyaml-devel
 lua
 lua-devel

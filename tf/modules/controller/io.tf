@@ -111,6 +111,11 @@ variable "munge_key" {
   default     = null
 }
 
+variable "jwt_key" {
+  description = "Specific libjwt key to use"
+  default     = null
+}
+
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({

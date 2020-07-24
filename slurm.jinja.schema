@@ -72,6 +72,7 @@ optional:
 - munge_key
 - network_storage
 - ompi_version
+- libjwt_version
 - shared_vpc_host_project
 - suspend_time
 - vpc_net
@@ -312,6 +313,12 @@ properties:
                   (e.g "date +%s | sha512sum | cut -d' ' -f1"). If not specified
                   then a random key will be generated at deployment creation.
 
+  jwt_key:
+    type        : string
+    description : Specific JWT key to use
+                  (e.g "dd if=/dev/urandom bs=32 count=1"). If not specified
+                  then a random key will be generated at deployment creation.
+
   network_storage:
     type        : array
     default     : []
@@ -325,6 +332,11 @@ properties:
     enum        : ["v3.1.x", "v4.0.x"]
     description : Version/branch of OpenMPI to install with Slurm/PMI support.
                   Allows mpi programs to be run with srun.
+
+  libjwt_version  :
+    type        : string
+    enum        : ["v1.12.0"]
+    description : Version/branch of libjwt to install.
 
   private_google_access:
     type        : boolean

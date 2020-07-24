@@ -74,6 +74,7 @@ def generate_config(context):
     }
     meta = {k: context.imports[v] for k, v in meta_imports.items()}
     meta['enable-oslogin'] = 'TRUE'
+    meta['libjwt_version'] = props['libjwt_version']
     # 'VmDnsSetting': 'GlobalOnly',
 
     resources = []

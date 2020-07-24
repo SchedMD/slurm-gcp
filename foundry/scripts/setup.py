@@ -63,12 +63,17 @@ class Config(util.NSDict):
     def __init__(self, *args, **kwargs):
         super(Config, self).__init__(*args, **kwargs)
 
-    @util.cached_property
+    @cached_property
     def slurm_version(self):
         # match 'b:<branch_name>' or eg. '20.02-latest', '20.02.0', '20.02.0-1'
         #patt = re.compile(r'(b:\S+)|((\d+[\.-])+\w+)')
-        version = yaml.safe_load(util.get_metadata('attributes/slurm_version'))
-        return version
+        vers = yaml.safe_load(util.get_metadata('attributes/slurm_version'))
+        return vers
+
+    @cached_property
+    def libjwt_version(self):
+        vers = yaml.safe_load(util.get_metadata('attributes/libjwt_version'))
+        return vers
 
     @cached_property
     def zone(self):
@@ -113,6 +118,7 @@ cfg = Config()
 
 dirs = util.NSDict({n: Path(p) for n, p in dict.items({
     'slurm': '/slurm',
+    'build': '/root/build',
     'install': '/usr/local',
     'apps': '/apps',
     'munge': '/etc/munge',
@@ -173,6 +179,7 @@ SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
 def add_slurm_user():
     """ Create user slurm """
     util.run("useradd -m -c SlurmUser -d /var/lib/slurm -U -r slurm")
+    util.run("useradd -m -c Slurmrestd -d /var/lib/slurmrestd -U -r slurmrestd")
 
 
 def setup_modules():
@@ -290,6 +297,24 @@ def install_cuda():
         util.run("apt-get -y install cuda")
 
 
+def install_libjwt():
+
+    JWT_PREFIX = dirs.install
+    src_path = dirs.build/'libjwt/src/'
+    if not src_path.exists():
+        src_path.mkdir(parents=True)
+
+    GIT_URL = 'https://github.com/benmcollins/libjwt.git'
+    util.run(
+        "git clone --single-branch --depth 1 -b {0} {1} {2}".format(cfg.libjwt_version, GIT_URL, src_path))
+
+    with cd(src_path):
+        util.run("autoreconf -if")
+        util.run("./configure --prefix={0} --sysconfdir={0}/etc"
+                 .format(JWT_PREFIX), stdout=DEVNULL)
+        util.run("make -j install", stdout=DEVNULL)
+
+
 def install_packages():
     """ Install all packages using the system package manager """
 
@@ -300,6 +325,13 @@ def install_packages():
         install_lustre()
     install_gcsfuse()
     install_cuda()
+    install_libjwt()
+
+    Path('/etc/ld.so.conf.d/usr-local.conf').write_text("""
+/usr/local/lib
+/usr/local/lib64
+""")
+    util.run("ldconfig")
         
     # install stackdriver monitoring and logging
     add_mon_script = Path('/tmp/add-monitoring-agent-repo.sh')
@@ -349,7 +381,7 @@ WantedBy=multi-user.target
 def install_slurm():
     """ Compile and install slurm """
 
-    src_path = dirs.slurm/'source'
+    src_path = dirs.build/'slurm'
     src_path.mkdir(parents=True, exist_ok=True)
 
     with cd(src_path):
@@ -371,7 +403,7 @@ def install_slurm():
     build_dir.mkdir(parents=True, exist_ok=True)
 
     with cd(build_dir):
-        util.run(f"{src_path}/configure --prefix={dirs.install} --sysconfdir={slurmdirs.etc}")
+        util.run(f"{src_path}/configure --prefix={dirs.install} --sysconfdir={slurmdirs.etc} --with-jwt={dirs.install}")
         util.run("make -j install", stdout=DEVNULL)
     with cd(build_dir/'contribs'):
         util.run("make -j install", stdout=DEVNULL)
@@ -434,6 +466,28 @@ WantedBy=multi-user.target
 """)
 
     dbd_service.chmod(0o644)
+
+    # slurmrestd.service
+    slurmrestd_service = Path('/usr/lib/systemd/system/slurmrestd.service')
+    with slurmrestd_service.open('w') as f:
+        f.write(f"""
+[Unit]
+Description=Slurm REST daemon
+After=network.target munge.service slurmctld.service
+ConditionPathExists={slurmdirs.etc}/slurm.conf
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/slurmrestd
+Environment="SLURM_JWT=daemon"
+ExecStart={dirs.install}/sbin/slurmrestd $SLURMRESTD_OPTIONS 0.0.0.0:80
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
+""")
+
+    slurmrestd_service.chmod(0o644)
 
 
 def install_compute_service_scripts():
