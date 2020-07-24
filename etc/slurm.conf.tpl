@@ -10,7 +10,7 @@ ControlMachine={control_host}
 AuthType=auth/munge
 AuthInfo=cred_expire=120
 #CheckpointType=checkpoint/none
-CryptoType=crypto/munge
+CredType=cred/munge
 #DisableRootJobs=NO
 #EnforcePartLimits=NO
 #Epilog=
