@@ -229,7 +229,9 @@ def get_source_image(compute, node_name):
                   or f"{image_name}-family")
         try:
             image_response = compute.images().getFromFamily(
-                project=cfg.project, family=family
+                project=(cfg.partitions[pid].compute_image_family_project or
+                         cfg.project),
+                family=family
             ).execute()
             if image_response['status'] != 'READY':
                 raise Exception("Image not ready")

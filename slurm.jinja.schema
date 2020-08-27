@@ -389,6 +389,7 @@ properties:
       - compute_disk_size_gb
       - compute_labels
       - compute_image_family
+      - compute_image_family_project
       - cpu_platform
       - gpu_type
       - gpu_count
@@ -426,6 +427,11 @@ properties:
           description : Image family name to use to find the base image for instances
                         from this partition. Specify when using an alternate image to
                         the generated one.
+
+        compute_image_family_project:
+          type        : string
+          description : Project that compute_image_family is found in.
+                        Default is current project.
 
         cpu_platform:
           enum        :

@@ -118,7 +118,8 @@ resources:
         # compute_labels         :
         #   key1 : value1
         #   key2 : value2
-        # compute_image_family   : custom-image
+        # compute_image_family         : custom-image
+        # compute_image_family_project : custom-image's project
 
     # Optional network configuration fields
         # vpc_subnet                : default
@@ -145,7 +146,8 @@ resources:
         # compute_labels         :
         #   key1 : value1
         #   key2 : value2
-        # compute_image_family   : custom-image
+        # compute_image_family         : custom-image
+        # compute_image_family_project : custom-image's project
         # network_storage        :
         #   - server_ip: none
         #     remote_mount: <gcs bucket name>
