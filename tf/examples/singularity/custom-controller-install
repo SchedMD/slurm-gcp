@@ -15,7 +15,7 @@ export SINGULARITY_VERSION=
 mkdir -p /opt/go/${GOLANG_VERSION}
 mkdir -p /opt/singularity/${SINGULARITY_VERSION}
 
-export OS=linux 
+export OS=linux
 export ARCH=amd64
 
 cd /opt/go/${GOLANG_VERSION}
@@ -45,7 +45,7 @@ rm -rf ${GOPATH}
 
 mkdir /apps/modulefiles/singularity
 
-bash -c "cat > /apps/modulefiles/singularity/${SINGULARITY_VERSION}" <<SINGULARITY_MODULEFILE 
+bash -c "cat > /apps/modulefiles/singularity/${SINGULARITY_VERSION}" <<SINGULARITY_MODULEFILE
 #%Module1.0#####################################################################
 ##
 ## modules singularity/${SINGULARITY_VERSION}.

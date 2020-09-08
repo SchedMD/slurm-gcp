@@ -18,11 +18,11 @@ Supply values for
 
 Supply values for
 - GOLANG_VERSION: the [latest release](https://golang.org/) available is recommended
-- SINGULARITY_VERSION the [lastest release](https://github.com/hpcng/singularity/releases) is recommended
+- SINGULARITY_VERSION: the [lastest release](https://github.com/hpcng/singularity/releases) is recommended
 
 # Deployment
 
-```terraform init```
+```terraform init```  
 ```make apply```
 
 # Teardown
