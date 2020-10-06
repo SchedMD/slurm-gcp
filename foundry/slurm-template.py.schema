@@ -1,0 +1,37 @@
+info:
+  title: A template for creating a Slurm cluster.
+  author: SchedMD LLC
+  description: |
+    Create a Slurm cluster in GCP.
+
+imports:
+- path: scripts/startup.sh
+- path: scripts/setup.py
+- path: scripts/util.py
+- path: etc/fluentd.conf
+
+required:
+- zone
+- machine_type
+- slurm_version
+- images
+
+#optional:
+
+properties:
+  zone:
+    type: string
+    description: Canonical zone name
+
+  machine_type:
+    type: string
+    description: Path to the canonical machine type
+
+  slurm_version:
+    type: string
+    default: 20.02-latest
+    description: Slurm version or public branch to install
+
+  images:
+    type: array
+    description: List of OSs and their images

@@ -1,0 +1,58 @@
+# Copyright 2017 SchedMD LLC.
+# Modified for use with the Slurm Resource Manager.
+#
+# Copyright 2015 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+imports:
+- path: slurm-template.py
+- path: scripts/centos7-packages
+- path: scripts/centos8-packages
+- path: scripts/debian10-packages
+- path: scripts/ubuntu2004-packages
+
+resources:
+- name: slurm-images
+  type: slurm-template.py
+  properties:
+    zone: &zone us-central1-a
+    machine_type: &machine_type
+      zones/us-central1-a/machineTypes/n1-standard-8
+    slurm_version: 20.02-latest
+    images:
+    - name: centos7
+      image: projects/centos-cloud/global/images/family/centos-7
+    - name: centos8
+      image: projects/centos-cloud/global/images/family/centos-8
+    - name: debian10
+      image: projects/debian-cloud/global/images/family/debian-10
+    - name: ubuntu2004
+      image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
+
+
+#- name: debian9
+#  type: slurm-template.py
+#  properties:
+#    os_name: debian9
+#    image: projects/debian-cloud/global/images/family/debian-9
+#    zone: *zone
+#    machine_type: *machine_type
+#
+#- name: debian10
+#  type: slurm-template.py
+#  properties:
+#    os_name: debian10
+#    image: projects/debian-cloud/global/images/family/debian-9
+#    zone: *zone
+#    machine_type: *machine_type
