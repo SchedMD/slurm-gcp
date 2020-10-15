@@ -962,7 +962,7 @@ def install_ompi():
     with cd(build_path):
         util.run(
             f"../configure --prefix={APPS_DIR}/ompi/{cfg.ompi_version} "
-            f"--with-pmi={APPS_DIR}/slurm/current --with-libevent=/usr "
+            f"--with-pmi={APPS_DIR}/slurm/current --with-slurm --with-libevent=/usr "
             "--with-hwloc=/usr", stdout=DEVNULL)
         util.run("make -j install", stdout=DEVNULL)
 # END install_ompi()
