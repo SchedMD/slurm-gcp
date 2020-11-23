@@ -13,50 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PACKAGES=(
-        'bind-utils'
-        'environment-modules'
-        'epel-release'
-        'gcc'
-        'git'
-        'hwloc'
-        'hwloc-devel'
-        'libibmad'
-        'libibumad'
-        'lua'
-        'lua-devel'
-        'man2html'
-        'mariadb'
-        'mariadb-devel'
-        'mariadb-server'
-        'munge'
-        'munge-devel'
-        'munge-libs'
-        'ncurses-devel'
-        'nfs-utils'
-        'numactl'
-        'numactl-devel'
-        'openssl-devel'
-        'pam-devel'
-        'perl-ExtUtils-MakeMaker'
-        'python3'
-        'python3-pip'
-        'readline-devel'
-        'rpm-build'
-        'rrdtool-devel'
-        'vim'
-        'wget'
-        'tmux'
-        'pdsh'
-        'openmpi'
-        'yum-utils'
-    )
-
-PY_PACKAGES=(
-        'pyyaml'
-        'requests'
-        'google-api-python-client'
-    )
 
 PING_HOST=8.8.8.8
 until ( ping -q -w1 -c1 $PING_HOST > /dev/null ) ; do
@@ -64,20 +20,8 @@ until ( ping -q -w1 -c1 $PING_HOST > /dev/null ) ; do
     sleep .5
 done
 
-echo "yum install -y ${PACKAGES[*]}"
-until ( yum install -y ${PACKAGES[*]} > /dev/null ) ; do
-    echo "yum failed to install packages. Trying again in 5 seconds"
-    sleep 5
-done
-
-echo   "pip3 install --upgrade ${PY_PACKAGES[*]}"
-until ( pip3 install --upgrade ${PY_PACKAGES[*]} ) ; do
-    echo "pip3 failed to install python packages. Trying again in 5 seconds"
-    sleep 5
-done
-
 SETUP_SCRIPT="setup.py"
-SETUP_META="setup_script"
+SETUP_META="setup-script"
 DIR="/tmp"
 URL="http://metadata.google.internal/computeMetadata/v1/instance/attributes/$SETUP_META"
 HEADER="Metadata-Flavor:Google"

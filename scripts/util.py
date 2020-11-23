@@ -19,7 +19,9 @@ import os
 import shlex
 import subprocess
 import sys
+import socket
 import time
+from itertools import chain
 from pathlib import Path
 from contextlib import contextmanager
 from collections import OrderedDict
@@ -158,7 +160,28 @@ class cached_property:
         return attr
 
 
-class Config(OrderedDict):
+class NSDict(OrderedDict):
+    """ Simple nested dict namespace """
+
+    def __init__(self, *args, **kwargs):
+        def from_nested(value):
+            """ If value is dict, convert to Config. Also recurse lists. """
+            if isinstance(value, dict):
+                return Config({k: from_nested(v) for k, v in value.items()})
+            elif isinstance(value, list):
+                return [from_nested(v) for v in value]
+            else:
+                return value
+
+        super(NSDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self  # all properties are member attributes
+
+        # Convert nested elements
+        for k, v in self.items():
+            self[k] = from_nested(v)
+
+
+class Config(NSDict):
     """ Loads config from yaml and holds values in nested namespaces """
 
     TYPES = set(('compute', 'login', 'controller'))
@@ -177,6 +200,8 @@ class Config(OrderedDict):
                    'google_app_cred_path',
                    'update_node_addrs',
                    'partitions',
+                   'network_storage',
+                   'login_network_storage',
                    )
     PROPERTIES = (*SAVED_PROPS,
                   'munge_key',
@@ -189,33 +214,22 @@ class Config(OrderedDict):
                   'controller_secondary_disk',
                   'slurm_version',
                   'suspend_time',
-                  'network_storage',
-                  'login_network_storage',
                   'login_node_count',
                   'cloudsql',
                   )
 
     def __init__(self, *args, **kwargs):
-        def from_nested(value):
-            """ If value is dict, convert to Config. Also recurse lists. """
-            if isinstance(value, dict):
-                return Config({k: from_nested(v) for k, v in value.items()})
-            elif isinstance(value, list):
-                return [from_nested(v) for v in value]
-            else:
-                return value
-
         super(Config, self).__init__(*args, **kwargs)
-        self.__dict__ = self  # all properties are member attributes
-
-        # Convert nested dicts to Configs
-        for k, v in self.items():
-            self[k] = from_nested(v)
 
     @classmethod
     def new_config(cls, properties):
         # If k is ever not found, None will be inserted as the value
-        return cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
+        cfg = cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
+        for netstore in (*cfg.network_storage, *cfg.login_network_storage,
+                         *chain(*(p.network_storage for p in cfg.partitions or []))):
+            if netstore.server_ip == '$controller':
+                netstore.server_ip = cfg.cluster_name + '-controller'
+        return cfg
 
     @classmethod
     def load_config(cls, path):
@@ -232,6 +246,10 @@ class Config(OrderedDict):
         tags = yaml.safe_load(get_metadata('tags'))
         # TODO what to default to if no match found.
         return next(iter(set(tags) & self.TYPES), None)
+
+    @cached_property
+    def hostname(self):
+        return socket.gethostname()
 
     @property
     def region(self):

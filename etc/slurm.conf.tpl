@@ -2,7 +2,7 @@
 # Put this file on all nodes of your cluster.
 # See the slurm.conf man page for more information.
 #
-ControlMachine={CONTROL_MACHINE}
+ControlMachine={control_host}
 #ControlAddr=
 #BackupController=
 #BackupAddr=
@@ -68,7 +68,7 @@ SlurmUser=slurm
 #SlurmdUser=root
 #SrunEpilog=
 #SrunProlog=
-StateSaveLocation={APPS_DIR}/slurm/state
+StateSaveLocation={state_save}
 SwitchType=switch/none
 #TaskEpilog=
 TaskPlugin=task/affinity,task/cgroup
@@ -128,14 +128,14 @@ SelectTypeParameters=CR_Core_Memory
 #
 # LOGGING AND ACCOUNTING
 #AccountingStorageEnforce=associations,limits,qos,safe
-AccountingStorageHost={CONTROL_MACHINE}
+AccountingStorageHost={control_host}
 #AccountingStorageLoc=
 #AccountingStoragePass=
 #AccountingStoragePort=
 AccountingStorageType=accounting_storage/slurmdbd
 #AccountingStorageUser=
 AccountingStoreJobComment=YES
-ClusterName={cfg.cluster_name}
+ClusterName={name}
 #DebugFlags=powersave
 #JobCompHost=
 #JobCompLoc=
@@ -147,22 +147,22 @@ JobCompType=jobcomp/none
 JobAcctGatherFrequency=30
 JobAcctGatherType=jobacct_gather/linux
 SlurmctldDebug=info
-SlurmctldLogFile={SLURM_LOG}/slurmctld.log
+SlurmctldLogFile={slurmlog}/slurmctld.log
 SlurmdDebug=info
-SlurmdLogFile={SLURM_LOG}/slurmd-%n.log
+SlurmdLogFile={slurmlog}/slurmd-%n.log
 #
 #
 # POWER SAVE SUPPORT FOR IDLE NODES (optional)
-SuspendProgram={APPS_DIR}/slurm/scripts/suspend.py
-ResumeProgram={APPS_DIR}/slurm/scripts/resume.py
-ResumeFailProgram={APPS_DIR}/slurm/scripts/suspend.py
-SuspendTimeout={SUSPEND_TIMEOUT}
-ResumeTimeout={RESUME_TIMEOUT}
+SuspendProgram={scripts}/suspend.py
+ResumeProgram={scripts}/resume.py
+ResumeFailProgram={scripts}/suspend.py
+SuspendTimeout={suspend_timeout}
+ResumeTimeout={resume_timeout}
 ResumeRate=0
 #SuspendExcNodes=
 #SuspendExcParts=
 SuspendRate=0
-SuspendTime={cfg.suspend_time}
+SuspendTime={suspend_time}
 #
 SchedulerParameters=salloc_wait_nodes
 SlurmctldParameters=cloud_dns,idle_on_node_suspend

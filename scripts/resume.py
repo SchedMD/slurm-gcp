@@ -121,6 +121,16 @@ def create_instance(compute, zone, machine_type, instance_name,
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
         cfg.project, zone, cfg.partitions[pid].compute_disk_type)
 
+    meta_files = {
+        'config': '/slurm/scripts/config.yaml',
+        'util-script': '/slurm/scripts/util.py',
+        'startup-script': '/slurm/scripts/startup.sh',
+        'setup-script': '/slurm/scripts/setup.py',
+    }
+    custom_compute = Path('/slurm/scripts/custom-compute-install')
+    if custom_compute.exists():
+        meta_files['custom-compute-install'] = str(custom_compute)
+
     config = {
         'name': instance_name,
         'machineType': machine_type_path,
@@ -160,7 +170,10 @@ def create_instance(compute, zone, machine_type, instance_name,
                 {'key': 'enable-oslogin',
                  'value': 'TRUE'},
                 {'key': 'VmDnsSetting',
-                 'value': 'GlobalOnly'}
+                 'value': 'GlobalOnly'},
+                {'key': 'terraform',
+                 'value': 'TRUE'},
+                *[{'key': k, 'value': Path(v).read_text()} for k, v in meta_files.items()]
             ]
         }
     }
@@ -218,33 +231,6 @@ def added_instances_cb(request_id, response, exception):
 # [END added_instances_cb]
 
 
-@util.static_vars(images={})
-def get_source_image(compute, node_name):
-
-    images = get_source_image.images
-    pid = util.get_pid(node_name)
-    if pid not in images:
-        image_name = f"{cfg.compute_node_prefix}-{pid}-image"
-        family = (cfg.partitions[pid].compute_image_family
-                  or f"{image_name}-family")
-        try:
-            image_response = compute.images().getFromFamily(
-                project=(cfg.partitions[pid].compute_image_family_project or
-                         cfg.project),
-                family=family
-            ).execute()
-            if image_response['status'] != 'READY':
-                raise Exception("Image not ready")
-            source_disk_image = image_response['selfLink']
-        except Exception as e:
-            log.error(f"Image {family} unavailable: {e}")
-            sys.exit()
-
-        images[pid] = source_disk_image
-    return images[pid]
-# [END get_source_image]
-
-
 def add_instances(compute, node_list):
 
     batch_list = []
@@ -262,9 +248,8 @@ def add_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=added_instances_cb))
 
-        source_disk_image = get_source_image(compute, node_name)
-
         pid = util.get_pid(node_name)
+        source_disk_image = cfg.partitions[pid].image
         batch_list[curr_batch].add(
             create_instance(compute, cfg.partitions[pid].zone,
                             cfg.partitions[pid].machine_type, node_name,
