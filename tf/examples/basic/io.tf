@@ -77,6 +77,12 @@ variable "controller_disk_type" {
   default     = "pd-standard"
 }
 
+variable "controller_image" {
+  description = "Slurm image to use for the controller instance"
+  type		  = string
+  default	  = "slurm-184304/schedmd-slurm-centos7"
+}
+
 variable "controller_disk_size_gb" {
   description = "Size of disk for the controller."
   type        = number
@@ -142,6 +148,12 @@ variable "login_disk_size_gb" {
   description = "Size of disk for login nodes."
   type        = number
   default     = 20
+}
+
+variable "login_image" {
+  description = "Slurm image to use for login instances"
+  type		  = string
+  default	  = "slurm-184304/schedmd-slurm-centos7"
 }
 
 variable "login_labels" {
@@ -220,6 +232,7 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
+	image				 = string,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,

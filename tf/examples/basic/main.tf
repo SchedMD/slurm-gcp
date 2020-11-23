@@ -43,6 +43,7 @@ module "slurm_cluster_controller" {
 
   boot_disk_size                = var.controller_disk_size_gb
   boot_disk_type                = var.controller_disk_type
+  image							= var.controller_image
   cluster_name                  = var.cluster_name
   compute_node_scopes           = var.compute_node_scopes
   compute_node_service_account  = var.compute_node_service_account
@@ -76,6 +77,7 @@ module "slurm_cluster_login" {
 
   boot_disk_size            = var.login_disk_size_gb
   boot_disk_type            = var.login_disk_type
+  image						= var.login_image
   cluster_name              = var.cluster_name
   controller_name           = module.slurm_cluster_controller.controller_node_name
   controller_secondary_disk = var.controller_secondary_disk
@@ -100,10 +102,6 @@ module "slurm_cluster_compute" {
   source = "../../modules/compute"
 
   cluster_name               = var.cluster_name
-  compute_image_disk_size_gb = var.compute_image_disk_size_gb
-  compute_image_disk_type    = var.compute_image_disk_type
-  compute_image_labels       = var.compute_image_labels
-  compute_image_machine_type = var.compute_image_machine_type
   controller_name            = module.slurm_cluster_controller.controller_node_name
   disable_compute_public_ips = var.disable_compute_public_ips
   network_storage            = var.network_storage

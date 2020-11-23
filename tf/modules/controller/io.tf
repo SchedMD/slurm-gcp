@@ -49,6 +49,10 @@ variable "boot_disk_type" {
   default     = "pd-standard"
 }
 
+variable "image" {
+  description = "Disk OS image (with Slurm) path for controller instance"
+}
+
 variable "labels" {
   description = "Labels to add to controller instance. List of key key, value pairs."
   type        = any
@@ -130,6 +134,7 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
+	image				 = string,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,

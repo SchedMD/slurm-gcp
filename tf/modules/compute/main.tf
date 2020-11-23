@@ -16,30 +16,13 @@
 locals {
   compute_node_prefix = "${var.cluster_name}-compute"
 
-  image_list = flatten([
-    for pid in range(length(var.partitions)) : [{
-      name           = "${local.compute_node_prefix}-${pid}-image"
-      boot_disk_size = var.compute_image_disk_size_gb
-      boot_disk_type = var.compute_image_disk_type
-      labels         = var.compute_image_labels
-      machine_type   = var.compute_image_machine_type
-      sa_email       = "default"
-      sa_scopes      = ["cloud-platform"]
-      zone           = var.zone
-      gpu_type       = null
-      gpu_count      = 0
-      subnet         = (var.subnetwork_name != null
-                        ? var.subnetwork_name
-                        : "${var.cluster_name}-${var.region}")
-    }]
-  ])
-
   static_list = flatten([
     for pid in range(length(var.partitions)) : [
       for n in range(var.partitions[pid].static_node_count) : {
         name           = "${local.compute_node_prefix}-${pid}-${n}"
         boot_disk_size = var.partitions[pid].compute_disk_size_gb
         boot_disk_type = var.partitions[pid].compute_disk_type
+		image		   = var.partitions[pid].image
         labels         = var.partitions[pid].compute_labels
         machine_type   = var.partitions[pid].machine_type
         sa_email       = var.service_account
@@ -54,10 +37,8 @@ locals {
     ]
   ])
 
-  combo_list = flatten([local.image_list, local.static_list])
-
   compute_map = {
-    for static in local.combo_list : "${static.name}" => static
+    for static in local.static_list : "${static.name}" => static
   }
 }
 
@@ -75,7 +56,7 @@ resource "google_compute_instance" "compute_node" {
 
   boot_disk {
     initialize_params {
-      image = "centos-cloud/centos-7"
+      image = each.value.image
       type  = each.value.boot_disk_type
       size  = each.value.boot_disk_size
     }
@@ -122,7 +103,7 @@ resource "google_compute_instance" "compute_node" {
 ${file("${path.module}/../../../scripts/startup.sh")}
 EOF
 
-    util_script = <<EOF
+    util-script = <<EOF
 ${file("${path.module}/../../../scripts/util.py")}
 EOF
 
@@ -139,7 +120,7 @@ ${jsonencode({
 })}
 EOF
 
-    setup_script = <<EOF
+    setup-script = <<EOF
 ${file("${path.module}/../../../scripts/setup.py")}
 EOF
 

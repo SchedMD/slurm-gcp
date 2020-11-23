@@ -23,6 +23,11 @@ variable "boot_disk_type" {
   default     = "pd-standard"
 }
 
+variable "image" {
+  description = "Disk OS image with Slurm preinstalled to use for login node"
+  type		  = string
+}
+
 variable "cluster_name" {
   description = "Name of the cluster"
   type        = string

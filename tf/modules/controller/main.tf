@@ -38,7 +38,7 @@ resource "google_compute_instance" "controller_node" {
 
   boot_disk {
     initialize_params {
-      image = "centos-cloud/centos-7"
+      image = var.image
       type  = var.boot_disk_type
       size  = var.boot_disk_size
     }
@@ -85,7 +85,7 @@ resource "google_compute_instance" "controller_node" {
 ${file("${path.module}/../../../scripts/startup.sh")}
 EOF
 
-    util_script = <<EOF
+    util-script = <<EOF
 ${file("${path.module}/../../../scripts/util.py")}
 EOF
 
@@ -114,20 +114,16 @@ ${jsonencode({
 })}
 EOF
 
-    setup_script = <<EOF
+    setup-script = <<EOF
 ${file("${path.module}/../../../scripts/setup.py")}
 EOF
 
-    slurm_resume = <<EOF
+    slurm-resume = <<EOF
 ${file("${path.module}/../../../scripts/resume.py")}
 EOF
 
-    slurm_suspend = <<EOF
+    slurm-suspend = <<EOF
 ${file("${path.module}/../../../scripts/suspend.py")}
-EOF
-
-    slurmsync = <<EOF
-${file("${path.module}/../../../scripts/slurmsync.py")}
 EOF
 
     slurmsync = <<EOF
