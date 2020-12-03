@@ -18,6 +18,7 @@
 imports:
 - path: slurm-template.py
 - path: scripts/centos7-packages
+- path: scripts/hpc-centos7-packages
 - path: scripts/centos8-packages
 - path: scripts/debian10-packages
 - path: scripts/ubuntu2004-packages
@@ -29,10 +30,12 @@ resources:
     zone: &zone us-central1-a
     machine_type: &machine_type
       zones/us-central1-a/machineTypes/n1-standard-8
-    slurm_version: 20.02-latest
+    slurm_version: 20.11.0
     images:
     - name: centos7
       image: projects/centos-cloud/global/images/family/centos-7
+#    - name: hpc-centos7
+#      image: projects/cloud-hpc-image-public/global/images/hpc-centos-7-v20200819
     - name: centos8
       image: projects/centos-cloud/global/images/family/centos-8
     - name: debian10

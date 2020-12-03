@@ -67,10 +67,13 @@ def generate_config(context):
 
     dep_name = context.env['name']
     project = context.env['project']
-    os_images = {im['name']: im['image'] for im in props['images']}
+    os_images = {
+        im['name']:
+            (im['image'], str(im.get('slurm_version', props['slurm_version'])))
+        for im in props['images']
+    }
     meta = {k: context.imports[v] for k, v in meta_imports.items()}
     meta['enable-oslogin'] = 'TRUE'
-    meta['slurm_version'] = props['slurm_version']
     # 'VmDnsSetting': 'GlobalOnly',
 
     resources = []
@@ -82,10 +85,12 @@ def generate_config(context):
     })
     resources.append(yaml.safe_load(router))
 
-    for os_name, image in os_images.items():
+    for os_name, (image, slurm_version) in os_images.items():
         # Insert properties into yaml for conversion to resources dict
         vm_config = {
-            'name': 'schedmd-slurm-{os_name}'.format(os_name=os_name),
+            'name': 'schedmd-slurm{vers}-{os_name}'.format(
+                os_name=os_name,
+                vers=slurm_version.replace('.', '')),
             'machine_type': props['machine_type'],
             'zone': props['zone'],
             'image': image,
@@ -95,6 +100,7 @@ def generate_config(context):
         # meta['config'] = yaml.safe_dump(res)
 
         meta['packages'] = context.imports['scripts/{os_name}-packages'.format(os_name=os_name)]
+        meta['slurm_version'] = slurm_version
 
         # Insert metadata directly into resources dict
         res['properties']['metadata']['items'] = (

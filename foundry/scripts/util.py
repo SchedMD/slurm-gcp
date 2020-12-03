@@ -16,9 +16,7 @@
 import logging
 import logging.config
 import os
-import re
 import shlex
-import socket
 import subprocess
 import sys
 import time
@@ -27,7 +25,6 @@ from contextlib import contextmanager
 from collections import OrderedDict
 
 import requests
-import yaml
 
 
 log = logging.getLogger(__name__)
@@ -147,7 +144,7 @@ class NSDict(OrderedDict):
         def from_nested(value):
             """ If value is dict, convert to Bunch. Also recurse lists. """
             if isinstance(value, dict):
-                return Config({k: from_nested(v) for k, v in value.items()})
+                return NSDict({k: from_nested(v) for k, v in value.items()})
             elif isinstance(value, list):
                 return [from_nested(v) for v in value]
             else:
@@ -159,51 +156,3 @@ class NSDict(OrderedDict):
         # Convert nested dicts
         for k, v in self.items():
             self[k] = from_nested(v)
-
-
-class Config(NSDict):
-    """ Loads config from yaml and holds values in nested namespaces """
-
-    def __init__(self, *args, **kwargs):
-        super(Config, self).__init__(*args, **kwargs)
-
-    @cached_property
-    def slurm_version(self):
-        # match 'b:<branch_name>' or eg. '20.02-latest', '20.02.0', '20.02.0-1'
-        #patt = re.compile(r'(b:\S+)|((\d+[\.-])+\w+)')
-        version = yaml.safe_load(get_metadata('attributes/slurm_version'))
-        return version
-
-    @cached_property
-    def zone(self):
-        return get_metadata('zone')
-
-    @cached_property
-    def hostname(self):
-        return socket.gethostname()
-
-    @cached_property
-    def os_name(self):
-        os_rel = Path('/etc/os-release').read_text()
-        os_info = dict(s.split('=') for s in shlex.split(os_rel))
-        return "{ID}{VERSION_ID}".format(**os_info).replace('.', '')
-
-    @property
-    def region(self):
-        return self.zone and '-'.join(self.zone.split('-')[:-1])
-
-    @property
-    def pacman(self):
-        yum = "yum install -y"
-        apt = "apt-get install -y"
-        return {
-            'centos7': yum,
-            'centos8': yum,
-            'debian9': apt,
-            'debian10': apt,
-            'ubuntu2004': apt,
-        }[self.os_name]
-
-    def __getattr__(self, item):
-        """ only called if item is not found in self """
-        return None

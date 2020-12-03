@@ -19,6 +19,8 @@ import logging
 import os
 import shutil
 import sys
+import socket
+import shlex
 import time
 import urllib.request
 from pathlib import Path
@@ -26,6 +28,7 @@ from subprocess import DEVNULL
 
 import googleapiclient.discovery
 import requests
+import yaml
 
 
 SCRIPTSDIR = Path('/root/image-scripts')
@@ -48,9 +51,11 @@ util = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = util
 spec.loader.exec_module(util)
 cd = util.cd  # import util.cd into local namespace
+cached_property = util.cached_property
 
 util.config_root_logger(file=str(SCRIPTSDIR/'setup.log'))
 log = logging.getLogger(Path(__file__).name)
+
 
 class Config(util.NSDict):
     """ Loads config from yaml and holds values in nested namespaces """
@@ -67,7 +72,7 @@ class Config(util.NSDict):
 
     @cached_property
     def zone(self):
-        return get_metadata('zone')
+        return util.get_metadata('zone')
 
     @cached_property
     def hostname(self):
@@ -98,11 +103,13 @@ class Config(util.NSDict):
     def __getattr__(self, item):
         """ only called if item is not found in self """
         return None
+
+
 # get setup config from metadata
 #config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
 #if not util.get_metadata('attributes/terraform'):
 #    config_yaml = yaml.safe_load(config_yaml)
-cfg = util.Config()
+cfg = Config()
 
 dirs = util.NSDict({n: Path(p) for n, p in dict.items({
     'slurm': '/slurm',
@@ -347,7 +354,7 @@ def install_slurm():
 
     with cd(src_path):
         use_version = ''
-        if (cfg.slurm_version[0:2] == 'b:'):
+        if cfg.slurm_version.startswith('b:'):
             GIT_URL = 'https://github.com/SchedMD/slurm.git'
             use_version = cfg.slurm_version[2:]
             util.run(
