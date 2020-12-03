@@ -448,21 +448,23 @@ def setup_network_storage():
             if 'nonempty' not in mount_options:
                 mount_options += ['nonempty']
             fstab_entries.append(
-                "\n{0}   {1}     {2}     {3}     0 0"
+                "{0}   {1}     {2}     {3}     0 0"
                 .format(remote_mount, local_mount, fs_type,
                         ','.join(mount_options)))
         else:
             remote_mount = Path(remote_mount).resolve()
             fstab_entries.append(
-                "\n{0}:{1}    {2}     {3}      {4}  0 0"
+                "{0}:{1}    {2}     {3}      {4}  0 0"
                 .format(server_ip, remote_mount, local_mount,
                         fs_type, ','.join(mount_options)))
 
     for mount in mounts:
         Path(mount).mkdir(parents=True, exist_ok=True)
     with open('/etc/fstab', 'a') as f:
+        f.write('\n')
         for entry in fstab_entries:
             f.write(entry)
+            f.write('\n')
 # END setup_network_storage()
 
 
