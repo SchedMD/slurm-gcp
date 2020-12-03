@@ -80,7 +80,6 @@ ${jsonencode({
     compute_node_prefix       = local.compute_node_prefix,
     controller_secondary_disk = var.controller_secondary_disk,
     munge_key                 = var.munge_key,
-    ompi_version              = var.ompi_version
     login_network_storage     = var.login_network_storage
     network_storage           = var.network_storage
 })}

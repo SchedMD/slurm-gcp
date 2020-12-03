@@ -54,7 +54,6 @@ module "slurm_cluster_controller" {
   machine_type                  = var.controller_machine_type
   munge_key                     = var.munge_key
   network_storage               = var.network_storage
-  ompi_version                  = var.ompi_version
   partitions                    = var.partitions
   project                       = var.project
   region                        = local.region
@@ -62,7 +61,6 @@ module "slurm_cluster_controller" {
   secondary_disk_size           = var.controller_secondary_disk_size
   secondary_disk_type           = var.controller_secondary_disk_type
   shared_vpc_host_project       = var.shared_vpc_host_project
-  slurm_version                 = var.slurm_version
   scopes                        = var.controller_scopes
   service_account               = var.controller_service_account
   subnet_depend                 = module.slurm_cluster_network.subnet_depend
@@ -89,7 +87,6 @@ module "slurm_cluster_login" {
   service_account           = var.login_node_service_account
   munge_key                 = var.munge_key
   network_storage           = var.network_storage
-  ompi_version              = var.ompi_version
   shared_vpc_host_project   = var.shared_vpc_host_project
   subnet_depend             = module.slurm_cluster_network.subnet_depend
   subnetwork_name           = var.subnetwork_name

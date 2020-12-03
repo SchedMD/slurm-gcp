@@ -102,12 +102,10 @@ ${jsonencode({
     login_node_count             = var.login_node_count
     munge_key                    = var.munge_key,
     network_storage              = var.network_storage,
-    ompi_version                 = var.ompi_version,
     partitions                   = var.partitions,
     project                      = var.project,
     region                       = var.region,
     shared_vpc_host_project      = var.shared_vpc_host_project,
-    slurm_version                = var.slurm_version,
     suspend_time                 = var.suspend_time,
     vpc_subnet                   = var.subnetwork_name,
     zone                         = var.zone,

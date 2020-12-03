@@ -122,11 +122,6 @@ variable "network_storage" {
   default = []
 }
 
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
-}
-
 variable "partitions" {
   description = "An array of configurations for specifying multiple machine types residing in their own Slurm partitions."
   type = list(object({
@@ -177,11 +172,6 @@ variable "service_account" {
 variable "shared_vpc_host_project" {
   type    = string
   default = null
-}
-
-variable "slurm_version" {
-  description = "The Slurm version to install. The version should match the link name found at https://www.schedmd.com/downloads.php"
-  default     = "19.05-latest"
 }
 
 variable "subnet_depend" {

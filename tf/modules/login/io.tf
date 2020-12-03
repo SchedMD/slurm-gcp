@@ -92,11 +92,6 @@ variable "node_count" {
   default     = 1
 }
 
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
-}
-
 variable "region" {
   description = "Compute Platform region where the Slurm cluster will be located"
   type        = string

@@ -54,11 +54,6 @@ variable "network_storage" {
   default = []
 }
 
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
-}
-
 variable "partitions" {
   description = "An array of configurations for specifying multiple machine types residing in their own Slurm partitions."
   type = list(object({
