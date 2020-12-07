@@ -269,7 +269,9 @@ def install_slurm_conf():
     if len(static_nodes):
         conf += "\nSuspendExcNodes={}\n".format(','.join(static_nodes))
 
-    (slurmdirs.etc/'slurm.conf').write_text(conf)
+    conf_file = slurmdirs.etc/'slurm.conf'
+    conf_file.write_text(conf)
+    shutil.chown(conf_file, user='slurm', group='slurm')
 # END install_slurm_conf()
 
 
@@ -296,8 +298,10 @@ def install_slurmdbd_conf():
     conf_resp = util.get_metadata('attributes/slurmdbd_conf_tpl')
     conf = conf_resp.format(**conf_options)
 
-    (slurmdirs.etc/'slurmdbd.conf').write_text(conf)
-    (slurmdirs.etc/'slurmdbd.conf').chmod(0o600)
+    conf_file = slurmdirs.etc/'slurmdbd.conf'
+    conf_file.write_text(conf)
+    shutil.chown(conf_file, user='slurm', group='slurm')
+    conf_file.chmod(0o600)
 # END install_slurmdbd_conf()
 
 
@@ -305,7 +309,9 @@ def install_cgroup_conf():
     """ install cgroup.conf """
     conf = util.get_metadata('attributes/cgroup_conf_tpl')
 
-    (slurmdirs.etc/'cgroup.conf').write_text(conf)
+    conf_file = slurmdirs.etc/'cgroup.conf'
+    conf_file.write_text(conf)
+    shutil.chown(conf_file, user='slurm', group='slurm')
 
     gpu_parts = [(i, x) for i, x in enumerate(cfg.partitions)
                  if x.gpu_count]

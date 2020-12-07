@@ -220,7 +220,7 @@ class Config(NSDict):
     def new_config(cls, properties):
         # If k is ever not found, None will be inserted as the value
         cfg = cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
-        for netstore in (*cfg.network_storage, *[cfg.login_network_storage or []],
+        for netstore in (*cfg.network_storage, *(cfg.login_network_storage or []),
                          *chain(*(p.network_storage for p in (cfg.partitions or [])))):
             if netstore.server_ip == '$controller':
                 netstore.server_ip = cfg.cluster_name + '-controller'
