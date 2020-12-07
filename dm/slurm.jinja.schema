@@ -22,28 +22,28 @@ info:
     Create a Slurm cluster in GCP.
 
 imports:
-- path: scripts/compute-shutdown
-- path: scripts/custom-compute-install
-- path: scripts/custom-controller-install
-- path: scripts/resume.py
-- path: scripts/slurmsync.py
-- path: scripts/startup.sh
-- path: scripts/setup.py
-- path: scripts/suspend.py
-- path: scripts/util.py
-- path: etc/slurm.conf.tpl
-- path: etc/slurmdbd.conf.tpl
-- path: etc/cgroup.conf.tpl
-- path: etc/controller-fluentd.conf.tpl
-- path: etc/compute-fluentd.conf.tpl
+- path: ../scripts/compute-shutdown
+- path: ../scripts/custom-compute-install
+- path: ../scripts/custom-controller-install
+- path: ../scripts/resume.py
+- path: ../scripts/slurmsync.py
+- path: ../scripts/startup.sh
+- path: ../scripts/setup.py
+- path: ../scripts/suspend.py
+- path: ../scripts/util.py
+- path: ../etc/slurm.conf.tpl
+- path: ../etc/slurmdbd.conf.tpl
+- path: ../etc/cgroup.conf.tpl
+- path: ../etc/controller-fluentd.conf.tpl
+- path: ../etc/compute-fluentd.conf.tpl
 
 required:
 - cluster_name
+- controller_image
 - controller_machine_type
-- compute_image_machine_type
+- login_image
 - login_machine_type
 - private_google_access
-- slurm_version
 - zone
 
 optional:
@@ -58,9 +58,6 @@ optional:
 - controller_secondary_disk_size_gb
 - compute_node_scopes
 - compute_node_service_account
-- compute_image_disk_size_gb
-- compute_image_disk_type
-- compute_image_labels
 - external_compute_ips
 - login_disk_size_gb
 - login_disk_type
@@ -71,8 +68,6 @@ optional:
 - login_node_service_account
 - munge_key
 - network_storage
-- ompi_version
-- libjwt_version
 - shared_vpc_host_project
 - suspend_time
 - vpc_net
@@ -112,6 +107,10 @@ properties:
         type          : string
         description   : Database name, defaults to <cluster_name>-slurm_acct_db
 
+
+  controller_image:
+    type        : string
+    description : Slurm image to boot the controller
 
   controller_machine_type:
     type        : string
@@ -166,29 +165,6 @@ properties:
     maximum     : 64000
     description : Size of disk for the secondary disk.
 
-  compute_image_machine_type:
-    type        : string
-    description : Machine type to use for compute node image instance.
-                  eg. n1-standard-4.
-
-  compute_image_disk_type:
-    enum        : ["pd-ssd", "pd-standard"]
-    default     : pd-standard
-    description : Disk type (pd-ssd or pd-standard) for compute node image.
-
-  compute_image_disk_size_gb:
-    type        : integer
-    default     : 20
-    minimum     : 20
-    maximum     : 2000
-    description : Size of disk for compute node image.
-
-  compute_image_labels:
-    type        : object
-    default     : {}
-    description : Labels to add to the compute node image. List of key key,
-                  value pairs.
-
   compute_node_scopes:
     type        : array
     default     : ["https://www.googleapis.com/auth/monitoring.write", "https://www.googleapis.com/auth/logging.write"]
@@ -219,6 +195,10 @@ properties:
     default     : False
     description : Whether compute nodes are assigned external IPs or not. Sets up Cloud NAT
                   if false.
+
+  login_image:
+    type        : string
+    description : Slurm image to boot the login nodes
 
   login_machine_type:
     type        : string
@@ -350,15 +330,6 @@ properties:
                   granted "Network User" role in host project. Requires external
                   IPs or Cloud NAT configured in host project.
 
-  slurm_version:
-    type        : string
-    default     : 20.02-latest
-    description : The Slurm version to install. The version should match link
-                  name found at https://www.schedmd.com/downloads.php. The
-                  version can also be in the form "b:<branch name>", where
-                  <branch name> is a branch in
-                  https://github.com/schedmd/slurm.
-
   suspend_time:
     type        : integer
     default     : 300
@@ -374,11 +345,13 @@ properties:
 
   vpc_net:
     type        : string
+    default     : default
     description : The name of the pre-defined VPC network you want the nodes
                   to attach to based on Region.
 
   vpc_subnet:
     type        : string
+    default     : default
     description : The name of the pre-defined VPC subnet you want the nodes
                   to attach to based on Region.
 
@@ -392,24 +365,26 @@ properties:
     items:
       type: object
       required :
+      - image
       - machine_type
       - name
       - max_node_count
-      - zone
       optional :
       - compute_disk_type
       - compute_disk_size_gb
       - compute_labels
-      - compute_image_family
-      - compute_image_family_project
       - cpu_platform
       - gpu_type
       - gpu_count
       - preemptible_bursting
+      - vpc_subnet
       - static_node_count
-      - zone
       - network_storage
       properties :
+
+        image:
+          type      : string
+          description : Image with Slurm to use for this partition's compute nodes
 
         machine_type:
           type        : string
@@ -433,17 +408,6 @@ properties:
           default     : {}
           description : Labels to add to compute instances. List of key key, value
                         pairs.
-
-        compute_image_family:
-          type        : string
-          description : Image family name to use to find the base image for instances
-                        from this partition. Specify when using an alternate image to
-                        the generated one.
-
-        compute_image_family_project:
-          type        : string
-          description : Project that compute_image_family is found in.
-                        Default is current project.
 
         cpu_platform:
           enum        :
@@ -487,6 +451,11 @@ properties:
                         not. Make sure to choose a zone that has preemptible
                         resources.
 
+        vpc_subnet:
+          type        : string
+          default     : default
+          description : The name of the pre-defined VPC subnet you want the nodes
+                        to attach to based on Region.
 
         static_node_count:
           type        : integer
