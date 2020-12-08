@@ -483,10 +483,13 @@ def mount_fstab():
     """ Wait on each mount, then make sure all fstab is mounted """
     global mounts
 
-    for path in mounts:
+    def mount_path(path):
         while not os.path.ismount(path):
             log.info(f"Waiting for {path} to be mounted")
             util.run(f"mount {path}", wait=5)
+
+    with ThreadPoolExecutor() as exe:
+        exe.map(mount_path, mounts.keys())
 
     util.run("mount -a", wait=1)
 # END mount_external
