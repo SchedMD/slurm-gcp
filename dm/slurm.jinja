@@ -210,7 +210,7 @@ resources:
         diskType: https://www.googleapis.com/compute/v1/projects/{{project}}/zones/{{zone}}/diskTypes/{{properties["partitions"][i]["compute_disk_type"]}}
         diskSizeGb: {{ properties['partitions'][i]['compute_disk_size_gb'] }}
     networkInterfaces:
-    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/subnetworks/{{properties['partitions'][i]['vpc_subnet']}}
+    - subnetwork: https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{cluster_region}}/subnetworks/{{properties['partitions'][i]['vpc_subnet']}}
   {% if properties['external_compute_ips'] %}
       accessConfigs:
       - name: External NAT
