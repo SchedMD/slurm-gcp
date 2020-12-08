@@ -188,7 +188,7 @@ def setup_modules():
     appsmfs = Path('/apps/modulefiles')
     modulespath = Path('/usr/share/Modules/init/.modulespath')
     if not modulespath.exists():
-        modulespath = Path('/usr/share/modules/init/.modulespath')
+        modulespath = Path('/etc/environment-modules/modulespath')
 
     with modulespath.open('r+') as dotmp:
         if str(appsmfs) not in dotmp.read():
