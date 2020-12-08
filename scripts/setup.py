@@ -80,6 +80,9 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
     'state': '/var/spool/slurmctld',
 })})
 
+cfg['log_dir'] = slurmdirs.log
+cfg['slurm_cmd_path'] = dirs.prefix/'bin'
+
 RESUME_TIMEOUT = 300
 SUSPEND_TIMEOUT = 300
 
@@ -333,6 +336,7 @@ def install_cgroup_conf():
 def install_meta_files():
     """ save config.yaml and download all scripts from metadata """
     cfg.save_config(dirs.scripts/'config.yaml')
+    shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
 
     meta_entries = [
         ('suspend.py', 'slurm-suspend'),
@@ -612,6 +616,12 @@ def configure_dirs():
     for p in slurmdirs.values():
         p.mkdir(parents=True, exist_ok=True)
         shutil.chown(p, user='slurm', group='slurm')
+
+    (dirs.scripts/'etc').symlink_to(slurmdirs.etc)
+    shutil.chown(dirs.scripts/'etc', user='slurm', group='slurm')
+
+    (dirs.scripts/'log').symlink_to(slurmdirs.log)
+    shutil.chown(dirs.scripts/'log', user='slurm', group='slurm')
 
 
 def setup_controller():

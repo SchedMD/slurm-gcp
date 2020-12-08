@@ -265,8 +265,14 @@ class Config(NSDict):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.add_representer(Config, self.represent_config)
+            self.add_multi_representer(Path, self.represent_path)
 
         @staticmethod
         def represent_config(dumper, data):
             return dumper.represent_mapping('tag:yaml.org,2002:map',
                                             data.items())
+
+        @staticmethod
+        def represent_path(dumper, path):
+            return dumper.represent_scalar('tag:yaml.org,2002:str',
+                                           str(path))
