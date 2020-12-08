@@ -77,7 +77,7 @@ dirs = NSDict({n: Path(p) for n, p in dict.items({
 slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
     'etc': '/usr/local/etc/slurm',
     'log': '/var/log/slurm',
-    'state': '/var/spool/slurmctld',
+    'state': '/var/spool/slurm',
 })})
 
 cfg['log_dir'] = slurmdirs.log
@@ -284,6 +284,7 @@ def install_slurmdbd_conf():
     conf_options = NSDict({
         'control_host': CONTROL_MACHINE,
         'slurmlog': slurmdirs.log,
+        'state_save': slurmdirs.state,
         'db_name': 'slurm_acct_db',
         'db_user': 'slurm',
         'db_pass': '""',
