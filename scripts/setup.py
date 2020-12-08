@@ -55,6 +55,7 @@ NSDict = util.NSDict
 
 util.config_root_logger(file='/tmp/setup.log')
 log = logging.getLogger(Path(__file__).name)
+sys.excepthook = util.handle_exception
 
 # get setup config from metadata
 config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))

@@ -76,6 +76,13 @@ def config_root_logger(level='DEBUG', util_level=None, file=None):
     logging.config.dictConfig(config)
 
 
+def handle_exception(exc_type, exc_value, exc_trace):
+    if not issubclass(exc_type, KeyboardInterrupt):
+        log.exception("Fatal exception",
+                      exc_info=(exc_type, exc_value, exc_trace))
+    sys.__excepthook__(exc_type, exc_value, exc_trace)
+
+
 def get_metadata(path):
     """ Get metadata relative to metadata/computeMetadata/v1/instance/ """
     URL = 'http://metadata.google.internal/computeMetadata/v1/instance/'

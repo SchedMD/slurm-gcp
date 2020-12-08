@@ -46,6 +46,7 @@ retry_list = []
 
 util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
 log = logging.getLogger(Path(__file__).name)
+sys.excepthook = util.handle_exception
 
 
 if cfg.google_app_cred_path:
