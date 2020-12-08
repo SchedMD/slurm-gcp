@@ -538,7 +538,7 @@ def setup_secondary_disks():
 def setup_sync_cronjob():
     """ Create cronjob for running slurmsync.py """
     util.run("crontab -u slurm -", input=(
-        f"*/1 * * * * {dirs.apps}/slurm/scripts/slurmsync.py\n"))
+        f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
 
 # END setup_sync_cronjob()
 
