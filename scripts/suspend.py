@@ -77,7 +77,7 @@ def delete_instances(compute, node_list):
         pid = util.get_pid(node_name)
         batch_list[curr_batch].add(
             compute.instances().delete(project=cfg.project,
-                                       zone=cfg.partitions[pid].zone,
+                                       zone=cfg.instance_types[pid].zone,
                                        instance=node_name),
             request_id=node_name)
         req_cnt += 1

@@ -125,7 +125,7 @@ def spawn(cmd, quiet=False, shell=False, **kwargs):
 def get_pid(node_name):
     """Convert <prefix>-<pid>-<nid>"""
 
-    return int(node_name.split('-')[-2])
+    return '-'.join(node_name.split('-')[:-1])
 
 
 @contextmanager
@@ -206,9 +206,9 @@ class Config(NSDict):
                    'log_dir',
                    'google_app_cred_path',
                    'update_node_addrs',
-                   'partitions',
                    'network_storage',
                    'login_network_storage',
+                   'instance_types',
                    )
     PROPERTIES = (*SAVED_PROPS,
                   'munge_key',
@@ -218,6 +218,7 @@ class Config(NSDict):
                   'suspend_time',
                   'login_node_count',
                   'cloudsql',
+                  'partitions',
                   )
 
     def __init__(self, *args, **kwargs):
@@ -227,6 +228,12 @@ class Config(NSDict):
     def new_config(cls, properties):
         # If k is ever not found, None will be inserted as the value
         cfg = cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
+        if cfg.partitions:
+            cfg['instance_types'] = NSDict({
+                f'{cfg.cluster_name}-compute-{pid}': part
+                for pid, part in enumerate(cfg.partitions)
+            })
+
         for netstore in (*cfg.network_storage, *(cfg.login_network_storage or []),
                          *chain(*(p.network_storage for p in (cfg.partitions or [])))):
             if netstore.server_ip == '$controller':
@@ -240,6 +247,10 @@ class Config(NSDict):
 
     def save_config(self, path):
         save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
+        for instance_type in save_dict.instance_types.values():
+            instance_type.pop('max_node_count', 0)
+            instance_type.pop('name', 0)
+            instance_type.pop('static_node_count', 0)
         Path(path).write_text(yaml.dump(save_dict, Dumper=Dumper))
 
     @cached_property

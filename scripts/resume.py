@@ -48,6 +48,10 @@ util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
 log = logging.getLogger(Path(__file__).name)
 sys.excepthook = util.handle_exception
 
+new_yaml = Path(__file__).with_name('config.yaml.new')
+if not cfg.partitions and not new_yaml.exists():
+    log.info(f"partition declarations in config.yaml have been converted to a new format and saved to {new_yaml}. Replace config.yaml as soon as possible.")
+    cfg.save_config(new_yaml)
 
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
@@ -100,7 +104,7 @@ def update_slurm_node_addrs(compute):
             pid = util.get_pid(node_name)
             my_fields = 'networkInterfaces(name,network,networkIP,subnetwork)'
             instance_networks = compute.instances().get(
-                project=cfg.project, zone=cfg.partitions[pid].zone,
+                project=cfg.project, zone=cfg.instance_types[pid].zone,
                 instance=node_name, fields=my_fields).execute()
             instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
 
@@ -120,7 +124,7 @@ def create_instance(compute, zone, machine_type, instance_name,
     # Configure the machine
     machine_type_path = f'zones/{zone}/machineTypes/{machine_type}'
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
-        cfg.project, zone, cfg.partitions[pid].compute_disk_type)
+        cfg.project, zone, cfg.instance_types[pid].compute_disk_type)
 
     meta_files = {
         'config': '/slurm/scripts/config.yaml',
@@ -143,7 +147,7 @@ def create_instance(compute, zone, machine_type, instance_name,
             'initializeParams': {
                 'sourceImage': source_disk_image,
                 'diskType': disk_type,
-                'diskSizeGb': cfg.partitions[pid].compute_disk_size_gb
+                'diskSizeGb': cfg.instance_types[pid].compute_disk_size_gb
             }
         }],
 
@@ -152,9 +156,9 @@ def create_instance(compute, zone, machine_type, instance_name,
             'subnetwork': (
                 "projects/{}/regions/{}/subnetworks/{}".format(
                     cfg.shared_vpc_host_project or cfg.project,
-                    cfg.partitions[pid].region,
-                    (cfg.partitions[pid].vpc_subnet
-                     or f'{cfg.cluster_name}-{cfg.partitions[pid].region}'))
+                    cfg.instance_types[pid].region,
+                    (cfg.instance_types[pid].vpc_subnet
+                     or f'{cfg.cluster_name}-{cfg.instance_types[pid].region}'))
             ),
         }],
 
@@ -186,29 +190,29 @@ def create_instance(compute, zone, machine_type, instance_name,
             'value': shutdown_script_path.read_text()
         })
 
-    if cfg.partitions[pid].gpu_type:
+    if cfg.instance_types[pid].gpu_type:
         accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
                       .format(cfg.project, zone,
-                              cfg.partitions[pid].gpu_type))
+                              cfg.instance_types[pid].gpu_type))
         config['guestAccelerators'] = [{
-            'acceleratorCount': cfg.partitions[pid].gpu_count,
+            'acceleratorCount': cfg.instance_types[pid].gpu_count,
             'acceleratorType': accel_type
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if cfg.partitions[pid].preemptible_bursting:
+    if cfg.instance_types[pid].preemptible_bursting:
         config['scheduling'] = {
             'preemptible': True,
             'onHostMaintenance': 'TERMINATE',
             'automaticRestart': False
         },
 
-    if cfg.partitions[pid].compute_labels:
-        config['labels'] = cfg.partitions[pid].compute_labels,
+    if cfg.instance_types[pid].compute_labels:
+        config['labels'] = cfg.instance_types[pid].compute_labels,
 
-    if cfg.partitions[pid].cpu_platform:
-        config['minCpuPlatform'] = cfg.partitions[pid].cpu_platform,
+    if cfg.instance_types[pid].cpu_platform:
+        config['minCpuPlatform'] = cfg.instance_types[pid].cpu_platform,
 
     if cfg.external_compute_ips:
         config['networkInterfaces'][0]['accessConfigs'] = [
@@ -250,10 +254,10 @@ def add_instances(compute, node_list):
                 compute.new_batch_http_request(callback=added_instances_cb))
 
         pid = util.get_pid(node_name)
-        source_disk_image = cfg.partitions[pid].image
+        source_disk_image = cfg.instance_types[pid].image
         batch_list[curr_batch].add(
-            create_instance(compute, cfg.partitions[pid].zone,
-                            cfg.partitions[pid].machine_type, node_name,
+            create_instance(compute, cfg.instance_types[pid].zone,
+                            cfg.instance_types[pid].machine_type, node_name,
                             source_disk_image),
             request_id=node_name)
         req_cnt += 1

@@ -151,16 +151,16 @@ def end_motd(broadcast=True):
 def have_gpus(hostname):
     """ return whether given compute node has gpus """
     pid = util.get_pid(hostname)
-    return cfg.partitions[pid].gpu_count > 0
+    return cfg.instance_types[pid].gpu_count > 0
 # END have_gpus()
 
 
 def expand_machine_type():
     """ get machine type specs from api """
-    machines = []
+    machines = {}
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
-    for part in cfg.partitions:
+    for pid, part in cfg.instance_types.items():
         machine = {'cpus': 1, 'memory': 1}
         try:
             type_resp = compute.machineTypes().get(
@@ -181,7 +181,7 @@ def expand_machine_type():
             log.exception("Failed to get MachineType '{}' from google api"
                           .format(part.machine_type))
         finally:
-            machines.append(machine)
+            machines[pid] = machine
 
     return machines
 # END expand_machine_type()
@@ -211,21 +211,21 @@ def install_slurm_conf():
     conf = conf_resp.format(**conf_options)
 
     static_nodes = []
-    for i, machine in enumerate(machines):
-        part = cfg.partitions[i]
+    for i, (pid, machine) in enumerate(machines.items()):
+        part = cfg.instance_types[pid]
         static_range = ''
         if part.static_node_count:
             if part.static_node_count > 1:
-                static_range = '{}-{}-[0-{}]'.format(
-                    cfg.compute_node_prefix, i, part.static_node_count - 1)
+                static_range = '{}-[0-{}]'.format(
+                    pid, part.static_node_count - 1)
             else:
-                static_range = f"{cfg.compute_node_prefix}-{i}-0"
+                static_range = f"{pid}-0"
 
         cloud_range = ""
         if (part.max_node_count and
                 (part.max_node_count != part.static_node_count)):
-            cloud_range = "{}-{}-[{}-{}]".format(
-                cfg.compute_node_prefix, i, part.static_node_count,
+            cloud_range = "{}-[{}-{}]".format(
+                pid, part.static_node_count,
                 part.max_node_count - 1)
 
         conf += ("NodeName=DEFAULT "
@@ -245,14 +245,14 @@ def install_slurm_conf():
         if cloud_range:
             conf += f"NodeName={cloud_range} State=CLOUD{gres}\n"
 
-        # Partitions
-        part_nodes = f'-{i}-[0-{part.max_node_count - 1}]'
+        # instance_types
+        part_nodes = f'{pid}-[0-{part.max_node_count - 1}]'
 
         def_mem_per_cpu = max(100, machine['memory'] // machine['cpus'])
 
-        conf += ("PartitionName={} Nodes={}-compute{} MaxTime=INFINITE "
+        conf += ("PartitionName={} Nodes={} MaxTime=INFINITE "
                  "State=UP DefMemPerCPU={} LLN=yes"
-                 .format(part.name, cfg.cluster_name, part_nodes,
+                 .format(part.name, part_nodes,
                          def_mem_per_cpu))
 
         # First partition specified is treated as the default partition
@@ -308,17 +308,16 @@ def install_cgroup_conf():
     conf_file.write_text(conf)
     shutil.chown(conf_file, user='slurm', group='slurm')
 
-    gpu_parts = [(i, x) for i, x in enumerate(cfg.partitions)
-                 if x.gpu_count]
     gpu_conf = ""
-    for i, part in gpu_parts:
+    for pid, part in cfg.instance_types.items():
+        if not part.gpu_count:
+            continue
         driver_range = '0'
         if part.gpu_count > 1:
             driver_range = '[0-{}]'.format(part.gpu_count-1)
 
-        gpu_conf += ("NodeName={}-{}-[0-{}] Name=gpu File=/dev/nvidia{}\n"
-                     .format(cfg.compute_node_prefix, i,
-                             part.max_node_count - 1, driver_range))
+        gpu_conf += ("NodeName={}-[0-{}] Name=gpu File=/dev/nvidia{}\n"
+                     .format(pid, part.max_node_count - 1, driver_range))
     if gpu_conf:
         (slurmdirs.etc/'gres.conf').write_text(gpu_conf)
 # END install_cgroup_conf()
@@ -396,7 +395,7 @@ def prepare_network_mounts(hostname, instance_type):
 
     if instance_type == 'compute':
         pid = util.get_pid(hostname)
-        mounts.update(listtodict(cfg.partitions[pid].network_storage))
+        mounts.update(listtodict(cfg.instance_types[pid].network_storage))
     else:
         # login_network_storage is mounted on controller and login instances
         mounts.update(listtodict(cfg.login_network_storage))
@@ -492,10 +491,10 @@ def setup_nfs_exports():
     # switch the key to remote mount path since that is what needs exporting
     _, con_mounts = prepare_network_mounts(cfg.hostname, cfg.instance_type)
     con_mounts = {m.remote_mount: m for m in con_mounts.values()}
-    for i, _ in enumerate(cfg.partitions):
+    for pid, _ in cfg.instance_types.items():
         # get internal mounts for each partition by calling
         # prepare_network_mounts as from a node in each partition
-        _, part_mounts = prepare_network_mounts(f'compute-{i}-n', 'compute')
+        _, part_mounts = prepare_network_mounts(f'{pid}-n', 'compute')
         part_mounts = {m.remote_mount: m for m in part_mounts.values()}
         con_mounts.update(part_mounts)
 
@@ -579,12 +578,12 @@ def remove_startup_scripts():
         util.run("{} {}-login{} --zone={} --keys={}"
                  .format(cmd, cfg.cluster_name, i, cfg.zone, common_keys))
     # computes
-    for i, part in enumerate(cfg.partitions):
+    for pid, part in cfg.instance_types.items():
         if not part.static_node_count:
             continue
         for j in range(part.static_node_count):
-            util.run("{} {}-{}-{} --zone={} --keys={}"
-                     .format(cmd, cfg.compute_node_prefix, i, j,
+            util.run("{} {}-{} --zone={} --keys={}"
+                     .format(cmd, pid, j,
                              part.zone, compute_keys))
 # END remove_startup_scripts()
 
