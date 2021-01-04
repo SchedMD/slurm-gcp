@@ -226,7 +226,7 @@ def install_slurmlog_conf():
 
 def install_lustre():
     """ Install lustre client drivers """
-    lustre_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7.7.1908/client/RPMS/x86_64/'
+    lustre_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/RPMS/x86_64/'
     lustre_tmp = Path('/tmp/lustre')
     lustre_tmp.mkdir(parents=True)
     util.run('yum update -y')
