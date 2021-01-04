@@ -172,9 +172,9 @@ class NSDict(OrderedDict):
 
     def __init__(self, *args, **kwargs):
         def from_nested(value):
-            """ If value is dict, convert to Config. Also recurse lists. """
+            """ If value is dict, convert to NSDict. Also recurse lists. """
             if isinstance(value, dict):
-                return Config({k: from_nested(v) for k, v in value.items()})
+                return NSDict({k: from_nested(v) for k, v in value.items()})
             elif isinstance(value, list):
                 return [from_nested(v) for v in value]
             else:
