@@ -639,6 +639,7 @@ def setup_controller():
         setup_secondary_disks()
     setup_network_storage()
     mount_fstab()
+    util.run("systemctl restart munge")
 
     try:
         util.run(str(dirs.scripts/'slurm/scripts/custom-controller-install'))
@@ -689,6 +690,7 @@ def setup_login():
     """ run login node setup """
     setup_network_storage()
     mount_fstab()
+    util.run("systemctl restart munge")
 
     try:
         util.run(str(dirs.scripts/'slurm/scripts/custom-compute-install'))
@@ -705,6 +707,7 @@ def setup_compute():
     mount_fstab()
 
     setup_slurmd_cronjob()
+    util.run("systemctl restart munge")
     util.run("systemctl enable slurmd")
     util.run("systemctl start slurmd")
 

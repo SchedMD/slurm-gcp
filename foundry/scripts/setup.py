@@ -347,7 +347,6 @@ def install_packages():
     install_slurmlog_conf()
 
     util.run("systemctl enable stackdriver-agent google-fluentd")
-    util.run("systemctl start stackdriver-agent google-fluentd")
 
 
 def setup_munge():
@@ -375,7 +374,6 @@ WantedBy=multi-user.target
 
     util.run("systemctl enable munge")
     util.run('create-munge-key -f')
-    util.run("systemctl start munge")
 
 
 def install_slurm():
