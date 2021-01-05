@@ -370,6 +370,7 @@ properties:
       - name
       - max_node_count
       optional :
+      - image_hyperthreads
       - compute_disk_type
       - compute_disk_size_gb
       - compute_labels
@@ -384,6 +385,11 @@ properties:
 
         image:
           type      : string
+          description : Image with Slurm to use for this partition's compute nodes
+
+        image_hyperthreads:
+          type      : string
+          default   : true
           description : Image with Slurm to use for this partition's compute nodes
 
         machine_type:

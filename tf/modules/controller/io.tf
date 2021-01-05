@@ -135,6 +135,7 @@ variable "partitions" {
     max_node_count       = number,
     zone                 = string,
 	image				 = string,
+    image_hyperthreads   = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,

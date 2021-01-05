@@ -178,7 +178,8 @@ def expand_machine_type():
                 project=cfg.project, zone=part.zone,
                 machineType=part.machine_type).execute()
             if type_resp:
-                machine['cpus'] = type_resp['guestCpus']
+                cpus = type_resp['guestCpus']
+                machine['cpus'] = cpus // (1 if part.image_hyperthreads else 2)
 
                 # Because the actual memory on the host will be different than
                 # what is configured (e.g. kernel will take it). From

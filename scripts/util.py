@@ -240,7 +240,7 @@ class Config(NSDict):
 
     def save_config(self, path):
         save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
-        Path(path).write_text(yaml.dump(save_dict, Dumper=self.Dumper))
+        Path(path).write_text(yaml.dump(save_dict, Dumper=Dumper))
 
     @cached_property
     def instance_type(self):
@@ -261,18 +261,20 @@ class Config(NSDict):
         """ only called if item is not found in self """
         return None
 
-    class Dumper(yaml.SafeDumper):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.add_representer(Config, self.represent_config)
-            self.add_multi_representer(Path, self.represent_path)
 
-        @staticmethod
-        def represent_config(dumper, data):
-            return dumper.represent_mapping('tag:yaml.org,2002:map',
-                                            data.items())
+class Dumper(yaml.SafeDumper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_representer(Config, self.represent_nsdict)
+        self.add_representer(NSDict, self.represent_nsdict)
+        self.add_multi_representer(Path, self.represent_path)
 
-        @staticmethod
-        def represent_path(dumper, path):
-            return dumper.represent_scalar('tag:yaml.org,2002:str',
-                                           str(path))
+    @staticmethod
+    def represent_nsdict(dumper, data):
+        return dumper.represent_mapping('tag:yaml.org,2002:map',
+                                        data.items())
+
+    @staticmethod
+    def represent_path(dumper, path):
+        return dumper.represent_scalar('tag:yaml.org,2002:str',
+                                       str(path))
