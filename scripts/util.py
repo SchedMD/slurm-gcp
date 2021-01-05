@@ -174,7 +174,7 @@ class NSDict(OrderedDict):
         def from_nested(value):
             """ If value is dict, convert to NSDict. Also recurse lists. """
             if isinstance(value, dict):
-                return NSDict({k: from_nested(v) for k, v in value.items()})
+                return type(self)({k: from_nested(v) for k, v in value.items()})
             elif isinstance(value, list):
                 return [from_nested(v) for v in value]
             else:
