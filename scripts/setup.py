@@ -132,18 +132,7 @@ SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
 
 def start_motd():
     """ advise in motd that slurm is currently configuring """
-    msg = MOTD_HEADER + """
-*** Slurm is currently being installed/configured in the background. ***
-A terminal broadcast will announce when installation and configuration is
-complete.
-
-Partitions will be marked down until the compute image has been created.
-For instances with gpus attached, it could take ~10 mins after the controller
-has finished installing.
-
-"""
-
-    Path('/etc/motd').write_text(msg)
+    Path('/etc/motd').write_text(MOTD_HEADER)
 # END start_motd()
 
 
@@ -154,7 +143,7 @@ def end_motd(broadcast=True):
     if not broadcast:
         return
 
-    util.run("wall -n '*** Slurm {} daemon installation complete ***'"
+    util.run("wall -n '*** Slurm {} setup complete ***'"
              .format(cfg.instance_type))
 # END start_motd()
 
