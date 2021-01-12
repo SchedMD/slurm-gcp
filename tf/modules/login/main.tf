@@ -14,7 +14,6 @@
 # limitations under the License.
 
 locals {
-  compute_node_prefix = "${var.cluster_name}-compute"
 }
 
 resource "google_compute_instance" "login_node" {
@@ -77,7 +76,6 @@ EOF
     config = <<EOF
 ${jsonencode({
     cluster_name              = var.cluster_name,
-    compute_node_prefix       = local.compute_node_prefix,
     controller_secondary_disk = var.controller_secondary_disk,
     munge_key                 = var.munge_key,
     login_network_storage     = var.login_network_storage

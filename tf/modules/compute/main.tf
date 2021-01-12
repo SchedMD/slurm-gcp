@@ -14,12 +14,10 @@
 # limitations under the License.
 
 locals {
-  compute_node_prefix = "${var.cluster_name}-compute"
-
   static_list = flatten([
     for pid in range(length(var.partitions)) : [
       for n in range(var.partitions[pid].static_node_count) : {
-        name           = "${local.compute_node_prefix}-${pid}-${n}"
+		name		   = "${var.cluster_name}-compute-${pid}-${n}"
         boot_disk_size = var.partitions[pid].compute_disk_size_gb
         boot_disk_type = var.partitions[pid].compute_disk_type
 		image		   = var.partitions[pid].image
@@ -110,7 +108,6 @@ EOF
     config = <<EOF
 ${jsonencode({
     cluster_name              = var.cluster_name,
-    compute_node_prefix       = local.compute_node_prefix,
     controller_secondary_disk = var.controller_secondary_disk,
     munge_key                 = var.munge_key,
     network_storage           = var.network_storage

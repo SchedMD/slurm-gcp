@@ -199,7 +199,6 @@ class Config(NSDict):
                    'cluster_name',
                    'external_compute_ips',
                    'shared_vpc_host_project',
-                   'compute_node_prefix',
                    'compute_node_service_account',
                    'compute_node_scopes',
                    'slurm_cmd_path',

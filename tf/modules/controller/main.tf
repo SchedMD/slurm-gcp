@@ -15,7 +15,6 @@
 
 locals {
   controller_name = "${var.cluster_name}-controller"
-  compute_node_prefix = "${var.cluster_name}-compute"
 }
 
 resource "google_compute_disk" "secondary" {
@@ -93,7 +92,6 @@ EOF
 ${jsonencode({
     cloudsql                     = var.cloudsql
     cluster_name                 = var.cluster_name,
-    compute_node_prefix          = local.compute_node_prefix,
     compute_node_scopes          = var.compute_node_scopes,
     compute_node_service_account = var.compute_node_service_account,
     controller_secondary_disk    = var.secondary_disk,
