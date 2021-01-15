@@ -49,7 +49,7 @@ log = logging.getLogger(Path(__file__).name)
 sys.excepthook = util.handle_exception
 
 new_yaml = Path(__file__).with_name('config.yaml.new')
-if not cfg.partitions and not new_yaml.exists():
+if (not cfg.instance_defs or cfg.partitions) and not new_yaml.exists():
     log.info(f"partition declarations in config.yaml have been converted to a new format and saved to {new_yaml}. Replace config.yaml as soon as possible.")
     cfg.save_config(new_yaml)
 
