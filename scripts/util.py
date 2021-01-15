@@ -207,7 +207,7 @@ class Config(NSDict):
                    'update_node_addrs',
                    'network_storage',
                    'login_network_storage',
-                   'instance_types',
+                   'instance_defs',
                    )
     PROPERTIES = (*SAVED_PROPS,
                   'munge_key',
@@ -228,7 +228,7 @@ class Config(NSDict):
         # If k is ever not found, None will be inserted as the value
         cfg = cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
         if cfg.partitions:
-            cfg['instance_types'] = NSDict({
+            cfg['instance_defs'] = NSDict({
                 f'{cfg.cluster_name}-compute-{pid}': part
                 for pid, part in enumerate(cfg.partitions)
             })
@@ -246,7 +246,7 @@ class Config(NSDict):
 
     def save_config(self, path):
         save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
-        for instance_type in save_dict.instance_types.values():
+        for instance_type in save_dict.instance_defs.values():
             instance_type.pop('max_node_count', 0)
             instance_type.pop('name', 0)
             instance_type.pop('static_node_count', 0)

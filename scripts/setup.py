@@ -151,7 +151,7 @@ def end_motd(broadcast=True):
 def have_gpus(hostname):
     """ return whether given compute node has gpus """
     pid = util.get_pid(hostname)
-    return cfg.instance_types[pid].gpu_count > 0
+    return cfg.instance_defs[pid].gpu_count > 0
 # END have_gpus()
 
 
@@ -160,7 +160,7 @@ def expand_machine_type():
     machines = {}
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
-    for pid, part in cfg.instance_types.items():
+    for pid, part in cfg.instance_defs.items():
         machine = {'cpus': 1, 'memory': 1}
         try:
             type_resp = compute.machineTypes().get(
@@ -212,7 +212,7 @@ def install_slurm_conf():
 
     static_nodes = []
     for i, (pid, machine) in enumerate(machines.items()):
-        part = cfg.instance_types[pid]
+        part = cfg.instance_defs[pid]
         static_range = ''
         if part.static_node_count:
             if part.static_node_count > 1:
@@ -245,7 +245,7 @@ def install_slurm_conf():
         if cloud_range:
             conf += f"NodeName={cloud_range} State=CLOUD{gres}\n"
 
-        # instance_types
+        # instance_defs
         part_nodes = f'{pid}-[0-{part.max_node_count - 1}]'
 
         def_mem_per_cpu = max(100, machine['memory'] // machine['cpus'])
@@ -309,7 +309,7 @@ def install_cgroup_conf():
     shutil.chown(conf_file, user='slurm', group='slurm')
 
     gpu_conf = ""
-    for pid, part in cfg.instance_types.items():
+    for pid, part in cfg.instance_defs.items():
         if not part.gpu_count:
             continue
         driver_range = '0'
@@ -395,7 +395,7 @@ def prepare_network_mounts(hostname, instance_type):
 
     if instance_type == 'compute':
         pid = util.get_pid(hostname)
-        mounts.update(listtodict(cfg.instance_types[pid].network_storage))
+        mounts.update(listtodict(cfg.instance_defs[pid].network_storage))
     else:
         # login_network_storage is mounted on controller and login instances
         mounts.update(listtodict(cfg.login_network_storage))
@@ -491,7 +491,7 @@ def setup_nfs_exports():
     # switch the key to remote mount path since that is what needs exporting
     _, con_mounts = prepare_network_mounts(cfg.hostname, cfg.instance_type)
     con_mounts = {m.remote_mount: m for m in con_mounts.values()}
-    for pid, _ in cfg.instance_types.items():
+    for pid, _ in cfg.instance_defs.items():
         # get internal mounts for each partition by calling
         # prepare_network_mounts as from a node in each partition
         _, part_mounts = prepare_network_mounts(f'{pid}-n', 'compute')
@@ -578,7 +578,7 @@ def remove_startup_scripts():
         util.run("{} {}-login{} --zone={} --keys={}"
                  .format(cmd, cfg.cluster_name, i, cfg.zone, common_keys))
     # computes
-    for pid, part in cfg.instance_types.items():
+    for pid, part in cfg.instance_defs.items():
         if not part.static_node_count:
             continue
         for j in range(part.static_node_count):
