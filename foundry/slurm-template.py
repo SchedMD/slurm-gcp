@@ -3,6 +3,7 @@ import yaml
 import io
 import zipfile as zf
 import base64
+from datetime import datetime, timezone
 
 
 def compress(name, text):
@@ -31,6 +32,7 @@ properties:
   serviceAccounts:
   - email: default
     scopes: ['https://www.googleapis.com/auth/cloud-platform']
+  labels: {{}}
   metadata:
     items: []
 """
@@ -67,14 +69,15 @@ def generate_config(context):
 
     dep_name = context.env['name']
     project = context.env['project']
-    os_images = {
-        im['name']:
-            (im['image'], str(im.get('slurm_version', props['slurm_version'])))
+    image_specs = {
+        im['base']: im
         for im in props['images']
     }
     meta = {k: context.imports[v] for k, v in meta_imports.items()}
     meta['enable-oslogin'] = 'TRUE'
     meta['libjwt_version'] = props['libjwt_version']
+    meta['ompi_version'] = props['ompi_version']
+    meta['slurm_version'] = slurm_version = props['slurm_version']
     # 'VmDnsSetting': 'GlobalOnly',
 
     resources = []
@@ -86,22 +89,36 @@ def generate_config(context):
     })
     resources.append(yaml.safe_load(router))
 
-    for os_name, (image, slurm_version) in os_images.items():
+    for base, spec in image_specs.items():
+        image = spec['base_image']
+
+        # Use provided name formats to determine image name and family
+        keywords = {
+            'base': base,
+            'major': ''.join(slurm_version.split('.')[:2]),
+            'minor': slurm_version.replace('.', ''),
+            'tag': "{:%Y-%m-%d-%H%M%S}".format(datetime.now(timezone.utc)),
+        }
+        family_format = spec['family'] or props['image_family']
+        name_format = spec['name'] or props['image_name']
+
+        image_family = family_format.format(**keywords)
+        keywords['image_family'] = image_family
+        image_name = name_format.format(**keywords)
+        meta['image_name'] = image_name
+
+        packages = spec['packages'] or f'scripts/{base}-packages'
+        meta['packages'] = context.imports[packages]
+
         # Insert properties into yaml for conversion to resources dict
         vm_config = {
-            'name': 'schedmd-slurm{vers}-{os_name}'.format(
-                os_name=os_name,
-                vers=slurm_version.replace('.', '')),
+            'name': image_family,
             'machine_type': props['machine_type'],
             'zone': props['zone'],
             'image': image,
         }
 
         res = yaml.safe_load(vm_yaml.format(**vm_config))
-        # meta['config'] = yaml.safe_dump(res)
-
-        meta['packages'] = context.imports['scripts/{os_name}-packages'.format(os_name=os_name)]
-        meta['slurm_version'] = slurm_version
 
         # Insert metadata directly into resources dict
         res['properties']['metadata']['items'] = (

@@ -63,17 +63,23 @@ class Config(util.NSDict):
     def __init__(self, *args, **kwargs):
         super(Config, self).__init__(*args, **kwargs)
 
+    @staticmethod
+    def _prop_from_meta(item):
+        return yaml.safe_load(util.get_metadata(f'attributes/{item}'))
+
     @cached_property
     def slurm_version(self):
         # match 'b:<branch_name>' or eg. '20.02-latest', '20.02.0', '20.02.0-1'
         #patt = re.compile(r'(b:\S+)|((\d+[\.-])+\w+)')
-        vers = yaml.safe_load(util.get_metadata('attributes/slurm_version'))
-        return vers
+        return self._prop_from_meta('slurm_version')
 
     @cached_property
     def libjwt_version(self):
-        vers = yaml.safe_load(util.get_metadata('attributes/libjwt_version'))
-        return vers
+        return self._prop_from_meta('libjwt_version')
+
+    @cached_property
+    def ompi_version(self):
+        return self._prop_from_meta('ompi_version')
 
     @cached_property
     def zone(self):
@@ -630,7 +636,7 @@ def main():
     setup_modules()
 
     install_slurm()
-    #install_ompi()
+    install_ompi()
 
     install_controller_service_scripts()
     install_compute_service_scripts()

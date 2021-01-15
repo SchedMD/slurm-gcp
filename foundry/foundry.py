@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 
+import argparse
 import logging
-import re
 import shlex
 import subprocess as sp
-import sys
 import time
 import yaml
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
 
 from googleapiclient import discovery
 
 
 log = logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='')
 
 
 def run(cmd, wait=0, quiet=False, get_stdout=False,
@@ -33,66 +31,158 @@ def run(cmd, wait=0, quiet=False, get_stdout=False,
     return ret
 
 
+def gcloud_dm(cmd, *args, **kwargs):
+    return run(f"gcloud deployment-manager {cmd}", *args, **kwargs)
+
+
 project = run("gcloud config list --format='value(core.project)'",
               get_stdout=True, quiet=True).stdout.rstrip()
 
 
+def wait_for_stop(instance, zone, timeout=20):
+    """ Wait for instance to stop, timeout in minutes """
+    compute = discovery.build('compute', 'v1', cache_discovery=False)
+    log.info(f"waiting for {instance} to stop")
+    interval = 10
+    attempts = (timeout * 60) // interval
+    while True:
+        resp = compute.instances().get(
+            project=project,
+            zone=zone,
+            fields='status',
+            instance=instance).execute()
+        if resp['status'] == 'TERMINATED':
+            break
+        time.sleep(interval)
+        attempts -= 1
+        if attempts <= 0:
+            log.info(f"Timed out waiting for instance to stop: {instance}")
+            return False
+    return True
+
+
 def create_images(instances):
     
-    def create_image(instance, zone):
+    def create_image(instance, image_name, zone):
         log.info(f"... waiting to create image for {instance}")
-        compute = discovery.build('compute', 'v1', cache_discovery=False)
-        attempts = 0
-        while True:
-            resp = compute.instances().get(
-                project=project,
-                zone=zone,
-                fields='status',
-                instance=instance).execute()
-            if resp['status'] == 'TERMINATED':
-                break
-            time.sleep(15)
-            attempts += 1
-            if attempts > 120:
-                print(f"Timed out waiting for instance to stop: {instance}")
-                return False
-        gimages = "gcloud compute images"
-        ver = datetime.now(timezone.utc)
+        if not wait_for_stop(instance, zone):
+            return False
         try:
-            run(f"{gimages} create {instance}-{ver:%Y-%m-%d-%H%M%S} --source-disk {instance}"
-                f" --source-disk-zone {zone} --force --family {instance} --quiet", check=True)
-            #run(f"gcloud compute instances delete {instance} --zone {zone} --quiet", check=True)
+            run(f"gcloud compute images create {image_name} --source-disk {instance}"
+                f" --source-disk-zone {zone} --force --family {instance} --quiet",
+                check=True)
         except sp.CalledProcessError:
             return False
         return True
 
     with ThreadPoolExecutor() as exe:
-        results = exe.map(lambda it: create_image(*it), instances.items())
+        results = exe.map(lambda inst: create_image(**inst), instances.values())
     # return True if all images successfully created
     return all(results)
 
 
-def main(dep_name='slurm-image-foundry'):
+def read_instances(dep_name):
+    """ Get instances from the deployment """
+    res = gcloud_dm("resources list "
+                    f"--deployment={dep_name} "
+                    "--filter='type=compute.v1.instance' "
+                    "--format='yaml(name,properties)'",
+                    get_stdout=True, check=True).stdout
 
-    depman = "gcloud deployment-manager"
-    run(f"{depman} deployments create {dep_name} --config slurm-cluster.yaml")
+    # load all the properties from the yaml text it comes as
+    instance_list = [
+        {
+            'name': inst['name'],
+            'properties': yaml.safe_load(inst['properties']),
+        } for inst in yaml.safe_load_all(res)
+    ]
+    # get zone and image_name from properties
+    # getting from metadata requires a search because it's a list of key-value
+    # pairs
+    instances = {
+        el['name']: dict(
+            instance=el['name'],
+            image_name=next(m for m in el['properties']['metadata']['items']
+                            if m['key'] == 'image_name')['value'],
+            zone=el['properties']['zone'],
+        ) for el in instance_list
+    }
+    log.info(
+        *("{instance}: {zone}, {image_name}".format(**inst)
+            for inst in instances.values()),
+        sep='\n',
+    )
+    return instances
 
-    res = run(f"{depman} resources list --deployment={dep_name} --format='yaml(name,type,url)'",
-              get_stdout=True)
-    # extract zone from resource url
-    zone_patt = re.compile(r'^https:.+zones\/(.+?)\/.+$')
-    instance_list = yaml.safe_load_all(res.stdout)
-    print(instance_list)
-    instances = {el['name']: zone_patt.match(el['url'])[1] for el in instance_list
-                 if el['type'].endswith('instance')}
-    print(instances)
-    if create_images(instances):
-        run(f"{depman} deployments remove {dep_name}")
+
+def main(dep_name='slurm-image-foundry', cleanup=True, force=False,
+         resume=False, pause=False):
+
+    existing = gcloud_dm("deployments list "
+                         f"--filter='name ~ ^{dep_name}$' "
+                         "--format='value(name)'",
+                         get_stdout=True, check=True).stdout
+    if existing:
+        log.info(f"{dep_name} deployment found,", end='')
+        if resume:
+            log.info(" resuming image creation")
+        elif force:
+            log.info(" deleting")
+            gcloud_dm(f"deployments delete {dep_name}", check=True)
+        else:
+            log.info(" aborting")
+            return
+    elif resume:
+        log.error(f"{dep_name} deployment not found, cannot resume")
+        return
+
+    if not resume:
+        gcloud_dm(f"deployments create {dep_name} --config slurm-cluster.yaml")
+
+    instances = read_instances(dep_name)
+
+    if pause:
+        with ThreadPoolExecutor() as exe:
+            exe.map(lambda inst: wait_for_stop(inst['instance'], inst['zone']),
+                    instances.values())
+
+    if create_images(instances) and cleanup:
+        gcloud_dm(f"deployments delete {dep_name}", check=True)
+
+
+OPTIONS = (
+    ('dep_name',
+     dict(metavar='deployment', action='store', nargs='?', default='slurm-image-foundry',
+          help="Name of the deployment to be created to manage the foundry instances")),
+    ('--force', '-f',
+     dict(dest='force', action='store_true',
+          help="delete existing deployments of the same name first")),
+    ('--no-cleanup', '-c',
+     dict(dest='cleanup', action='store_false',
+          help="Delete the deployment at the end if all images were successfully created")),
+    ('--resume', '-r',
+     dict(dest='resume', action='store_true',
+          help="Create images from whatever instances are in the existing deployment")),
+    ('--pause', '-p',
+     dict(dest='pause', action='store_true',
+          help="Do not create images from the instances to allow for customizations")),
+)
 
 
 if __name__ == '__main__':
-    name = sys.argv[1] if len(sys.argv) > 1 else None
-    if name:
-        main(name)
-    else:
-        main()
+    parser = argparse.ArgumentParser(
+        description="Slurm Image Foundry"
+    )
+    for x in OPTIONS:
+        parser.add_argument(*x[:-1], **x[-1])
+    args = parser.parse_args()
+    if args.force and args.resume:
+        log.error("Invalid options")
+        exit(1)
+    if args.resume and args.pause:
+        log.erro("Invalid options")
+        exit(1)
+    if args.pause and args.cleanup:
+        log.info("pause requires no-cleanup")
+        args.cleanup = False
+    main(**vars(args))

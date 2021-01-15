@@ -17,46 +17,32 @@
 
 imports:
 - path: slurm-template.py
-- path: scripts/centos7-packages
-- path: scripts/hpc-centos7-packages
-- path: scripts/centos8-packages
-- path: scripts/debian10-packages
-- path: scripts/ubuntu2004-packages
+- path: &centos7 scripts/centos7-packages
+- path: &centos8 scripts/centos8-packages
+- path: &debian10 scripts/debian10-packages
+- path: &ubuntu2004 scripts/ubuntu2004-packages
 
 resources:
 - name: slurm-images
   type: slurm-template.py
   properties:
-    zone: &zone us-central1-a
-    machine_type: &machine_type
+    zone: us-west1-b
+    machine_type:
       zones/us-central1-a/machineTypes/n1-standard-8
+    image_family: "schedmd-slurm{major}-{base}"
+    image_name: "schedmd-slurm{minor}-{base}-{tag}"
     slurm_version: 20.11.2
     libjwt_version: v1.12.0
+    ompi_version: v4.1.x
     images:
-    - name: centos7
-      image: projects/centos-cloud/global/images/family/centos-7
-#    - name: hpc-centos7
-#      image: projects/cloud-hpc-image-public/global/images/hpc-centos-7-v20200819
-    - name: centos8
-      image: projects/centos-cloud/global/images/family/centos-8
-    - name: debian10
-      image: projects/debian-cloud/global/images/family/debian-10
-    - name: ubuntu2004
-      image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
-
-
-#- name: debian9
-#  type: slurm-template.py
-#  properties:
-#    os_name: debian9
-#    image: projects/debian-cloud/global/images/family/debian-9
-#    zone: *zone
-#    machine_type: *machine_type
-#
-#- name: debian10
-#  type: slurm-template.py
-#  properties:
-#    os_name: debian10
-#    image: projects/debian-cloud/global/images/family/debian-9
-#    zone: *zone
-#    machine_type: *machine_type
+    - base: centos7
+      base_image: projects/centos-cloud/global/images/family/centos-7
+    - base: hpc-centos7
+      base_image: projects/cloud-hpc-image-public/global/images/hpc-centos-7-v20200819
+      packages: *centos7
+    #- key: centos8
+    #  base_image: projects/centos-cloud/global/images/family/centos-8
+    #- key: debian10
+    #  base_image: projects/debian-cloud/global/images/family/debian-10
+    #- key: ubuntu2004
+    #  base_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
