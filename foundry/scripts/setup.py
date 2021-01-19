@@ -593,18 +593,21 @@ def install_ompi():
     """ compile and install OMPI """
 
     ompi_git = "https://github.com/open-mpi/ompi.git"
-    ompi_path = dirs.apps/'ompi'/cfg.ompi_version/'src'
+    ompi_path = (dirs.apps/'ompi')/cfg.ompi_version
     ompi_path.mkdir(parents=True, exist_ok=True)
-    util.run(f"git clone --single-branch --depth 1 -b {cfg.ompi_version} {ompi_git} {ompi_path}")
-    with cd(ompi_path):
+
+    ompi_tmp = Path('/tmp/ompi')
+    ompi_tmp.mkdir(parents=True, exist_ok=True)
+    util.run(f"git clone --single-branch --depth 1 -b {cfg.ompi_version} {ompi_git} {ompi_tmp/'src'}")
+    with cd(ompi_tmp/'src'):
         util.run("./autogen.pl", stdout=DEVNULL)
 
-    build_path = ompi_path/'build'
+    build_path = ompi_tmp/'build'
     build_path.mkdir(parents=True, exist_ok=True)
     with cd(build_path):
         util.run(
-            f"../configure --prefix={dirs.apps}/ompi/{cfg.ompi_version} "
-            f"--with-pmi={dirs.apps}/slurm/current --with-libevent=/usr "
+            f"../configure --prefix={ompi_path} "
+            f"--with-pmi={dirs.install} --with-libevent=/usr "
             "--with-hwloc=/usr", stdout=DEVNULL)
         util.run("make -j install", stdout=DEVNULL)
 
