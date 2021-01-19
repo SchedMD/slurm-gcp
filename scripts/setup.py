@@ -53,7 +53,7 @@ spec.loader.exec_module(util)
 cd = util.cd  # import util.cd into local namespace
 NSDict = util.NSDict
 
-util.config_root_logger(file='/tmp/setup.log')
+util.config_root_logger(logfile='/tmp/setup.log')
 log = logging.getLogger(Path(__file__).name)
 sys.excepthook = util.handle_exception
 

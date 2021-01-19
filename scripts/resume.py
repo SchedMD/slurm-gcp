@@ -44,7 +44,7 @@ instances = {}
 operations = {}
 retry_list = []
 
-util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
+util.config_root_logger(level='DEBUG', util_level='ERROR', logfile=LOGFILE)
 log = logging.getLogger(Path(__file__).name)
 sys.excepthook = util.handle_exception
 

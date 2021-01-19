@@ -37,7 +37,7 @@ TOT_REQ_CNT = 1000
 
 retry_list = []
 
-util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
+util.config_root_logger(level='DEBUG', util_level='ERROR', logfile=LOGFILE)
 log = logging.getLogger(Path(__file__).name)
 
 if cfg.google_app_cred_path:

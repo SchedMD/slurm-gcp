@@ -21,7 +21,7 @@ import subprocess
 import sys
 import socket
 import time
-from itertools import chain
+from itertools import chain, compress
 from pathlib import Path
 from contextlib import contextmanager
 from collections import OrderedDict
@@ -33,10 +33,13 @@ import yaml
 log = logging.getLogger(__name__)
 
 
-def config_root_logger(level='DEBUG', util_level=None, file=None):
+def config_root_logger(level='DEBUG', util_level=None,
+                       stdout=True, logfile=None):
     if not util_level:
         util_level = level
-    handler = 'file_handler' if file else 'stdout_handler'
+    handlers = list(compress(('stdout_handler', 'file_handler'),
+                             (stdout, logfile)))
+
     config = {
         'version': 1,
         'disable_existing_loggers': True,
@@ -58,7 +61,7 @@ def config_root_logger(level='DEBUG', util_level=None, file=None):
         },
         'loggers': {
             '': {
-                'handlers': [handler],
+                'handlers': handlers,
                 'level': level,
             },
             __name__: {  # enable util.py logging
@@ -66,12 +69,12 @@ def config_root_logger(level='DEBUG', util_level=None, file=None):
             }
         },
     }
-    if file:
+    if logfile:
         config['handlers']['file_handler'] = {
             'level': 'DEBUG',
             'formatter': 'stamp',
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': file,
+            'filename': logfile,
         }
     logging.config.dictConfig(config)
 
