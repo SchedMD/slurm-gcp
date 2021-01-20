@@ -108,9 +108,8 @@ def read_instances(dep_name):
         ) for el in instance_list
     }
     log.info(
-        *("{instance}: {zone}, {image_name}".format(**inst)
-            for inst in instances.values()),
-        sep='\n',
+        '\n'.join("{instance}: {zone}, {image_name}".format(**inst)
+                  for inst in instances.values()),
     )
     return instances
 
@@ -123,14 +122,14 @@ def main(dep_name='slurm-image-foundry', cleanup=True, force=False,
                          "--format='value(name)'",
                          get_stdout=True, check=True).stdout
     if existing:
-        log.info(f"{dep_name} deployment found,", end='')
+        log.info(f"{dep_name} deployment found,")
         if resume:
-            log.info(" resuming image creation")
+            log.info("\tresuming image creation")
         elif force:
-            log.info(" deleting")
-            gcloud_dm(f"deployments delete {dep_name}", check=True)
+            log.info("\tdeleting")
+            gcloud_dm(f"\tdeployments delete {dep_name}", check=True)
         else:
-            log.info(" aborting")
+            log.info("\taborting")
             return
     elif resume:
         log.error(f"{dep_name} deployment not found, cannot resume")
