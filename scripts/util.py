@@ -249,10 +249,11 @@ class Config(NSDict):
 
     def save_config(self, path):
         save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
-        for instance_type in save_dict.instance_defs.values():
-            instance_type.pop('max_node_count', 0)
-            instance_type.pop('name', 0)
-            instance_type.pop('static_node_count', 0)
+        if save_dict.instance_defs:
+            for instance_type in save_dict.instance_defs.values():
+                instance_type.pop('max_node_count', 0)
+                instance_type.pop('name', 0)
+                instance_type.pop('static_node_count', 0)
         Path(path).write_text(yaml.dump(save_dict, Dumper=Dumper))
 
     @cached_property
