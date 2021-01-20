@@ -91,6 +91,8 @@ def generate_config(context):
 
     for base, spec in image_specs.items():
         image = spec['base_image']
+        zone = props['zone']
+        machine_type = props['machine_type']
 
         # Use provided name formats to determine image name and family
         keywords = {
@@ -113,7 +115,7 @@ def generate_config(context):
         # Insert properties into yaml for conversion to resources dict
         vm_config = {
             'name': image_family,
-            'machine_type': props['machine_type'],
+            'machine_type': f"zones/{zone]}/machineTypes/{machine_type}",
             'zone': props['zone'],
             'image': image,
         }
