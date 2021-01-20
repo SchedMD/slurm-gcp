@@ -276,9 +276,9 @@ variable "zone" {
 }
 
 output "controller_network_ips" {
-  value = "${module.slurm_cluster_controller.instance_network_ips}"
+  value = module.slurm_cluster_controller.instance_network_ips
 }
 
 output "login_network_ips" {
-  value = "${module.slurm_cluster_login.instance_network_ips}"
+  value = module.slurm_cluster_login.instance_network_ips
 }
