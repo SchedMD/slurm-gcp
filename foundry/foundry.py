@@ -39,7 +39,7 @@ project = run("gcloud config list --format='value(core.project)'",
               get_stdout=True, quiet=True).stdout.rstrip()
 
 
-def wait_for_stop(instance, zone, timeout=20):
+def wait_for_stop(instance, zone, timeout=30):
     """ Wait for instance to stop, timeout in minutes """
     compute = discovery.build('compute', 'v1', cache_discovery=False)
     log.info(f"waiting for {instance} to stop")
