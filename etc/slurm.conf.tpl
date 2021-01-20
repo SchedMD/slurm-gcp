@@ -38,7 +38,7 @@ MpiDefault={mpi_default}
 #PluginDir=
 #PlugStackConfig=
 #PrivateData=jobs
-LaunchParameters=send_gids,enable_nss_slurm
+LaunchParameters=enable_nss_slurm,use_interactive_step
 
 # Always show cloud nodes. Otherwise cloud nodes are hidden until they are
 # resumed. Having them shown can be useful in detecting downed nodes.
