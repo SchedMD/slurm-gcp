@@ -144,6 +144,7 @@ def main(dep_name='slurm-image-foundry', cleanup=True, force=False,
         with ThreadPoolExecutor() as exe:
             exe.map(lambda inst: wait_for_stop(inst['instance'], inst['zone']),
                     instances.values())
+        return
 
     if create_images(instances) and cleanup:
         gcloud_dm(f"deployments delete {dep_name}", check=True)
