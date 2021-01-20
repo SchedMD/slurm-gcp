@@ -17,10 +17,10 @@
 
 imports:
 - path: slurm-template.py
-- path: &centos7 scripts/centos7-packages
-- path: &centos8 scripts/centos8-packages
-- path: &debian10 scripts/debian10-packages
-- path: &ubuntu2004 scripts/ubuntu2004-packages
+- path: &centos-7 scripts/centos-7-packages
+- path: &centoso-8 scripts/centos-8-packages
+- path: &debian-10 scripts/debian-10-packages
+- path: &ubuntu-2004 scripts/ubuntu-2004-packages
 
 resources:
 - name: slurm-images
@@ -28,20 +28,20 @@ resources:
   properties:
     zone: us-west1-b
     machine_type: n1-standard-8
-    image_family: "schedmd-slurm{major}-{base}"
-    image_name: "schedmd-slurm{minor}-{base}-{tag}"
+    image_family: "schedmd-slurm-{major}-{minor}-{base}"
+    image_name: "schedmd-slurm-{major}-{minor}-{base}-{tag}"
     slurm_version: 20.11.3
     libjwt_version: v1.12.0
     ompi_version: v4.1.x
     images:
-    - base: centos7
+    - base: centos-7
       base_image: projects/centos-cloud/global/images/family/centos-7
-    - base: hpc-centos7
+    - base: hpc-centos-7
       base_image: projects/cloud-hpc-image-public/global/images/hpc-centos-7-v20200819
-      packages: *centos7
-    #- key: centos8
+      packages: *centos-7
+    #- key: centos-8
     #  base_image: projects/centos-cloud/global/images/family/centos-8
-    #- key: debian10
+    #- key: debian-10
     #  base_image: projects/debian-cloud/global/images/family/debian-10
-    #- key: ubuntu2004
+    #- key: ubuntu-2004
     #  base_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts

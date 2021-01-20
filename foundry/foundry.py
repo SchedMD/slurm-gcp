@@ -7,6 +7,7 @@ import subprocess as sp
 import time
 import yaml
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 
 from googleapiclient import discovery
 
@@ -62,11 +63,13 @@ def wait_for_stop(instance, zone, timeout=30):
 
 
 def create_images(instances):
+    tag = "{:%Y-%m-%d-%H%M%S}".format(datetime.now(timezone.utc))
     
     def create_image(instance, image_name, zone):
         log.info(f"... waiting to create image for {instance}")
         if not wait_for_stop(instance, zone):
             return False
+        image_name = image_name.format(tag=tag)
         try:
             run(f"gcloud compute images create {image_name} --source-disk {instance}"
                 f" --source-disk-zone {zone} --force --family {instance} --quiet",

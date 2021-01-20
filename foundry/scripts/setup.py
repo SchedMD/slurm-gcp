@@ -596,20 +596,25 @@ def install_ompi():
     ompi_path = (dirs.apps/'ompi')/cfg.ompi_version
     ompi_path.mkdir(parents=True, exist_ok=True)
 
-    ompi_tmp = Path('/tmp/ompi')
-    ompi_tmp.mkdir(parents=True, exist_ok=True)
-    util.run(f"git clone --single-branch --depth 1 -b {cfg.ompi_version} {ompi_git} {ompi_tmp/'src'}")
-    with cd(ompi_tmp/'src'):
+    ompi_src = ompi_path/'src'
+    ompi_src.mkdir(parents=True, exist_ok=True)
+    util.run(f"git clone --single-branch --depth 1 -b {cfg.ompi_version} {ompi_git} {ompi_src}")
+    with cd(ompi_src):
         util.run("./autogen.pl", stdout=DEVNULL)
 
-    build_path = ompi_tmp/'build'
-    build_path.mkdir(parents=True, exist_ok=True)
-    with cd(build_path):
+    ompi_build = ompi_path/'build'
+    ompi_build.mkdir(parents=True, exist_ok=True)
+    with cd(ompi_build):
         util.run(
-            f"../configure --prefix={ompi_path} "
+            f"{ompi_src}/configure --prefix={ompi_path} "
             f"--with-pmi={dirs.install} --with-libevent=/usr "
             "--with-hwloc=/usr", stdout=DEVNULL)
         util.run("make -j install", stdout=DEVNULL)
+
+    Path('/etc/profile.d/ompi.sh').write_text(f"""
+S_PATH={ompi_path}
+PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
+""")
 
 
 def remove_metadata():
