@@ -60,14 +60,14 @@ def config_root_logger(level='DEBUG', util_level=None,
             },
         },
         'loggers': {
-            '': {
-                'handlers': handlers,
-                'level': level,
-            },
             __name__: {  # enable util.py logging
                 'level': util_level,
-            }
+            },
         },
+        'root': {
+            'handlers': handlers,
+            'level': level,
+        }
     }
     if logfile:
         config['handlers']['file_handler'] = {

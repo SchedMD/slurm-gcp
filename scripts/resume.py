@@ -44,15 +44,6 @@ instances = {}
 operations = {}
 retry_list = []
 
-util.config_root_logger(level='DEBUG', util_level='ERROR', logfile=LOGFILE)
-log = logging.getLogger(Path(__file__).name)
-sys.excepthook = util.handle_exception
-
-new_yaml = Path(__file__).with_name('config.yaml.new')
-if (not cfg.instance_defs or cfg.partitions) and not new_yaml.exists():
-    log.info(f"partition declarations in config.yaml have been converted to a new format and saved to {new_yaml}. Replace config.yaml as soon as possible.")
-    cfg.save_config(new_yaml)
-
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
@@ -306,7 +297,22 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('nodes', help='Nodes to burst')
+    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
+                        help='Enable debugging output')
 
     args = parser.parse_args()
+    if args.debug:
+        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+                                logfile=LOGFILE)
+    else:
+        util.config_root_logger(level='INFO', util_level='ERROR',
+                                logfile=LOGFILE)
+    log = logging.getLogger(Path(__file__).name)
+    sys.excepthook = util.handle_exception
+    
+    new_yaml = Path(__file__).with_name('config.yaml.new')
+    if (not cfg.instance_defs or cfg.partitions) and not new_yaml.exists():
+        log.info(f"partition declarations in config.yaml have been converted to a new format and saved to {new_yaml}. Replace config.yaml as soon as possible.")
+        cfg.save_config(new_yaml)
 
     main(args.nodes)
