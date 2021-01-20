@@ -5,10 +5,10 @@ name = "pypi"
 
 [packages]
 google-api-python-client = "*"
-ipython = "*"
-pyaml = "*"
+pyyaml = "*"
 
 [dev-packages]
+ipython = "*"
+ipdb = "*"
 
 [requires]
-python_version = "3.8"
