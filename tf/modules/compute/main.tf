@@ -36,7 +36,7 @@ locals {
   ])
 
   compute_map = {
-    for static in local.static_list : "${static.name}" => static
+    for static in local.static_list : static.name => static
   }
 }
 
