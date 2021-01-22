@@ -38,11 +38,6 @@ TOT_REQ_CNT = 1000
 operations = {}
 retry_list = []
 
-util.config_root_logger(level='DEBUG', util_level='ERROR', logfile=LOGFILE)
-log = logging.getLogger(Path(__file__).name)
-sys.excepthook = util.handle_exception
-
-
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
@@ -123,7 +118,17 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('nodes', help='Nodes to release')
+    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
+                        help='Enable debugging output')
 
     args = parser.parse_args()
+    if args.debug:
+        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+                                logfile=LOGFILE)
+    else:
+        util.config_root_logger(level='INFO', util_level='ERROR',
+                                logfile=LOGFILE)
+    log = logging.getLogger(Path(__file__).name)
+    sys.excepthook = util.handle_exception
 
     main(args.nodes)

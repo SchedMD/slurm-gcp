@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import collections
 import fcntl
 import logging
@@ -36,9 +37,6 @@ LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 TOT_REQ_CNT = 1000
 
 retry_list = []
-
-util.config_root_logger(level='DEBUG', util_level='ERROR', logfile=LOGFILE)
-log = logging.getLogger(Path(__file__).name)
 
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
@@ -228,6 +226,22 @@ def main():
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
+                        help='Enable debugging output')
+
+    args = parser.parse_args()
+    if args.debug:
+        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+                                logfile=LOGFILE)
+    else:
+        util.config_root_logger(level='INFO', util_level='ERROR',
+                                logfile=LOGFILE)
+    log = logging.getLogger(Path(__file__).name)
+    sys.excepthook = util.handle_exception
 
     # only run one instance at a time
     pid_file = (Path('/tmp')/Path(__file__).name).with_suffix('.pid')
