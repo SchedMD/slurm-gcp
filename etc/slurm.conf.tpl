@@ -15,7 +15,6 @@ CredType=cred/munge
 #DisableRootJobs=NO
 #EnforcePartLimits=NO
 #Epilog=
-#EpilogSlurmctld=
 #FirstJobId=1
 #MaxJobId=999999
 #GroupUpdateForce=0
@@ -52,7 +51,6 @@ ProctrackType=proctrack/cgroup
 
 #Prolog=
 #PrologFlags=
-#PrologSlurmctld=
 #PropagatePrioProcess=0
 #PropagateResourceLimits=
 #PropagateResourceLimitsExcept=Sched
@@ -152,6 +150,11 @@ SlurmdDebug=info
 SlurmdLogFile={slurmlog}/slurmd-%n.log
 #
 #
+# Use Prolog/EpilogSlurmctld to make job to node one-to-one.
+# must set OverSubscribe=Exclusive on the corresponding partitions.
+PrologSlurmctld={scripts}/resume.py
+EpilogSlurmctld={scripts}/suspend.py
+
 # POWER SAVE SUPPORT FOR IDLE NODES (optional)
 SuspendProgram={scripts}/suspend.py
 ResumeProgram={scripts}/resume.py

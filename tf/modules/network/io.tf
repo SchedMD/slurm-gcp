@@ -86,5 +86,6 @@ variable "partitions" {
       mount_options = string})),
     preemptible_bursting = bool,
     vpc_subnet           = string,
+    exclusive            = bool,
   static_node_count = number }))
 }

@@ -227,7 +227,7 @@ def added_instances_cb(request_id, response, exception):
 # [END added_instances_cb]
 
 
-def add_instances(compute, node_list):
+def add_instances(compute, node_list, arg_job_id):
 
     batch_list = []
     curr_batch = 0
@@ -236,6 +236,11 @@ def add_instances(compute, node_list):
         curr_batch, compute.new_batch_http_request(callback=added_instances_cb))
 
     for node_name in node_list:
+
+        pid = util.get_pid(node_name)
+        if (not arg_job_id and cfg.instance_defs[pid].exclusive):
+            # Node was created by PrologSlurmctld, skip for ResumeProgram.
+            continue
 
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
@@ -267,8 +272,8 @@ def add_instances(compute, node_list):
 # [END add_instances]
 
 
-def main(arg_nodes):
-    log.info(f"Bursting out: {arg_nodes}")
+def main(arg_nodes, arg_job_id):
+    log.info(f"Bursting out: {arg_nodes} {arg_job_id}")
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=authorized_http,
                                               cache_discovery=False)
@@ -278,8 +283,13 @@ def main(arg_nodes):
                          check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
+    pid = util.get_pid(node_list[0])
+    if (arg_job_id and not cfg.instance_defs[pid].exclusive):
+        # Don't create from calls by PrologSlurmctld
+        return
+
     while True:
-        add_instances(compute, node_list)
+        add_instances(compute, node_list, arg_job_id):
         if not len(retry_list):
             break
 
@@ -296,11 +306,24 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('nodes', help='Nodes to burst')
+    parser.add_argument('args', nargs='+', help="nodes [jobid]")
     parser.add_argument('--debug', '-d', dest='debug', action='store_true',
                         help='Enable debugging output')
 
-    args = parser.parse_args()
+    job_id = 0
+    nodes = ""
+
+    if "SLURM_JOB_NODELIST" in os.environ:
+        args = parser.parse_args(sys.argv[1:] +
+                                 [os.environ['SLURM_JOB_NODELIST'],
+                                  os.environ['SLURM_JOB_ID']])
+    else:
+        args = parser.parse_args()
+
+    nodes = args.args[0]
+    if len(args.args) > 1:
+        job_id = args.args[1]
+
     if args.debug:
         util.config_root_logger(level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
@@ -315,4 +338,4 @@ if __name__ == '__main__':
         log.info(f"partition declarations in config.yaml have been converted to a new format and saved to {new_yaml}. Replace config.yaml as soon as possible.")
         cfg.save_config(new_yaml)
 
-    main(args.nodes)
+    main(nodes, job_id)

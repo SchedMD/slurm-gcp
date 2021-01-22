@@ -251,6 +251,8 @@ def install_slurm_conf():
                  "State=UP DefMemPerCPU={} LLN=yes"
                  .format(part.name, part_nodes,
                          def_mem_per_cpu))
+        if part.exclusive:
+            conf += " Oversubscribe=Exclusive"
 
         # First partition specified is treated as the default partition
         if i == 0:

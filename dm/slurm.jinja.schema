@@ -375,6 +375,7 @@ properties:
       - compute_disk_size_gb
       - compute_labels
       - cpu_platform
+      - exclusive
       - gpu_type
       - gpu_count
       - preemptible_bursting
@@ -423,6 +424,11 @@ properties:
                       - Intel Broadwell
                       - Intel Skylake
           description : Minimum Intel Platform for Compute Nodes to Use
+
+        exclusive:
+          type        : boolean
+          default     : False
+          description : Exclusive job access to nodes.
 
         gpu_type:
           enum        :
