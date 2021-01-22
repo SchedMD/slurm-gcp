@@ -164,6 +164,19 @@ def main(arg_nodes, arg_job_id):
 
     log.debug("done deleting instances")
 
+    if (arg_job_id and
+            cfg.instance_defs[pid].enable_placement and
+            cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
+            len(node_list) >= 2 and len(node_list) <= 22):
+        operation = compute.resourcePolicies().delete(
+            project=cfg.project,
+            region=cfg.instance_defs[pid].region,
+            resourcePolicy=f"{cfg.cluster_name}-{arg_job_id}").execute()
+        wait_for_operation(compute, cfg.project, operation)
+        log.debug("done deleting pg")
+
+    log.debug("exiting suspend")
+
 # [END main]
 
 

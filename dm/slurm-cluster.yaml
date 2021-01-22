@@ -117,6 +117,7 @@ resources:
         # cpu_platform           : Intel Skylake
         # preemptible_bursting   : False
         # exclusive              : False
+        # enable_placement       : False
         # compute_disk_type      : pd-standard
         # compute_disk_size_gb   : 20
         # compute_labels         :
@@ -146,6 +147,7 @@ resources:
         # cpu_platform           : Intel Skylake
         # preemptible_bursting   : False
         # exclusive              : False
+        # enable_placement       : False
         # compute_disk_type      : pd-standard
         # compute_disk_size_gb   : 20
         # compute_labels         :

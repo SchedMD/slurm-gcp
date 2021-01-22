@@ -109,7 +109,7 @@ def update_slurm_node_addrs(compute):
 
 
 def create_instance(compute, zone, machine_type, instance_name,
-                    source_disk_image):
+                    source_disk_image, placement_group_name):
 
     pid = util.get_pid(instance_name)
     # Configure the machine
@@ -181,6 +181,17 @@ def create_instance(compute, zone, machine_type, instance_name,
             'value': shutdown_script_path.read_text()
         })
 
+    if placement_group_name is not None:
+        config['scheduling'] = {
+            'onHostMaintenance': 'TERMINATE',
+            'automaticRestart': False
+        },
+        config['resourcePolicies'] = [
+            'https://www.googleapis.com/compute/v1/projects/{}/regions/{}/resourcePolicies/{}'
+            .format(cfg.shared_vpc_host_project or cfg.project,
+                    cfg.instance_defs[pid].region, placement_group_name)
+        ]
+
     if cfg.instance_defs[pid].gpu_type:
         accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
                       .format(cfg.project, zone,
@@ -227,7 +238,7 @@ def added_instances_cb(request_id, response, exception):
 # [END added_instances_cb]
 
 
-def add_instances(compute, node_list, arg_job_id):
+def add_instances(compute, node_list, arg_job_id, placement_group):
 
     batch_list = []
     curr_batch = 0
@@ -254,7 +265,7 @@ def add_instances(compute, node_list, arg_job_id):
         batch_list[curr_batch].add(
             create_instance(compute, cfg.instance_defs[pid].zone,
                             cfg.instance_defs[pid].machine_type, node_name,
-                            source_disk_image),
+                            source_disk_image, placement_group),
             request_id=node_name)
         req_cnt += 1
 
@@ -272,6 +283,27 @@ def add_instances(compute, node_list, arg_job_id):
 # [END add_instances]
 
 
+def create_placement_group(compute, arg_name, arg_count, region):
+    log.debug(f"Creating PG: {arg_name} arg_count:{arg_count} region:{region}")
+
+    config = {
+        'name': arg_name,
+        'region': region,
+        'groupPlacementPolicy': {
+            "collocation": "COLLOCATED",
+            "vmCount": arg_count
+         }
+    }
+
+    operation = compute.resourcePolicies().insert(
+        project=cfg.project,
+        region=region,
+        body=config).execute()
+    wait_for_operation(compute, cfg.project, operation)
+
+# [END create_placement_group]
+
+
 def main(arg_nodes, arg_job_id):
     log.info(f"Bursting out: {arg_nodes} {arg_job_id}")
     compute = googleapiclient.discovery.build('compute', 'v1',
@@ -283,13 +315,26 @@ def main(arg_nodes, arg_job_id):
                          check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
+    placement_group_name = None
     pid = util.get_pid(node_list[0])
     if (arg_job_id and not cfg.instance_defs[pid].exclusive):
         # Don't create from calls by PrologSlurmctld
         return
 
+    if (arg_job_id and
+            cfg.instance_defs[pid].enable_placement and
+            cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
+            len(node_list) >= 2 and len(node_list) <= 22):
+        log.debug(f"creating placement group for {arg_job_id}")
+        placement_group_name = f"{cfg.cluster_name}-{arg_job_id}"
+        placement_group_count = len(node_list)
+        create_placement_group(compute, placement_group_name,
+                               placement_group_count,
+                               cfg.instance_defs[pid].region)
+        time.sleep(5)
+
     while True:
-        add_instances(compute, node_list, arg_job_id):
+        add_instances(compute, node_list, arg_job_id, placement_group_name):
         if not len(retry_list):
             break
 

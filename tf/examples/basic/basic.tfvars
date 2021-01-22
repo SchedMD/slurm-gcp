@@ -92,6 +92,7 @@ partitions = [
   preemptible_bursting = false
   vpc_subnet           = null
   exclusive            = false
+  enable_placement     = false
   },
 #  { name                 = "partition2"
 #    machine_type         = "n1-standard-16"
@@ -120,5 +121,6 @@ partitions = [
 #    preemptible_bursting = true
 #    vpc_subnet           = null
 #    exclusive            = false
+#    enable_placement     = false
 ]
 

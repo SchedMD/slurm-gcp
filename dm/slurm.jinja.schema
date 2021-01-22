@@ -375,6 +375,7 @@ properties:
       - compute_disk_size_gb
       - compute_labels
       - cpu_platform
+      - enable_placement
       - exclusive
       - gpu_type
       - gpu_count
@@ -424,6 +425,13 @@ properties:
                       - Intel Broadwell
                       - Intel Skylake
           description : Minimum Intel Platform for Compute Nodes to Use
+
+        enable_placement:
+          type        : boolean
+          default     : False
+          description : Whether C2 instances in this partition should use
+                        placement groups for jobs requiring 2 to 22 instances.
+                        Implies exclusive option.
 
         exclusive:
           type        : boolean

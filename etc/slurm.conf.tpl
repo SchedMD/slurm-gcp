@@ -150,7 +150,10 @@ SlurmdDebug=info
 SlurmdLogFile={slurmlog}/slurmd-%n.log
 #
 #
+
 # Use Prolog/EpilogSlurmctld to make job to node one-to-one.
+# enable_placement=true with c2-standards creates placement groups
+# enable_placement=true w/out c2-standards creates one-to-one mappings of nodes.
 # must set OverSubscribe=Exclusive on the corresponding partitions.
 PrologSlurmctld={scripts}/resume.py
 EpilogSlurmctld={scripts}/suspend.py
