@@ -105,6 +105,8 @@ partitions = [
   regional_capacity    = false
   regional_policy      = {}
   instance_template    = null
+  tpu_type             = null
+  tpu_version          = null
   },
 #  { name                 = "partition2"
 #    machine_type         = "n1-standard-16"
@@ -152,5 +154,8 @@ partitions = [
 #    When specifying an instance template, specified compute fields will
 #    override the template properites.
 #    instance_template = "my-template"
+#
+#    tpu_type             = null
+#    tpu_version          = null
 ]
 

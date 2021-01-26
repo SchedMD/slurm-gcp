@@ -67,6 +67,9 @@ def start_instances(compute, node_list, gcp_nodes):
         pid = util.get_pid(node)
         zone = cfg.instance_defs[pid].zone
 
+        if cfg.instance_defs[pid].tpu_type:
+            log.error(f"unable to start tpu vm from slurmsync {node}")
+            continue
         if cfg.instance_defs[pid].regional_capacity:
             g_node = gcp_nodes.get(node, None)
             if not g_node:
@@ -95,6 +98,25 @@ def start_instances(compute, node_list, gcp_nodes):
         log.exception("error in start batch: ")
 
 # [END start_instances]
+
+
+def get_tpus():
+    """ get tpus via gcloud """
+    zones = [p.zone for p in cfg.partitions if p.tpu_type]
+    tpu_nodes = {}
+    for zone in zones:
+        tpus = yaml.safe_load_all(
+            run(f"gcloud alpha compute tpus list --zone={zone} --format=yaml --quiet",
+                get_stdout=True).stdout
+        )
+        # it gives the full url for the name, so just get the end
+        # the only part of the result we care about right now apart from
+        # the name is ['status']=='TERMINATED', which luckily is the same between compute api
+        # and here
+        tpus_nodes.update({
+            tpu['name'].split('/')[-1]: tpu for tpu in tpus
+        })
+    return tpu_nodes
 
 
 def main():
@@ -144,6 +166,7 @@ def main():
                         continue
 
                 break
+        g_nodes.update(get_tpus())
 
         to_down = []
         to_idle = []

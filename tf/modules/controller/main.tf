@@ -106,6 +106,7 @@ resource "google_compute_instance" "controller_node" {
   metadata = {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
+    instance-type  = "controller"
 
     config                    = local.config
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")

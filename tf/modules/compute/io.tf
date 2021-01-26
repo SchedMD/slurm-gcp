@@ -74,21 +74,21 @@ variable "partitions" {
     gpu_type             = string
     gpu_count            = number
     network_storage = list(object({
-      server_ip     = string
-      remote_mount  = string
-      local_mount   = string
-      fs_type       = string
-      mount_options = string
-    }))
-    preemptible_bursting = bool
-    vpc_subnet           = string
-    exclusive            = bool
-    enable_placement     = bool
-    regional_capacity    = bool
-    regional_policy      = any
-    instance_template    = string
-    static_node_count    = number
-  }))
+      server_ip    = string,
+      remote_mount = string,
+      local_mount  = string,
+      fs_type      = string,
+      mount_options = string })),
+    preemptible_bursting = bool,
+    vpc_subnet           = string,
+    exclusive            = bool,
+    enable_placement     = bool,
+    regional_capacity    = bool,
+    regional_policy      = any,
+    instance_template    = string,
+    tpu_type             = string,
+    tpu_version          = string,
+    static_node_count = number }))
 }
 
 variable "project" {

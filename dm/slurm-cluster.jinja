@@ -88,7 +88,7 @@ resources:
           value: TRUE
         - key: VmDnsSetting
           value: GlobalOnly
-        - key: instance_type
+        - key: instance-type
           value: controller
         - key: startup-script
           value: |
@@ -237,7 +237,7 @@ resources:
           value: TRUE
         - key: VmDnsSetting
           value: GlobalOnly
-        - key: instance_type
+        - key: instance-type
           value: compute
       {% if not part['image_hyperthreads'] %}
         - key: google_mpi_tuning

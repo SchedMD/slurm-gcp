@@ -69,6 +69,7 @@ resource "google_compute_instance" "login_node" {
   metadata = {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
+    instance-type  = "login"
 
     util-script = file("${path.module}/../../../scripts/util.py")
 

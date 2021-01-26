@@ -108,7 +108,7 @@ resource "google_compute_instance" "compute_node" {
   metadata = {
     enable-oslogin    = "TRUE"
     VmDnsSetting      = "GlobalOnly"
-    instance_type     = "compute"
+    instance-type     = "compute"
     google_mpi_tuning = each.value.image_hyperthreads ? null : "--nosmt"
 
     config = jsonencode({

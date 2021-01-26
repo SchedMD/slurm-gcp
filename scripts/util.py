@@ -21,10 +21,12 @@ import subprocess
 import sys
 import socket
 import time
+from collections import OrderedDict
+from contextlib import contextmanager
+from functools import reduce
 from itertools import chain, compress
 from pathlib import Path
-from contextlib import contextmanager
-from collections import OrderedDict
+from logging import DEBUG
 import googleapiclient.discovery
 
 import requests
@@ -101,18 +103,24 @@ def get_metadata(path):
     return resp.text
 
 
-def run(cmd, wait=0, quiet=False, get_stdout=False,
-        shell=False, universal_newlines=True, **kwargs):
+def run(cmd, wait=0, quiet=False, get_stdout=False, log_output=None,
+        log_level=DEBUG, shell=False, universal_newlines=True, **kwargs):
     """ run in subprocess. Optional wait after return. """
     if not quiet:
         log.debug(f"run: {cmd}")
     if get_stdout:
         kwargs['stdout'] = subprocess.PIPE
+    if log_output:
+        kwargs['stdout'] = subprocess.PIPE
+        kwargs['stderr'] = subprocess.PIPE
 
     args = cmd if shell else shlex.split(cmd)
     ret = subprocess.run(args, shell=shell,
                          universal_newlines=universal_newlines,
                          **kwargs)
+    if log_output:
+        log.log(log_level, ret.stderr)
+        log.log(log_level, ret.stout)
     if wait:
         time.sleep(wait)
     return ret
@@ -130,6 +138,16 @@ def get_pid(node_name):
     """Convert <prefix>-<pid>-<nid>"""
 
     return '-'.join(node_name.split('-')[:-1])
+
+
+def partition(coll, pred):
+    """ filter into 2 lists based on running pred for each element 
+        returns [<False>], [<True>]
+    """
+    return reduce(
+        lambda acc, el: acc[pred(el)].append(el) or acc,
+        coll, ([], [])
+    )
 
 
 @contextmanager
@@ -259,14 +277,15 @@ class Config(NSDict):
 
     @cached_property
     def instance_type(self):
-        # get tags, intersect with possible types, get the first or none
-        tags = yaml.safe_load(get_metadata('tags'))
-        # TODO what to default to if no match found.
-        return next(iter(set(tags) & self.TYPES), None)
+        return get_metadata('attributes/instance-type')
 
     @cached_property
     def hostname(self):
         return socket.gethostname()
+
+    @cached_property
+    def nodename(self):
+        return get_metadata('attributes/instance-id') or self.hostname
 
     @property
     def region(self):
@@ -280,7 +299,9 @@ class Config(NSDict):
 
     @property
     def exclusive(self):
-        return bool(self.get('exclusive', False) or self.enable_placement)
+        return bool(self.get('exclusive', False) or
+                    self.enable_placement or
+                    self.tpu_type)
 
     def __getattr__(self, item):
         """ only called if item is not found in self """

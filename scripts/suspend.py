@@ -20,6 +20,8 @@
 import argparse
 import logging
 import os
+import pty
+import subprocess
 import sys
 import time
 from itertools import groupby
@@ -155,6 +157,23 @@ def main(arg_nodes, arg_job_id):
         run(f"{SCONTROL} update node={arg_nodes} state=down reason='{arg_job_id} finishing'")
         # Power down nodes in slurm, so that they will become available again.
         run(f"{SCONTROL} update node={arg_nodes} state=power_down")
+
+    # Separate out tpu nodes
+    node_list, tpu_node_list = partition(
+        node_list, lambda el: bool(cfg.instance_defs[get_pid(el)].tpu_type)
+    )
+
+    # Remove TPUs
+    for node_name in tpu_node_list:
+        tpu_inst = cfg.instance_defs[get_pid(node_name)]
+        # can delete early
+        cmd = (f"gcloud alpha compute tpus tpu-vm delete {node_name} "
+              f"--zone={tpu_inst.zone} "
+              f"--quiet")
+        # glcoud crashes if stdin is closed.
+        # gcloud will wait till the TPU is deleted if given a pty.
+        (master, slave) = pty.openpty()
+        run(cmd, get_stdout=True, stderr=master, stdin=subprocess.DEVNULL)
 
     while True:
         delete_instances(compute, node_list, arg_job_id)

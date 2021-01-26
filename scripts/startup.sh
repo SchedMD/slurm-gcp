@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+#set -e
 
 FLAGFILE=/slurm/slurm_configured_do_not_remove
 if [ -f $FLAGFILE ]; then
@@ -28,13 +28,38 @@ if ( ! ping -q -w1 -c1 $PING_HOST > /dev/null ) ; then
 	echo No internet access detected
 fi
 
+URL="http://metadata.google.internal/computeMetadata/v1/instance/attributes"
+HEADER="Metadata-Flavor:Google"
+
+SETUP_MOUNT="/slurm/scripts"
+SETUP_SCRIPT="setup.py"
+if MOUNT=$(curl -f -s -H $HEADER $URL/external-setup-mount); then
+	# repeat apt-get update to avoid lock
+	until apt-get update; do sleep 5; done
+	until apt-get install -y nfs-common jq; do sleep 5; done
+	REMOTE=$(jq -r .remote <<< "$MOUNT")
+	TYPE=$(jq -r .type <<< "$MOUNT")
+	OPTIONS=$(jq -r .options <<< "$MOUNT")
+	if [ ! -z "$OPTIONS" ]; then
+		OPTIONS="-o $OPTIONS"
+	fi
+
+	cmd="mount -t $TYPE $REMOTE $SETUP_MOUNT $OPTIONS"
+	echo found metadata for external setup script location, mounting
+	echo $cmd
+	mkdir -p $SETUP_MOUNT
+	$cmd
+	cd $SETUP_MOUNT
+	./$SETUP_SCRIPT
+	exit
+fi
+
+DIR="/tmp"
 SETUP_SCRIPT="setup.py"
 SETUP_META="setup-script"
-DIR="/tmp"
-URL="http://metadata.google.internal/computeMetadata/v1/instance/attributes/$SETUP_META"
-HEADER="Metadata-Flavor:Google"
-echo  "wget -nv --header $HEADER $URL -O $DIR/$SETUP_SCRIPT"
-if ! ( wget -nv --header $HEADER $URL -O $DIR/$SETUP_SCRIPT ) ; then
+cmd="wget -nv --header $HEADER $URL/setup-script -O $DIR/$SETUP_SCRIPT"
+echo $cmd
+if ! ( $cmd ) ; then
     echo "Failed to fetch $SETUP_META:$SETUP_SCRIPT from metadata"
     exit 1
 fi

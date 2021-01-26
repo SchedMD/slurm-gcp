@@ -77,7 +77,7 @@ dirs = NSDict({n: Path(p) for n, p in dict.items({
     'apps': '/apps',
     'scripts': '/slurm/scripts',
     'slurm': '/slurm',
-    'prefix': '/usr/local',
+    'prefix': os.environ.get('SLURM_PREFIX', None) or '/usr/local',
     'munge': '/etc/munge',
     'secdisk': '/mnt/disks/sec',
 })})
@@ -91,8 +91,8 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
 cfg['log_dir'] = slurmdirs.log
 cfg['slurm_cmd_path'] = dirs.prefix/'bin'
 
-RESUME_TIMEOUT = 300
-SUSPEND_TIMEOUT = 300
+RESUME_TIMEOUT = 400
+SUSPEND_TIMEOUT = 400
 
 CONTROL_MACHINE = cfg.cluster_name + '-controller'
 
@@ -303,8 +303,10 @@ def install_slurm_conf():
                  "State=UP DefMemPerCPU={} LLN=yes"
                  .format(part.name, part_nodes,
                          def_mem_per_cpu))
-        if part.exclusive:
+        if part.exclusive or part.tpu_type:
             conf += " Oversubscribe=Exclusive"
+        if part.tpu_type:
+            conf += " MaxNodes=1"
 
         # First partition specified is treated as the default partition
         if i == 0:
@@ -405,7 +407,7 @@ def install_meta_files():
 # END install_meta_files()
 
 
-def prepare_network_mounts(hostname, instance_type):
+def prepare_network_mounts(nodename, instance_type):
     """ Prepare separate lists of cluster-internal and external mounts for the
     given host instance, returning (external_mounts, internal_mounts)
     """
@@ -448,21 +450,12 @@ def prepare_network_mounts(hostname, instance_type):
         # login_network_storage is mounted on controller and login instances
         mounts.update(listtodict(cfg.login_network_storage))
 
-    # filter mounts into two dicts, cluster-internal and external mounts, and
-    # return both. (external_mounts, internal_mounts)
     def internal_mount(mount):
-        return mount[1].server_ip == CONTROL_MACHINE
+        return mount.server_ip == CONTROL_MACHINE
+    internal = {k:v for k, v in mounts.items() if internal_mount(v)}
+    external = {k:v for k, v in mounts.items() if not internal_mount(v)}
 
-    def partition(pred, coll):
-        """ filter into 2 lists based on pred returning True or False 
-            returns ([False], [True])
-        """
-        return reduce(
-            lambda acc, el: acc[pred(el)].append(el) or acc,
-            coll, ([], [])
-        )
-
-    return tuple(map(dict, partition(internal_mount, mounts.items())))
+    return external, internal
 # END prepare_network_mounts
 
 
@@ -470,7 +463,7 @@ def setup_network_storage():
     """ prepare network fs mounts and add them to fstab """
 
     global mounts
-    ext_mounts, int_mounts = prepare_network_mounts(cfg.hostname,
+    ext_mounts, int_mounts = prepare_network_mounts(cfg.nodename,
                                                     cfg.instance_type)
     mounts = ext_mounts
     if cfg.instance_type != 'controller':
@@ -499,8 +492,6 @@ def setup_network_storage():
             mount_options += ['_netdev']
 
         if fs_type == 'gcsfuse':
-            if 'nonempty' not in mount_options:
-                mount_options += ['nonempty']
             fstab_entries.append(
                 "{0}   {1}     {2}     {3}     0 0"
                 .format(remote_mount, local_mount, fs_type,
@@ -542,20 +533,24 @@ def setup_nfs_exports():
     """ nfs export all needed directories """
     # The controller only needs to set up exports for cluster-internal mounts
     # switch the key to remote mount path since that is what needs exporting
-    _, con_mounts = prepare_network_mounts(cfg.hostname, cfg.instance_type)
-    con_mounts = {m.remote_mount: m for m in con_mounts.values()}
+    _, con_mounts = prepare_network_mounts(cfg.nodename, cfg.instance_type)
+    con_mounts = {Path(m.remote_mount).resolve(): m for m in con_mounts.values()}
     for pid, _ in cfg.instance_defs.items():
         # get internal mounts for each partition by calling
         # prepare_network_mounts as from a node in each partition
         _, part_mounts = prepare_network_mounts(f'{pid}-n', 'compute')
-        part_mounts = {m.remote_mount: m for m in part_mounts.values()}
+        part_mounts = {Path(m.remote_mount).resolve(): m for m in part_mounts.values()}
         con_mounts.update(part_mounts)
 
-    # export path if corresponding selector boolean is True
+
+    # Always export scripts dir
+    if dirs.scripts not in con_mounts:
+        con_mounts[dirs.scripts] = None
+
     exports = []
     for path in con_mounts:
-        Path(path).mkdirp()
-        util.run(rf"sed -i '\#{path}#d' /etc/exports")
+        path.mkdirp()
+        run(rf"sed -i '\#{path}#d' /etc/exports")
         exports.append(f"{path}  *(rw,no_subtree_check,no_root_squash)")
 
     exportsd = Path('/etc/exports.d')
@@ -612,16 +607,28 @@ def setup_slurmd_cronjob():
 # END setup_slurmd_cronjob()
 
 
-def setup_nss_slurm():
+def setup_nss_slurm(prefix=dirs.prefix):
     """ install and configure nss_slurm """
     # setup nss_slurm
     Path('/var/spool/slurmd').mkdirp()
-    util.run("ln -s {}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2"
-             .format(dirs.prefix))
-    util.run(
-        r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf"
-    )
+    run(f"ln -s {prefix}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2")
+    run(r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
 # END setup_nss_slurm()
+
+
+def create_users():
+    """ Create users, hide errors (might already exist) """
+    run("groupadd munge -g 980", stderr=DEVNULL)
+    run("useradd -m -c MungeUser -d /var/run/munge -r munge -u 980 -g 980",
+        stderr=DEVNULL)
+
+    run("groupadd slurm -g 981", stderr=DEVNULL)
+    run("useradd -m -c SlurmUser -d /var/lib/slurm -r slurm -u 981 -g 981",
+        stderr=DEVNULL)
+
+    run("groupadd slurmrestd -g 982", stderr=DEVNULL)
+    run("useradd -m -c Slurmrestd -d /var/lib/slurmrestd -r slurmrestd -u 982 -g 982",
+        stderr=DEVNULL)
 
 
 def configure_dirs():
@@ -635,11 +642,15 @@ def configure_dirs():
         p.mkdirp()
         shutil.chown(p, user='slurm', group='slurm')
 
-    (dirs.scripts/'etc').symlink_to(slurmdirs.etc)
-    shutil.chown(dirs.scripts/'etc', user='slurm', group='slurm')
+    etc_link = dirs.scripts/'etc'
+    if not etc_link.exists():
+        etc_link.symlink_to(slurmdirs.etc)
+        shutil.chown(etc_link, user='slurm', group='slurm')
 
-    (dirs.scripts/'log').symlink_to(slurmdirs.log)
-    shutil.chown(dirs.scripts/'log', user='slurm', group='slurm')
+    log_link = dirs.scripts/'log'
+    if not log_link.exists():
+        log_link.symlink_to(slurmdirs.log)
+        shutil.chown(log_link, user='slurm', group='slurm')
 
 
 def setup_controller():
@@ -742,29 +753,81 @@ def setup_compute():
         # Ignore blank files with no shell magic.
         pass
 
-    setup_slurmd_cronjob()
-    run("systemctl restart munge")
-    run("systemctl enable slurmd")
-    run("systemctl start slurmd")
+    #setup_slurmd_cronjob()
+    #run("systemctl restart munge")
+    #run("systemctl enable slurmd")
+    #run("systemctl start slurmd")
 
     log.info("Done setting up compute")
 
 
+def setup_compute_tpu():
+    #run("apt-get update")
+    run("apt-get install -y libmunge-dev munge nfs-common hwloc")
+
+    slurm_prefix = Path('/opt/slurm')
+
+    setup_nss_slurm(slurm_prefix)
+    setup_network_storage()
+    mount_fstab()
+
+    # add nonstandard slurm prefix to bash profile PATH
+    Path('/etc/profile.d/slurm.sh').write_text(f"""
+S_PATH={slurm_prefix}
+PATH=$S_PATH/bin:$S_PATH/sbin:$PATH
+""")
+
+    rank = int(get_metadata('attributes/agent-worker-number') or 0)
+    #run("rm -f /usr/local/sbin/slurmd")
+
+    if rank == 0:
+        setup_slurmd_cronjob()
+        run("systemctl restart munge")
+        override = Path('/etc/systemd/system/slurmd.service.d/conf-server.conf')
+        override.parent.mkdirp()
+        override.write_text(f"""
+[Service]
+Environment=SLURMD_OPTIONS='--conf-server={CONTROL_MACHINE}:6820 -N{cfg.nodename}'
+""")
+        run("systemctl daemon-reload")
+        run(f"systemctl enable {slurm_prefix}/etc/slurmd.service")
+        run("systemctl start slurmd")
+    else:
+        log.info("Not starting slurmd, not rank 0 tpu-vm")
+
+    try:
+        run(str(dirs.scripts/'custom-compute-install'))
+    except Exception:
+        # Ignore blank files with no shell magic.
+        pass
+
+    log.info("Done setting up compute-tpu")
+
+
 def main():
+        # nss_slurm?
+        # gets linked right if prefix is right in setup.py
+        # need to setup nss_slurm.conf thought because the nodename is different.
 
     start_motd()
+    create_users()
     configure_dirs()
     install_meta_files()
 
     # call the setup function for the instance type
+    instance_type = cfg.instance_type
+    if instance_type == 'compute' and get_metadata('attributes/tpu-vm'):
+        instance_type = 'compute-tpu'
+        log.info("Detected a tpu-vm instance, running alternate compute setup")
     setup = dict.get(
         {
             'controller': setup_controller,
             'compute': setup_compute,
+            'compute-tpu': setup_compute_tpu,
             'login': setup_login
         },
-        cfg.instance_type,
-        lambda: log.fatal(f"Unknown instance type: {cfg.instance_type}")
+        instance_type,
+        lambda: log.fatal(f"Unknown instance type: {instance_type}")
     )
     setup()
 

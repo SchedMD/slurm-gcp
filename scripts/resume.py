@@ -21,6 +21,8 @@ import argparse
 import httplib2
 import logging
 import os
+import pty
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -71,7 +73,7 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
     metadata = {
         'enable-oslogin': 'TRUE',
         'VmDnsSetting': 'GlobalOnly',
-        'instance_type': 'compute',
+        'instance-type': 'compute',
     }
     if not instance_def.image_hyperthreads:
         metadata['google_mpi_tuning'] = '--nosmt'
@@ -319,6 +321,67 @@ def create_placement_groups(arg_job_id, vm_count, region):
 # [END create_placement_groups]
 
 
+def add_tpus(nodes_by_pid):
+    metafiles = {
+        'config': SCRIPTS_DIR/'config.yaml',
+        'startup-script': SCRIPTS_DIR/'startup.sh',
+    }
+
+    controller = f"{cfg.cluster_name}-controller"
+    external_setup = f"""{{
+"remote": "{controller}:/slurm/scripts",
+"type":"nfs",
+"options": ""
+}}"""
+
+    metadata = {
+        'instance-type': 'compute',
+        'enable-oslogin': 'TRUE',
+        'tpu-vm': 'TRUE',
+        'external-setup-mount': external_setup,
+    }
+
+    # write metadata to files because --metadata doesn't seem to work with
+    # create tpu-vm
+    for m, v in metadata.items():
+        metafile = SCRIPTS_DIR/f'{m}.meta'
+        metafiles[m] = metafile
+        if not metafile.exists():
+            metafile.write_text(v)
+
+    custom_compute = SCRIPTS_DIR/'custom-compute-install'
+    if custom_compute.exists():
+        metafiles['custom-compute-install'] = custom_compute
+    metafiles_str = ','.join(f'{k}={str(v)}' for k, v in metafiles.items())
+
+    for pid in list(nodes_by_pid):
+        tpu_inst = cfg.instance_defs[pid]
+        for node_name in nodes_by_pid[pid]:
+            network = tpu_inst.vpc_subnet or f'{cfg.cluster_name}-network'
+            cmd = (
+                f"gcloud alpha compute tpus tpu-vm create {node_name} "
+                f"--zone={tpu_inst.zone} "
+                f"--accelerator-type={tpu_inst.tpu_type} "
+                f"--version={tpu_inst.tpu_version} "
+                f"--network={network} "
+                f"--scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append "
+                f"--metadata-from-file={metafiles_str} "
+                f"--quiet"
+            )
+            log.debug(cmd)
+
+            # gcloud crashes if stdin is closed.
+            # gcloud will wait till the TPU is created if given a pty.
+            (master, slave) = pty.openpty()
+            ret = run(cmd, get_stdout=True, stderr=master,
+                     stdin=subprocess.DEVNULL)
+            if ret.returncode:
+                msg = os.read(master, 1024).decode().rstrip()
+                log.error(f"failed to create tpu {node_name}: '{msg}'")
+                hold_job(arg_job_id, msg)
+                os._exit(1)
+
+
 def main(arg_nodes, arg_job_id):
     log.debug(f"Bursting out: {arg_nodes} {arg_job_id}")
     # Get node list
@@ -336,13 +399,11 @@ def main(arg_nodes, arg_job_id):
                     for k, nodes in groupby(node_list, get_pid)}
 
     if not arg_job_id:
-        for pid in [pid for pid in nodes_by_pid
-                    if cfg.instance_defs[pid].exclusive]:
-            # Node was created by PrologSlurmctld, skip for ResumeProgram.
-            del nodes_by_pid[pid]
+        # Node was created by PrologSlurmctld, skip for ResumeProgram.
+        nodes_by_pid = {pid: nodes for pid, nodes in nodes_by_pid.items()
+                        if not cfg.instance_defs[pid].exclusive}
 
-    if (arg_job_id and
-            cfg.instance_defs[pid].enable_placement):
+    if arg_job_id and cfg.instance_defs[pid].enable_placement:
         if cfg.instance_defs[pid].machine_type.split('-')[0] != "c2":
             msg = "Unsupported placement policy configuration. Please utilize c2 machine type."
             log.error(msg)
@@ -353,6 +414,14 @@ def main(arg_nodes, arg_job_id):
             log.debug(f"creating placement group for {arg_job_id}")
             placement_groups = create_placement_groups(
                 arg_job_id, len(node_list), cfg.instance_defs[pid].region)
+
+
+    tpu_nodes_by_pid = {pid: nodes for pid, nodes in nodes_by_pid.items()
+                        if cfg.instance_defs[pid].tpu_type}
+    for pid in tpu_nodes_by_pid:
+        nodes_by_pid.pop(pid)
+    if tpu_nodes_by_pid:
+        add_tpus(tpu_nodes_by_pid)
 
     def chunks(lst, pg_names):
         """ group list into chunks of max size n """

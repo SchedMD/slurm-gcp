@@ -76,7 +76,7 @@ TaskPlugin=task/affinity,task/cgroup
 #TopologyPlugin=topology/tree
 #TmpFS=/tmp
 #TrackWCKey=no
-#TreeWidth=
+TreeWidth=65533
 #UnkillableStepProgram=
 #UsePAM=0
 #
@@ -171,7 +171,7 @@ SuspendRate=0
 SuspendTime={suspend_time}
 #
 SchedulerParameters=salloc_wait_nodes
-SlurmctldParameters=cloud_dns,idle_on_node_suspend
+SlurmctldParameters=idle_on_node_suspend,cloud_reg_addrs,enable_configless
 CommunicationParameters=NoAddrCache
 GresTypes=gpu
 #
