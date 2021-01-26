@@ -32,6 +32,7 @@ from googleapiclient.http import set_user_agent
 
 import util
 
+PLACEMENT_MAX_CNT = 22
 
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
@@ -238,20 +239,27 @@ def added_instances_cb(request_id, response, exception):
 # [END added_instances_cb]
 
 
-def add_instances(compute, node_list, arg_job_id, placement_group):
+def add_instances(compute, node_list, arg_job_id, placement_groups):
 
+    placement_group_name = None
+    pg_index = 0
     batch_list = []
     curr_batch = 0
     req_cnt = 0
     batch_list.insert(
         curr_batch, compute.new_batch_http_request(callback=added_instances_cb))
 
-    for node_name in node_list:
+    for i, node_name in enumerate(node_list):
 
         pid = util.get_pid(node_name)
         if (not arg_job_id and cfg.instance_defs[pid].exclusive):
             # Node was created by PrologSlurmctld, skip for ResumeProgram.
             continue
+
+        if placement_groups:
+            if i != 0 and i % PLACEMENT_MAX_CNT == 0:
+                pg_index += 1
+            placement_group_name = placement_groups[pg_index]
 
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
@@ -265,7 +273,7 @@ def add_instances(compute, node_list, arg_job_id, placement_group):
         batch_list[curr_batch].add(
             create_instance(compute, cfg.instance_defs[pid].zone,
                             cfg.instance_defs[pid].machine_type, node_name,
-                            source_disk_image, placement_group),
+                            source_disk_image, placement_group_name),
             request_id=node_name)
         req_cnt += 1
 
@@ -283,25 +291,39 @@ def add_instances(compute, node_list, arg_job_id, placement_group):
 # [END add_instances]
 
 
-def create_placement_group(compute, arg_name, arg_count, region):
-    log.debug(f"Creating PG: {arg_name} arg_count:{arg_count} region:{region}")
+def create_placement_groups(compute, arg_job_id, vm_count, region):
+    log.debug(f"Creating PG: {arg_job_id} vm_count:{vm_count} region:{region}")
 
-    config = {
-        'name': arg_name,
-        'region': region,
-        'groupPlacementPolicy': {
-            "collocation": "COLLOCATED",
-            "vmCount": arg_count
-         }
-    }
+    pg_names = []
+    pg_ops = []
+    pg_index = 0
 
-    operation = compute.resourcePolicies().insert(
-        project=cfg.project,
-        region=region,
-        body=config).execute()
-    wait_for_operation(compute, cfg.project, operation)
+    for i in range(vm_count):
+        if i % PLACEMENT_MAX_CNT:
+            continue
+        pg_index += 1
+        pg_name = f'{cfg.cluster_name}-{arg_job_id}-{pg_index}'
+        pg_names.append(pg_name)
 
-# [END create_placement_group]
+        config = {
+            'name': pg_name,
+            'region': region,
+            'groupPlacementPolicy': {
+                "collocation": "COLLOCATED",
+                "vmCount": min(vm_count - i, PLACEMENT_MAX_CNT)
+             }
+        }
+
+        pg_ops.append(compute.resourcePolicies().insert(
+            project=cfg.project,
+            region=region,
+            body=config).execute())
+
+    for operation in pg_ops:
+        wait_for_operation(compute, cfg.project, operation)
+
+    return pg_names
+# [END create_placement_groups]
 
 
 def main(arg_nodes, arg_job_id):
@@ -315,7 +337,7 @@ def main(arg_nodes, arg_job_id):
                          check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
-    placement_group_name = None
+    placement_groups = None
     pid = util.get_pid(node_list[0])
     if (arg_job_id and not cfg.instance_defs[pid].exclusive):
         # Don't create from calls by PrologSlurmctld
@@ -324,17 +346,14 @@ def main(arg_nodes, arg_job_id):
     if (arg_job_id and
             cfg.instance_defs[pid].enable_placement and
             cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
-            len(node_list) >= 2 and len(node_list) <= 22):
+            len(node_list) > 1):
         log.debug(f"creating placement group for {arg_job_id}")
-        placement_group_name = f"{cfg.cluster_name}-{arg_job_id}"
-        placement_group_count = len(node_list)
-        create_placement_group(compute, placement_group_name,
-                               placement_group_count,
-                               cfg.instance_defs[pid].region)
+        placement_groups = create_placement_groups(
+            compute, arg_job_id, len(node_list), cfg.instance_defs[pid].region)
         time.sleep(5)
 
     while True:
-        add_instances(compute, node_list, arg_job_id, placement_group_name):
+        add_instances(compute, node_list, arg_job_id, placement_groups)
         if not len(retry_list):
             break
 

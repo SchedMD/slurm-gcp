@@ -430,8 +430,7 @@ properties:
           type        : boolean
           default     : False
           description : Whether C2 instances in this partition should use
-                        placement groups for jobs requiring 2 to 22 instances.
-                        Implies exclusive option.
+                        placement groups. Implies exclusive option.
 
         exclusive:
           type        : boolean

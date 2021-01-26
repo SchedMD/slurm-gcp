@@ -122,6 +122,26 @@ def wait_for_operation(compute, project, operation):
 # [END wait_for_operation]
 
 
+def delete_placement_groups(compute, node_list, arg_job_id):
+    PLACEMENT_MAX_CNT = 22
+    pg_ops = []
+    pg_index = 0
+    pid = util.get_pid(node_list[0])
+
+    for i in range(len(node_list)):
+        if i % PLACEMENT_MAX_CNT:
+            continue
+        pg_index += 1
+        pg_name = f'{cfg.cluster_name}-{arg_job_id}-{pg_index}'
+        pg_ops.append(compute.resourcePolicies().delete(
+            project=cfg.project, region=cfg.instance_defs[pid].region,
+            resourcePolicy=pg_name).execute())
+    for operation in pg_ops:
+        wait_for_operation(compute, cfg.project, operation)
+    log.debug("done deleting pg")
+# [END delete_placement_groups]
+
+
 def main(arg_nodes, arg_job_id):
     log.info(f"deleting nodes:{arg_nodes} job_id:{job_id}")
     compute = googleapiclient.discovery.build('compute', 'v1',
@@ -167,13 +187,8 @@ def main(arg_nodes, arg_job_id):
     if (arg_job_id and
             cfg.instance_defs[pid].enable_placement and
             cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
-            len(node_list) >= 2 and len(node_list) <= 22):
-        operation = compute.resourcePolicies().delete(
-            project=cfg.project,
-            region=cfg.instance_defs[pid].region,
-            resourcePolicy=f"{cfg.cluster_name}-{arg_job_id}").execute()
-        wait_for_operation(compute, cfg.project, operation)
-        log.debug("done deleting pg")
+            len(node_list) > 1):
+        delete_placement_groups(compute, node_list, arg_job_id)
 
     log.debug("exiting suspend")
 
