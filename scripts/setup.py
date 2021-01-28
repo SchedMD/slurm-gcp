@@ -14,15 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
 import importlib
-import itertools as it
 import logging
 import os
 import sys
 import shutil
 import time
-import urllib.request
 from pathlib import Path
 from subprocess import DEVNULL
 from functools import reduce
