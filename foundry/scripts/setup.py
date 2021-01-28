@@ -403,7 +403,7 @@ def install_slurm():
             use_version = util.run(f"tar -xvjf {tarfile}", check=True,
                                    get_stdout=True).stdout.splitlines()[0][:-1]
     src_path = src_path/use_version
-    build_dir = dirs.slurm/'build'
+    build_dir = dirs.build
     build_dir.mkdir(parents=True, exist_ok=True)
 
     with cd(build_dir):
@@ -617,6 +617,23 @@ PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """)
 
 
+def run_custom_scripts():
+    prefix = 'custom-'
+    metadata = util.get_metadata('attributes/').split('\n')
+    custom_scripts = [s for s in metadata if s.startswith(prefix)]
+
+    custom_path = dirs.slurm/'custom-scripts'
+    custom_path.mkdir(parents=True, exist_ok=True)
+    for script in custom_scripts:
+        name = script[len(prefix):]
+        path = custom_path/name
+        path.write_text(util.get_metadata(f'attributes/{script}'))
+        path.chmod(0o755)
+
+    for script in sorted(custom_path.glob('*')):
+        util.run(str(script.resolve()))
+
+
 def remove_metadata():
     """ Remove metadata from instance """
 
@@ -652,6 +669,7 @@ def main():
     setup_nfs_threads()
 
     install_slurm_tmpfile()
+    run_custom_scripts()
     
     setup_logrotate()
 

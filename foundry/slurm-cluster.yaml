@@ -21,6 +21,7 @@ imports:
 - path: &centoso-8 scripts/centos-8-packages
 - path: &debian-10 scripts/debian-10-packages
 - path: &ubuntu-2004 scripts/ubuntu-2004-packages
+- path: custom.d/*
 
 resources:
 - name: slurm-images

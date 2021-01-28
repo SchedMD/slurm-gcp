@@ -62,6 +62,12 @@ def generate_config(context):
     meta['libjwt_version'] = props['libjwt_version']
     meta['ompi_version'] = props['ompi_version']
     meta['slurm_version'] = slurm_version = props['slurm_version']
+
+    for path in filter(lambda x: x.startswith('custom.d/'),
+                       context.imports.keys()):
+        new = path.replace('custom.d/', 'custom-')
+        new = new.replace('.', '_')
+        meta[new] = context.imports[path]
     # 'VmDnsSetting': 'GlobalOnly',
 
     resources = []
