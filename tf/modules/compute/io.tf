@@ -13,28 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-variable "compute_image_disk_size_gb" {
-  description = "Size of disk for compute node image."
-  default     = 20
-}
-
-variable "compute_image_disk_type" {
-  description = "Disk type (pd-ssd or pd-standard) for compute node image."
-  type        = string
-  default     = "pd-standard"
-}
-
-variable "compute_image_labels" {
-  description = "Labels to add to the compute node image. List of key key, value pairs."
-  type        = any
-  default     = {}
-}
-
-variable "compute_image_machine_type" {
-  type    = string
-  default = "n1-standard-2"
-}
-
 variable "controller_name" {
   type        = string
   description = "FQDN or IP address of the controller node"
@@ -76,11 +54,6 @@ variable "network_storage" {
   default = []
 }
 
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
-}
-
 variable "partitions" {
   description = "An array of configurations for specifying multiple machine types residing in their own Slurm partitions."
   type = list(object({
@@ -88,6 +61,8 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
+	image				 = string,
+    image_hyperthreads   = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,

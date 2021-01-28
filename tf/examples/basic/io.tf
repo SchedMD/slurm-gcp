@@ -77,6 +77,12 @@ variable "controller_disk_type" {
   default     = "pd-standard"
 }
 
+variable "controller_image" {
+  description = "Slurm image to use for the controller instance"
+  type		  = string
+  default	  = "slurm-184304/schedmd-slurm-centos7"
+}
+
 variable "controller_disk_size_gb" {
   description = "Size of disk for the controller."
   type        = number
@@ -144,6 +150,12 @@ variable "login_disk_size_gb" {
   default     = 20
 }
 
+variable "login_image" {
+  description = "Slurm image to use for login instances"
+  type		  = string
+  default	  = "slurm-184304/schedmd-slurm-centos7"
+}
+
 variable "login_labels" {
   description = "Labels to add to login instances. List of key key, value pairs."
   type        = any
@@ -192,6 +204,11 @@ variable "munge_key" {
   default     = null
 }
 
+variable "jwt_key" {
+  description = "Specific libjwt key to use"
+  default     = null
+}
+
 variable "network_name" {
   default = null
   type    = string
@@ -208,11 +225,6 @@ variable "network_storage" {
   default = []
 }
 
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
-}
-
 variable "partitions" {
   description = "An array of configurations for specifying multiple machine types residing in their own Slurm partitions."
   type = list(object({
@@ -220,6 +232,8 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
+	image				 = string,
+    image_hyperthreads   = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,
@@ -246,10 +260,6 @@ variable "shared_vpc_host_project" {
   default = null
 }
 
-variable "slurm_version" {
-  default = "19.05-latest"
-}
-
 variable "subnetwork_name" {
   description = "The name of the pre-defined VPC subnet you want the nodes to attach to based on Region."
   default     = null
@@ -266,9 +276,9 @@ variable "zone" {
 }
 
 output "controller_network_ips" {
-  value = "${module.slurm_cluster_controller.instance_network_ips}"
+  value = module.slurm_cluster_controller.instance_network_ips
 }
 
 output "login_network_ips" {
-  value = "${module.slurm_cluster_login.instance_network_ips}"
+  value = module.slurm_cluster_login.instance_network_ips
 }

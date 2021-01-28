@@ -15,7 +15,6 @@
 
 locals {
   controller_name = "${var.cluster_name}-controller"
-  compute_node_prefix = "${var.cluster_name}-compute"
 }
 
 resource "google_compute_disk" "secondary" {
@@ -38,7 +37,7 @@ resource "google_compute_instance" "controller_node" {
 
   boot_disk {
     initialize_params {
-      image = "centos-cloud/centos-7"
+      image = var.image
       type  = var.boot_disk_type
       size  = var.boot_disk_size
     }
@@ -85,7 +84,7 @@ resource "google_compute_instance" "controller_node" {
 ${file("${path.module}/../../../scripts/startup.sh")}
 EOF
 
-    util_script = <<EOF
+    util-script = <<EOF
 ${file("${path.module}/../../../scripts/util.py")}
 EOF
 
@@ -93,7 +92,6 @@ EOF
 ${jsonencode({
     cloudsql                     = var.cloudsql
     cluster_name                 = var.cluster_name,
-    compute_node_prefix          = local.compute_node_prefix,
     compute_node_scopes          = var.compute_node_scopes,
     compute_node_service_account = var.compute_node_service_account,
     controller_secondary_disk    = var.secondary_disk,
@@ -101,33 +99,28 @@ ${jsonencode({
     login_network_storage        = var.login_network_storage,
     login_node_count             = var.login_node_count
     munge_key                    = var.munge_key,
+    jwt_key					     = var.jwt_key,
     network_storage              = var.network_storage,
-    ompi_version                 = var.ompi_version,
     partitions                   = var.partitions,
     project                      = var.project,
     region                       = var.region,
     shared_vpc_host_project      = var.shared_vpc_host_project,
-    slurm_version                = var.slurm_version,
     suspend_time                 = var.suspend_time,
     vpc_subnet                   = var.subnetwork_name,
     zone                         = var.zone,
 })}
 EOF
 
-    setup_script = <<EOF
+    setup-script = <<EOF
 ${file("${path.module}/../../../scripts/setup.py")}
 EOF
 
-    slurm_resume = <<EOF
+    slurm-resume = <<EOF
 ${file("${path.module}/../../../scripts/resume.py")}
 EOF
 
-    slurm_suspend = <<EOF
+    slurm-suspend = <<EOF
 ${file("${path.module}/../../../scripts/suspend.py")}
-EOF
-
-    slurmsync = <<EOF
-${file("${path.module}/../../../scripts/slurmsync.py")}
 EOF
 
     slurmsync = <<EOF

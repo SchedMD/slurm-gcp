@@ -13,16 +13,60 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+. /etc/os-release
+
+case "$ID" in
+	debian|ubuntu)
+		apt-get update
+		apt-get upgrade -y
+		pacman="apt-get install -y"
+		;;
+	rhel|centos)
+		# reboot on update in case of kernel update
+		yum check-updates
+		if [ $? -eq 100 ]; then
+			yum update -y
+			reboot
+		fi
+		pacman="yum install -y"
+		yum install -y epel-release
+		;;
+esac
+
+PACKAGES=(
+    'wget'
+    'python3'
+    'python3-pip'
+)
+
+PY_PACKAGES=(
+    'pyyaml'
+    'requests'
+    'google-api-python-client'
+)
 
 PING_HOST=8.8.8.8
 until ( ping -q -w1 -c1 $PING_HOST > /dev/null ) ; do
     echo "Waiting for internet"
-    sleep .5
+    sleep 1
+done
+
+echo "$pacman ${PACKAGES[*]}"
+until ( $pacman ${PACKAGES[*]} > /dev/null ) ; do
+    echo "failed to install packages. Trying again in 5 seconds"
+    sleep 5
+done
+
+echo   "pip3 install --upgrade ${PY_PACKAGES[*]}"
+until ( pip3 install --upgrade ${PY_PACKAGES[*]} ) ; do
+    echo "pip3 failed to install python packages. Trying again in 5 seconds"
+    sleep 5
 done
 
 SETUP_SCRIPT="setup.py"
 SETUP_META="setup-script"
-DIR="/tmp"
+DIR="/root/image-scripts"
+mkdir -p $DIR
 URL="http://metadata.google.internal/computeMetadata/v1/instance/attributes/$SETUP_META"
 HEADER="Metadata-Flavor:Google"
 echo  "wget -nv --header $HEADER $URL -O $DIR/$SETUP_SCRIPT"

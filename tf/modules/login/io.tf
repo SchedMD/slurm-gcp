@@ -23,6 +23,11 @@ variable "boot_disk_type" {
   default     = "pd-standard"
 }
 
+variable "image" {
+  description = "Disk OS image with Slurm preinstalled to use for login node"
+  type		  = string
+}
+
 variable "cluster_name" {
   description = "Name of the cluster"
   type        = string
@@ -87,11 +92,6 @@ variable "node_count" {
   default     = 1
 }
 
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
-}
-
 variable "region" {
   description = "Compute Platform region where the Slurm cluster will be located"
   type        = string
@@ -135,5 +135,5 @@ variable "zone" {
 }
 
 output "instance_network_ips" {
-  value = ["${google_compute_instance.login_node.*.network_interface.0.network_ip}"]
+  value = [google_compute_instance.login_node.*.network_interface.0.network_ip]
 }

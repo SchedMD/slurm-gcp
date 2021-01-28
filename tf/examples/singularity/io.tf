@@ -192,6 +192,11 @@ variable "munge_key" {
   default     = null
 }
 
+variable "jwt_key" {
+  description = "Specific libjwt key to use"
+  default     = null
+}
+
 variable "network_name" {
   default = null
   type    = string
@@ -206,11 +211,6 @@ variable "network_storage" {
     fs_type       = string,
     mount_options = string}))
   default = []
-}
-
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
 }
 
 variable "partitions" {
@@ -246,10 +246,6 @@ variable "shared_vpc_host_project" {
   default = null
 }
 
-variable "slurm_version" {
-  default = "19.05-latest"
-}
-
 variable "subnetwork_name" {
   description = "The name of the pre-defined VPC subnet you want the nodes to attach to based on Region."
   default     = null
@@ -266,9 +262,9 @@ variable "zone" {
 }
 
 output "controller_network_ips" {
-  value = "${module.slurm_cluster_controller.instance_network_ips}"
+  value = module.slurm_cluster_controller.instance_network_ips
 }
 
 output "login_network_ips" {
-  value = "${module.slurm_cluster_login.instance_network_ips}"
+  value = module.slurm_cluster_login.instance_network_ips
 }

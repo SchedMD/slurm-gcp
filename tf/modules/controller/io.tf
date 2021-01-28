@@ -49,6 +49,10 @@ variable "boot_disk_type" {
   default     = "pd-standard"
 }
 
+variable "image" {
+  description = "Disk OS image (with Slurm) path for controller instance"
+}
+
 variable "labels" {
   description = "Labels to add to controller instance. List of key key, value pairs."
   type        = any
@@ -107,6 +111,11 @@ variable "munge_key" {
   default     = null
 }
 
+variable "jwt_key" {
+  description = "Specific libjwt key to use"
+  default     = null
+}
+
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
@@ -118,11 +127,6 @@ variable "network_storage" {
   default = []
 }
 
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
-}
-
 variable "partitions" {
   description = "An array of configurations for specifying multiple machine types residing in their own Slurm partitions."
   type = list(object({
@@ -130,6 +134,8 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
+	image				 = string,
+    image_hyperthreads   = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,
@@ -174,11 +180,6 @@ variable "shared_vpc_host_project" {
   default = null
 }
 
-variable "slurm_version" {
-  description = "The Slurm version to install. The version should match the link name found at https://www.schedmd.com/downloads.php"
-  default     = "19.05-latest"
-}
-
 variable "subnet_depend" {
   description = "Used as a dependency between the network and instances"
   type        = string
@@ -206,5 +207,5 @@ output "controller_node_name" {
 }
 
 output "instance_network_ips" {
-  value = ["${google_compute_instance.controller_node.*.network_interface.0.network_ip}"]
+  value = [google_compute_instance.controller_node.*.network_interface.0.network_ip]
 }

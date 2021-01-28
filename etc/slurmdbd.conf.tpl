@@ -7,7 +7,10 @@
 #ArchiveUsage=no
 
 AuthType=auth/munge
-DbdHost={CONTROL_MACHINE}
+AuthAltTypes=auth/jwt
+AuthAltParameters=jwt_key={state_save}/jwt_hs256.key
+
+DbdHost={control_host}
 DebugLevel=debug
 
 #PurgeEventAfter=1month
@@ -18,7 +21,7 @@ DebugLevel=debug
 #PurgeTXNAfter=12month
 #PurgeUsageAfter=24month
 
-LogFile={SLURM_LOG}/slurmdbd.log
+LogFile={slurmlog}/slurmdbd.log
 PidFile=/var/run/slurm/slurmdbd.pid
 
 SlurmUser=slurm

@@ -44,10 +44,6 @@ instances = {}
 operations = {}
 retry_list = []
 
-util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
-log = logging.getLogger(Path(__file__).name)
-
-
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
@@ -99,7 +95,7 @@ def update_slurm_node_addrs(compute):
             pid = util.get_pid(node_name)
             my_fields = 'networkInterfaces(name,network,networkIP,subnetwork)'
             instance_networks = compute.instances().get(
-                project=cfg.project, zone=cfg.partitions[pid].zone,
+                project=cfg.project, zone=cfg.instance_defs[pid].zone,
                 instance=node_name, fields=my_fields).execute()
             instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
 
@@ -119,7 +115,17 @@ def create_instance(compute, zone, machine_type, instance_name,
     # Configure the machine
     machine_type_path = f'zones/{zone}/machineTypes/{machine_type}'
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
-        cfg.project, zone, cfg.partitions[pid].compute_disk_type)
+        cfg.project, zone, cfg.instance_defs[pid].compute_disk_type)
+
+    meta_files = {
+        'config': '/slurm/scripts/config.yaml',
+        'util-script': '/slurm/scripts/util.py',
+        'startup-script': '/slurm/scripts/startup.sh',
+        'setup-script': '/slurm/scripts/setup.py',
+    }
+    custom_compute = Path('/slurm/scripts/custom-compute-install')
+    if custom_compute.exists():
+        meta_files['custom-compute-install'] = str(custom_compute)
 
     config = {
         'name': instance_name,
@@ -132,7 +138,7 @@ def create_instance(compute, zone, machine_type, instance_name,
             'initializeParams': {
                 'sourceImage': source_disk_image,
                 'diskType': disk_type,
-                'diskSizeGb': cfg.partitions[pid].compute_disk_size_gb
+                'diskSizeGb': cfg.instance_defs[pid].compute_disk_size_gb
             }
         }],
 
@@ -141,9 +147,9 @@ def create_instance(compute, zone, machine_type, instance_name,
             'subnetwork': (
                 "projects/{}/regions/{}/subnetworks/{}".format(
                     cfg.shared_vpc_host_project or cfg.project,
-                    cfg.partitions[pid].region,
-                    (cfg.partitions[pid].vpc_subnet
-                     or f'{cfg.cluster_name}-{cfg.partitions[pid].region}'))
+                    cfg.instance_defs[pid].region,
+                    (cfg.instance_defs[pid].vpc_subnet
+                     or f'{cfg.cluster_name}-{cfg.instance_defs[pid].region}'))
             ),
         }],
 
@@ -160,7 +166,10 @@ def create_instance(compute, zone, machine_type, instance_name,
                 {'key': 'enable-oslogin',
                  'value': 'TRUE'},
                 {'key': 'VmDnsSetting',
-                 'value': 'GlobalOnly'}
+                 'value': 'GlobalOnly'},
+                {'key': 'terraform',
+                 'value': 'TRUE'},
+                *[{'key': k, 'value': Path(v).read_text()} for k, v in meta_files.items()]
             ]
         }
     }
@@ -172,29 +181,29 @@ def create_instance(compute, zone, machine_type, instance_name,
             'value': shutdown_script_path.read_text()
         })
 
-    if cfg.partitions[pid].gpu_type:
+    if cfg.instance_defs[pid].gpu_type:
         accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
                       .format(cfg.project, zone,
-                              cfg.partitions[pid].gpu_type))
+                              cfg.instance_defs[pid].gpu_type))
         config['guestAccelerators'] = [{
-            'acceleratorCount': cfg.partitions[pid].gpu_count,
+            'acceleratorCount': cfg.instance_defs[pid].gpu_count,
             'acceleratorType': accel_type
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if cfg.partitions[pid].preemptible_bursting:
+    if cfg.instance_defs[pid].preemptible_bursting:
         config['scheduling'] = {
             'preemptible': True,
             'onHostMaintenance': 'TERMINATE',
             'automaticRestart': False
         },
 
-    if cfg.partitions[pid].compute_labels:
-        config['labels'] = cfg.partitions[pid].compute_labels,
+    if cfg.instance_defs[pid].compute_labels:
+        config['labels'] = cfg.instance_defs[pid].compute_labels,
 
-    if cfg.partitions[pid].cpu_platform:
-        config['minCpuPlatform'] = cfg.partitions[pid].cpu_platform,
+    if cfg.instance_defs[pid].cpu_platform:
+        config['minCpuPlatform'] = cfg.instance_defs[pid].cpu_platform,
 
     if cfg.external_compute_ips:
         config['networkInterfaces'][0]['accessConfigs'] = [
@@ -218,33 +227,6 @@ def added_instances_cb(request_id, response, exception):
 # [END added_instances_cb]
 
 
-@util.static_vars(images={})
-def get_source_image(compute, node_name):
-
-    images = get_source_image.images
-    pid = util.get_pid(node_name)
-    if pid not in images:
-        image_name = f"{cfg.compute_node_prefix}-{pid}-image"
-        family = (cfg.partitions[pid].compute_image_family
-                  or f"{image_name}-family")
-        try:
-            image_response = compute.images().getFromFamily(
-                project=(cfg.partitions[pid].compute_image_family_project or
-                         cfg.project),
-                family=family
-            ).execute()
-            if image_response['status'] != 'READY':
-                raise Exception("Image not ready")
-            source_disk_image = image_response['selfLink']
-        except Exception as e:
-            log.error(f"Image {family} unavailable: {e}")
-            sys.exit()
-
-        images[pid] = source_disk_image
-    return images[pid]
-# [END get_source_image]
-
-
 def add_instances(compute, node_list):
 
     batch_list = []
@@ -262,12 +244,11 @@ def add_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=added_instances_cb))
 
-        source_disk_image = get_source_image(compute, node_name)
-
         pid = util.get_pid(node_name)
+        source_disk_image = cfg.instance_defs[pid].image
         batch_list[curr_batch].add(
-            create_instance(compute, cfg.partitions[pid].zone,
-                            cfg.partitions[pid].machine_type, node_name,
+            create_instance(compute, cfg.instance_defs[pid].zone,
+                            cfg.instance_defs[pid].machine_type, node_name,
                             source_disk_image),
             request_id=node_name)
         req_cnt += 1
@@ -316,7 +297,22 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('nodes', help='Nodes to burst')
+    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
+                        help='Enable debugging output')
 
     args = parser.parse_args()
+    if args.debug:
+        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+                                logfile=LOGFILE)
+    else:
+        util.config_root_logger(level='INFO', util_level='ERROR',
+                                logfile=LOGFILE)
+    log = logging.getLogger(Path(__file__).name)
+    sys.excepthook = util.handle_exception
+    
+    new_yaml = Path(__file__).with_name('config.yaml.new')
+    if (not cfg.instance_defs or cfg.partitions) and not new_yaml.exists():
+        log.info(f"partition declarations in config.yaml have been converted to a new format and saved to {new_yaml}. Replace config.yaml as soon as possible.")
+        cfg.save_config(new_yaml)
 
     main(args.nodes)

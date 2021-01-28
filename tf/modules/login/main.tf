@@ -14,7 +14,6 @@
 # limitations under the License.
 
 locals {
-  compute_node_prefix = "${var.cluster_name}-compute"
 }
 
 resource "google_compute_instance" "login_node" {
@@ -30,7 +29,7 @@ resource "google_compute_instance" "login_node" {
 
   boot_disk {
     initialize_params {
-      image = "centos-cloud/centos-7"
+      image = var.image
       type  = var.boot_disk_type
       size  = var.boot_disk_size
     }
@@ -70,23 +69,21 @@ resource "google_compute_instance" "login_node" {
 ${file("${path.module}/../../../scripts/startup.sh")}
 EOF
 
-    util_script = <<EOF
+    util-script = <<EOF
 ${file("${path.module}/../../../scripts/util.py")}
 EOF
 
     config = <<EOF
 ${jsonencode({
     cluster_name              = var.cluster_name,
-    compute_node_prefix       = local.compute_node_prefix,
     controller_secondary_disk = var.controller_secondary_disk,
     munge_key                 = var.munge_key,
-    ompi_version              = var.ompi_version
     login_network_storage     = var.login_network_storage
     network_storage           = var.network_storage
 })}
 EOF
 
-    setup_script = <<EOF
+    setup-script = <<EOF
 ${file("${path.module}/../../../scripts/setup.py")}
 EOF
 

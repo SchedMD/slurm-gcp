@@ -33,6 +33,7 @@ resources:
     # vpc_subnet                : default
     # shared_vpc_host_project   : < my-shared-vpc-project-name >
 
+    controller_image: projects/slurm-184304/global/images/family/schedmd-slurm2011-centos7
     controller_machine_type : n1-standard-2
     # controller_disk_type      : pd-standard
     # controller_disk_size_gb   : 50
@@ -50,6 +51,7 @@ resources:
     #   # Optional
     #   db_name: slurm_accounting
 
+    login_image         : projects/slurm-184304/global/images/family/schedmd-slurm2011-centos7
     login_machine_type        : n1-standard-2
     # login_disk_type           : pd-standard
     # login_disk_size_gb        : 20
@@ -104,10 +106,11 @@ resources:
     # ompi_version              : v3.1.x
 
     partitions :
-      - name              : debug
-        machine_type      : n1-standard-2
-        max_node_count    : 10
-        zone              : us-central1-a
+    - name              : debug
+      image             : projects/slurm-184304/global/images/family/schedmd-slurm2011-centos7
+      machine_type      : n1-standard-2
+      max_node_count    : 10
+      zone              : us-central1-a
 
     # Optional compute configuration fields
 

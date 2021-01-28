@@ -15,14 +15,14 @@
 
 locals {
   tmp_list = [for part in var.partitions :
-              "${join("-", slice(split("-", part.zone), 0, 2))}"
+              join("-", slice(split("-", part.zone), 0, 2))
               if part.vpc_subnet == null]
   region_subnet_list = (var.subnetwork_name != null
                         ? local.tmp_list
                         : distinct(concat([var.region], local.tmp_list)))
 
   tmp_map = [for part in var.partitions : {
-      region = "${join("-", slice(split("-", part.zone), 0, 2))}"
+      region = join("-", slice(split("-", part.zone), 0, 2))
       subnet = (part.vpc_subnet != null
                 ? part.vpc_subnet
                 : "${var.cluster_name}-${join("-", slice(split("-", part.zone), 0, 2))}")

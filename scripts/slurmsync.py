@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import collections
 import fcntl
 import logging
@@ -36,9 +37,6 @@ LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 TOT_REQ_CNT = 1000
 
 retry_list = []
-
-util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
-log = logging.getLogger(Path(__file__).name)
 
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
@@ -74,7 +72,7 @@ def start_instances(compute, node_list):
         pid = util.get_pid(node)
         batch_list[curr_batch].add(
             compute.instances().start(project=cfg.project,
-                                      zone=cfg.partitions[pid].zone,
+                                      zone=cfg.instance_defs[pid].zone,
                                       instance=node),
             request_id=node)
         req_cnt += 1
@@ -117,13 +115,13 @@ def main():
                        if 'CLOUD' in args]
 
         g_nodes = []
-        for i, part in enumerate(cfg.partitions):
+        for pid, part in cfg.instance_defs.items():
             page_token = ""
             while True:
                 resp = compute.instances().list(
                     project=cfg.project, zone=part.zone,
                     pageToken=page_token,
-                    filter=f"name={cfg.compute_node_prefix}-{i}-*"
+                    filter=f"name={pid}-*"
                 ).execute()
 
                 if "items" in resp:
@@ -151,7 +149,7 @@ def main():
                 if g_node and (g_node['status'] == "TERMINATED"):
                     if not s_state.base.startswith('DOWN'):
                         to_down.append(s_node)
-                    if (cfg.partitions[pid].preemptible_bursting):
+                    if (cfg.instance_defs[pid].preemptible_bursting):
                         to_start.append(s_node)
 
                 # can't check if the node doesn't exist in GCP while the node
@@ -228,6 +226,22 @@ def main():
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
+                        help='Enable debugging output')
+
+    args = parser.parse_args()
+    if args.debug:
+        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+                                logfile=LOGFILE)
+    else:
+        util.config_root_logger(level='INFO', util_level='ERROR',
+                                logfile=LOGFILE)
+    log = logging.getLogger(Path(__file__).name)
+    sys.excepthook = util.handle_exception
 
     # only run one instance at a time
     pid_file = (Path('/tmp')/Path(__file__).name).with_suffix('.pid')
