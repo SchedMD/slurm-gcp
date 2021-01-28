@@ -32,6 +32,7 @@ from googleapiclient.http import set_user_agent
 
 import util
 
+PLACEMENT_MAX_CNT = 22
 
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
@@ -109,7 +110,7 @@ def update_slurm_node_addrs(compute):
 
 
 def create_instance(compute, zone, machine_type, instance_name,
-                    source_disk_image):
+                    source_disk_image, placement_group_name):
 
     pid = util.get_pid(instance_name)
     # Configure the machine
@@ -181,6 +182,17 @@ def create_instance(compute, zone, machine_type, instance_name,
             'value': shutdown_script_path.read_text()
         })
 
+    if placement_group_name is not None:
+        config['scheduling'] = {
+            'onHostMaintenance': 'TERMINATE',
+            'automaticRestart': False
+        },
+        config['resourcePolicies'] = [
+            'https://www.googleapis.com/compute/v1/projects/{}/regions/{}/resourcePolicies/{}'
+            .format(cfg.shared_vpc_host_project or cfg.project,
+                    cfg.instance_defs[pid].region, placement_group_name)
+        ]
+
     if cfg.instance_defs[pid].gpu_type:
         accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
                       .format(cfg.project, zone,
@@ -227,15 +239,27 @@ def added_instances_cb(request_id, response, exception):
 # [END added_instances_cb]
 
 
-def add_instances(compute, node_list):
+def add_instances(compute, node_list, arg_job_id, placement_groups):
 
+    placement_group_name = None
+    pg_index = 0
     batch_list = []
     curr_batch = 0
     req_cnt = 0
     batch_list.insert(
         curr_batch, compute.new_batch_http_request(callback=added_instances_cb))
 
-    for node_name in node_list:
+    for i, node_name in enumerate(node_list):
+
+        pid = util.get_pid(node_name)
+        if (not arg_job_id and cfg.instance_defs[pid].exclusive):
+            # Node was created by PrologSlurmctld, skip for ResumeProgram.
+            continue
+
+        if placement_groups:
+            if i != 0 and i % PLACEMENT_MAX_CNT == 0:
+                pg_index += 1
+            placement_group_name = placement_groups[pg_index]
 
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
@@ -249,7 +273,7 @@ def add_instances(compute, node_list):
         batch_list[curr_batch].add(
             create_instance(compute, cfg.instance_defs[pid].zone,
                             cfg.instance_defs[pid].machine_type, node_name,
-                            source_disk_image),
+                            source_disk_image, placement_group_name),
             request_id=node_name)
         req_cnt += 1
 
@@ -267,8 +291,43 @@ def add_instances(compute, node_list):
 # [END add_instances]
 
 
-def main(arg_nodes):
-    log.info(f"Bursting out: {arg_nodes}")
+def create_placement_groups(compute, arg_job_id, vm_count, region):
+    log.debug(f"Creating PG: {arg_job_id} vm_count:{vm_count} region:{region}")
+
+    pg_names = []
+    pg_ops = []
+    pg_index = 0
+
+    for i in range(vm_count):
+        if i % PLACEMENT_MAX_CNT:
+            continue
+        pg_index += 1
+        pg_name = f'{cfg.cluster_name}-{arg_job_id}-{pg_index}'
+        pg_names.append(pg_name)
+
+        config = {
+            'name': pg_name,
+            'region': region,
+            'groupPlacementPolicy': {
+                "collocation": "COLLOCATED",
+                "vmCount": min(vm_count - i, PLACEMENT_MAX_CNT)
+             }
+        }
+
+        pg_ops.append(compute.resourcePolicies().insert(
+            project=cfg.project,
+            region=region,
+            body=config).execute())
+
+    for operation in pg_ops:
+        wait_for_operation(compute, cfg.project, operation)
+
+    return pg_names
+# [END create_placement_groups]
+
+
+def main(arg_nodes, arg_job_id):
+    log.info(f"Bursting out: {arg_nodes} {arg_job_id}")
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=authorized_http,
                                               cache_discovery=False)
@@ -278,8 +337,23 @@ def main(arg_nodes):
                          check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
+    placement_groups = None
+    pid = util.get_pid(node_list[0])
+    if (arg_job_id and not cfg.instance_defs[pid].exclusive):
+        # Don't create from calls by PrologSlurmctld
+        return
+
+    if (arg_job_id and
+            cfg.instance_defs[pid].enable_placement and
+            cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
+            len(node_list) > 1):
+        log.debug(f"creating placement group for {arg_job_id}")
+        placement_groups = create_placement_groups(
+            compute, arg_job_id, len(node_list), cfg.instance_defs[pid].region)
+        time.sleep(5)
+
     while True:
-        add_instances(compute, node_list)
+        add_instances(compute, node_list, arg_job_id, placement_groups)
         if not len(retry_list):
             break
 
@@ -296,11 +370,24 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('nodes', help='Nodes to burst')
+    parser.add_argument('args', nargs='+', help="nodes [jobid]")
     parser.add_argument('--debug', '-d', dest='debug', action='store_true',
                         help='Enable debugging output')
 
-    args = parser.parse_args()
+    job_id = 0
+    nodes = ""
+
+    if "SLURM_JOB_NODELIST" in os.environ:
+        args = parser.parse_args(sys.argv[1:] +
+                                 [os.environ['SLURM_JOB_NODELIST'],
+                                  os.environ['SLURM_JOB_ID']])
+    else:
+        args = parser.parse_args()
+
+    nodes = args.args[0]
+    if len(args.args) > 1:
+        job_id = args.args[1]
+
     if args.debug:
         util.config_root_logger(level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
@@ -315,4 +402,4 @@ if __name__ == '__main__':
         log.info(f"partition declarations in config.yaml have been converted to a new format and saved to {new_yaml}. Replace config.yaml as soon as possible.")
         cfg.save_config(new_yaml)
 
-    main(args.nodes)
+    main(nodes, job_id)

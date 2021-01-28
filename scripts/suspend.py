@@ -52,7 +52,7 @@ def delete_instances_cb(request_id, response, exception):
 # [END delete_instances_cb]
 
 
-def delete_instances(compute, node_list):
+def delete_instances(compute, node_list, arg_job_id):
 
     batch_list = []
     curr_batch = 0
@@ -62,6 +62,12 @@ def delete_instances(compute, node_list):
         compute.new_batch_http_request(callback=delete_instances_cb))
 
     for node_name in node_list:
+
+        pid = util.get_pid(node_name)
+        if (not arg_job_id and cfg.instance_defs[pid].exclusive):
+            # Node was deleted by EpilogSlurmctld, skip for SuspendProgram
+            continue
+
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
             curr_batch += 1
@@ -88,8 +94,56 @@ def delete_instances(compute, node_list):
 # [END delete_instances]
 
 
-def main(arg_nodes):
-    log.info("deleting nodes:" + arg_nodes)
+def wait_for_operation(compute, project, operation):
+    print('Waiting for operation to finish...')
+    while True:
+        if 'zone' in operation:
+            result = compute.zoneOperations().get(
+                project=project,
+                zone=operation['zone'].split('/')[-1],
+                operation=operation['name']).execute()
+        elif 'region' in operation:
+            result = compute.regionOperations().get(
+                project=project,
+                region=operation['region'].split('/')[-1],
+                operation=operation['name']).execute()
+        else:
+            result = compute.globalOperations().get(
+                project=project,
+                operation=operation['name']).execute()
+
+        if result['status'] == 'DONE':
+            print("done.")
+            if 'error' in result:
+                raise Exception(result['error'])
+            return result
+
+        time.sleep(1)
+# [END wait_for_operation]
+
+
+def delete_placement_groups(compute, node_list, arg_job_id):
+    PLACEMENT_MAX_CNT = 22
+    pg_ops = []
+    pg_index = 0
+    pid = util.get_pid(node_list[0])
+
+    for i in range(len(node_list)):
+        if i % PLACEMENT_MAX_CNT:
+            continue
+        pg_index += 1
+        pg_name = f'{cfg.cluster_name}-{arg_job_id}-{pg_index}'
+        pg_ops.append(compute.resourcePolicies().delete(
+            project=cfg.project, region=cfg.instance_defs[pid].region,
+            resourcePolicy=pg_name).execute())
+    for operation in pg_ops:
+        wait_for_operation(compute, cfg.project, operation)
+    log.debug("done deleting pg")
+# [END delete_placement_groups]
+
+
+def main(arg_nodes, arg_job_id):
+    log.info(f"deleting nodes:{arg_nodes} job_id:{job_id}")
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
 
@@ -98,8 +152,21 @@ def main(arg_nodes):
                          check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
+    pid = util.get_pid(node_list[0])
+    if (arg_job_id and not cfg.instance_defs[pid].exclusive):
+        # Don't delete from calls by EpilogSlurmctld
+        return
+
+    if arg_job_id:
+        # Mark nodes as off limits so new jobs while powering down.
+        util.run(
+            f"{SCONTROL} update node={arg_nodes} state=drain reason='{arg_job_id} finishing'")
+        # Power down nodes in slurm, so that they will become available again.
+        util.run(
+            f"{SCONTROL} update node={arg_nodes} state=power_down")
+
     while True:
-        delete_instances(compute, node_list)
+        delete_instances(compute, node_list, arg_job_id)
         if not len(retry_list):
             break
 
@@ -108,7 +175,22 @@ def main(arg_nodes):
         node_list = list(retry_list)
         del retry_list[:]
 
+    if arg_job_id:
+        for operation in operations.values():
+            try:
+                wait_for_operation(compute, cfg.project, operation)
+            except Exception:
+                log.exception(f"Error in deleting {operation['name']} to slurm")
+
     log.debug("done deleting instances")
+
+    if (arg_job_id and
+            cfg.instance_defs[pid].enable_placement and
+            cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
+            len(node_list) > 1):
+        delete_placement_groups(compute, node_list, arg_job_id)
+
+    log.debug("exiting suspend")
 
 # [END main]
 
@@ -117,11 +199,22 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('nodes', help='Nodes to release')
+    parser.add_argument('args', nargs='+', help="nodes [jobid]")
     parser.add_argument('--debug', '-d', dest='debug', action='store_true',
                         help='Enable debugging output')
 
-    args = parser.parse_args()
+    if "SLURM_JOB_NODELIST" in os.environ:
+        args = parser.parse_args(sys.argv[1:] +
+                                 [os.environ['SLURM_JOB_NODELIST'],
+                                  os.environ['SLURM_JOB_ID']])
+    else:
+        args = parser.parse_args()
+
+    nodes = args.args[0]
+    job_id = 0
+    if len(args.args) > 1:
+        job_id = args.args[1]
+
     if args.debug:
         util.config_root_logger(level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
@@ -131,4 +224,4 @@ if __name__ == '__main__':
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 
-    main(args.nodes)
+    main(nodes, job_id)

@@ -231,7 +231,7 @@ class Config(NSDict):
         # If k is ever not found, None will be inserted as the value
         cfg = cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
         if cfg.partitions:
-            cfg['instance_defs'] = NSDict({
+            cfg['instance_defs'] = Config({
                 f'{cfg.cluster_name}-compute-{pid}': part
                 for pid, part in enumerate(cfg.partitions)
             })
@@ -270,6 +270,10 @@ class Config(NSDict):
     @property
     def region(self):
         return self.zone and '-'.join(self.zone.split('-')[:-1])
+
+    @property
+    def exclusive(self):
+        return bool(self.get('exclusive', False) or self.enable_placement)
 
     def __getattr__(self, item):
         """ only called if item is not found in self """
