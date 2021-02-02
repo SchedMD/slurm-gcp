@@ -26,6 +26,8 @@ resource "google_compute_disk" "secondary" {
   zone = var.zone
 }
 
+data "google_compute_default_service_account" "default" {}
+
 resource "google_compute_instance" "controller_node" {
   depends_on = [var.subnet_depend]
 
@@ -64,95 +66,56 @@ resource "google_compute_instance" "controller_node" {
     # 2. var.project / var.subnetwork_name
     # 3. var.project / {cluster_name}-{region}
     subnetwork = (var.subnetwork_name != null
-                  ? var.subnetwork_name
-                  : "${var.cluster_name}-${var.region}")
+      ? var.subnetwork_name
+    : "${var.cluster_name}-${var.region}")
 
     subnetwork_project = var.shared_vpc_host_project
   }
 
   service_account {
-    email  = var.service_account
+    email  = var.service_account == null ? data.google_compute_default_service_account.default.email : var.service_account
     scopes = var.scopes
   }
+
+  metadata_startup_script = file("${path.module}/../../../scripts/startup.sh")
 
   metadata = {
     terraform      = "TRUE"
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
 
-    startup-script = <<EOF
-${file("${path.module}/../../../scripts/startup.sh")}
-EOF
+    config = jsonencode({
+      cloudsql                     = var.cloudsql
+      cluster_name                 = var.cluster_name
+      compute_node_scopes          = var.compute_node_scopes
+      compute_node_service_account = var.compute_node_service_account == null ? data.google_compute_default_service_account.default.email : var.compute_node_service_account
+      controller_secondary_disk    = var.secondary_disk
+      external_compute_ips         = !var.disable_compute_public_ips
+      login_network_storage        = var.login_network_storage
+      login_node_count             = var.login_node_count
+      munge_key                    = var.munge_key
+      jwt_key                      = var.jwt_key
+      network_storage              = var.network_storage
+      partitions                   = var.partitions
+      project                      = var.project
+      region                       = var.region
+      shared_vpc_host_project      = var.shared_vpc_host_project
+      suspend_time                 = var.suspend_time
+      vpc_subnet                   = var.subnetwork_name
+      zone                         = var.zone
+    })
 
-    util-script = <<EOF
-${file("${path.module}/../../../scripts/util.py")}
-EOF
-
-    config = <<EOF
-${jsonencode({
-    cloudsql                     = var.cloudsql
-    cluster_name                 = var.cluster_name,
-    compute_node_scopes          = var.compute_node_scopes,
-    compute_node_service_account = var.compute_node_service_account,
-    controller_secondary_disk    = var.secondary_disk,
-    external_compute_ips         = !var.disable_compute_public_ips,
-    login_network_storage        = var.login_network_storage,
-    login_node_count             = var.login_node_count
-    munge_key                    = var.munge_key,
-    jwt_key					     = var.jwt_key,
-    network_storage              = var.network_storage,
-    partitions                   = var.partitions,
-    project                      = var.project,
-    region                       = var.region,
-    shared_vpc_host_project      = var.shared_vpc_host_project,
-    suspend_time                 = var.suspend_time,
-    vpc_subnet                   = var.subnetwork_name,
-    zone                         = var.zone,
-})}
-EOF
-
-    setup-script = <<EOF
-${file("${path.module}/../../../scripts/setup.py")}
-EOF
-
-    slurm-resume = <<EOF
-${file("${path.module}/../../../scripts/resume.py")}
-EOF
-
-    slurm-suspend = <<EOF
-${file("${path.module}/../../../scripts/suspend.py")}
-EOF
-
-    slurmsync = <<EOF
-${file("${path.module}/../../../scripts/slurmsync.py")}
-EOF
-
-    custom-compute-install = <<EOF
-${file("${path.module}/../../../scripts/custom-compute-install")}
-EOF
-
-    custom-controller-install = <<EOF
-${file("${path.module}/../../../scripts/custom-controller-install")}
-EOF
-
-    compute-shutdown = <<EOF
-${file("${path.module}/../../../scripts/compute-shutdown")}
-EOF
-
-    slurm_conf_tpl = <<EOF
-${file("${path.module}/../../../etc/slurm.conf.tpl")}
-EOF
-
-    slurmdbd_conf_tpl = <<EOF
-${file("${path.module}/../../../etc/slurmdbd.conf.tpl")}
-EOF
-
-    cgroup_conf_tpl = <<EOF
-${file("${path.module}/../../../etc/cgroup.conf.tpl")}
-EOF
-
-    fluentd_conf_tpl = <<EOF
-${file("${path.module}/../../../etc/controller-fluentd.conf.tpl")}
-EOF
+    cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
+    compute-shutdown          = file("${path.module}/../../../scripts/compute-shutdown")
+    custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
+    custom-controller-install = file("${path.module}/../../../scripts/custom-controller-install")
+    fluentd_conf_tpl          = file("${path.module}/../../../etc/controller-fluentd.conf.tpl")
+    setup-script              = file("${path.module}/../../../scripts/setup.py")
+    slurm-resume              = file("${path.module}/../../../scripts/resume.py")
+    slurm-suspend             = file("${path.module}/../../../scripts/suspend.py")
+    slurm_conf_tpl            = file("${path.module}/../../../etc/slurm.conf.tpl")
+    slurmdbd_conf_tpl         = file("${path.module}/../../../etc/slurmdbd.conf.tpl")
+    slurmsync                 = file("${path.module}/../../../scripts/slurmsync.py")
+    util-script               = file("${path.module}/../../../scripts/util.py")
   }
 }

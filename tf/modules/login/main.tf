@@ -16,6 +16,8 @@
 locals {
 }
 
+data "google_compute_default_service_account" "default" {}
+
 resource "google_compute_instance" "login_node" {
   count = var.node_count
 
@@ -49,43 +51,34 @@ resource "google_compute_instance" "login_node" {
     # 2. var.project / var.subnetwork_name
     # 3. var.project / {cluster_name}-{region}
     subnetwork = (var.subnetwork_name != null
-                  ? var.subnetwork_name
-                  : "${var.cluster_name}-${var.region}")
+      ? var.subnetwork_name
+    : "${var.cluster_name}-${var.region}")
 
     subnetwork_project = var.shared_vpc_host_project
   }
 
   service_account {
-    email  = var.service_account
+    email  = var.service_account == null ? data.google_compute_default_service_account.default.email : var.service_account
     scopes = var.scopes
   }
+
+  metadata_startup_script = file("${path.module}/../../../scripts/startup.sh")
 
   metadata = {
     terraform      = "TRUE"
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
 
-    startup-script = <<EOF
-${file("${path.module}/../../../scripts/startup.sh")}
-EOF
+    util-script = file("${path.module}/../../../scripts/util.py")
 
-    util-script = <<EOF
-${file("${path.module}/../../../scripts/util.py")}
-EOF
+    config = jsonencode({
+      cluster_name              = var.cluster_name
+      controller_secondary_disk = var.controller_secondary_disk
+      munge_key                 = var.munge_key
+      login_network_storage     = var.login_network_storage
+      network_storage           = var.network_storage
+    })
 
-    config = <<EOF
-${jsonencode({
-    cluster_name              = var.cluster_name,
-    controller_secondary_disk = var.controller_secondary_disk,
-    munge_key                 = var.munge_key,
-    login_network_storage     = var.login_network_storage
-    network_storage           = var.network_storage
-})}
-EOF
-
-    setup-script = <<EOF
-${file("${path.module}/../../../scripts/setup.py")}
-EOF
-
+    setup-script = file("${path.module}/../../../scripts/setup.py")
   }
 }

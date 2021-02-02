@@ -92,37 +92,24 @@ resource "google_compute_instance" "compute_node" {
     scopes = each.value.sa_scopes
   }
 
+  metadata_startup_script = file("${path.module}/../../../scripts/startup.sh")
+
   metadata = {
     terraform      = "TRUE"
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
 
-    startup-script = <<EOF
-${file("${path.module}/../../../scripts/startup.sh")}
-EOF
+    config = jsonencode({
+      cluster_name              = var.cluster_name,
+      controller_secondary_disk = var.controller_secondary_disk,
+      munge_key                 = var.munge_key,
+      network_storage           = var.network_storage
+      partitions                = var.partitions
+      zone                      = var.zone
+    })
 
-    util-script = <<EOF
-${file("${path.module}/../../../scripts/util.py")}
-EOF
-
-    config = <<EOF
-${jsonencode({
-    cluster_name              = var.cluster_name,
-    controller_secondary_disk = var.controller_secondary_disk,
-    munge_key                 = var.munge_key,
-    network_storage           = var.network_storage
-    partitions                = var.partitions
-    zone                      = var.zone
-})}
-EOF
-
-    setup-script = <<EOF
-${file("${path.module}/../../../scripts/setup.py")}
-EOF
-
-    fluentd_conf_tpl = <<EOF
-${file("${path.module}/../../../etc/compute-fluentd.conf.tpl")}
-EOF
-
+    fluentd_conf_tpl = file("${path.module}/../../../etc/compute-fluentd.conf.tpl")
+    setup-script = file("${path.module}/../../../scripts/setup.py")
+    util-script = file("${path.module}/../../../scripts/util.py")
   }
 }
