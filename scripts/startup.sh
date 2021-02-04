@@ -13,6 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -e
+
+FLAGFILE=/slurm/slurm_configured_do_not_remove
+if [ -f $FLAGFILE ]; then
+	echo "Slurm was previously configured, quitting"
+	exit 0
+fi
+mkdir -p $(dirname $FLAGFILE)
+touch $FLAGFILE
 
 PING_HOST=8.8.8.8
 until ( ping -q -w1 -c1 $PING_HOST > /dev/null ) ; do

@@ -351,10 +351,6 @@ def install_meta_files():
     with ThreadPoolExecutor() as exe:
         exe.map(lambda x: install_metafile(*x), meta_entries)
 
-    util.run(
-        "gcloud compute instances remove-metadata {} --zone={} --keys={}"
-        .format(CONTROL_MACHINE, cfg.zone,
-                ','.join([x[1] for x in meta_entries])))
 # END install_meta_files()
 
 
@@ -558,35 +554,6 @@ def setup_slurmd_cronjob():
 # END setup_slurmd_cronjob()
 
 
-def remove_startup_scripts():
-    """ Remove metadata from all instances """
-    cmd = "gcloud compute instances remove-metadata"
-    common_keys = "startup-script,setup-script,util-script,config"
-    controller_keys = (f"{common_keys},"
-                       "slurm_conf_tpl,"
-                       "slurmdbd_conf_tpl,"
-                       "cgroup_conf_tpl")
-    #compute_keys = f"{common_keys},slurm_fluentd_log_tpl"
-    compute_keys = "slurm_fluentd_log_tpl"
-
-    # controller
-    util.run(f"{cmd} {cfg.hostname} --zone={cfg.zone} --keys={controller_keys}")
-
-    # logins
-    for i in range(0, cfg.login_node_count):
-        util.run("{} {}-login{} --zone={} --keys={}"
-                 .format(cmd, cfg.cluster_name, i, cfg.zone, common_keys))
-    # computes
-    for pid, part in cfg.instance_defs.items():
-        if not part.static_node_count:
-            continue
-        for j in range(part.static_node_count):
-            util.run("{} {}-{} --zone={} --keys={}"
-                     .format(cmd, pid, j,
-                             part.zone, compute_keys))
-# END remove_startup_scripts()
-
-
 def setup_nss_slurm():
     """ install and configure nss_slurm """
     # setup nss_slurm
@@ -669,7 +636,6 @@ def setup_controller():
     setup_nfs_exports()
     setup_sync_cronjob()
 
-    #remove_startup_scripts()
     log.info("Done setting up controller")
     pass
 
