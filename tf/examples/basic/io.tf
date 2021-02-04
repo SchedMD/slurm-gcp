@@ -62,7 +62,7 @@ variable "compute_node_scopes" {
 variable "compute_node_service_account" {
   description = "Service Account for compute nodes."
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "controller_machine_type" {
@@ -120,7 +120,7 @@ variable "controller_scopes" {
 variable "controller_service_account" {
   description = "Service Account for the controller"
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "disable_login_public_ips" {
@@ -191,7 +191,7 @@ variable "login_node_scopes" {
 variable "login_node_service_account" {
   description = "Service Account for compute nodes."
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "login_node_count" {

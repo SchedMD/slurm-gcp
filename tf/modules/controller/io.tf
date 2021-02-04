@@ -174,7 +174,7 @@ variable "scopes" {
 variable "service_account" {
   description = "Service Account for the controller"
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "shared_vpc_host_project" {

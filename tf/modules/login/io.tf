@@ -109,7 +109,7 @@ variable "scopes" {
 variable "service_account" {
   description = "Service Account for compute nodes."
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "shared_vpc_host_project" {
