@@ -139,7 +139,13 @@ def main(dep_name='slurm-image-foundry', cleanup=True, force=False,
         return
 
     if not resume:
+        glob_enabled = run("gcloud config get-value deployment_manager/glob_imports",
+                           get_stdout=True).stdout.strip() == "True"
+        if not glob_enabled:
+            run("gcloud config set deployment_manager/glob_imports True")
         gcloud_dm(f"deployments create {dep_name} --config slurm-cluster.yaml")
+        if not glob_enabled:
+            run("gcloud config set deployment_manager/glob_imports False")
 
     instances = read_instances(dep_name)
 
