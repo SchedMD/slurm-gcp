@@ -129,7 +129,10 @@ SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
 
 def start_motd():
     """ advise in motd that slurm is currently configuring """
-    Path('/etc/motd').write_text(MOTD_HEADER)
+    msg = MOTD_HEADER + """
+*** Slurm is currently being configured in the background. ***
+"""
+    Path('/etc/motd').write_text(msg)
 # END start_motd()
 
 
