@@ -124,10 +124,11 @@ cfg = Config()
 
 dirs = util.NSDict({n: Path(p) for n, p in dict.items({
     'slurm': '/slurm',
-    'build': '/root/build',
+    'build': '/tmp/build',
     'install': '/usr/local',
     'apps': '/apps',
     'munge': '/etc/munge',
+    'modulefiles': '/apps/modulefiles',
 })})
 
 for p in dirs.values():
@@ -191,17 +192,9 @@ def add_slurm_user():
 def setup_modules():
     """ Add /apps/modulefiles as environment module dir """
 
-    appsmfs = Path('/apps/modulefiles')
-    modulespath = Path('/usr/share/Modules/init/.modulespath')
-    if not modulespath.exists():
-        modulespath = Path('/etc/environment-modules/modulespath')
-
-    with modulespath.open('r+') as dotmp:
-        if str(appsmfs) not in dotmp.read():
-            if not appsmfs.is_dir():
-                appsmfs.mkdir(parents=True)
-            # after read, file cursor is at end of file
-            dotmp.write(f'\n{appsmfs}\n')
+    Path('/etc/profile.d/01-modulepath.sh').write_text(f"""
+export MODULEPATH=$(/usr/share/lmod/lmod/libexec/addto --append MODULEPATH {dirs.modulefiles})
+""")
 
 
 def start_motd():
@@ -306,7 +299,7 @@ def install_cuda():
 def install_libjwt():
 
     JWT_PREFIX = dirs.install
-    src_path = dirs.build/'libjwt/src/'
+    src_path = dirs.install/'src/libjwt'
     if not src_path.exists():
         src_path.mkdir(parents=True)
 
@@ -316,8 +309,10 @@ def install_libjwt():
 
     with cd(src_path):
         util.run("autoreconf -if")
-        util.run("./configure --prefix={0} --sysconfdir={0}/etc"
-                 .format(JWT_PREFIX), stdout=DEVNULL)
+    build_path = dirs.build/'libjwt'
+    with cd(build_path):
+        util.run(f"{src_path}/configure --prefix={JWT_PREFIX} --sysconfdir={JWT_PREFIX}/etc",
+                 stdout=DEVNULL)
         util.run("make -j install", stdout=DEVNULL)
 
 
@@ -385,7 +380,7 @@ WantedBy=multi-user.target
 def install_slurm():
     """ Compile and install slurm """
 
-    src_path = dirs.build/'slurm'
+    src_path = dirs.install/'src'
     src_path.mkdir(parents=True, exist_ok=True)
 
     with cd(src_path):
@@ -403,7 +398,7 @@ def install_slurm():
             use_version = util.run(f"tar -xvjf {tarfile}", check=True,
                                    get_stdout=True).stdout.splitlines()[0][:-1]
     src_path = src_path/use_version
-    build_dir = dirs.build
+    build_dir = dirs.build/'slurm'
     build_dir.mkdir(parents=True, exist_ok=True)
 
     with cd(build_dir):
@@ -602,7 +597,7 @@ def install_ompi():
     with cd(ompi_src):
         util.run("./autogen.pl", stdout=DEVNULL)
 
-    ompi_build = ompi_path/'build'
+    ompi_build = dirs.build/'ompi'
     ompi_build.mkdir(parents=True, exist_ok=True)
     with cd(ompi_build):
         util.run(
@@ -611,9 +606,19 @@ def install_ompi():
             "--with-hwloc=/usr", stdout=DEVNULL)
         util.run("make -j install", stdout=DEVNULL)
 
-    Path('/etc/profile.d/ompi.sh').write_text(f"""
-S_PATH={ompi_path}
-PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
+    ompi_sym = ompi_path.parent/'openmpi'
+    ompi_sym.link_to(ompi_path)
+    Path('/apps/modulefiles/openmpi').write_text("""
+ompi_install={ompi_sym}
+prepend-path(PATH, $ompi_install/bin)
+prepend-path(LD_LIBRARY_PATH, $ompi_install/lib)
+prepend-path(MANPATH, $ompi_install/share/man)
+setenv(MPI_HOME, $ompi_install)
+setenv(MPI_BIN, $ompi_install/bin)
+setenv(MPI_SYSCONFIG, $ompi_install/etc)
+setenv(MPI_INCLUDE, $ompi_install/include)
+setenv(MPI_LIB, $(ompi_install)/lib)
+setenv(MPI_MAN, $ompi_install)/share/man)
 """)
 
 

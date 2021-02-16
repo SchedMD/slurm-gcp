@@ -26,6 +26,7 @@ librrd-dev
 libssh2-1-dev
 libssl-dev
 lua5.3
+lmod
 man2html
 mariadb-server
 munge

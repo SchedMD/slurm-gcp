@@ -2,7 +2,6 @@ autoconf
 automake
 bind-utils
 cifs-utils
-environment-modules
 epel-release
 flex
 gcc
@@ -25,6 +24,7 @@ libyaml-devel
 lua
 lua-devel
 lz4-devel
+Lmod
 man2html
 mariadb
 mariadb-devel

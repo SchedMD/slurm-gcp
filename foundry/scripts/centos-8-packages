@@ -20,6 +20,7 @@ libtool
 libyaml-devel
 lua
 lua-devel
+Lmod
 man2html
 mariadb
 mariadb-devel
