@@ -95,7 +95,7 @@ def get_metadata(path):
         resp = requests.get(full_path, headers=HEADERS)
         resp.raise_for_status()
     except requests.exceptions.RequestException:
-        log.exception(f"Error while getting metadata from {full_path}")
+        log.error(f"Error while getting metadata from {full_path}")
         return None
     return resp.text
 

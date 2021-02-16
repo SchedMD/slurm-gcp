@@ -58,8 +58,6 @@ sys.excepthook = util.handle_exception
 
 # get setup config from metadata
 config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
-if not util.get_metadata('attributes/terraform'):
-    config_yaml = yaml.safe_load(config_yaml)
 cfg = util.Config.new_config(config_yaml)
 
 # load all directories as Paths into a dict-like namespace

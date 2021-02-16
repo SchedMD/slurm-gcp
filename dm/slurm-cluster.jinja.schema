@@ -22,20 +22,44 @@ info:
     Create a Slurm cluster in GCP.
 
 imports:
-- path: ../scripts/compute-shutdown
-- path: ../scripts/custom-compute-install
-- path: ../scripts/custom-controller-install
-- path: ../scripts/resume.py
-- path: ../scripts/slurmsync.py
-- path: ../scripts/startup.sh
-- path: ../scripts/setup.py
-- path: ../scripts/suspend.py
-- path: ../scripts/util.py
-- path: ../etc/slurm.conf.tpl
-- path: ../etc/slurmdbd.conf.tpl
-- path: ../etc/cgroup.conf.tpl
-- path: ../etc/controller-fluentd.conf.tpl
-- path: ../etc/compute-fluentd.conf.tpl
+- name: common.py
+  path: common/common.py
+- name: default.py
+  path: common/default.py
+- name: password.py
+  path: common/password.py
+- name: path_utils.jinja
+  path: common/path_utils.jinja
+- name: vm_instance.py
+  path: common/vm_instance.py
+- name: compute-shutdown
+  path: scripts/compute-shutdown
+- name: custom-compute-install
+  path: scripts/custom-compute-install
+- name: custom-controller-install
+  path: scripts/custom-controller-install
+- name: resume.py
+  path: scripts/resume.py
+- name: slurmsync.py
+  path: scripts/slurmsync.py
+- name: startup.sh
+  path: scripts/startup.sh
+- name: setup.py
+  path: scripts/setup.py
+- name: suspend.py
+  path: scripts/suspend.py
+- name: util.py
+  path: scripts/util.py
+- name: slurm.conf.tpl
+  path: etc/slurm.conf.tpl
+- name: slurmdbd.conf.tpl
+  path: etc/slurmdbd.conf.tpl
+- name: cgroup.conf.tpl
+  path: etc/cgroup.conf.tpl
+- name: controller-fluentd.conf.tpl
+  path: etc/controller-fluentd.conf.tpl
+- name: compute-fluentd.conf.tpl
+  path: etc/compute-fluentd.conf.tpl
 
 required:
 - cluster_name
@@ -74,6 +98,8 @@ optional:
 - vpc_subnet
 
 properties:
+  name:
+    type: string
 
   cluster_name:
     type        : string
@@ -130,8 +156,8 @@ properties:
     description : Size of disk for the controller.
 
   controller_labels:
-    type        : object
-    default     : {}
+    type        : array
+    default     : []
     description : Labels to add to controller instance. List of key key, value
                   pairs.
 
@@ -211,8 +237,8 @@ properties:
     description : Disk type (pd-ssd or pd-standard) for login node.
 
   login_labels:
-    type        : object
-    default     : {}
+    type        : array
+    default     : []
     description : Labels to add to login instances. List of key key, value
                   pairs.
 
@@ -369,6 +395,7 @@ properties:
       - machine_type
       - name
       - max_node_count
+      - zone
       optional :
       - image_hyperthreads
       - compute_disk_type
@@ -412,8 +439,8 @@ properties:
           description : Size of disk for compute nodes.
 
         compute_labels:
-          type        : object
-          default     : {}
+          type        : array
+          default     : []
           description : Labels to add to compute instances. List of key key, value
                         pairs.
 
@@ -439,6 +466,7 @@ properties:
 
         gpu_type:
           enum        :
+                      - none
                       - nvidia-tesla-k80
                       - nvidia-tesla-p100
                       - nvidia-tesla-v100

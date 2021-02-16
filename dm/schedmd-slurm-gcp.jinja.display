@@ -1,0 +1,127 @@
+description:
+  author:
+    title: Slurm on GCP
+    descriptionHtml: Slurm descriptionHtml.
+    shortDescription: Slurm shortDescription.
+    url: 'http://www.schedmd.com'
+  descriptionHtml: Slurm description.
+  tagline: Slurm short description.
+  title: Slurm on GCP
+  url: 'https://www.schedmd.com'
+  version: 1.0.0
+  softwareGroups:
+  - type: SOFTWARE_GROUP_OS
+    software:
+    - title: CentOs
+      version: '7'
+  documentations:
+  - title: Slurm on GCP Documentation
+    url: 'https://www.schedmd.com'
+    destinations:
+    - DESTINATION_SOLUTION_DETAILS
+    - DESTINATION_POST_DEPLOY
+  - title: Slurm manual
+    url: 'https://www.schedmd.com'
+    destinations:
+    - DESTINATION_SOLUTION_DETAILS
+    - DESTINATION_POST_DEPLOY
+  support:
+  - title: Support
+    descriptionHtml: Google does not offer support for this solution. However, community support is available on <a href="https://www.google.com"> email lists</a> .
+
+input:
+  properties:
+    - name: cluster_name
+      title: Cluster name
+    - name: zone
+      title: Zone
+      subtext: 'GPU availability is limited to certain zones. <a href="https://cloud.google.com/compute/docs/gpus">Learn more</a>'
+    - name: network
+      title: Network name
+      section: NETWORK_TIER
+    - name: subnetwork
+      title: Subnetwork name
+      section: NETWORK_TIER
+
+    - name: controller_machine_type
+      title: Controller Machine type
+      section: CONTROLLER_TIER
+    - name: suspend_time
+      title: Idle time to wait before nodes go away (in sec)
+    - name: controller_external_ip
+      title: External IP
+      tooltip: 'An external IP address associated with this instance. Selecting "None" will result in the instance having no external internet access. <a href="https://cloud.google.com/compute/docs/configure-instance-ip-addresses">Learn more</a>'
+      section: CONTROLLER_TIER
+
+    - name: login_node_count
+      title: Login Node Count
+      section: LOGIN_TIER
+    - name: login_machine_type
+      title: Login machine type
+      section: LOGIN_TIER
+    - name: login_external_ip
+      title: External IP
+      section: LOGIN_TIER
+
+    - name: compute_partition_name
+      title: Name for the Slurm compute partition
+      section: COMPUTE_CONFIG
+    - name: compute_machine_type
+      title: Machine type
+      section: COMPUTE_CONFIG
+    - name: compute_max_node_count
+      title: Maximum Instance Count
+      tooltip: Specify a value for the maximum amount of compute nodes.
+      section: COMPUTE_CONFIG
+    - name: compute_preemptible
+      title: Preemptible Machine
+      tooltip: A preemptible VM costs much less, but lasts only 24 hours. It can be terminated sooner due to system demands.
+      section: COMPUTE_CONFIG
+    - name: compute_gpu_count
+      title: GPU count
+      tooltip: How many GPUs to attach to compute nodes
+      section: COMPUTE_CONFIG
+    - name: compute_gpu_type
+      title: GPU type
+      section: COMPUTE_CONFIG
+    - name: compute_static_node_count
+      title: Number of static nodes to create
+      section: COMPUTE_CONFIG
+    - name: compute_external_ip
+      title: External IP
+      section: COMPUTE_CONFIG
+
+  sections:
+    - name: NETWORK_TIER
+      title: Network
+    - name: LOGIN_TIER
+      title: Slurm Login
+    - name: CONTROLLER_TIER
+      title: Slurm Controller
+    - name: COMPUTE_CONFIG
+      title: Slurm Compute
+
+runtime:
+  deployingMessage: Deployment can take several minutes to complete.
+  applicationTable:
+    rows:
+      - label: Zone
+        value: '{{ properties().zone }}'
+  primaryButton:
+    label: SSH to Slurm Login Node
+    type: TYPE_GCE_VM_SSH
+    action: '{{ outputs()["login_vmSelfLink" + 0] }}'
+  suggestedActions:
+    - heading: Any action
+      description: 'Action description'
+    - heading: No external IP configured on any tier
+      description: 'All VM instances have been configured with no external IP or internet access. Connecting to them directly may not be possible. Consider using a <a href="https://cloud.google.com/compute/docs/instances/connecting-advanced#bastion_host">bastion host</a> to access these VMs.'
+      showIf: "{{ outputs().tiersWithNoExternalIPStatus == 'ALL' }}"
+    - heading: No external IP configured on some tiers
+      description: 'Some VM instances have been configured with no external IP or internet access. Connecting to them directly may not be possible. Consider using a <a href="https://cloud.google.com/compute/docs/instances/connecting-advanced#bastion_host">bastion host</a> to access these VMs.'
+      showIf: "{{ outputs().tiersWithNoExternalIPStatus == 'SOME' }}"
+
+annotations:
+  autogenSpecType: 'MULTI_VM'
+
+metadata_version: v1

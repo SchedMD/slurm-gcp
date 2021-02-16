@@ -1,0 +1,19 @@
+
+imports:
+  - path: schedmd-slurm-gcp.jinja
+
+resources:
+- name: slurm-cluster
+  type: schedmd-slurm-gcp.jinja
+  properties:
+    cluster_name: bg1
+    zone: us-west1-b
+    controller_image: projects/slurm-184304/global/images/family/schedmd-slurm-20-11-3-centos-7
+    controller_machine_type: n1-standard-2
+    login_image: projects/slurm-184304/global/images/family/schedmd-slurm-20-11-3-centos-7
+    login_machine_type: n1-standard-2
+    compute_partition_name: nodes
+    compute_image: projects/slurm-184304/global/images/family/schedmd-slurm-20-11-3-centos-7
+    compute_image_hyperthreads: True
+    compute_machine_type: n1-standard-2
+    compute_max_node_count: 10
