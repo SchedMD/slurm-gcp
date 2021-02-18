@@ -227,16 +227,29 @@ def install_slurmlog_conf():
 
 def install_lustre():
     """ Install lustre client drivers """
-    lustre_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/RPMS/x86_64/'
+    rpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/RPMS/x86_64/'
+    srpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/SRPMS/'
+
     lustre_tmp = Path('/tmp/lustre')
-    lustre_tmp.mkdir(parents=True)
+    lustre_tmp.mkdirp()
+
     util.run('yum update -y')
     util.run('yum install -y wget libyaml')
-    for rpm in ('kmod-lustre-client-2*.rpm', 'lustre-client-2*.rpm'):
-        util.run(
-            f"wget -r -l1 --no-parent -A '{rpm}' '{lustre_url}' -P {lustre_tmp}")
+
+    rpmlist = ','.join(('kmod-lustre-client-2*.rpm', 'lustre-client-2*.rpm'))
+    util.run(
+        f"wget -r -l1 -np -nd -A '{rpmlist}' '{rpm_url}' -P {lustre_tmp}")
     util.run(
         f"find {lustre_tmp} -name '*.rpm' -execdir rpm -ivh {{}} ';'")
+
+    srpm = 'lustre-client-dkms-2*.src.rpm'
+    util.run(f"wget -r -l1 -np -nd -A {srpm} {srpm_url} -P {lustre_tmp}")
+    srpm = next(lustre_tmp.glob(srpm))
+    with cd(lustre_tmp):
+        util.run(f"rpm2cpio {srpm} | cpio -idmv", shell=True)
+    srctar = next(lustre_tmp.glob('lustre-2*.tar.gz'))
+    util.run(f"tar xf {srctar} -C /usr/src")
+
     util.run(f"rm -rf {lustre_tmp}")
     util.run("modprobe lustre")
 
