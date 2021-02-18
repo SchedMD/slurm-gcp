@@ -23,6 +23,7 @@ import socket
 import shlex
 import time
 import urllib.request
+from functools import partialmethod
 from pathlib import Path
 from subprocess import DEVNULL
 
@@ -31,8 +32,9 @@ import requests
 import yaml
 
 
+Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 SCRIPTSDIR = Path('/root/image-scripts')
-SCRIPTSDIR.mkdir(parents=True, exist_ok=True)
+SCRIPTSDIR.mkdirp()
 # get util.py from metadata
 UTIL_FILE = SCRIPTSDIR/'util.py'
 if not UTIL_FILE.exists():
@@ -132,7 +134,7 @@ dirs = util.NSDict({n: Path(p) for n, p in dict.items({
 })})
 
 for p in dirs.values():
-    p.mkdir(parents=True, exist_ok=True)
+    p.mkdirp()
 
 slurmdirs = util.NSDict({n: Path(p) for n, p in dict.items({
     'etc': '/usr/local/etc/slurm',
@@ -300,8 +302,7 @@ def install_libjwt():
 
     JWT_PREFIX = dirs.install
     src_path = dirs.install/'src/libjwt'
-    if not src_path.exists():
-        src_path.mkdir(parents=True)
+    src_path.mkdirp()
 
     GIT_URL = 'https://github.com/benmcollins/libjwt.git'
     util.run(
@@ -310,6 +311,8 @@ def install_libjwt():
     with cd(src_path):
         util.run("autoreconf -if")
     build_path = dirs.build/'libjwt'
+    build_path.mkdirp()
+
     with cd(build_path):
         util.run(f"{src_path}/configure --prefix={JWT_PREFIX} --sysconfdir={JWT_PREFIX}/etc",
                  stdout=DEVNULL)
@@ -381,7 +384,7 @@ def install_slurm():
     """ Compile and install slurm """
 
     src_path = dirs.install/'src'
-    src_path.mkdir(parents=True, exist_ok=True)
+    src_path.mkdirp()
 
     with cd(src_path):
         use_version = ''
@@ -399,7 +402,7 @@ def install_slurm():
                                    get_stdout=True).stdout.splitlines()[0][:-1]
     src_path = src_path/use_version
     build_dir = dirs.build/'slurm'
-    build_dir.mkdir(parents=True, exist_ok=True)
+    build_dir.mkdirp()
 
     with cd(build_dir):
         util.run(f"{src_path}/configure --prefix={dirs.install} --sysconfdir={slurmdirs.etc} --with-jwt={dirs.install}")
@@ -408,7 +411,7 @@ def install_slurm():
         util.run("make -j install", stdout=DEVNULL)
 
     for p in slurmdirs.values():
-        p.mkdir(parents=True, exist_ok=True)
+        p.mkdirp()
         shutil.chown(p, user='slurm', group='slurm')
 
 
@@ -589,16 +592,16 @@ def install_ompi():
 
     ompi_git = "https://github.com/open-mpi/ompi.git"
     ompi_path = (dirs.apps/'ompi')/cfg.ompi_version
-    ompi_path.mkdir(parents=True, exist_ok=True)
+    ompi_path.mkdirp()
 
     ompi_src = ompi_path/'src'
-    ompi_src.mkdir(parents=True, exist_ok=True)
+    ompi_src.mkdirp()
     util.run(f"git clone --single-branch --depth 1 -b {cfg.ompi_version} {ompi_git} {ompi_src}")
     with cd(ompi_src):
         util.run("./autogen.pl", stdout=DEVNULL)
 
     ompi_build = dirs.build/'ompi'
-    ompi_build.mkdir(parents=True, exist_ok=True)
+    ompi_build.mkdirp()
     with cd(ompi_build):
         util.run(
             f"{ompi_src}/configure --prefix={ompi_path} "
@@ -628,7 +631,7 @@ def run_custom_scripts():
     custom_scripts = [s for s in metadata if s.startswith(prefix)]
 
     custom_path = dirs.slurm/'custom-scripts'
-    custom_path.mkdir(parents=True, exist_ok=True)
+    custom_path.mkdirp()
     for script in custom_scripts:
         name = script[len(prefix):]
         path = custom_path/name
