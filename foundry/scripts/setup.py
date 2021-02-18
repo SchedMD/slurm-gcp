@@ -390,7 +390,6 @@ WantedBy=multi-user.target
 """)
 
     util.run("systemctl enable munge")
-    util.run('create-munge-key -f')
 
 
 def install_slurm():

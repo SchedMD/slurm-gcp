@@ -592,12 +592,13 @@ def setup_controller():
     install_slurm_conf()
     install_slurmdbd_conf()
     setup_jwt_key()
+    util.run("create-munge-key -f")
+    util.run("systemctl restart munge")
 
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
     setup_network_storage()
     mount_fstab()
-    util.run("systemctl restart munge")
 
     try:
         util.run(str(dirs.scripts/'slurm/scripts/custom-controller-install'))
