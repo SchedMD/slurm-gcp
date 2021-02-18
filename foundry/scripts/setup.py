@@ -623,7 +623,7 @@ def install_ompi():
         util.run("make -j install", stdout=DEVNULL)
 
     ompi_sym = ompi_path.parent/'openmpi'
-    ompi_sym.link_to(ompi_path)
+    ompi_sym.symlink_to(ompi_path)
     Path('/apps/modulefiles/openmpi').write_text("""
 ompi_install={ompi_sym}
 prepend-path(PATH, $ompi_install/bin)
