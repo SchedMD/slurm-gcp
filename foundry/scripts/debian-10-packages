@@ -1,7 +1,6 @@
 apt-transport-https
 bind9-utils
 cifs-utils
-environment-modules
 gcc
 git
 hwloc
