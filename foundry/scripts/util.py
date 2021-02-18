@@ -39,10 +39,10 @@ def config_root_logger(level='DEBUG', util_level=None, file=None):
         'disable_existing_loggers': True,
         'formatters': {
             'standard': {
-                'format': '',
+                'format': '%(funcName)s %(levelname)s: %(message)s',
             },
             'stamp': {
-                'format': '%(asctime)s %(name)s %(levelname)s: %(message)s',
+                'format': '%(asctime)s %(funcName)s %(levelname)s: %(message)s',
             },
         },
         'handlers': {
@@ -91,7 +91,7 @@ def run(cmd, wait=0, quiet=False, get_stdout=False,
         shell=False, universal_newlines=True, **kwargs):
     """ run in subprocess. Optional wait after return. """
     if not quiet:
-        log.debug(f"run: {cmd}")
+        log.debug(f"{cmd}")
     if get_stdout:
         kwargs['stdout'] = subprocess.PIPE
 
