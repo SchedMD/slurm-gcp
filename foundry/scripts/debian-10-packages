@@ -32,6 +32,7 @@ munge
 nfs-kernel-server
 numactl
 pdsh
+python3-httplib2
 rrdtool
 software-properties-common
 tclsh
