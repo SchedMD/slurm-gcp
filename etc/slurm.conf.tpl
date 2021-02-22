@@ -105,7 +105,7 @@ Waittime=0
 #MaxMemPerCPU=0
 #SchedulerTimeSlice=30
 SchedulerType=sched/backfill
-SelectType=select/cons_res
+SelectType=select/cons_tres
 SelectTypeParameters=CR_Core_Memory
 #
 #
