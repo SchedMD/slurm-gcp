@@ -452,6 +452,7 @@ ExecStart={dirs.install}/sbin/slurmctld -D $SLURMCTLD_OPTIONS
 ExecReload=/bin/kill -HUP $MAINPID
 LimitNOFILE=65536
 TasksMax=infinity
+WorkingDirectory={slurmdirs.log}
 
 [Install]
 WantedBy=multi-user.target
