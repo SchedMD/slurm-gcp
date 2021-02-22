@@ -22,7 +22,7 @@ import shutil
 import time
 from pathlib import Path
 from subprocess import DEVNULL
-from functools import reduce
+from functools import reduce, partialmethod
 from concurrent.futures import ThreadPoolExecutor
 
 import googleapiclient.discovery
@@ -49,6 +49,8 @@ sys.modules[spec.name] = util
 spec.loader.exec_module(util)
 cd = util.cd  # import util.cd into local namespace
 NSDict = util.NSDict
+
+Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
 util.config_root_logger(logfile='/tmp/setup.log')
 log = logging.getLogger(Path(__file__).name)
@@ -435,8 +437,7 @@ def setup_network_storage():
             fs_type, server_ip+':' if fs_type != 'gcsfuse' else "",
             remote_mount, local_mount))
 
-        if not local_mount.exists():
-            local_mount.mkdir(parents=True)
+        local_mount.mkdirp()
 
         mount_options = (mount.mount_options.split(',') if mount.mount_options
                          else [])
@@ -458,7 +459,7 @@ def setup_network_storage():
                         fs_type, ','.join(mount_options)))
 
     for mount in mounts:
-        Path(mount).mkdir(parents=True, exist_ok=True)
+        Path(mount).mkdirp()
     with open('/etc/fstab', 'a') as f:
         f.write('\n')
         for entry in fstab_entries:
@@ -571,12 +572,12 @@ def setup_nss_slurm():
 def configure_dirs():
 
     for p in dirs.values():
-        p.mkdir(parents=True, exist_ok=True)
+        p.mkdirp()
     shutil.chown(dirs.slurm, user='slurm', group='slurm')
     shutil.chown(dirs.scripts, user='slurm', group='slurm')
 
     for p in slurmdirs.values():
-        p.mkdir(parents=True, exist_ok=True)
+        p.mkdirp()
         shutil.chown(p, user='slurm', group='slurm')
 
     (dirs.scripts/'etc').symlink_to(slurmdirs.etc)
