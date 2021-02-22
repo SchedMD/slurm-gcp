@@ -500,11 +500,13 @@ def setup_nfs_exports():
     # export path if corresponding selector boolean is True
     exports = []
     for path in con_mounts:
-        Path(path).mkdir(parents=True, exist_ok=True)
+        Path(path).mkdirp()
         util.run(rf"sed -i '\#{path}#d' /etc/exports")
         exports.append(f"{path}  *(rw,no_subtree_check,no_root_squash)")
 
-    with open('/etc/exports.d/slurm.exports', 'w') as f:
+    exportsd = Path('/etc/exports.d')
+    exportsd.mkdirp()
+    with (exportsd/'slurm.exports').open('w') as f:
         f.write('\n')
         f.write('\n'.join(exports))
     util.run("exportfs -a")
