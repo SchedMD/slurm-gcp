@@ -36,7 +36,6 @@ ncurses-devel
 nfs-utils
 numactl
 numactl-devel
-openmpi
 openssl-devel
 pam-devel
 pdsh

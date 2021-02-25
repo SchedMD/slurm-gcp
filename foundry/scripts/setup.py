@@ -330,10 +330,16 @@ def install_libjwt():
         util.run(f"{src_path}/configure --prefix={JWT_PREFIX} --sysconfdir={JWT_PREFIX}/etc",
                  stdout=DEVNULL)
         util.run("make -j install", stdout=DEVNULL)
+    util.run("ldconfig")
 
 
 def install_packages():
     """ Install all packages using the system package manager """
+
+    Path('/etc/ld.so.conf.d/usr-local.conf').write_text("""
+/usr/local/lib
+/usr/local/lib64
+""")
 
     packages = util.get_metadata('attributes/packages').splitlines()
     util.run(f"{cfg.pacman} {' '.join(packages)}")
@@ -344,12 +350,6 @@ def install_packages():
     install_cuda()
     install_libjwt()
 
-    Path('/etc/ld.so.conf.d/usr-local.conf').write_text("""
-/usr/local/lib
-/usr/local/lib64
-""")
-    util.run("ldconfig")
-        
     # install stackdriver monitoring and logging
     add_mon_script = Path('/tmp/add-monitoring-agent-repo.sh')
     add_mon_url = f'https://dl.google.com/cloudagents/{add_mon_script.name}'
@@ -425,6 +425,7 @@ def install_slurm():
     for p in slurmdirs.values():
         p.mkdirp()
         shutil.chown(p, user='slurm', group='slurm')
+    util.run("ldconfig")
 
 
 def install_slurm_tmpfile():
@@ -624,17 +625,19 @@ def install_ompi():
 
     ompi_sym = ompi_path.parent/'openmpi'
     ompi_sym.symlink_to(ompi_path)
-    Path('/apps/modulefiles/openmpi').write_text("""
-ompi_install={ompi_sym}
-prepend-path(PATH, $ompi_install/bin)
-prepend-path(LD_LIBRARY_PATH, $ompi_install/lib)
-prepend-path(MANPATH, $ompi_install/share/man)
-setenv(MPI_HOME, $ompi_install)
-setenv(MPI_BIN, $ompi_install/bin)
-setenv(MPI_SYSCONFIG, $ompi_install/etc)
-setenv(MPI_INCLUDE, $ompi_install/include)
-setenv(MPI_LIB, $(ompi_install)/lib)
-setenv(MPI_MAN, $ompi_install)/share/man)
+    ompi_modulepath = Path('/apps/modulefiles/openmpi')
+    ompi_modulepath.mkdirp()
+    (ompi_modulepath/f'{cfg.ompi_version}.lua').write_text("""
+ompi_install="{ompi_path}"
+prepend_path("PATH", ompi_install.."/bin")
+prepend_path("LD_LIBRARY_PATH", ompi_install.."/lib")
+prepend_path("MANPATH", ompi_install.."/share/man")
+setenv("MPI_HOME", ompi_install)
+setenv("MPI_BIN", ompi_install.."/bin")
+setenv("MPI_SYSCONFIG", ompi_install.."/etc")
+setenv("MPI_INCLUDE", ompi_install.."/include")
+setenv("MPI_LIB", ompi_install.."/lib")
+setenv("MPI_MAN", ompi_install.."/share/man")
 """)
 
 
