@@ -77,7 +77,6 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
     'etc': '/usr/local/etc/slurm',
     'log': '/var/log/slurm',
     'state': '/var/spool/slurm',
-    'spool': '/var/spool/slurm',
 })})
 
 cfg['log_dir'] = slurmdirs.log
@@ -205,7 +204,6 @@ def install_slurm_conf():
         'scripts': dirs.scripts,
         'slurmlog': slurmdirs.log,
         'state_save': slurmdirs.state,
-        'spool': slurmdirs.spool,
         'resume_timeout': RESUME_TIMEOUT,
         'suspend_timeout': SUSPEND_TIMEOUT,
         'suspend_time': cfg.suspend_time,
