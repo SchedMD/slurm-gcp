@@ -185,10 +185,16 @@ SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
 """
 
 
-def add_slurm_user():
+def create_users():
     """ Create user slurm """
-    util.run("useradd -m -c SlurmUser -d /var/lib/slurm -U -r slurm")
-    util.run("useradd -m -c Slurmrestd -d /var/lib/slurmrestd -U -r slurmrestd")
+    util.run("groupadd munge -g 980")
+    util.run("useradd -m -c MungeUser -d /var/run/munge -r munge -u 980 -g 980")
+
+    util.run("groupadd slurm -g 981")
+    util.run("useradd -m -c SlurmUser -d /var/lib/slurm -r slurm -u 981 -g 981")
+
+    util.run("groupadd slurmrestd -g 982")
+    util.run("useradd -m -c Slurmrestd -d /var/lib/slurmrestd -r slurmrestd -u 982 -g 982")
 
 
 def setup_modules():
@@ -678,7 +684,7 @@ def main():
 
     start_motd()
 
-    add_slurm_user()
+    create_users()
     install_packages()
     setup_munge()
     setup_bash_profile()
