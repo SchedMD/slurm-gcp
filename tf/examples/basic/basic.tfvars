@@ -15,7 +15,7 @@ zone         = "us-west1-b"
 # suspend_time  = 300
 
 # controller_machine_type = "n1-standard-2"
-controller_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-debian-10"
+controller_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
 # controller_disk_type    = "pd-standard"
 # controller_disk_size_gb = 50
 # controller_labels = {
@@ -35,7 +35,7 @@ controller_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-
 # controller_secondary_disk_type = "pd-ssd"
 
 # login_machine_type = "n1-standard-2"
-login_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-debian-10"
+login_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
 # login_disk_type    = "pd-standard"
 # login_disk_size_gb = 20
 # login_labels = {
@@ -80,7 +80,7 @@ partitions = [
   static_node_count    = 0
   max_node_count       = 10
   zone                 = "us-west1-b"
-  image                = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-debian-10"
+  image                = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
   image_hyperthreads   = false
   compute_disk_type    = "pd-standard"
   compute_disk_size_gb = 20
