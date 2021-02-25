@@ -551,11 +551,11 @@ LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
 def setup_logrotate():
     """ configure logrotate for power scripts and slurm logs """
-    Path('/etc/logrotate.d/slurm').write_text("""
+    Path('/etc/logrotate.d/slurm').write_text(f"""
 ##
 # Slurm Logrotate Configuration
 ##
-/var/log/slurm/*.log {
+{slurmdirs.log}/*.log {{
         compress
         missingok
         nocopytruncate
@@ -573,7 +573,7 @@ def setup_logrotate():
                 pkill -x --signal SIGUSR2 slurmdbd
                 exit 0
         endscript
-}
+}}
 """)
 
 
