@@ -300,6 +300,7 @@ def install_cuda():
         util.run("apt-get install linux-headers-$(uname -r)")
         repo = 'https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/'
         util.run(f"add-apt-repository 'deb {repo} /'")
+        util.run("apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/7fa2af80.pub")
         util.run("add-apt-repository contrib")
         util.run("apt-get update")
         util.run("apt-get -y install cuda")
