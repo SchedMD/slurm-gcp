@@ -381,7 +381,7 @@ def setup_munge():
 [Unit]
 Description=MUNGE authentication service
 Documentation=man:munged(8)
-After=network.target
+After=network.target remote-fs.target
 After=syslog.target
 
 [Service]
@@ -451,6 +451,7 @@ def install_controller_service_scripts():
 [Unit]
 Description=Slurm controller daemon
 After=network.target munge.service
+Requires=munge.service
 ConditionPathExists={slurmdirs.etc}/slurm.conf
 
 [Service]
@@ -474,6 +475,7 @@ WantedBy=multi-user.target
 [Unit]
 Description=Slurm DBD accounting daemon
 After=network.target munge.service
+Requires=munge.service
 ConditionPathExists={slurmdirs.etc}/slurmdbd.conf
 
 [Service]
@@ -497,6 +499,7 @@ WantedBy=multi-user.target
 [Unit]
 Description=Slurm REST daemon
 After=network.target munge.service slurmctld.service
+Requires=munge.service
 ConditionPathExists={slurmdirs.etc}/slurm.conf
 
 [Service]
@@ -521,7 +524,8 @@ def install_compute_service_scripts():
     slurmd_service.write_text(f"""
 [Unit]
 Description=Slurm node daemon
-After=network.target munge.service home.mount apps.mount etc-munge.mount
+After=network.target munge.service
+Requires=munge.service
 ConditionPathExists={slurmdirs.etc}/slurm.conf
 
 [Service]
