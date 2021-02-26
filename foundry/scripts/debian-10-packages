@@ -5,13 +5,12 @@ gcc
 git
 hwloc
 iputils-ping
-libyaml-dev
-libjwt-dev
 libcurl4-gnutls-dev
 libgtk2.0-dev
 libhdf5-dev
 libhwloc-dev
 libibumad-dev
+libjwt-dev
 liblua5.3-dev
 libmariadb-dev
 libmunge-dev
@@ -22,10 +21,13 @@ libpam0g-dev
 libperl-dev
 libreadline-dev
 librrd-dev
+libsnmp-dev
 libssh2-1-dev
 libssl-dev
-lua5.3
+libyaml-dev
+linux-headers-$(uname -r)
 lmod
+lua5.3
 man2html
 mariadb-server
 munge

@@ -103,8 +103,8 @@ class Config(util.NSDict):
 
     @property
     def pacman(self):
-        yum = "yum install -y"
-        apt = "apt-get install -y"
+        yum = "yum"
+        apt = "apt-get"
         return {
             'centos7': yum,
             'centos8': yum,
@@ -112,6 +112,11 @@ class Config(util.NSDict):
             'debian10': apt,
             'ubuntu2004': apt,
         }[self.os_name]
+
+    def update(self):
+        if self.os_name in ('centos7', 'centos8'):
+            return
+        util.run(f"{cfg.pacman} update")
 
     def __getattr__(self, item):
         """ only called if item is not found in self """
@@ -233,31 +238,39 @@ def install_slurmlog_conf():
 
 def install_lustre():
     """ Install lustre client drivers """
-    rpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/RPMS/x86_64/'
-    srpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/SRPMS/'
-
-    lustre_tmp = Path('/tmp/lustre')
+    lustre_tmp = Path('/root/lustre-pkg')
     lustre_tmp.mkdirp()
 
-    util.run('yum update -y')
-    util.run('yum install -y wget libyaml')
+    if cfg.os_name in ('centos7', 'centos8', 'rhel7', 'rhel8'):
+        rpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/RPMS/x86_64/'
+        srpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/SRPMS/'
 
-    rpmlist = ','.join(('kmod-lustre-client-2*.rpm', 'lustre-client-2*.rpm'))
-    util.run(
-        f"wget -r -l1 -np -nd -A '{rpmlist}' '{rpm_url}' -P {lustre_tmp}")
-    util.run(
-        f"find {lustre_tmp} -name '*.rpm' -execdir rpm -ivh {{}} ';'")
+        util.run('yum update -y')
+        util.run('yum install -y wget libyaml')
 
-    srpm = 'lustre-client-dkms-2*.src.rpm'
-    util.run(f"wget -r -l1 -np -nd -A {srpm} {srpm_url} -P {lustre_tmp}")
-    srpm = next(lustre_tmp.glob(srpm))
-    with cd(lustre_tmp):
-        util.run(f"rpm2cpio {srpm} | cpio -idmv", shell=True)
-    srctar = next(lustre_tmp.glob('lustre-2*.tar.gz'))
-    util.run(f"tar xf {srctar} -C /usr/src")
+        rpmlist = ','.join(('kmod-lustre-client-2*.rpm', 'lustre-client-2*.rpm'))
+        util.run(
+            f"wget -r -l1 -np -nd -A '{rpmlist}' '{rpm_url}' -P {lustre_tmp}")
+        util.run(
+            f"find {lustre_tmp} -name '*.rpm' -execdir rpm -ivh {{}} ';'")
 
-    util.run(f"rm -rf {lustre_tmp}")
-    util.run("modprobe lustre")
+        srpm = 'lustre-client-dkms-2*.src.rpm'
+        util.run(f"wget -r -l1 -np -nd -A {srpm} {srpm_url} -P {lustre_tmp}")
+        srpm = next(lustre_tmp.glob(srpm))
+        with cd(lustre_tmp):
+            util.run(f"rpm2cpio {srpm} | cpio -idmv", shell=True)
+        srctar = next(lustre_tmp.glob('lustre-2*.tar.gz'))
+        util.run(f"tar xf {srctar} -C /usr/src")
+
+        util.run(f"rm -rf {lustre_tmp}")
+        util.run("modprobe lustre")
+    elif cfg.os_name in ('debian10', 'ubuntu2004'):
+        deb_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/ubuntu1804/client/'
+        deblist = ','.join(('lustre-client-*_amd64.deb', 'lustre-source*.deb'))
+        util.run(f"wget -r -l1 -np -nd -A {deblist} {deb_url} -P {lustre_tmp}")
+        for deb in lustre_tmp.glob('*.deb'):
+            util.run(f"dpkg -i {deb}")
+        util.run("apt-get install -f -y")
 
 
 def install_gcsfuse():
@@ -303,7 +316,7 @@ def install_cuda():
         util.run("apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/7fa2af80.pub")
         util.run("add-apt-repository contrib")
         util.run("apt-get update")
-        util.run("apt-get -y install cuda")
+        util.run("apt-get -y install nvidia-kernel-dkms cuda")
     elif cfg.os_name == 'ubuntu2004':
         pin_url = 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin'
         pinfile = Path('/etc/apt/preferences.d/cuda-repository-pin')
@@ -349,10 +362,9 @@ def install_packages():
 """)
 
     packages = util.get_metadata('attributes/packages').splitlines()
-    util.run(f"{cfg.pacman} {' '.join(packages)}")
+    util.run(f"{cfg.pacman} install -y {' '.join(packages)}", shell=True)
 
-    if cfg.os_name in ('centos7', 'centos8'):
-        install_lustre()
+    install_lustre()
     install_gcsfuse()
     install_cuda()
     install_libjwt()
@@ -362,7 +374,8 @@ def install_packages():
     add_mon_url = f'https://dl.google.com/cloudagents/{add_mon_script.name}'
     urllib.request.urlretrieve(add_mon_url, add_mon_script)
     util.run(f"bash {add_mon_script}")
-    util.run(f"{cfg.pacman} stackdriver-agent")
+    cfg.update()
+    util.run(f"{cfg.pacman} install -y stackdriver-agent")
 
     add_log_script = Path('/tmp/install-logging-agent.sh')
     add_log_url = f'https://dl.google.com/cloudagents/{add_log_script.name}'

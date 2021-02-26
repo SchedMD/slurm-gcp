@@ -18,20 +18,26 @@
 case "$ID" in
 	debian|ubuntu)
 		apt-get update
-		apt-get upgrade -y
+		update="apt-get upgrade -y"
 		pacman="apt-get install -y"
 		;;
 	rhel|centos)
 		# reboot on update in case of kernel update
 		yum check-updates
-		if [ $? -eq 100 ]; then
-			yum update -y
-			reboot
-		fi
-		pacman="yum install -y"
 		yum install -y epel-release
+		update="yum update -y"
+		pacman="yum install -y"
 		;;
 esac
+
+FLAGFILE=/root/os_updated
+if [ ! -f $FLAGFILE ]; then
+	eval $update
+
+	mkdir -p $(dirname $FLAGFILE)
+	touch $FLAGFILE
+	reboot
+fi
 
 PACKAGES=(
     'wget'
@@ -52,7 +58,7 @@ until ( ping -q -w1 -c1 $PING_HOST > /dev/null ) ; do
 done
 
 echo "$pacman ${PACKAGES[*]}"
-until ( $pacman ${PACKAGES[*]} > /dev/null ) ; do
+until ( $pacman ${PACKAGES[*]} ) ; do
     echo "failed to install packages. Trying again in 5 seconds"
     sleep 5
 done

@@ -667,6 +667,14 @@ def setup_compute():
     setup_network_storage()
     mount_fstab()
 
+    pid = util.get_pid(cfg.hostname)
+    if cfg.instance_defs[pid].gpu_count:
+        retries = n = 50
+        while util.run("nvidia-smi").returncode != 0 and n > 0:
+            n -= 1
+            log.info(f"Nvidia driver not yet loaded, try {retries-n}")
+            time.sleep(5)
+
     setup_slurmd_cronjob()
     util.run("systemctl restart munge")
     util.run("systemctl enable slurmd")
