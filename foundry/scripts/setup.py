@@ -651,7 +651,7 @@ def install_ompi():
     ompi_sym.symlink_to(ompi_path)
     ompi_modulepath = Path('/apps/modulefiles/openmpi')
     ompi_modulepath.mkdirp()
-    (ompi_modulepath/f'{cfg.ompi_version}.lua').write_text("""
+    (ompi_modulepath/f'{cfg.ompi_version}.lua').write_text(f"""
 ompi_install="{ompi_path}"
 prepend_path("PATH", ompi_install.."/bin")
 prepend_path("LD_LIBRARY_PATH", ompi_install.."/lib")
