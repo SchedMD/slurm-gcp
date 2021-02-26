@@ -556,6 +556,7 @@ def setup_slurmd_cronjob():
 def setup_nss_slurm():
     """ install and configure nss_slurm """
     # setup nss_slurm
+    Path('/var/spool/slurmd').mkdirp()
     util.run("ln -s {}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2"
              .format(dirs.prefix))
     util.run(
