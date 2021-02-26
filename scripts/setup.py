@@ -150,13 +150,6 @@ def end_motd(broadcast=True):
 # END start_motd()
 
 
-def have_gpus(hostname):
-    """ return whether given compute node has gpus """
-    pid = util.get_pid(hostname)
-    return cfg.instance_defs[pid].gpu_count > 0
-# END have_gpus()
-
-
 def expand_machine_type():
     """ get machine type specs from api """
     machines = {}
