@@ -30,10 +30,14 @@ import requests
 log = logging.getLogger(__name__)
 
 
-def config_root_logger(level='DEBUG', util_level=None, file=None):
+def config_root_logger(level='DEBUG', util_level=None, stdout=True, file=None):
     if not util_level:
         util_level = level
-    handler = 'file_handler' if file else 'stdout_handler'
+    handlers = []
+    if file:
+        handlers.append('file_handler')
+    if stdout or not file:
+        handlers.append('stdout_handler')
     config = {
         'version': 1,
         'disable_existing_loggers': True,
@@ -55,7 +59,7 @@ def config_root_logger(level='DEBUG', util_level=None, file=None):
         },
         'loggers': {
             '': {
-                'handlers': [handler],
+                'handlers': handlers,
                 'level': level,
             },
             __name__: {  # enable util.py logging
@@ -142,7 +146,7 @@ class cached_property:
 class NSDict(OrderedDict):
     def __init__(self, *args, **kwargs):
         def from_nested(value):
-            """ If value is dict, convert to Bunch. Also recurse lists. """
+            """ If value is dict, convert to NSDict. Also recurse lists. """
             if isinstance(value, dict):
                 return NSDict({k: from_nested(v) for k, v in value.items()})
             elif isinstance(value, list):
