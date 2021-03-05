@@ -53,8 +53,10 @@ credentials = compute_engine.Credentials()
 http = None
 authorized_http = None
 if not cfg.google_app_cred_path:
-    http = set_user_agent(httplib2.Http(), "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
-    authorized_http = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
+    http = set_user_agent(httplib2.Http(),
+                          "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
+    authorized_http = google_auth_httplib2.AuthorizedHttp(credentials,
+                                                          http=http)
 
 
 def wait_for_operation(compute, project, operation):
@@ -396,7 +398,7 @@ if __name__ == '__main__':
                                 logfile=LOGFILE)
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
-    
+
     new_yaml = Path(__file__).with_name('config.yaml.new')
     if (not cfg.instance_defs or cfg.partitions) and not new_yaml.exists():
         log.info(f"partition declarations in config.yaml have been converted to a new format and saved to {new_yaml}. Replace config.yaml as soon as possible.")

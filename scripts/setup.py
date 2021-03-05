@@ -374,8 +374,10 @@ def prepare_network_mounts(hostname, instance_type):
         'mount_options': 'defaults,hard,intr',
     }
     # seed the non-controller mounts with the default controller mounts
-    mounts = {path: util.Config(CONTROL_NFS, local_mount=path, remote_mount=path)
-              for path in default_mounts}
+    mounts = {
+        path: util.Config(CONTROL_NFS, local_mount=path, remote_mount=path)
+        for path in default_mounts
+    }
 
     # convert network_storage list of mounts to dict of mounts,
     #   local_mount as key
@@ -398,10 +400,16 @@ def prepare_network_mounts(hostname, instance_type):
     def internal_mount(mount):
         return mount[1].server_ip == CONTROL_MACHINE
 
-    return tuple(map(dict, reduce(
-        lambda acc, el: acc[internal_mount(el)].append(el) or acc,
-        mounts.items(), ([], [])
-    )))
+    def partition(pred, coll):
+        """ filter into 2 lists based on pred returning True or False 
+            returns ([False], [True])
+        """
+        return reduce(
+            lambda acc, el: acc[pred(el)].append(el) or acc,
+            coll, ([], [])
+        )
+
+    return tuple(map(dict, partition(internal_mount, mounts.items())))
 # END prepare_network_mounts
 
 
