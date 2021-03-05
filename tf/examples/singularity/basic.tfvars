@@ -96,6 +96,7 @@ partitions = [
     vpc_subnet           = null
     exclusive            = false
     enable_placement     = false
+    regional_capacity    = false
   },
 #  { name                 = "partition2"
 #    machine_type         = "n1-standard-16"
@@ -122,5 +123,10 @@ partitions = [
 #    vpc_subnet           = null
 #    exclusive            = false
 #    enable_placement     = false
+#
+#    # With regional_capacity : True, the region can be specified in the zone.
+#    # Otherwise the region will be inferred from the zone.
+#    zone = "us-west1"
+#    regional_capacity    = True
 ]
 

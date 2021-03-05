@@ -269,7 +269,13 @@ class Config(NSDict):
 
     @property
     def region(self):
-        return self.zone and '-'.join(self.zone.split('-')[:-1])
+        if self.zone:
+            parts = self.zone.split('-')
+            if len(parts) > 2:
+                return '-'.join(parts[:-1])
+            else:
+                return self.zone
+        return None
 
     @property
     def exclusive(self):

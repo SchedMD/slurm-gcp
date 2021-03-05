@@ -75,10 +75,23 @@ def delete_instances(compute, node_list, arg_job_id):
                 curr_batch,
                 compute.new_batch_http_request(callback=delete_instances_cb))
 
-        pid = util.get_pid(node_name)
+        zone = None
+        if cfg.instance_defs[pid].regional_capacity:
+            node_find = compute.instances().aggregatedList(
+                project=cfg.project, filter=f'name={node_name}').execute()
+            for key, zone_value in node_find['items'].items():
+                if 'instances' in zone_value:
+                    zone = zone_value['instances'][0]['zone'].split('/')[-1]
+                    break;
+            if zone is None:
+                log.error(f"failed to find regional node '{node_name}' to delete")
+                continue
+        else:
+            zone = cfg.instance_defs[pid].zone
+
         batch_list[curr_batch].add(
             compute.instances().delete(project=cfg.project,
-                                       zone=cfg.instance_defs[pid].zone,
+                                       zone=zone,
                                        instance=node_name),
             request_id=node_name)
         req_cnt += 1

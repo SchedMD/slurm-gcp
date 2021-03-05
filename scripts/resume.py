@@ -184,6 +184,13 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         'instanceProperties': config,
         'perInstanceProperties': perInstanceProperties,
     }
+
+    if instance_def.regional_capacity:
+        op = compute.regionInstances().bulkInsert(
+            project=cfg.project, region=instance_def.region,
+            body=body)
+        return op.execute()
+
     return compute.instances().bulkInsert(
         project=cfg.project, zone=instance_def.zone,
         body=body).execute()

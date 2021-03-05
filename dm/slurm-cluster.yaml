@@ -162,6 +162,7 @@ resources:
         #     fs_type: gcsfuse
         #     mount_options: file_mode=664,dir_mode=775,allow_other
         #
+        # regional_capacity : True
 
     # Optional network configuration fields
         # vpc_subnet                : my-subnet
