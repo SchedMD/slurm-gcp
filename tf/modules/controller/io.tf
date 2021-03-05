@@ -93,11 +93,11 @@ variable "disable_compute_public_ips" {
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
 }
 
@@ -119,11 +119,11 @@ variable "jwt_key" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
 }
 
@@ -134,7 +134,7 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
-	image				 = string,
+    image                = string,
     image_hyperthreads   = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
@@ -143,11 +143,11 @@ variable "partitions" {
     gpu_type             = string,
     gpu_count            = number,
     network_storage = list(object({
-      server_ip     = string,
-      remote_mount  = string,
-      local_mount   = string,
-      fs_type       = string,
-      mount_options = string})),
+      server_ip    = string,
+      remote_mount = string,
+      local_mount  = string,
+      fs_type      = string,
+    mount_options = string })),
     preemptible_bursting = bool,
     vpc_subnet           = string,
     exclusive            = bool,

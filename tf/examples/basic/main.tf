@@ -43,7 +43,7 @@ module "slurm_cluster_controller" {
 
   boot_disk_size                = var.controller_disk_size_gb
   boot_disk_type                = var.controller_disk_type
-  image							= var.controller_image
+  image                         = var.controller_image
   cluster_name                  = var.cluster_name
   compute_node_scopes           = var.compute_node_scopes
   compute_node_service_account  = var.compute_node_service_account
@@ -54,7 +54,7 @@ module "slurm_cluster_controller" {
   login_node_count              = var.login_node_count
   machine_type                  = var.controller_machine_type
   munge_key                     = var.munge_key
-  jwt_key						= var.jwt_key
+  jwt_key                       = var.jwt_key
   network_storage               = var.network_storage
   partitions                    = var.partitions
   project                       = var.project
@@ -76,7 +76,7 @@ module "slurm_cluster_login" {
 
   boot_disk_size            = var.login_disk_size_gb
   boot_disk_type            = var.login_disk_type
-  image						= var.login_image
+  image                     = var.login_image
   cluster_name              = var.cluster_name
   controller_name           = module.slurm_cluster_controller.controller_node_name
   controller_secondary_disk = var.controller_secondary_disk

@@ -25,7 +25,7 @@ variable "boot_disk_type" {
 
 variable "image" {
   description = "Disk OS image with Slurm preinstalled to use for login node"
-  type		  = string
+  type        = string
 }
 
 variable "cluster_name" {
@@ -58,11 +58,11 @@ variable "labels" {
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
 }
 
@@ -79,11 +79,11 @@ variable "munge_key" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
 }
 
@@ -100,7 +100,7 @@ variable "region" {
 variable "scopes" {
   description = "Scopes to apply to login nodes."
   type        = list(string)
-  default     = [
+  default = [
     "https://www.googleapis.com/auth/monitoring.write",
     "https://www.googleapis.com/auth/logging.write"
   ]

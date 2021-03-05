@@ -17,10 +17,10 @@ locals {
   static_list = flatten([
     for pid in range(length(var.partitions)) : [
       for n in range(var.partitions[pid].static_node_count) : {
-		name		   = "${var.cluster_name}-compute-${pid}-${n}"
+        name           = "${var.cluster_name}-compute-${pid}-${n}"
         boot_disk_size = var.partitions[pid].compute_disk_size_gb
         boot_disk_type = var.partitions[pid].compute_disk_type
-		image		   = var.partitions[pid].image
+        image          = var.partitions[pid].image
         labels         = var.partitions[pid].compute_labels
         machine_type   = var.partitions[pid].machine_type
         sa_email       = var.service_account
@@ -28,9 +28,9 @@ locals {
         zone           = var.partitions[pid].zone
         gpu_type       = var.partitions[pid].gpu_type
         gpu_count      = var.partitions[pid].gpu_count
-        subnet         = (var.partitions[pid].vpc_subnet != null
-                          ? var.partitions[pid].vpc_subnet
-                          : "${var.cluster_name}-${join("-", slice(split("-", var.partitions[pid].zone), 0, 2))}")
+        subnet = (var.partitions[pid].vpc_subnet != null
+          ? var.partitions[pid].vpc_subnet
+        : "${var.cluster_name}-${join("-", slice(split("-", var.partitions[pid].zone), 0, 2))}")
       }
     ]
   ])
@@ -109,7 +109,7 @@ resource "google_compute_instance" "compute_node" {
     })
 
     fluentd_conf_tpl = file("${path.module}/../../../etc/compute-fluentd.conf.tpl")
-    setup-script = file("${path.module}/../../../scripts/setup.py")
-    util-script = file("${path.module}/../../../scripts/util.py")
+    setup-script     = file("${path.module}/../../../scripts/setup.py")
+    util-script      = file("${path.module}/../../../scripts/util.py")
   }
 }

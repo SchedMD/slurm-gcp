@@ -46,11 +46,11 @@ variable "munge_key" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
 }
 
@@ -61,7 +61,7 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
-	image				 = string,
+    image                = string,
     image_hyperthreads   = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
@@ -70,11 +70,11 @@ variable "partitions" {
     gpu_type             = string,
     gpu_count            = number,
     network_storage = list(object({
-      server_ip     = string,
-      remote_mount  = string,
-      local_mount   = string,
-      fs_type       = string,
-      mount_options = string})),
+      server_ip    = string,
+      remote_mount = string,
+      local_mount  = string,
+      fs_type      = string,
+    mount_options = string })),
     preemptible_bursting = bool,
     vpc_subnet           = string,
     exclusive            = bool,
@@ -95,7 +95,7 @@ variable "region" {
 variable "scopes" {
   description = "Scopes to apply to compute nodes."
   type        = list(string)
-  default     = [
+  default = [
     "https://www.googleapis.com/auth/monitoring.write",
     "https://www.googleapis.com/auth/logging.write"
   ]

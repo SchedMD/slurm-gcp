@@ -106,7 +106,6 @@ resource "google_compute_instance" "controller_node" {
     })
 
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
-    compute-shutdown          = file("${path.module}/../../../scripts/compute-shutdown")
     custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
     custom-controller-install = file("${path.module}/../../../scripts/custom-controller-install")
     fluentd_conf_tpl          = file("${path.module}/../../../etc/controller-fluentd.conf.tpl")
