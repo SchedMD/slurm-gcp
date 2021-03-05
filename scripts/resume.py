@@ -83,9 +83,6 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
 
     pid = util.get_pid(node_list[0])
     # Configure the machine
-    machine_type_path = f'zones/{zone}/machineTypes/{instance_def.machine_type}'
-    disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
-        cfg.project, instance_def.zone, instance_def.compute_disk_type)
 
     meta_files = {
         'config': SCRIPTS_DIR/'config.yaml',
@@ -99,15 +96,15 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
 
     config = {
         'name': 'notused',
-        'machineType': machine_type_path,
+        'machineType': instance_def.machine_type,
 
         # Specify the boot disk and the image to use as a source.
         'disks': [{
             'boot': True,
             'autoDelete': True,
             'initializeParams': {
-                'sourceImage': source_disk_image,
-                'diskType': disk_type,
+                'sourceImage': instance_def.image,
+                'diskType': instance_def.compute_disk_type,
                 'diskSizeGb': instance_def.compute_disk_size_gb
             }
         }],
@@ -156,12 +153,9 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         ]
 
     if instance_def.gpu_type:
-        accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
-                      .format(cfg.project, instance_def.zone,
-                              instance_def.gpu_type))
         config['guestAccelerators'] = [{
-            'acceleratorType': accel_type
             'acceleratorCount': instance_def.gpu_count,
+            'acceleratorType': instance_def.gpu_type
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
@@ -184,10 +178,11 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
         ]
 
+    perInstanceProperties = {k: {} for k in node_list}
     body = {
-        'predefinedNames': node_list,
         'count': len(node_list),
-        'instance': config,
+        'instanceProperties': config,
+        'perInstanceProperties': perInstanceProperties,
     }
     return compute.instances().bulkInsert(
         project=cfg.project, zone=instance_def.zone,
