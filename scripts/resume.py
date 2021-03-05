@@ -38,6 +38,7 @@ cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
 SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
 LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
+SCRIPTS_DIR = Path(__file__).parent.resolve()
 
 TOT_REQ_CNT = 1000
 
@@ -121,12 +122,12 @@ def create_instance(compute, zone, machine_type, instance_name,
         cfg.project, zone, cfg.instance_defs[pid].compute_disk_type)
 
     meta_files = {
-        'config': '/slurm/scripts/config.yaml',
-        'util-script': '/slurm/scripts/util.py',
-        'startup-script': '/slurm/scripts/startup.sh',
-        'setup-script': '/slurm/scripts/setup.py',
+        'config': SCRIPTS_DIR/'config.yaml',
+        'util-script': SCRIPTS_DIR/'util.py',
+        'startup-script': SCRIPTS_DIR/'startup.sh',
+        'setup-script': SCRIPTS_DIR/'setup.py',
     }
-    custom_compute = Path('/slurm/scripts/custom-compute-install')
+    custom_compute = SCRIPTS_DIR/'custom-compute-install'
     if custom_compute.exists():
         meta_files['custom-compute-install'] = str(custom_compute)
 
@@ -176,13 +177,6 @@ def create_instance(compute, zone, machine_type, instance_name,
             ]
         }
     }
-
-    shutdown_script_path = Path('/apps/slurm/scripts/compute-shutdown')
-    if shutdown_script_path.exists():
-        config['metadata']['items'].append({
-            'key': 'shutdown-script',
-            'value': shutdown_script_path.read_text()
-        })
 
     if placement_group_name is not None:
         config['scheduling'] = {

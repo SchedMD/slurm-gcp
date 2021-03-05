@@ -1,6 +1,0 @@
-#!/bin/sh
-
-killall slurmd
-
-rm -rf /var/spool/slurmd/*
-

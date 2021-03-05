@@ -124,9 +124,6 @@ resources:
         - key: custom-compute-install
           value: |
             {{ imports['custom-compute-install']|indent(12) }}
-        - key: compute-shutdown
-          value: |
-            {{ imports['compute-shutdown']|indent(12) }}
         - key: slurm_conf_tpl
           value: |
             {{ imports['slurm.conf.tpl']|indent(12) }}
@@ -257,9 +254,6 @@ resources:
         - key: custom-compute-install
           value: |
             {{ imports['custom-compute-install']|indent(12) }}
-        - key: compute-shutdown
-          value: |
-            {{ imports['compute-shutdown']|indent(12) }}
         - key: fluentd_conf_tpl
           value: |
             {{ imports['compute-fluentd.conf.tpl']|indent(12) }}

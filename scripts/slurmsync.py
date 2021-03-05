@@ -33,6 +33,7 @@ cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
 SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
 LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
+SCRIPTS_DIR = Path(__file__).parent.resolve()
 
 TOT_REQ_CNT = 1000
 
@@ -48,7 +49,7 @@ def start_instances_cb(request_id, response, exception):
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
         elif "was not found" in str(exception):
-            util.spawn(f"/apps/slurm/scripts/resume.py {request_id}")
+            util.spawn(f"{SCRIPTS_DIR}/resume.py {request_id}")
 # [END start_instances_cb]
 
 

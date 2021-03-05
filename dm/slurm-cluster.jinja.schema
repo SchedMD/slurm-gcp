@@ -32,8 +32,6 @@ imports:
   path: common/path_utils.jinja
 - name: vm_instance.py
   path: common/vm_instance.py
-- name: compute-shutdown
-  path: scripts/compute-shutdown
 - name: custom-compute-install
   path: scripts/custom-compute-install
 - name: custom-controller-install

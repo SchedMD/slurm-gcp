@@ -330,7 +330,6 @@ def install_meta_files():
         ('util.py', 'util-script'),
         ('setup.py', 'setup-script'),
         ('startup.sh', 'startup-script'),
-        ('compute-shutdown', 'compute-shutdown'),
         ('custom-compute-install', 'custom-compute-install'),
         ('custom-controller-install', 'custom-controller-install'),
     ]
