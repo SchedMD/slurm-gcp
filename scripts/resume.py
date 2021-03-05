@@ -79,14 +79,13 @@ def wait_for_operation(compute, operation):
 # [END wait_for_operation]
 
 
-def create_instance(compute, zone, machine_type, node_list,
-                    source_disk_image, placement_group_name):
+def create_instance(compute, instance_def, node_list, placement_group_name):
 
     pid = util.get_pid(node_list[0])
     # Configure the machine
-    machine_type_path = f'zones/{zone}/machineTypes/{machine_type}'
+    machine_type_path = f'zones/{zone}/machineTypes/{instance_def.machine_type}'
     disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
-        cfg.project, zone, cfg.instance_defs[pid].compute_disk_type)
+        cfg.project, instance_def.zone, instance_def.compute_disk_type)
 
     meta_files = {
         'config': SCRIPTS_DIR/'config.yaml',
@@ -109,7 +108,7 @@ def create_instance(compute, zone, machine_type, node_list,
             'initializeParams': {
                 'sourceImage': source_disk_image,
                 'diskType': disk_type,
-                'diskSizeGb': cfg.instance_defs[pid].compute_disk_size_gb
+                'diskSizeGb': instance_def.compute_disk_size_gb
             }
         }],
 
@@ -118,9 +117,9 @@ def create_instance(compute, zone, machine_type, node_list,
             'subnetwork': (
                 "projects/{}/regions/{}/subnetworks/{}".format(
                     cfg.shared_vpc_host_project or cfg.project,
-                    cfg.instance_defs[pid].region,
-                    (cfg.instance_defs[pid].vpc_subnet
-                     or f'{cfg.cluster_name}-{cfg.instance_defs[pid].region}'))
+                    instance_def.region,
+                    (instance_def.vpc_subnet
+                     or f'{cfg.cluster_name}-{instance_def.region}'))
             ),
         }],
 
@@ -153,32 +152,32 @@ def create_instance(compute, zone, machine_type, node_list,
         config['resourcePolicies'] = [
             'https://www.googleapis.com/compute/v1/projects/{}/regions/{}/resourcePolicies/{}'
             .format(cfg.shared_vpc_host_project or cfg.project,
-                    cfg.instance_defs[pid].region, placement_group_name)
+                    instance_def.region, placement_group_name)
         ]
 
-    if cfg.instance_defs[pid].gpu_type:
+    if instance_def.gpu_type:
         accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
-                      .format(cfg.project, zone,
-                              cfg.instance_defs[pid].gpu_type))
+                      .format(cfg.project, instance_def.zone,
+                              instance_def.gpu_type))
         config['guestAccelerators'] = [{
-            'acceleratorCount': cfg.instance_defs[pid].gpu_count,
             'acceleratorType': accel_type
+            'acceleratorCount': instance_def.gpu_count,
         }]
 
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if cfg.instance_defs[pid].preemptible_bursting:
+    if instance_def.preemptible_bursting:
         config['scheduling'] = {
             'preemptible': True,
             'onHostMaintenance': 'TERMINATE',
             'automaticRestart': False
         }
 
-    if cfg.instance_defs[pid].compute_labels:
-        config['labels'] = cfg.instance_defs[pid].compute_labels,
+    if instance_def.compute_labels:
+        config['labels'] = instance_def.compute_labels,
 
-    if cfg.instance_defs[pid].cpu_platform:
-        config['minCpuPlatform'] = cfg.instance_defs[pid].cpu_platform,
+    if instance_def.cpu_platform:
+        config['minCpuPlatform'] = instance_def.cpu_platform,
 
     if cfg.external_compute_ips:
         config['networkInterfaces'][0]['accessConfigs'] = [
@@ -191,7 +190,8 @@ def create_instance(compute, zone, machine_type, node_list,
         'instance': config,
     }
     return compute.instances().bulkInsert(
-        project=cfg.project, zone=zone, body=body).execute()
+        project=cfg.project, zone=instance_def.zone,
+        body=body).execute()
 # [END create_instance]
 
 
@@ -213,12 +213,10 @@ def add_instances(node_chunk):
                                               http=auth_http,
                                               cache_discovery=False)
     pid = util.get_pid(node_list[0])
-    disk_image = cfg.instance_defs[pid].image
+    instance_def = cfg.instance_defs[pid]
 
     try:
-        operation = create_instance(compute, cfg.instance_defs[pid].zone,
-                                    cfg.instance_defs[pid].machine_type,
-                                    node_list, disk_image, pg_name)
+        operation = create_instance(compute, instance_def, node_list, pg_name)
         wait_for_operation(compute, operation)
     except Exception as e:
         log.error(f"failed to add {node_list[0]}*{len(node_list)} to slurm, {e}")
