@@ -53,7 +53,7 @@ def start_instances_cb(request_id, response, exception):
 # [END start_instances_cb]
 
 
-def start_instances(compute, node_list):
+def start_instances(compute, node_list, gcp_nodes):
 
     req_cnt = 0
     curr_batch = 0
@@ -63,6 +63,18 @@ def start_instances(compute, node_list):
         compute.new_batch_http_request(callback=start_instances_cb))
 
     for node in node_list:
+
+        pid = util.get_pid(node)
+        zone = cfg.instance_defs[pid].zone
+
+        if cfg.instance_defs[pid].regional_capacity:
+            g_node = next((item for item in gcp_nodes if item["name"] == node),
+                          None)
+            if not g_node:
+                log.error(f"Didn't regional GCP record for '{node}'")
+                continue
+            zone = g_node['zone'].split('/')[-1]
+
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
             curr_batch += 1
@@ -70,10 +82,8 @@ def start_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=start_instances_cb))
 
-        pid = util.get_pid(node)
         batch_list[curr_batch].add(
-            compute.instances().start(project=cfg.project,
-                                      zone=cfg.instance_defs[pid].zone,
+            compute.instances().start(project=cfg.project, zone=zone,
                                       instance=node),
             request_id=node)
         req_cnt += 1
@@ -119,17 +129,28 @@ def main():
         for pid, part in cfg.instance_defs.items():
             page_token = ""
             while True:
-                resp = compute.instances().list(
-                    project=cfg.project, zone=part.zone,
-                    pageToken=page_token,
-                    filter=f"name={pid}-*"
-                ).execute()
+                if cfg.instance_defs[pid].regional_capacity:
+                    node_find = compute.instances().aggregatedList(
+                        project=cfg.project, pageToken=page_token,
+                        filter=f'name={pid}-*').execute()
+                    for key, zone_value in node_find['items'].items():
+                        if 'instances' in zone_value:
+                            g_nodes.extend(zone_value['instances'])
+                    if "nextPageToken" in resp:
+                        page_token = resp['nextPageToken']
+                        continue
+                else:
+                    resp = compute.instances().list(
+                        project=cfg.project, zone=part.zone,
+                        pageToken=page_token,
+                        filter=f"name={pid}-*"
+                    ).execute()
 
-                if "items" in resp:
-                    g_nodes.extend(resp['items'])
-                if "nextPageToken" in resp:
-                    page_token = resp['nextPageToken']
-                    continue
+                    if "items" in resp:
+                        g_nodes.extend(resp['items'])
+                    if "nextPageToken" in resp:
+                        page_token = resp['nextPageToken']
+                        continue
 
                 break
 
@@ -193,7 +214,7 @@ def main():
                      "reason='Instance stopped/deleted'")
 
             while True:
-                start_instances(compute, to_start)
+                start_instances(compute, to_start, g_nodes)
                 if not len(retry_list):
                     break
 

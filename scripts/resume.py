@@ -186,6 +186,8 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
     }
 
     if instance_def.regional_capacity:
+        if instance_def.regional_policy:
+            body['locationPolicy'] = instance_def.regional_policy
         op = compute.regionInstances().bulkInsert(
             project=cfg.project, region=instance_def.region,
             body=body)

@@ -409,6 +409,7 @@ properties:
       - preemptible_bursting
       - vpc_subnet
       - regional_capacity
+      - regional_policy
       - static_node_count
       - network_storage
       properties :
@@ -511,6 +512,11 @@ properties:
           description : If True, then create instances in the region that has
                         available capacity. Specify the region in the zone
                         field.
+
+        regional_policy:
+          type        : object
+          default     : {}
+          description : locationPolicy defintion for regional bulkInsert().
 
         static_node_count:
           type        : integer

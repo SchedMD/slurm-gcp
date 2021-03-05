@@ -163,6 +163,14 @@ resources:
         #     mount_options: file_mode=664,dir_mode=775,allow_other
         #
         # regional_capacity : True
+        # regional_policy :
+        #   locations:
+        #     zones/us-west1-a:
+        #       preference: DENY
+        #     zones/us-west1-b:
+        #       preference: DENY
+        #     zones/us-west1-c:
+        #       preference: ALLOW
 
     # Optional network configuration fields
         # vpc_subnet                : my-subnet

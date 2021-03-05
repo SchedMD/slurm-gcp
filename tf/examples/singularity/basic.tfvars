@@ -97,6 +97,7 @@ partitions = [
     exclusive            = false
     enable_placement     = false
     regional_capacity    = false
+    regional_policy      = {}
   },
 #  { name                 = "partition2"
 #    machine_type         = "n1-standard-16"
@@ -128,5 +129,13 @@ partitions = [
 #    # Otherwise the region will be inferred from the zone.
 #    zone = "us-west1"
 #    regional_capacity    = True
+#    # Optional
+#    regional_policy      = {
+#        locations = {
+#            "zones/us-west1-a" = {
+#                preference = "DENY"
+#            }
+#        }
+#    }
 ]
 
