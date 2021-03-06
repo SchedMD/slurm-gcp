@@ -168,10 +168,10 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         }
 
     if instance_def.compute_labels:
-        config['labels'] = instance_def.compute_labels,
+        config['labels'] = instance_def.compute_labels
 
     if instance_def.cpu_platform:
-        config['minCpuPlatform'] = instance_def.cpu_platform,
+        config['minCpuPlatform'] = instance_def.cpu_platform
 
     if cfg.external_compute_ips:
         config['networkInterfaces'][0]['accessConfigs'] = [
