@@ -146,11 +146,7 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             'onHostMaintenance': 'TERMINATE',
             'automaticRestart': False
         }
-        config['resourcePolicies'] = [
-            'https://www.googleapis.com/compute/v1/projects/{}/regions/{}/resourcePolicies/{}'
-            .format(cfg.shared_vpc_host_project or cfg.project,
-                    instance_def.region, placement_group_name)
-        ]
+        config['resourcePolicies'] = [placement_group_name]
 
     if instance_def.gpu_type:
         config['guestAccelerators'] = [{
