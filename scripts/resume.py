@@ -80,6 +80,29 @@ def wait_for_operation(compute, operation):
         except Exception:
             pass
 # [END wait_for_operation]
+
+
+def get_group_operations(compute, operation):
+    """ get list of operations associated with group id """
+    project = cfg.project
+    group_id = operation['operationGroupId']
+    result = None
+    if 'zone' in operation:
+        result = compute.zoneOperations().list(
+            project=project,
+            zone=operation['zone'].split('/')[-1],
+            filter=f"operationGroupId={group_id}").execute()
+    elif 'region' in operation:
+        result = compute.regionOperations().list(
+            project=project,
+            region=operation['region'].split('/')[-1],
+            filter=f"operationGroupId={group_id}").execute()
+    else:
+        result = compute.globalOperations().list(
+            project=project,
+            filter=f"operationGroupId={group_id}").execute()
+
+    return result
 # [END wait_for_operation]
 
 
@@ -226,10 +249,36 @@ def add_instances(node_chunk):
 
     try:
         operation = create_instance(compute, instance_def, node_list, pg_name)
-        wait_for_operation(compute, operation)
+        result = wait_for_operation(compute, operation)
+
+        if 'error' in result:
+            grp_err_msg = result['error']['errors'][0]['message']
+            log.error(f"group operation failed: {grp_err_msg}")
+            if instance_def.exclusive:
+                os._exit(1)
+
+            group_ops = get_group_operations(compute, result)
+            failed_nodes = {}
+            for op in group_ops['items']:
+                if op['operationType'] != 'insert':
+                    continue
+                if 'error' in op:
+                    err_msg = op['error']['errors'][0]['message']
+                    failed_node = op['targetLink'].split('/')[-1]
+                    if err_msg not in failed_nodes:
+                        failed_nodes[err_msg] = [failed_node]
+                    else:
+                        failed_nodes[err_msg].append(failed_node)
+            if failed_nodes:
+                log.error(f"insert requests failed: {failed_nodes}")
+                for msg, nodes in failed_nodes.items():
+                    down_nodes(nodes, msg)
+
     except Exception as e:
         log.error(f"failed to add {node_list[0]}*{len(node_list)} to slurm, {e}")
-        down_nodes(node_list, "resume.py failed, see resume.log")
+        if instance_def.exclusive:
+            os._exit(1)
+        down_nodes(node_list, e)
 # [END add_instances]
 
 
@@ -284,7 +333,11 @@ def create_placement_groups(arg_job_id, vm_count, region):
             body=config).execute())
 
     for operation in pg_ops:
-        wait_for_operation(compute, operation)
+        result = wait_for_operation(compute, operation)
+        if 'error' in result:
+            err_msg = result['error']['errors'][0]['message']
+            log.error(f" placement group operation failed: {err_msg}")
+            os._exit(1)
 
     return pg_names
 # [END create_placement_groups]
