@@ -55,27 +55,31 @@ def wait_for_operation(compute, operation):
     print('Waiting for operation to finish...')
     project = cfg.project
     while True:
-        result = None
-        if 'zone' in operation:
-            result = compute.zoneOperations().get(
-                project=project,
-                zone=operation['zone'].split('/')[-1],
-                operation=operation['name']).execute()
-        elif 'region' in operation:
-            result = compute.regionOperations().get(
-                project=project,
-                region=operation['region'].split('/')[-1],
-                operation=operation['name']).execute()
-        else:
-            result = compute.globalOperations().get(
-                project=project,
-                operation=operation['name']).execute()
+        try:
+            result = None
+            if 'zone' in operation:
+                result = compute.zoneOperations().wait(
+                    project=project,
+                    zone=operation['zone'].split('/')[-1],
+                    operation=operation['name']).execute()
+            elif 'region' in operation:
+                result = compute.regionOperations().wait(
+                    project=project,
+                    region=operation['region'].split('/')[-1],
+                    operation=operation['name']).execute()
+            else:
+                result = compute.globalOperations().wait(
+                    project=project,
+                    operation=operation['name']).execute()
 
-        if result['status'] == 'DONE':
-            print("done.")
-            return result
+            if result['status'] == 'DONE':
+                print("done.")
+                return result
 
-        time.sleep(1)
+        # wait will thow an exception if wait times out.
+        except Exception:
+            pass
+# [END wait_for_operation]
 # [END wait_for_operation]
 
 
