@@ -185,6 +185,11 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         'perInstanceProperties': perInstanceProperties,
     }
 
+    # For non-exclusive requests, create as many instances as possible as the
+    # nodelist isn't tied to a specific set of instances.
+    if not instance_def.exclusive:
+        body['minCount'] = 1
+
     if instance_def.regional_capacity:
         if instance_def.regional_policy:
             body['locationPolicy'] = instance_def.regional_policy
