@@ -37,23 +37,7 @@
 {% endfor %}
 
 resources:
-{% for region, subnet in subnets %}
-- name: {{cluster_name}}-{{region}}-router
-  type: compute.v1.router
-  properties:
-    network: https://www.googleapis.com/compute/v1/projects/{{project}}/global/networks/{{vpc_net}}
-    region: {{region}}
-    nats:
-    - name: {{cluster_name}}-nat
-      natIpAllocateOption: "AUTO_ONLY"
-      sourceSubnetworkIpRangesToNat: "LIST_OF_SUBNETWORKS"
-      subnetworks:
-      - name: https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/subnetworks/{{subnet}}
-        sourceIpRangesToNat: ["PRIMARY_IP_RANGE"]
-{% endfor %}
-
-
-- name: {{ cluster_name }}-controller
+- name: controller
   type: vm_instance.py
   properties:
     instanceName: {{ cluster_name }}-controller
@@ -139,7 +123,7 @@ resources:
 
 
 {% for n in range(properties['login_node_count']) %}
-- name: {{ cluster_name }}-login{{ n }}
+- name: login{{ n }}
   type: vm_instance.py
   properties:
     instanceName: {{ cluster_name }}-login{{ n }}
@@ -196,7 +180,7 @@ resources:
 {% set zone = part['zone'] %}
 
 {% for n in range(part['static_node_count']) %}
-- name: {{ properties['compute_node_prefix'] }}-{{ i }}-{{ n }}
+- name: static-compute-{{ i }}-{{ n }}
   type: vm_instance.py
   properties:
     instanceName: {{ properties['compute_node_prefix'] }}-{{ i }}-{{ n }}
@@ -259,4 +243,63 @@ resources:
             {{ imports['compute-fluentd.conf.tpl']|indent(12) }}
 {% endfor %}
 
+{% endfor %}
+
+outputs:
+  - name: controller-id
+    value: $(ref.{{ cluster_name }}-controller.id)
+  - name: controller-name
+    value: {{ cluster_name }}-controller
+  - name: controller-internal-ip
+    value: $(ref.controller.internalIP)
+  - name: controller-ip
+  {% if properties['controller_external_ip'] %}
+    value: $(ref.controller.ip)
+  {% else %}
+    value: NONE
+  {% endif %}
+  - name: controller-link
+    value: $(ref.{{ cluster_name }}-controller.selfLink)
+
+  - name: login_node_count
+    value: {{ properties['login_node_count'] }}
+{% for n in range(properties['login_node_count']) %}
+  {% set name = 'login' ~ n %}
+  {% set vm_name = cluster_name ~ '-' ~ name %}
+  - name: {{ name }}-id
+    value: $(ref.{{ vm_name }}.id)
+  - name: {{ name }}-name
+    value: {{ vm_name }}
+  - name: {{ name }}-internal-ip
+    value: $(ref.{{ name }}.internalIP)
+  - name: {{ name }}-ip
+  {% if properties['login_external_ip'] %}
+    value: $(ref.{{ name }}.ip)
+  {% else %}
+    value: NONE
+  {% endif %}
+  - name: {{ name }}-link
+    value: $(ref.{{ vm_name }}.selfLink)
+{% endfor %}
+
+{% for part in partitions %}
+{% set i = loop.index0 %}
+{% for n in range(part['static_node_count']) %}
+  {% set name = 'static-compute-{}-{}'.format(i, n)  %}
+  {% set vm_name = '{}-{}-{}'.format(properties['compute_node_prefix'], i, n) %}
+  - name: {{ name }}-id
+    value: $(ref.{{ vm_name }}.id)
+  - name: {{ name }}-name
+    value: {{ vm_name }}
+  - name: {{ name }}-internal-ip
+    value: $(ref.{{ name }}.internalIP)
+  - name: {{ name }}-ip
+  {% if properties['compute_external_ip'] %}
+    value: $(ref.{{ name }}.ip)
+  {% else %}
+    value: NONE
+  {% endif %}
+  - name: {{ name }}-link
+    value: $(ref.{{ vm_name }}.selfLink)
+{% endfor %}
 {% endfor %}

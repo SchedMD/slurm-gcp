@@ -37,11 +37,6 @@ imports:
 required:
 - cluster_name
 - zone
-- controller_machine_type
-- login_machine_type
-- compute_partition_name
-- compute_machine_type
-- compute_max_node_count
 
 optional:
 - network
@@ -49,12 +44,43 @@ optional:
 - controller_external_ip
 - login_external_ip
 - compute_external_ip
+- controller_machine_type
+- controller_disk_type
+- controller_disk_size_gb
+- login_machine_type
+- login_disk_type
+- login_disk_size_gb
 - login_node_count
 - suspend_time
-- compute_gpu_count
-- compute_gpu_type
-- compute_preemptible
-- compute_static_node_count
+- compute1_partition_name
+- compute1_machine_type
+- compute1_disk_type
+- compute1_disk_size_gb
+- compute1_max_node_count
+- compute1_static_node_count
+- compute1_gpu_count
+- compute1_gpu_type
+- compute1_preemptible
+- compute2_enabled
+- compute2_partition_name
+- compute2_machine_type
+- compute2_disk_type
+- compute2_disk_size_gb
+- compute2_max_node_count
+- compute2_static_node_count
+- compute2_gpu_count
+- compute2_gpu_type
+- compute2_preemptible
+- compute3_enabled
+- compute3_partition_name
+- compute3_machine_type
+- compute3_disk_type
+- compute3_disk_size_gb
+- compute3_max_node_count
+- compute3_static_node_count
+- compute3_gpu_count
+- compute3_gpu_type
+- compute3_preemptible
 
 properties:
   cluster_name:
@@ -63,37 +89,106 @@ properties:
 
   zone:
     type        : string
+    default     : us-central1-a
     description : Zone to run the instances in based on Region.
+    x-googleProperty:
+      type: GCE_ZONE
 
   network:
-    type        : string
-    default     : default
+    type        : array
+    default     : [default]
+    minItems    : 1
+    maxItems    : 1
     description : The name of the pre-defined VPC network you want the nodes
                   to attach to based on Region.
+    x-googleProperty:
+      type: GCE_NETWORK
+      gceNetwork:
+        allowSharedVpcs: True
 
   subnetwork:
-    type        : string
-    default     : default
+    type        : array
+    default     : [default]
+    minItems    : 1
+    maxItems    : 1
     description : The name of the pre-defined VPC subnet you want the nodes
                   to attach to based on Region.
+    x-googleProperty:
+      type: GCE_SUBNETWORK
+      zoneProperty: zone
+      gceSubnetwork:
+        networkProperty: network
 
   controller_external_ip:
     type        : boolean
     default     : False
-    description : Whether the controller instance is assigned an external ip or not.
-                  Sets up Cloud NAT gateway if false.
+    description : Whether the controller instance is assigned an external ip or not
+
+  login_external_ip:
+    type        : boolean
+    default     : False
+    description : Whether login instances are assigned external IPS or not
+
+  compute_external_ip:
+    type        : boolean
+    default     : False
+    description : Whether compute nodes are assigned external IPs or not
 
   controller_machine_type:
     type        : string
     default     : n1-standard-2
     description : Machine type to use for the controller instance.
                   eg. n1-standard-4.
+    x-googleProperty:
+      type: GCE_MACHINE_TYPE
+      zoneProperty: zone
+      gceMachineType:
+        minCpu: 2
+
+  controller_disk_type:
+    type: string
+    default: pd-standard
+    x-googleProperty:
+      type: GCE_DISK_TYPE
+      zoneProperty: zone
+
+  controller_disk_size_gb:
+    type: integer
+    default: 30
+    minimum: 30
+    maximum: 10000
+    x-googleProperty:
+      type: GCE_DISK_SIZE
+      gceDiskSize:
+        diskTypeProperty: controller_disk_type
 
   login_machine_type:
     type        : string
     default     : n1-standard-2
     description : Machine type to use for login node instances, eg.
                   n1-standard-4.
+    x-googleProperty:
+      type: GCE_MACHINE_TYPE
+      zoneProperty: zone
+      gceMachineType:
+        minCpu: 1
+
+  login_disk_type:
+    type: string
+    default: pd-standard
+    x-googleProperty:
+      type: GCE_DISK_TYPE
+      zoneProperty: zone
+
+  login_disk_size_gb:
+    type: integer
+    default: 30
+    minimum: 30
+    maximum: 10000
+    x-googleProperty:
+      type: GCE_DISK_SIZE
+      gceDiskSize:
+        diskTypeProperty: login_disk_type
 
   login_labels:
     type        : array
@@ -105,43 +200,46 @@ properties:
     default     : 1
     description : Number of login nodes in the cluster.
 
-  login_external_ip:
-    type        : boolean
-    default     : False
-    description : Whether login instances are assigned external IPS or not. Sets up Cloud NAT
-                  gateway if false.
-
   suspend_time:
     type        : integer
     default     : 300
     minimum     : 300
-    description : Idle time to wait before nodes go away (in sec)
-                  From Slurm Power Save Documentation
-                  Nodes become eligible for power saving mode after being idle
-                  for this number of seconds. For efficient system utilization,
-                  it is recommended that the value of SuspendTime be at least
-                  as large as the sum of SuspendTimeout plus ResumeTimeout. For
-                  slurm-gcp, note that SuspendTimeout and ResumeTimeout are
-                  hard-coded at 300s in scripts/startup-script.py
+    description : Idle time to wait before nodes are decommissioned (in sec)
 
-  compute_external_ip:
-    type        : boolean
-    default     : False
-    description : Whether compute nodes are assigned external IPs or not. Sets up Cloud NAT
-                  if false.
-
-  compute_partition_name:
+  compute1_partition_name:
     type        : string
-    default     : nodes
+    default     : p1
     description : Name of the compute node partition
 
-  compute_machine_type:
+  compute1_machine_type:
     type        : string
     default     : n1-standard-2
     description : Machine type to use for compute node instances.
                   eg. n1-standard-4.
+    x-googleProperty:
+      type: GCE_MACHINE_TYPE
+      zoneProperty: zone
+      gceMachineType:
+        minCpu: 1
 
-  compute_max_node_count:
+  compute1_disk_type:
+    type: string
+    default: pd-standard
+    x-googleProperty:
+      type: GCE_DISK_TYPE
+      zoneProperty: zone
+
+  compute1_disk_size_gb:
+    type: integer
+    default: 30
+    minimum: 20
+    maximum: 10000
+    x-googleProperty:
+      type: GCE_DISK_SIZE
+      gceDiskSize:
+        diskTypeProperty: compute1_disk_type
+
+  compute1_max_node_count:
     type        : integer
     minimum     : 0
     maximum     : 10000
@@ -149,32 +247,211 @@ properties:
     description : Maximum number of instances that the cluster can grow to.
                   Consider adding 10% to account for preemptible nodes.
 
-  compute_gpu_type:
+  compute1_gpu_type:
     type        : string
-    enum        :
-                - None
-                - nvidia-tesla-k80
-                - nvidia-tesla-p100
-                - nvidia-tesla-v100
-                - nvidia-tesla-p4
-                - nvidia-tesla-t4
     default     : None
     description : GPU Type to attach to static nodes.
+    x-googleProperty:
+      type: GCE_GPU_TYPE
+      gceGpuType:
+        machineTypeProperty: compute1_machine_type
+        gpuType:
+          - nvidia-tesla-k80
+          - nvidia-tesla-p100
+          - nvidia-tesla-v100
+          - nvidia-tesla-p4
+          - nvidia-tesla-t4
 
-  compute_gpu_count:
-    type        : string
-    enum        : ['0', '1', '2', '4', '8']
-    default     : '0'
+  compute1_gpu_count:
+    type        : integer
+    default     : 0
     description : Number of GPUs to attach to each node.
+    x-googleProperty:
+      type: GCE_GPU_COUNT
+      gceGpuCount:
+        machineTypeProperty: compute1_machine_type
 
-  compute_preemptible:
+  compute1_preemptible:
     type        : boolean
     default     : False
     description : Whether bursted compute nodes are preemptible instances or
                   not. Make sure to choose a zone that has preemptible
                   resources.
 
-  compute_static_node_count:
+  compute1_static_node_count:
     type        : integer
     description : Number of initial instances in the cluster.
     default     : 0
+    minimum: 0
+
+  compute2_enabled:
+    type        : boolean
+    default     : false
+    description : Third partition enabled
+
+  compute2_partition_name:
+    type        : string
+    default     : p2
+    description : Name of the compute node partition
+
+  compute2_machine_type:
+    type        : string
+    default     : n1-standard-2
+    description : Machine type to use for compute node instances.
+                  eg. n1-standard-4.
+    x-googleProperty:
+      type: GCE_MACHINE_TYPE
+      zoneProperty: zone
+      gceMachineType:
+        minCpu: 1
+
+  compute2_disk_type:
+    type: string
+    default: pd-standard
+    x-googleProperty:
+      type: GCE_DISK_TYPE
+      zoneProperty: zone
+
+  compute2_disk_size_gb:
+    type: integer
+    default: 30
+    minimum: 20
+    maximum: 10000
+    x-googleProperty:
+      type: GCE_DISK_SIZE
+      gceDiskSize:
+        diskTypeProperty: compute2_disk_type
+
+  compute2_max_node_count:
+    type        : integer
+    minimum     : 0
+    maximum     : 10000
+    default     : 10
+    description : Maximum number of instances that the cluster can grow to.
+                  Consider adding 10% to account for preemptible nodes.
+
+  compute2_gpu_type:
+    type        : string
+    default     : None
+    description : GPU Type to attach to static nodes.
+    x-googleProperty:
+      type: GCE_GPU_TYPE
+      gceGpuType:
+        machineTypeProperty: compute2_machine_type
+        gpuType:
+          - nvidia-tesla-k80
+          - nvidia-tesla-p100
+          - nvidia-tesla-v100
+          - nvidia-tesla-p4
+          - nvidia-tesla-t4
+
+  compute2_gpu_count:
+    type        : integer
+    default     : 0
+    description : Number of GPUs to attach to each node.
+    x-googleProperty:
+      type: GCE_GPU_COUNT
+      gceGpuCount:
+        machineTypeProperty: compute2_machine_type
+
+  compute2_preemptible:
+    type        : boolean
+    default     : False
+    description : Whether bursted compute nodes are preemptible instances or
+                  not. Make sure to choose a zone that has preemptible
+                  resources.
+
+  compute2_static_node_count:
+    type        : integer
+    description : Number of initial instances in the cluster.
+    default     : 0
+    minimum: 0
+
+  compute3_enabled:
+    type        : boolean
+    default     : false
+    description : Third partition enabled
+
+  compute3_partition_name:
+    type        : string
+    default     : p3
+    description : Name of the compute node partition
+
+  compute3_machine_type:
+    type        : string
+    default     : n1-standard-2
+    description : Machine type to use for compute node instances.
+                  eg. n1-standard-4.
+    x-googleProperty:
+      type: GCE_MACHINE_TYPE
+      zoneProperty: zone
+      gceMachineType:
+        minCpu: 1
+
+  compute3_disk_type:
+    type: string
+    default: pd-standard
+    x-googleProperty:
+      type: GCE_DISK_TYPE
+      zoneProperty: zone
+
+  compute3_disk_size_gb:
+    type: integer
+    default: 30
+    minimum: 20
+    maximum: 10000
+    x-googleProperty:
+      type: GCE_DISK_SIZE
+      gceDiskSize:
+        diskTypeProperty: compute3_disk_type
+
+  compute3_max_node_count:
+    type        : integer
+    minimum     : 0
+    maximum     : 10000
+    default     : 10
+    description : Maximum number of instances that the cluster can grow to.
+                  Consider adding 10% to account for preemptible nodes.
+
+  compute3_gpu_type:
+    type        : string
+    default     : None
+    description : GPU Type to attach to static nodes.
+    x-googleProperty:
+      type: GCE_GPU_TYPE
+      gceGpuType:
+        machineTypeProperty: compute3_machine_type
+        gpuType:
+          - nvidia-tesla-k80
+          - nvidia-tesla-p100
+          - nvidia-tesla-v100
+          - nvidia-tesla-p4
+          - nvidia-tesla-t4
+
+  compute3_gpu_count:
+    type        : integer
+    default     : 0
+    description : Number of GPUs to attach to each node.
+    x-googleProperty:
+      type: GCE_GPU_COUNT
+      gceGpuCount:
+        machineTypeProperty: compute3_machine_type
+
+  compute3_preemptible:
+    type        : boolean
+    default     : False
+    description : Whether bursted compute nodes are preemptible instances or
+                  not. Make sure to choose a zone that has preemptible
+                  resources.
+
+  compute3_static_node_count:
+    type        : integer
+    description : Number of initial instances in the cluster.
+    default     : 0
+    minimum: 0
+
+outputs:
+  deployment:
+    type: string
+  project:
+    type: string

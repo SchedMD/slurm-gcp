@@ -1,33 +1,59 @@
 description:
   author:
-    title: Slurm on GCP
-    descriptionHtml: Slurm descriptionHtml.
-    shortDescription: Slurm shortDescription.
+    title: SchedMD
+    descriptionHtml: >-
+      SchedMD® is the core company behind the Slurm workload manager software,
+      a free open-source workload manager designed specifically to satisfy
+      the demanding needs of high performance computing.
+    shortDescription: >-
+      SchedMD is the core developer and services provider for the
+      market-leading Slurm workload manager, supporting and optimizing the
+      speed, throughput and resource consumption for organizations’ unique
+      workload mix and needs.
     url: 'http://www.schedmd.com'
-  descriptionHtml: Slurm description.
-  tagline: Slurm short description.
-  title: Slurm on GCP
+  descriptionHtml: >-
+    Slurm is a free open-source workload manager designed specifically to
+    satisfy the demanding needs of high performance and high throughput
+    computing and AI. Slurm® is the industry-leading open source workload
+    manager to manage large-scale, complex HPC and AI workloads in the
+    cloud with faster processing and optimal consumption of the specialized
+    resource capabilities needed for each workload. Slurm maximizes workload
+    throughput, scale, reliability, and results in the fastest possible
+    time, managing workloads across cloud and on-prem clusters. SchedMD®
+    and Google have partnered to optimize Slurm for Google Cloud, enabling
+    seamless management and integration with optimal use and scaling of
+    Google Cloud resources so organizations can focus on getting to results
+    faster and easier.
+  tagline: Speeding HPC HTC & AI workloads via demand-based cloud clusters
+  logo: '@media/Slurm_workload_manager.png'
+  icon: '@media/slurm-logo-only-small.png'
+  title: SchedMD Slurm GCP
   url: 'https://www.schedmd.com'
-  version: 1.0.0
+  version: 4.0.0
   softwareGroups:
   - type: SOFTWARE_GROUP_OS
     software:
-    - title: CentOs
+    - title: CentOS
       version: '7'
+  - software:
+    - title: Slurm
+      version: 20.11.4
   documentations:
   - title: Slurm on GCP Documentation
-    url: 'https://www.schedmd.com'
+    url: 'https://github.com/schedmd/slurm-gcp'
     destinations:
     - DESTINATION_SOLUTION_DETAILS
     - DESTINATION_POST_DEPLOY
   - title: Slurm manual
-    url: 'https://www.schedmd.com'
+    url: 'https://github.com/schedmd/slurm-gcp'
     destinations:
     - DESTINATION_SOLUTION_DETAILS
     - DESTINATION_POST_DEPLOY
   support:
   - title: Support
-    descriptionHtml: Google does not offer support for this solution. However, community support is available on <a href="https://www.google.com"> email lists</a> .
+    descriptionHtml: >-
+      Google does not offer support for this solution. However, community
+      support is available on <a href="https://groups.google.com/g/google-cloud-slurm-discuss"> email lists</a> .
 
 input:
   properties:
@@ -42,16 +68,31 @@ input:
     - name: subnetwork
       title: Subnetwork name
       section: NETWORK_TIER
+    - name: controller_external_ip
+      title: Controller External IP
+      section: NETWORK_TIER
+    - name: login_external_ip
+      title: Login External IPs
+      section: NETWORK_TIER
+    - name: compute_external_ip
+      title: Compute Node External IPs
+      section: NETWORK_TIER
 
     - name: controller_machine_type
       title: Controller Machine type
       section: CONTROLLER_TIER
-    - name: suspend_time
-      title: Idle time to wait before nodes go away (in sec)
-    - name: controller_external_ip
-      title: External IP
-      tooltip: 'An external IP address associated with this instance. Selecting "None" will result in the instance having no external internet access. <a href="https://cloud.google.com/compute/docs/configure-instance-ip-addresses">Learn more</a>'
+    - name: controller_disk_type
+      title: Boot Disk Type
       section: CONTROLLER_TIER
+      level: 1
+    - name: controller_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: CONTROLLER_TIER
+      level: 1
+    - name: suspend_time
+      title: Suspend Time (in sec)
+      section: CONTROLLER_TIER
+      level: 1
 
     - name: login_node_count
       title: Login Node Count
@@ -59,47 +100,149 @@ input:
     - name: login_machine_type
       title: Login machine type
       section: LOGIN_TIER
-    - name: login_external_ip
-      title: External IP
+    - name: login_disk_type
+      title: Boot Disk Type
       section: LOGIN_TIER
+      level: 1
+    - name: login_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: LOGIN_TIER
+      level: 1
 
-    - name: compute_partition_name
+    - name: compute1_partition_name
       title: Name for the Slurm compute partition
-      section: COMPUTE_CONFIG
-    - name: compute_machine_type
+      section: COMPUTE1_CONFIG
+    - name: compute1_max_node_count
+      title: Maximum Instance Count
+      tooltip: Specify a value for the maximum number of compute nodes in this partition
+      section: COMPUTE1_CONFIG
+    - name: compute1_static_node_count
+      title: Number of static nodes to create
+      section: COMPUTE1_CONFIG
+    - name: compute1_preemptible
+      title: Preemptible Instances
+      tooltip: A preemptible VM costs much less, but lasts only 24 hours. It can be terminated sooner due to system demands.
+      section: COMPUTE1_CONFIG
+    - name: compute1_machine_type
       title: Machine type
-      section: COMPUTE_CONFIG
-    - name: compute_max_node_count
+      section: COMPUTE1_CONFIG
+    - name: compute1_disk_type
+      title: Boot Disk Type
+      section: COMPUTE1_CONFIG
+      level: 1
+    - name: compute1_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: COMPUTE1_CONFIG
+      level: 1
+    - name: compute1_gpu_count
+      title: GPU count
+      tooltip: Number of GPUs to attach to each compute node
+      section: COMPUTE1_CONFIG
+      level: 1
+    - name: compute1_gpu_type
+      title: GPU type
+      section: COMPUTE1_CONFIG
+      level: 1
+
+    - name: compute2_enabled
+      title: Enable partition
+      section: COMPUTE2_CONFIG
+    - name: compute2_partition_name
+      title: Name for the Slurm compute partition
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_max_node_count
       title: Maximum Instance Count
       tooltip: Specify a value for the maximum amount of compute nodes.
-      section: COMPUTE_CONFIG
-    - name: compute_preemptible
-      title: Preemptible Machine
-      tooltip: A preemptible VM costs much less, but lasts only 24 hours. It can be terminated sooner due to system demands.
-      section: COMPUTE_CONFIG
-    - name: compute_gpu_count
-      title: GPU count
-      tooltip: How many GPUs to attach to compute nodes
-      section: COMPUTE_CONFIG
-    - name: compute_gpu_type
-      title: GPU type
-      section: COMPUTE_CONFIG
-    - name: compute_static_node_count
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_static_node_count
       title: Number of static nodes to create
-      section: COMPUTE_CONFIG
-    - name: compute_external_ip
-      title: External IP
-      section: COMPUTE_CONFIG
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_preemptible
+      title: Preemptible Instances
+      tooltip: A preemptible VM costs much less, but lasts only 24 hours. It can be terminated sooner due to system demands.
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_machine_type
+      title: Machine type
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_disk_type
+      title: Boot Disk Type
+      section: COMPUTE2_CONFIG
+      level: 2
+    - name: compute2_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: COMPUTE2_CONFIG
+      level: 2
+    - name: compute2_gpu_count
+      title: GPU count
+      tooltip: Number of GPUs to attach to each compute node
+      section: COMPUTE2_CONFIG
+      level: 2
+    - name: compute2_gpu_type
+      title: GPU type
+      section: COMPUTE2_CONFIG
+      level: 2
+
+    - name: compute3_enabled
+      title: Enable partition
+      section: COMPUTE3_CONFIG
+    - name: compute3_partition_name
+      title: Name for the Slurm compute partition
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_max_node_count
+      title: Maximum Instance Count
+      tooltip: Specify a value for the maximum amount of compute nodes.
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_static_node_count
+      title: Number of static nodes to create
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_preemptible
+      title: Preemptible Instances
+      tooltip: A preemptible VM costs much less, but lasts only 24 hours. It can be terminated sooner due to system demands.
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_machine_type
+      title: Machine type
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_disk_type
+      title: Boot Disk Type
+      section: COMPUTE3_CONFIG
+      level: 2
+    - name: compute3_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: COMPUTE3_CONFIG
+      level: 2
+    - name: compute3_gpu_count
+      title: GPU count
+      tooltip: Number of GPUs to attach to each compute node
+      section: COMPUTE3_CONFIG
+      level: 2
+    - name: compute3_gpu_type
+      title: GPU type
+      section: COMPUTE3_CONFIG
+      level: 2
 
   sections:
     - name: NETWORK_TIER
       title: Network
-    - name: LOGIN_TIER
-      title: Slurm Login
     - name: CONTROLLER_TIER
       title: Slurm Controller
-    - name: COMPUTE_CONFIG
-      title: Slurm Compute
+    - name: LOGIN_TIER
+      title: Slurm Login
+    - name: COMPUTE1_CONFIG
+      title: Slurm Compute Partition 1
+    - name: COMPUTE2_CONFIG
+      title: Slurm Compute Partition 2
+    - name: COMPUTE3_CONFIG
+      title: Slurm Compute Partition 3
 
 runtime:
   deployingMessage: Deployment can take several minutes to complete.
@@ -110,10 +253,8 @@ runtime:
   primaryButton:
     label: SSH to Slurm Login Node
     type: TYPE_GCE_VM_SSH
-    action: '{{ outputs()["login_vmSelfLink" + 0] }}'
+    action: '{{ outputs()["login0-link"] }}'
   suggestedActions:
-    - heading: Any action
-      description: 'Action description'
     - heading: No external IP configured on any tier
       description: 'All VM instances have been configured with no external IP or internet access. Connecting to them directly may not be possible. Consider using a <a href="https://cloud.google.com/compute/docs/instances/connecting-advanced#bastion_host">bastion host</a> to access these VMs.'
       showIf: "{{ outputs().tiersWithNoExternalIPStatus == 'ALL' }}"
