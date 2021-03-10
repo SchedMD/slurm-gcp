@@ -24,10 +24,9 @@ mkdir -p $(dirname $FLAGFILE)
 touch $FLAGFILE
 
 PING_HOST=8.8.8.8
-until ( ping -q -w1 -c1 $PING_HOST > /dev/null ) ; do
-    echo "Waiting for internet"
-    sleep .5
-done
+if ( ! ping -q -w1 -c1 $PING_HOST > /dev/null ) ; then
+	echo No internet access detected
+fi
 
 SETUP_SCRIPT="setup.py"
 SETUP_META="setup-script"
