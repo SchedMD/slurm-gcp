@@ -609,6 +609,10 @@ def setup_controller():
         pass
 
     if not cfg.cloudsql:
+        Path('/etc/my.cnf.d/mysql_slurm.cnf').write_text("""
+[mysqld]
+bind-address = 127.0.0.1
+""")
         util.run('systemctl enable mariadb')
         util.run('systemctl start mariadb')
 
