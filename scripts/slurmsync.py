@@ -89,7 +89,7 @@ def start_instances(compute, node_list, gcp_nodes):
         req_cnt += 1
     try:
         for i, batch in enumerate(batch_list):
-            batch.execute()
+            util.ensure_execute(batch)
             if i < (len(batch_list) - 1):
                 time.sleep(30)
     except Exception:
@@ -130,21 +130,21 @@ def main():
             page_token = ""
             while True:
                 if cfg.instance_defs[pid].regional_capacity:
-                    node_find = compute.instances().aggregatedList(
-                        project=cfg.project, pageToken=page_token,
-                        filter=f'name={pid}-*').execute()
-                    for key, zone_value in node_find['items'].items():
+                    resp = util.ensure_execute(
+                        compute.instances().aggregatedList(
+                            project=cfg.project, pageToken=page_token,
+                            filter=f'name={pid}-*'))
+                    for key, zone_value in resp['items'].items():
                         if 'instances' in zone_value:
                             g_nodes.extend(zone_value['instances'])
                     if "nextPageToken" in resp:
                         page_token = resp['nextPageToken']
                         continue
                 else:
-                    resp = compute.instances().list(
-                        project=cfg.project, zone=part.zone,
-                        pageToken=page_token,
-                        filter=f"name={pid}-*"
-                    ).execute()
+                    resp = util.ensure_execute(
+                        compute.instances().list(
+                            project=cfg.project, zone=part.zone,
+                            pageToken=page_token, filter=f"name={pid}-*"))
 
                     if "items" in resp:
                         g_nodes.extend(resp['items'])

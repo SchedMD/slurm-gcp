@@ -25,6 +25,7 @@ from itertools import chain, compress
 from pathlib import Path
 from contextlib import contextmanager
 from collections import OrderedDict
+import googleapiclient.discovery
 
 import requests
 import yaml
@@ -302,3 +303,79 @@ class Dumper(yaml.SafeDumper):
     def represent_path(dumper, path):
         return dumper.represent_scalar('tag:yaml.org,2002:str',
                                        str(path))
+
+
+def ensure_execute(operation):
+    """ Handle rate limits and socket time outs """
+
+    retry = 0
+    sleep = 1
+    max_sleep = 60
+    while True:
+        try:
+            return operation.execute()
+
+        except googleapiclient.errors.HttpError as e:
+            if "Rate Limit Exceeded" in str(e):
+                retry += 1
+                sleep = min(sleep*2, max_sleep)
+                log.error(f"retry:{retry} sleep:{sleep} '{e}'")
+                time.sleep(sleep)
+                continue
+            raise
+
+        except socket.timeout as e:
+            # socket timed out, try again
+            log.debug(e)
+
+        except Exception as e:
+            log.error(e, exc_info=True)
+            raise
+
+        break
+
+
+def wait_for_operation(compute, project, operation):
+    print('Waiting for operation to finish...')
+    while True:
+        if 'zone' in operation:
+            operation = compute.zoneOperations().wait(
+                project=project,
+                zone=operation['zone'].split('/')[-1],
+                operation=operation['name'])
+        elif 'region' in operation:
+            operation = compute.regionOperations().wait(
+                project=project,
+                region=operation['region'].split('/')[-1],
+                operation=operation['name'])
+        else:
+            operation = compute.globalOperations().wait(
+                project=project,
+                operation=operation['name'])
+
+        result = ensure_execute(operation)
+        if result['status'] == 'DONE':
+            print("done.")
+            return result
+
+
+def get_group_operations(compute, project, operation):
+    """ get list of operations associated with group id """
+
+    group_id = operation['operationGroupId']
+    if 'zone' in operation:
+        operation = compute.zoneOperations().list(
+            project=project,
+            zone=operation['zone'].split('/')[-1],
+            filter=f"operationGroupId={group_id}")
+    elif 'region' in operation:
+        operation = compute.regionOperations().list(
+            project=project,
+            region=operation['region'].split('/')[-1],
+            filter=f"operationGroupId={group_id}")
+    else:
+        operation = compute.globalOperations().list(
+            project=project,
+            filter=f"operationGroupId={group_id}")
+
+    return ensure_execute(operation)
