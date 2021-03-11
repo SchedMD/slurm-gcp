@@ -83,7 +83,7 @@ def delete_instances(compute, node_list, arg_job_id):
             for key, zone_value in node_find['items'].items():
                 if 'instances' in zone_value:
                     zone = zone_value['instances'][0]['zone'].split('/')[-1]
-                    break;
+                    break
             if zone is None:
                 log.error(f"failed to find regional node '{node_name}' to delete")
                 continue
