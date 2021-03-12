@@ -53,6 +53,12 @@ variable "image" {
   description = "Disk OS image (with Slurm) path for controller instance"
 }
 
+variable "instance_template" {
+  description = "Instance template to use to create controller instance"
+  type        = string
+  default     = null
+}
+
 variable "labels" {
   description = "Labels to add to controller instance. List of key key, value pairs."
   type        = any
@@ -208,7 +214,7 @@ variable "zone" {
 }
 
 output "controller_node_name" {
-  value = google_compute_instance.controller_node.name
+  value = var.instance_template == null ? google_compute_instance.controller_node[0].name : google_compute_instance_from_template.controller_node[0].name
 }
 
 output "instance_network_ips" {

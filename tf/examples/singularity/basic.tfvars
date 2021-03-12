@@ -12,10 +12,10 @@ zone         = "us-west1-b"
 
 # suspend_time  = 300
 
-# controller_machine_type = "n1-standard-2"
-controller_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
-# controller_disk_type    = "pd-standard"
-# controller_disk_size_gb = 50
+controller_machine_type = "n1-standard-2"
+controller_image        = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
+controller_disk_type    = "pd-standard"
+controller_disk_size_gb = 50
 # controller_labels = {
 #   key1 = "val1"
 #   key2 = "val2"
@@ -31,11 +31,15 @@ controller_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-
 # controller_secondary_disk      = false
 # controller_secondary_disk_size = 100
 # controller_secondary_disk_type = "pd-ssd"
+#
+# When specifying an instance template, specified controller fields will
+# override the template properites.
+# controller_instance_template = null
 
-# login_machine_type = "n1-standard-2"
-login_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
-# login_disk_type    = "pd-standard"
-# login_disk_size_gb = 20
+login_machine_type = "n1-standard-2"
+login_image        = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
+login_disk_type    = "pd-standard"
+login_disk_size_gb = 20
 # login_labels = {
 #   key1 = "val1"
 #   key2 = "val2"
@@ -46,6 +50,10 @@ login_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-
 #   "https://www.googleapis.com/auth/monitoring.write",
 #   "https://www.googleapis.com/auth/logging.write"
 # ]
+#
+# When specifying an instance template, specified login fields will
+# override the template properites.
+# controller_instance_template = null
 
 # Optional network storage fields
 # network_storage is mounted on all instances
