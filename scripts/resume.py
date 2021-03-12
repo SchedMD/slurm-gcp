@@ -125,7 +125,6 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             'acceleratorCount': instance_def.gpu_count,
             'acceleratorType': instance_def.gpu_type
         }]
-
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
     if instance_def.preemptible_bursting:
