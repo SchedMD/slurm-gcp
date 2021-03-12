@@ -81,6 +81,7 @@ variable "partitions" {
     enable_placement     = bool,
     regional_capacity    = bool,
     regional_policy      = any,
+    instance_template    = string,
   static_node_count = number }))
 }
 
