@@ -106,8 +106,6 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
                  'value': 'TRUE'},
                 {'key': 'VmDnsSetting',
                  'value': 'GlobalOnly'},
-                {'key': 'terraform',
-                 'value': 'TRUE'},
                 *[{'key': k, 'value': Path(v).read_text()} for k, v in meta_files.items()]
             ]
         }
