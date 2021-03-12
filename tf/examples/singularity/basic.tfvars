@@ -1,6 +1,6 @@
-cluster_name = <cluster_name>
-project      = <project>
-zone         = <zone>
+cluster_name = "g1"
+project      = "<project>"
+zone         = "us-west1-b"
 
 # network_name            = "<existing network name>"
 # subnetwork_name         = "<existing subnetwork name>"
@@ -15,6 +15,7 @@ zone         = <zone>
 # suspend_time  = 300
 
 # controller_machine_type = "n1-standard-2"
+controller_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
 # controller_disk_type    = "pd-standard"
 # controller_disk_size_gb = 50
 # controller_labels = {
@@ -34,6 +35,7 @@ zone         = <zone>
 # controller_secondary_disk_type = "pd-ssd"
 
 # login_machine_type = "n1-standard-2"
+login_image = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
 # login_disk_type    = "pd-standard"
 # login_disk_size_gb = 20
 # login_labels = {
@@ -66,44 +68,42 @@ zone         = <zone>
 #   mount_options = null
 # }]
 
-# compute_image_machine_type = "n1-standard-2"
-# compute_image_disk_type    = "pd-standard"
-# compute_image_disk_size_gb = 20
-# compute_image_labels = {
-#   key1 = "val1"
-#   key2 = "val2"
-# }
-
 # compute_node_service_account = "default"
-compute_node_scopes          = [
-  "https://www.googleapis.com/auth/cloud-platform"
-]
+# compute_node_scopes          = [
+#   "https://www.googleapis.com/auth/monitoring.write",
+#   "https://www.googleapis.com/auth/logging.write"
+# ]
 
 partitions = [
-  { name                 = "std"
-    machine_type         = "n1-standard-2"
-    static_node_count    = 0
-    max_node_count       = 10
-    zone                 = "us-east4-c"
-    compute_disk_type    = "pd-ssd"
-    compute_disk_size_gb = 20
-    compute_labels       = {}
-    cpu_platform         = null
-    gpu_count            = 0
-    gpu_type             = null
-    network_storage      = []
-    preemptible_bursting = true
-    vpc_subnet           = null
-    exclusive            = false
-    enable_placement     = false
-    regional_capacity    = false
-    regional_policy      = {}
+{ name                 = "debug"
+  machine_type         = "n1-standard-2"
+  static_node_count    = 0
+  max_node_count       = 10
+  zone                 = "us-west1-b"
+  image                = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
+  image_hyperthreads   = false
+  compute_disk_type    = "pd-standard"
+  compute_disk_size_gb = 20
+  compute_labels       = {}
+  cpu_platform         = null
+  gpu_count            = 0
+  gpu_type             = null
+  network_storage      = []
+  preemptible_bursting = false
+  vpc_subnet           = null
+  exclusive            = false
+  enable_placement     = false
+  regional_capacity    = false
+  regional_policy      = {}
   },
 #  { name                 = "partition2"
 #    machine_type         = "n1-standard-16"
 #    static_node_count    = 0
 #    max_node_count       = 20
 #    zone                 = "us-west1-b"
+#    image                = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-3-hpc-centos-7"
+#    image_hyperthreads   = false
+#
 #    compute_disk_type    = "pd-ssd"
 #    compute_disk_size_gb = 20
 #    compute_labels       = {
