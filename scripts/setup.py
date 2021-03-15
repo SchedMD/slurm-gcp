@@ -609,7 +609,10 @@ def setup_controller():
         pass
 
     if not cfg.cloudsql:
-        Path('/etc/my.cnf.d/mysql_slurm.cnf').write_text("""
+        cnfdir = Path('/etc/my.cnf.d')
+        if not cnfdir.exists():
+            cnfdir = Path('/etc/mysql/conf.d')
+        (cnfdir/'mysql_slurm.cnf').write_text("""
 [mysqld]
 bind-address = 127.0.0.1
 """)
