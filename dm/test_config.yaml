@@ -6,10 +6,4 @@ resources:
   type: schedmd-slurm-gcp.jinja
   properties:
     cluster_name: slurmtest
-    zone: us-west1-b
-    login_node_count: 1
-    compute1_static_node_count: 1
-    compute2_enabled: true
-    compute2_static_node_count: 1
-    compute2_gpu_type: nvidia-tesla-k80
-    compute2_gpu_count: 1
+    zone: us-central1-a

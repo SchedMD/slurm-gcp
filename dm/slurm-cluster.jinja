@@ -82,6 +82,10 @@ resources:
           value: {{ properties|safe|tojson(2) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: google-logging-enable
+          value: TRUE
+        - key: google-monitoring-enable
+          value: TRUE
         - key: VmDnsSetting
           value: GlobalOnly
         - key: startup-script
@@ -136,7 +140,7 @@ resources:
       - {{ vpc_net }}
     subnetworks:
       - {{ vpc_subnet }}
-  {% if properties['login_external_ips'] %}
+  {% if properties['external_login_ips'] %}
     externalIPs:
       - EPHEMERAL
   {% else %}
@@ -160,6 +164,10 @@ resources:
           value: {{ properties|safe|tojson(2) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: google-logging-enable
+          value: TRUE
+        - key: google-monitoring-enable
+          value: TRUE
         - key: VmDnsSetting
           value: GlobalOnly
         - key: startup-script
@@ -224,6 +232,10 @@ resources:
           value: {{ properties|safe|tojson(2) }}
         - key: enable-oslogin
           value: "TRUE"
+        - key: google-logging-enable
+          value: TRUE
+        - key: google-monitoring-enable
+          value: TRUE
         - key: VmDnsSetting
           value: GlobalOnly
         - key: startup-script
@@ -273,7 +285,7 @@ outputs:
   - name: {{ name }}-internal-ip
     value: $(ref.{{ name }}.internalIP)
   - name: {{ name }}-ip
-  {% if properties['login_external_ip'] %}
+  {% if properties['login_external_ips'] %}
     value: $(ref.{{ name }}.ip)
   {% else %}
     value: NONE
@@ -294,7 +306,7 @@ outputs:
   - name: {{ name }}-internal-ip
     value: $(ref.{{ name }}.internalIP)
   - name: {{ name }}-ip
-  {% if properties['compute_external_ip'] %}
+  {% if properties['external_compute_ips'] %}
     value: $(ref.{{ name }}.ip)
   {% else %}
     value: NONE

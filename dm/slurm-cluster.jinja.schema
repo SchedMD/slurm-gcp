@@ -80,6 +80,8 @@ optional:
 - controller_secondary_disk_size_gb
 - compute_node_scopes
 - compute_node_service_account
+- external_controller_ip
+- external_login_ips
 - external_compute_ips
 - login_disk_size_gb
 - login_disk_type

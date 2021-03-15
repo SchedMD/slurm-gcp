@@ -44,16 +44,23 @@ description:
     destinations:
     - DESTINATION_SOLUTION_DETAILS
     - DESTINATION_POST_DEPLOY
-  - title: Slurm manual
-    url: 'https://github.com/schedmd/slurm-gcp'
-    destinations:
-    - DESTINATION_SOLUTION_DETAILS
-    - DESTINATION_POST_DEPLOY
   support:
   - title: Support
     descriptionHtml: >-
-      Google does not offer support for this solution. However, community
-      support is available on <a href="https://groups.google.com/g/google-cloud-slurm-discuss"> email lists</a> .
+      <p>SchedMD is the core developer and services provider for Slurm, supporting
+      and optimizing the speed, throughput and resource consumption for
+      organizations' unique workload mix and needs. Support, consulting,
+      configuration, development and training services accelerate workloads
+      and results across cloud and on-prem clusters with proven best practices
+      and innovation.<br>
+      Request Slurm support pricing at sales@schedmd.com.</p>
+
+      <p>Issues and/or enhancement requests can be submitted to SchedMD's
+      Bugzilla.</p>
+
+      <p>Also, join comunity discussions on either the Slurm User mailing list or
+      the <a href="https://groups.google.com/g/google-cloud-slurm-discuss">
+      Google Cloud & Slurm Community Discussion Group</a>.</p>
 
 input:
   properties:
@@ -70,13 +77,39 @@ input:
       section: NETWORK_TIER
     - name: controller_external_ip
       title: Controller External IP
+      subtext: Enable Private Google access or add a Cloud Router NAT on the target subnetwork before disabling
       section: NETWORK_TIER
     - name: login_external_ip
-      title: Login External IPs
+      title: Login External IP
       section: NETWORK_TIER
     - name: compute_external_ip
       title: Compute Node External IPs
       section: NETWORK_TIER
+
+    - name: netstore_enabled
+      title: Enable network storage mount
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_server_ip
+      title: Server host/IP
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_remote_mount
+      title: Remote mount path
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_local_mount
+      title: Local mount path
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_fs_type
+      title: Filesystem type
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_mount_options
+      title: Mount options
+      section: NETSTORE_TIER
+      level: 1
 
     - name: controller_machine_type
       title: Controller Machine type
@@ -94,12 +127,10 @@ input:
       section: CONTROLLER_TIER
       level: 1
 
-    - name: login_node_count
-      title: Login Node Count
-      section: LOGIN_TIER
     - name: login_machine_type
       title: Login machine type
       section: LOGIN_TIER
+      level: 1
     - name: login_disk_type
       title: Boot Disk Type
       section: LOGIN_TIER
@@ -233,6 +264,8 @@ input:
   sections:
     - name: NETWORK_TIER
       title: Network
+    - name: NETSTORE_TIER
+      title: Network Storage Mount
     - name: CONTROLLER_TIER
       title: Slurm Controller
     - name: LOGIN_TIER
@@ -248,19 +281,51 @@ runtime:
   deployingMessage: Deployment can take several minutes to complete.
   applicationTable:
     rows:
-      - label: Zone
+      - label: Cluster Zone
         value: '{{ properties().zone }}'
+      - label: Login Node
+        value: '{{ outputs()["login-name"] }}'
+      - label: Login Address
+        value: '{{ externalIp(outputs()["login-link"]) }}'
+        showIf: '{{ properties().login_external_ip }}'
+      - label: Controller
+        value: '{{ outputs()["controller-name"] }}'
+      - label: Controller Address
+        value: '{{ externalIp(outputs()["controller-link"]) }}'
   primaryButton:
     label: SSH to Slurm Login Node
     type: TYPE_GCE_VM_SSH
-    action: '{{ outputs()["login0-link"] }}'
+    action: '{{ outputs()["login-link"] }}'
   suggestedActions:
-    - heading: No external IP configured on any tier
-      description: 'All VM instances have been configured with no external IP or internet access. Connecting to them directly may not be possible. Consider using a <a href="https://cloud.google.com/compute/docs/instances/connecting-advanced#bastion_host">bastion host</a> to access these VMs.'
-      showIf: "{{ outputs().tiersWithNoExternalIPStatus == 'ALL' }}"
-    - heading: No external IP configured on some tiers
-      description: 'Some VM instances have been configured with no external IP or internet access. Connecting to them directly may not be possible. Consider using a <a href="https://cloud.google.com/compute/docs/instances/connecting-advanced#bastion_host">bastion host</a> to access these VMs.'
-      showIf: "{{ outputs().tiersWithNoExternalIPStatus == 'SOME' }}"
+    - heading: Summarize node status
+      description: >-
+        <code>$ sinfo</code>
+    - heading: Submit batch script job
+      description: >-
+        <code>
+          $ cat > example.sh << EOF<br>
+          #!/bin/bash<br>
+          srun hostname<br>
+          EOF<br>
+          $ sbatch --nodes=2 example.sh
+        </code>
+    - heading: Use GPUs (if available)
+      description: >-
+        <code>$ srun -N2 --gpus-per-node=1 nvidia-smi</code>
+    - heading: Query job status
+      description: >-
+        <code>$ squeue</code>
+    - heading: More information
+      description: >-
+        <code>$ man sbatch<br>
+              $ man srun</code>
+    - heading: Note
+      description: >-
+        If additional resources (instances, networks) are created other than the
+        ones in the initial deployment, then they will need to be destroyed
+        separately. They are not part of the deployment, so they will not be
+        removed with it. This includes instances created by Slurm for bursted
+        workloads.
 
 annotations:
   autogenSpecType: 'MULTI_VM'
