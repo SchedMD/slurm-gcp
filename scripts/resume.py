@@ -182,7 +182,7 @@ def add_instances(node_chunk):
                               "Slurm_GCP_Scripts/1.2 (GPN:SchedMD)")
         creds = compute_engine.Credentials()
         auth_http = google_auth_httplib2.AuthorizedHttp(creds, http=http)
-    compute = googleapiclient.discovery.build('compute', 'alpha',
+    compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=auth_http,
                                               cache_discovery=False)
     pid = util.get_pid(node_list[0])
@@ -249,7 +249,7 @@ def create_placement_groups(arg_job_id, vm_count, region):
                               "Slurm_GCP_Scripts/1.2 (GPN:SchedMD)")
         creds = compute_engine.Credentials()
         auth_http = google_auth_httplib2.AuthorizedHttp(creds, http=http)
-    compute = googleapiclient.discovery.build('compute', 'alpha',
+    compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=auth_http,
                                               cache_discovery=False)
 
