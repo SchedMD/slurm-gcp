@@ -28,28 +28,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "compute_image_disk_size_gb" {
-  description = "Size of disk for compute node image."
-  default     = 20
-}
-
-variable "compute_image_disk_type" {
-  description = "Disk type (pd-ssd or pd-standard) for compute node image."
-  type        = string
-  default     = "pd-standard"
-}
-
-variable "compute_image_labels" {
-  description = "Labels to add to the compute node image. List of key key, value pairs."
-  type        = any
-  default     = {}
-}
-
-variable "compute_image_machine_type" {
-  type    = string
-  default = "n1-standard-2"
-}
-
 variable "compute_node_scopes" {
   description = "Scopes to apply to compute nodes."
   type        = list(string)
@@ -68,31 +46,37 @@ variable "compute_node_service_account" {
 variable "controller_machine_type" {
   description = "Machine type to use for the controller instance"
   type        = string
-  default     = "n1-standard-2"
+  default     = null
 }
 
 variable "controller_disk_type" {
   description = "Disk type (pd-ssd or pd-standard) for controller."
   type        = string
-  default     = "pd-standard"
+  default     = null
 }
 
 variable "controller_image" {
   description = "Slurm image to use for the controller instance"
   type        = string
-  default     = "slurm-184304/schedmd-slurm-centos7"
+  default     = null
+}
+
+variable "controller_instance_template" {
+  description = "Instance template to use to create controller instance"
+  type        = string
+  default     = null
 }
 
 variable "controller_disk_size_gb" {
   description = "Size of disk for the controller."
   type        = number
-  default     = 50
+  default     = null
 }
 
 variable "controller_labels" {
   description = "Labels to add to controller instance. List of key key, value pairs."
   type        = any
-  default     = {}
+  default     = null
 }
 
 variable "controller_secondary_disk" {
@@ -141,31 +125,37 @@ variable "disable_compute_public_ips" {
 variable "login_disk_type" {
   description = "Disk type (pd-ssd or pd-standard) for login nodes."
   type        = string
-  default     = "pd-standard"
+  default     = null
 }
 
 variable "login_disk_size_gb" {
   description = "Size of disk for login nodes."
   type        = number
-  default     = 20
+  default     = null
 }
 
 variable "login_image" {
   description = "Slurm image to use for login instances"
   type        = string
-  default     = "slurm-184304/schedmd-slurm-centos7"
+  default     = null
+}
+
+variable "login_instance_template" {
+  description = "Instance template to use to creating login instances"
+  type        = string
+  default     = null
 }
 
 variable "login_labels" {
   description = "Labels to add to login instances. List of key key, value pairs."
   type        = any
-  default     = {}
+  default     = null
 }
 
 variable "login_machine_type" {
   description = "Machine type to use for login node instances."
   type        = string
-  default     = "n1-standard-2"
+  default     = null
 }
 
 variable "login_network_storage" {
@@ -252,6 +242,7 @@ variable "partitions" {
     enable_placement     = bool,
     regional_capacity    = bool,
     regional_policy      = any,
+    instance_template    = string,
   static_node_count = number }))
 }
 

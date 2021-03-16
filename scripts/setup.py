@@ -156,9 +156,21 @@ def expand_machine_type():
     for pid, part in cfg.instance_defs.items():
         machine = {'cpus': 1, 'memory': 1}
         try:
+            machine_type = None
+            if part.machine_type:
+                machine_type = part.machine_type
+            elif part.instance_template:
+                template_resp = compute.instanceTemplates().get(
+                    project=cfg.project,
+                    instanceTemplate=part.instance_template).execute()
+                if template_resp:
+                    machine_type = template_resp['properties']['machineType']
+            if not machine_type:
+                log.error("No known machine type to get configuration from")
+
             type_resp = compute.machineTypes().get(
                 project=cfg.project, zone=part.zone,
-                machineType=part.machine_type).execute()
+                machineType=machine_type).execute()
             if type_resp:
                 cpus = type_resp['guestCpus']
                 machine['cpus'] = cpus // (1 if part.image_hyperthreads else 2)

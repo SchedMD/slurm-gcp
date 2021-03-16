@@ -68,18 +68,6 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
 
     config = {
         'name': 'notused',
-        'machineType': instance_def.machine_type,
-
-        # Specify the boot disk and the image to use as a source.
-        'disks': [{
-            'boot': True,
-            'autoDelete': True,
-            'initializeParams': {
-                'sourceImage': instance_def.image,
-                'diskType': instance_def.compute_disk_type,
-                'diskSizeGb': instance_def.compute_disk_size_gb
-            }
-        }],
 
         # Specify a network interface
         'networkInterfaces': [{
@@ -90,12 +78,6 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
                     (instance_def.vpc_subnet
                      or f'{cfg.cluster_name}-{instance_def.region}'))
             ),
-        }],
-
-        # Allow the instance to access cloud storage and logging.
-        'serviceAccounts': [{
-            'email': cfg.compute_node_service_account,
-            'scopes': cfg.compute_node_scopes
         }],
 
         'tags': {'items': ['compute']},
@@ -110,6 +92,29 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             ]
         }
     }
+
+    if instance_def.machine_type:
+        config['machineType'] = instance_def.machine_type
+
+    if (instance_def.image and
+            instance_def.compute_disk_type and
+            instance_def.compute_disk_size_gb):
+        config['disks'] = [{
+            'boot': True,
+            'autoDelete': True,
+            'initializeParams': {
+                'sourceImage': instance_def.image,
+                'diskType': instance_def.compute_disk_type,
+                'diskSizeGb': instance_def.compute_disk_size_gb
+            }
+        }]
+
+    if cfg.compute_node_service_account and cfg.compute_node_scopes:
+        # Allow the instance to access cloud storage and logging.
+        config['serviceAccounts'] = [{
+            'email': cfg.compute_node_service_account,
+            'scopes': cfg.compute_node_scopes
+        }]
 
     if placement_group_name is not None:
         config['scheduling'] = {
@@ -149,6 +154,12 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         'instanceProperties': config,
         'perInstanceProperties': perInstanceProperties,
     }
+
+    if instance_def.instance_template:
+        body['sourceInstanceTemplate'] = (
+            "projects/{}/global/instanceTemplates/{}".format(
+                cfg.project, instance_def.instance_template)
+        )
 
     # For non-exclusive requests, create as many instances as possible as the
     # nodelist isn't tied to a specific set of instances.

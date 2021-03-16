@@ -28,6 +28,12 @@ variable "image" {
   type        = string
 }
 
+variable "instance_template" {
+  description = "Instance template to use to create controller instance"
+  type        = string
+  default     = null
+}
+
 variable "cluster_name" {
   description = "Name of the cluster"
   type        = string
