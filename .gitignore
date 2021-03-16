@@ -3,4 +3,4 @@ __pycache__
 **/*.tfstate
 **/*.tfstate.backup
 **/*.tfplan
-**/local.tfvars
+**/*.tfvars
