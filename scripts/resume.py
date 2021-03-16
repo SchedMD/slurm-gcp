@@ -22,8 +22,12 @@ import httplib2
 import logging
 import os
 import sys
+import tempfile
 import time
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
+from itertools import groupby, chain
 
 import googleapiclient.discovery
 from google.auth import compute_engine
@@ -43,83 +47,14 @@ SCRIPTS_DIR = Path(__file__).parent.resolve()
 TOT_REQ_CNT = 1000
 
 instances = {}
-operations = {}
-retry_list = []
 
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
-credentials = compute_engine.Credentials()
 
-http = None
-authorized_http = None
-if not cfg.google_app_cred_path:
-    http = set_user_agent(httplib2.Http(),
-                          "Slurm_GCP_Scripts/1.1 (GPN:SchedMD)")
-    authorized_http = google_auth_httplib2.AuthorizedHttp(credentials,
-                                                          http=http)
+def create_instance(compute, instance_def, node_list, placement_group_name):
 
-
-def wait_for_operation(compute, project, operation):
-    print('Waiting for operation to finish...')
-    while True:
-        result = None
-        if 'zone' in operation:
-            result = compute.zoneOperations().get(
-                project=project,
-                zone=operation['zone'].split('/')[-1],
-                operation=operation['name']).execute()
-        elif 'region' in operation:
-            result = compute.regionOperations().get(
-                project=project,
-                region=operation['region'].split('/')[-1],
-                operation=operation['name']).execute()
-        else:
-            result = compute.globalOperations().get(
-                project=project,
-                operation=operation['name']).execute()
-
-        if result['status'] == 'DONE':
-            print("done.")
-            if 'error' in result:
-                raise Exception(result['error'])
-            return result
-
-        time.sleep(1)
-# [END wait_for_operation]
-
-
-def update_slurm_node_addrs(compute):
-    for node_name, operation in operations.items():
-        try:
-            # Do this after the instances have been initialized and then wait
-            # for all operations to finish. Then updates their addrs.
-            wait_for_operation(compute, cfg.project, operation)
-
-            pid = util.get_pid(node_name)
-            my_fields = 'networkInterfaces(name,network,networkIP,subnetwork)'
-            instance_networks = compute.instances().get(
-                project=cfg.project, zone=cfg.instance_defs[pid].zone,
-                instance=node_name, fields=my_fields).execute()
-            instance_ip = instance_networks['networkInterfaces'][0]['networkIP']
-
-            util.run(
-                f"{SCONTROL} update node={node_name} nodeaddr={instance_ip}")
-
-            log.info("Instance " + node_name + " is now up")
-        except Exception:
-            log.exception(f"Error in adding {node_name} to slurm")
-# [END update_slurm_node_addrs]
-
-
-def create_instance(compute, zone, machine_type, instance_name,
-                    source_disk_image, placement_group_name):
-
-    pid = util.get_pid(instance_name)
     # Configure the machine
-    machine_type_path = f'zones/{zone}/machineTypes/{machine_type}'
-    disk_type = 'projects/{}/zones/{}/diskTypes/{}'.format(
-        cfg.project, zone, cfg.instance_defs[pid].compute_disk_type)
 
     meta_files = {
         'config': SCRIPTS_DIR/'config.yaml',
@@ -132,17 +67,17 @@ def create_instance(compute, zone, machine_type, instance_name,
         meta_files['custom-compute-install'] = str(custom_compute)
 
     config = {
-        'name': instance_name,
-        'machineType': machine_type_path,
+        'name': 'notused',
+        'machineType': instance_def.machine_type,
 
         # Specify the boot disk and the image to use as a source.
         'disks': [{
             'boot': True,
             'autoDelete': True,
             'initializeParams': {
-                'sourceImage': source_disk_image,
-                'diskType': disk_type,
-                'diskSizeGb': cfg.instance_defs[pid].compute_disk_size_gb
+                'sourceImage': instance_def.image,
+                'diskType': instance_def.compute_disk_type,
+                'diskSizeGb': instance_def.compute_disk_size_gb
             }
         }],
 
@@ -151,9 +86,9 @@ def create_instance(compute, zone, machine_type, instance_name,
             'subnetwork': (
                 "projects/{}/regions/{}/subnetworks/{}".format(
                     cfg.shared_vpc_host_project or cfg.project,
-                    cfg.instance_defs[pid].region,
-                    (cfg.instance_defs[pid].vpc_subnet
-                     or f'{cfg.cluster_name}-{cfg.instance_defs[pid].region}'))
+                    instance_def.region,
+                    (instance_def.vpc_subnet
+                     or f'{cfg.cluster_name}-{instance_def.region}'))
             ),
         }],
 
@@ -171,8 +106,6 @@ def create_instance(compute, zone, machine_type, instance_name,
                  'value': 'TRUE'},
                 {'key': 'VmDnsSetting',
                  'value': 'GlobalOnly'},
-                {'key': 'terraform',
-                 'value': 'TRUE'},
                 *[{'key': k, 'value': Path(v).read_text()} for k, v in meta_files.items()]
             ]
         }
@@ -182,117 +115,143 @@ def create_instance(compute, zone, machine_type, instance_name,
         config['scheduling'] = {
             'onHostMaintenance': 'TERMINATE',
             'automaticRestart': False
-        },
-        config['resourcePolicies'] = [
-            'https://www.googleapis.com/compute/v1/projects/{}/regions/{}/resourcePolicies/{}'
-            .format(cfg.shared_vpc_host_project or cfg.project,
-                    cfg.instance_defs[pid].region, placement_group_name)
-        ]
+        }
+        config['resourcePolicies'] = [placement_group_name]
 
-    if cfg.instance_defs[pid].gpu_type:
-        accel_type = ('https://www.googleapis.com/compute/v1/projects/{}/zones/{}/acceleratorTypes/{}'
-                      .format(cfg.project, zone,
-                              cfg.instance_defs[pid].gpu_type))
+    if instance_def.gpu_type:
         config['guestAccelerators'] = [{
-            'acceleratorCount': cfg.instance_defs[pid].gpu_count,
-            'acceleratorType': accel_type
+            'acceleratorCount': instance_def.gpu_count,
+            'acceleratorType': instance_def.gpu_type
         }]
-
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if cfg.instance_defs[pid].preemptible_bursting:
+    if instance_def.preemptible_bursting:
         config['scheduling'] = {
             'preemptible': True,
             'onHostMaintenance': 'TERMINATE',
             'automaticRestart': False
-        },
+        }
 
-    if cfg.instance_defs[pid].compute_labels:
-        config['labels'] = cfg.instance_defs[pid].compute_labels,
+    if instance_def.compute_labels:
+        config['labels'] = instance_def.compute_labels
 
-    if cfg.instance_defs[pid].cpu_platform:
-        config['minCpuPlatform'] = cfg.instance_defs[pid].cpu_platform,
+    if instance_def.cpu_platform:
+        config['minCpuPlatform'] = instance_def.cpu_platform
 
     if cfg.external_compute_ips:
         config['networkInterfaces'][0]['accessConfigs'] = [
             {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
         ]
 
-    return compute.instances().insert(
-        project=cfg.project,
-        zone=zone,
-        body=config)
+    perInstanceProperties = {k: {} for k in node_list}
+    body = {
+        'count': len(node_list),
+        'instanceProperties': config,
+        'perInstanceProperties': perInstanceProperties,
+    }
+
+    # For non-exclusive requests, create as many instances as possible as the
+    # nodelist isn't tied to a specific set of instances.
+    if not instance_def.exclusive:
+        body['minCount'] = 1
+
+    if instance_def.regional_capacity:
+        if instance_def.regional_policy:
+            body['locationPolicy'] = instance_def.regional_policy
+        op = compute.regionInstances().bulkInsert(
+            project=cfg.project, region=instance_def.region,
+            body=body)
+        return op.execute()
+
+    return util.ensure_execute(compute.instances().bulkInsert(
+        project=cfg.project, zone=instance_def.zone, body=body))
 # [END create_instance]
 
 
-def added_instances_cb(request_id, response, exception):
-    if exception is not None:
-        log.error(f"add exception for node {request_id}: {exception}")
-        if "Rate Limit Exceeded" in str(exception):
-            retry_list.append(request_id)
-    else:
-        operations[request_id] = response
-# [END added_instances_cb]
+def add_instances(node_chunk):
 
+    node_list = node_chunk['nodes']
+    pg_name = None
+    if 'pg' in node_chunk:
+        pg_name = node_chunk['pg']
+    log.debug(f"node_list:{node_list} pg:{pg_name}")
 
-def add_instances(compute, node_list, arg_job_id, placement_groups):
-
-    placement_group_name = None
-    pg_index = 0
-    batch_list = []
-    curr_batch = 0
-    req_cnt = 0
-    batch_list.insert(
-        curr_batch, compute.new_batch_http_request(callback=added_instances_cb))
-
-    for i, node_name in enumerate(node_list):
-
-        pid = util.get_pid(node_name)
-        if (not arg_job_id and cfg.instance_defs[pid].exclusive):
-            # Node was created by PrologSlurmctld, skip for ResumeProgram.
-            continue
-
-        if placement_groups:
-            if i != 0 and i % PLACEMENT_MAX_CNT == 0:
-                pg_index += 1
-            placement_group_name = placement_groups[pg_index]
-
-        if req_cnt >= TOT_REQ_CNT:
-            req_cnt = 0
-            curr_batch += 1
-            batch_list.insert(
-                curr_batch,
-                compute.new_batch_http_request(callback=added_instances_cb))
-
-        pid = util.get_pid(node_name)
-        source_disk_image = cfg.instance_defs[pid].image
-        batch_list[curr_batch].add(
-            create_instance(compute, cfg.instance_defs[pid].zone,
-                            cfg.instance_defs[pid].machine_type, node_name,
-                            source_disk_image, placement_group_name),
-            request_id=node_name)
-        req_cnt += 1
+    auth_http = None
+    if not cfg.google_app_cred_path:
+        http = set_user_agent(httplib2.Http(),
+                              "Slurm_GCP_Scripts/1.2 (GPN:SchedMD)")
+        creds = compute_engine.Credentials()
+        auth_http = google_auth_httplib2.AuthorizedHttp(creds, http=http)
+    compute = googleapiclient.discovery.build('compute', 'v1',
+                                              http=auth_http,
+                                              cache_discovery=False)
+    pid = util.get_pid(node_list[0])
+    instance_def = cfg.instance_defs[pid]
 
     try:
-        for i, batch in enumerate(batch_list):
-            batch.execute(http=http)
-            if i < (len(batch_list) - 1):
-                time.sleep(30)
-    except Exception:
-        log.exception("error in add batch")
+        operation = create_instance(compute, instance_def, node_list, pg_name)
+    except googleapiclient.errors.HttpError as e:
+        log.error(f"failed to add {node_list[0]}*{len(node_list)} to slurm, {e}")
+        if instance_def.exclusive:
+            os._exit(1)
+        down_nodes(node_list, e)
+        return
 
-    if cfg.update_node_addrs:
-        update_slurm_node_addrs(compute)
+    result = util.wait_for_operation(compute, cfg.project, operation)
+    if not result or 'error' in result:
+        grp_err_msg = result['error']['errors'][0]['message']
+        log.error(f"group operation failed: {grp_err_msg}")
+        if instance_def.exclusive:
+            os._exit(1)
+
+        group_ops = util.get_group_operations(compute, cfg.project, result)
+        failed_nodes = {}
+        for op in group_ops['items']:
+            if op['operationType'] != 'insert':
+                continue
+            if 'error' in op:
+                err_msg = op['error']['errors'][0]['message']
+                failed_node = op['targetLink'].split('/')[-1]
+                if err_msg not in failed_nodes:
+                    failed_nodes[err_msg] = [failed_node]
+                else:
+                    failed_nodes[err_msg].append(failed_node)
+        if failed_nodes:
+            log.error(f"insert requests failed: {failed_nodes}")
+            for msg, nodes in failed_nodes.items():
+                down_nodes(nodes, msg)
 
 # [END add_instances]
 
 
-def create_placement_groups(compute, arg_job_id, vm_count, region):
+def down_nodes(node_list, reason):
+    """ set nodes in node_list down with given reason """
+    with tempfile.NamedTemporaryFile(mode='w+t') as f:
+        f.writelines("\n".join(node_list))
+        f.flush()
+        hostlist = util.run(f"{SCONTROL} show hostlist {f.name}",
+                            check=True, get_stdout=True).stdout
+    util.run(
+        f"{SCONTROL} update nodename={hostlist} state=down reason='{reason}'")
+# [END down_nodes]
+
+
+def create_placement_groups(arg_job_id, vm_count, region):
     log.debug(f"Creating PG: {arg_job_id} vm_count:{vm_count} region:{region}")
 
     pg_names = []
     pg_ops = []
     pg_index = 0
+
+    auth_http = None
+    if not cfg.google_app_cred_path:
+        http = set_user_agent(httplib2.Http(),
+                              "Slurm_GCP_Scripts/1.2 (GPN:SchedMD)")
+        creds = compute_engine.Credentials()
+        auth_http = google_auth_httplib2.AuthorizedHttp(creds, http=http)
+    compute = googleapiclient.discovery.build('compute', 'v1',
+                                              http=auth_http,
+                                              cache_discovery=False)
 
     for i in range(vm_count):
         if i % PLACEMENT_MAX_CNT:
@@ -310,13 +269,16 @@ def create_placement_groups(compute, arg_job_id, vm_count, region):
              }
         }
 
-        pg_ops.append(compute.resourcePolicies().insert(
-            project=cfg.project,
-            region=region,
-            body=config).execute())
+        pg_ops.append(util.ensure_execute(
+            compute.resourcePolicies().insert(
+                project=cfg.project, region=region, body=config)))
 
     for operation in pg_ops:
-        wait_for_operation(compute, cfg.project, operation)
+        result = util.wait_for_operation(compute, cfg.project, operation)
+        if result and 'error' in result:
+            err_msg = result['error']['errors'][0]['message']
+            log.error(f" placement group operation failed: {err_msg}")
+            os._exit(1)
 
     return pg_names
 # [END create_placement_groups]
@@ -324,14 +286,10 @@ def create_placement_groups(compute, arg_job_id, vm_count, region):
 
 def main(arg_nodes, arg_job_id):
     log.info(f"Bursting out: {arg_nodes} {arg_job_id}")
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              http=authorized_http,
-                                              cache_discovery=False)
-
     # Get node list
     nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
                          check=True, get_stdout=True).stdout
-    node_list = nodes_str.splitlines()
+    node_list = sorted(nodes_str.splitlines(), key=util.get_pid)
 
     placement_groups = None
     pid = util.get_pid(node_list[0])
@@ -339,26 +297,45 @@ def main(arg_nodes, arg_job_id):
         # Don't create from calls by PrologSlurmctld
         return
 
+    nodes_by_pid = {k: tuple(nodes)
+                    for k, nodes in groupby(node_list, util.get_pid)}
+
+    if not arg_job_id:
+        for pid in [pid for pid in nodes_by_pid
+                    if cfg.instance_defs[pid].exclusive]:
+            # Node was created by PrologSlurmctld, skip for ResumeProgram.
+            del nodes_by_pid[pid]
+
     if (arg_job_id and
             cfg.instance_defs[pid].enable_placement and
             cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
             len(node_list) > 1):
         log.debug(f"creating placement group for {arg_job_id}")
         placement_groups = create_placement_groups(
-            compute, arg_job_id, len(node_list), cfg.instance_defs[pid].region)
+            arg_job_id, len(node_list), cfg.instance_defs[pid].region)
         time.sleep(5)
 
-    while True:
-        add_instances(compute, node_list, arg_job_id, placement_groups)
-        if not len(retry_list):
-            break
+    def chunks(lst, pg_names):
+        """ group list into chunks of max size n """
+        n = 1000
+        if pg_names:
+            n = PLACEMENT_MAX_CNT
 
-        log.debug("got {} nodes to retry ({})"
-                  .format(len(retry_list), ','.join(retry_list)))
-        node_list = list(retry_list)
-        del retry_list[:]
+        pg_index = 0
+        for i in range(0, len(lst), n):
+            chunk = dict(nodes=lst[i:i+n])
+            if pg_names:
+                chunk['pg'] = pg_names[pg_index]
+                pg_index += 1
+            yield chunk
+    # concurrently add nodes grouped by instance_def (pid), max 1000
+    with ThreadPoolExecutor() as exe:
+        node_chunks = chain.from_iterable(
+            map(partial(chunks, pg_names=placement_groups),
+                nodes_by_pid.values()))
+        exe.map(add_instances, node_chunks)
 
-    log.debug("done adding instances")
+    log.info("done adding instances")
 # [END main]
 
 

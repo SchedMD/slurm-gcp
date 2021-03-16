@@ -10,8 +10,6 @@ zone         = "us-west1-b"
 # disable_login_public_ips      = true
 # disable_compute_public_ips    = true
 
-# ompi_version  = null # e.g. v3.1.x
-# slurm_version = "19.05-latest"
 # suspend_time  = 300
 
 # controller_machine_type = "n1-standard-2"
@@ -93,6 +91,8 @@ partitions = [
   vpc_subnet           = null
   exclusive            = false
   enable_placement     = false
+  regional_capacity    = false
+  regional_policy      = {}
   },
 #  { name                 = "partition2"
 #    machine_type         = "n1-standard-16"
@@ -122,5 +122,18 @@ partitions = [
 #    vpc_subnet           = null
 #    exclusive            = false
 #    enable_placement     = false
+#
+#    # With regional_capacity : True, the region can be specified in the zone.
+#    # Otherwise the region will be inferred from the zone.
+#    zone = "us-west1"
+#    regional_capacity    = True
+#    # Optional
+#    regional_policy      = {
+#        locations = {
+#            "zones/us-west1-a" = {
+#                preference = "DENY"
+#            }
+#        }
+#    }
 ]
 

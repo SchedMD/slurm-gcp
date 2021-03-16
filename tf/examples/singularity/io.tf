@@ -62,7 +62,7 @@ variable "compute_node_scopes" {
 variable "compute_node_service_account" {
   description = "Service Account for compute nodes."
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "controller_machine_type" {
@@ -75,6 +75,12 @@ variable "controller_disk_type" {
   description = "Disk type (pd-ssd or pd-standard) for controller."
   type        = string
   default     = "pd-standard"
+}
+
+variable "controller_image" {
+  description = "Slurm image to use for the controller instance"
+  type        = string
+  default     = "slurm-184304/schedmd-slurm-centos7"
 }
 
 variable "controller_disk_size_gb" {
@@ -114,7 +120,7 @@ variable "controller_scopes" {
 variable "controller_service_account" {
   description = "Service Account for the controller"
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "disable_login_public_ips" {
@@ -142,6 +148,12 @@ variable "login_disk_size_gb" {
   description = "Size of disk for login nodes."
   type        = number
   default     = 20
+}
+
+variable "login_image" {
+  description = "Slurm image to use for login instances"
+  type        = string
+  default     = "slurm-184304/schedmd-slurm-centos7"
 }
 
 variable "login_labels" {
@@ -179,7 +191,7 @@ variable "login_node_scopes" {
 variable "login_node_service_account" {
   description = "Service Account for compute nodes."
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "login_node_count" {
@@ -220,6 +232,8 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
+    image                = string,
+    image_hyperthreads   = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,
@@ -236,6 +250,8 @@ variable "partitions" {
     vpc_subnet           = string,
     exclusive            = bool,
     enable_placement     = bool,
+    regional_capacity    = bool,
+    regional_policy      = any,
   static_node_count = number }))
 }
 

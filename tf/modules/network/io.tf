@@ -88,5 +88,7 @@ variable "partitions" {
     vpc_subnet           = string,
     exclusive            = bool,
     enable_placement     = bool,
+    regional_capacity    = bool,
+    regional_policy      = any,
   static_node_count = number }))
 }

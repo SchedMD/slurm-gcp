@@ -75,51 +75,37 @@ def delete_instances(compute, node_list, arg_job_id):
                 curr_batch,
                 compute.new_batch_http_request(callback=delete_instances_cb))
 
-        pid = util.get_pid(node_name)
+        zone = None
+        if cfg.instance_defs[pid].regional_capacity:
+            node_find = util.ensure_execute(
+                compute.instances().aggregatedList(
+                    project=cfg.project, filter=f'name={node_name}'))
+            for key, zone_value in node_find['items'].items():
+                if 'instances' in zone_value:
+                    zone = zone_value['instances'][0]['zone'].split('/')[-1]
+                    break
+            if zone is None:
+                log.error(f"failed to find regional node '{node_name}' to delete")
+                continue
+        else:
+            zone = cfg.instance_defs[pid].zone
+
         batch_list[curr_batch].add(
             compute.instances().delete(project=cfg.project,
-                                       zone=cfg.instance_defs[pid].zone,
+                                       zone=zone,
                                        instance=node_name),
             request_id=node_name)
         req_cnt += 1
 
     try:
         for i, batch in enumerate(batch_list):
-            batch.execute()
+            util.ensure_execute(batch)
             if i < (len(batch_list) - 1):
                 time.sleep(30)
     except Exception:
         log.exception("error in batch:")
 
 # [END delete_instances]
-
-
-def wait_for_operation(compute, project, operation):
-    print('Waiting for operation to finish...')
-    while True:
-        if 'zone' in operation:
-            result = compute.zoneOperations().get(
-                project=project,
-                zone=operation['zone'].split('/')[-1],
-                operation=operation['name']).execute()
-        elif 'region' in operation:
-            result = compute.regionOperations().get(
-                project=project,
-                region=operation['region'].split('/')[-1],
-                operation=operation['name']).execute()
-        else:
-            result = compute.globalOperations().get(
-                project=project,
-                operation=operation['name']).execute()
-
-        if result['status'] == 'DONE':
-            print("done.")
-            if 'error' in result:
-                raise Exception(result['error'])
-            return result
-
-        time.sleep(1)
-# [END wait_for_operation]
 
 
 def delete_placement_groups(compute, node_list, arg_job_id):
@@ -137,7 +123,7 @@ def delete_placement_groups(compute, node_list, arg_job_id):
             project=cfg.project, region=cfg.instance_defs[pid].region,
             resourcePolicy=pg_name).execute())
     for operation in pg_ops:
-        wait_for_operation(compute, cfg.project, operation)
+        util.wait_for_operation(compute, cfg.project, operation)
     log.debug("done deleting pg")
 # [END delete_placement_groups]
 
@@ -158,9 +144,12 @@ def main(arg_nodes, arg_job_id):
         return
 
     if arg_job_id:
-        # Mark nodes as off limits so new jobs while powering down.
+        # Mark nodes as off limits to new jobs while powering down.
+        # Have to use "down" because it's the only, current, way to remove the
+        # power_up flag from the node -- followed by a power_down -- if the
+        # PrologSlurmctld fails with a non-zero exit code.
         util.run(
-            f"{SCONTROL} update node={arg_nodes} state=drain reason='{arg_job_id} finishing'")
+            f"{SCONTROL} update node={arg_nodes} state=down reason='{arg_job_id} finishing'")
         # Power down nodes in slurm, so that they will become available again.
         util.run(
             f"{SCONTROL} update node={arg_nodes} state=power_down")
@@ -178,7 +167,7 @@ def main(arg_nodes, arg_job_id):
     if arg_job_id:
         for operation in operations.values():
             try:
-                wait_for_operation(compute, cfg.project, operation)
+                util.wait_for_operation(compute, cfg.project, operation)
             except Exception:
                 log.exception(f"Error in deleting {operation['name']} to slurm")
 
