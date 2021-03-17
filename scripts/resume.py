@@ -241,7 +241,7 @@ def down_nodes(node_list, reason):
         f.writelines("\n".join(node_list))
         f.flush()
         hostlist = util.run(f"{SCONTROL} show hostlist {f.name}",
-                            check=True, get_stdout=True).stdout
+                            check=True, get_stdout=True).stdout.rstrip()
     util.run(
         f"{SCONTROL} update nodename={hostlist} state=down reason='{reason}'")
 # [END down_nodes]

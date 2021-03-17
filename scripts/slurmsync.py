@@ -206,7 +206,7 @@ def main():
             log.debug("tmp_file = {}".format(tmp_file.name))
 
             hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-                                check=True, get_stdout=True).stdout
+                                check=True, get_stdout=True).stdout.rstrip()
             log.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
@@ -235,7 +235,7 @@ def main():
             log.debug("tmp_file = {}".format(tmp_file.name))
 
             hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-                                check=True, get_stdout=True).stdout
+                                check=True, get_stdout=True).stdout.rstrip()
             log.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
