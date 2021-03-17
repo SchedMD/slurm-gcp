@@ -247,6 +247,13 @@ def down_nodes(node_list, reason):
 # [END down_nodes]
 
 
+def hold_job(job_id, reason):
+    """ hold job_id """
+    util.run(f"{SCONTROL} hold jobid={job_id}")
+    util.run(f"{SCONTROL} update jobid={job_id} comment='{reason}'")
+# [END hold_job]
+
+
 def create_placement_groups(arg_job_id, vm_count, region):
     log.debug(f"Creating PG: {arg_job_id} vm_count:{vm_count} region:{region}")
 
@@ -318,13 +325,17 @@ def main(arg_nodes, arg_job_id):
             del nodes_by_pid[pid]
 
     if (arg_job_id and
-            cfg.instance_defs[pid].enable_placement and
-            cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
-            len(node_list) > 1):
-        log.debug(f"creating placement group for {arg_job_id}")
-        placement_groups = create_placement_groups(
-            arg_job_id, len(node_list), cfg.instance_defs[pid].region)
-        time.sleep(5)
+            cfg.instance_defs[pid].enable_placement):
+        if cfg.instance_defs[pid].machine_type.split('-')[0] != "c2":
+            msg = "Unsupported placement policy configuration. Please utilize c2 machine type."
+            log.error(msg)
+            hold_job(arg_job_id, msg)
+            os._exit(1)
+
+        elif len(node_list) > 1:
+            log.debug(f"creating placement group for {arg_job_id}")
+            placement_groups = create_placement_groups(
+                arg_job_id, len(node_list), cfg.instance_defs[pid].region)
 
     def chunks(lst, pg_names):
         """ group list into chunks of max size n """
