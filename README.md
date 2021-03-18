@@ -487,13 +487,16 @@ When the deployment is complete, you should see the following:
    * Summarize node status.
 
    ![](./img/market-screen6.png) 
+
    * Submit a batch script job.
 
    ![](./img/market-screen7.png)
+
    * View the job queue.
 
    ![](./img/market-screen8.png)
    
    * View the new compute nodes added on the Console.
+   
    ![](./img/market-screen9.png)
 
