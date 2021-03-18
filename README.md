@@ -482,7 +482,7 @@ When the deployment is complete, you should see the following:
 
 ![](./img/market-screen5.png)
 
-2. We provide some recommended steps to verify the Slurm cluster is working as expected
+2. Provided are some recommended steps to verify the Slurm cluster is working as expected.
    
    * Summarize node status.
 
