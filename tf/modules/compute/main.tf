@@ -87,8 +87,11 @@ resource "google_compute_instance" "compute_node" {
     subnetwork_project = var.shared_vpc_host_project
   }
 
-  scheduling {
-    on_host_maintenance = each.value.gpu_count > 0 ? "TERMINATE" : ""
+  dynamic "scheduling" {
+    for_each = each.value.gpu_count > 0 ? [1] : [0]
+    content {
+      on_host_maintenance = "TERMINATE"
+    }
   }
 
   service_account {
@@ -164,8 +167,11 @@ resource "google_compute_instance_from_template" "compute_node" {
     subnetwork_project = var.shared_vpc_host_project
   }
 
-  scheduling {
-    on_host_maintenance = each.value.gpu_count > 0 ? "TERMINATE" : ""
+  dynamic "scheduling" {
+    for_each = each.value.gpu_count > 0 ? [1] : [0]
+    content {
+      on_host_maintenance = "TERMINATE"
+    }
   }
 
   service_account {
