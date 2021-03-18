@@ -123,7 +123,7 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         }
         config['resourcePolicies'] = [placement_group_name]
 
-    if instance_def.gpu_type:
+    if instance_def.gpu_count:
         config['guestAccelerators'] = [{
             'acceleratorCount': instance_def.gpu_count,
             'acceleratorType': instance_def.gpu_type
