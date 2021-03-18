@@ -302,7 +302,7 @@ def create_placement_groups(arg_job_id, vm_count, region):
 
 
 def main(arg_nodes, arg_job_id):
-    log.info(f"Bursting out: {arg_nodes} {arg_job_id}")
+    log.debug(f"Bursting out: {arg_nodes} {arg_job_id}")
     # Get node list
     nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
                          check=True, get_stdout=True).stdout
@@ -356,7 +356,7 @@ def main(arg_nodes, arg_job_id):
                 nodes_by_pid.values()))
         exe.map(add_instances, node_chunks)
 
-    log.info("done adding instances")
+    log.info(f"done adding instances: {arg_nodes} {arg_job_id}")
 # [END main]
 
 

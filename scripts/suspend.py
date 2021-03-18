@@ -129,7 +129,7 @@ def delete_placement_groups(compute, node_list, arg_job_id):
 
 
 def main(arg_nodes, arg_job_id):
-    log.info(f"deleting nodes:{arg_nodes} job_id:{job_id}")
+    log.debug(f"deleting nodes:{arg_nodes} job_id:{job_id}")
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
 
@@ -179,7 +179,7 @@ def main(arg_nodes, arg_job_id):
             len(node_list) > 1):
         delete_placement_groups(compute, node_list, arg_job_id)
 
-    log.debug("exiting suspend")
+    log.info(f"done deleting nodes:{arg_nodes} job_id:{job_id}")
 
 # [END main]
 
