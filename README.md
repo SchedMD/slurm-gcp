@@ -442,3 +442,60 @@ For more information see:
      * /var/log/slurm/*.log
      * **NOTE:** syslog and all Slurm logs can be viewed in [GCP Console's Logs Viewer](https://console.cloud.google.com/logs/viewer).
    * check GCP quotas
+
+
+## Google Cloud Launcher
+
+
+### Deploying
+
+
+1. Go to the SchedMD-Slurm-GCP listing in the GCP Marketplace.
+
+Link
+
+ ![](./img/market-screen1.png)
+
+2. Click “Launch”
+
+ ![](./img/market-screen1.png)
+
+3. Some of the options provide defaults, others require input.
+
+4. By default, one partition is enabled. Check the box “Enable partition” under the other “Slurm Compute Partition” sections to configure more partitions.
+
+ ![](./img/market-screen1.png)
+
+5. When complete, click “Deploy”.
+
+Your Slurm cluster is now deploying.
+
+ ![](./img/market-screen1.png)
+
+## Using the Cluster
+
+When the deployment is complete, you should see the following:
+
+ ![](./img/market-screen1.png)
+
+1. SSH to the Login node by clicking the “SSH TO SLURM LOGIN NODE” button.
+
+ ![](./img/market-screen1.png)
+
+2. We provide some recommended steps to verify the Slurm cluster is working as expected
+    * Summarize node status
+
+ ![](./img/market-screen1.png)
+
+    * Submit a batch script job
+
+ ![](./img/market-screen1.png)
+
+    * View the job queue
+
+ ![](./img/market-screen1.png)
+
+    * View the new compute nodes added on the Console
+
+ ![](./img/market-screen1.png)
+
