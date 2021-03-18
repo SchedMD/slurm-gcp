@@ -452,7 +452,7 @@ For more information see:
 
 1. Go to the SchedMD-Slurm-GCP listing in the GCP Marketplace.
 
-Link
+[SchedMD-Slurm-GCP Marketplace] (https://console.cloud.google.com/marketplace/product/schedmd-slurm-public/schedmd-slurm-gcp)
 
 ![](./img/market-screen1.png)
 
