@@ -136,6 +136,7 @@ resource "google_compute_instance_from_template" "controller_node" {
   dynamic "boot_disk" {
     for_each = var.image != null && var.boot_disk_type != null && var.boot_disk_size != null ? [1] : []
     content {
+      auto_delete = true
       initialize_params {
         image = var.image
         type  = var.boot_disk_type
