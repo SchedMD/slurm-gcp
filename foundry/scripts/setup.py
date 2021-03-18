@@ -205,8 +205,19 @@ def create_users():
 def setup_modules():
     """ Add /apps/modulefiles as environment module dir """
 
-    Path('/etc/profile.d/01-modulepath.sh').write_text(f"""
-export MODULEPATH=$(/usr/share/lmod/lmod/libexec/addto --append MODULEPATH {dirs.modulefiles})
+    # for Debian 10
+    modulepaths = Path('/etc/lmod/modulespath')
+    if modulepaths.exists():
+        paths = [path for path in modulepaths.read_text().splitlines()
+                 if not path.startswith('#')]
+        if str(dirs.modulefiles) not in paths:
+            with modulepaths.open('a') as f:
+                f.write(f"\n{dirs.modulefiles}")
+
+    # for CentOS 7
+    modulespath = Path('/usr/share/lmod/lmod/init/.modulespath')
+    modulespath.write_text(f"""
+{dirs.modulefiles}
 """)
 
 
