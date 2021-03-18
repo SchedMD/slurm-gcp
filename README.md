@@ -450,9 +450,7 @@ For more information see:
 ### Deploying
 
 
-1. Go to the SchedMD-Slurm-GCP listing in the GCP Marketplace.
-
-[SchedMD-Slurm-GCP Marketplace](https://console.cloud.google.com/marketplace/product/schedmd-slurm-public/schedmd-slurm-gcp)
+1. Go to the SchedMD-Slurm-GCP listing in the GCP Marketplace.  [SchedMD-Slurm-GCP Marketplace](https://console.cloud.google.com/marketplace/product/schedmd-slurm-public/schedmd-slurm-gcp)
 
 ![](./img/market-screen1.png)
 
