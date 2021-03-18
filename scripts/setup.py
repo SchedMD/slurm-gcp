@@ -148,6 +148,30 @@ def end_motd(broadcast=True):
 # END start_motd()
 
 
+def expand_instance_templates():
+    """ Expand instance template into instance_defs """
+
+    compute = googleapiclient.discovery.build('compute', 'v1',
+                                              cache_discovery=False)
+    for pid, instance_def in cfg.instance_defs.items():
+        if (instance_def.instance_template and
+                (not instance_def.machine_type or not instance_def.gpu_count)):
+            template_resp = util.ensure_execute(
+                compute.instanceTemplates().get(
+                    project=cfg.project,
+                    instanceTemplate=instance_def.instance_template))
+            if template_resp:
+                template_props = template_resp['properties']
+                if not instance_def.machine_type:
+                    instance_def.machine_type = template_props['machineType']
+                if (not instance_def.gpu_count and
+                        'guestAccelerators' in template_props):
+                    accel_props = template_props['guestAccelerators'][0]
+                    instance_def.gpu_count = accel_props['acceleratorCount']
+                    instance_def.gpu_type = accel_props['acceleratorType']
+# END expand_instance_templates()
+
+
 def expand_machine_type():
     """ get machine type specs from api """
     machines = {}
@@ -155,38 +179,41 @@ def expand_machine_type():
                                               cache_discovery=False)
     for pid, part in cfg.instance_defs.items():
         machine = {'cpus': 1, 'memory': 1}
-        try:
-            machine_type = None
-            if part.machine_type:
-                machine_type = part.machine_type
-            elif part.instance_template:
-                template_resp = compute.instanceTemplates().get(
-                    project=cfg.project,
-                    instanceTemplate=part.instance_template).execute()
-                if template_resp:
-                    machine_type = template_resp['properties']['machineType']
-            if not machine_type:
-                log.error("No known machine type to get configuration from")
+        machines[pid] = machine
 
-            type_resp = compute.machineTypes().get(
-                project=cfg.project, zone=part.zone,
-                machineType=machine_type).execute()
-            if type_resp:
-                cpus = type_resp['guestCpus']
-                machine['cpus'] = cpus // (1 if part.image_hyperthreads else 2)
+        if not part.machine_type:
+            log.error("No machine type to get configuration from")
+            continue
 
-                # Because the actual memory on the host will be different than
-                # what is configured (e.g. kernel will take it). From
-                # experiments, about 16 MB per GB are used (plus about 400 MB
-                # buffer for the first couple of GB's. Using 30 MB to be safe.
-                gb = type_resp['memoryMb'] // 1024
-                machine['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
+        type_resp = None
+        if part.regional_capacity:
+            filter = f"(zone={part.region}-*) AND (name={part.machine_type})"
+            list_resp = util.ensure_execute(
+                compute.machineTypes().aggregatedList(
+                    project=cfg.project, filter=filter))
 
-        except Exception:
-            log.exception("Failed to get MachineType '{}' from google api"
-                          .format(part.machine_type))
-        finally:
-            machines[pid] = machine
+            if 'items' in list_resp:
+                zone_types = list_resp['items']
+                for k, v in zone_types.items():
+                    if part.region in k and 'machineTypes' in v:
+                        type_resp = v['machineTypes'][0]
+                        break
+        else:
+            type_resp = util.ensure_execute(
+                compute.machineTypes().get(
+                    project=cfg.project, zone=part.zone,
+                    machineType=part.machine_type))
+
+        if type_resp:
+            cpus = type_resp['guestCpus']
+            machine['cpus'] = cpus // (1 if part.image_hyperthreads else 2)
+
+            # Because the actual memory on the host will be different than
+            # what is configured (e.g. kernel will take it). From
+            # experiments, about 16 MB per GB are used (plus about 400 MB
+            # buffer for the first couple of GB's. Using 30 MB to be safe.
+            gb = type_resp['memoryMb'] // 1024
+            machine['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
 
     return machines
 # END expand_machine_type()
@@ -602,6 +629,7 @@ def configure_dirs():
 
 def setup_controller():
     """ Run controller setup """
+    expand_instance_templates()
     install_cgroup_conf()
     install_slurm_conf()
     install_slurmdbd_conf()
