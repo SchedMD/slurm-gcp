@@ -485,11 +485,15 @@ When the deployment is complete, you should see the following:
 2. We provide some recommended steps to verify the Slurm cluster is working as expected
    
    * Summarize node status.
+
    ![](./img/market-screen6.png) 
    * Submit a batch script job.
+
    ![](./img/market-screen7.png)
    * View the job queue.
+
    ![](./img/market-screen8.png)
+   
    * View the new compute nodes added on the Console.
    ![](./img/market-screen9.png)
 
