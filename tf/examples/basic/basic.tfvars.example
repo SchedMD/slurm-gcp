@@ -53,7 +53,7 @@ login_disk_size_gb = 20
 #
 # When specifying an instance template, specified login fields will
 # override the template properites.
-# controller_instance_template = null
+# login_instance_template = null
 
 # Optional network storage fields
 # network_storage is mounted on all instances
