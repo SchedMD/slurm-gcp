@@ -209,18 +209,17 @@ able to communicate with the controller.
    https://cloud.google.com/dns/zones/#peering-zones  
 
 * Use IP addresses with NodeAddr
-   1. disable cloud_dns in *slurm.conf*
-   2. disable hierarchical communication in *slurm.conf*: `TreeWidth=65533`
-   3. set `update_node_addrs` to `true` in *config.yaml*
+   1. disable [cloud_dns](https://slurm.schedmd.com/slurm.conf.html#OPT_cloud_dns) in *slurm.conf*
+   2. add SlurmctldParameters=[cloud_reg_addrs](https://slurm.schedmd.com/slurm.conf.html#OPT_cloud_reg_addrs) in *slurm.conf*
+   3. disable hierarchical communication in *slurm.conf*: `TreeWidth=65533`
    4. add controller's ip address to /etc/hosts on compute image
 
 ### Configuration Steps
 1. Create a base instance
 
    Create a bare image and install and configure the packages (including Slurm)
-   that you are used to for a Slurm compute node. Then create an image
-   from it creating a family either in the form
-   "<cluster_name>-compute-#-image-family" or in a name of your choosing.
+   that you are used to for a Slurm compute node. Then [create an image](https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images)
+   of the base image. It's recommended to create the image in a family.
 
 2. Create a [service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
    and [service account key](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account)
@@ -228,16 +227,14 @@ able to communicate with the controller.
 
 3. Install scripts
 
-   Install the *resume.py*, *suspend.py*, *slurmsync.py* and
-   *config.yaml.example* from the slurm-gcp repository's scripts directory to a
+   Install the *resume.py*, *suspend.py*, *slurmsync.py*, *util.py* and
+   *config.yaml.example* from the slurm-gcp repository's [scripts](scripts) directory to a
    location on the slurmctld. Rename *config.yaml.example* to *config.yaml* and
    modify the approriate values.  
 
    Add the path of the service account key to *google_app_cred_path* in *config.yaml*.
    
-   Add the compute_image_family to each partition if different than the naming
-   schema, "<cluster_name>-compute-#-image-family".
-
+   Add the image URL (path to the image or family) to each instance defintion.
 
 4. Modify slurm.conf:
 
