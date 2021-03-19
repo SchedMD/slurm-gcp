@@ -38,7 +38,7 @@ resources:
     - base: centos-7
       base_image: projects/centos-cloud/global/images/family/centos-7
     - base: hpc-centos-7
-      base_image: projects/cloud-hpc-image-public/global/images/hpc-centos-7-v20200819
+      base_image: projects/cloud-hpc-image-public/global/images/family/hpc-centos-7
       packages: *centos-7
     #- key: centos-8
     #  base_image: projects/centos-cloud/global/images/family/centos-8
