@@ -1,7 +1,6 @@
-## Google Cloud Launcher
+# Google Cloud Marketplace 
 
-
-### Deploying
+## Deploying
 
 
 1. Go to the SchedMD-Slurm-GCP listing in the GCP Marketplace.  [SchedMD-Slurm-GCP Marketplace](https://console.cloud.google.com/marketplace/product/schedmd-slurm-public/schedmd-slurm-gcp)
