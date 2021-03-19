@@ -68,15 +68,15 @@ installed on your computer or use the GCP
 Steps:
 1. cd to tf/examples/basic
 2. Copy `basic.tfvars.example` to `basic.tfvars`
-3. Edit `basic.tfvars` with the required configuration
-	See the tf/examples/basic.io.tf file for more detailed information on
-	available configuration options.
-3. Deploy the cluster
+3. Edit `basic.tfvars` with the required configuration  
+	See the [tf/examples/basic/io.tf](tf/examples/basic/io.tf)
+	file for more detailed information on available configuration options.
+4. Deploy the cluster
    ```
    $ terraform init
    $ terraform apply -var-file=basic.tfvars
    ```
-4. Tearing down the cluster
+5. Tearing down the cluster
 
    ```
    $ terraform destroy -var-file=basic.tfvars
