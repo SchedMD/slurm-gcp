@@ -19,7 +19,7 @@
 
 4. By default, one partition is enabled. Check the box “Enable partition” under the other “Slurm Compute Partition” sections to configure more partitions.  
 
-![](./img/market-screen3.png)
+![](./img/market-screen3-2.png)
 
 5. When complete, click “Deploy”.
 
@@ -31,7 +31,7 @@ Your Slurm cluster is now deploying.
 
 When the deployment is complete, you should see the following:
 
-![](./img/market-screen5-1.png)
+![](./img/market-screen5-3.png)
 
 1. SSH to the Login node by clicking the “SSH TO SLURM LOGIN NODE” button.
 
