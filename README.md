@@ -24,6 +24,7 @@ Also, join comunity discussions on either the
   * [Install using GCP Marketplace](#install-using-gcp-marketplace)
   * [Install using Terraform](#install-using-terraform)
 	* [Defining network storage mounts](#defining-network-storage-mounts)
+  * [Preinstalled Modules: OpenMPI](#preinstalled-modules-openmpi)
   * [Installing Custom Packages](#installing-custom-packages)
   * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
   * [OS Login](#os-login)
@@ -109,6 +110,15 @@ will be replaced with the correct hostname so all other instances can properly
 access the mount.
 
 `fs_type` can be one of: `nfs`, `cifs`, `lustre`, `gcsfuse`
+
+### Preinstalled modules: OpenMPI
+OpenMPI comes preinstalled as a module. To see available modules and activate the
+openmpi environment, run
+```
+$ module avail
+$ module load openmpi
+$ which mpicc
+```
 
 ### Installing Custom Packages
    There are two files, *custom-controller-install* and *custom-compute-install*, in
