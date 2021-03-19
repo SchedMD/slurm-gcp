@@ -17,15 +17,16 @@
 import importlib
 import logging
 import os
-import shutil
-import sys
-import socket
 import shlex
+import shutil
+import socket
+import sys
 import time
 import urllib.request
 from functools import partialmethod
 from pathlib import Path
 from subprocess import DEVNULL
+from concurrent.futures import ThreadPoolExecutor
 
 import googleapiclient.discovery
 import requests
@@ -364,8 +365,8 @@ def install_libjwt():
     util.run("ldconfig")
 
 
-def install_packages():
-    """ Install all packages using the system package manager """
+def install_dependencies():
+    """ Install all dependencies """
 
     Path('/etc/ld.so.conf.d/usr-local.conf').write_text("""
 /usr/local/lib
@@ -376,11 +377,15 @@ def install_packages():
         util.run(f"{cfg.pacman} -y groupinstall 'Development Tools'")
     packages = util.get_metadata('attributes/packages').splitlines()
     util.run(f"{cfg.pacman} install -y {' '.join(packages)}", shell=True)
+    install_libjwt()
+
+
+def install_apps():
+    """ Install all core applications using system package manager """
 
     install_lustre()
     install_gcsfuse()
     install_cuda()
-    install_libjwt()
 
     # install stackdriver monitoring and logging
     add_mon_script = Path('/tmp/add-monitoring-agent-repo.sh')
@@ -397,6 +402,12 @@ def install_packages():
     install_slurmlog_conf()
 
     util.run("systemctl enable stackdriver-agent google-fluentd")
+
+
+def install_compiled_apps():
+    """ Compile and install Slurm and Openmpi """
+    install_slurm()
+    install_ompi()
 
 
 def setup_munge():
@@ -716,13 +727,15 @@ def main():
     start_motd()
 
     create_users()
-    install_packages()
+    install_dependencies()
+
+    with ThreadPoolExecutor() as exe:
+        exe.submit(install_compiled_apps)
+        exe.submit(install_apps)
+
     setup_munge()
     setup_bash_profile()
     setup_modules()
-
-    install_slurm()
-    install_ompi()
 
     install_controller_service_scripts()
     install_compute_service_scripts()
