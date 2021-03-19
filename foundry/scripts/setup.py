@@ -372,6 +372,8 @@ def install_packages():
 /usr/local/lib64
 """)
 
+    if cfg.os_name in ('centos7', 'centos8'):
+        util.run(f"{cfg.pacman} -y groupinstall 'Development Tools'")
     packages = util.get_metadata('attributes/packages').splitlines()
     util.run(f"{cfg.pacman} install -y {' '.join(packages)}", shell=True)
 
