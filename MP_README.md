@@ -31,11 +31,11 @@ Your Slurm cluster is now deploying.
 
 When the deployment is complete, you should see the following:
 
-![](./img/market-screen5-3.png)
+![](./img/market-screen5-1.png)
 
 1. SSH to the Login node by clicking the “SSH TO SLURM LOGIN NODE” button.
 
-![](./img/market-screen5.png)
+![](./img/market-screen5-2.png)
 
 2. Provided are some recommended steps to verify the Slurm cluster is working as expected.
    
