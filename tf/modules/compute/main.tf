@@ -114,7 +114,6 @@ resource "google_compute_instance" "compute_node" {
       zone                      = var.zone
     })
 
-    fluentd_conf_tpl = file("${path.module}/../../../etc/compute-fluentd.conf.tpl")
     setup-script     = file("${path.module}/../../../scripts/setup.py")
     util-script      = file("${path.module}/../../../scripts/util.py")
   }
@@ -195,7 +194,6 @@ resource "google_compute_instance_from_template" "compute_node" {
       zone                      = var.zone
     })
 
-    fluentd_conf_tpl = file("${path.module}/../../../etc/compute-fluentd.conf.tpl")
     setup-script     = file("${path.module}/../../../scripts/setup.py")
     util-script      = file("${path.module}/../../../scripts/util.py")
   }
