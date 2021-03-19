@@ -1,4 +1,3 @@
-
 # Google Cloud Marketplace 
 
 ## Deploying
@@ -9,7 +8,7 @@
 ![](./img/market-screen1.png)  
 
 
-**2. Click “Launch”.  **
+2. Click “Launch”.
 
 
 ![](./img/market-screen2.png)  
