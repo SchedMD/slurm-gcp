@@ -43,7 +43,7 @@
   read_from_head true
   <parse>
     @type regexp
-    expression /^(?<time>\S+ \S+) (?<message>\S+ (?<severity>\S+):.*)$/
+    expression /^(?<time>\S+ \S+) \d+ \d+ (?<message>\S+ (?<severity>\S+):.*)$/
     time_format %Y-%m-%d %H:%M:%S,%N
   </parse>
 </source>
@@ -56,7 +56,7 @@
   read_from_head true
   <parse>
     @type regexp
-    expression /^(?<time>\S+ \S+) (?<message>\S+ (?<severity>\S+):.*)$/
+    expression /^(?<time>\S+ \S+) \d+ \d+ (?<message>\S+ (?<severity>\S+):.*)$/
     time_format %Y-%m-%d %H:%M:%S,%N
   </parse>
 </source>
@@ -69,7 +69,7 @@
   read_from_head true
   <parse>
     @type regexp
-    expression /^(?<time>\S+ \S+) (?<message>\S+ (?<severity>\S+):.*)$/
+    expression /^(?<time>\S+ \S+) \d+ \d+ (?<message>\S+ (?<severity>\S+):.*)$/
     time_format %Y-%m-%d %H:%M:%S,%N
   </parse>
 </source>
