@@ -1,19 +1,24 @@
+
 # Google Cloud Marketplace 
 
 ## Deploying
 
 
 1. Go to the SchedMD-Slurm-GCP listing in the GCP Marketplace.  [SchedMD-Slurm-GCP Marketplace](https://console.cloud.google.com/marketplace/product/schedmd-slurm-public/schedmd-slurm-gcp)
-&nbsp  
-![](./img/market-screen1.png)
-&nbsp  
-2. Click “Launch”.
 
-![](./img/market-screen2.png)
+![](./img/market-screen1.png)  
 
-3. Some of the options provide defaults, others require input.
 
-4. By default, one partition is enabled. Check the box “Enable partition” under the other “Slurm Compute Partition” sections to configure more partitions.
+**2. Click “Launch”.  **
+
+
+![](./img/market-screen2.png)  
+
+
+3. Some of the options provide defaults, others require input.  
+
+
+4. By default, one partition is enabled. Check the box “Enable partition” under the other “Slurm Compute Partition” sections to configure more partitions.  
 
 ![](./img/market-screen3.png)
 
