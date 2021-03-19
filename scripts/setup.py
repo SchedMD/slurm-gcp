@@ -145,6 +145,11 @@ def end_motd(broadcast=True):
 
     util.run("wall -n '*** Slurm {} setup complete ***'"
              .format(cfg.instance_type))
+    if cfg.instance_type != 'controller':
+        util.run("""wall -n '
+/home on the controller was mounted over the existing /home.
+Either log out and log back in or cd into ~.
+'""")
 # END start_motd()
 
 
