@@ -181,7 +181,7 @@ OPTIONS = (
           help="delete existing deployments of the same name first")),
     ('--no-cleanup', '-c',
      dict(dest='cleanup', action='store_false',
-          help="Delete the deployment at the end if all images were successfully created")),
+          help="Do not delete the deployment at the end. By default, the deployment is deleted if all images were successfully created")),
     ('--resume', '-r',
      dict(dest='resume', action='store_true',
           help="Create images from whatever instances are in the existing deployment")),
