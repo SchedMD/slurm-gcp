@@ -20,6 +20,7 @@
 import argparse
 import logging
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -37,10 +38,6 @@ TOT_REQ_CNT = 1000
 operations = {}
 retry_list = []
 
-util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
-log = logging.getLogger(Path(__file__).name)
-
-
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
@@ -55,7 +52,7 @@ def delete_instances_cb(request_id, response, exception):
 # [END delete_instances_cb]
 
 
-def delete_instances(compute, node_list):
+def delete_instances(compute, node_list, arg_job_id):
 
     batch_list = []
     curr_batch = 0
@@ -65,6 +62,12 @@ def delete_instances(compute, node_list):
         compute.new_batch_http_request(callback=delete_instances_cb))
 
     for node_name in node_list:
+
+        pid = util.get_pid(node_name)
+        if (not arg_job_id and cfg.instance_defs[pid].exclusive):
+            # Node was deleted by EpilogSlurmctld, skip for SuspendProgram
+            continue
+
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
             curr_batch += 1
@@ -72,17 +75,31 @@ def delete_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=delete_instances_cb))
 
-        pid = util.get_pid(node_name)
+        zone = None
+        if cfg.instance_defs[pid].regional_capacity:
+            node_find = util.ensure_execute(
+                compute.instances().aggregatedList(
+                    project=cfg.project, filter=f'name={node_name}'))
+            for key, zone_value in node_find['items'].items():
+                if 'instances' in zone_value:
+                    zone = zone_value['instances'][0]['zone'].split('/')[-1]
+                    break
+            if zone is None:
+                log.error(f"failed to find regional node '{node_name}' to delete")
+                continue
+        else:
+            zone = cfg.instance_defs[pid].zone
+
         batch_list[curr_batch].add(
             compute.instances().delete(project=cfg.project,
-                                       zone=cfg.partitions[pid].zone,
+                                       zone=zone,
                                        instance=node_name),
             request_id=node_name)
         req_cnt += 1
 
     try:
         for i, batch in enumerate(batch_list):
-            batch.execute()
+            util.ensure_execute(batch)
             if i < (len(batch_list) - 1):
                 time.sleep(30)
     except Exception:
@@ -91,8 +108,28 @@ def delete_instances(compute, node_list):
 # [END delete_instances]
 
 
-def main(arg_nodes):
-    log.info("deleting nodes:" + arg_nodes)
+def delete_placement_groups(compute, node_list, arg_job_id):
+    PLACEMENT_MAX_CNT = 22
+    pg_ops = []
+    pg_index = 0
+    pid = util.get_pid(node_list[0])
+
+    for i in range(len(node_list)):
+        if i % PLACEMENT_MAX_CNT:
+            continue
+        pg_index += 1
+        pg_name = f'{cfg.cluster_name}-{arg_job_id}-{pg_index}'
+        pg_ops.append(compute.resourcePolicies().delete(
+            project=cfg.project, region=cfg.instance_defs[pid].region,
+            resourcePolicy=pg_name).execute())
+    for operation in pg_ops:
+        util.wait_for_operation(compute, cfg.project, operation)
+    log.debug("done deleting pg")
+# [END delete_placement_groups]
+
+
+def main(arg_nodes, arg_job_id):
+    log.debug(f"deleting nodes:{arg_nodes} job_id:{job_id}")
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               cache_discovery=False)
 
@@ -101,8 +138,24 @@ def main(arg_nodes):
                          check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
+    pid = util.get_pid(node_list[0])
+    if (arg_job_id and not cfg.instance_defs[pid].exclusive):
+        # Don't delete from calls by EpilogSlurmctld
+        return
+
+    if arg_job_id:
+        # Mark nodes as off limits to new jobs while powering down.
+        # Have to use "down" because it's the only, current, way to remove the
+        # power_up flag from the node -- followed by a power_down -- if the
+        # PrologSlurmctld fails with a non-zero exit code.
+        util.run(
+            f"{SCONTROL} update node={arg_nodes} state=down reason='{arg_job_id} finishing'")
+        # Power down nodes in slurm, so that they will become available again.
+        util.run(
+            f"{SCONTROL} update node={arg_nodes} state=power_down")
+
     while True:
-        delete_instances(compute, node_list)
+        delete_instances(compute, node_list, arg_job_id)
         if not len(retry_list):
             break
 
@@ -111,7 +164,22 @@ def main(arg_nodes):
         node_list = list(retry_list)
         del retry_list[:]
 
+    if arg_job_id:
+        for operation in operations.values():
+            try:
+                util.wait_for_operation(compute, cfg.project, operation)
+            except Exception:
+                log.exception(f"Error in deleting {operation['name']} to slurm")
+
     log.debug("done deleting instances")
+
+    if (arg_job_id and
+            cfg.instance_defs[pid].enable_placement and
+            cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
+            len(node_list) > 1):
+        delete_placement_groups(compute, node_list, arg_job_id)
+
+    log.info(f"done deleting nodes:{arg_nodes} job_id:{job_id}")
 
 # [END main]
 
@@ -120,8 +188,29 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('nodes', help='Nodes to release')
+    parser.add_argument('args', nargs='+', help="nodes [jobid]")
+    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
+                        help='Enable debugging output')
 
-    args = parser.parse_args()
+    if "SLURM_JOB_NODELIST" in os.environ:
+        args = parser.parse_args(sys.argv[1:] +
+                                 [os.environ['SLURM_JOB_NODELIST'],
+                                  os.environ['SLURM_JOB_ID']])
+    else:
+        args = parser.parse_args()
 
-    main(args.nodes)
+    nodes = args.args[0]
+    job_id = 0
+    if len(args.args) > 1:
+        job_id = args.args[1]
+
+    if args.debug:
+        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+                                logfile=LOGFILE)
+    else:
+        util.config_root_logger(level='INFO', util_level='ERROR',
+                                logfile=LOGFILE)
+    log = logging.getLogger(Path(__file__).name)
+    sys.excepthook = util.handle_exception
+
+    main(nodes, job_id)

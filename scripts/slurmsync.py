@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import collections
 import fcntl
 import logging
@@ -32,13 +33,11 @@ cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
 SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
 LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
+SCRIPTS_DIR = Path(__file__).parent.resolve()
 
 TOT_REQ_CNT = 1000
 
 retry_list = []
-
-util.config_root_logger(level='DEBUG', util_level='ERROR', file=LOGFILE)
-log = logging.getLogger(Path(__file__).name)
 
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
@@ -50,11 +49,11 @@ def start_instances_cb(request_id, response, exception):
         if "Rate Limit Exceeded" in str(exception):
             retry_list.append(request_id)
         elif "was not found" in str(exception):
-            util.spawn(f"/apps/slurm/scripts/resume.py {request_id}")
+            util.spawn(f"{SCRIPTS_DIR}/resume.py {request_id}")
 # [END start_instances_cb]
 
 
-def start_instances(compute, node_list):
+def start_instances(compute, node_list, gcp_nodes):
 
     req_cnt = 0
     curr_batch = 0
@@ -64,6 +63,18 @@ def start_instances(compute, node_list):
         compute.new_batch_http_request(callback=start_instances_cb))
 
     for node in node_list:
+
+        pid = util.get_pid(node)
+        zone = cfg.instance_defs[pid].zone
+
+        if cfg.instance_defs[pid].regional_capacity:
+            g_node = next((item for item in gcp_nodes if item["name"] == node),
+                          None)
+            if not g_node:
+                log.error(f"Didn't regional GCP record for '{node}'")
+                continue
+            zone = g_node['zone'].split('/')[-1]
+
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
             curr_batch += 1
@@ -71,16 +82,14 @@ def start_instances(compute, node_list):
                 curr_batch,
                 compute.new_batch_http_request(callback=start_instances_cb))
 
-        pid = util.get_pid(node)
         batch_list[curr_batch].add(
-            compute.instances().start(project=cfg.project,
-                                      zone=cfg.partitions[pid].zone,
+            compute.instances().start(project=cfg.project, zone=zone,
                                       instance=node),
             request_id=node)
         req_cnt += 1
     try:
         for i, batch in enumerate(batch_list):
-            batch.execute()
+            util.ensure_execute(batch)
             if i < (len(batch_list) - 1):
                 time.sleep(30)
     except Exception:
@@ -117,20 +126,31 @@ def main():
                        if 'CLOUD' in args]
 
         g_nodes = []
-        for i, part in enumerate(cfg.partitions):
+        for pid, part in cfg.instance_defs.items():
             page_token = ""
             while True:
-                resp = compute.instances().list(
-                    project=cfg.project, zone=part.zone,
-                    pageToken=page_token,
-                    filter=f"name={cfg.compute_node_prefix}-{i}-*"
-                ).execute()
+                if cfg.instance_defs[pid].regional_capacity:
+                    resp = util.ensure_execute(
+                        compute.instances().aggregatedList(
+                            project=cfg.project, pageToken=page_token,
+                            filter=f'name={pid}-*'))
+                    for key, zone_value in resp['items'].items():
+                        if 'instances' in zone_value:
+                            g_nodes.extend(zone_value['instances'])
+                    if "nextPageToken" in resp:
+                        page_token = resp['nextPageToken']
+                        continue
+                else:
+                    resp = util.ensure_execute(
+                        compute.instances().list(
+                            project=cfg.project, zone=part.zone,
+                            pageToken=page_token, filter=f"name={pid}-*"))
 
-                if "items" in resp:
-                    g_nodes.extend(resp['items'])
-                if "nextPageToken" in resp:
-                    page_token = resp['nextPageToken']
-                    continue
+                    if "items" in resp:
+                        g_nodes.extend(resp['items'])
+                    if "nextPageToken" in resp:
+                        page_token = resp['nextPageToken']
+                        continue
 
                 break
 
@@ -151,7 +171,7 @@ def main():
                 if g_node and (g_node['status'] == "TERMINATED"):
                     if not s_state.base.startswith('DOWN'):
                         to_down.append(s_node)
-                    if (cfg.partitions[pid].preemptible_bursting):
+                    if (cfg.instance_defs[pid].preemptible_bursting):
                         to_start.append(s_node)
 
                 # can't check if the node doesn't exist in GCP while the node
@@ -186,7 +206,7 @@ def main():
             log.debug("tmp_file = {}".format(tmp_file.name))
 
             hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-                                check=True, get_stdout=True).stdout
+                                check=True, get_stdout=True).stdout.rstrip()
             log.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
@@ -194,7 +214,7 @@ def main():
                      "reason='Instance stopped/deleted'")
 
             while True:
-                start_instances(compute, to_start)
+                start_instances(compute, to_start, g_nodes)
                 if not len(retry_list):
                     break
 
@@ -215,7 +235,7 @@ def main():
             log.debug("tmp_file = {}".format(tmp_file.name))
 
             hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-                                check=True, get_stdout=True).stdout
+                                check=True, get_stdout=True).stdout.rstrip()
             log.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
@@ -228,6 +248,22 @@ def main():
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
+                        help='Enable debugging output')
+
+    args = parser.parse_args()
+    if args.debug:
+        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+                                logfile=LOGFILE)
+    else:
+        util.config_root_logger(level='INFO', util_level='ERROR',
+                                logfile=LOGFILE)
+    log = logging.getLogger(Path(__file__).name)
+    sys.excepthook = util.handle_exception
 
     # only run one instance at a time
     pid_file = (Path('/tmp')/Path(__file__).name).with_suffix('.pid')

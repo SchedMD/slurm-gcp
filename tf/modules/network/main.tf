@@ -15,32 +15,32 @@
 
 locals {
   tmp_list = [for part in var.partitions :
-              "${join("-", slice(split("-", part.zone), 0, 2))}"
-              if part.vpc_subnet == null]
+    join("-", slice(split("-", part.zone), 0, 2))
+  if part.vpc_subnet == null]
   region_subnet_list = (var.subnetwork_name != null
-                        ? local.tmp_list
-                        : distinct(concat([var.region], local.tmp_list)))
+    ? local.tmp_list
+  : distinct(concat([var.region], local.tmp_list)))
 
   tmp_map = [for part in var.partitions : {
-      region = "${join("-", slice(split("-", part.zone), 0, 2))}"
-      subnet = (part.vpc_subnet != null
-                ? part.vpc_subnet
-                : "${var.cluster_name}-${join("-", slice(split("-", part.zone), 0, 2))}")
+    region = join("-", slice(split("-", part.zone), 0, 2))
+    subnet = (part.vpc_subnet != null
+      ? part.vpc_subnet
+    : "${var.cluster_name}-${join("-", slice(split("-", part.zone), 0, 2))}")
   }]
   region_router_list = distinct(
-                         concat(local.tmp_map,
-                                [{region = var.region
-                                 subnet = (var.subnetwork_name != null
-                                           ? var.subnetwork_name
-                                           : "${var.cluster_name}-${var.region}")
-                                }]))
+    concat(local.tmp_map,
+      [{ region = var.region
+        subnet = (var.subnetwork_name != null
+          ? var.subnetwork_name
+        : "${var.cluster_name}-${var.region}")
+  }]))
 }
 
 resource "google_compute_network" "cluster_network" {
   count = (var.network_name == null &&
-           var.shared_vpc_host_project == null
-           ? 1
-           : 0)
+    var.shared_vpc_host_project == null
+    ? 1
+  : 0)
 
   name                    = "${var.cluster_name}-network"
   auto_create_subnetworks = false
@@ -48,8 +48,8 @@ resource "google_compute_network" "cluster_network" {
 
 resource "google_compute_subnetwork" "cluster_subnet" {
   count = (var.shared_vpc_host_project == null
-           ? length(local.region_subnet_list)
-           : 0)
+    ? length(local.region_subnet_list)
+  : 0)
 
   name                     = "${var.cluster_name}-${local.region_subnet_list[count.index]}"
   network                  = var.network_name != null ? var.network_name : google_compute_network.cluster_network[0].self_link
@@ -60,12 +60,12 @@ resource "google_compute_subnetwork" "cluster_subnet" {
 
 resource "google_compute_firewall" "cluster_ssh_firewall" {
   count = ((var.shared_vpc_host_project == null &&
-            length(google_compute_network.cluster_network) > 0 &&
-            (var.disable_login_public_ips == false ||
-             var.disable_controller_public_ips == false ||
-             var.disable_compute_public_ips == false))
-           ? 1
-           : 0)
+    length(google_compute_network.cluster_network) > 0 &&
+    (var.disable_login_public_ips == false ||
+      var.disable_controller_public_ips == false ||
+    var.disable_compute_public_ips == false))
+    ? 1
+  : 0)
 
   name          = "${var.cluster_name}-allow-ssh"
   network       = google_compute_network.cluster_network[0].name
@@ -79,12 +79,12 @@ resource "google_compute_firewall" "cluster_ssh_firewall" {
 
 resource "google_compute_firewall" "cluster_iap_ssh_firewall" {
   count = ((var.shared_vpc_host_project == null &&
-            length(google_compute_network.cluster_network) > 0 &&
-            var.disable_login_public_ips &&
-            var.disable_controller_public_ips &&
-            var.disable_compute_public_ips)
-           ? 1
-           : 0)
+    length(google_compute_network.cluster_network) > 0 &&
+    var.disable_login_public_ips &&
+    var.disable_controller_public_ips &&
+    var.disable_compute_public_ips)
+    ? 1
+  : 0)
 
   name          = "${var.cluster_name}-allow-iap"
   network       = google_compute_network.cluster_network[0].name
@@ -121,18 +121,18 @@ resource "google_compute_firewall" "cluster_internal_firewall" {
 
 resource "google_compute_router" "cluster_router" {
   count = ((var.shared_vpc_host_project == null &&
-            (var.disable_login_public_ips ||
-             var.disable_controller_public_ips ||
-             var.disable_compute_public_ips))
-           ? length(local.region_router_list)
-           : 0)
+    (var.disable_login_public_ips ||
+      var.disable_controller_public_ips ||
+    var.disable_compute_public_ips))
+    ? length(local.region_router_list)
+  : 0)
 
   name = "${var.cluster_name}-router"
 
-  region  = local.region_router_list[count.index].region
+  region = local.region_router_list[count.index].region
   network = (var.network_name != null
-             ? var.network_name
-             : google_compute_network.cluster_network[0].self_link)
+    ? var.network_name
+  : google_compute_network.cluster_network[0].self_link)
 }
 
 resource "google_compute_router_nat" "cluster_nat" {

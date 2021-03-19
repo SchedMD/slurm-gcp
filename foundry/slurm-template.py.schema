@@ -1,0 +1,106 @@
+# Copyright 2020 SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+info:
+  title: A template for creating a Slurm cluster.
+  author: SchedMD LLC
+  description: |
+    Create a Slurm cluster in GCP.
+
+imports:
+- path: scripts/startup.sh
+- path: scripts/setup.py
+- path: scripts/util.py
+- path: etc/fluentd.conf
+
+required:
+- zone
+- machine_type
+- image_family
+- image_name
+- slurm_version
+- libjwt_version
+- ompi_version
+- images
+
+#optional:
+
+properties:
+  zone:
+    type: string
+    description: Canonical zone name
+
+  machine_type:
+    type: string
+    description: Path to the canonical machine type
+
+  image_family:
+    type: string
+    description: format string for image family name. Valid specifiers include
+                 'base',
+                 'major' (slurm major version 2011),
+                 'minor' (slurm minor version 20112),
+                 'tag' (timestamp).
+  image_name:
+    type: string
+    description: format string for image name. Valid specifiers are the same as
+                 for image_family with one addition 'image_family'.
+
+  slurm_version:
+    type: string
+    description: Slurm version or public branch to install
+
+  libjwt_version:
+    type: string
+    description: libjwt version to install
+
+  ompi_version:
+    type: string
+    description: OpenMPI version to install
+
+  images:
+    type: array
+    description: List of OSs and their images
+    items:
+      type: object
+      required:
+      - base
+      - base_image
+      optional:
+      - packages
+      - family
+      - name
+      properties:
+        base:
+          type: string
+          description: specifier for the image, usually the os of the base image
+                       or some derivative
+        base_image:
+          type: string
+          description: url of the image or image family to use as the base for
+                       this image
+        packages:
+          type: string
+          default: ''
+          description: path of the imported file containing necessary packages.
+                       If left unspecified, it defaults to
+                       "scripts/{base}-packages"
+        family:
+          type: string
+          default: ''
+          description: format string for this image, overriding image_family
+        name:
+          type: string
+          default: ''
+          description: format string for this image, overriding image_name

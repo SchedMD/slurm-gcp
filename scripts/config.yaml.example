@@ -1,51 +1,63 @@
 cluster_name: <cluster_name>
 
-project: slurm-184304
-region: us-west1
+project: <project id>
 zone: us-west1-b
 
 external_compute_ips: false
-
 google_app_cred_path: null
 
 shared_vpc_host_project: null
 vpc_subnet: null
 
-slurm_cmd_path: /apps/slurm/current/bin
+slurm_cmd_path: /usr/local/bin
 log_dir: /var/log/slurm
 
-compute_node_prefix: <compute_node_prefix>
 compute_node_scopes:
 - https://www.googleapis.com/auth/monitoring.write
 - https://www.googleapis.com/auth/logging.write
 compute_node_service_account: default
+
 update_node_addrs: false
 
-partitions:
-- name: debug
-  machine_type: n1-standard-2
-  zone: us-west1-b
-  compute_disk_size_gb: 10
-  compute_disk_type: pd-standard
-  compute_labels: {}
-  gpu_count: 0
-  max_node_count: 10
-  preemptible_bursting: true
-  static_node_count: 2
-  network_storage: []
-  # compute_image_family: <image family name>
-  # vpc_subnet:
-# - name: gpu
-#   compute_disk_size_gb: 10
-#   compute_disk_type: pd-standard
-#   compute_labels: {}
-#   gpu_count: 2
-#   gpu_type: nvidia-tesla-k80
-#   machine_type: n1-standard-2
-#   max_node_count: 2
-#   network_storage: []
-#   preemptible_bursting: false
-#   static_node_count: 0
-#   zone: us-west1-b
-#   compute_image_family: <image family name>
-#   vpc_subnet:
+network_storage: []
+login_network_storage: []
+
+instance_defs:
+  bg1-compute-0:
+    machine_type: n1-standard-2
+    zone: us-west1-b
+    image: projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7
+    image_hyperthreads: false
+    compute_disk_size_gb: 20
+    compute_disk_type: pd-standard
+    compute_labels: {}
+    cpu_platform: null
+    gpu_count: 0
+    gpu_type: null
+    enable_placement: false
+    exclusive: false
+    instance_template: null
+    network_storage: []
+    preemptible_bursting: false
+    regional_capacity: false
+    regional_policy: {}
+    vpc_subnet: null
+#  bg1-compute-1:
+#    machine_type: n1-standard-2
+#    zone: us-west1-b
+#    image: projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7
+#    image_hyperthreads: false
+#    compute_disk_size_gb: 20
+#    compute_disk_type: pd-standard
+#    compute_labels: {}
+#    cpu_platform: null
+#    gpu_count: 1
+#    gpu_type: nvidia-tesla-k80
+#    enable_placement: false
+#    exclusive: false
+#    instance_template: null
+#    network_storage: []
+#    preemptible_bursting: false
+#    regional_capacity: false
+#    regional_policy: {}
+#    vpc_subnet: null

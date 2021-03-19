@@ -1,0 +1,7 @@
+{
+  "defaultDeploymentType": "MULTI_VM",
+  "imageName": "schedmd-slurm-20-11-4-hpc-centos-7-test",
+  "projectId": "schedmd-slurm-public",
+  "templateName": "nonexistent_template",
+  "useSolutionPackage": true
+}

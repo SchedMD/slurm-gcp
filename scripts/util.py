@@ -19,10 +19,13 @@ import os
 import shlex
 import subprocess
 import sys
+import socket
 import time
+from itertools import chain, compress
 from pathlib import Path
 from contextlib import contextmanager
 from collections import OrderedDict
+import googleapiclient.discovery
 
 import requests
 import yaml
@@ -31,10 +34,13 @@ import yaml
 log = logging.getLogger(__name__)
 
 
-def config_root_logger(level='DEBUG', util_level=None, file=None):
+def config_root_logger(level='DEBUG', util_level=None,
+                       stdout=True, logfile=None):
     if not util_level:
         util_level = level
-    handler = 'file_handler' if file else 'stdout_handler'
+    handlers = list(compress(('stdout_handler', 'file_handler'),
+                             (stdout, logfile)))
+
     config = {
         'version': 1,
         'disable_existing_loggers': True,
@@ -43,7 +49,7 @@ def config_root_logger(level='DEBUG', util_level=None, file=None):
                 'format': '',
             },
             'stamp': {
-                'format': '%(asctime)s %(name)s %(levelname)s: %(message)s',
+                'format': '%(asctime)s %(process)s %(thread)s %(name)s %(levelname)s: %(message)s',
             },
         },
         'handlers': {
@@ -55,23 +61,30 @@ def config_root_logger(level='DEBUG', util_level=None, file=None):
             },
         },
         'loggers': {
-            '': {
-                'handlers': [handler],
-                'level': level,
-            },
             __name__: {  # enable util.py logging
                 'level': util_level,
-            }
+            },
         },
+        'root': {
+            'handlers': handlers,
+            'level': level,
+        }
     }
-    if file:
+    if logfile:
         config['handlers']['file_handler'] = {
             'level': 'DEBUG',
             'formatter': 'stamp',
             'class': 'logging.handlers.WatchedFileHandler',
-            'filename': file,
+            'filename': logfile,
         }
     logging.config.dictConfig(config)
+
+
+def handle_exception(exc_type, exc_value, exc_trace):
+    if not issubclass(exc_type, KeyboardInterrupt):
+        log.exception("Fatal exception",
+                      exc_info=(exc_type, exc_value, exc_trace))
+    sys.__excepthook__(exc_type, exc_value, exc_trace)
 
 
 def get_metadata(path):
@@ -83,7 +96,7 @@ def get_metadata(path):
         resp = requests.get(full_path, headers=HEADERS)
         resp.raise_for_status()
     except requests.exceptions.RequestException:
-        log.exception(f"Error while getting metadata from {full_path}")
+        log.error(f"Error while getting metadata from {full_path}")
         return None
     return resp.text
 
@@ -116,7 +129,7 @@ def spawn(cmd, quiet=False, shell=False, **kwargs):
 def get_pid(node_name):
     """Convert <prefix>-<pid>-<nid>"""
 
-    return int(node_name.split('-')[-2])
+    return '-'.join(node_name.split('-')[:-1])
 
 
 @contextmanager
@@ -158,7 +171,28 @@ class cached_property:
         return attr
 
 
-class Config(OrderedDict):
+class NSDict(OrderedDict):
+    """ Simple nested dict namespace """
+
+    def __init__(self, *args, **kwargs):
+        def from_nested(value):
+            """ If value is dict, convert to NSDict. Also recurse lists. """
+            if isinstance(value, dict):
+                return type(self)({k: from_nested(v) for k, v in value.items()})
+            elif isinstance(value, list):
+                return [from_nested(v) for v in value]
+            else:
+                return value
+
+        super(NSDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self  # all properties are member attributes
+
+        # Convert nested elements
+        for k, v in self.items():
+            self[k] = from_nested(v)
+
+
+class Config(NSDict):
     """ Loads config from yaml and holds values in nested namespaces """
 
     TYPES = set(('compute', 'login', 'controller'))
@@ -169,53 +203,45 @@ class Config(OrderedDict):
                    'cluster_name',
                    'external_compute_ips',
                    'shared_vpc_host_project',
-                   'compute_node_prefix',
                    'compute_node_service_account',
                    'compute_node_scopes',
                    'slurm_cmd_path',
                    'log_dir',
                    'google_app_cred_path',
                    'update_node_addrs',
-                   'partitions',
+                   'network_storage',
+                   'login_network_storage',
+                   'instance_defs',
                    )
     PROPERTIES = (*SAVED_PROPS,
                   'munge_key',
+                  'jwt_key',
                   'external_compute_ips',
-                  'nfs_home_server',
-                  'nfs_home_dir',
-                  'nfs_apps_server',
-                  'nfs_apps_dir',
-                  'ompi_version',
                   'controller_secondary_disk',
-                  'slurm_version',
                   'suspend_time',
-                  'network_storage',
-                  'login_network_storage',
                   'login_node_count',
                   'cloudsql',
+                  'partitions',
                   )
 
     def __init__(self, *args, **kwargs):
-        def from_nested(value):
-            """ If value is dict, convert to Config. Also recurse lists. """
-            if isinstance(value, dict):
-                return Config({k: from_nested(v) for k, v in value.items()})
-            elif isinstance(value, list):
-                return [from_nested(v) for v in value]
-            else:
-                return value
-
         super(Config, self).__init__(*args, **kwargs)
-        self.__dict__ = self  # all properties are member attributes
-
-        # Convert nested dicts to Configs
-        for k, v in self.items():
-            self[k] = from_nested(v)
 
     @classmethod
     def new_config(cls, properties):
         # If k is ever not found, None will be inserted as the value
-        return cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
+        cfg = cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
+        if cfg.partitions:
+            cfg['instance_defs'] = Config({
+                f'{cfg.cluster_name}-compute-{pid}': part
+                for pid, part in enumerate(cfg.partitions)
+            })
+
+        for netstore in (*cfg.network_storage, *(cfg.login_network_storage or []),
+                         *chain(*(p.network_storage for p in (cfg.partitions or [])))):
+            if netstore.server_ip == '$controller':
+                netstore.server_ip = cfg.cluster_name + '-controller'
+        return cfg
 
     @classmethod
     def load_config(cls, path):
@@ -224,7 +250,12 @@ class Config(OrderedDict):
 
     def save_config(self, path):
         save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
-        Path(path).write_text(yaml.dump(save_dict, Dumper=self.Dumper))
+        if save_dict.instance_defs:
+            for instance_type in save_dict.instance_defs.values():
+                instance_type.pop('max_node_count', 0)
+                instance_type.pop('name', 0)
+                instance_type.pop('static_node_count', 0)
+        Path(path).write_text(yaml.dump(save_dict, Dumper=Dumper))
 
     @cached_property
     def instance_type(self):
@@ -233,20 +264,118 @@ class Config(OrderedDict):
         # TODO what to default to if no match found.
         return next(iter(set(tags) & self.TYPES), None)
 
+    @cached_property
+    def hostname(self):
+        return socket.gethostname()
+
     @property
     def region(self):
-        return self.zone and '-'.join(self.zone.split('-')[:-1])
+        if self.zone:
+            parts = self.zone.split('-')
+            if len(parts) > 2:
+                return '-'.join(parts[:-1])
+            else:
+                return self.zone
+        return None
+
+    @property
+    def exclusive(self):
+        return bool(self.get('exclusive', False) or self.enable_placement)
 
     def __getattr__(self, item):
         """ only called if item is not found in self """
         return None
 
-    class Dumper(yaml.SafeDumper):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.add_representer(Config, self.represent_config)
 
-        @staticmethod
-        def represent_config(dumper, data):
-            return dumper.represent_mapping('tag:yaml.org,2002:map',
-                                            data.items())
+class Dumper(yaml.SafeDumper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_representer(Config, self.represent_nsdict)
+        self.add_representer(NSDict, self.represent_nsdict)
+        self.add_multi_representer(Path, self.represent_path)
+
+    @staticmethod
+    def represent_nsdict(dumper, data):
+        return dumper.represent_mapping('tag:yaml.org,2002:map',
+                                        data.items())
+
+    @staticmethod
+    def represent_path(dumper, path):
+        return dumper.represent_scalar('tag:yaml.org,2002:str',
+                                       str(path))
+
+
+def ensure_execute(operation):
+    """ Handle rate limits and socket time outs """
+
+    retry = 0
+    sleep = 1
+    max_sleep = 60
+    while True:
+        try:
+            return operation.execute()
+
+        except googleapiclient.errors.HttpError as e:
+            if "Rate Limit Exceeded" in str(e):
+                retry += 1
+                sleep = min(sleep*2, max_sleep)
+                log.error(f"retry:{retry} sleep:{sleep} '{e}'")
+                time.sleep(sleep)
+                continue
+            raise
+
+        except socket.timeout as e:
+            # socket timed out, try again
+            log.debug(e)
+
+        except Exception as e:
+            log.error(e, exc_info=True)
+            raise
+
+        break
+
+
+def wait_for_operation(compute, project, operation):
+    print('Waiting for operation to finish...')
+    while True:
+        if 'zone' in operation:
+            operation = compute.zoneOperations().wait(
+                project=project,
+                zone=operation['zone'].split('/')[-1],
+                operation=operation['name'])
+        elif 'region' in operation:
+            operation = compute.regionOperations().wait(
+                project=project,
+                region=operation['region'].split('/')[-1],
+                operation=operation['name'])
+        else:
+            operation = compute.globalOperations().wait(
+                project=project,
+                operation=operation['name'])
+
+        result = ensure_execute(operation)
+        if result['status'] == 'DONE':
+            print("done.")
+            return result
+
+
+def get_group_operations(compute, project, operation):
+    """ get list of operations associated with group id """
+
+    group_id = operation['operationGroupId']
+    if 'zone' in operation:
+        operation = compute.zoneOperations().list(
+            project=project,
+            zone=operation['zone'].split('/')[-1],
+            filter=f"operationGroupId={group_id}")
+    elif 'region' in operation:
+        operation = compute.regionOperations().list(
+            project=project,
+            region=operation['region'].split('/')[-1],
+            filter=f"operationGroupId={group_id}")
+    else:
+        operation = compute.globalOperations().list(
+            project=project,
+            filter=f"operationGroupId={group_id}")
+
+    return ensure_execute(operation)

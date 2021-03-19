@@ -1,0 +1,333 @@
+description:
+  author:
+    title: SchedMD
+    descriptionHtml: >-
+      SchedMD® is the core company behind the Slurm workload manager software,
+      a free open-source workload manager designed specifically to satisfy
+      the demanding needs of high performance computing.
+    shortDescription: >-
+      SchedMD is the core developer and services provider for the
+      market-leading Slurm workload manager, supporting and optimizing the
+      speed, throughput and resource consumption for organizations’ unique
+      workload mix and needs.
+    url: 'http://www.schedmd.com'
+  descriptionHtml: >-
+    Slurm is a free open-source workload manager designed specifically to
+    satisfy the demanding needs of high performance and high throughput
+    computing and AI. Slurm® is the industry-leading open source workload
+    manager to manage large-scale, complex HPC and AI workloads in the
+    cloud with faster processing and optimal consumption of the specialized
+    resource capabilities needed for each workload. Slurm maximizes workload
+    throughput, scale, reliability, and results in the fastest possible
+    time, managing workloads across cloud and on-prem clusters. SchedMD®
+    and Google have partnered to optimize Slurm for Google Cloud, enabling
+    seamless management and integration with optimal use and scaling of
+    Google Cloud resources so organizations can focus on getting to results
+    faster and easier.
+  tagline: Speeding HPC HTC & AI workloads via demand-based cloud clusters
+  logo: '@media/Slurm_workload_manager.png'
+  icon: '@media/slurm-logo-only-small.png'
+  title: SchedMD Slurm GCP
+  url: 'https://www.schedmd.com'
+  version: 4.0.0
+  softwareGroups:
+  - type: SOFTWARE_GROUP_OS
+    software:
+    - title: CentOS
+      version: '7'
+  - software:
+    - title: Slurm
+      version: 20.11.4
+  documentations:
+  - title: Slurm on GCP Documentation
+    url: 'https://github.com/schedmd/slurm-gcp'
+    destinations:
+    - DESTINATION_SOLUTION_DETAILS
+    - DESTINATION_POST_DEPLOY
+  support:
+  - title: Support
+    descriptionHtml: >-
+      <p>SchedMD is the core developer and services provider for Slurm, supporting
+      and optimizing the speed, throughput and resource consumption for
+      organizations' unique workload mix and needs. Support, consulting,
+      configuration, development and training services accelerate workloads
+      and results across cloud and on-prem clusters with proven best practices
+      and innovation.<br>
+      Request Slurm support pricing at sales@schedmd.com.</p>
+
+      <p>Issues and/or enhancement requests can be submitted to SchedMD's
+      Bugzilla.</p>
+
+      <p>Also, join comunity discussions on either the Slurm User mailing list or
+      the <a href="https://groups.google.com/g/google-cloud-slurm-discuss">
+      Google Cloud & Slurm Community Discussion Group</a>.</p>
+
+input:
+  properties:
+    - name: cluster_name
+      title: Cluster name
+    - name: zone
+      title: Zone
+      subtext: 'GPU availability is limited to certain zones. <a href="https://cloud.google.com/compute/docs/gpus">Learn more</a>'
+    - name: network
+      title: Network name
+      section: NETWORK_TIER
+    - name: subnetwork
+      title: Subnetwork name
+      section: NETWORK_TIER
+    - name: controller_external_ip
+      title: Controller External IP
+      subtext: Enable Private Google access or add a Cloud Router NAT on the target subnetwork before disabling
+      section: NETWORK_TIER
+    - name: login_external_ip
+      title: Login External IP
+      section: NETWORK_TIER
+    - name: compute_external_ip
+      title: Compute Node External IPs
+      section: NETWORK_TIER
+
+    - name: netstore_enabled
+      title: Enable network storage mount
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_server_ip
+      title: Server host/IP
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_remote_mount
+      title: Remote mount path
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_local_mount
+      title: Local mount path
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_fs_type
+      title: Filesystem type
+      section: NETSTORE_TIER
+      level: 1
+    - name: netstore_mount_options
+      title: Mount options
+      section: NETSTORE_TIER
+      level: 1
+
+    - name: controller_machine_type
+      title: Controller Machine type
+      section: CONTROLLER_TIER
+    - name: controller_disk_type
+      title: Boot Disk Type
+      section: CONTROLLER_TIER
+      level: 1
+    - name: controller_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: CONTROLLER_TIER
+      level: 1
+    - name: suspend_time
+      title: Suspend Time (in sec)
+      section: CONTROLLER_TIER
+      level: 1
+
+    - name: login_machine_type
+      title: Login machine type
+      section: LOGIN_TIER
+      level: 1
+    - name: login_disk_type
+      title: Boot Disk Type
+      section: LOGIN_TIER
+      level: 1
+    - name: login_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: LOGIN_TIER
+      level: 1
+
+    - name: compute1_partition_name
+      title: Name for the Slurm compute partition
+      section: COMPUTE1_CONFIG
+    - name: compute1_max_node_count
+      title: Maximum Instance Count
+      tooltip: Specify a value for the maximum number of compute nodes in this partition
+      section: COMPUTE1_CONFIG
+    - name: compute1_static_node_count
+      title: Number of static nodes to create
+      section: COMPUTE1_CONFIG
+    - name: compute1_preemptible
+      title: Preemptible Instances
+      tooltip: A preemptible VM costs much less, but lasts only 24 hours. It can be terminated sooner due to system demands.
+      section: COMPUTE1_CONFIG
+    - name: compute1_machine_type
+      title: Machine type
+      section: COMPUTE1_CONFIG
+    - name: compute1_disk_type
+      title: Boot Disk Type
+      section: COMPUTE1_CONFIG
+      level: 1
+    - name: compute1_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: COMPUTE1_CONFIG
+      level: 1
+    - name: compute1_gpu_count
+      title: GPU count
+      tooltip: Number of GPUs to attach to each compute node
+      section: COMPUTE1_CONFIG
+      level: 1
+    - name: compute1_gpu_type
+      title: GPU type
+      section: COMPUTE1_CONFIG
+      level: 1
+
+    - name: compute2_enabled
+      title: Enable partition
+      section: COMPUTE2_CONFIG
+    - name: compute2_partition_name
+      title: Name for the Slurm compute partition
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_max_node_count
+      title: Maximum Instance Count
+      tooltip: Specify a value for the maximum amount of compute nodes.
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_static_node_count
+      title: Number of static nodes to create
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_preemptible
+      title: Preemptible Instances
+      tooltip: A preemptible VM costs much less, but lasts only 24 hours. It can be terminated sooner due to system demands.
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_machine_type
+      title: Machine type
+      section: COMPUTE2_CONFIG
+      level: 1
+    - name: compute2_disk_type
+      title: Boot Disk Type
+      section: COMPUTE2_CONFIG
+      level: 2
+    - name: compute2_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: COMPUTE2_CONFIG
+      level: 2
+    - name: compute2_gpu_count
+      title: GPU count
+      tooltip: Number of GPUs to attach to each compute node
+      section: COMPUTE2_CONFIG
+      level: 2
+    - name: compute2_gpu_type
+      title: GPU type
+      section: COMPUTE2_CONFIG
+      level: 2
+
+    - name: compute3_enabled
+      title: Enable partition
+      section: COMPUTE3_CONFIG
+    - name: compute3_partition_name
+      title: Name for the Slurm compute partition
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_max_node_count
+      title: Maximum Instance Count
+      tooltip: Specify a value for the maximum amount of compute nodes.
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_static_node_count
+      title: Number of static nodes to create
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_preemptible
+      title: Preemptible Instances
+      tooltip: A preemptible VM costs much less, but lasts only 24 hours. It can be terminated sooner due to system demands.
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_machine_type
+      title: Machine type
+      section: COMPUTE3_CONFIG
+      level: 1
+    - name: compute3_disk_type
+      title: Boot Disk Type
+      section: COMPUTE3_CONFIG
+      level: 2
+    - name: compute3_disk_size_gb
+      title: Boot Disk Size (GB)
+      section: COMPUTE3_CONFIG
+      level: 2
+    - name: compute3_gpu_count
+      title: GPU count
+      tooltip: Number of GPUs to attach to each compute node
+      section: COMPUTE3_CONFIG
+      level: 2
+    - name: compute3_gpu_type
+      title: GPU type
+      section: COMPUTE3_CONFIG
+      level: 2
+
+  sections:
+    - name: NETWORK_TIER
+      title: Network
+    - name: NETSTORE_TIER
+      title: Network Storage Mount
+    - name: CONTROLLER_TIER
+      title: Slurm Controller
+    - name: LOGIN_TIER
+      title: Slurm Login
+    - name: COMPUTE1_CONFIG
+      title: Slurm Compute Partition 1
+    - name: COMPUTE2_CONFIG
+      title: Slurm Compute Partition 2
+    - name: COMPUTE3_CONFIG
+      title: Slurm Compute Partition 3
+
+runtime:
+  deployingMessage: Deployment can take several minutes to complete.
+  applicationTable:
+    rows:
+      - label: Cluster Zone
+        value: '{{ properties().zone }}'
+      - label: Login Node
+        value: '{{ outputs()["login-name"] }}'
+      - label: Login Address
+        value: '{{ externalIp(outputs()["login-link"]) }}'
+        showIf: '{{ properties().login_external_ip }}'
+      - label: Controller
+        value: '{{ outputs()["controller-name"] }}'
+      - label: Controller Address
+        value: '{{ externalIp(outputs()["controller-link"]) }}'
+  primaryButton:
+    label: SSH to Slurm Login Node
+    type: TYPE_GCE_VM_SSH
+    action: '{{ outputs()["login-link"] }}'
+  suggestedActions:
+    - heading: Summarize node status
+      description: >-
+        <code>$ sinfo</code>
+    - heading: Submit batch script job
+      description: >-
+        <code>
+          $ cat > example.sh << EOF<br>
+          #!/bin/bash<br>
+          srun hostname<br>
+          EOF<br>
+          $ sbatch --nodes=2 example.sh
+        </code>
+    - heading: Use GPUs (if available)
+      description: >-
+        <code>$ srun -N2 --gpus-per-node=1 nvidia-smi</code>
+    - heading: Query job status
+      description: >-
+        <code>$ squeue</code>
+    - heading: More information
+      description: >-
+        <code>$ man sbatch<br>
+              $ man srun</code>
+    - heading: Note
+      description: >-
+        If additional resources (instances, networks) are created other than the
+        ones in the initial deployment, then they will need to be destroyed
+        separately. They are not part of the deployment, so they will not be
+        removed with it. This includes instances created by Slurm for bursted
+        workloads.
+
+annotations:
+  autogenSpecType: 'MULTI_VM'
+
+metadata_version: v1

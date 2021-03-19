@@ -19,7 +19,7 @@ variable "cloudsql" {
     server_ip = string,
     user      = string,
     password  = string,
-    db_name   = string})
+  db_name = string })
   default = null
 }
 
@@ -28,32 +28,10 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "compute_image_disk_size_gb" {
-  description = "Size of disk for compute node image."
-  default     = 20
-}
-
-variable "compute_image_disk_type" {
-  description = "Disk type (pd-ssd or pd-standard) for compute node image."
-  type        = string
-  default     = "pd-standard"
-}
-
-variable "compute_image_labels" {
-  description = "Labels to add to the compute node image. List of key key, value pairs."
-  type        = any
-  default     = {}
-}
-
-variable "compute_image_machine_type" {
-  type    = string
-  default = "n1-standard-2"
-}
-
 variable "compute_node_scopes" {
   description = "Scopes to apply to compute nodes."
   type        = list(string)
-  default     = [
+  default = [
     "https://www.googleapis.com/auth/monitoring.write",
     "https://www.googleapis.com/auth/logging.write"
   ]
@@ -62,31 +40,43 @@ variable "compute_node_scopes" {
 variable "compute_node_service_account" {
   description = "Service Account for compute nodes."
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "controller_machine_type" {
   description = "Machine type to use for the controller instance"
   type        = string
-  default     = "n1-standard-2"
+  default     = null
 }
 
 variable "controller_disk_type" {
   description = "Disk type (pd-ssd or pd-standard) for controller."
   type        = string
-  default     = "pd-standard"
+  default     = null
+}
+
+variable "controller_image" {
+  description = "Slurm image to use for the controller instance"
+  type        = string
+  default     = null
+}
+
+variable "controller_instance_template" {
+  description = "Instance template to use to create controller instance"
+  type        = string
+  default     = null
 }
 
 variable "controller_disk_size_gb" {
   description = "Size of disk for the controller."
   type        = number
-  default     = 50
+  default     = null
 }
 
 variable "controller_labels" {
   description = "Labels to add to controller instance. List of key key, value pairs."
   type        = any
-  default     = {}
+  default     = null
 }
 
 variable "controller_secondary_disk" {
@@ -114,7 +104,7 @@ variable "controller_scopes" {
 variable "controller_service_account" {
   description = "Service Account for the controller"
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "disable_login_public_ips" {
@@ -135,42 +125,54 @@ variable "disable_compute_public_ips" {
 variable "login_disk_type" {
   description = "Disk type (pd-ssd or pd-standard) for login nodes."
   type        = string
-  default     = "pd-standard"
+  default     = null
 }
 
 variable "login_disk_size_gb" {
   description = "Size of disk for login nodes."
   type        = number
-  default     = 20
+  default     = null
+}
+
+variable "login_image" {
+  description = "Slurm image to use for login instances"
+  type        = string
+  default     = null
+}
+
+variable "login_instance_template" {
+  description = "Instance template to use to creating login instances"
+  type        = string
+  default     = null
 }
 
 variable "login_labels" {
   description = "Labels to add to login instances. List of key key, value pairs."
   type        = any
-  default     = {}
+  default     = null
 }
 
 variable "login_machine_type" {
   description = "Machine type to use for login node instances."
   type        = string
-  default     = "n1-standard-2"
+  default     = null
 }
 
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
 }
 
 variable "login_node_scopes" {
   description = "Scopes to apply to login nodes."
   type        = list(string)
-  default     = [
+  default = [
     "https://www.googleapis.com/auth/monitoring.write",
     "https://www.googleapis.com/auth/logging.write"
   ]
@@ -179,7 +181,7 @@ variable "login_node_scopes" {
 variable "login_node_service_account" {
   description = "Service Account for compute nodes."
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "login_node_count" {
@@ -192,6 +194,11 @@ variable "munge_key" {
   default     = null
 }
 
+variable "jwt_key" {
+  description = "Specific libjwt key to use"
+  default     = null
+}
+
 variable "network_name" {
   default = null
   type    = string
@@ -200,17 +207,12 @@ variable "network_name" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
-}
-
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
 }
 
 variable "partitions" {
@@ -220,6 +222,8 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
+    image                = string,
+    image_hyperthreads   = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,
@@ -227,13 +231,18 @@ variable "partitions" {
     gpu_type             = string,
     gpu_count            = number,
     network_storage = list(object({
-      server_ip     = string,
-      remote_mount  = string,
-      local_mount   = string,
-      fs_type       = string,
-      mount_options = string})),
+      server_ip    = string,
+      remote_mount = string,
+      local_mount  = string,
+      fs_type      = string,
+    mount_options = string })),
     preemptible_bursting = bool,
     vpc_subnet           = string,
+    exclusive            = bool,
+    enable_placement     = bool,
+    regional_capacity    = bool,
+    regional_policy      = any,
+    instance_template    = string,
   static_node_count = number }))
 }
 
@@ -244,10 +253,6 @@ variable "project" {
 variable "shared_vpc_host_project" {
   type    = string
   default = null
-}
-
-variable "slurm_version" {
-  default = "19.05-latest"
 }
 
 variable "subnetwork_name" {
@@ -266,9 +271,9 @@ variable "zone" {
 }
 
 output "controller_network_ips" {
-  value = "${module.slurm_cluster_controller.instance_network_ips}"
+  value = module.slurm_cluster_controller.instance_network_ips
 }
 
 output "login_network_ips" {
-  value = "${module.slurm_cluster_login.instance_network_ips}"
+  value = module.slurm_cluster_login.instance_network_ips
 }

@@ -1,0 +1,9 @@
+imports:
+- path: schedmd-slurm-gcp.jinja
+
+resources:
+- name: schedmd-slurm-gcp
+  type: schedmd-slurm-gcp.jinja
+  properties:
+    cluster_name: slurmtest
+    zone: us-central1-a

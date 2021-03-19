@@ -17,11 +17,11 @@
 
 # [START cluster_yaml]
 imports:
-- path: slurm.jinja
+- path: schedmd-slurm-gcp.jinja
 
 resources:
 - name: slurm-cluster
-  type: slurm.jinja
+  type: schedmd-slurm-gcp.jinja
   properties:
     cluster_name            : g1
 
@@ -33,6 +33,7 @@ resources:
     # vpc_subnet                : default
     # shared_vpc_host_project   : < my-shared-vpc-project-name >
 
+    controller_image: projects/slurm-184304/global/images/family/schedmd-slurm-20-11-3-centos-7
     controller_machine_type : n1-standard-2
     # controller_disk_type      : pd-standard
     # controller_disk_size_gb   : 50
@@ -50,6 +51,7 @@ resources:
     #   # Optional
     #   db_name: slurm_accounting
 
+    login_image         : projects/slurm-184304/global/images/family/schedmd-slurm-20-11-3-centos-7
     login_machine_type        : n1-standard-2
     # login_disk_type           : pd-standard
     # login_disk_size_gb        : 20
@@ -104,15 +106,18 @@ resources:
     # ompi_version              : v3.1.x
 
     partitions :
-      - name              : debug
-        machine_type      : n1-standard-2
-        max_node_count    : 10
-        zone              : us-central1-a
+    - name              : debug
+      image             : projects/slurm-184304/global/images/family/schedmd-slurm-20-11-3-centos-7
+      machine_type      : n1-standard-2
+      max_node_count    : 10
+      zone              : us-central1-a
 
     # Optional compute configuration fields
 
         # cpu_platform           : Intel Skylake
         # preemptible_bursting   : False
+        # exclusive              : False
+        # enable_placement       : False
         # compute_disk_type      : pd-standard
         # compute_disk_size_gb   : 20
         # compute_labels         :
@@ -141,6 +146,8 @@ resources:
 
         # cpu_platform           : Intel Skylake
         # preemptible_bursting   : False
+        # exclusive              : False
+        # enable_placement       : False
         # compute_disk_type      : pd-standard
         # compute_disk_size_gb   : 20
         # compute_labels         :
@@ -155,6 +162,15 @@ resources:
         #     fs_type: gcsfuse
         #     mount_options: file_mode=664,dir_mode=775,allow_other
         #
+        # regional_capacity : True
+        # regional_policy :
+        #   locations:
+        #     zones/us-west1-a:
+        #       preference: DENY
+        #     zones/us-west1-b:
+        #       preference: DENY
+        #     zones/us-west1-c:
+        #       preference: ALLOW
 
     # Optional network configuration fields
         # vpc_subnet                : my-subnet

@@ -15,7 +15,6 @@
 
 locals {
   controller_name = "${var.cluster_name}-controller"
-  compute_node_prefix = "${var.cluster_name}-compute"
 }
 
 resource "google_compute_disk" "secondary" {
@@ -27,7 +26,11 @@ resource "google_compute_disk" "secondary" {
   zone = var.zone
 }
 
+data "google_compute_default_service_account" "default" {}
+
 resource "google_compute_instance" "controller_node" {
+  count = var.instance_template == null ? 1 : 0
+
   depends_on = [var.subnet_depend]
 
   name         = local.controller_name
@@ -38,7 +41,7 @@ resource "google_compute_instance" "controller_node" {
 
   boot_disk {
     initialize_params {
-      image = "centos-cloud/centos-7"
+      image = var.image
       type  = var.boot_disk_type
       size  = var.boot_disk_size
     }
@@ -65,101 +68,150 @@ resource "google_compute_instance" "controller_node" {
     # 2. var.project / var.subnetwork_name
     # 3. var.project / {cluster_name}-{region}
     subnetwork = (var.subnetwork_name != null
-                  ? var.subnetwork_name
-                  : "${var.cluster_name}-${var.region}")
+      ? var.subnetwork_name
+    : "${var.cluster_name}-${var.region}")
 
     subnetwork_project = var.shared_vpc_host_project
   }
 
   service_account {
-    email  = var.service_account
+    email  = var.service_account == null ? data.google_compute_default_service_account.default.email : var.service_account
     scopes = var.scopes
   }
 
+  metadata_startup_script = file("${path.module}/../../../scripts/startup.sh")
+
   metadata = {
-    terraform      = "TRUE"
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
 
-    startup-script = <<EOF
-${file("${path.module}/../../../scripts/startup.sh")}
-EOF
+    config = jsonencode({
+      cloudsql                     = var.cloudsql
+      cluster_name                 = var.cluster_name
+      compute_node_scopes          = var.compute_node_scopes
+      compute_node_service_account = var.compute_node_service_account == null ? data.google_compute_default_service_account.default.email : var.compute_node_service_account
+      controller_secondary_disk    = var.secondary_disk
+      external_compute_ips         = !var.disable_compute_public_ips
+      login_network_storage        = var.login_network_storage
+      login_node_count             = var.login_node_count
+      munge_key                    = var.munge_key
+      jwt_key                      = var.jwt_key
+      network_storage              = var.network_storage
+      partitions                   = var.partitions
+      project                      = var.project
+      region                       = var.region
+      shared_vpc_host_project      = var.shared_vpc_host_project
+      suspend_time                 = var.suspend_time
+      vpc_subnet                   = var.subnetwork_name
+      zone                         = var.zone
+    })
 
-    util_script = <<EOF
-${file("${path.module}/../../../scripts/util.py")}
-EOF
+    cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
+    custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
+    custom-controller-install = file("${path.module}/../../../scripts/custom-controller-install")
+    setup-script              = file("${path.module}/../../../scripts/setup.py")
+    slurm-resume              = file("${path.module}/../../../scripts/resume.py")
+    slurm-suspend             = file("${path.module}/../../../scripts/suspend.py")
+    slurm_conf_tpl            = file("${path.module}/../../../etc/slurm.conf.tpl")
+    slurmdbd_conf_tpl         = file("${path.module}/../../../etc/slurmdbd.conf.tpl")
+    slurmsync                 = file("${path.module}/../../../scripts/slurmsync.py")
+    util-script               = file("${path.module}/../../../scripts/util.py")
+  }
+}
 
-    config = <<EOF
-${jsonencode({
-    cloudsql                     = var.cloudsql
-    cluster_name                 = var.cluster_name,
-    compute_node_prefix          = local.compute_node_prefix,
-    compute_node_scopes          = var.compute_node_scopes,
-    compute_node_service_account = var.compute_node_service_account,
-    controller_secondary_disk    = var.secondary_disk,
-    external_compute_ips         = !var.disable_compute_public_ips,
-    login_network_storage        = var.login_network_storage,
-    login_node_count             = var.login_node_count
-    munge_key                    = var.munge_key,
-    network_storage              = var.network_storage,
-    ompi_version                 = var.ompi_version,
-    partitions                   = var.partitions,
-    project                      = var.project,
-    region                       = var.region,
-    shared_vpc_host_project      = var.shared_vpc_host_project,
-    slurm_version                = var.slurm_version,
-    suspend_time                 = var.suspend_time,
-    vpc_subnet                   = var.subnetwork_name,
-    zone                         = var.zone,
-})}
-EOF
+resource "google_compute_instance_from_template" "controller_node" {
+  count = var.instance_template != null ? 1 : 0
 
-    setup_script = <<EOF
-${file("${path.module}/../../../scripts/setup.py")}
-EOF
+  source_instance_template = var.instance_template
 
-    slurm_resume = <<EOF
-${file("${path.module}/../../../scripts/resume.py")}
-EOF
+  depends_on = [var.subnet_depend]
 
-    slurm_suspend = <<EOF
-${file("${path.module}/../../../scripts/suspend.py")}
-EOF
+  name         = local.controller_name
+  machine_type = var.machine_type
+  zone         = var.zone
 
-    slurmsync = <<EOF
-${file("${path.module}/../../../scripts/slurmsync.py")}
-EOF
+  tags = ["controller"]
 
-    slurmsync = <<EOF
-${file("${path.module}/../../../scripts/slurmsync.py")}
-EOF
+  dynamic "boot_disk" {
+    for_each = var.image != null && var.boot_disk_type != null && var.boot_disk_size != null ? [1] : []
+    content {
+      auto_delete = true
+      initialize_params {
+        image = var.image
+        type  = var.boot_disk_type
+        size  = var.boot_disk_size
+      }
+    }
+  }
 
-    custom-compute-install = <<EOF
-${file("${path.module}/../../../scripts/custom-compute-install")}
-EOF
+  dynamic "attached_disk" {
+    for_each = google_compute_disk.secondary
+    content {
+      source = google_compute_disk.secondary[0].self_link
+    }
+  }
 
-    custom-controller-install = <<EOF
-${file("${path.module}/../../../scripts/custom-controller-install")}
-EOF
+  labels = var.labels
 
-    compute-shutdown = <<EOF
-${file("${path.module}/../../../scripts/compute-shutdown")}
-EOF
+  network_interface {
+    dynamic "access_config" {
+      for_each = var.disable_controller_public_ips == true ? [] : [1]
+      content {}
+    }
 
-    slurm_conf_tpl = <<EOF
-${file("${path.module}/../../../etc/slurm.conf.tpl")}
-EOF
+    # Subnet order:
+    # 1. shared_vpc_host_project / var.subnetwork_name
+    #   a. subnetwork_project isn't set when shared_vpc_host_project is null
+    # 2. var.project / var.subnetwork_name
+    # 3. var.project / {cluster_name}-{region}
+    subnetwork = (var.subnetwork_name != null
+      ? var.subnetwork_name
+    : "${var.cluster_name}-${var.region}")
 
-    slurmdbd_conf_tpl = <<EOF
-${file("${path.module}/../../../etc/slurmdbd.conf.tpl")}
-EOF
+    subnetwork_project = var.shared_vpc_host_project
+  }
 
-    cgroup_conf_tpl = <<EOF
-${file("${path.module}/../../../etc/cgroup.conf.tpl")}
-EOF
+  service_account {
+    email  = var.service_account == null ? data.google_compute_default_service_account.default.email : var.service_account
+    scopes = var.scopes
+  }
 
-    fluentd_conf_tpl = <<EOF
-${file("${path.module}/../../../etc/controller-fluentd.conf.tpl")}
-EOF
+  metadata_startup_script = file("${path.module}/../../../scripts/startup.sh")
+
+  metadata = {
+    enable-oslogin = "TRUE"
+    VmDnsSetting   = "GlobalOnly"
+
+    config = jsonencode({
+      cloudsql                     = var.cloudsql
+      cluster_name                 = var.cluster_name
+      compute_node_scopes          = var.compute_node_scopes
+      compute_node_service_account = var.compute_node_service_account == null ? data.google_compute_default_service_account.default.email : var.compute_node_service_account
+      controller_secondary_disk    = var.secondary_disk
+      external_compute_ips         = !var.disable_compute_public_ips
+      login_network_storage        = var.login_network_storage
+      login_node_count             = var.login_node_count
+      munge_key                    = var.munge_key
+      jwt_key                      = var.jwt_key
+      network_storage              = var.network_storage
+      partitions                   = var.partitions
+      project                      = var.project
+      region                       = var.region
+      shared_vpc_host_project      = var.shared_vpc_host_project
+      suspend_time                 = var.suspend_time
+      vpc_subnet                   = var.subnetwork_name
+      zone                         = var.zone
+    })
+
+    cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
+    custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
+    custom-controller-install = file("${path.module}/../../../scripts/custom-controller-install")
+    setup-script              = file("${path.module}/../../../scripts/setup.py")
+    slurm-resume              = file("${path.module}/../../../scripts/resume.py")
+    slurm-suspend             = file("${path.module}/../../../scripts/suspend.py")
+    slurm_conf_tpl            = file("${path.module}/../../../etc/slurm.conf.tpl")
+    slurmdbd_conf_tpl         = file("${path.module}/../../../etc/slurmdbd.conf.tpl")
+    slurmsync                 = file("${path.module}/../../../scripts/slurmsync.py")
+    util-script               = file("${path.module}/../../../scripts/util.py")
   }
 }

@@ -1,0 +1,113 @@
+{% import "path_utils.jinja" as path_utils with context %}
+
+{% set networks = [] %}
+{% for network in properties['network'] %}
+{% set _ = networks.append(path_utils.networkPath(network)) %}
+{% endfor %}
+
+{% set image = 'https://www.googleapis.com/compute/v1/projects/schedmd-slurm-public/global/images/schedmd-slurm-20-11-4-hpc-centos-7-2021-03-12-215000' %}
+
+resources:
+- name: {{ properties['cluster_name'] }}
+  type: slurm-cluster.jinja
+  properties:
+    cluster_name: {{ properties['cluster_name'] }}
+    zone: {{ properties['zone'] }}
+
+    vpc_net: {{ networks[0] }}
+    vpc_subnet: {{ properties['subnetwork'][0] }}
+    external_controller_ip: {{ properties['controller_external_ip'] }}
+    external_login_ips: {{ properties['login_external_ip'] }}
+    external_compute_ips: {{ properties['compute_external_ip'] }}
+
+  {% if properties['netstore_enabled'] %}
+    network_storage:
+    - server_ip: {{ properties['netstore_server_ip'] }}
+      remote_mount: {{ properties['netstore_remote_mount'] }}
+      local_mount: {{ properties['netstore_local_mount'] }}
+      fs_type: {{ properties['netstore_fs_type'] }}
+      mount_options: {{ properties['netstore_mount_options'] }}
+  {% endif %}
+
+    controller_image: {{ image }}
+    controller_machine_type:  {{ properties['controller_machine_type'] }}
+    controller_disk_type: {{ properties['controller_disk_type'] }}
+    controller_disk_size_gb: {{ properties['controller_disk_size_gb'] }}
+
+    login_node_count: 1
+    login_image: {{ image }}
+    login_machine_type: {{ properties['login_machine_type'] }}
+    login_disk_type: {{ properties['login_disk_type'] }}
+    login_disk_size_gb: {{ properties['login_disk_size_gb'] }}
+
+    suspend_time: {{ properties['suspend_time'] }}
+
+    partitions:
+      - name: {{ properties['compute1_partition_name'] }}
+        zone: {{ properties['zone'] }}
+        image: {{ image }}
+        image_hyperthreads: False
+        machine_type: {{ properties['compute1_machine_type'] }}
+        compute_disk_type: {{ properties['compute1_disk_type'] }}
+        compute_disk_size_gb: {{ properties['compute1_disk_size_gb'] }}
+        max_node_count: {{ properties['compute1_max_node_count'] }}
+      {% if properties['compute1_gpu_count']|int > 0 and properties['compute1_gpu_type'] != 'None' %}
+        gpu_count: {{ properties['compute1_gpu_count'] | int }}
+        gpu_type: {{ properties['compute1_gpu_type'] }}
+      {% endif %}
+        preemptible_bursting: {{ properties['compute1_preemptible'] }}
+        static_node_count: {{ properties['compute1_static_node_count'] }}
+    {% if properties['compute2_enabled'] %}
+      - name: {{ properties['compute2_partition_name'] }}
+        zone: {{ properties['zone'] }}
+        image: {{ image }}
+        image_hyperthreads: False
+        machine_type: {{ properties['compute2_machine_type'] }}
+        compute_disk_type: {{ properties['compute2_disk_type'] }}
+        compute_disk_size_gb: {{ properties['compute2_disk_size_gb'] }}
+        max_node_count: {{ properties['compute2_max_node_count'] }}
+      {% if properties['compute2_gpu_count']|int > 0 and properties['compute2_gpu_type'] != 'None' %}
+        gpu_count: {{ properties['compute2_gpu_count'] | int }}
+        gpu_type: {{ properties['compute2_gpu_type'] }}
+      {% endif %}
+        preemptible_bursting: {{ properties['compute2_preemptible'] }}
+        static_node_count: {{ properties['compute2_static_node_count'] }}
+    {% endif %}
+    {% if properties['compute3_enabled'] %}
+      - name: {{ properties['compute3_partition_name'] }}
+        zone: {{ properties['zone'] }}
+        image: {{ image }}
+        image_hyperthreads: False
+        machine_type: {{ properties['compute3_machine_type'] }}
+        compute_disk_type: {{ properties['compute3_disk_type'] }}
+        compute_disk_size_gb: {{ properties['compute3_disk_size_gb'] }}
+        max_node_count: {{ properties['compute3_max_node_count'] }}
+      {% if properties['compute3_gpu_count']|int > 0 and properties['compute3_gpu_type'] != 'None' %}
+        gpu_count: {{ properties['compute3_gpu_count'] | int }}
+        gpu_type: {{ properties['compute3_gpu_type'] }}
+      {% endif %}
+        preemptible_bursting: {{ properties['compute3_preemptible'] }}
+        static_node_count: {{ properties['compute3_static_node_count'] }}
+    {% endif %}
+
+outputs:
+  - name: deployment
+    value: {{ env['deployment'] }}
+  - name: project
+    value: {{ env['project'] }}
+  - name: network
+    value: {{ networks[0] }}
+  - name: cluster
+    value: $(ref.{{ properties['cluster_name'] }})
+  - name: controller-name
+    value: $(ref.{{ properties['cluster_name'] }}.controller-name)
+  - name: controller-ip
+    value: $(ref.{{ properties['cluster_name'] }}.controller-ip)
+  - name: controller-link
+    value: $(ref.{{ properties['cluster_name'] }}.controller-link)
+  - name: login-name
+    value: $(ref.{{ properties['cluster_name'] }}.login0-name)
+  - name: login-ip
+    value: $(ref.{{ properties['cluster_name'] }}.login0-ip)
+  - name: login-link
+    value: $(ref.{{ properties['cluster_name'] }}.login0-link)

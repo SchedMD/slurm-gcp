@@ -49,6 +49,16 @@ variable "boot_disk_type" {
   default     = "pd-standard"
 }
 
+variable "image" {
+  description = "Disk OS image (with Slurm) path for controller instance"
+}
+
+variable "instance_template" {
+  description = "Instance template to use to create controller instance"
+  type        = string
+  default     = null
+}
+
 variable "labels" {
   description = "Labels to add to controller instance. List of key key, value pairs."
   type        = any
@@ -89,11 +99,11 @@ variable "disable_compute_public_ips" {
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
 }
 
@@ -107,20 +117,20 @@ variable "munge_key" {
   default     = null
 }
 
+variable "jwt_key" {
+  description = "Specific libjwt key to use"
+  default     = null
+}
+
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
-}
-
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
 }
 
 variable "partitions" {
@@ -130,6 +140,8 @@ variable "partitions" {
     machine_type         = string,
     max_node_count       = number,
     zone                 = string,
+    image                = string,
+    image_hyperthreads   = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,
@@ -137,13 +149,18 @@ variable "partitions" {
     gpu_type             = string,
     gpu_count            = number,
     network_storage = list(object({
-      server_ip     = string,
-      remote_mount  = string,
-      local_mount   = string,
-      fs_type       = string,
-      mount_options = string})),
+      server_ip    = string,
+      remote_mount = string,
+      local_mount  = string,
+      fs_type      = string,
+    mount_options = string })),
     preemptible_bursting = bool,
     vpc_subnet           = string,
+    exclusive            = bool,
+    enable_placement     = bool,
+    regional_capacity    = bool,
+    regional_policy      = any,
+    instance_template    = string,
   static_node_count = number }))
 }
 
@@ -166,17 +183,12 @@ variable "scopes" {
 variable "service_account" {
   description = "Service Account for the controller"
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "shared_vpc_host_project" {
   type    = string
   default = null
-}
-
-variable "slurm_version" {
-  description = "The Slurm version to install. The version should match the link name found at https://www.schedmd.com/downloads.php"
-  default     = "19.05-latest"
 }
 
 variable "subnet_depend" {
@@ -202,9 +214,9 @@ variable "zone" {
 }
 
 output "controller_node_name" {
-  value = google_compute_instance.controller_node.name
+  value = var.instance_template == null ? google_compute_instance.controller_node[0].name : google_compute_instance_from_template.controller_node[0].name
 }
 
 output "instance_network_ips" {
-  value = ["${google_compute_instance.controller_node.*.network_interface.0.network_ip}"]
+  value = [google_compute_instance.controller_node.*.network_interface.0.network_ip]
 }

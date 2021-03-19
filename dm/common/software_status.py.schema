@@ -1,0 +1,17 @@
+imports: []
+
+properties:
+  timeout:
+    type: integer
+  waiterDependsOn:
+    type: array
+  successNumber:
+    type: integer
+  failureNumber:
+    type: integer
+
+outputs:
+  config-url:
+    type: string
+  variable-path:
+    type: string

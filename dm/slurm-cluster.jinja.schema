@@ -22,28 +22,50 @@ info:
     Create a Slurm cluster in GCP.
 
 imports:
-- path: scripts/compute-shutdown
-- path: scripts/custom-compute-install
-- path: scripts/custom-controller-install
-- path: scripts/resume.py
-- path: scripts/slurmsync.py
-- path: scripts/startup.sh
-- path: scripts/setup.py
-- path: scripts/suspend.py
-- path: scripts/util.py
-- path: etc/slurm.conf.tpl
-- path: etc/slurmdbd.conf.tpl
-- path: etc/cgroup.conf.tpl
-- path: etc/controller-fluentd.conf.tpl
-- path: etc/compute-fluentd.conf.tpl
+- name: common.py
+  path: common/common.py
+- name: default.py
+  path: common/default.py
+- name: password.py
+  path: common/password.py
+- name: path_utils.jinja
+  path: common/path_utils.jinja
+- name: vm_instance.py
+  path: common/vm_instance.py
+- name: custom-compute-install
+  path: scripts/custom-compute-install
+- name: custom-controller-install
+  path: scripts/custom-controller-install
+- name: resume.py
+  path: scripts/resume.py
+- name: slurmsync.py
+  path: scripts/slurmsync.py
+- name: startup.sh
+  path: scripts/startup.sh
+- name: setup.py
+  path: scripts/setup.py
+- name: suspend.py
+  path: scripts/suspend.py
+- name: util.py
+  path: scripts/util.py
+- name: slurm.conf.tpl
+  path: etc/slurm.conf.tpl
+- name: slurmdbd.conf.tpl
+  path: etc/slurmdbd.conf.tpl
+- name: cgroup.conf.tpl
+  path: etc/cgroup.conf.tpl
+- name: controller-fluentd.conf.tpl
+  path: etc/controller-fluentd.conf.tpl
+- name: compute-fluentd.conf.tpl
+  path: etc/compute-fluentd.conf.tpl
 
 required:
 - cluster_name
+- controller_image
 - controller_machine_type
-- compute_image_machine_type
+- login_image
 - login_machine_type
 - private_google_access
-- slurm_version
 - zone
 
 optional:
@@ -58,9 +80,8 @@ optional:
 - controller_secondary_disk_size_gb
 - compute_node_scopes
 - compute_node_service_account
-- compute_image_disk_size_gb
-- compute_image_disk_type
-- compute_image_labels
+- external_controller_ip
+- external_login_ips
 - external_compute_ips
 - login_disk_size_gb
 - login_disk_type
@@ -71,13 +92,14 @@ optional:
 - login_node_service_account
 - munge_key
 - network_storage
-- ompi_version
 - shared_vpc_host_project
 - suspend_time
 - vpc_net
 - vpc_subnet
 
 properties:
+  name:
+    type: string
 
   cluster_name:
     type        : string
@@ -112,6 +134,10 @@ properties:
         description   : Database name, defaults to <cluster_name>-slurm_acct_db
 
 
+  controller_image:
+    type        : string
+    description : Slurm image to boot the controller
+
   controller_machine_type:
     type        : string
     description : Machine type to use for the controller instance.
@@ -130,8 +156,8 @@ properties:
     description : Size of disk for the controller.
 
   controller_labels:
-    type        : object
-    default     : {}
+    type        : array
+    default     : []
     description : Labels to add to controller instance. List of key key, value
                   pairs.
 
@@ -165,29 +191,6 @@ properties:
     maximum     : 64000
     description : Size of disk for the secondary disk.
 
-  compute_image_machine_type:
-    type        : string
-    description : Machine type to use for compute node image instance.
-                  eg. n1-standard-4.
-
-  compute_image_disk_type:
-    enum        : ["pd-ssd", "pd-standard"]
-    default     : pd-standard
-    description : Disk type (pd-ssd or pd-standard) for compute node image.
-
-  compute_image_disk_size_gb:
-    type        : integer
-    default     : 20
-    minimum     : 20
-    maximum     : 2000
-    description : Size of disk for compute node image.
-
-  compute_image_labels:
-    type        : object
-    default     : {}
-    description : Labels to add to the compute node image. List of key key,
-                  value pairs.
-
   compute_node_scopes:
     type        : array
     default     : ["https://www.googleapis.com/auth/monitoring.write", "https://www.googleapis.com/auth/logging.write"]
@@ -219,6 +222,10 @@ properties:
     description : Whether compute nodes are assigned external IPs or not. Sets up Cloud NAT
                   if false.
 
+  login_image:
+    type        : string
+    description : Slurm image to boot the login nodes
+
   login_machine_type:
     type        : string
     description : Machine type to use for login node instances, eg.
@@ -230,8 +237,8 @@ properties:
     description : Disk type (pd-ssd or pd-standard) for login node.
 
   login_labels:
-    type        : object
-    default     : {}
+    type        : array
+    default     : []
     description : Labels to add to login instances. List of key key, value
                   pairs.
 
@@ -312,6 +319,12 @@ properties:
                   (e.g "date +%s | sha512sum | cut -d' ' -f1"). If not specified
                   then a random key will be generated at deployment creation.
 
+  jwt_key:
+    type        : string
+    description : Specific JWT key to use
+                  (e.g "dd if=/dev/urandom bs=32 count=1"). If not specified
+                  then a random key will be generated at deployment creation.
+
   network_storage:
     type        : array
     default     : []
@@ -326,6 +339,11 @@ properties:
     description : Version/branch of OpenMPI to install with Slurm/PMI support.
                   Allows mpi programs to be run with srun.
 
+  libjwt_version  :
+    type        : string
+    enum        : ["v1.12.0"]
+    description : Version/branch of libjwt to install.
+
   private_google_access:
     type        : boolean
     default     : True
@@ -337,15 +355,6 @@ properties:
                   to. Default service account and APIs service agent must be
                   granted "Network User" role in host project. Requires external
                   IPs or Cloud NAT configured in host project.
-
-  slurm_version:
-    type        : string
-    default     : 19.05-latest
-    description : The Slurm version to install. The version should match link
-                  name found at https://www.schedmd.com/downloads.php. The
-                  version can also be in the form "b:<branch name>", where
-                  <branch name> is a branch in
-                  https://github.com/schedmd/slurm.
 
   suspend_time:
     type        : integer
@@ -362,11 +371,13 @@ properties:
 
   vpc_net:
     type        : string
+    default     : default
     description : The name of the pre-defined VPC network you want the nodes
                   to attach to based on Region.
 
   vpc_subnet:
     type        : string
+    default     : default
     description : The name of the pre-defined VPC subnet you want the nodes
                   to attach to based on Region.
 
@@ -380,24 +391,37 @@ properties:
     items:
       type: object
       required :
+      - image
       - machine_type
       - name
       - max_node_count
       - zone
       optional :
+      - image_hyperthreads
       - compute_disk_type
       - compute_disk_size_gb
       - compute_labels
-      - compute_image_family
-      - compute_image_family_project
       - cpu_platform
+      - enable_placement
+      - exclusive
       - gpu_type
       - gpu_count
       - preemptible_bursting
+      - vpc_subnet
+      - regional_capacity
+      - regional_policy
       - static_node_count
-      - zone
       - network_storage
       properties :
+
+        image:
+          type      : string
+          description : Image with Slurm to use for this partition's compute nodes
+
+        image_hyperthreads:
+          type      : boolean
+          default   : True
+          description : Image with Slurm to use for this partition's compute nodes
 
         machine_type:
           type        : string
@@ -417,21 +441,10 @@ properties:
           description : Size of disk for compute nodes.
 
         compute_labels:
-          type        : object
-          default     : {}
+          type        : array
+          default     : []
           description : Labels to add to compute instances. List of key key, value
                         pairs.
-
-        compute_image_family:
-          type        : string
-          description : Image family name to use to find the base image for instances
-                        from this partition. Specify when using an alternate image to
-                        the generated one.
-
-        compute_image_family_project:
-          type        : string
-          description : Project that compute_image_family is found in.
-                        Default is current project.
 
         cpu_platform:
           enum        :
@@ -442,8 +455,20 @@ properties:
                       - Intel Skylake
           description : Minimum Intel Platform for Compute Nodes to Use
 
+        enable_placement:
+          type        : boolean
+          default     : False
+          description : Whether C2 instances in this partition should use
+                        placement groups. Implies exclusive option.
+
+        exclusive:
+          type        : boolean
+          default     : False
+          description : Exclusive job access to nodes.
+
         gpu_type:
           enum        :
+                      - none
                       - nvidia-tesla-k80
                       - nvidia-tesla-p100
                       - nvidia-tesla-v100
@@ -475,6 +500,23 @@ properties:
                         not. Make sure to choose a zone that has preemptible
                         resources.
 
+        vpc_subnet:
+          type        : string
+          default     : default
+          description : The name of the pre-defined VPC subnet you want the nodes
+                        to attach to based on Region.
+
+        regional_capacity:
+          type        : boolean
+          default     : False
+          description : If True, then create instances in the region that has
+                        available capacity. Specify the region in the zone
+                        field.
+
+        regional_policy:
+          type        : object
+          default     : {}
+          description : locationPolicy defintion for regional bulkInsert().
 
         static_node_count:
           type        : integer

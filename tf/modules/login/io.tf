@@ -23,6 +23,17 @@ variable "boot_disk_type" {
   default     = "pd-standard"
 }
 
+variable "image" {
+  description = "Disk OS image with Slurm preinstalled to use for login node"
+  type        = string
+}
+
+variable "instance_template" {
+  description = "Instance template to use to create controller instance"
+  type        = string
+  default     = null
+}
+
 variable "cluster_name" {
   description = "Name of the cluster"
   type        = string
@@ -53,11 +64,11 @@ variable "labels" {
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
 }
 
@@ -74,22 +85,17 @@ variable "munge_key" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip     = string,
-    remote_mount  = string,
-    local_mount   = string,
-    fs_type       = string,
-    mount_options = string}))
+    server_ip    = string,
+    remote_mount = string,
+    local_mount  = string,
+    fs_type      = string,
+  mount_options = string }))
   default = []
 }
 
 variable "node_count" {
   description = "Number of login nodes in the cluster"
   default     = 1
-}
-
-variable "ompi_version" {
-  description = "Version/branch of OpenMPI to install with Slurm/PMI support. Allows mpi programs to be run with srun."
-  default     = null
 }
 
 variable "region" {
@@ -100,7 +106,7 @@ variable "region" {
 variable "scopes" {
   description = "Scopes to apply to login nodes."
   type        = list(string)
-  default     = [
+  default = [
     "https://www.googleapis.com/auth/monitoring.write",
     "https://www.googleapis.com/auth/logging.write"
   ]
@@ -109,7 +115,7 @@ variable "scopes" {
 variable "service_account" {
   description = "Service Account for compute nodes."
   type        = string
-  default     = "default"
+  default     = null
 }
 
 variable "shared_vpc_host_project" {
@@ -135,5 +141,5 @@ variable "zone" {
 }
 
 output "instance_network_ips" {
-  value = ["${google_compute_instance.login_node.*.network_interface.0.network_ip}"]
+  value = [google_compute_instance.login_node.*.network_interface.0.network_ip]
 }
