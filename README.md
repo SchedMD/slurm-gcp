@@ -1,15 +1,9 @@
 # Slurm on Google Cloud Platform
 
-**NOTE: This will be the last release supporting Deployment Manager. Please
-migrate your workflows to Terraform (found in the tf folder). All future
-features / functionality will be integrated with Terraform.**
-
 The following describes setting up a Slurm cluster using [Google Cloud
 Platform](https://cloud.google.com), bursting out from an on-premise cluster to
 nodes in Google Cloud Platform and setting a multi-cluster/federated setup with
 a cluster that resides in Google Cloud Platform.
-
-Also, checkout the [Slurm on GCP code lab](https://codelabs.developers.google.com/codelabs/hpc-slurm-on-gcp/).
 
 The supplied scripts can be modified to work with your environment.
 
@@ -27,9 +21,9 @@ Also, join comunity discussions on either the
 # Contents
 
 * [Stand-alone Cluster in Google Cloud Platform](#stand-alone-cluster-in-google-cloud-platform)
-  * [Install using Deployment Manager](#install-using-deployment-manager)
-  * [Install using Terraform (Beta)](#install-using-terraform-beta)
-  * [Image-based Scaling](#image-based-scaling)
+  * [Install using GCP Marketplace](#install-using-gcp-marketplace)
+  * [Install using Terraform](#install-using-terraform)
+	* [Defining network storage mounts](#defining-network-storage-mounts)
   * [Installing Custom Packages](#installing-custom-packages)
   * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
   * [OS Login](#os-login)
@@ -41,7 +35,6 @@ Also, join comunity discussions on either the
 * [Multi-Cluster / Federation](#multi-cluster-federation)
 * [Troubleshooting](#troubleshooting)
 
-
 ## Stand-alone Cluster in Google Cloud Platform
 
 The supplied scripts can be used to create a stand-alone cluster in Google Cloud
@@ -52,88 +45,19 @@ Platform. The scripts setup the following scenario:
 * Multiple partitions with their own machine type, gpu type/count, disk size,
   disk type, cpu platform, and maximum node count.
 
+Instances are created from images with Slurm and dependencies preinstalled. The default,
+`schedmd-slurm-public/schedmd-slurm-20-11-4-hpc-centos-7`, is based on the
+Google-provided HPC-optimized CentOS 7 image.
 
-The default image for the instances is CentOS 7.
+By default, `/apps` and `/home` are mounted from the controller across all instances
+in the cluster. These can be overwritten, and any other controller paths or
+external mounts can be added.
 
-On the controller node, slurm is installed in:
-/apps/slurm/<slurm_version>
-with the symlink /apps/slurm/current pointing to /apps/slurm/<slurm_version>.
+### Install using GCP Marketplace
 
-The login nodes mount /apps and /home from the controller node.
+See the following [page](MP_README.md) for Marketplace instructions.
 
-
-### Install using Deployment Manager
-
-To deploy, you must have a GCP account and either have the
-[GCP Cloud SDK](https://cloud.google.com/sdk/downloads)
-installed on your computer or use the GCP
-[Cloud Shell](https://cloud.google.com/shell/).
-
-Steps:
-1. Edit the `slurm-cluster.yaml` file and specify the required values
-
-   **NOTE:** For a complete list of available options and their definitions,
-   check out the [schema file](slurm.jinja.schema).
-
-2. Spin up the cluster.
-
-   Assuming that you have gcloud configured for your account, you can just run:
-
-   ```
-   $ gcloud deployment-manager deployments [--project=<project id>] create slurm --config slurm-cluster.yaml
-   ```
-
-3. Check the cluster status.
-
-   You can see that status of the deployment by viewing:
-   https://console.cloud.google.com/deployments
-
-   and viewing the new instances:
-   https://console.cloud.google.com/compute/instances
-
-   To verify the deployment, ssh to the login node and run `sinfo` to see how
-   many nodes have registered and are in an idle state.
-
-   A message will be broadcast to the terminal when the installation is
-   complete. If you log in before the installation is complete, you will either
-   need to re-log in after the installation is complete or start a new shell
-   (e.g. /bin/bash) to get the correct bash profile.
-
-   ```
-   $ gcloud compute [--project=<project id>] ssh [--zone=<zone>] g1-login0
-   ...
-   [bob@g1-login0 ~]$ sinfo
-   PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
-   debug*       up   infinite      8  idle~ g1-compute-0-[1-9]
-   debug*       up   infinite      2   idle g1-compute-0-[0-1]
-   ```
-
-   **NOTE:** By default, Slurm will hide nodes that are in a power_save state --
-   "cloud" nodes. The GCP Slurm scripts configure **PrivateData=cloud** in the
-   slurm.conf so that the "cloud" nodes are always shown. This is done so that
-   nodes that get marked down can be easily seen.
-
-4. Submit jobs on the cluster.
-
-   ```
-   [bob@g1-login0 ~]$ sbatch -N2 --wrap="srun hostname"
-   Submitted batch job 2
-   [bob@g1-login0 ~]$ cat slurm-2.out
-   g1-compute-0-0
-   g1-compute-0-1
-   ```
-
-5. Tearing down the deployment.
-
-   ```
-   $ gcloud deployment-manager [--project=<project id>] deployments delete slurm
-   ```
-
-   **NOTE:** If additional resources (instances, networks) are created other
-   than the ones created from the default deployment then they will need to be
-   destroyed before deployment can be removed.
-
-### Install using Terraform (Beta)
+### Install using Terraform
 
 To deploy, you must have a GCP account and either have the
 [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) and
@@ -143,13 +67,16 @@ installed on your computer or use the GCP
 
 Steps:
 1. cd to tf/examples/basic
-2. Edit the `basic.tfvars` file and specify the required values
-3. Deploy the cluster
+2. Copy `basic.tfvars.example` to `basic.tfvars`
+3. Edit `basic.tfvars` with the required configuration  
+	See the [tf/examples/basic/io.tf](tf/examples/basic/io.tf)
+	file for more detailed information on available configuration options.
+4. Deploy the cluster
    ```
    $ terraform init
    $ terraform apply -var-file=basic.tfvars
    ```
-4. Tearing down the cluster
+5. Tearing down the cluster
 
    ```
    $ terraform destroy -var-file=basic.tfvars
@@ -157,39 +84,40 @@ Steps:
 
    **NOTE:** If additional resources (instances, networks) are created other
    than the ones created from the default deployment then they will need to be
-   destroyed before deployment can be removed.
+   destroyed before deployment can be removed. This includes bursted instances
+   that Slurm has not yet suspended.
 
-### Image-based Scaling
-   The deployment will create a <cluster_name>-compute-\#-image instance, where
-   \# is the index in the array of partitions, for each partition that is a base
-   compute instance image. After installing necessary packages, the instance
-   will be stopped and an image of the instance will be created. Subsequent
-   bursted compute instances will use this image -- shortening the creation and
-   boot time of new compute instances. While the compute image is running, the
-   respective partitions will be marked as "down" to prevent jobs from
-   launching until the image is created. After the image is created, the
-   partition will be put into an "up" state and jobs can then run.
+#### Defining network storage mounts
+There are 3 types of network storage sections that can be provided to the TF
+modules: `network_storage`, `login_network_storage`, and
+`partitions[].network_storage`.
+* `network_storage` is mounted on all instances in the cluster.
+* `login_network_storage` is mounted on the controller and all login nodes.
+* `partitions[].network_storage` is mounted on compute instances within the
+specified partition.
 
-   **NOTE:** When creating a compute image that has gpus attached, the process
-   can take about 10 minutes.
+All of these have the same 5 fields: 
+* `server_ip`
+* `remote_mount`
+* `local_mount`
+* `fs_type`
+* `mount_options`
 
-   If the compute image needs to be updated, it can be done with the following
-   command:
-   ```
-   $ gcloud compute images create <cluster_name>-compute-#-image-$(date '+%Y-%m-%d-%H-%M-%S') \
-                                  --source-disk <instance name> \
-                                  --source-disk-zone <zone> --force \
-                                  --family <cluster_name>-compute-#-image-family
-   ```
+`server_ip` has one special value: `$controller`. This indicates that the mount is
+on the controller, so the `remote_mount` path will be exported, and the `server_ip`
+will be replaced with the correct hostname so all other instances can properly
+access the mount.
 
-   Existing images can be viewed on the console's [Images](https://console.cloud.google.com/compute/images)
-   page.
+`fs_type` can be one of: `nfs`, `cifs`, `lustre`, `gcsfuse`
 
 ### Installing Custom Packages
    There are two files, *custom-controller-install* and *custom-compute-install*, in
    the scripts directory that can be used to add custom installations for the
    given instance type. The files will be executed during startup of the
    instance types.
+
+   Since the custom install scripts must be run when starting bursted nodes,
+   long-running customizations should be added in a custom image instead.
 
 ### Accessing Compute Nodes Directly
 
@@ -284,18 +212,17 @@ able to communicate with the controller.
    https://cloud.google.com/dns/zones/#peering-zones  
 
 * Use IP addresses with NodeAddr
-   1. disable cloud_dns in *slurm.conf*
-   2. disable hierarchical communication in *slurm.conf*: `TreeWidth=65533`
-   3. set `update_node_addrs` to `true` in *config.yaml*
+   1. disable [cloud_dns](https://slurm.schedmd.com/slurm.conf.html#OPT_cloud_dns) in *slurm.conf*
+   2. add SlurmctldParameters=[cloud_reg_addrs](https://slurm.schedmd.com/slurm.conf.html#OPT_cloud_reg_addrs) in *slurm.conf*
+   3. disable hierarchical communication in *slurm.conf*: `TreeWidth=65533`
    4. add controller's ip address to /etc/hosts on compute image
 
 ### Configuration Steps
 1. Create a base instance
 
    Create a bare image and install and configure the packages (including Slurm)
-   that you are used to for a Slurm compute node. Then create an image
-   from it creating a family either in the form
-   "<cluster_name>-compute-#-image-family" or in a name of your choosing.
+   that you are used to for a Slurm compute node. Then [create an image](https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images)
+   of the base image. It's recommended to create the image in a family.
 
 2. Create a [service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
    and [service account key](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account)
@@ -303,16 +230,14 @@ able to communicate with the controller.
 
 3. Install scripts
 
-   Install the *resume.py*, *suspend.py*, *slurmsync.py* and
-   *config.yaml.example* from the slurm-gcp repository's scripts directory to a
+   Install the *resume.py*, *suspend.py*, *slurmsync.py*, *util.py* and
+   *config.yaml.example* from the slurm-gcp repository's [scripts](scripts) directory to a
    location on the slurmctld. Rename *config.yaml.example* to *config.yaml* and
    modify the approriate values.  
 
    Add the path of the service account key to *google_app_cred_path* in *config.yaml*.
    
-   Add the compute_image_family to each partition if different than the naming
-   schema, "<cluster_name>-compute-#-image-family".
-
+   Add the image URL (path to the image or family) to each instance defintion.
 
 4. Modify slurm.conf:
 
