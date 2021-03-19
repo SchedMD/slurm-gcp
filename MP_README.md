@@ -1,3 +1,4 @@
+<pre>
 # Google Cloud Marketplace 
 
 ## Deploying
@@ -50,4 +51,4 @@ When the deployment is complete, you should see the following:
    * View the new compute nodes added on the Console.
    
    ![](./img/market-screen9.png)
-
+</pre>
