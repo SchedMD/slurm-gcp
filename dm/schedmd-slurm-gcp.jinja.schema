@@ -89,6 +89,7 @@ optional:
 properties:
   cluster_name:
     type        : string
+    pattern     : '^[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?$'
     description : Name of the cluster
 
   zone:
@@ -203,6 +204,19 @@ properties:
       gceDiskSize:
         diskTypeProperty: controller_disk_type
 
+  controller_access:
+    enum:
+      - Default access
+      - Full Cloud API access
+      - Custom scopes
+    default: Default access
+    description: Select a predetermined set of scopes or define your own
+
+  controller_custom_scopes:
+    type: string
+    default: ""
+    description: Comma-separated list of custom scopes to give to the controller service account
+
   login_machine_type:
     type        : string
     default     : n1-standard-2
@@ -237,11 +251,37 @@ properties:
     description : Labels to add to login instances. List of key key, value
                   pairs.
 
+  login_access:
+    enum:
+      - Default access
+      - Full Cloud API access
+      - Custom scopes
+    default: Default access
+    description: Select a predetermined set of scopes or define your own
+
+  login_custom_scopes:
+    type: string
+    default: ""
+    description: Comma-separated list of custom scopes to give to the login service account
+
   suspend_time:
     type        : integer
     default     : 300
     minimum     : 300
     description : Idle time to wait before nodes are decommissioned (in sec)
+
+  compute_node_access:
+    enum:
+      - Default access
+      - Full Cloud API access
+      - Custom scopes
+    default: Default access
+    description: Select a predetermined set of scopes or define your own
+
+  compute_node_custom_scopes:
+    type: string
+    default: ""
+    description: Comma-separated list of custom scopes to give to the login service account
 
   compute1_partition_name:
     type        : string
