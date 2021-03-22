@@ -54,10 +54,6 @@ imports:
   path: etc/slurmdbd.conf.tpl
 - name: cgroup.conf.tpl
   path: etc/cgroup.conf.tpl
-- name: controller-fluentd.conf.tpl
-  path: etc/controller-fluentd.conf.tpl
-- name: compute-fluentd.conf.tpl
-  path: etc/compute-fluentd.conf.tpl
 
 required:
 - cluster_name

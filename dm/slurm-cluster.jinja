@@ -121,9 +121,6 @@ resources:
         - key: cgroup_conf_tpl
           value: |
             {{ imports['cgroup.conf.tpl']|indent(12) }}
-        - key: fluentd_conf_tpl
-          value: |
-            {{ imports['controller-fluentd.conf.tpl']|indent(12) }}
 
 
 {% for n in range(properties['login_node_count']) %}
@@ -250,9 +247,6 @@ resources:
         - key: custom-compute-install
           value: |
             {{ imports['custom-compute-install']|indent(12) }}
-        - key: fluentd_conf_tpl
-          value: |
-            {{ imports['compute-fluentd.conf.tpl']|indent(12) }}
 {% endfor %}
 
 {% endfor %}
