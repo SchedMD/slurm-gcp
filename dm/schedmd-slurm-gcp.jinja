@@ -56,7 +56,7 @@ resources:
     login_disk_type: {{ properties['login_disk_type'] }}
     login_disk_size_gb: {{ properties['login_disk_size_gb'] }}
   {% if properties['login_access'] == 'Default access' %}
-    login_scopes: [
+    login_node_scopes: [
         "https://www.googleapis.com/auth/compute.readonly",
         "https://www.googleapis.com/auth/servicecontrol",
         "https://www.googleapis.com/auth/service.management.readonly",
@@ -66,9 +66,9 @@ resources:
         "https://www.googleapis.com/auth/devstorage.read_write",
       ]
   {% elif properties['login_access'] == 'Full Cloud API access' %}
-    login_scopes: ["https://www.googleapis.com/auth/cloud-platform"]
+    login_node_scopes: ["https://www.googleapis.com/auth/cloud-platform"]
   {% elif properties['login_access'] == 'Custom scopes' %}
-    login_scopes: {{ properties['login_custom_scopes'].split(',') }}
+    login_node_scopes: {{ properties['login_custom_scopes'].split(',') }}
   {% endif %}
 
     suspend_time: {{ properties['suspend_time'] }}
