@@ -112,12 +112,17 @@ access the mount.
 `fs_type` can be one of: `nfs`, `cifs`, `lustre`, `gcsfuse`
 
 ### Preinstalled modules: OpenMPI
-OpenMPI comes preinstalled as a module. To see available modules and activate the
-openmpi environment, run
+OpenMPI has been compiled to work with Slurm's srun. e.g.
 ```
-$ module avail
 $ module load openmpi
 $ which mpicc
+/apps/ompi/v4.1.x/bin/mpicc
+$ mpicc mpi_hello_world.c
+$ srun -N4 a.out
+Hello world from processor g1-compute-0-0, rank 0 out of 4 processors
+Hello world from processor g1-compute-0-3, rank 3 out of 4 processors
+Hello world from processor g1-compute-0-1, rank 1 out of 4 processors
+Hello world from processor g1-compute-0-2, rank 2 out of 4 processors
 ```
 
 ### Installing Custom Packages
