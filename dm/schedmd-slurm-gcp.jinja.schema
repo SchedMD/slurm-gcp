@@ -149,12 +149,13 @@ properties:
     default       : ''
     description   : IP of the remote file server. '$controller' here will nfs
                     mount a directory from the controller across the cluster.
-                    For gcsfuse, use the name of the bucket.
+                    'gcsfuse' for gcsfuse.
 
   netstore_remote_mount:
     type          : string
     default       : ''
     description   : Remote mount directory of the remote file server.
+                    For gcsfuse, use the name of the bucket with no leading slash
 
   netstore_local_mount:
     type          : string
