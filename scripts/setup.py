@@ -648,7 +648,7 @@ def setup_controller():
     mount_fstab()
 
     try:
-        util.run(str(dirs.scripts/'slurm/scripts/custom-controller-install'))
+        util.run(str(dirs.scripts/'custom-controller-install'))
     except Exception:
         # Ignore blank files with no shell magic.
         pass
@@ -705,7 +705,7 @@ def setup_login():
     util.run("systemctl restart munge")
 
     try:
-        util.run(str(dirs.scripts/'slurm/scripts/custom-compute-install'))
+        util.run(str(dirs.scripts/'custom-compute-install'))
     except Exception:
         # Ignore blank files with no shell magic.
         pass
@@ -732,7 +732,7 @@ def setup_compute():
     util.run("systemctl start slurmd")
 
     try:
-        util.run(str(dirs.scripts/'slurm/scripts/custom-compute-install'))
+        util.run(str(dirs.scripts/'custom-compute-install'))
     except Exception:
         # Ignore blank files with no shell magic.
         pass
