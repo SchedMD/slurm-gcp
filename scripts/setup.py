@@ -148,7 +148,7 @@ def end_motd(broadcast=True):
     if cfg.instance_type != 'controller':
         util.run("""wall -n '
 /home on the controller was mounted over the existing /home.
-Either log out and log back in or cd into ~.
+Log back in to ensure your home directory is correct.
 '""")
 # END start_motd()
 
