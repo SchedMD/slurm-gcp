@@ -379,3 +379,34 @@ def get_group_operations(compute, project, operation):
             filter=f"operationGroupId={group_id}")
 
     return ensure_execute(operation)
+
+
+def get_regional_instances(compute, project, def_list):
+    """ Get instances that exist in regional capacity instance defs """
+
+    fields = 'items.zones.instances(name,zone,status),nextPageToken'
+    regional_instances = {}
+
+    region_filter = ' OR '.join(f'(name={pid}-*)' for pid, d in
+                                def_list.items() if d.regional_capacity)
+    if region_filter:
+        page_token = ""
+        while True:
+            resp = ensure_execute(
+                compute.instances().aggregatedList(
+                    project=project, filter=region_filter, fields=fields,
+                    pageToken=page_token))
+            if not resp:
+                break
+            for zone, zone_value in resp['items'].items():
+                if 'instances' in zone_value:
+                    regional_instances.update(
+                        {instance['name']: instance
+                         for instance in zone_value['instances']}
+                    )
+            if "nextPageToken" in resp:
+                page_token = resp['nextPageToken']
+                continue
+            break
+
+    return regional_instances

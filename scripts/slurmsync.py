@@ -68,10 +68,9 @@ def start_instances(compute, node_list, gcp_nodes):
         zone = cfg.instance_defs[pid].zone
 
         if cfg.instance_defs[pid].regional_capacity:
-            g_node = next((item for item in gcp_nodes if item["name"] == node),
-                          None)
+            g_node = gcp_nodes.get(node, None)
             if not g_node:
-                log.error(f"Didn't regional GCP record for '{node}'")
+                log.error(f"Didn't find regional GCP record for '{node}'")
                 continue
             zone = g_node['zone'].split('/')[-1]
 
@@ -125,29 +124,21 @@ def main():
                        map(lambda x: x.split(','), nodes.rstrip().splitlines())
                        if 'CLOUD' in args]
 
-        g_nodes = []
+        g_nodes = util.get_regional_instances(compute, cfg.project,
+                                              cfg.instance_defs)
         for pid, part in cfg.instance_defs.items():
             page_token = ""
             while True:
-                if cfg.instance_defs[pid].regional_capacity:
-                    resp = util.ensure_execute(
-                        compute.instances().aggregatedList(
-                            project=cfg.project, pageToken=page_token,
-                            filter=f'name={pid}-*'))
-                    for key, zone_value in resp['items'].items():
-                        if 'instances' in zone_value:
-                            g_nodes.extend(zone_value['instances'])
-                    if "nextPageToken" in resp:
-                        page_token = resp['nextPageToken']
-                        continue
-                else:
+                if not part.regional_capacity:
                     resp = util.ensure_execute(
                         compute.instances().list(
                             project=cfg.project, zone=part.zone,
+                            fields='items(name,zone,status),nextPageToken',
                             pageToken=page_token, filter=f"name={pid}-*"))
 
                     if "items" in resp:
-                        g_nodes.extend(resp['items'])
+                        g_nodes.update({instance['name']: instance
+                                       for instance in resp['items']})
                     if "nextPageToken" in resp:
                         page_token = resp['nextPageToken']
                         continue
@@ -158,9 +149,7 @@ def main():
         to_idle = []
         to_start = []
         for s_node, s_state in s_nodes:
-            g_node = next((item for item in g_nodes
-                           if item["name"] == s_node),
-                          None)
+            g_node = g_nodes.get(s_node, None)
             pid = util.get_pid(s_node)
 
             if (('POWER' not in s_state.flags) and

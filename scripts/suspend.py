@@ -22,6 +22,7 @@ import logging
 import os
 import sys
 import time
+from itertools import groupby
 from pathlib import Path
 
 import googleapiclient.discovery
@@ -61,6 +62,11 @@ def delete_instances(compute, node_list, arg_job_id):
         curr_batch,
         compute.new_batch_http_request(callback=delete_instances_cb))
 
+    def_list = {pid: cfg.instance_defs[pid]
+                for pid, nodes in groupby(node_list, util.get_pid)}
+    regional_instances = util.get_regional_instances(compute, cfg.project,
+                                                     def_list)
+
     for node_name in node_list:
 
         pid = util.get_pid(node_name)
@@ -68,27 +74,22 @@ def delete_instances(compute, node_list, arg_job_id):
             # Node was deleted by EpilogSlurmctld, skip for SuspendProgram
             continue
 
+        zone = None
+        if cfg.instance_defs[pid].regional_capacity:
+            instance = regional_instances.get(node_name, None)
+            if instance is None:
+                log.debug("Regional node not found. Already deleted?")
+                continue
+            zone = instance['zone'].split('/')[-1]
+        else:
+            zone = cfg.instance_defs[pid].zone
+
         if req_cnt >= TOT_REQ_CNT:
             req_cnt = 0
             curr_batch += 1
             batch_list.insert(
                 curr_batch,
                 compute.new_batch_http_request(callback=delete_instances_cb))
-
-        zone = None
-        if cfg.instance_defs[pid].regional_capacity:
-            node_find = util.ensure_execute(
-                compute.instances().aggregatedList(
-                    project=cfg.project, filter=f'name={node_name}'))
-            for key, zone_value in node_find['items'].items():
-                if 'instances' in zone_value:
-                    zone = zone_value['instances'][0]['zone'].split('/')[-1]
-                    break
-            if zone is None:
-                log.error(f"failed to find regional node '{node_name}' to delete")
-                continue
-        else:
-            zone = cfg.instance_defs[pid].zone
 
         batch_list[curr_batch].add(
             compute.instances().delete(project=cfg.project,

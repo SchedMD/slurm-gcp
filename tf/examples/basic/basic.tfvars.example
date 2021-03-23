@@ -132,10 +132,6 @@ partitions = [
   #    exclusive            = false
   #    enable_placement     = false
   #
-  #    ### NOTE ####
-  #    # regional_capacity is under development. You may see slowness in
-  #    # deleting lots of instances.
-  #    #
   #    # With regional_capacity : true, the region can be specified in the zone.
   #    # Otherwise the region will be inferred from the zone.
   #    zone = "us-central"
