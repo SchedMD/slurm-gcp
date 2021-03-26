@@ -726,16 +726,17 @@ def setup_compute():
             log.info(f"Nvidia driver not yet loaded, try {retries-n}")
             time.sleep(5)
 
-    setup_slurmd_cronjob()
-    util.run("systemctl restart munge")
-    util.run("systemctl enable slurmd")
-    util.run("systemctl start slurmd")
-
     try:
         util.run(str(dirs.scripts/'custom-compute-install'))
     except Exception:
         # Ignore blank files with no shell magic.
         pass
+
+    setup_slurmd_cronjob()
+    util.run("systemctl restart munge")
+    util.run("systemctl enable slurmd")
+    util.run("systemctl start slurmd")
+
     log.info("Done setting up compute")
 
 
