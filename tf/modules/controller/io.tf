@@ -218,5 +218,5 @@ output "controller_node_name" {
 }
 
 output "instance_network_ips" {
-  value = [google_compute_instance.controller_node.*.network_interface.0.network_ip]
+  value = google_compute_instance.controller_node.*.network_interface.0.network_ip
 }

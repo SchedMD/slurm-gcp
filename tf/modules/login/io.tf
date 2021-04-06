@@ -140,6 +140,10 @@ variable "zone" {
   default     = "us-central1-b"
 }
 
+output "names" {
+  value = google_compute_instance.login_node.*.name
+}
+
 output "instance_network_ips" {
-  value = [google_compute_instance.login_node.*.network_interface.0.network_ip]
+  value = google_compute_instance.login_node.*.network_interface.0.network_ip
 }

@@ -270,8 +270,20 @@ variable "zone" {
   type = string
 }
 
+output "zone" {
+  value = var.zone
+}
+
+output "controller_name" {
+  value = module.slurm_cluster_controller.controller_node_name
+}
+
 output "controller_network_ips" {
   value = module.slurm_cluster_controller.instance_network_ips
+}
+
+output "login_names" {
+  value = module.slurm_cluster_login.names
 }
 
 output "login_network_ips" {
