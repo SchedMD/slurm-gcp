@@ -108,7 +108,7 @@ partitions = [
   #    static_node_count    = 0
   #    max_node_count       = 20
   #    zone                 = "us-west1-b"
-  #    image                = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-3-hpc-centos-7"
+  #    image                = "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7"
   #    image_hyperthreads   = false
   #
   #    compute_disk_type    = "pd-ssd"
@@ -149,8 +149,9 @@ partitions = [
   #        }
   #    }
   #
-  #    When specifying an instance template, specified compute fields will
-  #    override the template properites.
+  #    # When specifying an instance template, specified compute fields will
+  #    # override the template properites.
   #    instance_template = "my-template"
+  #  }
 ]
 
