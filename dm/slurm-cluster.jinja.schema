@@ -393,6 +393,7 @@ properties:
       - max_node_count
       - zone
       optional :
+      - bandwidth_tier
       - image_hyperthreads
       - compute_disk_type
       - compute_disk_size_gb

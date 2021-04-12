@@ -196,6 +196,8 @@ resources:
     sourceImage: {{ part['image'] }}
     bootDiskType: {{ part['compute_disk_type'] }}
     bootDiskSizeGb: {{ part['compute_disk_size_gb'] }}
+    bandwidth_tier: {{ part['bandwidth_tier'] }}
+
     networks:
       - {{ vpc_net }}
     subnetworks:

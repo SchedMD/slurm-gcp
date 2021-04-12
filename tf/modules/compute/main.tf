@@ -35,6 +35,7 @@ locals {
         subnet = (var.partitions[pid].vpc_subnet != null
           ? var.partitions[pid].vpc_subnet
         : "${var.cluster_name}-${join("-", slice(split("-", var.partitions[pid].zone), 0, 2))}")
+        bandwidth_tier     = var.partitions[pid].bandwidth_tier
       }
     ]
   ])

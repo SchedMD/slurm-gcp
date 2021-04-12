@@ -87,6 +87,8 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             ),
         }],
 
+        'networkPerformanceConfig': {},
+
         'tags': {'items': ['compute']},
 
         'metadata': {
@@ -160,6 +162,14 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         config['networkInterfaces'][0]['accessConfigs'] = [
             {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
         ]
+
+    if instance_def.bandwidth_tier == 'not_enabled':
+        config['networkInterfaces'][0]['nicType'] = 'VirtioNet'
+    else:
+        config['networkInterfaces'][0]['nicType'] = 'gVNIC'
+
+    if instance_def.bandwidth_tier == 'tier_1_enabled':
+        config['networkPerformanceConfig']['totalEgressBandwidthTier'] = 'TIER_1'
 
     perInstanceProperties = {k: {} for k in node_list}
     body = {

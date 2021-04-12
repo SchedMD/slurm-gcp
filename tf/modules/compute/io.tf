@@ -84,6 +84,7 @@ variable "partitions" {
     regional_capacity    = bool,
     regional_policy      = any,
     instance_template    = string,
+    bandwidth_tier       = string,
   static_node_count = number }))
 }
 
