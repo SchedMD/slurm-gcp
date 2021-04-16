@@ -136,10 +136,10 @@ partitions = [
   #    # regional_capacity is under development. You may see slowness in
   #    # deleting lots of instances.
   #    #
-  #    # With regional_capacity : True, the region can be specified in the zone.
+  #    # With regional_capacity : true, the region can be specified in the zone.
   #    # Otherwise the region will be inferred from the zone.
   #    zone = "us-west1"
-  #    regional_capacity    = True
+  #    regional_capacity    = true
   #    # Optional
   #    regional_policy      = {
   #        locations = {
