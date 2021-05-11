@@ -15,6 +15,26 @@
 
 locals {
   controller_name = "${var.cluster_name}-controller"
+  config = jsonencode({
+    cloudsql                     = var.cloudsql
+    cluster_name                 = var.cluster_name
+    compute_node_scopes          = var.compute_node_scopes
+    compute_node_service_account = var.compute_node_service_account == null ? data.google_compute_default_service_account.default.email : var.compute_node_service_account
+    controller_secondary_disk    = var.secondary_disk
+    external_compute_ips         = !var.disable_compute_public_ips
+    login_network_storage        = var.login_network_storage
+    login_node_count             = var.login_node_count
+    munge_key                    = var.munge_key
+    jwt_key                      = var.jwt_key
+    network_storage              = var.network_storage
+    partitions                   = var.partitions
+    project                      = var.project
+    region                       = var.region
+    shared_vpc_host_project      = var.shared_vpc_host_project
+    suspend_time                 = var.suspend_time
+    vpc_subnet                   = var.subnetwork_name
+    zone                         = var.zone
+  })
 }
 
 resource "google_compute_disk" "secondary" {
@@ -85,27 +105,7 @@ resource "google_compute_instance" "controller_node" {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
 
-    config = jsonencode({
-      cloudsql                     = var.cloudsql
-      cluster_name                 = var.cluster_name
-      compute_node_scopes          = var.compute_node_scopes
-      compute_node_service_account = var.compute_node_service_account == null ? data.google_compute_default_service_account.default.email : var.compute_node_service_account
-      controller_secondary_disk    = var.secondary_disk
-      external_compute_ips         = !var.disable_compute_public_ips
-      login_network_storage        = var.login_network_storage
-      login_node_count             = var.login_node_count
-      munge_key                    = var.munge_key
-      jwt_key                      = var.jwt_key
-      network_storage              = var.network_storage
-      partitions                   = var.partitions
-      project                      = var.project
-      region                       = var.region
-      shared_vpc_host_project      = var.shared_vpc_host_project
-      suspend_time                 = var.suspend_time
-      vpc_subnet                   = var.subnetwork_name
-      zone                         = var.zone
-    })
-
+    config = local.config
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
     custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
     custom-controller-install = file("${path.module}/../../../scripts/custom-controller-install")
@@ -181,27 +181,7 @@ resource "google_compute_instance_from_template" "controller_node" {
   metadata = {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
-
-    config = jsonencode({
-      cloudsql                     = var.cloudsql
-      cluster_name                 = var.cluster_name
-      compute_node_scopes          = var.compute_node_scopes
-      compute_node_service_account = var.compute_node_service_account == null ? data.google_compute_default_service_account.default.email : var.compute_node_service_account
-      controller_secondary_disk    = var.secondary_disk
-      external_compute_ips         = !var.disable_compute_public_ips
-      login_network_storage        = var.login_network_storage
-      login_node_count             = var.login_node_count
-      munge_key                    = var.munge_key
-      jwt_key                      = var.jwt_key
-      network_storage              = var.network_storage
-      partitions                   = var.partitions
-      project                      = var.project
-      region                       = var.region
-      shared_vpc_host_project      = var.shared_vpc_host_project
-      suspend_time                 = var.suspend_time
-      vpc_subnet                   = var.subnetwork_name
-      zone                         = var.zone
-    })
+	config = local.config
 
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
     custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
