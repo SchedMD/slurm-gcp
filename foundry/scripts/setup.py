@@ -387,21 +387,16 @@ def install_apps():
     install_gcsfuse()
     install_cuda()
 
-    # install stackdriver monitoring and logging
-    add_mon_script = Path('/tmp/add-monitoring-agent-repo.sh')
-    add_mon_url = f'https://dl.google.com/cloudagents/{add_mon_script.name}'
-    urllib.request.urlretrieve(add_mon_url, add_mon_script)
-    util.run(f"bash {add_mon_script}")
-    cfg.update()
-    util.run(f"{cfg.pacman} install -y stackdriver-agent")
+    def install_agent(script):
+        url = f'https://dl.google.com/cloudagents/{script.name}'
+        urllib.request.urlretrieve(url, script)
+        util.run(f"bash {script} --also-install")
 
-    add_log_script = Path('/tmp/install-logging-agent.sh')
-    add_log_url = f'https://dl.google.com/cloudagents/{add_log_script.name}'
-    urllib.request.urlretrieve(add_log_url, add_log_script)
-    util.run(f"bash {add_log_script}")
+    scripts = SCRIPTSDIR
+    for agent in ('add-monitoring-agent-repo.sh',
+                  'add-logging-agent-repo.sh',):
+        install_agent(scripts/agent)
     install_slurmlog_conf()
-
-    util.run("systemctl enable stackdriver-agent google-fluentd")
 
 
 def install_compiled_apps():
