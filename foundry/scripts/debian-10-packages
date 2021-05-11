@@ -7,12 +7,16 @@ gcc
 git
 hwloc
 iputils-ping
+keyboard-configuration
 libcurl4-gnutls-dev
 libevent-dev
 libgtk2.0-dev
 libhdf5-dev
+libhttp-parser-dev
 libhwloc-dev
 libibumad-dev
+libjansson-dev
+libjson-c-dev
 libjwt-dev
 liblua5.3-dev
 libmariadb-dev
@@ -31,6 +35,7 @@ libyaml-dev
 linux-headers-$(uname -r)
 lmod
 lua5.3
+lynx
 man2html
 mariadb-server
 munge
