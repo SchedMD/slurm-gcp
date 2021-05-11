@@ -539,7 +539,8 @@ ConditionPathExists={slurmdirs.etc}/slurm.conf
 Type=simple
 EnvironmentFile=-/etc/sysconfig/slurmrestd
 Environment="SLURM_JWT=daemon"
-ExecStart={dirs.install}/sbin/slurmrestd $SLURMRESTD_OPTIONS 0.0.0.0:80
+Environment="SLURMRESTD_BINDS=localhost:8383 0.0.0.0:6820 :::8620"
+ExecStart={dirs.install}/sbin/slurmrestd $SLURMRESTD_OPTIONS $SLURMRESTD_BINDS
 ExecReload=/bin/kill -HUP $MAINPID
 
 [Install]
