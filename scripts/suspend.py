@@ -169,6 +169,9 @@ def main(arg_nodes, arg_job_id):
         for operation in operations.values():
             try:
                 util.wait_for_operation(compute, cfg.project, operation)
+                # now that the instance is gone, resume to put back in service
+                util.run(
+                    f"{SCONTROL} update node={arg_nodes} state=resume")
             except Exception:
                 log.exception(f"Error in deleting {operation['name']} to slurm")
 
