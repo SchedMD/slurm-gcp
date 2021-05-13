@@ -327,12 +327,12 @@ properties:
 
   compute1_gpu_type:
     type        : string
-    default     : None
-    description : GPU Type to attach to static nodes.
+    description : GPU Type
     x-googleProperty:
       type: GCE_GPU_TYPE
       gceGpuType:
         machineTypeProperty: compute1_machine_type
+        gpuCountProperty: compute1_gpu_count
         gpuType:
           - nvidia-tesla-k80
           - nvidia-tesla-p100
@@ -348,6 +348,7 @@ properties:
       type: GCE_GPU_COUNT
       gceGpuCount:
         machineTypeProperty: compute1_machine_type
+        gpuTypeProperty: compute1_gpu_type
 
   compute1_preemptible:
     type        : boolean
@@ -410,8 +411,7 @@ properties:
 
   compute2_gpu_type:
     type        : string
-    default     : None
-    description : GPU Type to attach to static nodes.
+    description : GPU Type
     x-googleProperty:
       type: GCE_GPU_TYPE
       gceGpuType:
@@ -493,8 +493,7 @@ properties:
 
   compute3_gpu_type:
     type        : string
-    default     : None
-    description : GPU Type to attach to static nodes.
+    description : GPU Type
     x-googleProperty:
       type: GCE_GPU_TYPE
       gceGpuType:
