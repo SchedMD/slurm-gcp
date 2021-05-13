@@ -744,6 +744,8 @@ def main():
     
     setup_logrotate()
 
+    util.run("touch /.google_hpc_firstrun")
+
     remove_metadata()
     end_motd()
     stop_instance()
