@@ -102,8 +102,9 @@ resource "google_compute_instance" "compute_node" {
   metadata_startup_script = file("${path.module}/../../../scripts/startup.sh")
 
   metadata = {
-    enable-oslogin = "TRUE"
-    VmDnsSetting   = "GlobalOnly"
+    enable-oslogin    = "TRUE"
+    VmDnsSetting      = "GlobalOnly"
+    instance_type     = "compute"
 
     config = jsonencode({
       cluster_name              = var.cluster_name,
@@ -114,8 +115,8 @@ resource "google_compute_instance" "compute_node" {
       zone                      = var.zone
     })
 
-    setup-script     = file("${path.module}/../../../scripts/setup.py")
-    util-script      = file("${path.module}/../../../scripts/util.py")
+    setup-script = file("${path.module}/../../../scripts/setup.py")
+    util-script  = file("${path.module}/../../../scripts/util.py")
   }
 }
 
@@ -182,8 +183,9 @@ resource "google_compute_instance_from_template" "compute_node" {
   metadata_startup_script = file("${path.module}/../../../scripts/startup.sh")
 
   metadata = {
-    enable-oslogin = "TRUE"
-    VmDnsSetting   = "GlobalOnly"
+    enable-oslogin                                               = "TRUE"
+    VmDnsSetting                                                 = "GlobalOnly"
+    instance_type     = "compute"
 
     config = jsonencode({
       cluster_name              = var.cluster_name,
@@ -194,7 +196,7 @@ resource "google_compute_instance_from_template" "compute_node" {
       zone                      = var.zone
     })
 
-    setup-script     = file("${path.module}/../../../scripts/setup.py")
-    util-script      = file("${path.module}/../../../scripts/util.py")
+    setup-script = file("${path.module}/../../../scripts/setup.py")
+    util-script  = file("${path.module}/../../../scripts/util.py")
   }
 }

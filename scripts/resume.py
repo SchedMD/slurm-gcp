@@ -65,6 +65,12 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
     if custom_compute.exists():
         meta_files['custom-compute-install'] = str(custom_compute)
 
+    metadata = {
+        'enable-oslogin': 'TRUE',
+        'VmDnsSetting': 'GlobalOnly',
+        'instance_type': 'compute',
+    }
+
     config = {
         'name': 'notused',
 
@@ -83,10 +89,7 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
 
         'metadata': {
             'items': [
-                {'key': 'enable-oslogin',
-                 'value': 'TRUE'},
-                {'key': 'VmDnsSetting',
-                 'value': 'GlobalOnly'},
+                *[{'key': k, 'value': v} for k, v in metadata.items()],
                 *[{'key': k, 'value': Path(v).read_text()} for k, v in meta_files.items()]
             ]
         }
