@@ -721,9 +721,6 @@ def setup_compute():
     mount_fstab()
 
     pid = util.get_pid(cfg.hostname)
-    if not cfg.instance_defs[pid].image_hyperthreads:
-        util.run("google_mpu_tuning --nosmt")
-
     if cfg.instance_defs[pid].gpu_count:
         retries = n = 50
         while util.run("nvidia-smi").returncode != 0 and n > 0:
