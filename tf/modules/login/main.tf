@@ -79,6 +79,8 @@ resource "google_compute_instance" "login_node" {
     })
 
     setup-script = file("${path.module}/../../../scripts/setup.py")
+    custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
+
   }
 }
 
@@ -150,5 +152,7 @@ resource "google_compute_instance_from_template" "login_node" {
     })
 
     setup-script = file("${path.module}/../../../scripts/setup.py")
+    custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
+
   }
 }
