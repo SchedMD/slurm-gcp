@@ -31,8 +31,8 @@ resources:
     machine_type: n1-standard-8
     image_family: "schedmd-slurm-{major}-{minor}-{base}"
     image_name: "schedmd-slurm-{major}-{minor}-{base}-{tag}"
-    slurm_version: 20.11.6
-    libjwt_version: v1.12.0
+    slurm_version: 20.11.7
+    libjwt_version: v1.13.1
     ompi_version: v4.1.x
     images:
     - base: centos-7
