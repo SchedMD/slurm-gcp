@@ -70,6 +70,8 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         'VmDnsSetting': 'GlobalOnly',
         'instance_type': 'compute',
     }
+    if not instance_def.image_hyperthreads:
+        metadata['google_mpi_tuning'] = '--nosmt'
 
     config = {
         'name': 'notused',

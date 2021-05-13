@@ -17,18 +17,19 @@ locals {
   static_list = flatten([
     for pid in range(length(var.partitions)) : [
       for n in range(var.partitions[pid].static_node_count) : {
-        name           = "${var.cluster_name}-compute-${pid}-${n}"
-        boot_disk_size = var.partitions[pid].compute_disk_size_gb
-        boot_disk_type = var.partitions[pid].compute_disk_type
-        image          = var.partitions[pid].image
-        labels         = var.partitions[pid].compute_labels
-        machine_type   = var.partitions[pid].machine_type
-        sa_email       = var.service_account
-        sa_scopes      = var.scopes
-        template       = var.partitions[pid].instance_template
-        zone           = var.partitions[pid].zone
-        gpu_type       = var.partitions[pid].gpu_type
-        gpu_count      = var.partitions[pid].gpu_count
+        name               = "${var.cluster_name}-compute-${pid}-${n}"
+        boot_disk_size     = var.partitions[pid].compute_disk_size_gb
+        boot_disk_type     = var.partitions[pid].compute_disk_type
+        image              = var.partitions[pid].image
+        image_hyperthreads = var.partitions[pid].image_hyperthreads
+        labels             = var.partitions[pid].compute_labels
+        machine_type       = var.partitions[pid].machine_type
+        sa_email           = var.service_account
+        sa_scopes          = var.scopes
+        template           = var.partitions[pid].instance_template
+        zone               = var.partitions[pid].zone
+        gpu_type           = var.partitions[pid].gpu_type
+        gpu_count          = var.partitions[pid].gpu_count
         subnet = (var.partitions[pid].vpc_subnet != null
           ? var.partitions[pid].vpc_subnet
         : "${var.cluster_name}-${join("-", slice(split("-", var.partitions[pid].zone), 0, 2))}")
@@ -105,6 +106,7 @@ resource "google_compute_instance" "compute_node" {
     enable-oslogin    = "TRUE"
     VmDnsSetting      = "GlobalOnly"
     instance_type     = "compute"
+    google_mpi_tuning = each.value.image_hyperthreads ? null : "--nosmt"
 
     config = jsonencode({
       cluster_name              = var.cluster_name,
@@ -186,6 +188,7 @@ resource "google_compute_instance_from_template" "compute_node" {
     enable-oslogin                                               = "TRUE"
     VmDnsSetting                                                 = "GlobalOnly"
     instance_type     = "compute"
+    google_mpi_tuning = each.value.image_hyperthreads ? null : "--nosmt"
 
     config = jsonencode({
       cluster_name              = var.cluster_name,

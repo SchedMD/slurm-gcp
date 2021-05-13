@@ -239,6 +239,10 @@ resources:
           value: GlobalOnly
         - key: instance_type
           value: compute
+      {% if not part['image_hyperthreads'] %}
+        - key: google_mpi_tuning
+          value: --nosmt
+      {% endif %}
         - key: startup-script
           value: |
             {{ imports['startup.sh']|indent(12) }}

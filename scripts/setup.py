@@ -211,7 +211,9 @@ def expand_machine_type():
 
         if type_resp:
             cpus = type_resp['guestCpus']
-            machine['cpus'] = cpus // (1 if part.image_hyperthreads else 2)
+            machine['cpus'] = (
+                cpus // (1 if part.image_hyperthreads else 2) or 1
+            )
 
             # Because the actual memory on the host will be different than
             # what is configured (e.g. kernel will take it). From
@@ -719,6 +721,9 @@ def setup_compute():
     mount_fstab()
 
     pid = util.get_pid(cfg.hostname)
+    if not cfg.instance_defs[pid].image_hyperthreads:
+        util.run("google_mpu_tuning --nosmt")
+
     if cfg.instance_defs[pid].gpu_count:
         retries = n = 50
         while util.run("nvidia-smi").returncode != 0 and n > 0:
