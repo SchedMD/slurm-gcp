@@ -26,7 +26,7 @@ instance_defs:
   bg1-compute-0:
     machine_type: n1-standard-2
     zone: us-west1-b
-    image: projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7
+    image: projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-hpc-centos-7
     image_hyperthreads: false
     compute_disk_size_gb: 20
     compute_disk_type: pd-standard
@@ -45,7 +45,7 @@ instance_defs:
 #  bg1-compute-1:
 #    machine_type: n1-standard-2
 #    zone: us-west1-b
-#    image: projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-4-hpc-centos-7
+#    image: projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-hpc-centos-7
 #    image_hyperthreads: false
 #    compute_disk_size_gb: 20
 #    compute_disk_type: pd-standard
