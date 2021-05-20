@@ -1,0 +1,10 @@
+Changes in Slurm-GCP 4.0.3
+==========================
+ -- Introduce NEWS file
+ -- Recommended image is now
+	schedmd-slurm-public/hpc-centos-7-schedmd-slurm-20-11-7
+ -- Changed slurmrestd port to 6842 (from 80)
+ -- partitions[].image_hyperthreads=false now actively disables hyperthreads
+    on hpc-centos-7 images, starting with the now recommended image
+ -- Fixed running of custom-compute-install on login node
+ -- Fixed slurmrestd install on foundry debian images
