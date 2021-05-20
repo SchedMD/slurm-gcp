@@ -92,7 +92,7 @@ resource "google_compute_firewall" "cluster_iap_ssh_firewall" {
 
   allow {
     protocol = "tcp"
-    ports    = ["22", "6820", "8620"]
+    ports    = ["22", "6842", "8642"]
   }
 }
 
