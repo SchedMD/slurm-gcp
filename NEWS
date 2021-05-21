@@ -8,3 +8,4 @@ Changes in Slurm-GCP 4.0.3
     on hpc-centos-7 images, starting with the now recommended image
  -- Fixed running of custom-compute-install on login node
  -- Fixed slurmrestd install on foundry debian images
+ -- Disable SELinux (was permissive) to fix hpc-centos-7 reboot issue
