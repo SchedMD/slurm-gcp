@@ -6,6 +6,7 @@ Changes in Slurm-GCP 4.0.3
  -- Changed slurmrestd port to 6842 (from 80)
  -- partitions[].image_hyperthreads=false now actively disables hyperthreads
     on hpc-centos-7 images, starting with the now recommended image
+ -- partitions[].image_hyperthreads is now true in tfvars examples
  -- Fixed running of custom-compute-install on login node
  -- Fixed slurmrestd install on foundry debian images
  -- Disable SELinux (was permissive) to fix hpc-centos-7 reboot issue

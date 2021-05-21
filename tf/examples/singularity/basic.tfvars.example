@@ -87,7 +87,7 @@ partitions = [
   max_node_count       = 10
   zone                 = "us-west1-b"
   image                = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-7-hpc-centos-7"
-  image_hyperthreads   = false
+  image_hyperthreads   = true
   compute_disk_type    = "pd-standard"
   compute_disk_size_gb = 20
   compute_labels       = {}
@@ -109,7 +109,7 @@ partitions = [
 #    max_node_count       = 20
 #    zone                 = "us-west1-b"
 #    image                = "projects/slurm-184304/global/images/family/schedmd-slurm-20-11-3-hpc-centos-7"
-#    image_hyperthreads   = false
+#    image_hyperthreads   = true
 #
 #    compute_disk_type    = "pd-ssd"
 #    compute_disk_size_gb = 20
