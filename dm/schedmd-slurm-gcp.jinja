@@ -92,7 +92,7 @@ resources:
       - name: {{ properties['compute1_partition_name'] }}
         zone: {{ properties['zone'] }}
         image: {{ image }}
-        image_hyperthreads: False
+        image_hyperthreads: True
         machine_type: {{ properties['compute1_machine_type'] }}
         compute_disk_type: {{ properties['compute1_disk_type'] }}
         compute_disk_size_gb: {{ properties['compute1_disk_size_gb'] }}
@@ -107,7 +107,7 @@ resources:
       - name: {{ properties['compute2_partition_name'] }}
         zone: {{ properties['zone'] }}
         image: {{ image }}
-        image_hyperthreads: False
+        image_hyperthreads: True
         machine_type: {{ properties['compute2_machine_type'] }}
         compute_disk_type: {{ properties['compute2_disk_type'] }}
         compute_disk_size_gb: {{ properties['compute2_disk_size_gb'] }}
@@ -123,7 +123,7 @@ resources:
       - name: {{ properties['compute3_partition_name'] }}
         zone: {{ properties['zone'] }}
         image: {{ image }}
-        image_hyperthreads: False
+        image_hyperthreads: True
         machine_type: {{ properties['compute3_machine_type'] }}
         compute_disk_type: {{ properties['compute3_disk_type'] }}
         compute_disk_size_gb: {{ properties['compute3_disk_size_gb'] }}
