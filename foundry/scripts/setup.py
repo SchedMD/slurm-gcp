@@ -639,9 +639,8 @@ RPCNFSDCOUNT=256
 def setup_selinux():
     """ Make sure selinux is not enabled """
     if cfg.os_name in ('centos7', 'centos8'):
-        util.run('setenforce 0')
         Path('/etc/selinux/config').write_text("""
-SELINUX=permissive
+SELINUX=disabled
 SELINUXTYPE=targeted
 """)
 
