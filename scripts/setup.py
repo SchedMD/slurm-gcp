@@ -721,7 +721,8 @@ def setup_compute():
     mount_fstab()
 
     pid = util.get_pid(cfg.hostname)
-    if not cfg.instance_defs[pid].image_hyperthreads:
+    if (not cfg.instance_defs[pid].image_hyperthreads and
+            shutil.which('google_mpi_tuning')):
         util.run("google_mpi_tuning --nosmt")
     if cfg.instance_defs[pid].gpu_count:
         retries = n = 50
