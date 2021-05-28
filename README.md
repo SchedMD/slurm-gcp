@@ -121,14 +121,13 @@ There are currently 3 public image families available for use with Slurm-GCP:
 * `schedmd-slurm-20-11-7-debian-10`
 
 #### Hyperthreads
-For now, hyperthreading is either enabled or disabled in the image. Slurm-GCP must 
-know this for each compute node type when configuring the cluster so it can 
-configure the correct number of CPUs.
-`image_hyperthreads` must be set on the partition definition to reflect the 
-state of hyperthreads in the image. If `image_hyperthreads` is set to `true`, 
-and the image does not have hyperthreads enabled, the compute nodes will fail 
-to report to Slurm when created.
-The `hpc-centos-7` image has hyperthreads disabled.  
+The `hpc-centos-7` image has hyperthreads enabled by default, but can have the
+hyperthreads disabled by setting `image_hyperthreads` to `false`. The non-HPC 
+images, `centos-7` and `debian-10`, cannot have hyperthreads disabled.  Slurm-GCP 
+must know this for each compute node type when configuring the cluster so it can 
+configure the correct number of CPUs. `image_hyperthreads` must be set on the 
+partition definition to reflect the state of hyperthreads in the image.
+
 **NOTE:** The result of disabling hyperthreads is that half the number of CPUs will 
 be usable, eg. `c2-standard-4` compute nodes will have 2 CPUs.
 
