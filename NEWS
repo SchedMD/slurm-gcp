@@ -10,4 +10,4 @@ Changes in Slurm-GCP 4.0.3
  -- Fixed running of custom-compute-install on login node
  -- Fixed slurmrestd install on foundry debian images
  -- Disable SELinux (was permissive) to fix hpc-centos-7 reboot issue
- -- Updated Slurm to 21.11.07
+ -- Updated Slurm to 20.11.07
