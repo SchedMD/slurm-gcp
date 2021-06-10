@@ -29,7 +29,7 @@ description:
   icon: '@media/slurm-logo-only-small.png'
   title: SchedMD Slurm GCP
   url: 'https://www.schedmd.com'
-  version: 4.0.0
+  version: 4.0.3
   softwareGroups:
   - type: SOFTWARE_GROUP_OS
     software:
@@ -37,7 +37,7 @@ description:
       version: '7'
   - software:
     - title: Slurm
-      version: 20.11.4
+      version: 20.11.7
   documentations:
   - title: Slurm on GCP Documentation
     url: 'https://github.com/schedmd/slurm-gcp'
