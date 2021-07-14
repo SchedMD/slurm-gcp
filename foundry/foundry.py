@@ -74,6 +74,34 @@ def wait_for_stop(instance, zone, timeout=30):
             return False
     return True
 
+def create_intel_images(instances):
+
+    def create_image(instance, image_name, zone):
+        log.info(f"... waiting to create image for {instance}")
+        if not wait_for_stop(instance, zone):
+            return False
+
+        compute = discovery.build('compute', 'v1', cache_discovery=False)
+        check_image = compute.images().get(project=project,image=image_name)
+        try:
+            response = check_image.execute()
+            log.info(f"Delete existed {image_name} image before creating updated one.")
+            run(f"gcloud compute images delete {image_name} --quiet", check=True)
+        except:
+            log.info(f"Create new {image_name} image.")
+
+        try:
+            run(f"gcloud compute images create {image_name} --source-disk {instance}"
+                f" --source-disk-zone {zone} --force --family {instance} --quiet",
+                check=True)
+        except sp.CalledProcessError:
+            return False
+        return True
+ 
+    with ThreadPoolExecutor() as exe:
+        results = exe.map(lambda inst: create_image(**inst), instances.values())
+    # return True if all images successfully created
+    return all(results)
 
 def create_images(instances):
     tag = "{:%Y-%m-%d-%H%M%S}".format(datetime.now(timezone.utc))
@@ -131,7 +159,10 @@ def read_instances(dep_name):
 
 
 def main(dep_name='slurm-image-foundry', cleanup=True, force=False,
-         resume=False, pause=False):
+         resume=False, pause=False, intel_image=False):
+
+    if intel_image:
+        dep_name='slurm-image-foundry-intel'
 
     existing = gcloud_dm("deployments list "
                          f"--filter='name ~ ^{dep_name}$' "
@@ -156,7 +187,12 @@ def main(dep_name='slurm-image-foundry', cleanup=True, force=False,
                            get_stdout=True).stdout.strip() == "True"
         if not glob_enabled:
             run("gcloud config set deployment_manager/glob_imports True")
-        gcloud_dm(f"deployments create {dep_name} --config images.yaml")
+
+        if intel_image:
+            gcloud_dm(f"deployments create {dep_name} --config intel-image/images-intel-select-solution.yaml")
+        else:
+            gcloud_dm(f"deployments create {dep_name} --config images.yaml")
+
         if not glob_enabled:
             run("gcloud config set deployment_manager/glob_imports False")
 
@@ -168,7 +204,12 @@ def main(dep_name='slurm-image-foundry', cleanup=True, force=False,
                     instances.values())
         return
 
-    if create_images(instances) and cleanup:
+    if intel_image:
+        create_intel_images(instances) 
+    else:
+        create_images(instances)
+
+    if cleanup:
         gcloud_dm(f"deployments delete {dep_name}", check=True)
 
 
@@ -188,6 +229,10 @@ OPTIONS = (
     ('--pause', '-p',
      dict(dest='pause', action='store_true',
           help="Do not create images from the instances to allow for customizations")),
+    ('--intel_image', 
+     dict(dest="intel_image", action='store_true',
+          help="Create images for the Intel Select Solution cluster.")),
+          
 )
 
 
