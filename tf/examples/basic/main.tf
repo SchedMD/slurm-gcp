@@ -70,6 +70,7 @@ module "slurm_cluster_controller" {
   subnetwork_name               = var.subnetwork_name
   suspend_time                  = var.suspend_time
   zone                          = var.zone
+  intel_select_solution         = var.intel_select_solution
 }
 
 module "slurm_cluster_login" {
@@ -114,5 +115,6 @@ module "slurm_cluster_compute" {
   subnet_depend              = module.slurm_cluster_network.subnet_depend
   subnetwork_name            = var.subnetwork_name
   zone                       = var.zone
+  intel_select_solution      = var.intel_select_solution
 }
 

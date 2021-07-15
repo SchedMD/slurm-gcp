@@ -270,6 +270,12 @@ variable "zone" {
   type = string
 }
 
+variable "intel_select_solution" {
+  description = "Configure the cluster to meet the performance requirement of the Intel Select Solution"
+  type        = string
+  default     = null
+}
+
 output "zone" {
   value = var.zone
 }

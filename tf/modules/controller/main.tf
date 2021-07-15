@@ -19,6 +19,7 @@ locals {
     cloudsql                     = var.cloudsql
     cluster_name                 = var.cluster_name
     compute_node_scopes          = var.compute_node_scopes
+    intel_select_solution        = var.intel_select_solution
     compute_node_service_account = var.compute_node_service_account == null ? data.google_compute_default_service_account.default.email : var.compute_node_service_account
     controller_secondary_disk    = var.secondary_disk
     external_compute_ips         = !var.disable_compute_public_ips
@@ -61,7 +62,7 @@ resource "google_compute_instance" "controller_node" {
 
   boot_disk {
     initialize_params {
-      image = var.image
+      image = var.intel_select_solution == "software_only" || var.intel_select_solution == "full_config" ? "projects/${var.project}/global/images/schedmd-slurm-20-11-7-hpc-intel-controller" : var.image
       type  = var.boot_disk_type
       size  = var.boot_disk_size
     }
