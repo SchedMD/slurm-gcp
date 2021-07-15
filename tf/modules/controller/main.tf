@@ -196,3 +196,10 @@ resource "google_compute_instance_from_template" "controller_node" {
     util-script               = file("${path.module}/../../../scripts/util.py")
   }
 }
+
+resource "null_resource" "check_intel_validation" {
+    triggers = (var.intel_select_solution == null || 
+                  var.intel_select_solution == "software_only" || 
+                  (var.intel_select_solution == "full_config" &&  var.boot_disk_size >=215) ? {} : 
+                  file("ERROR: Configuration failed as full_config requires boot_disk_size of the controller to be larger than 215 GB."))
+}

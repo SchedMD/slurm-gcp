@@ -15,6 +15,8 @@
 
 locals {
   region = join("-", slice(split("-", var.zone), 0, 2))
+  par_map = {
+    for item in var.partitions: item.name => item }
 }
 
 provider "google" {
@@ -118,3 +120,10 @@ module "slurm_cluster_compute" {
   intel_select_solution      = var.intel_select_solution
 }
 
+resource "null_resource" "check_intel_select_solution" {
+  for_each = local.par_map
+  triggers = ( var.intel_select_solution == null || var.intel_select_solution == "software_only" ||
+               (var.intel_select_solution == "full_config" && each.value.machine_type == "c2-standard-60") ? {} :
+               file("ERROR: Configuration failed as full_config requires machine_type of compute nodes to be c2-standard-60." )
+             )
+} 
