@@ -33,6 +33,9 @@ from google.auth import compute_engine
 import google_auth_httplib2
 from googleapiclient.http import set_user_agent
 
+from util import run, config_root_logger
+from util import get_pid
+from util import ensure_execute, wait_for_operation, get_group_operations
 import util
 
 PLACEMENT_MAX_CNT = 22
@@ -186,10 +189,10 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
     if instance_def.regional_capacity:
         if instance_def.regional_policy:
             body['locationPolicy'] = instance_def.regional_policy
-        return util.ensure_execute(compute.regionInstances().bulkInsert(
+        return ensure_execute(compute.regionInstances().bulkInsert(
             project=cfg.project, region=instance_def.region, body=body))
 
-    return util.ensure_execute(compute.instances().bulkInsert(
+    return ensure_execute(compute.instances().bulkInsert(
         project=cfg.project, zone=instance_def.zone, body=body))
 # [END create_instance]
 
@@ -211,7 +214,7 @@ def add_instances(node_chunk):
     compute = googleapiclient.discovery.build('compute', 'v1',
                                               http=auth_http,
                                               cache_discovery=False)
-    pid = util.get_pid(node_list[0])
+    pid = get_pid(node_list[0])
     instance_def = cfg.instance_defs[pid]
 
     try:
@@ -223,14 +226,14 @@ def add_instances(node_chunk):
         down_nodes(node_list, e)
         return
 
-    result = util.wait_for_operation(compute, cfg.project, operation)
+    result = wait_for_operation(compute, cfg.project, operation)
     if not result or 'error' in result:
         grp_err_msg = result['error']['errors'][0]['message']
         log.error(f"group operation failed: {grp_err_msg}")
         if instance_def.exclusive:
             os._exit(1)
 
-        group_ops = util.get_group_operations(compute, cfg.project, result)
+        group_ops = get_group_operations(compute, cfg.project, result)
         failed_nodes = {}
         for op in group_ops['items']:
             if op['operationType'] != 'insert':
@@ -255,17 +258,16 @@ def down_nodes(node_list, reason):
     with tempfile.NamedTemporaryFile(mode='w+t') as f:
         f.writelines("\n".join(node_list))
         f.flush()
-        hostlist = util.run(f"{SCONTROL} show hostlist {f.name}",
+        hostlist = run(f"{SCONTROL} show hostlist {f.name}",
                             check=True, get_stdout=True).stdout.rstrip()
-    util.run(
-        f"{SCONTROL} update nodename={hostlist} state=down reason='{reason}'")
+    run(f"{SCONTROL} update nodename={hostlist} state=down reason='{reason}'")
 # [END down_nodes]
 
 
 def hold_job(job_id, reason):
     """ hold job_id """
-    util.run(f"{SCONTROL} hold jobid={job_id}")
-    util.run(f"{SCONTROL} update jobid={job_id} comment='{reason}'")
+    run(f"{SCONTROL} hold jobid={job_id}")
+    run(f"{SCONTROL} update jobid={job_id} comment='{reason}'")
 # [END hold_job]
 
 
@@ -302,12 +304,12 @@ def create_placement_groups(arg_job_id, vm_count, region):
              }
         }
 
-        pg_ops.append(util.ensure_execute(
+        pg_ops.append(ensure_execute(
             compute.resourcePolicies().insert(
                 project=cfg.project, region=region, body=config)))
 
     for operation in pg_ops:
-        result = util.wait_for_operation(compute, cfg.project, operation)
+        result = wait_for_operation(compute, cfg.project, operation)
         if result and 'error' in result:
             err_msg = result['error']['errors'][0]['message']
             log.error(f" placement group operation failed: {err_msg}")
@@ -320,18 +322,18 @@ def create_placement_groups(arg_job_id, vm_count, region):
 def main(arg_nodes, arg_job_id):
     log.debug(f"Bursting out: {arg_nodes} {arg_job_id}")
     # Get node list
-    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
+    nodes_str = run(f"{SCONTROL} show hostnames {arg_nodes}",
                          check=True, get_stdout=True).stdout
-    node_list = sorted(nodes_str.splitlines(), key=util.get_pid)
+    node_list = sorted(nodes_str.splitlines(), key=get_pid)
 
     placement_groups = None
-    pid = util.get_pid(node_list[0])
+    pid = get_pid(node_list[0])
     if (arg_job_id and not cfg.instance_defs[pid].exclusive):
         # Don't create from calls by PrologSlurmctld
         return
 
     nodes_by_pid = {k: tuple(nodes)
-                    for k, nodes in groupby(node_list, util.get_pid)}
+                    for k, nodes in groupby(node_list, get_pid)}
 
     if not arg_job_id:
         for pid in [pid for pid in nodes_by_pid
@@ -399,10 +401,10 @@ if __name__ == '__main__':
         job_id = args.args[1]
 
     if args.debug:
-        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+        config_root_logger(level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
     else:
-        util.config_root_logger(level='INFO', util_level='ERROR',
+        config_root_logger(level='INFO', util_level='ERROR',
                                 logfile=LOGFILE)
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception

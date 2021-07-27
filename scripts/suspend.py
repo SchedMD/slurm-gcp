@@ -27,6 +27,9 @@ from pathlib import Path
 
 import googleapiclient.discovery
 
+from util import run, partition, config_root_logger
+from util import get_pid, get_regional_instances
+from util import ensure_execute, wait_for_operation
 import util
 
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
@@ -63,13 +66,13 @@ def delete_instances(compute, node_list, arg_job_id):
         compute.new_batch_http_request(callback=delete_instances_cb))
 
     def_list = {pid: cfg.instance_defs[pid]
-                for pid, nodes in groupby(node_list, util.get_pid)}
-    regional_instances = util.get_regional_instances(compute, cfg.project,
+                for pid, nodes in groupby(node_list, get_pid)}
+    regional_instances = get_regional_instances(compute, cfg.project,
                                                      def_list)
 
     for node_name in node_list:
 
-        pid = util.get_pid(node_name)
+        pid = get_pid(node_name)
         if (not arg_job_id and cfg.instance_defs[pid].exclusive):
             # Node was deleted by EpilogSlurmctld, skip for SuspendProgram
             continue
@@ -100,7 +103,7 @@ def delete_instances(compute, node_list, arg_job_id):
 
     try:
         for i, batch in enumerate(batch_list):
-            util.ensure_execute(batch)
+            ensure_execute(batch)
             if i < (len(batch_list) - 1):
                 time.sleep(30)
     except Exception:
@@ -113,7 +116,7 @@ def delete_placement_groups(compute, node_list, arg_job_id):
     PLACEMENT_MAX_CNT = 22
     pg_ops = []
     pg_index = 0
-    pid = util.get_pid(node_list[0])
+    pid = get_pid(node_list[0])
 
     for i in range(len(node_list)):
         if i % PLACEMENT_MAX_CNT:
@@ -124,7 +127,7 @@ def delete_placement_groups(compute, node_list, arg_job_id):
             project=cfg.project, region=cfg.instance_defs[pid].region,
             resourcePolicy=pg_name).execute())
     for operation in pg_ops:
-        util.wait_for_operation(compute, cfg.project, operation)
+        wait_for_operation(compute, cfg.project, operation)
     log.debug("done deleting pg")
 # [END delete_placement_groups]
 
@@ -135,11 +138,11 @@ def main(arg_nodes, arg_job_id):
                                               cache_discovery=False)
 
     # Get node list
-    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
+    nodes_str = run(f"{SCONTROL} show hostnames {arg_nodes}",
                          check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
-    pid = util.get_pid(node_list[0])
+    pid = get_pid(node_list[0])
     if (arg_job_id and not cfg.instance_defs[pid].exclusive):
         # Don't delete from calls by EpilogSlurmctld
         return
@@ -149,11 +152,9 @@ def main(arg_nodes, arg_job_id):
         # Have to use "down" because it's the only, current, way to remove the
         # power_up flag from the node -- followed by a power_down -- if the
         # PrologSlurmctld fails with a non-zero exit code.
-        util.run(
-            f"{SCONTROL} update node={arg_nodes} state=down reason='{arg_job_id} finishing'")
+        run(f"{SCONTROL} update node={arg_nodes} state=down reason='{arg_job_id} finishing'")
         # Power down nodes in slurm, so that they will become available again.
-        util.run(
-            f"{SCONTROL} update node={arg_nodes} state=power_down")
+        run(f"{SCONTROL} update node={arg_nodes} state=power_down")
 
     while True:
         delete_instances(compute, node_list, arg_job_id)
@@ -168,10 +169,9 @@ def main(arg_nodes, arg_job_id):
     if arg_job_id:
         for operation in operations.values():
             try:
-                util.wait_for_operation(compute, cfg.project, operation)
+                wait_for_operation(compute, cfg.project, operation)
                 # now that the instance is gone, resume to put back in service
-                util.run(
-                    f"{SCONTROL} update node={arg_nodes} state=resume")
+                run(f"{SCONTROL} update node={arg_nodes} state=resume")
             except Exception:
                 log.exception(f"Error in deleting {operation['name']} to slurm")
 
@@ -209,11 +209,9 @@ if __name__ == '__main__':
         job_id = args.args[1]
 
     if args.debug:
-        util.config_root_logger(level='DEBUG', util_level='DEBUG',
-                                logfile=LOGFILE)
+        config_root_logger(level='DEBUG', util_level='DEBUG', logfile=LOGFILE)
     else:
-        util.config_root_logger(level='INFO', util_level='ERROR',
-                                logfile=LOGFILE)
+        config_root_logger(level='DEBUG', util_level='DEBUG', logfile=LOGFILE)
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 

@@ -30,26 +30,37 @@ import requests
 import yaml
 
 
-# get util.py from metadata
-UTIL_FILE = Path('/tmp/util.py')
-try:
-    resp = requests.get('http://metadata.google.internal/computeMetadata/v1/instance/attributes/util-script',
-                        headers={'Metadata-Flavor': 'Google'})
-    resp.raise_for_status()
-    UTIL_FILE.write_text(resp.text)
-except requests.exceptions.RequestException:
-    print("util.py script not found in metadata")
+# first try to import util normally
+util_spec = importlib.util.find_spec('util')
+if not util_spec:
+    # prefer /tmp/util.py
+    UTIL_FILE = Path('/tmp/util.py')
     if not UTIL_FILE.exists():
-        print(f"{UTIL_FILE} also does not exist, aborting")
-        sys.exit(1)
+        # get util.py from metadata
+        print(f"{UTIL_FILE} does not exist, checking in metadata")
+        UTIL_URL = 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/util-script'
+        try:
+            resp = requests.get(UTIL_URL, headers={'Metadata-Flavor': 'Google'})
+            resp.raise_for_status()
+            UTIL_FILE.write_text(resp.text)
+        except requests.exceptions.RequestException:
+            print("util.py script not found in metadata")
+            sys.exit(1)
+    util_spec = importlib.util.spec_from_file_location('util', UTIL_FILE)
 
-spec = importlib.util.spec_from_file_location('util', UTIL_FILE)
-util = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = util
-spec.loader.exec_module(util)
-cd = util.cd  # import util.cd into local namespace
+util = importlib.util.module_from_spec(util_spec)
+sys.modules[util_spec.name] = util
+util_spec.loader.exec_module(util)
+
+# import into local namespace
+cd = util.cd
 NSDict = util.NSDict
+run = util.run
+get_pid = util.get_pid
+get_metadata = util.get_metadata
+ensure_execute = util.ensure_execute
 
+# monkey patch?
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
 util.config_root_logger(logfile='/tmp/setup.log')
@@ -57,7 +68,7 @@ log = logging.getLogger(Path(__file__).name)
 sys.excepthook = util.handle_exception
 
 # get setup config from metadata
-config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
+config_yaml = yaml.safe_load(get_metadata('attributes/config'))
 cfg = util.Config.new_config(config_yaml)
 
 # load all directories as Paths into a dict-like namespace
@@ -143,10 +154,9 @@ def end_motd(broadcast=True):
     if not broadcast:
         return
 
-    util.run("wall -n '*** Slurm {} setup complete ***'"
-             .format(cfg.instance_type))
+    run("wall -n '*** Slurm {} setup complete ***'".format(cfg.instance_type))
     if cfg.instance_type != 'controller':
-        util.run("""wall -n '
+        run("""wall -n '
 /home on the controller was mounted over the existing /home.
 Log back in to ensure your home directory is correct.
 '""")
@@ -161,7 +171,7 @@ def expand_instance_templates():
     for pid, instance_def in cfg.instance_defs.items():
         if (instance_def.instance_template and
                 (not instance_def.machine_type or not instance_def.gpu_count)):
-            template_resp = util.ensure_execute(
+            template_resp = ensure_execute(
                 compute.instanceTemplates().get(
                     project=cfg.project,
                     instanceTemplate=instance_def.instance_template))
@@ -193,7 +203,7 @@ def expand_machine_type():
         type_resp = None
         if part.regional_capacity:
             filter = f"(zone={part.region}-*) AND (name={part.machine_type})"
-            list_resp = util.ensure_execute(
+            list_resp = ensure_execute(
                 compute.machineTypes().aggregatedList(
                     project=cfg.project, filter=filter))
 
@@ -204,7 +214,7 @@ def expand_machine_type():
                         type_resp = v['machineTypes'][0]
                         break
         else:
-            type_resp = util.ensure_execute(
+            type_resp = ensure_execute(
                 compute.machineTypes().get(
                     project=cfg.project, zone=part.zone,
                     machineType=part.machine_type))
@@ -246,7 +256,7 @@ def install_slurm_conf():
         'suspend_time': cfg.suspend_time,
         'mpi_default': mpi_default,
     }
-    conf_resp = util.get_metadata('attributes/slurm_conf_tpl')
+    conf_resp = get_metadata('attributes/slurm_conf_tpl')
     conf = conf_resp.format(**conf_options)
 
     static_nodes = []
@@ -331,7 +341,7 @@ def install_slurmdbd_conf():
         conf_options.db_host = db_host_str[0]
         conf_options.db_port = db_host_str[1] if len(db_host_str) >= 2 else '3306'
 
-    conf_resp = util.get_metadata('attributes/slurmdbd_conf_tpl')
+    conf_resp = get_metadata('attributes/slurmdbd_conf_tpl')
     conf = conf_resp.format(**conf_options)
 
     conf_file = slurmdirs.etc/'slurmdbd.conf'
@@ -343,7 +353,7 @@ def install_slurmdbd_conf():
 
 def install_cgroup_conf():
     """ install cgroup.conf """
-    conf = util.get_metadata('attributes/cgroup_conf_tpl')
+    conf = get_metadata('attributes/cgroup_conf_tpl')
 
     conf_file = slurmdirs.etc/'cgroup.conf'
     conf_file.write_text(conf)
@@ -381,7 +391,7 @@ def install_meta_files():
     ]
 
     def install_metafile(filename, metaname):
-        text = util.get_metadata('attributes/' + metaname)
+        text = get_metadata('attributes/' + metaname)
         if not text:
             return
         path = dirs.scripts/filename
@@ -432,7 +442,7 @@ def prepare_network_mounts(hostname, instance_type):
     mounts.update(listtodict(cfg.network_storage))
 
     if instance_type == 'compute':
-        pid = util.get_pid(hostname)
+        pid = get_pid(nodename)
         mounts.update(listtodict(cfg.instance_defs[pid].network_storage))
     else:
         # login_network_storage is mounted on controller and login instances
@@ -519,12 +529,12 @@ def mount_fstab():
     def mount_path(path):
         while not os.path.ismount(path):
             log.info(f"Waiting for {path} to be mounted")
-            util.run(f"mount {path}", wait=5)
+            run(f"mount {path}", wait=5)
 
     with ThreadPoolExecutor() as exe:
         exe.map(mount_path, mounts.keys())
 
-    util.run("mount -a", wait=1)
+    run("mount -a", wait=1)
 # END mount_external
 
 
@@ -553,14 +563,13 @@ def setup_nfs_exports():
     with (exportsd/'slurm.exports').open('w') as f:
         f.write('\n')
         f.write('\n'.join(exports))
-    util.run("exportfs -a")
+    run("exportfs -a")
 # END setup_nfs_exports()
 
 
 def setup_secondary_disks():
     """ Format and mount secondary disk """
-    util.run(
-        "sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb")
+    run("sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb")
     with open('/etc/fstab', 'a') as f:
         f.write(
             "\n/dev/sdb     {0}     ext4    discard,defaults,nofail     0 2"
@@ -571,7 +580,7 @@ def setup_secondary_disks():
 
 def setup_sync_cronjob():
     """ Create cronjob for running slurmsync.py """
-    util.run("crontab -u slurm -", input=(
+    run("crontab -u slurm -", input=(
         f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
 
 # END setup_sync_cronjob()
@@ -584,23 +593,22 @@ def setup_jwt_key():
         with (jwt_key).open('w') as f:
             f.write(cfg.jwt_key)
     else:
-        util.run("dd if=/dev/urandom bs=32 count=1 >"+str(jwt_key), shell=True)
+        run("dd if=/dev/urandom bs=32 count=1 >"+str(jwt_key), shell=True)
 
-    util.run(f"chown -R slurm:slurm {jwt_key}")
+    run(f"chown -R slurm:slurm {jwt_key}")
     jwt_key.chmod(0o400)
 
 
 def setup_slurmd_cronjob():
     """ Create cronjob for keeping slurmd service up """
-    util.run(
-        "crontab -u root -", input=(
-            "*/2 * * * * "
-            "if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then "
-            "mount -a; "
-            "systemctl restart munge; "
-            "systemctl restart slurmd; "
-            "fi\n"
-        ))
+    run("crontab -u root -", input=(
+        "*/2 * * * * "
+        "if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then "
+        "mount -a; "
+        "systemctl restart munge; "
+        "systemctl restart slurmd; "
+        "fi\n"
+    ))
 # END setup_slurmd_cronjob()
 
 
@@ -641,8 +649,8 @@ def setup_controller():
     install_slurm_conf()
     install_slurmdbd_conf()
     setup_jwt_key()
-    util.run("create-munge-key -f")
-    util.run("systemctl restart munge")
+    run("create-munge-key -f")
+    run("systemctl restart munge")
 
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
@@ -650,7 +658,7 @@ def setup_controller():
     mount_fstab()
 
     try:
-        util.run(str(dirs.scripts/'custom-controller-install'))
+        run(str(dirs.scripts/'custom-controller-install'))
     except Exception:
         # Ignore blank files with no shell magic.
         pass
@@ -663,35 +671,32 @@ def setup_controller():
 [mysqld]
 bind-address = 127.0.0.1
 """)
-        util.run('systemctl enable mariadb')
-        util.run('systemctl start mariadb')
+        run('systemctl enable mariadb')
+        run('systemctl start mariadb')
 
         mysql = "mysql -u root -e"
-        util.run(
-            f"""{mysql} "create user 'slurm'@'localhost'";""")
-        util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""")
-        util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
+        run(f"""{mysql} "create user 'slurm'@'localhost'";""")
+        run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""")
+        run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
 
-    util.run("systemctl enable slurmdbd")
-    util.run("systemctl start slurmdbd")
+    run("systemctl enable slurmdbd")
+    run("systemctl start slurmdbd")
 
     # Wait for slurmdbd to come up
     time.sleep(5)
 
     sacctmgr = f"{dirs.prefix}/bin/sacctmgr -i"
-    util.run(f"{sacctmgr} add cluster {cfg.cluster_name}")
+    run(f"{sacctmgr} add cluster {cfg.cluster_name}")
 
-    util.run("systemctl enable slurmctld")
-    util.run("systemctl start slurmctld")
+    run("systemctl enable slurmctld")
+    run("systemctl start slurmctld")
 
-    util.run("systemctl enable slurmrestd")
-    util.run("systemctl start slurmrestd")
+    run("systemctl enable slurmrestd")
+    run("systemctl start slurmrestd")
 
     # Export at the end to signal that everything is up
-    util.run("systemctl enable nfs-server")
-    util.run("systemctl start nfs-server")
+    run("systemctl enable nfs-server")
+    run("systemctl start nfs-server")
 
     setup_nfs_exports()
     setup_sync_cronjob()
@@ -704,10 +709,10 @@ def setup_login():
     """ run login node setup """
     setup_network_storage()
     mount_fstab()
-    util.run("systemctl restart munge")
+    run("systemctl restart munge")
 
     try:
-        util.run(str(dirs.scripts/'custom-compute-install'))
+        run(str(dirs.scripts/'custom-compute-install'))
     except Exception:
         # Ignore blank files with no shell magic.
         pass
@@ -720,27 +725,27 @@ def setup_compute():
     setup_network_storage()
     mount_fstab()
 
-    pid = util.get_pid(cfg.hostname)
+    pid = get_pid(cfg.nodename)
     if (not cfg.instance_defs[pid].image_hyperthreads and
             shutil.which('google_mpi_tuning')):
-        util.run("google_mpi_tuning --nosmt")
+        run("google_mpi_tuning --nosmt")
     if cfg.instance_defs[pid].gpu_count:
         retries = n = 50
-        while util.run("nvidia-smi").returncode != 0 and n > 0:
+        while run("nvidia-smi").returncode != 0 and n > 0:
             n -= 1
             log.info(f"Nvidia driver not yet loaded, try {retries-n}")
             time.sleep(5)
 
     try:
-        util.run(str(dirs.scripts/'custom-compute-install'))
+        run(str(dirs.scripts/'custom-compute-install'))
     except Exception:
         # Ignore blank files with no shell magic.
         pass
 
     setup_slurmd_cronjob()
-    util.run("systemctl restart munge")
-    util.run("systemctl enable slurmd")
-    util.run("systemctl start slurmd")
+    run("systemctl restart munge")
+    run("systemctl enable slurmd")
+    run("systemctl start slurmd")
 
     log.info("Done setting up compute")
 
