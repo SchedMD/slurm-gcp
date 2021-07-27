@@ -19,6 +19,7 @@ libjansson-dev
 libjson-c-dev
 libjwt-dev
 liblua5.3-dev
+liblz4-dev
 libmariadb-dev
 libmunge-dev
 libncurses-dev
@@ -33,8 +34,11 @@ libssh2-1-dev
 libssl-dev
 libyaml-dev
 linux-headers-$(uname -r)
-lmod
+lua-bit32
+lua-posix
+lua-posix-dev
 lua5.3
+lua5.3-dev
 lynx
 man2html
 mariadb-server
@@ -45,6 +49,10 @@ pdsh
 python3-httplib2
 rrdtool
 software-properties-common
+tcl
+tcl-dev
+tcl8.6
+tcl8.6-dev
 tclsh
 tmux
 vim

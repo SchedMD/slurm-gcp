@@ -41,6 +41,7 @@ readline-devel
 rpm-build
 rrdtool-devel
 tmux
+tcl-devel
 vim
 wget
 yum-utils

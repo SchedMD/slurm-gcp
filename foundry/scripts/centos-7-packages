@@ -22,9 +22,13 @@ libibumad
 libtool
 libyaml-devel
 lua
+lua-bitop
 lua-devel
+lua-json
+lua-lpeg
+lua-posix
+lua-term
 lz4-devel
-Lmod
 man2html
 mariadb
 mariadb-devel
@@ -43,6 +47,8 @@ perl-ExtUtils-MakeMaker
 readline-devel
 rpm-build
 rrdtool-devel
+tcl
+tcl-devel
 tmux
 vim
 wget
