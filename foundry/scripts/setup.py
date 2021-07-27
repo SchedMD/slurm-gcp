@@ -25,7 +25,7 @@ import time
 import urllib.request
 from functools import partialmethod
 from pathlib import Path
-from subprocess import DEVNULL
+from subprocess import DEVNULL, PIPE
 from concurrent.futures import ThreadPoolExecutor
 
 import googleapiclient.discovery
@@ -54,6 +54,7 @@ util = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = util
 spec.loader.exec_module(util)
 cd = util.cd  # import util.cd into local namespace
+run = util.run
 cached_property = util.cached_property
 
 util.config_root_logger(file=str(SCRIPTSDIR/'setup.log'))
@@ -117,7 +118,7 @@ class Config(util.NSDict):
     def update(self):
         if self.os_name in ('centos7', 'centos8'):
             return
-        util.run(f"{cfg.pacman} update")
+        run(f"{cfg.pacman} update")
 
     def __getattr__(self, item):
         """ only called if item is not found in self """
@@ -193,14 +194,14 @@ SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
 
 def create_users():
     """ Create user slurm """
-    util.run("groupadd munge -g 980")
-    util.run("useradd -m -c MungeUser -d /var/run/munge -r munge -u 980 -g 980")
+    run("groupadd munge -g 980")
+    run("useradd -m -c MungeUser -d /var/run/munge -r munge -u 980 -g 980")
 
-    util.run("groupadd slurm -g 981")
-    util.run("useradd -m -c SlurmUser -d /var/lib/slurm -r slurm -u 981 -g 981")
+    run("groupadd slurm -g 981")
+    run("useradd -m -c SlurmUser -d /var/lib/slurm -r slurm -u 981 -g 981")
 
-    util.run("groupadd slurmrestd -g 982")
-    util.run("useradd -m -c Slurmrestd -d /var/lib/slurmrestd -r slurmrestd -u 982 -g 982")
+    run("groupadd slurmrestd -g 982")
+    run("useradd -m -c Slurmrestd -d /var/lib/slurmrestd -r slurmrestd -u 982 -g 982")
 
 
 def setup_modules():
@@ -236,7 +237,7 @@ def end_motd(broadcast=True):
     if not broadcast:
         return
 
-    util.run("wall -n '*** Slurm installation complete ***'")
+    run("wall -n '*** Slurm installation complete ***'")
 
 
 def install_slurmlog_conf():
@@ -257,32 +258,30 @@ def install_lustre():
         rpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/RPMS/x86_64/'
         srpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/SRPMS/'
 
-        util.run('yum update -y')
-        util.run('yum install -y wget libyaml')
+        run('yum update -y')
+        run('yum install -y wget libyaml')
 
         rpmlist = ','.join(('kmod-lustre-client-2*.rpm', 'lustre-client-2*.rpm'))
-        util.run(
-            f"wget -r -l1 -np -nd -A '{rpmlist}' '{rpm_url}' -P {lustre_tmp}")
-        util.run(
-            f"find {lustre_tmp} -name '*.rpm' -execdir rpm -ivh {{}} ';'")
+        run(f"wget -r -l1 -np -nd -nv -A '{rpmlist}' '{rpm_url}' -P {lustre_tmp}")
+        run(f"find {lustre_tmp} -name '*.rpm' -execdir rpm -ivh {{}} ';'")
 
         srpm = 'lustre-client-dkms-2*.src.rpm'
-        util.run(f"wget -r -l1 -np -nd -A {srpm} {srpm_url} -P {lustre_tmp}")
+        run(f"wget -r -l1 -np -nd -A {srpm} {srpm_url} -P {lustre_tmp}")
         srpm = next(lustre_tmp.glob(srpm))
         with cd(lustre_tmp):
-            util.run(f"rpm2cpio {srpm} | cpio -idmv", shell=True)
+            run(f"rpm2cpio {srpm} | cpio -idmv", shell=True)
         srctar = next(lustre_tmp.glob('lustre-2*.tar.gz'))
-        util.run(f"tar xf {srctar} -C /usr/src")
+        run(f"tar xf {srctar} -C /usr/src")
 
-        util.run(f"rm -rf {lustre_tmp}")
-        util.run("modprobe lustre")
+        run(f"rm -rf {lustre_tmp}")
+        run("modprobe lustre")
     elif cfg.os_name in ('debian10', 'ubuntu2004'):
         deb_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/ubuntu1804/client/'
         deblist = ','.join(('lustre-client-*_amd64.deb', 'lustre-source*.deb'))
-        util.run(f"wget -r -l1 -np -nd -A {deblist} {deb_url} -P {lustre_tmp}")
-        for deb in lustre_tmp.glob('*.deb'):
-            util.run(f"dpkg -i {deb}")
-        util.run("apt-get install -f -y")
+        run(f"wget -r -l1 -np -nd -A {deblist} {deb_url} -P {lustre_tmp}")
+        for deb in sorted(lustre_tmp.glob('*.deb')):
+            run(f"dpkg -i {deb}")
+        run("apt-get install -f -y")
 
 
 def install_gcsfuse():
@@ -298,17 +297,18 @@ repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 """)
-        util.run("yum install -y gcsfuse")
+        run("yum install -y gcsfuse")
     elif cfg.os_name in ('debian10', 'ubuntu2004'):
-        release = util.run("lsb_release -cs", get_stdout=True).stdout.rstrip()
+        release = run("lsb_release -cs", get_stdout=True).stdout.rstrip()
         repo = f'gcsfuse-{release}'
         Path('/etc/apt/sources.list.d/gcsfuse.list').write_text(
             f"deb https://packages.cloud.google.com/apt {repo} main"
         )
         key_url = 'https://packages.cloud.google.com/apt/doc/apt-key.gpg'
-        util.run("apt-key add -", input=requests.get(key_url).text)
-        util.run("apt-get update")
-        util.run("apt-get install -y gcsfuse")
+        run("apt-key add -", input=requests.get(key_url).content,
+            universal_newlines=False)
+        run("apt-get update")
+        run("apt-get install -y gcsfuse")
 
 
 def install_cuda():
@@ -316,31 +316,31 @@ def install_cuda():
     if cfg.os_name in ('centos7', 'centos8'):
         vers = 'rhel' + cfg.os_name[-1]
         repo = f'http://developer.download.nvidia.com/compute/cuda/repos/{vers}/x86_64/cuda-{vers}.repo'
-        util.run(f"yum-config-manager --add-repo {repo}")
-        util.run("yum clean all")
-        util.run("yum -y install nvidia-driver-latest-dkms cuda")
-        util.run("yum -y install cuda-drivers")
+        run(f"yum-config-manager --add-repo {repo}")
+        run("yum clean all")
+        run("yum -y install nvidia-driver-latest-dkms cuda")
+        run("yum -y install cuda-drivers")
         # Creates the device files
     elif cfg.os_name == 'debian10':
-        util.run("apt-get install linux-headers-$(uname -r)")
+        run("apt-get install linux-headers-$(uname -r)")
         repo = 'https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/'
-        util.run(f"add-apt-repository 'deb {repo} /'")
-        util.run("apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/7fa2af80.pub")
-        util.run("add-apt-repository contrib")
-        util.run("apt-get update")
-        util.run("apt-get -y install nvidia-kernel-dkms cuda")
+        run(f"add-apt-repository 'deb {repo} /'")
+        run("apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/7fa2af80.pub")
+        run("add-apt-repository contrib")
+        run("apt-get update")
+        run("apt-get -y install nvidia-kernel-dkms cuda")
     elif cfg.os_name == 'ubuntu2004':
         pin_url = 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin'
         pinfile = Path('/etc/apt/preferences.d/cuda-repository-pin')
         pinfile.write_text(requests.get(pin_url).text)
 
         key_url = 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub'
-        util.run(f"apt-key adv --fetch-keys {key_url}")
+        run(f"apt-key adv --fetch-keys {key_url}")
 
         repo_url = 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/'
-        util.run(f"add-apt-repository 'deb {repo_url} /'")
-        util.run("apt-get update")
-        util.run("apt-get -y install cuda")
+        run(f"add-apt-repository 'deb {repo_url} /'")
+        run("apt-get update")
+        run("apt-get -y install cuda")
 
 
 def install_libjwt():
@@ -350,19 +350,18 @@ def install_libjwt():
     src_path.mkdirp()
 
     GIT_URL = 'https://github.com/benmcollins/libjwt.git'
-    util.run(
-        "git clone --single-branch --depth 1 -b {0} {1} {2}".format(cfg.libjwt_version, GIT_URL, src_path))
+    run("git clone --single-branch --depth 1 -b {0} {1} {2}".format(cfg.libjwt_version, GIT_URL, src_path))
 
     with cd(src_path):
-        util.run("autoreconf -if")
+        run("autoreconf -if")
     build_path = dirs.build/'libjwt'
     build_path.mkdirp()
 
     with cd(build_path):
-        util.run(f"{src_path}/configure --prefix={JWT_PREFIX} --sysconfdir={JWT_PREFIX}/etc",
-                 stdout=DEVNULL)
-        util.run("make -j install", stdout=DEVNULL)
-    util.run("ldconfig")
+        run(f"{src_path}/configure --prefix={JWT_PREFIX} --sysconfdir={JWT_PREFIX}/etc",
+            stdout=DEVNULL)
+        run("make -j install", stdout=DEVNULL)
+    run("ldconfig")
 
 
 def install_dependencies():
@@ -374,24 +373,24 @@ def install_dependencies():
 """)
 
     if cfg.os_name in ('centos7', 'centos8'):
-        util.run(f"{cfg.pacman} -y groupinstall 'Development Tools'")
+        run(f"{cfg.pacman} -y groupinstall 'Development Tools'")
     packages = util.get_metadata('attributes/packages').splitlines()
-    util.run(f"{cfg.pacman} install -y {' '.join(packages)}", shell=True,
-             env=dict(os.environ, DEBIAN_FRONTEND='noninteractive'))
+    run(f"{cfg.pacman} install -y {' '.join(packages)}", shell=True,
+        env=dict(os.environ, DEBIAN_FRONTEND='noninteractive'))
     install_libjwt()
 
 
 def install_apps():
     """ Install all core applications using system package manager """
 
-    install_lustre()
     install_gcsfuse()
+    install_lustre()
     install_cuda()
 
     def install_agent(script):
         url = f'https://dl.google.com/cloudagents/{script.name}'
         urllib.request.urlretrieve(url, script)
-        util.run(f"bash {script} --also-install")
+        run(f"bash {script} --also-install")
 
     scripts = SCRIPTSDIR
     for agent in ('add-monitoring-agent-repo.sh',
@@ -429,7 +428,7 @@ Restart=on-abort
 WantedBy=multi-user.target
 """)
 
-    util.run("systemctl enable munge")
+    run("systemctl enable munge")
 
 
 def install_slurm():
@@ -443,29 +442,28 @@ def install_slurm():
         if cfg.slurm_version.startswith('b:'):
             GIT_URL = 'https://github.com/SchedMD/slurm.git'
             use_version = cfg.slurm_version[2:]
-            util.run(
-                "git clone --single-branch --depth 1 -b {0} {1} {0}".format(use_version, GIT_URL))
+            run("git clone --single-branch --depth 1 -b {0} {1} {0}".format(use_version, GIT_URL))
         else:
             tarfile = 'slurm-{}.tar.bz2'.format(cfg.slurm_version)
             slurm_url = 'https://download.schedmd.com/slurm/' + tarfile
             urllib.request.urlretrieve(slurm_url, src_path/tarfile)
 
-            use_version = util.run(f"tar -xvjf {tarfile}", check=True,
-                                   get_stdout=True).stdout.splitlines()[0][:-1]
+            use_version = run(f"tar -xvjf {tarfile}", check=True,
+                              get_stdout=True).stdout.splitlines()[0][:-1]
     src_path = src_path/use_version
     build_dir = dirs.build/'slurm'
     build_dir.mkdirp()
 
     with cd(build_dir):
-        util.run(f"{src_path}/configure --prefix={dirs.install} --sysconfdir={slurmdirs.etc} --with-jwt={dirs.install}")
-        util.run("make -j install", stdout=DEVNULL)
+        run(f"{src_path}/configure --prefix={dirs.install} --sysconfdir={slurmdirs.etc} --with-jwt={dirs.install}")
+        run("make -j install", stdout=DEVNULL)
     with cd(build_dir/'contribs'):
-        util.run("make -j install", stdout=DEVNULL)
+        run("make -j install", stdout=DEVNULL)
 
     for p in slurmdirs.values():
         p.mkdirp()
         shutil.chown(p, user='slurm', group='slurm')
-    util.run("ldconfig")
+    run("ldconfig")
 
 
 def install_slurm_tmpfile():
@@ -654,18 +652,17 @@ def install_ompi():
 
     ompi_src = ompi_path/'src'
     ompi_src.mkdirp()
-    util.run(f"git clone --single-branch --depth 1 -b {cfg.ompi_version} {ompi_git} {ompi_src}")
+    run(f"git clone --single-branch --depth 1 -b {cfg.ompi_version} {ompi_git} {ompi_src}")
     with cd(ompi_src):
-        util.run("./autogen.pl", stdout=DEVNULL)
+        run("./autogen.pl", stdout=DEVNULL)
 
     ompi_build = dirs.build/'ompi'
     ompi_build.mkdirp()
     with cd(ompi_build):
-        util.run(
-            f"{ompi_src}/configure --prefix={ompi_path} "
+        run(f"{ompi_src}/configure --prefix={ompi_path} "
             f"--with-pmi={dirs.install} --with-libevent=/usr "
             "--with-hwloc=/usr", stdout=DEVNULL)
-        util.run("make -j install", stdout=DEVNULL)
+        run("make -j install", stdout=DEVNULL)
 
     ompi_sym = ompi_path.parent/'openmpi'
     ompi_sym.symlink_to(ompi_path)
@@ -699,7 +696,7 @@ def run_custom_scripts():
         path.chmod(0o755)
 
     for script in sorted(custom_path.glob('*')):
-        util.run(str(script.resolve()))
+        run(str(script.resolve()))
 
 
 def remove_metadata():
@@ -708,12 +705,12 @@ def remove_metadata():
     cmd = "gcloud compute instances remove-metadata"
     meta_keys = "startup-script,setup-script,util-script,fluentd-conf"
 
-    util.run(f"{cmd} {cfg.hostname} --zone={cfg.zone} --keys={meta_keys}")
-    util.run("systemctl enable tmp.mount")
+    run(f"{cmd} {cfg.hostname} --zone={cfg.zone} --keys={meta_keys}")
+    run("systemctl enable tmp.mount")
 
 
 def stop_instance():
-    util.run(f"gcloud compute instances stop {cfg.hostname} --zone {cfg.zone} --quiet")
+    run(f"gcloud compute instances stop {cfg.hostname} --zone {cfg.zone} --quiet")
 
 
 def main():
