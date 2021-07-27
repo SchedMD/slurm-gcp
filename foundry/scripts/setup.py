@@ -206,21 +206,22 @@ def create_users():
 
 def setup_modules():
     """ Add /apps/modulefiles as environment module dir """
+    url = 'https://github.com/TACC/Lmod.git'
+    prefix = Path('/opt')
+    src = prefix/'lmod/src'
+    lmod = prefix/'lmod/lmod'
+    run(f"git clone --single-branch --depth 1 {url} {src}")
 
-    # for Debian 10
-    modulepaths = Path('/etc/lmod/modulespath')
-    if modulepaths.exists():
-        paths = [path for path in modulepaths.read_text().splitlines()
-                 if not path.startswith('#')]
-        if str(dirs.modulefiles) not in paths:
-            with modulepaths.open('a') as f:
-                f.write(f"\n{dirs.modulefiles}")
+    modulespath = lmod/'init/modulespath'
+    with cd(src):
+        run(f"./configure --prefix={prefix} --with-ModulePathInit={modulespath}")
+        run("make install", stdout=DEVNULL)
+        lmodsh = Path('/etc/profile.d/z00_lmod.sh')
+        if lmodsh.exists():
+            lmodsh.unlink()
+        lmodsh.symlink_to(lmod/'init/bash')
 
-    # for CentOS 7
-    modulespath = Path('/usr/share/lmod/lmod/init/.modulespath')
-    modulespath.write_text(f"""
-{dirs.modulefiles}
-""")
+    modulespath.write_text(f"{dirs.modulefiles}")
 
 
 def start_motd():
@@ -434,7 +435,7 @@ WantedBy=multi-user.target
 def install_slurm():
     """ Compile and install slurm """
 
-    src_path = dirs.install/'src'
+    src_path = dirs.install/'src/slurm'
     src_path.mkdirp()
 
     with cd(src_path):
@@ -687,7 +688,7 @@ def run_custom_scripts():
     metadata = util.get_metadata('attributes/').split('\n')
     custom_scripts = [s for s in metadata if s.startswith(prefix)]
 
-    custom_path = dirs.slurm/'custom-scripts'
+    custom_path = SCRIPTSDIR/'custom-scripts'
     custom_path.mkdirp()
     for script in custom_scripts:
         name = script[len(prefix):]
@@ -722,9 +723,11 @@ def main():
     create_users()
     install_dependencies()
 
+    #install_apps()
+    #install_compiled_apps()
     with ThreadPoolExecutor() as exe:
-        exe.submit(install_compiled_apps)
         exe.submit(install_apps)
+        exe.submit(install_compiled_apps)
 
     setup_munge()
     setup_bash_profile()
@@ -734,13 +737,11 @@ def main():
     install_compute_service_scripts()
 
     setup_nfs_threads()
-
     install_slurm_tmpfile()
-    run_custom_scripts()
-    
     setup_logrotate()
 
-    #util.run("touch /.google_hpc_firstrun")
+    #run("touch /.google_hpc_firstrun")
+    run_custom_scripts()
 
     remove_metadata()
     end_motd()

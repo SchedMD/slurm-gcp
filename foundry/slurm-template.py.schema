@@ -104,3 +104,6 @@ properties:
           type: string
           default: ''
           description: format string for this image, overriding image_name
+        metadata:
+          type: object
+          description: key-value pairs to be inserted into instance metadata

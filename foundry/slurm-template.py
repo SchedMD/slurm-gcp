@@ -108,6 +108,8 @@ def generate_config(context):
 
         packages = spec['packages'] or f'scripts/{base}-packages'
         meta['packages'] = context.imports[packages]
+        if 'metadata' in spec:
+            meta.update(spec['metadata'])
 
         # Insert properties into yaml for conversion to resources dict
         vm_config = {

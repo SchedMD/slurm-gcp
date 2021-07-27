@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 google-api-python-client = "*"
 pyyaml = "*"
+yq = "*"
 
 [dev-packages]
 ipython = "*"
