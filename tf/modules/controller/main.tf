@@ -62,7 +62,7 @@ resource "google_compute_instance" "controller_node" {
 
   boot_disk {
     initialize_params {
-      image = var.intel_select_solution == "software_only" || var.intel_select_solution == "full_config" ? "projects/${var.project}/global/images/schedmd-slurm-20-11-7-hpc-intel-controller" : var.image
+      image = var.intel_select_solution == "software_only" || var.intel_select_solution == "full_config" ? "projects/${var.project}/global/images/schedmd-slurm-hpc-intel-controller" : var.image
       type  = var.boot_disk_type
       size  = var.boot_disk_size
     }

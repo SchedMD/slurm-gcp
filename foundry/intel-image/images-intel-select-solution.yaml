@@ -29,8 +29,8 @@ resources:
   properties:
     zone: us-west1-b
     machine_type: n1-standard-8
-    image_family: "schedmd-slurm-{major}-{minor}-{base}"
-    image_name: "schedmd-slurm-{major}-{minor}-{base}"
+    image_family: "schedmd-slurm-{base}"
+    image_name: "schedmd-slurm-{base}"
     slurm_version: 20.11.7
     libjwt_version: v1.13.1
     ompi_version: v4.1.x

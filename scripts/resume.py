@@ -101,7 +101,7 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         config['machineType'] = instance_def.machine_type
 
     if cfg.intel_select_solution == "software_only" or cfg.intel_select_solution == "full_config":
-        instance_def.image = "projects/{}/global/images/schedmd-slurm-20-11-7-hpc-intel-compute".format(cfg.project)
+        instance_def.image = "projects/{}/global/images/schedmd-slurm-hpc-intel-compute".format(cfg.project)
 
     if (instance_def.image and
             instance_def.compute_disk_type and
