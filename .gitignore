@@ -5,3 +5,5 @@ __pycache__
 **/*.tfplan
 **/*.tfvars
 .terraform.lock.hcl
+.terraform.tfstate.lock.info
+.vagrant
