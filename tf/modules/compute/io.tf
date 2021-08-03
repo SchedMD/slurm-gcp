@@ -63,6 +63,7 @@ variable "partitions" {
     zone                 = string,
     image                = string,
     image_hyperthreads   = bool,
+    shielded_instance    = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,

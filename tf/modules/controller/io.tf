@@ -142,6 +142,7 @@ variable "partitions" {
     zone                 = string,
     image                = string,
     image_hyperthreads   = bool,
+    shielded_instance    = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,
@@ -224,4 +225,10 @@ output "instance_network_ips" {
 output "config" {
   value = local.config
   sensitive = true
+}
+
+variable "shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
 }

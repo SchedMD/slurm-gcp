@@ -147,3 +147,9 @@ output "names" {
 output "instance_network_ips" {
   value = google_compute_instance.login_node.*.network_interface.0.network_ip
 }
+
+variable "shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
+}

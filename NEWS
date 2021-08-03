@@ -1,5 +1,6 @@
 Changes in Slurm-GCP 5.0.0
 ==========================
+ -- Added shielded VM support
 
 Changes in Slurm-GCP 4.0.3
 ==========================

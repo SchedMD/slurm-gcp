@@ -107,6 +107,12 @@ variable "controller_service_account" {
   default     = null
 }
 
+variable "controller_shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
+}
+
 variable "disable_login_public_ips" {
   type    = bool
   default = true
@@ -189,6 +195,12 @@ variable "login_node_count" {
   default     = 1
 }
 
+variable "login_shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
+}
+
 variable "munge_key" {
   description = "Specific munge key to use"
   default     = null
@@ -224,6 +236,7 @@ variable "partitions" {
     zone                 = string,
     image                = string,
     image_hyperthreads   = bool,
+    shielded_instance    = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,
