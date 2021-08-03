@@ -1,0 +1,46 @@
+# Copyright 2021 SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+
+- name: Install {{ansible_os_family}} Family Dependencies
+  package:
+    name:
+      - wget
+      - curl
+    state: present
+
+- name: Mkdir
+  file:
+    path: /root/image-scripts
+    state: directory
+
+- name: Get Cloud Agent Scripts
+  get_url:
+    url: "{{cloudagents_url}}/{{item}}"
+    dest: "/root/image-scripts/{{item}}"
+    mode: 0o744
+  loop:
+    - add-monitoring-agent-repo.sh
+    - add-logging-agent-repo.sh
+  register: scripts
+
+- name: Run Cloud Agent Scripts
+  shell: bash /root/image-scripts/{{item.item}} --also-install --version=latest
+  with_items: "{{scripts.results | list}}"
+
+- name: Install Fluentd Config
+  template:
+    src: fluentd.conf.j2
+    dest: /etc/google-fluentd/config.d/slurmlogs.conf
+  notify: Handle Fluentd Service

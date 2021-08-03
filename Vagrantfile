@@ -36,10 +36,20 @@ Vagrant.configure("2") do |config|
     centos7.vm.box = "generic/centos7"
   end
 
-  # # RHEL 7
-  # config.vm.define "rhel7" do |rhel7|
-  #   config.vm.box = "generic/rhel7"
-  # end
+  # RHEL 7
+  config.vm.define "rhel7" do |rhel7|
+    config.vm.box = "generic/rhel7"
+  end
+
+  # CentOS 8
+  config.vm.define "centos8" do |centos8|
+    centos8.vm.box = "generic/centos8"
+  end
+
+  # RHEL 8
+  config.vm.define "rhel8" do |rhel8|
+    config.vm.box = "generic/rhel8"
+  end
 
   # Copy the Ansible playbook over to the guest machine, run rsync-auto to automatically
   # pull in the latest changes while a VM is running.
