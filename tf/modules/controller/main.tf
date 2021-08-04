@@ -117,6 +117,15 @@ resource "google_compute_instance" "controller_node" {
     slurmsync                 = file("${path.module}/../../../scripts/slurmsync.py")
     util-script               = file("${path.module}/../../../scripts/util.py")
   }
+
+  dynamic "shielded_instance_config" {
+    for_each = var.shielded_instance ? [1] : []
+    content {
+      enable_secure_boot = true
+      enable_vtpm = true
+      enable_integrity_monitoring = true
+    }
+  }
 }
 
 resource "google_compute_instance_from_template" "controller_node" {
@@ -193,5 +202,14 @@ resource "google_compute_instance_from_template" "controller_node" {
     slurmdbd_conf_tpl         = file("${path.module}/../../../etc/slurmdbd.conf.tpl")
     slurmsync                 = file("${path.module}/../../../scripts/slurmsync.py")
     util-script               = file("${path.module}/../../../scripts/util.py")
+  }
+
+  dynamic "shielded_instance_config" {
+    for_each = var.shielded_instance ? [1] : []
+    content {
+      enable_secure_boot = true
+      enable_vtpm = true
+      enable_integrity_monitoring = true
+    }
   }
 }

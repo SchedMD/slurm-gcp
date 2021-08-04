@@ -1,3 +1,8 @@
+Changes in Slurm-GCP 5.0.0
+==========================
+ -- Added shielded VM support
+ -- suspend.py - now handles "Quota exceeded" error
+
 Changes in Slurm-GCP 4.0.3
 ==========================
  -- Introduce NEWS file
