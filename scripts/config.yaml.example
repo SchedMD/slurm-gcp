@@ -28,6 +28,7 @@ instance_defs:
     zone: us-west1-b
     image: projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-hpc-centos-7
     image_hyperthreads: false
+    shielded_instance: false
     compute_disk_size_gb: 20
     compute_disk_type: pd-standard
     compute_labels: {}
@@ -47,6 +48,7 @@ instance_defs:
 #    zone: us-west1-b
 #    image: projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-hpc-centos-7
 #    image_hyperthreads: false
+#    shielded_instance: false
 #    compute_disk_size_gb: 20
 #    compute_disk_type: pd-standard
 #    compute_labels: {}

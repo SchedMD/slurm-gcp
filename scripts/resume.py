@@ -152,6 +152,13 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
         ]
 
+    if instance_def.shielded_instance:
+        config['shieldedInstanceConfig'] = {
+            'enableSecureBoot': True,
+            'enableVtpm': True,
+            'enableIntegrityMonitoring': True,
+        }
+
     perInstanceProperties = {k: {} for k in node_list}
     body = {
         'count': len(node_list),

@@ -123,7 +123,7 @@ resource "google_compute_instance" "compute_node" {
   }
 
   dynamic "shielded_instance_config" {
-    for_each = each.value.shielded_instance ? [1] : null
+    for_each = each.value.shielded_instance ? [1] : []
     content {
       enable_secure_boot = true
       enable_vtpm = true
@@ -214,7 +214,7 @@ resource "google_compute_instance_from_template" "compute_node" {
   }
 
   dynamic "shielded_instance_config" {
-    for_each = each.value.shielded_instance ? [1] : null
+    for_each = each.value.shielded_instance ? [1] : []
     content {
       shielded_instance_config {
         enable_secure_boot          = true
