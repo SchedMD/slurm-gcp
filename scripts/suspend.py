@@ -46,7 +46,7 @@ if cfg.google_app_cred_path:
 def delete_instances_cb(request_id, response, exception):
     if exception is not None:
         log.error(f"delete exception for node {request_id}: {exception}")
-        if "Rate Limit Exceeded" in str(exception):
+        if "Rate Limit Exceeded" in str(exception) or "Quota exceeded" in str(exception):
             retry_list.append(request_id)
     else:
         operations[request_id] = response

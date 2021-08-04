@@ -1,3 +1,7 @@
+Changes in Slurm-GCP 4.0.5
+==========================
+ -- suspend.py - now handles "Quota exceeded" error.
+
 Changes in Slurm-GCP 4.0.4
 ==========================
  -- Configure sockets, cores, threads on compute nodes for better performace
