@@ -87,7 +87,7 @@ module "slurm_cluster_login" {
   labels                    = var.login_labels
   login_network_storage     = var.login_network_storage
   machine_type              = var.login_machine_type
-  shielded_instance             = var.controller_shielded_instance
+  shielded_instance         = var.login_shielded_instance
   node_count                = var.login_node_count
   region                    = local.region
   scopes                    = var.login_node_scopes
