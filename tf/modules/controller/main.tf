@@ -105,7 +105,7 @@ resource "google_compute_instance" "controller_node" {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
 
-    config = local.config
+    config                    = local.config
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
     custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
     custom-controller-install = file("${path.module}/../../../scripts/custom-controller-install")
@@ -121,8 +121,8 @@ resource "google_compute_instance" "controller_node" {
   dynamic "shielded_instance_config" {
     for_each = var.shielded_instance ? [1] : []
     content {
-      enable_secure_boot = true
-      enable_vtpm = true
+      enable_secure_boot          = true
+      enable_vtpm                 = true
       enable_integrity_monitoring = true
     }
   }
@@ -190,7 +190,7 @@ resource "google_compute_instance_from_template" "controller_node" {
   metadata = {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
-	config = local.config
+    config         = local.config
 
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
     custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
@@ -207,8 +207,8 @@ resource "google_compute_instance_from_template" "controller_node" {
   dynamic "shielded_instance_config" {
     for_each = var.shielded_instance ? [1] : []
     content {
-      enable_secure_boot = true
-      enable_vtpm = true
+      enable_secure_boot          = true
+      enable_vtpm                 = true
       enable_integrity_monitoring = true
     }
   }
