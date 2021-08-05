@@ -49,6 +49,12 @@ variable "controller_machine_type" {
   default     = null
 }
 
+variable "controller_shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
+}
+
 variable "controller_disk_type" {
   description = "Disk type (pd-ssd or pd-standard) for controller."
   type        = string
@@ -107,12 +113,6 @@ variable "controller_service_account" {
   default     = null
 }
 
-variable "controller_shielded_instance" {
-  description = "Enables GCP Shielded VM Security."
-  type        = bool
-  default     = false
-}
-
 variable "disable_login_public_ips" {
   type    = bool
   default = true
@@ -164,6 +164,12 @@ variable "login_machine_type" {
   default     = null
 }
 
+variable "login_shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
+}
+
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
@@ -193,12 +199,6 @@ variable "login_node_service_account" {
 variable "login_node_count" {
   description = "Number of login nodes in the cluster"
   default     = 1
-}
-
-variable "login_shielded_instance" {
-  description = "Enables GCP Shielded VM Security."
-  type        = bool
-  default     = false
 }
 
 variable "munge_key" {

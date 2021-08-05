@@ -49,6 +49,12 @@ variable "controller_machine_type" {
   default     = null
 }
 
+variable "controller_shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
+}
+
 variable "controller_disk_type" {
   description = "Disk type (pd-ssd or pd-standard) for controller."
   type        = string
@@ -158,6 +164,12 @@ variable "login_machine_type" {
   default     = null
 }
 
+variable "login_shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
+}
+
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
@@ -224,6 +236,7 @@ variable "partitions" {
     zone                 = string,
     image                = string,
     image_hyperthreads   = bool,
+    shielded_instance    = bool,
     compute_disk_type    = string,
     compute_disk_size_gb = number,
     compute_labels       = any,
