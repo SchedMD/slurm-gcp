@@ -56,7 +56,7 @@ resource "google_compute_instance" "compute_node" {
   machine_type = each.value.machine_type
   zone         = each.value.zone
 
-  tags = ["compute"]
+  tags = ["${var.cluster_name}", "compute"]
 
   boot_disk {
     initialize_params {
@@ -143,7 +143,7 @@ resource "google_compute_instance_from_template" "compute_node" {
   machine_type = each.value.machine_type
   zone         = each.value.zone
 
-  tags = ["compute"]
+  tags = ["${var.cluster_name}", "compute"]
 
   dynamic "boot_disk" {
     for_each = each.value.image != null && each.value.boot_disk_type != null && each.value.boot_disk_size != null ? [1] : []

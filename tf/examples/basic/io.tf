@@ -288,6 +288,10 @@ variable "zone" {
   type = string
 }
 
+output "cluster_name" {
+  value = var.cluster_name
+}
+
 output "zone" {
   value = var.zone
 }
