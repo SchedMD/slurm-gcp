@@ -87,7 +87,12 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             ),
         }],
 
-        'tags': {'items': ['compute']},
+        'tags': {
+            'items': [
+                cfg.cluster_name,
+                'compute',
+            ]
+        },
 
         'metadata': {
             'items': [

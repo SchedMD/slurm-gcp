@@ -27,7 +27,7 @@ resource "google_compute_instance" "login_node" {
   machine_type = var.machine_type
   zone         = var.zone
 
-  tags = ["login"]
+  tags = ["${var.cluster_name}", "login"]
 
   boot_disk {
     initialize_params {
@@ -105,7 +105,7 @@ resource "google_compute_instance_from_template" "login_node" {
   machine_type = var.machine_type
   zone         = var.zone
 
-  tags = ["login"]
+  tags = ["${var.cluster_name}", "login"]
 
   dynamic "boot_disk" {
     for_each = var.image != null && var.boot_disk_type != null && var.boot_disk_size != null ? [1] : []
