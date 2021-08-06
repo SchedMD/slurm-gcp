@@ -212,15 +212,4 @@ resource "google_compute_instance_from_template" "compute_node" {
     setup-script = file("${path.module}/../../../scripts/setup.py")
     util-script  = file("${path.module}/../../../scripts/util.py")
   }
-
-  dynamic "shielded_instance_config" {
-    for_each = each.value.shielded_instance ? [1] : []
-    content {
-      shielded_instance_config {
-        enable_secure_boot          = true
-        enable_vtpm                 = true
-        enable_integrity_monitoring = true
-      }
-    }
-  }
 }
