@@ -164,13 +164,4 @@ resource "google_compute_instance_from_template" "login_node" {
     custom-compute-install = file("${path.module}/../../../scripts/custom-compute-install")
 
   }
-
-  dynamic "shielded_instance_config" {
-    for_each = var.shielded_instance ? [1] : []
-    content {
-      enable_secure_boot          = true
-      enable_vtpm                 = true
-      enable_integrity_monitoring = true
-    }
-  }
 }
