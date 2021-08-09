@@ -1,11 +1,14 @@
 SCRIPTS=../../../scripts
 
-.PHONY: plan apply destroy import
+.PHONY: plan apply destroy import remove
 
 plan:
 	terraform plan -var-file=basic.tfvars -out terraform.tfplan
 
-apply:
+remove:
+	@python3 $(SCRIPTS)/remove.py
+
+apply: remove
 	terraform apply -var-file=basic.tfvars -auto-approve
 
 import:
