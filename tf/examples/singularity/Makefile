@@ -1,6 +1,6 @@
 SCRIPTS=../../../scripts
 
-.PHONY: plan apply destroy import
+.PHONY: plan apply destroy import remove
 
 $SCRIPTS/custom-controller-install: custom-controller-install
 	ln -sfn $$PWD/custom-controller-install ../../../scripts/custom-controller-install
@@ -8,7 +8,10 @@ $SCRIPTS/custom-controller-install: custom-controller-install
 plan:
 	terraform plan -var-file=basic.tfvars -out terraform.tfplan
 
-apply: $(SCRIPTS)/custom-controller-install
+remove:
+	@python3 $(SCRIPTS)/remove.py
+
+apply: remove $(SCRIPTS)/custom-controller-install
 	terraform apply -var-file=basic.tfvars -auto-approve
 
 import:

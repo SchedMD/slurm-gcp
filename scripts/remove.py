@@ -38,19 +38,19 @@ def main():
     output = run(f"terraform output -no-color cluster_name", shell=True, check=True, get_stdout=True).stdout
 
     if "Warning: No outputs found" in output:
-        print("No outputs in tfstate. Aborting import process.")
+        print("No outputs in tfstate. Aborting removal process.")
         sys.exit(0)
 
-    print("Attempting to import compute nodes to 'tfstate'...")
-    cluster_name=output.strip()
+    print("Attempting to removal compute nodes to 'tfstate'...")
+    cluster_name = output.strip()
     compute_list = run(f"gcloud compute instances list --uri --filter='tags.items={cluster_name} AND tags.items=\"compute\" AND tags.items=\"dynamic\"'", shell=True, check=True, get_stdout=True).stdout.strip().split('\n')
     if len(compute_list) == 0 or compute_list[0] == '':
-        print(f"No compute nodes found for cluster {cluster_name}. Aborting import process.")
+        print(f"No compute nodes found for cluster {cluster_name}. Aborting removal process.")
         sys.exit(0)
 
     for compute_uri in compute_list:
         compute_name = compute_uri.strip().split('/')[-1]
-        run(f"terraform import -var-file=basic.tfvars -input=false 'module.slurm_cluster_compute.google_compute_instance.compute_node[\"{compute_name}\"]' '{compute_uri}'")
+        run(f"terraform state rm 'module.slurm_cluster_compute.google_compute_instance.compute_node[\"{compute_name}\"]'")
     print("done.")
 
 if __name__ == '__main__':

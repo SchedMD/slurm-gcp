@@ -91,6 +91,7 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             'items': [
                 cfg.cluster_name,
                 'compute',
+                'dynamic',
             ]
         },
 
