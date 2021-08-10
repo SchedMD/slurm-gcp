@@ -1,3 +1,6 @@
+# Copyright 2021 SchedMD LLC
+# Modified for use with the Slurm Resource Manager.
+#
 # Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,5 +23,5 @@ terraform {
     }
   }
 
-  required_version = ">= 0.12.20"
+  required_version = "~> 1.0"
 }
