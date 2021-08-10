@@ -1,3 +1,5 @@
+# Copyright 2021 SchedMD LLC
+# Modified for use with the Slurm Resource Manager.
 #
 # Copyright 2019 Google LLC
 #
