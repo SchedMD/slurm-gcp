@@ -84,5 +84,10 @@ build {
     ]
   }
 
-  post-processor "manifest" {}
+  post-processor "manifest" {
+    output = "manifest.json"
+
+    strip_path = false
+    strip_time = false
+  }
 }
