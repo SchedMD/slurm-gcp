@@ -268,7 +268,9 @@ def install_slurm_conf():
                 part.max_node_count - 1)
 
         conf += ("NodeName=DEFAULT "
-                 f"CPUs={machine['cpus']} "
+                 "Sockets=1 "
+                 f"CoresPerSocket={machine['cpus']} "
+                 "ThreadsPerCore=1 "
                  f"RealMemory={machine['memory']} "
                  "State=UNKNOWN")
         conf += '\n'
