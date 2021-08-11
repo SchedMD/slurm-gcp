@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# DOCS: https://www.packer.io/docs/builders/googlecompute
-
 ###########
 # ACCOUNT #
 ###########
@@ -33,7 +31,7 @@ variable "zone" {
 # One of the following:
 # - source_image
 # - source_image_family
-# NOTE: source_image takes precedence when both are provided.
+# NOTE: 'source_image' takes precedence when both are provided.
 
 variable "source_image" {
   type    = string
@@ -135,5 +133,5 @@ variable "tags" {
 variable "slurm_version" {
   description = "Slurm version by git branch"
   type        = string
-  default     = "20.11"
+  default     = "slurm-20.11"
 }

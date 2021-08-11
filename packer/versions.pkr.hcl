@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# DOCS: https://www.packer.io/docs/builders/googlecompute
-
 packer {
   required_plugins {
     googlecompute = {
       source  = "github.com/hashicorp/googlecompute"
-      version = "~> 1.0.0"
+      version = "~> 1.0"
     }
   }
 
-  required_version = "~> 1.7.0"
+  required_version = "~> 1.7"
 }

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# DOCS: https://www.packer.io/docs/builders/googlecompute
-
 project = "<project>"
 zone    = "us-central1-a"
 
@@ -33,7 +31,6 @@ source_image_family = "centos-7"
 # SSH #
 #######
 
-# useful source_image is custom
 # ssh_username = "packer"
 
 ############
