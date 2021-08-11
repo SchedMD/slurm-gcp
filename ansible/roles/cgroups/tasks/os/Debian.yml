@@ -16,7 +16,7 @@
 - name: Install {{ansible_os_family}} Family Dependencies
   apt:
     name:
-      - libcgroup
+      - libcgroup1
       - libcgroup-dev
       - libpam-cgroup
     state: present

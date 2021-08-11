@@ -22,12 +22,6 @@
     state: present
   notify: yum-clean-metadata
 
-# - name: Install Cuda Dependencies
-#   yum:
-#     name:
-#       - libnvjpeg-devel-11-4
-#     state: present
-
 - name: Install Cuda
   yum:
     name:

@@ -20,4 +20,9 @@
       - mariadb-devel
       - mariadb-server
     state: present
+
+- name: Update Conf
+  template:
+    src: mysql_slurm.cnf.j2
+    dest: /etc/my.cnf.d/mysql_slurm.cnf
   notify: Handle Mariadb Service

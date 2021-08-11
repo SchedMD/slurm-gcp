@@ -15,11 +15,16 @@
 - hosts: all
   become: yes
 
-  vars_files:
-    - vars/config.yml
-
-  vars: 
+  vars:
     min_ansible_version: 2.7
+    paths: {
+      install: "/usr/local",
+      src: "/usr/local/src",
+      etc: "/usr/local/etc",
+      build: "/tmp",
+      apps: "/apps",
+      modules: "/apps/modules"
+    }
 
   pre_tasks:
     - name: Supported OS Check

@@ -1,4 +1,4 @@
-# Copyright 2021 SchedMD LLC.
+# Copyright 2021 SchedMD LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,14 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
 
-slurm_version: slurm-20.11
-paths: {
-  install: "/usr/local",
-  src: "/usr/local/src",
-  etc: "/usr/local/etc",
-  build: "/tmp",
-  apps: "/apps",
-  modules: "/apps/modules"
+# DOCS: https://www.packer.io/docs/builders/googlecompute
+
+packer {
+  required_plugins {
+    googlecompute = {
+      source  = "github.com/hashicorp/googlecompute"
+      version = "~> 1.0.0"
+    }
+  }
+
+  required_version = "~> 1.7.0"
 }

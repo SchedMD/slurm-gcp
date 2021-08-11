@@ -15,25 +15,3 @@
 
 - name: Include OS Family Dependent Tasks
   include_tasks: "os/{{ansible_os_family}}.yml"
-
-- name: Update NFS Config
-  blockinfile:
-    block: |
-      # Added by Google
-      RPCNFSDCOUNT={{nfs_threads}}
-    path: /etc/sysconfig/nfs
-    state: present
-    backup: yes
-  when: ansible_os_family == "RedHat"
-  notify: Handle NFS Service
-
-- name: Update NFS Config
-  blockinfile:
-    block: |
-      # Added by Google
-      RPCNFSDCOUNT={{nfs_threads}}
-    path: /etc/default/nfs-kernel-server
-    state: present
-    backup: yes
-  when: ansible_os_family == "Debian"
-  notify: Handle NFS Service

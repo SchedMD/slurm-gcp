@@ -16,7 +16,7 @@
 - name: Add Gcsfuse Repository
   template:
     src: gcsfuse.repo.j2
-    dest: /etc/yum.repo.d/gcsfuse.repo
+    dest: /etc/yum.repos.d/gcsfuse.repo
 
 - name: Install Gcsfuse
   yum:

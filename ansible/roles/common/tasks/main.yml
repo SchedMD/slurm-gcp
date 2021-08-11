@@ -24,6 +24,7 @@
       - clang
       - gcc
       - git
+      - graphviz
       - libtool
       - make
       - python3

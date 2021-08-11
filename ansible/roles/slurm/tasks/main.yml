@@ -63,6 +63,7 @@
   loop:
     - "{{slurm_paths.build}}"
     - "{{slurm_paths.etc}}"
+    - "{{slurm_paths.scripts}}"
     - "{{slurm_paths.log}}"
     - "{{slurm_paths.state}}"
     - "{{slurm_paths.run}}"
@@ -135,3 +136,17 @@
   template:
     src: tmpfiles.d/slurm.conf.j2
     dest: /etc/tmpfiles.d/slurm.conf
+
+- name: Copy Scripts
+  copy:
+    src: scripts/{{item}}
+    dest: "{{slurm_paths.scripts}}/{{item}}"
+    owner: "{{slurm_user.user}}"
+    group: "{{slurm_user.group}}"
+    mode: 0o755
+  with_items:
+    - resume.py
+    - setup.py
+    - slurmsync.py
+    - suspend.py
+    - util.py

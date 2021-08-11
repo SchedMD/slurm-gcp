@@ -7,6 +7,9 @@
 ### Packer ###
 packer_cache/
 output-*/
+*.pkrvars.hcl
+*.pem
+packer/*.json
 
 ### Python ###
 __pycache__/

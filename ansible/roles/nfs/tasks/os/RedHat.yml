@@ -18,3 +18,13 @@
     name:
       - nfs-utils
     state: present
+
+- name: Update NFS Config
+  blockinfile:
+    block: |
+      # Added by Google
+      RPCNFSDCOUNT={{nfs_threads}}
+    path: /etc/sysconfig/nfs
+    state: present
+    backup: yes
+  notify: Handle NFS Service

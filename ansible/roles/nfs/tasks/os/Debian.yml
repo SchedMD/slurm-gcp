@@ -18,3 +18,13 @@
     name:
       - nfs-kernel-server
     state: present
+
+- name: Update NFS Config
+  blockinfile:
+    block: |
+      # Added by Google
+      RPCNFSDCOUNT={{nfs_threads}}
+    path: /etc/default/nfs-kernel-server
+    state: present
+    backup: yes
+  notify: Handle NFS Service

@@ -14,9 +14,14 @@
 ---
 
 - name: Install {{ansible_os_family}} Family Dependencies
-  yum:
+  apt:
     name:
       - libmariadb-dev
       - mariadb-server
     state: present
+
+- name: Update Conf
+  template:
+    src: mysql_slurm.cnf.j2
+    dest: /etc/mysql/conf.d/mysql_slurm.cnf
   notify: Handle Mariadb Service
