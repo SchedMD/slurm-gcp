@@ -62,6 +62,12 @@ variable "ssh_username" {
   default = "packer"
 }
 
+variable "ssh_password" {
+  type      = string
+  default   = null
+  sensitive = true
+}
+
 ############
 # INSTANCE #
 ############

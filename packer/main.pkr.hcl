@@ -38,10 +38,13 @@ source "googlecompute" "image" {
   source_image        = var.source_image
   source_image_family = var.source_image_family
   image_licenses      = var.image_licenses
+  image_description   = "slurm-gcp"
   skip_create_image   = var.skip_create_image
 
   # ssh settings
-  ssh_username              = var.ssh_username
+  ssh_username = var.ssh_username
+  ssh_password = var.ssh_password
+
   ssh_clear_authorized_keys = true
 
   # instance settings

@@ -19,7 +19,7 @@ slurm_paths: {
   install: "{{paths.install}}",
   src: "{{paths.src}}/slurm",
   etc: "{{paths.install}}/etc/slurm",
-  scripts: "{slurm_paths.etc}/scripts",
+  scripts: "/slurm/scripts",
   build: "{{paths.build}}/slurm",
   log: "/var/log/slurm",
   state: "/var/spool/slurmctld",

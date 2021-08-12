@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+###########
+# ACCOUNT #
+###########
+
 project = "<project>"
 zone    = "us-central1-a"
 
@@ -31,14 +35,16 @@ source_image_family = "centos-7"
 # SSH #
 #######
 
-# ssh_username = "packer"
+# May be useful when source image is not from marketplace
+# ssh_username = "<username>"
+# ssh_password = "<password>"
 
 ############
 # INSTANCE #
 ############
 
 machine_type = "n1-standard-1"
-# preemptible = true
+# preemptible  = true
 
 # Root of Trust (RoT)
 # enable_secure_boot          = true
@@ -56,9 +62,9 @@ machine_type = "n1-standard-1"
 # NETWORK #
 ###########
 
-# network_project_id = "<network_project_id>"
+# network_project_id = "<existing network_project_id uri>"
 
-# subnetwork = "<subnetwork_uri>"
+# subnetwork = "<existing subnetwork uri>"
 
 # tags = []
 

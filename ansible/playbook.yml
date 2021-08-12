@@ -67,3 +67,4 @@
     - gcsfuse
     - cloudagents
     - logrotate
+    - python
