@@ -14,4 +14,4 @@
 ---
 
 dependencies:
-  - role: modules
+  - role: lmod

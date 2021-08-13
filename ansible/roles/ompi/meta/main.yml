@@ -15,5 +15,5 @@
 
 dependencies:
   - role: common
-  - role: modules
+  - role: lmod
   - role: slurm

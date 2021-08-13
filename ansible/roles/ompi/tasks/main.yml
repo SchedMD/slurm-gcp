@@ -23,7 +23,7 @@
   loop:
     - "{{ompi_paths.build}}"
     - "{{ompi_paths.apps}}"
-    - "{{ompi_paths.modules}}"
+    - "{{ompi_paths.modulefiles}}"
 
 - name: Git Clone
   git:
@@ -58,7 +58,7 @@
 - name: Create Modulefile
   template:
     src: ompi.lua.j2
-    dest: "{{ompi_paths.modules}}/{{ompi_version}}.lua"
+    dest: "{{ompi_paths.modulefiles}}/{{ompi_version}}.lua"
 
 - name: Symlink
   file:

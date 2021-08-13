@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+---
 
 - hosts: all
   become: yes
@@ -22,8 +23,8 @@
       src: "/usr/local/src",
       etc: "/usr/local/etc",
       build: "/tmp",
-      apps: "/apps",
-      modules: "/apps/modules"
+      apps: "/opt/apps",
+      modulefiles: "/opt/apps/modulefiles"
     }
 
   pre_tasks:
@@ -60,7 +61,7 @@
     - munge
     - mariadb
     - libjwt
-    - modules
+    - lmod
     - slurm
     - ompi
     - lustre

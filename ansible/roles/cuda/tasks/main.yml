@@ -16,8 +16,12 @@
 - name: Include OS Tasks
   include_tasks: "os/{{ansible_os_family}}.yml"
 
-- name: Add Conf to 'ld.so.conf.d/'
+- name: Add Nvidia to 'ld.so.conf.d/'
   template:
-    src: nvidia.conf.j2
+    src: ld.so.conf.d/nvidia.conf.j2
     dest: /etc/ld.so.conf.d/nvidia.conf
-    force: yes
+
+- name: Add Cuda to 'profile.d/'
+  template:
+    src: profile.d/cuda.sh.j2
+    dest: /etc/profile.d/cuda.sh

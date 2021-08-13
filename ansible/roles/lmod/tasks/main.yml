@@ -16,48 +16,50 @@
 - name: Include OS Family Dependent Tasks
   include_tasks: "os/{{ansible_os_family}}.yml"
 
+
 - name: Mkdir
   file:
     path: "{{item}}"
     state: directory
   loop:
-    - "{{libjwt_paths.build}}"
-    - "{{libjwt_paths.etc}}"
+    - "{{paths.apps}}"
+    - "{{paths.modulefiles}}"
 
 - name: Git Clone
   git:
-    repo: "{{libjwt_git_url}}"
-    dest: "{{libjwt_paths.src}}"
-    version: "{{libjwt_version}}"
+    repo: "{{lmod_git_url}}"
+    dest: "{{lmod_paths.src}}"
+    version: "{{lmod_version}}"
     clone: yes
     # single_branch: yes # ansible 2.11
     depth: "1"
 
-- name: Autoreconf
-  shell:
-    cmd: autoreconf --install --force > /dev/null
-    chdir: "{{libjwt_paths.src}}"
+- name: Create Modulespath
+  template:
+    src: modulespath.j2
+    dest: "{{paths.apps}}/lmod/.modulespath"
+    mode: 0644
 
 - name: Configure
   shell:
     cmd: >
-      {{libjwt_paths.src}}/configure
-      --prefix={{libjwt_paths.install}}
-      --sysconfdir={{libjwt_paths.etc}}
+      {{lmod_paths.src}}/configure
+      --prefix={{paths.apps}}
+      --with-ModulePathInit={{paths.apps}}/lmod/.modulespath
       > /dev/null
-    chdir: "{{libjwt_paths.build}}"
+    chdir: "{{lmod_paths.src}}"
 
 - name: Make Install
   shell:
-    cmd: make --jobs install > /dev/null
-    chdir: "{{libjwt_paths.build}}"
+    cmd: make install > /dev/null
+    chdir: "{{lmod_paths.src}}"
 
-- name: Add Conf to 'ld.so.conf.d/'
-  template:
-    src: libjwt.conf.j2
-    dest: /etc/ld.so.conf.d/libjwt.conf
-
-- name: Ldconfig
-  command:
-    cmd: ldconfig
-    chdir: "{{libjwt_paths.src}}"
+- name: Symbolic Link
+  file:
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+    state: link
+  with_items:
+    - { src: "{{lmod_paths.build}}/init/profile", dest: "/etc/profile.d/z00_lmod.sh" }
+    - { src: "{{lmod_paths.build}}/init/cshrc", dest: "/etc/profile.d/z00_lmod.csh" }
+    # - { src: "{{lmod_paths.build}}/init/profile.fish", dest: "/etc/fish/conf.d/z00_lmod.fish" }

@@ -17,22 +17,22 @@
   systemd:
     name: slurmdbd
     enabled: yes
-    state: restarted
+    state: stopped
 
 - name: Handle Slurmctld Service
   systemd:
     name: slurmctld
     enabled: yes
-    state: restarted
+    state: stopped
 
 - name: Handle Slurmrestd Service
   systemd:
     name: slurmrestd
     enabled: yes
-    state: restarted
+    state: stopped
 
 - name: Handle Slurmd Service
   systemd:
     name: slurmd
     enabled: yes
-    state: restarted
+    state: stopped

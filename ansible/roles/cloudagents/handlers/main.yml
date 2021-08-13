@@ -17,4 +17,4 @@
   systemd:
     name: google-fluentd
     enabled: yes
-    state: restarted
+    state: stopped

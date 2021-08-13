@@ -13,17 +13,9 @@
 # limitations under the License.
 ---
 
-- name: RedHat Family Tasks
-  block:
-    - name: Backup SeLinux Config File
-      copy:
-        src: "{{selinux_conf}}"
-        dest: "{{selinux_conf}}.bak"
-        remote_src: yes
-
-    - name: Disable SELinux
-      selinux:
-        configfile: "{{selinux_conf}}"
-        state: disabled
-        policy: targeted
+- name: Disable SELinux
+  selinux:
+    configfile: "{{selinux_conf}}"
+    state: disabled
+    policy: targeted
   when: ansible_os_family == "RedHat"

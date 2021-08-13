@@ -33,9 +33,15 @@
 - name: Install Misc. Software
   package:
     name:
+      - emacs
       - htop
       - lynx
       - pdsh
       - tmux
       - vim
     state: present
+
+- name: Add Conf to 'ld.so.conf.d/'
+  template:
+    src: ld.so.conf.d/usr-local.conf.j2
+    dest: /etc/ld.so.conf.d/usr-local.conf

@@ -22,6 +22,7 @@
       - http-parser-devel
       - hwloc
       - hwloc-devel
+      - hwloc-gui
       - json-c-devel
       - libcurl-devel
       - libevent-devel

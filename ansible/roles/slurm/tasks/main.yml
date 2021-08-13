@@ -101,38 +101,46 @@
   template:
     src: ld.so.conf.d/slurm.conf.j2
     dest: /etc/ld.so.conf.d/slurm.conf
-    force: yes
 
 - name: Ldconfig
   command:
     cmd: ldconfig
     chdir: "{{slurm_paths.src}}"
 
+- name: Add Slurm to 'profile.d/'
+  template:
+    src: profile.d/slurm.sh.j2
+    dest: /etc/profile.d/slurm.sh
+
 - name: Install Slurmdbd Service
   template:
     src: systemd/slurmdbd.service.j2
     dest: /usr/lib/systemd/system/slurmdbd.service
     mode: 0o644
+  notify: Handle Slurmdbd Service
 
 - name: Install Slurmctld Service
   template:
     src: systemd/slurmctld.service.j2
     dest: /usr/lib/systemd/system/slurmctld.service
     mode: 0o644
+  notify: Handle Slurmctld Service
 
 - name: Install Slurmrestd Service
   template:
     src: systemd/slurmrestd.service.j2
     dest: /usr/lib/systemd/system/slurmrestd.service
     mode: 0o644
+  notify: Handle Slurmrestd Service
 
 - name: Install Slurmd Service
   template:
     src: systemd/slurmd.service.j2
     dest: /usr/lib/systemd/system/slurmd.service
     mode: 0o644
+  notify: Handle Slurmd Service
 
-- name: Install Tmpfile
+- name: Create Tmpfile
   template:
     src: tmpfiles.d/slurm.conf.j2
     dest: /etc/tmpfiles.d/slurm.conf
