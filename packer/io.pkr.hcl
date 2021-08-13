@@ -20,10 +20,6 @@ variable "project" {
   type = string
 }
 
-variable "zone" {
-  type = string
-}
-
 #########
 # IMAGE #
 #########
@@ -80,6 +76,10 @@ variable "machine_type" {
 variable "preemptible" {
   type    = bool
   default = false
+}
+
+variable "zone" {
+  type = string
 }
 
 ### Root of Trust (RoT) ###
