@@ -21,20 +21,20 @@ Also, join comunity discussions on either the
 # Contents
 
 * [Stand-alone Cluster in Google Cloud Platform](#stand-alone-cluster-in-google-cloud-platform)
-  * [Install using GCP Marketplace](#install-using-gcp-marketplace)
-  * [Install using Terraform](#install-using-terraform)
-	* [Defining network storage mounts](#defining-network-storage-mounts)
-  * [Public Slurm Images](#public-slurm-images)
-	* [Hyperthreads](hyperthreads)
-	* [Preinstalled Modules: OpenMPI](#preinstalled-modules-openmpi)
-  * [Installing Custom Packages](#installing-custom-packages)
-  * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
-  * [OS Login](#os-login)
-  * [Preemptible VMs](#preemptible-vms)
+   * [Install using GCP Marketplace](#install-using-gcp-marketplace)
+   * [Install using Terraform](#install-using-terraform)
+      * [Defining network storage mounts](#defining-network-storage-mounts)
+   * [Public Slurm Images](#public-slurm-images)
+      * [Hyperthreads](hyperthreads)
+      * [Preinstalled Modules: OpenMPI](#preinstalled-modules-openmpi)
+   * [Installing Custom Packages](#installing-custom-packages)
+   * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
+   * [OS Login](#os-login)
+   * [Preemptible VMs](#preemptible-vms)
 * [Hybrid Cluster for Bursting from On-Premise](#hybrid-cluster-for-bursting-from-on-premise)
-  * [Node Addressing](#node-addressing)
-  * [Configuration Steps](#configuration-steps)
-  * [Users and Groups in a Hybrid Cluster](#users-and-groups-in-a-hybrid-cluster)
+   * [Node Addressing](#node-addressing)
+   * [Configuration Steps](#configuration-steps)
+   * [Users and Groups in a Hybrid Cluster](#users-and-groups-in-a-hybrid-cluster)
 * [Multi-Cluster / Federation](#multi-cluster-federation)
 * [Troubleshooting](#troubleshooting)
 
@@ -71,9 +71,9 @@ installed on your computer or use the GCP
 Steps:
 1. cd to tf/examples/basic
 2. Copy `basic.tfvars.example` to `basic.tfvars`
-3. Edit `basic.tfvars` with the required configuration  
-	See the [tf/examples/basic/io.tf](tf/examples/basic/io.tf)
-	file for more detailed information on available configuration options.
+3. Edit `basic.tfvars` with the required configuration
+   See the [tf/examples/basic/io.tf](tf/examples/basic/io.tf)
+   file for more detailed information on available configuration options.
 4. Deploy the cluster
    ```
    $ terraform init
@@ -99,7 +99,7 @@ modules: `network_storage`, `login_network_storage`, and
 * `partitions[].network_storage` is mounted on compute instances within the
 specified partition.
 
-All of these have the same 5 fields: 
+All of these have the same 5 fields:
 * `server_ip`
 * `remote_mount`
 * `local_mount`
@@ -114,21 +114,21 @@ access the mount.
 `fs_type` can be one of: `nfs`, `cifs`, `lustre`, `gcsfuse`
 
 ### Public Slurm images
-There are currently 3 public image families available for use with Slurm-GCP:  
-`projects/schedmd-slurm-public/global/images/family/`  
-* `schedmd-slurm-20-11-7-hpc-centos-7`  
-* `schedmd-slurm-20-11-7-centos-7`  
+There are currently 3 public image families available for use with Slurm-GCP:
+`projects/schedmd-slurm-public/global/images/family/`
+* `schedmd-slurm-20-11-7-hpc-centos-7`
+* `schedmd-slurm-20-11-7-centos-7`
 * `schedmd-slurm-20-11-7-debian-10`
 
 #### Hyperthreads
 The `hpc-centos-7` image has hyperthreads enabled by default, but can have the
-hyperthreads disabled by setting `image_hyperthreads` to `false`. The non-HPC 
-images, `centos-7` and `debian-10`, cannot have hyperthreads disabled.  Slurm-GCP 
-must know this for each compute node type when configuring the cluster so it can 
-configure the correct number of CPUs. `image_hyperthreads` must be set on the 
+hyperthreads disabled by setting `image_hyperthreads` to `false`. The non-HPC
+images, `centos-7` and `debian-10`, cannot have hyperthreads disabled. Slurm-GCP
+must know this for each compute node type when configuring the cluster so it can
+configure the correct number of CPUs. `image_hyperthreads` must be set on the
 partition definition to reflect the state of hyperthreads in the image.
 
-**NOTE:** The result of disabling hyperthreads is that half the number of CPUs will 
+**NOTE:** The result of disabling hyperthreads is that half the number of CPUs will
 be usable, eg. `c2-standard-4` compute nodes will have 2 CPUs.
 
 #### Preinstalled modules: OpenMPI
@@ -216,10 +216,10 @@ Hello world from processor g1-compute-0-2, rank 2 out of 4 processors
 ## Hybrid Cluster for Bursting from On-Premise
 
 Bursting out from an on-premise cluster is done by configuring the
-**ResumeProgram** and the **SuspendProgram** in the slurm.conf to 
+**ResumeProgram** and the **SuspendProgram** in the slurm.conf to
 *resume.py*, *suspend.py* in the scripts directory. *config.yaml* should
 be configured so that the scripts can create and destroy compute instances in a
-GCP project. 
+GCP project.
 See [Cloud Scheduling Guide](https://slurm.schedmd.com/elastic_computing.html)
 for more information.
 
@@ -232,19 +232,19 @@ Pre-reqs:
    3. SrunPortRange
 4. Open ports in GCP for NFS from on-premise
 
-### Node Addressing  
+### Node Addressing
 There are two options: 1) setup DNS between the on-premise network and the GCP
 network or 2) configure Slurm to use NodeAddr to communicate with cloud compute
 nodes. In the end, the slurmctld and any login nodes should be able to
 communicate with cloud compute nodes, and the cloud compute nodes should be
 able to communicate with the controller.
 
-* Configure DNS peering  
+* Configure DNS peering
    1. GCP instances need to be resolvable by name from the controller and any
       login nodes.
    2. The controller needs to be resolvable by name from GCP instances, or the
       controller ip address needs to be added to /etc/hosts.
-   https://cloud.google.com/dns/zones/#peering-zones  
+      https://cloud.google.com/dns/zones/#peering-zones
 
 * Use IP addresses with NodeAddr
    1. disable [cloud_dns](https://slurm.schedmd.com/slurm.conf.html#OPT_cloud_dns) in *slurm.conf*
@@ -268,17 +268,17 @@ able to communicate with the controller.
    Install the *resume.py*, *suspend.py*, *slurmsync.py*, *util.py* and
    *config.yaml.example* from the slurm-gcp repository's [scripts](scripts) directory to a
    location on the slurmctld. Rename *config.yaml.example* to *config.yaml* and
-   modify the approriate values.  
+   modify the approriate values.
 
    Add the path of the service account key to *google_app_cred_path* in *config.yaml*.
-   
+
    Add the image URL (path to the image or family) to each instance defintion.
 
 4. Modify slurm.conf:
 
    ```
    PrivateData=cloud
-   
+
    SuspendProgram=/path/to/suspend.py
    ResumeProgram=/path/to/resume.py
    ResumeFailProgram=/path/to/suspend.py
@@ -287,17 +287,17 @@ able to communicate with the controller.
    ResumeRate=0
    SuspendRate=0
    SuspendTime=300
-   
+
    # Tell Slurm to not power off nodes. By default, it will want to power
    # everything off. SuspendExcParts will probably be the easiest one to use.
    #SuspendExcNodes=
    #SuspendExcParts=
-   
+
    SchedulerParameters=salloc_wait_nodes
    SlurmctldParameters=cloud_dns,idle_on_node_suspend
    CommunicationParameters=NoAddrCache
    LaunchParameters=enable_nss_slurm
-   
+
    SrunPortRange=60001-63000
    ```
 
@@ -349,7 +349,7 @@ The following considerations are needed for these scenarios:
   each cluster, the compute nodes must be accessible from the login nodes on
   each cluster.
   * It may be easier to only support batch jobs between clusters.
-    * Once a batch job is on a cluster, srun functions normally.
+      * Once a batch job is on a cluster, srun functions normally.
 * If a firewall exists, srun communications most likely need to be allowed
   through it. Configure SrunPortRange to define a range for ports for srun
   communications.
@@ -360,13 +360,13 @@ The following considerations are needed for these scenarios:
   or use a separate MUNGE key for each cluster and another key for use between
   each cluster and the SlurmDBD. In order for cross-cluster interactive jobs to
   work, the clusters must share the same MUNGE key. See the following for more
-  information:  
-  [Multi-Cluster Operation](https://slurm.schedmd.com/multi_cluster.html)  
+  information:
+  [Multi-Cluster Operation](https://slurm.schedmd.com/multi_cluster.html)
   [Accounting and Resource Limits](https://slurm.schedmd.com/accounting.html)
 
 
-For more information see:  
-[Multi-Cluster Operation](https://slurm.schedmd.com/multi_cluster.html)  
+For more information see:
+[Multi-Cluster Operation](https://slurm.schedmd.com/multi_cluster.html)
 [Federated Scheduling Guide](https://slurm.schedmd.com/federation.html)
 
 
@@ -377,18 +377,18 @@ For more information see:
    2. Try creating nodes manually by calling resume.py manually **as the
       "slurm" user**.
       * **NOTE:** If you run resume.py manually with root, subsequent calls to
-	resume.py by the "slurm" user may fail because resume.py's log file
-	will be owned by root.
+   resume.py by the "slurm" user may fail because resume.py's log file
+   will be owned by root.
    3. Check the slurmctld logs
       * /var/log/slurm/slurmctld.log
       * Turn on the *PowerSave* debug flag to get more information.
-        e.g.
-        ```
-        $ scontrol setdebugflags +powersave
-        ...
-        $ scontrol setdebugflags -powersave
-        ```
-2. Cluster environment not fully coming up  
+         e.g.
+         ```
+         $ scontrol setdebugflags +powersave
+         ...
+         $ scontrol setdebugflags -powersave
+         ```
+2. Cluster environment not fully coming up
    For example:
    * Slurm not being installed
    * Compute images never being stopped
@@ -398,7 +398,7 @@ For more information see:
       search for last mention of "startup-script."
 3. General debugging
    * check logs
-     * /var/log/messages
-     * /var/log/slurm/*.log
-     * **NOTE:** syslog and all Slurm logs can be viewed in [GCP Console's Logs Viewer](https://console.cloud.google.com/logs/viewer).
+      * /var/log/messages
+      * /var/log/slurm/*.log
+      * **NOTE:** syslog and all Slurm logs can be viewed in [GCP Console's Logs Viewer](https://console.cloud.google.com/logs/viewer).
    * check GCP quotas
