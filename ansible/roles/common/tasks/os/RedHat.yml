@@ -19,7 +19,7 @@
     state: latest
     update_cache: yes
 
-- name: Enable CentOS 8 PowerTools Repository
+- name: Enable RedHat 8 PowerTools Repository
   shell: dnf config-manager --set-enabled powertools
   when: ansible_distribution_major_version is version('8', '>=')
 
@@ -35,7 +35,7 @@
       - yum-utils
     state: present
 
-- name: Install CentOS 8 Development Dependencies
+- name: Install RedHat 8 Development Dependencies
   yum:
     name:
       - dnf-utils

@@ -28,6 +28,7 @@
       - libtool
       - make
       - python3
+      - valgrind
     state: present
 
 - name: Install Misc. Software
