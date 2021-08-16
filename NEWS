@@ -3,6 +3,7 @@ Changes in Slurm-GCP 5.0.0
  -- Added shielded VM support
  -- suspend.py - now handles "Quota exceeded" error
  -- Compute nodes are no longer orphaned on terraform destroy
+ -- Changed Terraform minimum version to 1.0
 
 Changes in Slurm-GCP 4.0.3
 ==========================
