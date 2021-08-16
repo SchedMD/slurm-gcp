@@ -25,7 +25,7 @@ Also, join comunity discussions on either the
    * [Install using Terraform](#install-using-terraform)
       * [Defining network storage mounts](#defining-network-storage-mounts)
    * [Public Slurm Images](#public-slurm-images)
-      * [Hyperthreads](hyperthreads)
+      * [Hyperthreads](#hyperthreads)
       * [Preinstalled Modules: OpenMPI](#preinstalled-modules-openmpi)
    * [Installing Custom Packages](#installing-custom-packages)
    * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
@@ -35,7 +35,7 @@ Also, join comunity discussions on either the
    * [Node Addressing](#node-addressing)
    * [Configuration Steps](#configuration-steps)
    * [Users and Groups in a Hybrid Cluster](#users-and-groups-in-a-hybrid-cluster)
-* [Multi-Cluster / Federation](#multi-cluster-federation)
+* [Multi-Cluster / Federation](#multi-cluster-\/-federation)
 * [Troubleshooting](#troubleshooting)
 
 ## Stand-alone Cluster in Google Cloud Platform
