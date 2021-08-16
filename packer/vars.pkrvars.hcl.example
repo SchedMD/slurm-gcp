@@ -40,7 +40,7 @@ builds = [
     machine_type = "n1-standard-8"
     preemptible  = false
 
-    ### root fo trust ###
+    ### root of trust ###
     enable_secure_boot          = null
     enable_vtpm                 = null
     enable_integrity_monitoring = null
