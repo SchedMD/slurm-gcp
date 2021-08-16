@@ -43,6 +43,7 @@ variable "machine_type" {
 variable "munge_key" {
   description = "Specific munge key to use (e.g. date +%s | sha512sum | cut -d' ' -f1) generate a random key if none is specified"
   default     = ""
+  sensitive   = true
 }
 
 variable "network_storage" {

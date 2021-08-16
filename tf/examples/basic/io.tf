@@ -23,7 +23,8 @@ variable "cloudsql" {
     password  = string
     db_name   = string
   })
-  default = null
+  default   = null
+  sensitive = true
 }
 
 variable "cluster_name" {
@@ -208,6 +209,7 @@ variable "login_node_count" {
 variable "munge_key" {
   description = "Specific munge key to use"
   default     = null
+  sensitive   = true
 }
 
 variable "jwt_key" {
