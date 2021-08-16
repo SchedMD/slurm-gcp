@@ -18,9 +18,9 @@
 
 locals {
   slurm_semver = split(".", trimprefix(var.slurm_version, "slurm-"))
-  image_family = "schedmd-slurm-${join("-", local.slurm_semver)}-${var.source_image_family}"
-  ansible_dir  = "../ansible"
-  scripts_dir  = "../scripts"
+
+  ansible_dir = "../ansible"
+  scripts_dir = "../scripts"
 }
 
 ##########
@@ -28,35 +28,14 @@ locals {
 ##########
 
 source "googlecompute" "image" {
-  # account settings
+  ### general ###
   project_id = var.project
   zone       = var.zone
 
-  # image settings
-  image_name          = "${local.image_family}-{{timestamp}}"
-  image_family        = local.image_family
-  source_image        = var.source_image
-  source_image_family = var.source_image_family
-  image_licenses      = var.image_licenses
-  image_description   = "slurm-gcp"
-  skip_create_image   = var.skip_create_image
-
-  # ssh settings
-  ssh_username = var.ssh_username
-  ssh_password = var.ssh_password
-
+  ### ssh ###
   ssh_clear_authorized_keys = true
 
-  # instance settings
-  instance_name = "${local.image_family}-{{timestamp}}"
-  machine_type  = var.machine_type
-  preemptible   = var.preemptible
-
-  # disk settings
-  disk_size = var.disk_size
-  disk_type = var.disk_type
-
-  # network settings
+  ### network ###
   network_project_id = var.network_project_id
   subnetwork         = var.subnetwork
   tags               = var.tags
@@ -67,14 +46,49 @@ source "googlecompute" "image" {
 #########
 
 build {
+  ### general ###
   name = "slurm-gcp"
 
-  sources = [
-    "sources.googlecompute.image",
-  ]
+  ### builds ###
+  dynamic "source" {
+    for_each = var.builds
+    labels = [
+      "sources.googlecompute.image",
+    ]
+    content {
+      name = source.key
 
+      ### image ###
+      source_image        = source.value.source_image
+      source_image_family = source.value.source_image_family
+
+      image_name        = "schedmd-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}-{{timestamp}}"
+      image_family      = "schedmd-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}"
+      image_description = "slurm-gcp"
+      skip_create_image = source.value.skip_create_image
+      image_licenses    = source.value.image_licenses
+      image_labels      = source.value.labels
+
+      ### ssh ###
+      ssh_username = source.value.ssh_username
+      ssh_password = source.value.ssh_password
+
+      ### instance ###
+      instance_name = "schedmd-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}-{{timestamp}}"
+      machine_type  = source.value.machine_type
+      preemptible   = source.value.preemptible
+      labels        = source.value.labels
+
+      ### disk ###
+      disk_size = source.value.disk_size
+      disk_type = source.value.disk_type
+    }
+  }
+
+  ### provision ###
   provisioner "ansible" {
     playbook_file = "${local.ansible_dir}/playbook.yml"
+    roles_path    = "${local.ansible_dir}/roles"
     ansible_env_vars = [
       "ANSIBLE_CONFIG=${local.ansible_dir}/ansible.cfg",
     ]
@@ -85,6 +99,7 @@ build {
     ]
   }
 
+  ### post processor ###
   post-processor "manifest" {
     output = "manifest.json"
 

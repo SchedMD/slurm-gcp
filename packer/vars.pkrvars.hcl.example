@@ -13,63 +13,81 @@
 # limitations under the License.
 
 ###########
-# ACCOUNT #
+# GENERAL #
 ###########
 
 project = "<project>"
 zone    = "us-central1-a"
 
-#########
-# IMAGE #
-#########
+##########
+# BUILDS #
+##########
 
-# source_image        = "centos-7-v20210721"
-source_image_family = "centos-7"
+builds = [
+  {
+    ### image ###
+    source_image        = null
+    source_image_family = "centos-7"
+    skip_create_image   = false
+    image_licenses      = null
+    labels              = null
 
-# image_licenses = []
+    ### ssh ###
+    ssh_username = "packer"
+    ssh_password = null
 
-### debug options ###
-# skip_create_image = true
+    ### instance ###
+    machine_type = "n1-standard-8"
+    preemptible  = false
 
-#######
-# SSH #
-#######
+    ### root fo trust ###
+    enable_secure_boot          = null
+    enable_vtpm                 = null
+    enable_integrity_monitoring = null
 
-# May be useful when source image is not from marketplace
-# ssh_username = "<username>"
-# ssh_password = "<password>"
+    ### storage ###
+    disk_size = null
+    disk_type = null
+  },
+  # {
+  #   ### image ###
+  #   source_image        = null
+  #   source_image_family = "centos-7"
+  #   skip_create_image   = false
+  #   image_licenses      = null
+  #   labels              = null
 
-############
-# INSTANCE #
-############
+  #   ### ssh ###
+  #   ssh_username = "packer"
+  #   ssh_password = null
 
-machine_type = "n1-standard-1"
-# preemptible  = true
+  #   ### instance ###
+  #   machine_type = "n1-standard-8"
+  #   preemptible  = false
 
-# Root of Trust (RoT)
-# enable_secure_boot          = true
-# enable_vtpm                 = true
-# enable_integrity_monitoring = true
+  #   ### root of trust ###
+  #   enable_secure_boot          = null
+  #   enable_vtpm                 = null
+  #   enable_integrity_monitoring = null
 
-###########
-# STORAGE #
-###########
-
-# disk_size = 20
-# disk_type = "pd-standard"
+  #   ### storage ###
+  #   disk_size = null
+  #   disk_type = null
+  # },
+]
 
 ###########
 # NETWORK #
 ###########
 
-# network_project_id = "<existing network_project_id uri>"
+# network_project_id = "<existing network_project_id>"
 
-# subnetwork = "<existing subnetwork uri>"
+# subnetwork = "<existing subnetwork id>"
 
 # tags = []
 
-################
-# PROVISIONING #
-################
+#############
+# PROVISION #
+#############
 
 slurm_version = "slurm-20.11"

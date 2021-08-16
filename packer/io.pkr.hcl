@@ -13,104 +13,48 @@
 # limitations under the License.
 
 ###########
-# ACCOUNT #
+# GENERAL #
 ###########
 
 variable "project" {
   type = string
 }
 
-#########
-# IMAGE #
-#########
-
-# One of the following:
-# - source_image
-# - source_image_family
-# NOTE: 'source_image' takes precedence when both are provided.
-
-variable "source_image" {
-  type    = string
-  default = null
-}
-
-variable "source_image_family" {
-  type    = string
-  default = null
-}
-
-variable "skip_create_image" {
-  type    = bool
-  default = null
-}
-
-variable "image_licenses" {
-  type    = list(string)
-  default = []
-}
-
-#######
-# SSH #
-#######
-
-variable "ssh_username" {
-  type    = string
-  default = "packer"
-}
-
-variable "ssh_password" {
-  type      = string
-  default   = null
-  sensitive = true
-}
-
-############
-# INSTANCE #
-############
-
-variable "machine_type" {
-  type    = string
-  default = null
-}
-
-variable "preemptible" {
-  type    = bool
-  default = false
-}
-
 variable "zone" {
   type = string
 }
 
-### Root of Trust (RoT) ###
+##########
+# BUILDS #
+##########
 
-variable "enable_secure_boot" {
-  type    = bool
-  default = null
-}
+variable "builds" {
+  type = list(object({
+    ### image ###
+    source_image        = string
+    source_image_family = string
+    skip_create_image   = bool
+    image_licenses      = list(string)
+    labels              = map(string)
 
-variable "enable_vtpm" {
-  type    = bool
-  default = null
-}
+    ### ssh ###
+    ssh_username = string
+    ssh_password = string # sensitive
 
-variable "enable_integrity_monitoring" {
-  type    = bool
-  default = null
-}
+    ### instance ###
+    machine_type = string
+    preemptible  = bool
 
-###########
-# STORAGE #
-###########
+    ### root fo trust ###
+    enable_secure_boot          = bool
+    enable_vtpm                 = bool
+    enable_integrity_monitoring = bool
 
-variable "disk_size" {
-  type    = number
-  default = null
-}
-
-variable "disk_type" {
-  type    = string
-  default = null
+    ### storage ###
+    disk_size = number
+    disk_type = string
+  }))
+  sensitive = true
 }
 
 ###########
@@ -118,23 +62,26 @@ variable "disk_type" {
 ###########
 
 variable "network_project_id" {
-  type    = string
-  default = null
+  description = "The project ID for the network and subnetwork to use for launched instance."
+  type        = string
+  default     = null
 }
 
 variable "subnetwork" {
-  type    = string
-  default = null
+  description = "The subnetwork ID or URI to use for the launched instance."
+  type        = string
+  default     = null
 }
 
 variable "tags" {
-  type    = list(string)
-  default = []
+  description = "Assign network tags to apply firewall rules to VM instance."
+  type        = list(string)
+  default     = null
 }
 
-################
-# PROVISIONING #
-################
+#############
+# PROVISION #
+#############
 
 variable "slurm_version" {
   description = "Slurm version by git branch"

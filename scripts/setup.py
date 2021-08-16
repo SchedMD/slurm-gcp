@@ -63,7 +63,7 @@ cfg = util.Config.new_config(config_yaml)
 # load all directories as Paths into a dict-like namespace
 dirs = NSDict({n: Path(p) for n, p in dict.items({
     'home': '/home',
-    'apps': '/apps',
+    'apps': '/opt/apps',
     'scripts': '/slurm/scripts',
     'slurm': '/slurm',
     'prefix': '/usr/local',

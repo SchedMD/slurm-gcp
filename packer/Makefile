@@ -1,16 +1,16 @@
-.PHONY: build debug
-
-build:
-	packer build -var-file=vars.pkrvars.hcl .
-
-validate:
-	packer validate -var-file=vars.pkrvars.hcl .
+.PHONY: init validate inspect build debug
 
 init:
 	packer init .
 
-debug:
-	packer build -var-file=vars.pkrvars.hcl -debug .
+validate:
+	packer validate -var-file=vars.pkrvars.hcl .
 
 inspect:
 	packer inspect -var-file=vars.pkrvars.hcl .
+
+build:
+	packer build -var-file=vars.pkrvars.hcl .
+
+debug:
+	packer build -var-file=vars.pkrvars.hcl -debug .
