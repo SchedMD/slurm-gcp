@@ -12,6 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+##########
+# LOCALS #
+##########
+
+local "secrets" {
+  expression = var.builds.*.ssh_password
+  sensitive  = true
+}
+
 ###########
 # GENERAL #
 ###########
@@ -54,7 +63,7 @@ variable "builds" {
     disk_size = number
     disk_type = string
   }))
-  sensitive = true
+  # sensitive = true
 }
 
 ###########
