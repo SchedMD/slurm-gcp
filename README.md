@@ -28,6 +28,7 @@ Also, join comunity discussions on either the
       * [Hyperthreads](#hyperthreads)
       * [Preinstalled Modules: OpenMPI](#preinstalled-modules-openmpi)
    * [Installing Custom Packages](#installing-custom-packages)
+      * [Creating Custom Slurm Images](#creating-custom-slurm-images)
    * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
    * [OS Login](#os-login)
    * [Preemptible VMs](#preemptible-vms)
@@ -52,7 +53,7 @@ Instances are created from images with Slurm and dependencies preinstalled. The 
 `schedmd-slurm-public/schedmd-slurm-20-11-7-hpc-centos-7`, is based on the
 Google-provided HPC-optimized CentOS 7 image.
 
-By default, `/apps` and `/home` are mounted from the controller across all instances
+By default, `/opt/apps` and `/home` are mounted from the controller across all instances
 in the cluster. These can be overwritten, and any other controller paths or
 external mounts can be added.
 
@@ -153,6 +154,34 @@ Hello world from processor g1-compute-0-2, rank 2 out of 4 processors
 
    Since the custom install scripts must be run when starting bursted nodes,
    long-running customizations should be added in a custom image instead.
+
+#### Creating Custom Slurm Images
+
+To build images you must have [Packer](https://www.packer.io/downloads) and
+[Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) installed.
+
+Steps:
+1. cd to `packer/`
+2. Copy `vars.pkrvars.hcl.example` to `vars.pkrvars.hcl`
+3. Edit `vars.pkrvars.hcl` with the required configuration.
+   See the [packer/io.pkr.hcl](packer/io.pkr.hcl)
+   file for more detailed information on available configuration options.
+4. Build image(s)
+   ```
+   $ packer init .
+   $ packer build -var-file=vars.pkrvars.hcl .
+   ```
+
+Custom packages and other image configurations can be added by two methods:
+source image, and or ansible role(s).
+
+   1. Slurm can be build on top of an existing image. Configure the
+      `source_image` / `source_image_family` to point to the desired image.
+      If the source image requires it, configure the `ssh_username` and
+      `ssh_password`.
+   2. Image configuration can be extended via ansible roles. Create more roles
+      as desired and add them to the end of the `roles` task in the
+      [ansible/playbook.yml](ansible/playbook.yml).
 
 ### Accessing Compute Nodes Directly
 
