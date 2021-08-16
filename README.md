@@ -70,9 +70,9 @@ installed on your computer or use the GCP
 [Cloud Shell](https://cloud.google.com/shell/).
 
 Steps:
-1. cd to tf/examples/basic
-2. Copy `basic.tfvars.example` to `basic.tfvars`
-3. Edit `basic.tfvars` with the required configuration
+1. cd to `tf/examples/basic/`.
+2. Copy `basic.tfvars.example` to `basic.tfvars`.
+3. Edit `basic.tfvars` with the required configuration.
    See the [tf/examples/basic/io.tf](tf/examples/basic/io.tf)
    file for more detailed information on available configuration options.
 4. Deploy the cluster
@@ -161,8 +161,8 @@ To build images you must have [Packer](https://www.packer.io/downloads) and
 [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) installed.
 
 Steps:
-1. cd to `packer/`
-2. Copy `vars.pkrvars.hcl.example` to `vars.pkrvars.hcl`
+1. cd to `packer/`.
+2. Copy `vars.pkrvars.hcl.example` to `vars.pkrvars.hcl`.
 3. Edit `vars.pkrvars.hcl` with the required configuration.
    See the [packer/io.pkr.hcl](packer/io.pkr.hcl)
    file for more detailed information on available configuration options.
