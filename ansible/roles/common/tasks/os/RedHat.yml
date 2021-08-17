@@ -19,11 +19,21 @@
     state: latest
     update_cache: yes
 
-- name: Enable RedHat 8 PowerTools Repository
+- name: Enable CentOS 8 PowerTools Repository
   shell: dnf config-manager --set-enabled powertools
   args:
     warn: false
-  when: ansible_distribution_major_version is version('8', '>=')
+  when: |
+    ansible_distribution == "CentOS"
+    and ansible_distribution_major_version is version('8', '>=')
+
+- name: Enable RedHat 8 CloudReady Repository
+  shell: subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
+  args:
+    warn: false
+  when: |
+    ansible_distribution == "RedHat"
+    and ansible_distribution_major_version is version('8', '>=')
 
 - name: Install {{ansible_os_family}} Development Dependencies
   yum:
