@@ -16,7 +16,7 @@
 # LOCALS #
 ##########
 
-local "secrets" {
+local "ssh_passwords" {
   expression = var.builds.*.ssh_password
   sensitive  = true
 }
@@ -63,7 +63,6 @@ variable "builds" {
     disk_size = number
     disk_type = string
   }))
-  # sensitive = true
 }
 
 ###########
