@@ -753,10 +753,10 @@ def setup_compute():
         # Ignore blank files with no shell magic.
         pass
 
-    #setup_slurmd_cronjob()
-    #run("systemctl restart munge")
-    #run("systemctl enable slurmd")
-    #run("systemctl start slurmd")
+    setup_slurmd_cronjob()
+    run("systemctl restart munge")
+    run("systemctl enable slurmd")
+    run("systemctl start slurmd")
 
     log.info("Done setting up compute")
 
