@@ -13,17 +13,27 @@
 # limitations under the License.
 ---
 
-- name: Add Lustre Client Repository
-  apt_repository:
-    repo: deb https://downloads.whamcloud.com/public/lustre/latest-release/ubuntu1804/client/ /
-    filename: lustre
-    state: present
-    validate_certs: no
+- name: Get DEBs
+  shell: >
+    wget
+    --recursive
+    --level=1
+    --no-parent
+    --no-directories
+    --accept="{{lustre_files | join(',')}}"
+    --directory-prefix="{{lustre_artifacts_dir}}"
+    {{lustre_deb_url}}
+  args:
+    warn: no
 
-- name: Install Lustre
+- name: Gather DEBs
+  find:
+    path: "{{lustre_artifacts_dir}}"
+    patterns: "*.deb"
+  register: lustre_debs
+
+- name: Install DEBs
   apt:
-    name:
-      - lustre-client-utils
-      - lustre-client-modules
-    state: latest
-    update_cache: yes
+    deb: "{{item.path}}"
+    state: present
+  with_items: "{{lustre_debs.files}}"

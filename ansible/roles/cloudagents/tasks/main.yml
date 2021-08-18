@@ -13,34 +13,7 @@
 # limitations under the License.
 ---
 
-- name: Install {{ansible_os_family}} Family Dependencies
-  package:
-    name:
-      - wget
-      - curl
-    state: present
-
-- name: Mkdir
-  file:
-    path: /root/image-scripts
-    state: directory
-
-- name: Get Cloud Agent Scripts
-  get_url:
-    url: "{{cloudagents_url}}/{{item}}"
-    dest: "/root/image-scripts/{{item}}"
-    mode: 0o744
-  loop:
-    - add-monitoring-agent-repo.sh
-    - add-logging-agent-repo.sh
-  register: scripts
-
-- name: Run Cloud Agent Scripts
-  shell: bash /root/image-scripts/{{item.item}} --also-install --version=latest
-  with_items: "{{scripts.results | list}}"
-
 - name: Install Fluentd Config
   template:
     src: fluentd.conf.j2
     dest: /etc/google-fluentd/config.d/slurmlogs.conf
-  notify: Handle Fluentd Service

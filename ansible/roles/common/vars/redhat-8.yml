@@ -13,4 +13,28 @@
 # limitations under the License.
 ---
 
-lustre_artifacts_dir: /root/lustre_pkgs
+common_packages:
+  - "@Development tools"
+  - autoconf
+  - automake
+  - clang
+  - dnf-utils
+  - doxygen
+  - drpm
+  - emacs
+  - epel-release
+  - gcc
+  - gcc-c++
+  - git
+  - graphviz
+  - htop
+  - libtool
+  - lynx
+  - make
+  - openssl-devel
+  - pdsh
+  - pkgconfig
+  - python3
+  - tmux
+  - valgrind
+  - vim

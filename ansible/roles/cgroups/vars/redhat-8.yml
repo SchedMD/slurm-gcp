@@ -13,8 +13,6 @@
 # limitations under the License.
 ---
 
-- name: Handle Fluentd Service
-  systemd:
-    name: google-fluentd
-    enabled: yes
-    state: stopped
+cgroup_packages:
+  - libcgroup
+  - libcgroup-pam

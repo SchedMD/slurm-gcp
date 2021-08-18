@@ -13,4 +13,29 @@
 # limitations under the License.
 ---
 
-lustre_artifacts_dir: /root/lustre_pkgs
+slurm_packages:
+  - cifs-utils
+  - gtk2-devel
+  - hdf5-devel
+  - http-parser-devel
+  - hwloc
+  - hwloc-devel
+  - hwloc-gui
+  - json-c-devel
+  - libcurl-devel
+  - libevent-devel
+  - libibmad
+  - libibumad
+  - libyaml-devel
+  - lua
+  - lua-devel
+  - lz4-devel
+  - man2html
+  - ncurses-devel
+  - numactl
+  - numactl-devel
+  - openssl-devel
+  - pam-devel
+  - perl-ExtUtils-MakeMaker
+  - readline-devel
+  - rrdtool-devel

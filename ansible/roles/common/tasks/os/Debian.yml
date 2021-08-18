@@ -15,7 +15,7 @@
 
 - name: Install Aptitude
   apt:
-    name: 
+    name:
       - aptitude
       - software-properties-common
     state: present
@@ -28,19 +28,3 @@
     name: "*"
     state: latest
     update_cache: yes
-
-- name: Install {{ansible_os_family}} Family Development Dependencies
-  apt:
-    name:
-      - build-essential
-      - doxygen
-      - g++
-      - libssl-dev
-      - pkg-config
-    state: present
-
-- name: Install {{ansible_os_family}} Family Misc. Software
-  package:
-    name:
-      - iputils-ping
-    state: present

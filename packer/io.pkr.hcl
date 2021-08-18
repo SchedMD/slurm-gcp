@@ -33,36 +33,18 @@ variable "zone" {
   type = string
 }
 
-##########
-# BUILDS #
-##########
+#########
+# IMAGE #
+#########
 
-variable "builds" {
-  type = list(object({
-    ### image ###
-    source_image        = string
-    source_image_family = string
-    skip_create_image   = bool
-    image_licenses      = list(string)
-    labels              = map(string)
+variable "source_image_project_id" {
+  type    = list(string)
+  default = null
+}
 
-    ### ssh ###
-    ssh_username = string
-    ssh_password = string # sensitive
-
-    ### instance ###
-    machine_type = string
-    preemptible  = bool
-
-    ### root fo trust ###
-    enable_secure_boot          = bool
-    enable_vtpm                 = bool
-    enable_integrity_monitoring = bool
-
-    ### storage ###
-    disk_size = number
-    disk_type = string
-  }))
+variable "skip_create_image" {
+  type    = bool
+  default = false
 }
 
 ###########
@@ -95,4 +77,35 @@ variable "slurm_version" {
   description = "Slurm version by git branch"
   type        = string
   default     = "slurm-20.11"
+}
+
+##########
+# BUILDS #
+##########
+
+variable "builds" {
+  type = list(object({
+    ### image ###
+    source_image        = string
+    source_image_family = string
+    image_licenses      = list(string)
+    labels              = map(string)
+
+    ### ssh ###
+    ssh_username = string
+    ssh_password = string # sensitive
+
+    ### instance ###
+    machine_type = string
+    preemptible  = bool
+
+    ### root fo trust ###
+    enable_secure_boot          = bool
+    enable_vtpm                 = bool
+    enable_integrity_monitoring = bool
+
+    ### storage ###
+    disk_size = number
+    disk_type = string
+  }))
 }

@@ -13,33 +13,15 @@
 # limitations under the License.
 ---
 
+- name: Include OS Vars
+  include_vars: "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version }}.yml"
+
 - name: Include OS Family Dependent Tasks
   include_tasks: "os/{{ansible_os_family}}.yml"
 
-- name: Install Common Development Dependencies
+- name: Install Packages
   package:
-    name:
-      - autoconf
-      - automake
-      - clang
-      - gcc
-      - git
-      - graphviz
-      - libtool
-      - make
-      - python3
-      - valgrind
-    state: present
-
-- name: Install Misc. Software
-  package:
-    name:
-      - emacs
-      - htop
-      - lynx
-      - pdsh
-      - tmux
-      - vim
+    name: "{{common_packages}}"
     state: present
 
 - name: Add Conf to 'ld.so.conf.d/'

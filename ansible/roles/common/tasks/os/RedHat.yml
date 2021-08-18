@@ -35,28 +35,7 @@
     ansible_distribution == "RedHat"
     and ansible_distribution_major_version is version('8', '>=')
 
-- name: Install {{ansible_os_family}} Development Dependencies
+- name: Install epel-release Repository
   yum:
-    name:
-      - "@Development tools"
-      - epel-release
-      - deltarpm
-      - doxygen
-      - gcc-c++
-      - openssl-devel
-      - pkgconfig
-      - yum-utils
-    state: present
-
-- name: Install RedHat 8 Development Dependencies
-  yum:
-    name:
-      - dnf-utils
-    state: present
-  when: ansible_distribution_major_version is version('8', '>=')
-
-- name: Install {{ansible_os_family}} Family Misc. Software
-  package:
-    name:
-      - iputils
+    name: epel-release
     state: present

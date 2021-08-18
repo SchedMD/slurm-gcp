@@ -13,4 +13,8 @@
 # limitations under the License.
 ---
 
-lustre_artifacts_dir: /root/lustre_pkgs
+python_packages:
+  - python3
+  - python3-pip
+  - python3-setuptools
+  - python3-virtualenv

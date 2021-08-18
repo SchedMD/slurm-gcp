@@ -13,10 +13,11 @@
 # limitations under the License.
 ---
 
-- name: Install {{ansible_os_family}} Family Dependencies
-  apt:
-    name:
-      - libcgroup1
-      - libcgroup-dev
-      - libpam-cgroup
-    state: present
+python_packages:
+  - python-pip
+  - python-setuptools
+  - python-virtualenv
+  - python3
+  - python3-pip
+  - python3-setuptools
+  - python3-virtualenv

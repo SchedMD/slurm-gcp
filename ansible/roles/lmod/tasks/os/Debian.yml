@@ -20,7 +20,6 @@
       - lua-bit32
       - lua-posix
       - lua-posix-dev
-      - liblua5.3
       - liblua5.3-dev
       - tcl
       - tcl-dev

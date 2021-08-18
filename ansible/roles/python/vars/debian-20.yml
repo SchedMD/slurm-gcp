@@ -13,5 +13,11 @@
 # limitations under the License.
 ---
 
-dependencies:
-  - role: slurm
+python_packages:
+  - python-pip
+  - python-setuptools
+  - python-virtualenv
+  - python3
+  - python3-pip
+  - python3-setuptools
+  - python3-virtualenv

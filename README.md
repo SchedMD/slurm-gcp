@@ -161,12 +161,14 @@ To build images you must have [Packer](https://www.packer.io/downloads) and
 [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) installed.
 
 Steps:
-1. cd to `packer/`.
-2. Copy `vars.pkrvars.hcl.example` to `vars.pkrvars.hcl`.
-3. Edit `vars.pkrvars.hcl` with the required configuration.
+1. Install external ansible roles via
+   `ansible-galaxy install --role-file ansible/requirements.yml`.
+2. cd to `packer/`.
+3. Copy `vars.pkrvars.hcl.example` to `vars.pkrvars.hcl`.
+4. Edit `vars.pkrvars.hcl` with the required configuration.
    See the [packer/io.pkr.hcl](packer/io.pkr.hcl)
    file for more detailed information on available configuration options.
-4. Build image(s)
+5. Build image(s)
    ```
    $ packer init .
    $ packer build -var-file=vars.pkrvars.hcl .

@@ -13,39 +13,39 @@
 # limitations under the License.
 ---
 
-- name: Add Cuda Repository Key
+- name: Add Ubnutu Cuda Repository Key
   apt_key:
     url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu{{ansible_distribution_major_version}}04/x86_64/7fa2af80.pub
     state: present
   when: ansible_distribution == "Ubuntu"
 
-- name: Add Cuda Repository
+- name: Add Ubnutu Cuda Repository
   apt_repository:
     repo: deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu{{ansible_distribution_major_version}}04/x86_64/ /
     filename: cuda
     state: present
   when: ansible_distribution == "Ubuntu"
 
-- name: Pin Cuda Repository
+- name: Pin Ubnutu Cuda Repository
   get_url:
     url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
     dest: /etc/apt/preferences.d/cuda-repository-pin-600
   when: ansible_distribution == "Ubuntu" and ansible_distribution_version is version('18.04', '>')
 
-- name: Add Cuda Repository Key
+- name: Add Debian Cuda Repository Key
   apt_key:
     url: https://developer.download.nvidia.com/compute/cuda/repos/debian{{ansible_distribution_major_version}}/x86_64/7fa2af80.pub
     state: present
   when: ansible_distribution == "Debian"
 
-- name: Add Cuda Repository
+- name: Add Debian Cuda Repository
   apt_repository:
     repo: deb https://developer.download.nvidia.com/compute/cuda/repos/debian{{ansible_distribution_major_version}}/x86_64/ /
     filename: cuda
     state: present
   when: ansible_distribution == "Debian"
 
-- name: Add Contrib Repository
+- name: Add Debian Contrib Repository
   shell: add-apt-repository contrib
   when: ansible_distribution == "Debian"
 

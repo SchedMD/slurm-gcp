@@ -13,5 +13,19 @@
 # limitations under the License.
 ---
 
+- name: Install Dependancies
+  package:
+    name:
+      - wget
+    state: present
+
+- name: Mkdir
+  file:
+    name: "{{lustre_artifacts_dir}}"
+    state: directory
+
+- name: Include OS Family Dependent Vars
+  include_vars: "{{ansible_os_family}}.yml"
+
 - name: Include OS Family Dependent Tasks
   include_tasks: "os/{{ansible_os_family}}.yml"

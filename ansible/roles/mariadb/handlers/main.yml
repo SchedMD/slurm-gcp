@@ -16,5 +16,5 @@
 - name: Handle Mariadb Service
   systemd:
     name: mariadb
-    enabled: yes
-    state: restarted
+    enabled: no
+    state: stopped

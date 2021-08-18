@@ -13,4 +13,7 @@
 # limitations under the License.
 ---
 
-lustre_artifacts_dir: /root/lustre_pkgs
+cgroup_packages:
+  - libcgroup1
+  - libcgroup-dev
+  - libpam-cgroup

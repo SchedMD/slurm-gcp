@@ -14,4 +14,13 @@
 ---
 
 dependencies:
-  - role: lmod
+  - role: googlecloudplatform.google_cloud_ops_agents
+    vars:
+      agent_type: monitoring
+      package_state: present
+      version: latest
+  - role: googlecloudplatform.google_cloud_ops_agents
+    vars:
+      agent_type: logging
+      package_state: present
+      version: latest

@@ -32,6 +32,10 @@ source "googlecompute" "image" {
   project_id = var.project
   zone       = var.zone
 
+  ### image ###
+  source_image_project_id = var.source_image_project_id
+  skip_create_image       = var.skip_create_image
+
   ### ssh ###
   ssh_clear_authorized_keys = true
 
@@ -39,6 +43,15 @@ source "googlecompute" "image" {
   network_project_id = var.network_project_id
   subnetwork         = var.subnetwork
   tags               = var.tags
+
+  ### service account ###
+  scopes = [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/compute",
+    "https://www.googleapis.com/auth/devstorage.full_control",
+    "https://www.googleapis.com/auth/logging.write",
+    "https://www.googleapis.com/auth/monitoring.write",
+  ]
 }
 
 #########
@@ -65,7 +78,6 @@ build {
       image_name        = "schedmd-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}-{{timestamp}}"
       image_family      = "schedmd-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}"
       image_description = "slurm-gcp"
-      skip_create_image = source.value.skip_create_image
       image_licenses    = source.value.image_licenses
       image_labels      = source.value.labels
 

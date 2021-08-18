@@ -13,4 +13,7 @@
 # limitations under the License.
 ---
 
-lustre_artifacts_dir: /root/lustre_pkgs
+lustre_deb_url: https://downloads.whamcloud.com/public/lustre/latest-release/ubuntu1804/client
+lustre_files:
+  - lustre-client-*.deb
+  - lustre-source_*.deb

@@ -16,23 +16,23 @@
 - name: Handle Slurmdbd Service
   systemd:
     name: slurmdbd
-    enabled: yes
+    enabled: no
     state: stopped
 
 - name: Handle Slurmctld Service
   systemd:
     name: slurmctld
-    enabled: yes
+    enabled: no
     state: stopped
 
 - name: Handle Slurmrestd Service
   systemd:
     name: slurmrestd
-    enabled: yes
+    enabled: no
     state: stopped
 
 - name: Handle Slurmd Service
   systemd:
     name: slurmd
-    enabled: yes
+    enabled: no
     state: stopped

@@ -13,17 +13,12 @@
 # limitations under the License.
 ---
 
-- name: Install Python
+- name: Include OS Vars
+  include_vars: "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version }}.yml"
+
+- name: Install Packages
   package:
-    name:
-      - python
-      - python-pip
-      - python-setuptools
-      - python-virtualenv
-      - python3
-      - python3-pip
-      - python3-setuptools
-      - python3-virtualenv
+    name: "{{python_packages}}"
     state: present
 
 - name: Install Python Packages

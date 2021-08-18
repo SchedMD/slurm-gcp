@@ -17,7 +17,6 @@
   yum:
     name:
       - lua
-      - lua-bitop
       - lua-devel
       - lua-json
       - lua-lpeg

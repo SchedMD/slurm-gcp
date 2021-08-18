@@ -13,10 +13,29 @@
 # limitations under the License.
 ---
 
-- name: Install {{ansible_os_family}} Family Dependencies
-  yum:
-    name:
-      - libcgroup
-      - libcgroup-devel
-      - libcgroup-pam
-    state: present
+common_packages:
+  - "@Development tools"
+  - autoconf
+  - automake
+  - clang
+  - deltarpm
+  - doxygen
+  - emacs
+  - epel-release
+  - gcc
+  - gcc-c++
+  - git
+  - graphviz
+  - htop
+  - iputils
+  - libtool
+  - lynx
+  - make
+  - openssl-devel
+  - pdsh
+  - pkgconfig
+  - python3
+  - tmux
+  - valgrind
+  - vim
+  - yum-utils

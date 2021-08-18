@@ -13,4 +13,4 @@
 # limitations under the License.
 ---
 
-lustre_artifacts_dir: /root/lustre_pkgs
+- name: googlecloudplatform.google_cloud_ops_agents
