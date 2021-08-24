@@ -70,20 +70,19 @@ installed on your computer or use the GCP
 [Cloud Shell](https://cloud.google.com/shell/).
 
 Steps:
-1. cd to `tf/examples/basic/`.
-2. Copy `basic.tfvars.example` to `basic.tfvars`.
-3. Edit `basic.tfvars` with the required configuration.
-   See the [tf/examples/basic/io.tf](tf/examples/basic/io.tf)
+1. cd to `terrafrom/`.
+2. Copy `example.tfvars` to `vars.tfvars`.
+3. Edit `vars.tfvars` with the desired configuration.
+   See the [terraform/variables.tf](terraform/variables.tf)
    file for more detailed information on available configuration options.
 4. Deploy the cluster
-   ```
+   ```sh
    $ terraform init
-   $ terraform apply -var-file=basic.tfvars
+   $ terraform apply -var-file=vars.tfvars
    ```
 5. Tearing down the cluster
-
-   ```
-   $ terraform destroy -var-file=basic.tfvars
+   ```sh
+   $ terraform destroy -var-file=vars.tfvars
    ```
 
    **NOTE:** If additional resources (instances, networks) are created other
@@ -164,9 +163,9 @@ Steps:
 1. Install external ansible roles via
    `ansible-galaxy install --role-file ansible/requirements.yml`.
 2. cd to `packer/`.
-3. Copy `vars.pkrvars.hcl.example` to `vars.pkrvars.hcl`.
-4. Edit `vars.pkrvars.hcl` with the required configuration.
-   See the [packer/io.pkr.hcl](packer/io.pkr.hcl)
+3. Copy `example.pkrvars.hcl` to `vars.pkrvars.hcl`.
+4. Edit `vars.pkrvars.hcl` with the desired configuration.
+   See the [packer/variables.pkr.hcl](packer/variables.pkr.hcl)
    file for more detailed information on available configuration options.
 5. Build image(s)
    ```
