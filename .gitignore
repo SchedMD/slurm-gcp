@@ -8,6 +8,7 @@
 packer_cache/
 output-*/
 *.pkrvars.hcl
+!example.pkrvars.hcl
 *.pem
 *.json
 

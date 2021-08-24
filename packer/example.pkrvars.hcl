@@ -16,14 +16,14 @@
 # GENERAL #
 ###########
 
-project = "<project>"
+project = "<PROJECT_ID>"
 zone    = "us-central1-a"
 
 #########
 # IMAGE #
 #########
 
-# source_image_project_id = "<existing source_image_project_id>"
+# source_image_project_id = "<SOURCE_IMAGE-PROJECT_ID>"
 
 # skip_create_image = true
 
@@ -31,9 +31,9 @@ zone    = "us-central1-a"
 # NETWORK #
 ###########
 
-# network_project_id = "<existing network_project_id>"
+# network_project_id = "<NETWORK_PROJECT_ID>"
 
-# subnetwork = "<existing subnetwork id>"
+# subnetwork = "<SUBNETWORK_ID>"
 
 # tags = []
 
@@ -60,7 +60,7 @@ builds = [
     ssh_password = null
 
     ### instance ###
-    machine_type = "n1-standard-8"
+    machine_type = "n2d-standard-4"
     preemptible  = false
 
     ### root of trust ###
@@ -72,52 +72,52 @@ builds = [
     disk_size = null
     disk_type = null
   },
-  # {
-  #   ### image ###
-  #   source_image        = null
-  #   source_image_family = "centos-8"
-  #   image_licenses      = null
-  #   labels              = null
+  {
+    ### image ###
+    source_image        = null
+    source_image_family = "centos-8"
+    image_licenses      = null
+    labels              = null
 
-  #   ### ssh ###
-  #   ssh_username = "packer"
-  #   ssh_password = null
+    ### ssh ###
+    ssh_username = "packer"
+    ssh_password = null
 
-  #   ### instance ###
-  #   machine_type = "n1-standard-8"
-  #   preemptible  = false
+    ### instance ###
+    machine_type = "n2d-standard-4"
+    preemptible  = false
 
-  #   ### root of trust ###
-  #   enable_secure_boot          = null
-  #   enable_vtpm                 = null
-  #   enable_integrity_monitoring = null
+    ### root of trust ###
+    enable_secure_boot          = null
+    enable_vtpm                 = null
+    enable_integrity_monitoring = null
 
-  #   ### storage ###
-  #   disk_size = null
-  #   disk_type = null
-  # },
-  # {
-  #   ### image ###
-  #   source_image        = null
-  #   source_image_family = "debian-10"
-  #   image_licenses      = null
-  #   labels              = null
+    ### storage ###
+    disk_size = null
+    disk_type = null
+  },
+  {
+    ### image ###
+    source_image        = null
+    source_image_family = "debian-10"
+    image_licenses      = null
+    labels              = null
 
-  #   ### ssh ###
-  #   ssh_username = "packer"
-  #   ssh_password = null
+    ### ssh ###
+    ssh_username = "packer"
+    ssh_password = null
 
-  #   ### instance ###
-  #   machine_type = "n1-standard-8"
-  #   preemptible  = false
+    ### instance ###
+    machine_type = "n2d-standard-4"
+    preemptible  = false
 
-  #   ### root of trust ###
-  #   enable_secure_boot          = null
-  #   enable_vtpm                 = null
-  #   enable_integrity_monitoring = null
+    ### root of trust ###
+    enable_secure_boot          = null
+    enable_vtpm                 = null
+    enable_integrity_monitoring = null
 
-  #   ### storage ###
-  #   disk_size = null
-  #   disk_type = null
-  # },
+    ### storage ###
+    disk_size = null
+    disk_type = null
+  },
 ]
