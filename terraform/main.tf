@@ -337,8 +337,8 @@ module "compute" {
   cluster_name = var.cluster_name
 
   ### multitude ###
-  count_per_region      = 1
-  count_regions_covered = 1
+  count_per_region      = 0
+  count_regions_covered = 0
 
   ### network ###
   subnetwork_project = var.network.subnetwork_project

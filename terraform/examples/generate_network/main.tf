@@ -16,7 +16,7 @@ module "slurm_cluster" {
   source = "../../../terraform"
 
   project_id   = var.project_id
-  cluster_name = "generated-network"
+  cluster_name = "generate-network"
 
   network = {
     network            = null

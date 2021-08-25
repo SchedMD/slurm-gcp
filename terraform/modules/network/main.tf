@@ -102,7 +102,7 @@ module "cluster_router" {
 
   for_each = module.vpc.subnets
 
-  name    = "${var.cluster_name}-${each.value.region}-router"
+  name    = "${var.cluster_name}-router"
   project = var.project_id
   region  = each.value.region
   network = module.vpc.network.network_id
@@ -118,7 +118,7 @@ module "cluster_nat" {
 
   for_each = module.cluster_router
 
-  name       = "${var.cluster_name}-${each.value.router.region}-nat"
+  name       = "${var.cluster_name}-nat"
   project_id = var.project_id
   region     = each.value.router.region
   router     = each.value.router.name
