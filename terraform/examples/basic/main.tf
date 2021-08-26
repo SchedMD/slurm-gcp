@@ -19,9 +19,14 @@ module "slurm_cluster" {
   cluster_name = "basic"
 
   network = {
-    network            = null
-    subnets            = null
-    subnets_regions    = ["us-central1"]
+    network = null
+    subnets = null
+    subnets_spec = [
+      {
+        cidr   = "10.0.0.0/24"
+        region = "us-central1"
+      },
+    ]
     subnetwork_project = null
   }
 
@@ -29,69 +34,17 @@ module "slurm_cluster" {
     cloudsql              = null
     jwt_key               = null
     login_network_storage = null
-    munge_key             = null
+    munge_key             = "basic-munge-key"
     network_storage       = null
     suspend_time          = 300
   }
 
-  controller = {
-    additional_disks          = null
-    count_per_region          = 1
-    count_regions_covered     = 1
-    disable_smt               = false
-    disk_auto_delete          = false
-    disk_labels               = null
-    disk_size_gb              = 32
-    disk_type                 = null
-    enable_confidential_vm    = false
-    enable_shielded_vm        = false
-    gpu                       = null
-    instance_template         = null
-    instance_template_project = null
-    machine_type              = "n2d-standard-1"
-    metadata                  = null
-    min_cpu_platform          = null
-    preemptible               = false
-    service_account           = null
-    shielded_instance_config  = null
-    source_image              = null
-    source_image_family       = null
-    source_image_project      = null
-    tags                      = null
-  }
-
-  login = {
-    additional_disks          = null
-    count_per_region          = 1
-    count_regions_covered     = 1
-    disable_smt               = false
-    disk_auto_delete          = false
-    disk_labels               = null
-    disk_size_gb              = 32
-    disk_type                 = null
-    enable_confidential_vm    = false
-    enable_shielded_vm        = false
-    gpu                       = null
-    instance_template         = null
-    instance_template_project = null
-    machine_type              = "n2d-standard-1"
-    metadata                  = null
-    min_cpu_platform          = null
-    preemptible               = false
-    service_account           = null
-    shielded_instance_config  = null
-    source_image              = null
-    source_image_family       = null
-    source_image_project      = null
-    tags                      = null
-  }
-
-  compute = {
-    "compute0" = {
-      additional_disks          = null
+  controller_templates = {
+    "basic-controller" = {
+      additional_disks          = []
       disable_smt               = false
       disk_auto_delete          = false
-      disk_labels               = null
+      disk_labels               = {}
       disk_size_gb              = 32
       disk_type                 = null
       enable_confidential_vm    = false
@@ -99,8 +52,8 @@ module "slurm_cluster" {
       gpu                       = null
       instance_template         = null
       instance_template_project = null
-      machine_type              = "n2d-standard-1"
-      metadata                  = null
+      machine_type              = "n2d-standard-2"
+      metadata                  = {}
       min_cpu_platform          = null
       preemptible               = false
       service_account           = null
@@ -108,7 +61,101 @@ module "slurm_cluster" {
       source_image              = null
       source_image_family       = null
       source_image_project      = null
-      tags                      = null
+      subnet_name               = null
+      subnet_region             = "us-central1"
+      tags                      = []
+    }
+  }
+
+  controller_instances = [
+    {
+      count_static  = 1
+      subnet_name   = null
+      subnet_region = "us-central1"
+      template      = "basic-controller"
     },
+  ]
+
+  login_templates = {
+    "basic-login" = {
+      additional_disks          = []
+      disable_smt               = false
+      disk_auto_delete          = false
+      disk_labels               = {}
+      disk_size_gb              = 32
+      disk_type                 = null
+      enable_confidential_vm    = false
+      enable_shielded_vm        = false
+      gpu                       = null
+      instance_template         = null
+      instance_template_project = null
+      machine_type              = "n2d-standard-2"
+      metadata                  = {}
+      min_cpu_platform          = null
+      preemptible               = false
+      service_account           = null
+      shielded_instance_config  = null
+      source_image              = null
+      source_image_family       = null
+      source_image_project      = null
+      subnet_name               = null
+      subnet_region             = "us-central1"
+      tags                      = []
+    }
+  }
+
+  login_instances = [
+    {
+      count_static  = 1
+      subnet_name   = null
+      subnet_region = "us-central1"
+      template      = "basic-login"
+    },
+  ]
+
+  compute_templates = {
+    "basic-node" = {
+      additional_disks          = []
+      disable_smt               = false
+      disk_auto_delete          = false
+      disk_labels               = {}
+      disk_size_gb              = 32
+      disk_type                 = null
+      enable_confidential_vm    = false
+      enable_shielded_vm        = false
+      gpu                       = null
+      instance_template         = null
+      instance_template_project = null
+      machine_type              = "n2d-standard-2"
+      metadata                  = {}
+      min_cpu_platform          = null
+      preemptible               = false
+      service_account           = null
+      shielded_instance_config  = null
+      source_image              = null
+      source_image_family       = null
+      source_image_project      = null
+      subnet_name               = null
+      subnet_region             = "us-central1"
+      tags                      = []
+    }
+  }
+
+  partitions = {
+    "basic-debug" = {
+      conf = {
+        MaxTime         = "UNLIMITED"
+        DisableRootJobs = "NO"
+      }
+      nodes = [
+        {
+          count_dynamic = 5
+          count_static  = 0
+          subnet_name   = null
+          subnet_region = "us-central1"
+          template      = "basic-node"
+        },
+      ]
+    }
   }
 }

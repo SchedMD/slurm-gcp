@@ -16,19 +16,9 @@
 # LOCALS #
 ##########
 
+### Instance ###
+
 locals {
-  count_per_region = (
-    var.count_per_region != null
-    ? var.count_per_region
-    : 0
-  )
-
-  count_regions_covered = (
-    var.count_regions_covered != null
-    ? var.count_regions_covered
-    : 0
-  )
-
   tags = var.tags != null ? var.tags : []
 
   service_account = (
@@ -59,7 +49,7 @@ locals {
   source_image_family = (
     var.source_image_family != null
     ? var.source_image_family
-    : ""
+    : "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-centos-7"
   )
 
   source_image = (
@@ -80,26 +70,36 @@ locals {
 ### Templates ###
 
 locals {
-  instance_template_project = (var.instance_template_project != null
+  instance_template_project = (
+    var.instance_template_project != null
     ? var.instance_template_project
-  : var.project_id)
+    : var.project_id
+  )
 
-  instance_template = (var.instance_template != null
-    ? data.google_compute_instance_template.template[0]
-  : module.template[0].self_link)
+  instance_template = (
+    var.instance_template != null
+    ? data.google_compute_instance_template.template[0].self_link
+    : module.template[0].self_link
+  )
 }
 
 ########
 # DATA #
 ########
 
-data "google_compute_default_service_account" "default" {}
+### Service Account ###
+
+data "google_compute_default_service_account" "default" {
+  project = var.project_id
+}
+
+### Template ###
 
 data "google_compute_instance_template" "template" {
   count = var.instance_template != null ? 1 : 0
 
   project     = local.instance_template_project
-  name        = var.instance_template
+  filter      = "name = ${var.instance_template}*"
   most_recent = true
 }
 
@@ -109,7 +109,7 @@ data "google_compute_instance_template" "template" {
 
 module "template" {
   source  = "terraform-google-modules/vm/google//modules/instance_template"
-  version = "~> 7.1.0"
+  version = "~> 7.1"
 
   count = var.instance_template == null ? 1 : 0
 
@@ -118,10 +118,8 @@ module "template" {
   name_prefix = var.name_prefix
 
   ### network ###
-  network            = var.network
   subnetwork_project = var.subnetwork_project
-  subnetwork         = var.subnets[0]
-  region             = var.subnets_regions[0]
+  subnetwork         = var.subnetwork
   tags               = local.tags
 
   ### instance ###
@@ -150,26 +148,4 @@ module "template" {
   disk_labels      = local.disk_labels
   auto_delete      = var.disk_auto_delete
   additional_disks = local.additional_disks
-}
-
-###########
-# COMPUTE #
-###########
-
-module "node" {
-  source  = "terraform-google-modules/vm/google//modules/compute_instance"
-  version = "~> 7.1.0"
-
-  ### multitude ###
-  num_instances = local.count_per_region
-  count         = local.count_regions_covered
-
-  ### network ###
-  network    = var.network
-  subnetwork = var.subnets[count.index]
-  region     = var.subnets_regions[count.index]
-
-  ### instance ###
-  instance_template = local.instance_template
-  hostname          = "${var.name_prefix}${count.index}"
 }

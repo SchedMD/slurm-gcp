@@ -1,4 +1,6 @@
-### General ###
+###########
+# GENERAL #
+###########
 
 project_id = "<PROJECT_ID>"
 
@@ -7,20 +9,28 @@ cluster_name = "slurm"
 # *NOT* intended for production use
 # enable_devel = true
 
-### Network ###
+###########
+# NETWORK #
+###########
 
 network = {
+  ### attach ###
   subnetwork_project = null
   network            = null
   subnets            = null
-  subnets_regions = [
-    "us-west1",
-    "us-central1",
-    "us-east1",
+
+  ### generate ###
+  subnets_spec = [
+    {
+      cidr   = "10.0.0.0/24"
+      region = "us-central1"
+    },
   ]
 }
 
-### Configuration ###
+#################
+# CONFIGURATION #
+#################
 
 config = {
   ### setup ###
@@ -52,146 +62,172 @@ config = {
   suspend_time = null
 }
 
-### Controller ###
+##############
+# CONTROLLER #
+##############
 
-controller = {
-  count_per_region      = 1
-  count_regions_covered = 1
+controller_templates = {
+  "example-controller" = {
+    ### network ###
+    subnet_name   = null
+    subnet_region = "us-central1"
+    tags = [
+      # "tag0",
+      # "tag1",
+    ]
 
-  ### network ###
-  tags = [
-    # "tag0",
-    # "tag1",
-  ]
+    ### template ###
+    instance_template_project = null
+    instance_template         = null
 
-  ### template ###
-  instance_template_project = null
-  instance_template         = null
+    ### instance ###
+    machine_type     = "n2d-standard-4"
+    min_cpu_platform = null
+    gpu              = null
+    service_account  = null
+    # service_account = {
+    #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
+    #   scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    # }
+    shielded_instance_config = null
+    # shielded_instance_config = {
+    #   enable_secure_boot          = true
+    #   enable_vtpm                 = true
+    #   enable_integrity_monitoring = true
+    # }
+    enable_confidential_vm = false
+    enable_shielded_vm     = true
+    disable_smt            = false
+    preemptible            = false
 
-  ### instance ###
-  machine_type     = "n2d-standard-4"
-  min_cpu_platform = null
-  gpu              = null
-  service_account  = null
-  # service_account = {
-  #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
-  #   scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-  # }
-  shielded_instance_config = null
-  # shielded_instance_config = {
-  #   enable_secure_boot          = true
-  #   enable_vtpm                 = true
-  #   enable_integrity_monitoring = true
-  # }
-  enable_confidential_vm = false
-  enable_shielded_vm     = true
-  disable_smt            = false
-  preemptible            = false
+    ### metadata ###
+    metadata = {
+      # metadata0 = "value0"
+      # metadata1 = "value1"
+    }
 
-  ### metadata ###
-  metadata = {
-    # "metadata0" = "value0"
-    # "metadata1" = "value1"
+    ### image ###
+    source_image_project = null
+    source_image_family  = null
+    source_image         = null
+
+    ### disk ###
+    disk_labels = {
+      # label0 = "value0"
+      # label1 = "value1"
+    }
+    disk_size_gb     = 64
+    disk_type        = "pd-standard"
+    disk_auto_delete = true
+    additional_disks = [
+      # {
+      #   disk_name    = null
+      #   device_name  = null
+      #   disk_size_gb = 128
+      #   disk_type    = "pd-ssd"
+      #   disk_labels  = null
+      #   auto_delete  = true
+      #   boot         = false
+      # },
+    ]
   }
-
-  ### image ###
-  source_image_project = null
-  source_image_family  = "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-centos-7"
-  source_image         = null
-
-  ### disk ###
-  disk_labels = {
-    # "label0" = "value0"
-    # "label1" = "value1"
-  }
-  disk_size_gb     = 64
-  disk_type        = "pd-standard"
-  disk_auto_delete = true
-  additional_disks = [
-    # {
-    #   disk_name    = null
-    #   device_name  = null
-    #   disk_size_gb = 128
-    #   disk_type    = "pd-ssd"
-    #   disk_labels  = null
-    #   auto_delete  = true
-    #   boot         = false
-    # },
-  ]
 }
 
-### Login ###
+controller_instances = [
+  {
+    template      = "example-controller"
+    count_static  = 1
+    subnet_name   = null
+    subnet_region = "us-central1"
+  },
+]
 
-login = {
-  count_per_region      = 1
-  count_regions_covered = 1
+#########
+# LOGIN #
+#########
 
-  ### network ###
-  tags = [
-    # "tag0",
-    # "tag1",
-  ]
+login_templates = {
+  "example-login" = {
+    ### network ###
+    subnet_name   = null
+    subnet_region = "us-central1"
+    tags = [
+      # "tag0",
+      # "tag1",
+    ]
 
-  ### template ###
-  instance_template_project = null
-  instance_template         = null
+    ### template ###
+    instance_template_project = null
+    instance_template         = null
 
-  ### instance ###
-  machine_type     = "n2d-standard-2"
-  min_cpu_platform = null
-  gpu              = null
-  service_account  = null
-  # service_account = {
-  #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
-  #   scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-  # }
-  shielded_instance_config = null
-  # shielded_instance_config = {
-  #   enable_secure_boot          = true
-  #   enable_vtpm                 = true
-  #   enable_integrity_monitoring = true
-  # }
-  enable_confidential_vm = false
-  enable_shielded_vm     = true
-  disable_smt            = false
-  preemptible            = false
+    ### instance ###
+    machine_type     = "n2d-standard-2"
+    min_cpu_platform = null
+    gpu              = null
+    service_account  = null
+    # service_account = {
+    #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
+    #   scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    # }
+    shielded_instance_config = null
+    # shielded_instance_config = {
+    #   enable_secure_boot          = true
+    #   enable_vtpm                 = true
+    #   enable_integrity_monitoring = true
+    # }
+    enable_confidential_vm = false
+    enable_shielded_vm     = true
+    disable_smt            = false
+    preemptible            = false
 
-  ### metadata ###
-  metadata = {
-    # "metadata0" = "value0"
-    # "metadata1" = "value1"
+    ### metadata ###
+    metadata = {
+      # metadata0 = "value0"
+      # metadata1 = "value1"
+    }
+
+    ### image ###
+    source_image_project = null
+    source_image_family  = null
+    source_image         = null
+
+    ### disk ###
+    disk_labels = {
+      # label0 = "value0"
+      # label1 = "value1"
+    }
+    disk_size_gb     = 32
+    disk_type        = "pd-standard"
+    disk_auto_delete = true
+    additional_disks = [
+      # {
+      #   disk_name    = null
+      #   device_name  = null
+      #   disk_size_gb = 128
+      #   disk_type    = "pd-ssd"
+      #   disk_labels = null
+      #   auto_delete = true
+      #   boot        = false
+      # },
+    ]
   }
-
-  ### image ###
-  source_image_project = null
-  source_image_family  = "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-centos-7"
-  source_image         = null
-
-  ### disk ###
-  disk_labels = {
-    # "label0" = "value0"
-    # "label1" = "value1"
-  }
-  disk_size_gb     = 32
-  disk_type        = "pd-standard"
-  disk_auto_delete = true
-  additional_disks = [
-    # {
-    #   disk_name    = null
-    #   device_name  = null
-    #   disk_size_gb = 128
-    #   disk_type    = "pd-ssd"
-    #   disk_labels = null
-    #   auto_delete = true
-    #   boot        = false
-    # },
-  ]
 }
 
-### Compute ###
+login_instances = [
+  {
+    template      = "example-login"
+    count_static  = 1
+    subnet_name   = null
+    subnet_region = "us-central1"
+  },
+]
 
-compute = {
-  bigcpu = {
+###########
+# COMPUTE #
+###########
+
+compute_templates = {
+  "example-cpu" = {
     ### network ###
     tags = [
       # "tag0",
@@ -203,14 +239,10 @@ compute = {
     instance_template         = null
 
     ### instance ###
-    machine_type     = "c2-standard-60"
+    machine_type     = "c2-standard-16"
     min_cpu_platform = null
     gpu              = null
-    # gpu = {
-    #   type  = "nvidia-tesla-k80"
-    #   count = 1
-    # }
-    service_account = null
+    service_account  = null
     # service_account = {
     #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
     #   scopes = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -234,7 +266,7 @@ compute = {
 
     ### image ###
     source_image_project = null
-    source_image_family  = "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-centos-7"
+    source_image_family  = null
     source_image         = null
 
     ### disk ###
@@ -256,8 +288,8 @@ compute = {
       #   boot         = false
       # },
     ]
-  },
-  biggpu = {
+  }
+  "example-gpu" = {
     ### network ###
     tags = [
       # "tag0",
@@ -269,13 +301,12 @@ compute = {
     instance_template         = null
 
     ### instance ###
-    machine_type     = "a2-megagpu-16g"
+    machine_type     = "c2-standard-4"
     min_cpu_platform = null
-    gpu              = null
-    # gpu = {
-    #   type  = "nvidia-tesla-t4"
-    #   count = 8
-    # }
+    gpu = {
+      type  = "nvidia-tesla-t4"
+      count = 4
+    }
     service_account = null
     # service_account = {
     #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
@@ -300,7 +331,7 @@ compute = {
 
     ### image ###
     source_image_project = null
-    source_image_family  = "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-centos-7"
+    source_image_family  = null
     source_image         = null
 
     ### disk ###
@@ -322,5 +353,34 @@ compute = {
       #   boot         = false
       # },
     ]
-  },
+  }
+}
+
+##############
+# PARTITIONS #
+##############
+
+partitions = {
+  "example-partition" = {
+    nodes = [
+      {
+        template      = "example-cpu"
+        count_static  = 0
+        count_dynamic = 10
+        subnet_name   = null
+        subnet_region = "us-central1"
+      },
+      {
+        template      = "example-gpu"
+        count_static  = 0
+        count_dynamic = 5
+        subnet_name   = null
+        subnet_region = "us-central1"
+      },
+    ]
+    conf = {
+      MaxTime         = "UNLIMITED"
+      DisableRootJobs = "NO"
+    }
+  }
 }

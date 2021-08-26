@@ -19,34 +19,12 @@
 ### Network ###
 
 locals {
-  network = (
-    var.network.network != null
-    ? var.network.network
-    : ""
-  )
-
-  valid_network = (
-    length(local.network) > 0
-    ? local.network
-    : module.vpc[0].vpc_info.network_name
-  )
-
   network_count = (
-    var.network.network != null || var.network.subnets != null
+    var.network.subnetwork_project != null
+    || var.network.network != null
+    || var.network.subnets != null
     ? 0
     : 1
-  )
-
-  subnets = (
-    var.network.subnets != null
-    ? var.network.subnets
-    : []
-  )
-
-  valid_subnets = (
-    length(local.subnets) > 0
-    ? local.subnets
-    : module.vpc[0].vpc_info.subnets_names
   )
 }
 
@@ -62,17 +40,21 @@ locals {
 ### Controller ###
 
 locals {
-  controller_count_per_region = (
-    var.controller.count_regions_covered != null
-    ? var.controller.count_regions_covered
-    : 1
+  controller_templates = (
+    var.controller_templates != null
+    ? var.controller_templates
+    : {}
   )
 
-  controller_count_regions_covered = (
-    var.controller.count_regions_covered != null
-    ? var.controller.count_regions_covered
-    : 1
-  )
+  controller_instances_map = {
+    for x in var.controller_instances
+    : "${x.subnet_region}/${x.subnet_name != null ? x.subnet_name : "${var.cluster_name}-subnet"}" => {
+      template      = x.template
+      count_static  = x.count_static
+      subnet_name   = x.subnet_name != null ? x.subnet_name : "${var.cluster_name}-subnet"
+      subnet_region = x.subnet_region
+    }
+  }
 
   controller_config = jsonencode({
     ### setup ###
@@ -88,6 +70,7 @@ locals {
 
     ### slurm.conf ###
     suspend_time = var.config.suspend_time
+    partitions   = var.partitions
   })
 
   controller_metadata_slurm = {
@@ -110,21 +93,27 @@ locals {
     }
     : null
   )
-
-  controller_metadata = merge(
-    local.common_metadata,
-    local.controller_metadata_slurm,
-    local.controller_metadata_devel,
-    var.controller.metadata,
-    {
-      google_mpi_tuning = var.controller.disable_smt == true ? "--nosmt" : null
-    },
-  )
 }
 
 ### Login ###
 
 locals {
+  login_templates = (
+    var.login_templates != null
+    ? var.login_templates
+    : {}
+  )
+
+  login_instances_map = {
+    for x in var.login_instances
+    : "${x.subnet_region}/${x.subnet_name != null ? x.subnet_name : "${var.cluster_name}-subnet"}" => {
+      template      = x.template
+      count_static  = x.count_static
+      subnet_name   = x.subnet_name != null ? x.subnet_name : "${var.cluster_name}-subnet"
+      subnet_region = x.subnet_region
+    }
+  }
+
   login_config = jsonencode({
     ### setup ###
     cluster_name = var.cluster_name
@@ -148,22 +137,16 @@ locals {
     }
     : null
   )
-
-  login_metadata = merge(
-    local.common_metadata,
-    local.login_metadata_slurm,
-    local.login_metadata_devel,
-    var.login.metadata,
-    {
-      google_mpi_tuning = var.login.disable_smt == true ? "--nosmt" : null
-    }
-  )
 }
 
 ### Compute ###
 
 locals {
-  compute_map = var.compute != null ? var.compute : {}
+  compute_templates = (
+    var.compute_templates != null
+    ? var.compute_templates
+    : {}
+  )
 
   compute_config = jsonencode({
     ### setup ###
@@ -176,18 +159,12 @@ locals {
 
   compute_metadata_slurm = {
     instance_type = "compute"
-
-    config       = local.compute_config
-    setup-script = file("${path.module}/../scripts/setup.py")
-    util-script  = file("${path.module}/../scripts/util.py")
+    config        = local.compute_config
   }
 
   compute_metadata_devel = (
     var.enable_devel == true
     ? {
-      instance_type = "compute"
-
-      config       = local.compute_config
       setup-script = file("${path.module}/../scripts/setup.py")
       util-script  = file("${path.module}/../scripts/util.py")
     }
@@ -203,6 +180,52 @@ provider "google" {
   project = var.project_id
 }
 
+########
+# DATA #
+########
+
+### Controller ###
+
+data "google_compute_subnetwork" "controller_subnetwork" {
+  depends_on = [
+    module.vpc,
+  ]
+
+  for_each = local.controller_instances_map
+
+  project = lookup(var.network, "subnetwork_project", var.project_id)
+  name    = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  region  = each.value.subnet_region
+}
+
+### Login ###
+
+data "google_compute_subnetwork" "login_subnetwork" {
+  depends_on = [
+    module.vpc,
+  ]
+
+  for_each = local.login_instances_map
+
+  project = lookup(var.network, "subnetwork_project", var.project_id)
+  name    = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  region  = each.value.subnet_region
+}
+
+### Compute ###
+
+data "google_compute_subnetwork" "compute_subnetwork" {
+  depends_on = [
+    module.vpc,
+  ]
+
+  for_each = local.compute_templates
+
+  project = lookup(var.network, "subnetwork_project", var.project_id)
+  name    = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  region  = each.value.subnet_region
+}
+
 ###########
 # NETWORK #
 ###########
@@ -212,139 +235,204 @@ module "vpc" {
 
   count = local.network_count
 
-  project_id      = var.project_id
-  cluster_name    = var.cluster_name
-  subnets_regions = var.network.subnets_regions
+  project_id   = var.project_id
+  cluster_name = var.cluster_name
+  subnets_spec = var.network.subnets_spec
 }
 
 ##############
 # CONTROLLER #
 ##############
 
-module "controller" {
-  source = "./modules/node"
+### Template ###
+
+module "controller_template" {
+  source = "./modules/node_template"
+
+  for_each = local.controller_templates
 
   ### general ###
   project_id   = var.project_id
   cluster_name = var.cluster_name
 
-  ### multitude ###
-  count_per_region      = local.controller_count_per_region
-  count_regions_covered = local.controller_count_regions_covered
-
   ### network ###
   subnetwork_project = var.network.subnetwork_project
-  network            = local.valid_network
-  subnets            = local.valid_subnets
-  subnets_regions    = var.network.subnets_regions
-  tags               = var.controller.tags
+  subnetwork = (
+    data.google_compute_subnetwork.controller_subnetwork[
+      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"}"
+    ].self_link
+  )
+  region = (
+    data.google_compute_subnetwork.controller_subnetwork[
+      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"}"
+    ].region
+  )
+  tags = each.value.tags
 
   ### template ###
-  instance_template_project = var.controller.instance_template_project
-  instance_template         = var.controller.instance_template
+  instance_template_project = each.value.instance_template_project
+  instance_template         = each.value.instance_template
   name_prefix               = "${var.cluster_name}-controller"
 
   ### instance ###
-  service_account          = var.controller.service_account
-  machine_type             = var.controller.machine_type
-  min_cpu_platform         = var.controller.min_cpu_platform
-  gpu                      = var.controller.gpu
-  shielded_instance_config = var.controller.shielded_instance_config
-  enable_confidential_vm   = var.controller.enable_confidential_vm
-  enable_shielded_vm       = var.controller.enable_shielded_vm
-  preemptible              = var.controller.preemptible
+  service_account          = each.value.service_account
+  machine_type             = each.value.machine_type
+  min_cpu_platform         = each.value.min_cpu_platform
+  gpu                      = each.value.gpu
+  shielded_instance_config = each.value.shielded_instance_config
+  enable_confidential_vm   = each.value.enable_confidential_vm
+  enable_shielded_vm       = each.value.enable_shielded_vm
+  preemptible              = each.value.preemptible
 
   ### metadata ###
-  metadata = local.controller_metadata
+  metadata = merge(
+    local.common_metadata,
+    local.controller_metadata_slurm,
+    local.controller_metadata_devel,
+    each.value.metadata,
+    {
+      google_mpi_tuning = each.value.disable_smt == true ? "--nosmt" : null
+    },
+  )
 
   ### source image ###
-  source_image_project = var.controller.source_image_project
-  source_image_family  = var.controller.source_image_family
-  source_image         = var.controller.source_image
+  source_image_project = each.value.source_image_project
+  source_image_family  = each.value.source_image_family
+  source_image         = each.value.source_image
 
   ### disk ###
-  disk_type        = var.controller.disk_type
-  disk_size_gb     = var.controller.disk_size_gb
-  disk_labels      = var.controller.disk_labels
-  disk_auto_delete = var.controller.disk_auto_delete
-  additional_disks = var.controller.additional_disks
+  disk_type        = each.value.disk_type
+  disk_size_gb     = each.value.disk_size_gb
+  disk_labels      = each.value.disk_labels
+  disk_auto_delete = each.value.disk_auto_delete
+  additional_disks = each.value.additional_disks
+}
+
+### Instance ###
+
+module "controller_instance" {
+  source  = "terraform-google-modules/vm/google//modules/compute_instance"
+  version = "~> 7.1"
+
+  for_each = local.controller_instances_map
+
+  ### network ###
+  subnetwork_project = var.network.subnetwork_project
+  subnetwork         = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  region             = each.value.subnet_region
+
+  ### instance ###
+  instance_template = module.controller_template[each.value.template].self_link
+  num_instances     = each.value.count_static
+  hostname          = "${var.cluster_name}-controller-${each.value.subnet_region}"
 }
 
 #########
 # LOGIN #
 #########
 
-module "login" {
-  source = "./modules/node"
+### Template ###
+
+module "login_template" {
+  source = "./modules/node_template"
+
+  for_each = local.login_templates
 
   ### general ###
   project_id   = var.project_id
   cluster_name = var.cluster_name
 
-  ### multitude ###
-  count_per_region      = var.login.count_per_region
-  count_regions_covered = var.login.count_regions_covered
-
   ### network ###
   subnetwork_project = var.network.subnetwork_project
-  network            = local.valid_network
-  subnets            = local.valid_subnets
-  subnets_regions    = var.network.subnets_regions
-  tags               = var.login.tags
+  subnetwork = (
+    data.google_compute_subnetwork.login_subnetwork[
+      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"}"
+    ].self_link
+  )
+  region = (
+    data.google_compute_subnetwork.login_subnetwork[
+      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"}"
+    ].region
+  )
+  tags = each.value.tags
 
   ### template ###
-  instance_template_project = var.login.instance_template_project
-  instance_template         = var.login.instance_template
+  instance_template_project = each.value.instance_template_project
+  instance_template         = each.value.instance_template
   name_prefix               = "${var.cluster_name}-login"
 
   ### instance ###
-  service_account          = var.login.service_account
-  machine_type             = var.login.machine_type
-  min_cpu_platform         = var.login.min_cpu_platform
-  gpu                      = var.login.gpu
-  shielded_instance_config = var.login.shielded_instance_config
-  enable_confidential_vm   = var.login.enable_confidential_vm
-  enable_shielded_vm       = var.login.enable_shielded_vm
-  preemptible              = var.login.preemptible
+  service_account          = each.value.service_account
+  machine_type             = each.value.machine_type
+  min_cpu_platform         = each.value.min_cpu_platform
+  gpu                      = each.value.gpu
+  shielded_instance_config = each.value.shielded_instance_config
+  enable_confidential_vm   = each.value.enable_confidential_vm
+  enable_shielded_vm       = each.value.enable_shielded_vm
+  preemptible              = each.value.preemptible
 
   ### metadata ###
-  metadata = local.login_metadata
+  metadata = merge(
+    local.common_metadata,
+    local.login_metadata_slurm,
+    local.login_metadata_devel,
+    each.value.metadata,
+    {
+      google_mpi_tuning = each.value.disable_smt == true ? "--nosmt" : null
+    }
+  )
 
   ### source image ###
-  source_image_project = var.login.source_image_project
-  source_image_family  = var.login.source_image_family
-  source_image         = var.login.source_image
+  source_image_project = each.value.source_image_project
+  source_image_family  = each.value.source_image_family
+  source_image         = each.value.source_image
 
   ### disk ###
-  disk_type        = var.login.disk_type
-  disk_size_gb     = var.login.disk_size_gb
-  disk_labels      = var.login.disk_labels
-  disk_auto_delete = var.login.disk_auto_delete
-  additional_disks = var.login.additional_disks
+  disk_type        = each.value.disk_type
+  disk_size_gb     = each.value.disk_size_gb
+  disk_labels      = each.value.disk_labels
+  disk_auto_delete = each.value.disk_auto_delete
+  additional_disks = each.value.additional_disks
+}
+
+### Instance ###
+
+module "login_instance" {
+  source  = "terraform-google-modules/vm/google//modules/compute_instance"
+  version = "~> 7.1"
+
+  for_each = local.login_instances_map
+
+  ### network ###
+  subnetwork_project = var.network.subnetwork_project
+  subnetwork         = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  region             = each.value.subnet_region
+
+  ### instance ###
+  instance_template = module.login_template[each.value.template].self_link
+  num_instances     = each.value.count_static
+  hostname          = "${var.cluster_name}-login-${each.value.subnet_region}"
 }
 
 ###########
 # COMPUTE #
 ###########
 
-module "compute" {
-  source = "./modules/node"
+### Template ###
 
-  for_each = local.compute_map
+module "compute_template" {
+  source = "./modules/node_template"
+
+  for_each = local.compute_templates
 
   ### general ###
   project_id   = var.project_id
   cluster_name = var.cluster_name
 
-  ### multitude ###
-  count_per_region      = 0
-  count_regions_covered = 0
-
   ### network ###
   subnetwork_project = var.network.subnetwork_project
-  network            = local.valid_network
-  subnets            = local.valid_subnets
-  subnets_regions    = var.network.subnets_regions
+  subnetwork         = data.google_compute_subnetwork.compute_subnetwork[each.key].self_link
+  region             = data.google_compute_subnetwork.compute_subnetwork[each.key].region
   tags               = each.value.tags
 
   ### template ###

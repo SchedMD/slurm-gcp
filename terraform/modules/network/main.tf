@@ -25,13 +25,17 @@ module "vpc" {
   routing_mode = "GLOBAL"
 
   subnets = [
-    for index, region in var.subnets_regions : {
+    for subnet in var.subnets_spec : {
       subnet_name   = "${var.cluster_name}-subnet"
-      subnet_ip     = "10.${index}.0.0/24"
-      subnet_region = region
+      subnet_ip     = subnet.cidr
+      subnet_region = subnet.region
 
       subnet_private_access = true
       subnet_flow_logs      = true
+
+      subnet_flow_logs_interval = "INTERVAL_5_SEC"
+      subnet_flow_logs_sampling = 0.5
+      subnet_flow_logs_metadata = "INCLUDE_ALL_METADATA"
     }
   ]
 

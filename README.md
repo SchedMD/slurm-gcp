@@ -25,7 +25,7 @@ Also, join comunity discussions on either the
    * [Install using Terraform](#install-using-terraform)
       * [Defining network storage mounts](#defining-network-storage-mounts)
    * [Public Slurm Images](#public-slurm-images)
-      * [Hyperthreads](#hyperthreads)
+      * [Simultaneous Multi-Threading (SMT)](#simultaneous-multi-threading-\(smt\))
       * [Preinstalled Modules: OpenMPI](#preinstalled-modules-openmpi)
    * [Installing Custom Packages](#installing-custom-packages)
       * [Creating Custom Slurm Images](#creating-custom-slurm-images)
@@ -120,15 +120,14 @@ There are currently 3 public image families available for use with Slurm-GCP:
 * `schedmd-slurm-20-11-7-centos-7`
 * `schedmd-slurm-20-11-7-debian-10`
 
-#### Hyperthreads
-The `hpc-centos-7` image has hyperthreads enabled by default, but can have the
-hyperthreads disabled by setting `image_hyperthreads` to `false`. The non-HPC
-images, `centos-7` and `debian-10`, cannot have hyperthreads disabled. Slurm-GCP
-must know this for each compute node type when configuring the cluster so it can
-configure the correct number of CPUs. `image_hyperthreads` must be set on the
-partition definition to reflect the state of hyperthreads in the image.
+#### Simultaneous Multi-Threading (SMT)
+The `hpc-centos-7` image has SMT enabled by default, but can have SMT disabled
+by setting `disable_smt` to `true`. The non-HPC images, `centos-7` and
+`debian-10`, cannot have SMT disabled. Slurm-GCP must know this for each compute
+node type when configuring the cluster so it can configure the correct number of
+CPUs. `disable_smt` must be set to reflect the state of SMT on the node.
 
-**NOTE:** The result of disabling hyperthreads is that half the number of CPUs will
+**NOTE:** The result of disabling SMT is that half the number of CPUs will
 be usable, eg. `c2-standard-4` compute nodes will have 2 CPUs.
 
 #### Preinstalled modules: OpenMPI

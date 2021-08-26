@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-### General ###
+###########
+# GENERAL #
+###########
 
 variable "project_id" {
   type        = string
@@ -30,18 +32,31 @@ variable "enable_devel" {
   default     = false
 }
 
-### Network ###
+###########
+# NETWORK #
+###########
 
 variable "network" {
   type = object({
+    ### attach ###
     subnetwork_project = string
     network            = string
-    subnets            = list(string)
-    subnets_regions    = list(string)
+    subnets = list(object({
+      name   = string
+      region = string
+    }))
+
+    ### generate ###
+    subnets_spec = list(object({
+      cidr   = string
+      region = string
+    }))
   })
 }
 
-### Configuration ###
+#################
+# CONFIGURATION #
+#################
 
 variable "config" {
   ### setup ###
@@ -87,184 +102,16 @@ variable "config" {
   }
 }
 
-### Controller ###
+##############
+# CONTROLLER #
+##############
 
-variable "controller" {
-  type = object({
-    ### multitude ###
-    count_per_region      = number
-    count_regions_covered = number
-
-    ### network ###
-    tags = list(string)
-
-    ### template ###
-    instance_template_project = string
-    instance_template         = string
-
-    ### instance ###
-    machine_type     = string
-    min_cpu_platform = string
-    gpu = object({
-      type  = string
-      count = number
-    })
-    service_account = object({
-      email  = string
-      scopes = set(string)
-    })
-    shielded_instance_config = object({
-      enable_secure_boot          = bool
-      enable_vtpm                 = bool
-      enable_integrity_monitoring = bool
-    })
-    enable_confidential_vm = bool
-    enable_shielded_vm     = bool
-    disable_smt            = bool
-    preemptible            = bool
-
-    ### metadata ###
-    metadata = map(string)
-
-    ### source image ###
-    source_image_project = string
-    source_image_family  = string
-    source_image         = string
-
-    ### disk ###
-    disk_type        = string
-    disk_size_gb     = number
-    disk_labels      = map(string)
-    disk_auto_delete = bool
-    additional_disks = list(object({
-      disk_name    = string
-      device_name  = string
-      auto_delete  = bool
-      boot         = bool
-      disk_size_gb = number
-      disk_type    = string
-      disk_labels  = map(string)
-    }))
-  })
-  default = {
-    additional_disks          = null
-    count_per_region          = 0
-    count_regions_covered     = 0
-    disable_smt               = false
-    disk_auto_delete          = false
-    disk_labels               = null
-    disk_size_gb              = null
-    disk_type                 = null
-    enable_confidential_vm    = false
-    enable_shielded_vm        = false
-    gpu                       = null
-    instance_template         = null
-    instance_template_project = null
-    machine_type              = "n2d-standard-1"
-    metadata                  = null
-    min_cpu_platform          = null
-    preemptible               = false
-    service_account           = null
-    shielded_instance_config  = null
-    source_image              = null
-    source_image_family       = null
-    source_image_project      = null
-    tags                      = null
-  }
-}
-
-### Login ###
-
-variable "login" {
-  type = object({
-    ### multitude ###
-    count_per_region      = number
-    count_regions_covered = number
-
-    ### network ###
-    tags = list(string)
-
-    ### template ###
-    instance_template_project = string
-    instance_template         = string
-
-    ### instance ###
-    machine_type     = string
-    min_cpu_platform = string
-    gpu = object({
-      type  = string
-      count = number
-    })
-    service_account = object({
-      email  = string
-      scopes = set(string)
-    })
-    shielded_instance_config = object({
-      enable_secure_boot          = bool
-      enable_vtpm                 = bool
-      enable_integrity_monitoring = bool
-    })
-    enable_confidential_vm = bool
-    enable_shielded_vm     = bool
-    disable_smt            = bool
-    preemptible            = bool
-
-    ### metadata ###
-    metadata = map(string)
-
-    ### source image ###
-    source_image_project = string
-    source_image_family  = string
-    source_image         = string
-
-    ### disk ###
-    disk_type        = string
-    disk_size_gb     = number
-    disk_labels      = map(string)
-    disk_auto_delete = bool
-    additional_disks = list(object({
-      disk_name    = string
-      device_name  = string
-      auto_delete  = bool
-      boot         = bool
-      disk_size_gb = number
-      disk_type    = string
-      disk_labels  = map(string)
-    }))
-  })
-  default = {
-    additional_disks          = null
-    count_per_region          = 0
-    count_regions_covered     = 0
-    disable_smt               = false
-    disk_auto_delete          = false
-    disk_labels               = null
-    disk_size_gb              = null
-    disk_type                 = null
-    enable_confidential_vm    = false
-    enable_shielded_vm        = false
-    gpu                       = null
-    instance_template         = null
-    instance_template_project = null
-    machine_type              = "n2d-standard-1"
-    metadata                  = null
-    min_cpu_platform          = null
-    preemptible               = false
-    service_account           = null
-    shielded_instance_config  = null
-    source_image              = null
-    source_image_family       = null
-    source_image_project      = null
-    tags                      = null
-  }
-}
-
-### Compute ###
-
-variable "compute" {
+variable "controller_templates" {
   type = map(object({
     ### network ###
-    tags = list(string)
+    subnet_name   = string
+    subnet_region = string
+    tags          = list(string)
 
     ### template ###
     instance_template_project = string
@@ -313,6 +160,168 @@ variable "compute" {
       disk_type    = string
       disk_labels  = map(string)
     }))
+  }))
+  default = {}
+}
+
+variable "controller_instances" {
+  type = list(object({
+    template      = string # must match a key in 'controller_templates'
+    count_static  = number
+    subnet_name   = string
+    subnet_region = string
+  }))
+  default = []
+}
+
+#########
+# LOGIN #
+#########
+
+variable "login_templates" {
+  type = map(object({
+    ### network ###
+    subnet_name   = string
+    subnet_region = string
+    tags          = list(string)
+
+    ### template ###
+    instance_template_project = string
+    instance_template         = string
+
+    ### instance ###
+    machine_type     = string
+    min_cpu_platform = string
+    gpu = object({
+      type  = string
+      count = number
+    })
+    service_account = object({
+      email  = string
+      scopes = set(string)
+    })
+    shielded_instance_config = object({
+      enable_secure_boot          = bool
+      enable_vtpm                 = bool
+      enable_integrity_monitoring = bool
+    })
+    enable_confidential_vm = bool
+    enable_shielded_vm     = bool
+    disable_smt            = bool
+    preemptible            = bool
+
+    ### metadata ###
+    metadata = map(string)
+
+    ### source image ###
+    source_image_project = string
+    source_image_family  = string
+    source_image         = string
+
+    ### disk ###
+    disk_type        = string
+    disk_size_gb     = number
+    disk_labels      = map(string)
+    disk_auto_delete = bool
+    additional_disks = list(object({
+      disk_name    = string
+      device_name  = string
+      auto_delete  = bool
+      boot         = bool
+      disk_size_gb = number
+      disk_type    = string
+      disk_labels  = map(string)
+    }))
+  }))
+  default = {}
+}
+
+variable "login_instances" {
+  type = list(object({
+    template      = string # must match a key in 'login_templates'
+    count_static  = number
+    subnet_name   = string
+    subnet_region = string
+  }))
+  default = []
+}
+
+###########
+# COMPUTE #
+###########
+
+variable "compute_templates" {
+  type = map(object({
+    ### network ###
+    subnet_name   = string
+    subnet_region = string
+    tags          = list(string)
+
+    ### template ###
+    instance_template_project = string
+    instance_template         = string
+
+    ### instance ###
+    machine_type     = string
+    min_cpu_platform = string
+    gpu = object({
+      type  = string
+      count = number
+    })
+    service_account = object({
+      email  = string
+      scopes = set(string)
+    })
+    shielded_instance_config = object({
+      enable_secure_boot          = bool
+      enable_vtpm                 = bool
+      enable_integrity_monitoring = bool
+    })
+    enable_confidential_vm = bool
+    enable_shielded_vm     = bool
+    disable_smt            = bool
+    preemptible            = bool
+
+    ### metadata ###
+    metadata = map(string)
+
+    ### source image ###
+    source_image_project = string
+    source_image_family  = string
+    source_image         = string
+
+    ### disk ###
+    disk_type        = string
+    disk_size_gb     = number
+    disk_labels      = map(string)
+    disk_auto_delete = bool
+    additional_disks = list(object({
+      disk_name    = string
+      device_name  = string
+      auto_delete  = bool
+      boot         = bool
+      disk_size_gb = number
+      disk_type    = string
+      disk_labels  = map(string)
+    }))
+  }))
+  default = {}
+}
+
+##############
+# PARTITIONS #
+##############
+
+variable "partitions" {
+  type = map(object({
+    nodes = list(object({
+      template      = string # must match a key in 'compute_templates'
+      count_static  = number
+      count_dynamic = number
+      subnet_name   = string
+      subnet_region = string
+    }))
+    conf = map(string)
   }))
   default = {}
 }

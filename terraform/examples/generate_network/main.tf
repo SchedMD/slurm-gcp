@@ -19,9 +19,14 @@ module "slurm_cluster" {
   cluster_name = "generate-network"
 
   network = {
-    network            = null
-    subnets            = null
-    subnets_regions    = ["us-central1"]
+    network = null
+    subnets = null
+    subnets_spec = [
+      {
+        cidr   = "10.0.0.0/24"
+        region = "us-central1"
+      },
+    ]
     subnetwork_project = null
   }
 }

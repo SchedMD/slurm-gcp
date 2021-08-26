@@ -36,5 +36,5 @@ output "login_template" {
 }
 
 output "compute_templates" {
-  value = module.slurm_cluster.compute_templates
+  value = module.slurm_cluster.compute_template
 }

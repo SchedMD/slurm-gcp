@@ -19,9 +19,14 @@ module "slurm_cluster" {
   cluster_name = "attach-network"
 
   network = {
-    network            = "default"
-    subnets            = ["default"]
-    subnets_regions    = ["us-central1"]
+    network = "default"
+    subnets = [
+      {
+        name   = "default"
+        region = "us-central1"
+      },
+    ]
+    subnets_spec       = null
     subnetwork_project = null
   }
 }

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-output "vpc_info" {
+output "vpc" {
   description = "vpc object information"
   value       = module.vpc
 }

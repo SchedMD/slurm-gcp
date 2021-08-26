@@ -19,11 +19,10 @@ There are two ways to use this module:
     Copy [example.tfvars](example.tfvars) and fill out with required information.
 
     ```sh
-    $ cp example.tfvars my_example.tfvars
-    $ vim my_example.tfvars
+    $ cp example.tfvars vars.tfvars
+    $ vim vars.tfvars
     $ terraform init
-    $ terraform apply -var-file=my_example.tfvars
-    $ terraform destroy
+    $ terraform apply -var-file=vars.tfvars
     ```
 
 * Module (recommended)
@@ -42,5 +41,19 @@ There are two ways to use this module:
     **NOTE:** This is not a hosted module, hence source must be the path to the
     directory on filesystem.
 
-    Additionally, please go to [examples/](./examples) for examples on how to
+    Additionally, please go to [examples/](examples/) for examples on how to
     use the root module.
+
+### Destroy Resources
+
+Clean-up terraform managed resources.
+
+```sh
+$ terraform destroy -var-file=vars.tfvars
+```
+
+**NOTE:** Compute node instances are not managed by terraform, rather by the
+controller instance via scripts. Ergo, if the controller is destroyed
+before all compute node instances are terminated, the cluster administrator
+must be manually handle the termination of orpahned compute node instances.
+Failure to moderate resources in this case may lead to additional costs.

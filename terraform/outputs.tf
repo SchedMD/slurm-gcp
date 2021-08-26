@@ -19,22 +19,21 @@ output "cluster_name" {
 
 output "vpc" {
   description = "vpc details"
-  value       = module.vpc
+  value       = local.network_count == 1 ? module.vpc[0] : null
 }
 
 output "config" {
   value     = var.config
   sensitive = true
 }
-
 output "controller_template" {
-  value = module.controller.template
+  value = module.controller_template
 }
 
 output "login_template" {
-  value = module.login.template
+  value = module.login_template
 }
 
-output "compute_templates" {
-  value = module.compute
+output "compute_template" {
+  value = module.compute_template
 }

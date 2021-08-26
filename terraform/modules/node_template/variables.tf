@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-### General ###
+###########
+# GENERAL #
+###########
 
 variable "project_id" {
   type        = string
@@ -24,21 +26,9 @@ variable "cluster_name" {
   description = "Cluster name used for accounting and resource naming."
 }
 
-### Multitude ###
-
-variable "count_per_region" {
-  type        = number
-  description = "Number of controller instances to create in the same region."
-  default     = null
-}
-
-variable "count_regions_covered" {
-  type        = number
-  description = "Number of regions to create controller instances."
-  default     = null
-}
-
-### Network ###
+###########
+# NETWORK #
+###########
 
 variable "subnetwork_project" {
   type        = string
@@ -46,22 +36,14 @@ variable "subnetwork_project" {
   default     = null
 }
 
-variable "network" {
+variable "subnetwork" {
   type        = string
-  description = "Network to deploy to."
-  default     = null
+  description = "Subnet to deploy to."
 }
 
-variable "subnets" {
-  type        = list(string)
-  description = "Subnet to deploy to. Note: Indicies are correlated with 'subnets_regions'."
-  default     = null
-}
-
-variable "subnets_regions" {
-  type        = list(string)
-  description = "Regions where the templates and instances should be created. Note: Indicies are correlated with 'subnets'."
-  default     = null
+variable "region" {
+  type        = string
+  description = "Region to deploy to."
 }
 
 variable "tags" {
@@ -70,7 +52,9 @@ variable "tags" {
   default     = []
 }
 
-### Template ###
+############
+# TEMPLATE #
+############
 
 variable "instance_template_project" {
   type        = string
@@ -90,7 +74,9 @@ variable "name_prefix" {
   default     = "node"
 }
 
-### Instance ###
+############
+# INSTANCE #
+############
 
 variable "machine_type" {
   type        = string
@@ -159,15 +145,19 @@ variable "preemptible" {
   default     = false
 }
 
-### Metadata ###
+############
+# METADATA #
+############
 
 variable "metadata" {
   type        = map(string)
   description = "Metadata, provided as a map"
-  default     = null
+  default     = {}
 }
 
-### Source Image ###
+################
+# SOURCE IMAGE #
+################
 
 variable "source_image_project" {
   type        = string
@@ -187,7 +177,9 @@ variable "source_image" {
   default     = null
 }
 
-### Disk ###
+########
+# DISK #
+########
 
 variable "disk_type" {
   type        = string

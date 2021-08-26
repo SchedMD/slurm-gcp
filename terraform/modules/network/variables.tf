@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+###########
+# GENERAL #
+###########
+
 variable "project_id" {
   type        = string
   description = "Project ID to create resources in."
@@ -22,7 +26,14 @@ variable "cluster_name" {
   description = "Cluster name used for accounting and resource naming."
 }
 
-variable "subnets_regions" {
-  type        = list(string)
-  description = "Regions to create resources in."
+###########
+# NETWORK #
+###########
+
+variable "subnets_spec" {
+  type = list(object({
+    cidr   = string
+    region = string
+  }))
+  description = "Subnet specification."
 }

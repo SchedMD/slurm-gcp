@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-output "template" {
+output "self_link" {
   value = local.instance_template
 }
