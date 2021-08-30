@@ -4,7 +4,7 @@
 
 project_id = "<PROJECT_ID>"
 
-cluster_name = "slurm"
+cluster_name = "example"
 
 # *NOT* intended for production use
 # enable_devel = true

@@ -1,6 +1,7 @@
 # Example: generate_network
 
-In this example, it will generate a new network for the slurm cluster.
+In this example, it will create a vpc and generate subnetworks for the
+slurm cluster from the given subnet specifications.
 
 Steps:
 
