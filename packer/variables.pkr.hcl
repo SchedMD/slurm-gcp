@@ -96,8 +96,8 @@ variable "builds" {
     ssh_password = string // description: A plaintext password to use to authenticate with SSH. (sensitive)
 
     ### instance ###
-    machine_type = string // description: 
-    preemptible  = bool // description: If true, launch a preemptible instance.
+    machine_type = string // description: Machine type to create (e.g. n1-standard-1).
+    preemptible  = bool   // description: If true, launch a preemptible instance.
 
     ### root of trust ###
     enable_secure_boot          = bool // description: Create a Shielded VM image with Secure Boot enabled. See https://cloud.google.com/security/shielded-cloud/shielded-vm#secure-boot.
@@ -105,7 +105,7 @@ variable "builds" {
     enable_integrity_monitoring = bool // description: Integrity monitoring helps you understand and make decisions about the state of your VM instances. Note: integrity monitoring relies on having vTPM enabled. See https://cloud.google.com/security/shielded-cloud/shielded-vm#integrity-monitoring.
 
     ### storage ###
-    disk_size = number // description: 
-    disk_type = string // description: 
+    disk_size = number // description: The size of the disk in GB. This defaults to 10, which is 10GB.
+    disk_type = string // description: Type of disk used to back your instance, like pd-ssd or pd-standard. Defaults to pd-standard.
   }))
 }
