@@ -20,6 +20,7 @@ network = {
   subnets            = null
 
   ### generate ###
+  auto_create_subnetworks = false
   subnets_spec = [
     {
       cidr   = "10.0.0.0/24"
@@ -229,6 +230,8 @@ login_instances = [
 compute_templates = {
   "example-cpu" = {
     ### network ###
+    subnet_name   = null
+    subnet_region = "us-central1"
     tags = [
       # "tag0",
       # "tag1",
@@ -291,6 +294,8 @@ compute_templates = {
   }
   "example-gpu" = {
     ### network ###
+    subnet_name   = null
+    subnet_region = "us-central1"
     tags = [
       # "tag0",
       # "tag1",

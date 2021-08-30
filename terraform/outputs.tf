@@ -19,7 +19,7 @@ output "cluster_name" {
 
 output "vpc" {
   description = "vpc details"
-  value       = local.network_count == 1 ? module.vpc[0] : null
+  value       = module.vpc
 }
 
 output "config" {

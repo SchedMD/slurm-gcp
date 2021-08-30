@@ -19,8 +19,9 @@ module "slurm_cluster" {
   cluster_name = "basic"
 
   network = {
-    network = null
-    subnets = null
+    auto_create_subnetworks = false
+    network                 = null
+    subnets                 = null
     subnets_spec = [
       {
         cidr   = "10.0.0.0/24"

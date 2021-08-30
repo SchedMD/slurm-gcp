@@ -26,6 +26,12 @@ locals {
     ? 0
     : 1
   )
+
+  subnet_default_name = (
+    var.network.auto_create_subnetworks == true
+    ? module.vpc[0].vpc.network.network_name
+    : "${var.cluster_name}-subnet"
+  )
 }
 
 ### Metadata ###
@@ -48,10 +54,10 @@ locals {
 
   controller_instances_map = {
     for x in var.controller_instances
-    : "${x.subnet_region}/${x.subnet_name != null ? x.subnet_name : "${var.cluster_name}-subnet"}" => {
+    : "${x.subnet_region}/${x.subnet_name != null ? x.subnet_name : local.subnet_default_name}" => {
       template      = x.template
       count_static  = x.count_static
-      subnet_name   = x.subnet_name != null ? x.subnet_name : "${var.cluster_name}-subnet"
+      subnet_name   = x.subnet_name != null ? x.subnet_name : local.subnet_default_name
       subnet_region = x.subnet_region
     }
   }
@@ -106,10 +112,10 @@ locals {
 
   login_instances_map = {
     for x in var.login_instances
-    : "${x.subnet_region}/${x.subnet_name != null ? x.subnet_name : "${var.cluster_name}-subnet"}" => {
+    : "${x.subnet_region}/${x.subnet_name != null ? x.subnet_name : local.subnet_default_name}" => {
       template      = x.template
       count_static  = x.count_static
-      subnet_name   = x.subnet_name != null ? x.subnet_name : "${var.cluster_name}-subnet"
+      subnet_name   = x.subnet_name != null ? x.subnet_name : local.subnet_default_name
       subnet_region = x.subnet_region
     }
   }
@@ -194,7 +200,7 @@ data "google_compute_subnetwork" "controller_subnetwork" {
   for_each = local.controller_instances_map
 
   project = lookup(var.network, "subnetwork_project", var.project_id)
-  name    = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  name    = each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name
   region  = each.value.subnet_region
 }
 
@@ -208,7 +214,7 @@ data "google_compute_subnetwork" "login_subnetwork" {
   for_each = local.login_instances_map
 
   project = lookup(var.network, "subnetwork_project", var.project_id)
-  name    = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  name    = each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name
   region  = each.value.subnet_region
 }
 
@@ -222,7 +228,7 @@ data "google_compute_subnetwork" "compute_subnetwork" {
   for_each = local.compute_templates
 
   project = lookup(var.network, "subnetwork_project", var.project_id)
-  name    = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  name    = each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name
   region  = each.value.subnet_region
 }
 
@@ -235,9 +241,13 @@ module "vpc" {
 
   count = local.network_count
 
+  ### general ###
   project_id   = var.project_id
   cluster_name = var.cluster_name
-  subnets_spec = var.network.subnets_spec
+
+  ### network ###
+  auto_create_subnetworks = var.network.auto_create_subnetworks
+  subnets_spec            = var.network.subnets_spec
 }
 
 ##############
@@ -257,14 +267,15 @@ module "controller_template" {
 
   ### network ###
   subnetwork_project = var.network.subnetwork_project
+  network            = module.vpc[0].vpc.network.network.self_link
   subnetwork = (
     data.google_compute_subnetwork.controller_subnetwork[
-      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"}"
+      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name}"
     ].self_link
   )
   region = (
     data.google_compute_subnetwork.controller_subnetwork[
-      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"}"
+      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name}"
     ].region
   )
   tags = each.value.tags
@@ -318,7 +329,8 @@ module "controller_instance" {
 
   ### network ###
   subnetwork_project = var.network.subnetwork_project
-  subnetwork         = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  network            = module.vpc[0].vpc.network.network.self_link
+  subnetwork         = each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name
   region             = each.value.subnet_region
 
   ### instance ###
@@ -344,14 +356,15 @@ module "login_template" {
 
   ### network ###
   subnetwork_project = var.network.subnetwork_project
+  network            = module.vpc[0].vpc.network.network.self_link
   subnetwork = (
     data.google_compute_subnetwork.login_subnetwork[
-      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"}"
+      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name}"
     ].self_link
   )
   region = (
     data.google_compute_subnetwork.login_subnetwork[
-      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"}"
+      "${each.value.subnet_region}/${each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name}"
     ].region
   )
   tags = each.value.tags
@@ -405,7 +418,8 @@ module "login_instance" {
 
   ### network ###
   subnetwork_project = var.network.subnetwork_project
-  subnetwork         = each.value.subnet_name != null ? each.value.subnet_name : "${var.cluster_name}-subnet"
+  network            = module.vpc[0].vpc.network.network.self_link
+  subnetwork         = each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name
   region             = each.value.subnet_region
 
   ### instance ###
@@ -431,6 +445,7 @@ module "compute_template" {
 
   ### network ###
   subnetwork_project = var.network.subnetwork_project
+  network            = module.vpc[0].vpc.network.network.self_link
   subnetwork         = data.google_compute_subnetwork.compute_subnetwork[each.key].self_link
   region             = data.google_compute_subnetwork.compute_subnetwork[each.key].region
   tags               = each.value.tags

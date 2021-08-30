@@ -119,6 +119,7 @@ module "template" {
 
   ### network ###
   subnetwork_project = var.subnetwork_project
+  network            = var.network
   subnetwork         = var.subnetwork
   tags               = local.tags
 

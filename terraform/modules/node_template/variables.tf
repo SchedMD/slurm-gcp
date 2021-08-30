@@ -36,20 +36,28 @@ variable "subnetwork_project" {
   default     = null
 }
 
+variable "network" {
+  type        = string
+  description = "The name or self_link of the network to attach this interface to. Use network attribute for Legacy or Auto subnetted networks and subnetwork for custom subnetted networks."
+  default     = null
+}
+
 variable "subnetwork" {
   type        = string
-  description = "Subnet to deploy to."
+  description = "The name of the subnetwork to attach this interface to. The subnetwork must exist in the same region this instance will be created in. Either network or subnetwork must be provided."
+  default     = null
 }
 
 variable "region" {
   type        = string
-  description = "Region to deploy to."
+  description = "Region where the instance template should be created."
+  default     = null
 }
 
 variable "tags" {
   type        = list(string)
   description = "Network tag list."
-  default     = []
+  default     = null
 }
 
 ############

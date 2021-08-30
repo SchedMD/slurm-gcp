@@ -12,22 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module "slurm_cluster" {
-  source = "../../../terraform"
-
-  project_id   = var.project_id
-  cluster_name = "attach-network"
-
-  network = {
-    auto_create_subnetworks = false
-    network                 = "default"
-    subnets = [
-      {
-        name   = "default"
-        region = "us-central1"
-      },
-    ]
-    subnets_spec       = null
-    subnetwork_project = null
-  }
+variable "project_id" {
+  type        = string
+  description = "Project ID to create resources in."
 }

@@ -16,18 +16,5 @@ module "slurm_cluster" {
   source = "../../../terraform"
 
   project_id   = var.project_id
-  cluster_name = "attach-network"
-
-  network = {
-    auto_create_subnetworks = false
-    network                 = "default"
-    subnets = [
-      {
-        name   = "default"
-        region = "us-central1"
-      },
-    ]
-    subnets_spec       = null
-    subnetwork_project = null
-  }
+  cluster_name = "auto-generate-network"
 }

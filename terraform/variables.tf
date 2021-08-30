@@ -47,11 +47,19 @@ variable "network" {
     }))
 
     ### generate ###
+    auto_create_subnetworks = bool
     subnets_spec = list(object({
       cidr   = string
       region = string
     }))
   })
+  default = {
+    auto_create_subnetworks = true
+    network                 = null
+    subnets                 = null
+    subnets_spec            = null
+    subnetwork_project      = null
+  }
 }
 
 #################

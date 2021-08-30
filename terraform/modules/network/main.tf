@@ -12,6 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#########
+# LOCAL #
+#########
+
+locals {
+  subnets = (
+    var.auto_create_subnetworks == true
+    ? []
+    : [
+      for subnet in var.subnets_spec : {
+        subnet_name   = "${var.cluster_name}-subnet"
+        subnet_ip     = subnet.cidr
+        subnet_region = subnet.region
+
+        subnet_private_access = true
+        subnet_flow_logs      = true
+
+        subnet_flow_logs_interval = "INTERVAL_5_SEC"
+        subnet_flow_logs_sampling = 0.5
+        subnet_flow_logs_metadata = "INCLUDE_ALL_METADATA"
+      }
+    ]
+  )
+}
+
 ###########
 # NETWORK #
 ###########
@@ -24,20 +49,8 @@ module "vpc" {
   network_name = "${var.cluster_name}-vpc"
   routing_mode = "GLOBAL"
 
-  subnets = [
-    for subnet in var.subnets_spec : {
-      subnet_name   = "${var.cluster_name}-subnet"
-      subnet_ip     = subnet.cidr
-      subnet_region = subnet.region
-
-      subnet_private_access = true
-      subnet_flow_logs      = true
-
-      subnet_flow_logs_interval = "INTERVAL_5_SEC"
-      subnet_flow_logs_sampling = 0.5
-      subnet_flow_logs_metadata = "INCLUDE_ALL_METADATA"
-    }
-  ]
+  auto_create_subnetworks = var.auto_create_subnetworks
+  subnets                 = local.subnets
 
   firewall_rules = [
     {
