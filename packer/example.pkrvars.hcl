@@ -25,6 +25,7 @@ zone    = "us-central1-a"
 
 # source_image_project_id = "<SOURCE_IMAGE-PROJECT_ID>"
 
+# *NOT* intended for production use
 # skip_create_image = true
 
 ###########
@@ -35,7 +36,10 @@ zone    = "us-central1-a"
 
 # subnetwork = "<SUBNETWORK_ID>"
 
-# tags = []
+tags = [
+  # "tag0",
+  # "tag1",
+]
 
 #############
 # PROVISION #

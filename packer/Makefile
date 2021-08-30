@@ -1,4 +1,4 @@
-.PHONY: init validate inspect build debug
+.PHONY: init validate inspect build debug format
 
 init:
 	packer init .
@@ -14,3 +14,6 @@ build:
 
 debug:
 	packer build -var-file=vars.pkrvars.hcl -debug .
+
+format:
+	packer fmt -recursive .
