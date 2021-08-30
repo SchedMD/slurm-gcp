@@ -86,26 +86,26 @@ variable "slurm_version" {
 variable "builds" {
   type = list(object({
     ### image ###
-    source_image        = string
-    source_image_family = string
-    image_licenses      = list(string)
-    labels              = map(string)
+    source_image        = string       // description: Source disk image.
+    source_image_family = string       // description: Source image family.
+    image_licenses      = list(string) // description: Licenses to apply to the created image.
+    labels              = map(string)  // description: Key/value pair labels to apply to the launched instance and image.
 
     ### ssh ###
-    ssh_username = string
-    ssh_password = string # sensitive
+    ssh_username = string // description: The username to connect to SSH with. Default: "packer"
+    ssh_password = string // description: A plaintext password to use to authenticate with SSH. (sensitive)
 
     ### instance ###
-    machine_type = string
-    preemptible  = bool
+    machine_type = string // description: 
+    preemptible  = bool // description: If true, launch a preemptible instance.
 
-    ### root fo trust ###
-    enable_secure_boot          = bool
-    enable_vtpm                 = bool
-    enable_integrity_monitoring = bool
+    ### root of trust ###
+    enable_secure_boot          = bool // description: Create a Shielded VM image with Secure Boot enabled. See https://cloud.google.com/security/shielded-cloud/shielded-vm#secure-boot.
+    enable_vtpm                 = bool // description: Create a Shielded VM image with virtual trusted platform module Measured Boot enabled. See https://cloud.google.com/security/shielded-cloud/shielded-vm#vtpm.
+    enable_integrity_monitoring = bool // description: Integrity monitoring helps you understand and make decisions about the state of your VM instances. Note: integrity monitoring relies on having vTPM enabled. See https://cloud.google.com/security/shielded-cloud/shielded-vm#integrity-monitoring.
 
     ### storage ###
-    disk_size = number
-    disk_type = string
+    disk_size = number // description: 
+    disk_type = string // description: 
   }))
 }
