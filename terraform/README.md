@@ -52,8 +52,15 @@ Clean-up terraform managed resources.
 $ terraform destroy -var-file=vars.tfvars
 ```
 
+**NOTE:** If the VPC/network is managed by terraform, then all resources that
+are not managed by terraform (compute nodes, non-slurm instances) and on said
+VPC/network must be terminated before the VPC/network can be destroyed. This
+may require manual termination of resources. This includes bursted instances
+that Slurm has not yet suspended. Failure to do so may lead to errors when
+using `terraform destroy`.
+
 **NOTE:** Compute node instances are not managed by terraform, rather by the
 controller instance via scripts. Ergo, if the controller is destroyed
-before all compute node instances are terminated, the cluster administrator
-must be manually handle the termination of orpahned compute node instances.
-Failure to moderate resources in this case may lead to additional costs.
+before all compute node instances are terminated, the cloud administrator
+must manually handle the termination of orpahned compute node instances.
+Failure to manually moderate resources may lead to additional cloud costs.
