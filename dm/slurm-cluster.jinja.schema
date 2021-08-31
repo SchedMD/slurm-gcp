@@ -140,9 +140,9 @@ properties:
                   eg. n1-standard-4.
 
   controller_disk_type:
-    enum        : ["pd-ssd", "pd-standard"]
+    type        : string
     default     : pd-standard
-    description : Disk type (pd-ssd or pd-standard) for controller.
+    description : Disk type for controller.
 
   controller_disk_size_gb:
     type        : integer
@@ -176,9 +176,9 @@ properties:
     description : Create secondary disk mounted to controller node (True/False)
 
   controller_secondary_disk_type:
-    enum        : ["pd-ssd", "pd-standard"]
+    type        : string
     default     : pd-standard
-    description : Disk type (pd-ssd or pd-standard) for secondary disk.
+    description : Disk type for secondary disk.
 
   controller_secondary_disk_size_gb:
     type        : integer
@@ -228,9 +228,9 @@ properties:
                   n1-standard-4.
 
   login_disk_type:
-    enum        : ["pd-ssd", "pd-standard"]
+    type        : string
     default     : pd-standard
-    description : Disk type (pd-ssd or pd-standard) for login node.
+    description : Disk type for login node.
 
   login_labels:
     type        : array
@@ -425,9 +425,9 @@ properties:
                         eg. n1-standard-4.
 
         compute_disk_type:
-          enum        : ["pd-ssd", "pd-standard"]
+          type        : string
           default     : pd-standard
-          description : Disk type (pd-ssd or pd-standard) for compute nodes.
+          description : Disk type for compute nodes.
 
         compute_disk_size_gb:
           type        : integer

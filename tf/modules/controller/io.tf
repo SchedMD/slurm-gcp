@@ -18,10 +18,11 @@
 variable "cloudsql" {
   description = "Define an existing CloudSQL instance to use instead of instance-local MySQL"
   type = object({
-    server_ip = string,
-    user      = string,
-    password  = string,
-  db_name = string })
+    server_ip = string
+    user      = string
+    password  = string
+    db_name   = string
+  })
   default = null
 }
 
@@ -101,11 +102,12 @@ variable "disable_compute_public_ips" {
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mount  = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
   default = []
 }
 
@@ -127,43 +129,47 @@ variable "jwt_key" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mount  = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
   default = []
 }
 
 variable "partitions" {
   description = "An array of configurations for specifying multiple machine types residing in their own Slurm partitions."
   type = list(object({
-    name                 = string,
-    machine_type         = string,
-    max_node_count       = number,
-    zone                 = string,
-    image                = string,
-    image_hyperthreads   = bool,
-    compute_disk_type    = string,
-    compute_disk_size_gb = number,
-    compute_labels       = any,
-    cpu_platform         = string,
-    gpu_type             = string,
-    gpu_count            = number,
+    name                 = string
+    machine_type         = string
+    max_node_count       = number
+    zone                 = string
+    image                = string
+    image_hyperthreads   = bool
+    shielded_instance    = bool
+    compute_disk_type    = string
+    compute_disk_size_gb = number
+    compute_labels       = any
+    cpu_platform         = string
+    gpu_type             = string
+    gpu_count            = number
     network_storage = list(object({
-      server_ip    = string,
-      remote_mount = string,
-      local_mount  = string,
-      fs_type      = string,
-    mount_options = string })),
-    preemptible_bursting = bool,
-    vpc_subnet           = string,
-    exclusive            = bool,
-    enable_placement     = bool,
-    regional_capacity    = bool,
-    regional_policy      = any,
-    instance_template    = string,
-  static_node_count = number }))
+      server_ip     = string
+      remote_mount  = string
+      local_mount   = string
+      fs_type       = string
+      mount_options = string
+    }))
+    preemptible_bursting = bool
+    vpc_subnet           = string
+    exclusive            = bool
+    enable_placement     = bool
+    regional_capacity    = bool
+    regional_policy      = any
+    instance_template    = string
+    static_node_count    = number
+  }))
 }
 
 variable "project" {
@@ -224,6 +230,12 @@ output "instance_network_ips" {
 }
 
 output "config" {
-  value = local.config
+  value     = local.config
   sensitive = true
+}
+
+variable "shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
 }

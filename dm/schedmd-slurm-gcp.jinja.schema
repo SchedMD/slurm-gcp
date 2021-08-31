@@ -89,6 +89,7 @@ optional:
 properties:
   cluster_name:
     type        : string
+    pattern     : '^[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?$'
     description : Name of the cluster
 
   zone:
@@ -148,12 +149,13 @@ properties:
     default       : ''
     description   : IP of the remote file server. '$controller' here will nfs
                     mount a directory from the controller across the cluster.
-                    For gcsfuse, use the name of the bucket.
+                    'gcsfuse' for gcsfuse.
 
   netstore_remote_mount:
     type          : string
     default       : ''
     description   : Remote mount directory of the remote file server.
+                    For gcsfuse, use the name of the bucket with no leading slash
 
   netstore_local_mount:
     type          : string
@@ -203,6 +205,19 @@ properties:
       gceDiskSize:
         diskTypeProperty: controller_disk_type
 
+  controller_access:
+    enum:
+      - Default access
+      - Full Cloud API access
+      - Custom scopes
+    default: Default access
+    description: Select a predetermined set of scopes or define your own
+
+  controller_custom_scopes:
+    type: string
+    default: ""
+    description: Comma-separated list of custom scopes to give to the controller service account
+
   login_machine_type:
     type        : string
     default     : n1-standard-2
@@ -237,11 +252,37 @@ properties:
     description : Labels to add to login instances. List of key key, value
                   pairs.
 
+  login_access:
+    enum:
+      - Default access
+      - Full Cloud API access
+      - Custom scopes
+    default: Default access
+    description: Select a predetermined set of scopes or define your own
+
+  login_custom_scopes:
+    type: string
+    default: ""
+    description: Comma-separated list of custom scopes to give to the login service account
+
   suspend_time:
     type        : integer
     default     : 300
     minimum     : 300
     description : Idle time to wait before nodes are decommissioned (in sec)
+
+  compute_node_access:
+    enum:
+      - Default access
+      - Full Cloud API access
+      - Custom scopes
+    default: Default access
+    description: Select a predetermined set of scopes or define your own
+
+  compute_node_custom_scopes:
+    type: string
+    default: ""
+    description: Comma-separated list of custom scopes to give to the login service account
 
   compute1_partition_name:
     type        : string
@@ -286,12 +327,12 @@ properties:
 
   compute1_gpu_type:
     type        : string
-    default     : None
-    description : GPU Type to attach to static nodes.
+    description : GPU Type
     x-googleProperty:
       type: GCE_GPU_TYPE
       gceGpuType:
         machineTypeProperty: compute1_machine_type
+        gpuCountProperty: compute1_gpu_count
         gpuType:
           - nvidia-tesla-k80
           - nvidia-tesla-p100
@@ -307,6 +348,7 @@ properties:
       type: GCE_GPU_COUNT
       gceGpuCount:
         machineTypeProperty: compute1_machine_type
+        gpuTypeProperty: compute1_gpu_type
 
   compute1_preemptible:
     type        : boolean
@@ -369,8 +411,7 @@ properties:
 
   compute2_gpu_type:
     type        : string
-    default     : None
-    description : GPU Type to attach to static nodes.
+    description : GPU Type
     x-googleProperty:
       type: GCE_GPU_TYPE
       gceGpuType:
@@ -452,8 +493,7 @@ properties:
 
   compute3_gpu_type:
     type        : string
-    default     : None
-    description : GPU Type to attach to static nodes.
+    description : GPU Type
     x-googleProperty:
       type: GCE_GPU_TYPE
       gceGpuType:

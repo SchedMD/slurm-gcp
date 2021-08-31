@@ -29,7 +29,7 @@ resource "google_compute_instance" "login_node" {
   machine_type = var.machine_type
   zone         = var.zone
 
-  tags = ["login"]
+  tags = ["${var.cluster_name}", "login"]
 
   boot_disk {
     initialize_params {
@@ -80,9 +80,18 @@ resource "google_compute_instance" "login_node" {
       network_storage           = var.network_storage
     })
 
-    setup-script = file("${path.module}/../../../scripts/setup.py")
-    custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
+    setup-script           = file("${path.module}/../../../scripts/setup.py")
+    custom-compute-install = file("${path.module}/../../../scripts/custom-compute-install")
 
+  }
+
+  dynamic "shielded_instance_config" {
+    for_each = var.shielded_instance ? [1] : []
+    content {
+      enable_secure_boot          = true
+      enable_vtpm                 = true
+      enable_integrity_monitoring = true
+    }
   }
 }
 
@@ -98,7 +107,7 @@ resource "google_compute_instance_from_template" "login_node" {
   machine_type = var.machine_type
   zone         = var.zone
 
-  tags = ["login"]
+  tags = ["${var.cluster_name}", "login"]
 
   dynamic "boot_disk" {
     for_each = var.image != null && var.boot_disk_type != null && var.boot_disk_size != null ? [1] : []
@@ -153,8 +162,8 @@ resource "google_compute_instance_from_template" "login_node" {
       network_storage           = var.network_storage
     })
 
-    setup-script = file("${path.module}/../../../scripts/setup.py")
-    custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
+    setup-script           = file("${path.module}/../../../scripts/setup.py")
+    custom-compute-install = file("${path.module}/../../../scripts/custom-compute-install")
 
   }
 }

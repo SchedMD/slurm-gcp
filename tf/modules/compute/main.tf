@@ -24,6 +24,7 @@ locals {
         boot_disk_type     = var.partitions[pid].compute_disk_type
         image              = var.partitions[pid].image
         image_hyperthreads = var.partitions[pid].image_hyperthreads
+        shielded_instance  = var.partitions[pid].shielded_instance
         labels             = var.partitions[pid].compute_labels
         machine_type       = var.partitions[pid].machine_type
         sa_email           = var.service_account
@@ -57,7 +58,7 @@ resource "google_compute_instance" "compute_node" {
   machine_type = each.value.machine_type
   zone         = each.value.zone
 
-  tags = ["compute"]
+  tags = ["${var.cluster_name}", "compute"]
 
   boot_disk {
     initialize_params {
@@ -122,6 +123,15 @@ resource "google_compute_instance" "compute_node" {
     setup-script = file("${path.module}/../../../scripts/setup.py")
     util-script  = file("${path.module}/../../../scripts/util.py")
   }
+
+  dynamic "shielded_instance_config" {
+    for_each = each.value.shielded_instance ? [1] : []
+    content {
+      enable_secure_boot          = true
+      enable_vtpm                 = true
+      enable_integrity_monitoring = true
+    }
+  }
 }
 
 resource "google_compute_instance_from_template" "compute_node" {
@@ -135,7 +145,7 @@ resource "google_compute_instance_from_template" "compute_node" {
   machine_type = each.value.machine_type
   zone         = each.value.zone
 
-  tags = ["compute"]
+  tags = ["${var.cluster_name}", "compute"]
 
   dynamic "boot_disk" {
     for_each = each.value.image != null && each.value.boot_disk_type != null && each.value.boot_disk_size != null ? [1] : []
@@ -187,8 +197,8 @@ resource "google_compute_instance_from_template" "compute_node" {
   metadata_startup_script = file("${path.module}/../../../scripts/startup.sh")
 
   metadata = {
-    enable-oslogin                                               = "TRUE"
-    VmDnsSetting                                                 = "GlobalOnly"
+    enable-oslogin    = "TRUE"
+    VmDnsSetting      = "GlobalOnly"
     instance_type     = "compute"
     google_mpi_tuning = each.value.image_hyperthreads ? null : "--nosmt"
 

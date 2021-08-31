@@ -87,7 +87,13 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             ),
         }],
 
-        'tags': {'items': ['compute']},
+        'tags': {
+            'items': [
+                cfg.cluster_name,
+                'compute',
+                'dynamic',
+            ]
+        },
 
         'metadata': {
             'items': [
@@ -152,6 +158,13 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
         ]
 
+    if instance_def.shielded_instance:
+        config['shieldedInstanceConfig'] = {
+            'enableSecureBoot': True,
+            'enableVtpm': True,
+            'enableIntegrityMonitoring': True,
+        }
+
     perInstanceProperties = {k: {} for k in node_list}
     body = {
         'count': len(node_list),
@@ -173,10 +186,8 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
     if instance_def.regional_capacity:
         if instance_def.regional_policy:
             body['locationPolicy'] = instance_def.regional_policy
-        op = compute.regionInstances().bulkInsert(
-            project=cfg.project, region=instance_def.region,
-            body=body)
-        return op.execute()
+        return util.ensure_execute(compute.regionInstances().bulkInsert(
+            project=cfg.project, region=instance_def.region, body=body))
 
     return util.ensure_execute(compute.instances().bulkInsert(
         project=cfg.project, zone=instance_def.zone, body=body))

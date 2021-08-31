@@ -66,11 +66,12 @@ variable "labels" {
 variable "login_network_storage" {
   description = "An array of network attached storage mounts to be configured on the login and controller instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mount  = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
   default = []
 }
 
@@ -87,11 +88,12 @@ variable "munge_key" {
 variable "network_storage" {
   description = " An array of network attached storage mounts to be configured on all instances."
   type = list(object({
-    server_ip    = string,
-    remote_mount = string,
-    local_mount  = string,
-    fs_type      = string,
-  mount_options = string }))
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
   default = []
 }
 
@@ -110,7 +112,7 @@ variable "scopes" {
   type        = list(string)
   default = [
     "https://www.googleapis.com/auth/monitoring.write",
-    "https://www.googleapis.com/auth/logging.write"
+    "https://www.googleapis.com/auth/logging.write",
   ]
 }
 
@@ -148,4 +150,10 @@ output "names" {
 
 output "instance_network_ips" {
   value = google_compute_instance.login_node.*.network_interface.0.network_ip
+}
+
+variable "shielded_instance" {
+  description = "Enables GCP Shielded VM Security."
+  type        = bool
+  default     = false
 }
