@@ -63,7 +63,7 @@ cfg = util.Config.new_config(config_yaml)
 # load all directories as Paths into a dict-like namespace
 dirs = NSDict({n: Path(p) for n, p in dict.items({
     'home': '/home',
-    'apps': '/apps',
+    'apps': '/opt/apps',
     'scripts': '/slurm/scripts',
     'slurm': '/slurm',
     'prefix': '/usr/local',
@@ -661,12 +661,16 @@ def setup_controller():
         cnfdir = Path('/etc/my.cnf.d')
         if not cnfdir.exists():
             cnfdir = Path('/etc/mysql/conf.d')
-        (cnfdir/'mysql_slurm.cnf').write_text("""
+        if not (cnfdir/'mysql_slurm.cnf').exists():
+            (cnfdir/'mysql_slurm.cnf').write_text("""
 [mysqld]
-bind-address = 127.0.0.1
+bind-address=127.0.0.1
+innodb_buffer_pool_size=1024M
+innodb_log_file_size=64M
+innodb_lock_wait_timeout=900
 """)
         util.run('systemctl enable mariadb')
-        util.run('systemctl start mariadb')
+        util.run('systemctl restart mariadb')
 
         mysql = "mysql -u root -e"
         util.run(

@@ -23,7 +23,8 @@ variable "cloudsql" {
     password  = string
     db_name   = string
   })
-  default = null
+  default   = null
+  sensitive = true
 }
 
 variable "cluster_name" {

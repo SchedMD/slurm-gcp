@@ -15,10 +15,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+##########
+# LOCALS #
+##########
+
 locals {
+  email = (var.service_account == null
+    ? data.google_compute_default_service_account.default.email
+  : var.service_account)
+
+  subnetwork = (var.subnetwork_name != null
+    ? var.subnetwork_name
+  : "${var.cluster_name}-${var.region}")
 }
 
+########
+# DATA #
+########
+
 data "google_compute_default_service_account" "default" {}
+
+###########
+# COMPUTE #
+###########
 
 resource "google_compute_instance" "login_node" {
   count = var.instance_template == null ? var.node_count : 0
@@ -29,7 +48,10 @@ resource "google_compute_instance" "login_node" {
   machine_type = var.machine_type
   zone         = var.zone
 
-  tags = ["${var.cluster_name}", "login"]
+  tags = [
+    var.cluster_name,
+    "login",
+  ]
 
   boot_disk {
     initialize_params {
@@ -52,15 +74,13 @@ resource "google_compute_instance" "login_node" {
     #   a. subnetwork_project isn't set when shared_vpc_host_project is null
     # 2. var.project / var.subnetwork_name
     # 3. var.project / {cluster_name}-{region}
-    subnetwork = (var.subnetwork_name != null
-      ? var.subnetwork_name
-    : "${var.cluster_name}-${var.region}")
+    subnetwork = local.subnetwork
 
     subnetwork_project = var.shared_vpc_host_project
   }
 
   service_account {
-    email  = var.service_account == null ? data.google_compute_default_service_account.default.email : var.service_account
+    email  = local.email
     scopes = var.scopes
   }
 
@@ -95,6 +115,9 @@ resource "google_compute_instance" "login_node" {
   }
 }
 
+####################
+# COMPUTE TEMPLATE #
+####################
 
 resource "google_compute_instance_from_template" "login_node" {
   count = var.instance_template != null ? var.node_count : 0
@@ -107,7 +130,10 @@ resource "google_compute_instance_from_template" "login_node" {
   machine_type = var.machine_type
   zone         = var.zone
 
-  tags = ["${var.cluster_name}", "login"]
+  tags = [
+    var.cluster_name,
+    "login",
+  ]
 
   dynamic "boot_disk" {
     for_each = var.image != null && var.boot_disk_type != null && var.boot_disk_size != null ? [1] : []
@@ -134,15 +160,13 @@ resource "google_compute_instance_from_template" "login_node" {
     #   a. subnetwork_project isn't set when shared_vpc_host_project is null
     # 2. var.project / var.subnetwork_name
     # 3. var.project / {cluster_name}-{region}
-    subnetwork = (var.subnetwork_name != null
-      ? var.subnetwork_name
-    : "${var.cluster_name}-${var.region}")
+    subnetwork = local.subnetwork
 
     subnetwork_project = var.shared_vpc_host_project
   }
 
   service_account {
-    email  = var.service_account == null ? data.google_compute_default_service_account.default.email : var.service_account
+    email  = local.email
     scopes = var.scopes
   }
 
@@ -164,6 +188,5 @@ resource "google_compute_instance_from_template" "login_node" {
 
     setup-script           = file("${path.module}/../../../scripts/setup.py")
     custom-compute-install = file("${path.module}/../../../scripts/custom-compute-install")
-
   }
 }

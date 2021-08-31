@@ -15,14 +15,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+##########
+# LOCALS #
+##########
+
 locals {
   region = join("-", slice(split("-", var.zone), 0, 2))
 }
+
+############
+# PROVIDER #
+############
 
 provider "google" {
   project = var.project
   region  = local.region
 }
+
+###################
+# MODULE: NETWORK #
+###################
 
 module "slurm_cluster_network" {
   source = "../../modules/network"
@@ -39,6 +51,10 @@ module "slurm_cluster_network" {
   project = var.project
   region  = local.region
 }
+
+###########################
+# MODULE: CONTROLLER NODE #
+###########################
 
 module "slurm_cluster_controller" {
   source = "../../modules/controller"
@@ -75,6 +91,10 @@ module "slurm_cluster_controller" {
   zone                          = var.zone
 }
 
+######################
+# MODULE: LOGIN NODE #
+######################
+
 module "slurm_cluster_login" {
   source = "../../modules/login"
 
@@ -101,6 +121,10 @@ module "slurm_cluster_login" {
   subnetwork_name           = var.subnetwork_name
   zone                      = var.zone
 }
+
+########################
+# MODULE: COMPUTE NODE #
+########################
 
 module "slurm_cluster_compute" {
   source = "../../modules/compute"

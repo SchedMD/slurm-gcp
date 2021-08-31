@@ -7,6 +7,10 @@
 ### Packer ###
 packer_cache/
 output-*/
+*.pkrvars.hcl
+!example.pkrvars.hcl
+*.pem
+*.json
 
 ### Python ###
 __pycache__/
@@ -19,6 +23,7 @@ __pycache__/
 *.tfstate
 *.tfstate.*
 *.tfvars
+!example.tfvars
 .terraform.lock.hcl
 
 ### Vagrant ###

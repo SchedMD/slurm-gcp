@@ -83,6 +83,7 @@ variable "machine_type" {
 variable "munge_key" {
   description = "Specific munge key to use"
   default     = null
+  sensitive   = true
 }
 
 variable "network_storage" {

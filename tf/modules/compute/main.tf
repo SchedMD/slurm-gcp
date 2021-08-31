@@ -15,6 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+##########
+# LOCALS #
+##########
+
 locals {
   static_list = flatten([
     for pid in range(length(var.partitions)) : [
@@ -43,11 +47,15 @@ locals {
   compute_map = {
     for static in local.static_list : static.name => static if static.template == null
   }
+
   template_map = {
     for static in local.static_list : static.name => static if static.template != null
   }
 }
 
+###########
+# COMPUTE #
+###########
 
 resource "google_compute_instance" "compute_node" {
   for_each = local.compute_map
@@ -58,7 +66,10 @@ resource "google_compute_instance" "compute_node" {
   machine_type = each.value.machine_type
   zone         = each.value.zone
 
-  tags = ["${var.cluster_name}", "compute"]
+  tags = [
+    var.cluster_name,
+    "compute",
+  ]
 
   boot_disk {
     initialize_params {
@@ -134,6 +145,10 @@ resource "google_compute_instance" "compute_node" {
   }
 }
 
+####################
+# COMPUTE TEMPLATE #
+####################
+
 resource "google_compute_instance_from_template" "compute_node" {
   for_each = local.template_map
 
@@ -145,7 +160,10 @@ resource "google_compute_instance_from_template" "compute_node" {
   machine_type = each.value.machine_type
   zone         = each.value.zone
 
-  tags = ["${var.cluster_name}", "compute"]
+  tags = [
+    var.cluster_name,
+    "compute",
+  ]
 
   dynamic "boot_disk" {
     for_each = each.value.image != null && each.value.boot_disk_type != null && each.value.boot_disk_size != null ? [1] : []

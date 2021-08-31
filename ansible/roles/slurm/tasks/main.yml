@@ -1,0 +1,166 @@
+# Copyright 2021 SchedMD LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+
+- name: Include OS Vars
+  include_vars: "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version }}.yml"
+
+- name: Install Packages
+  package:
+    name: "{{slurm_packages}}"
+    state: present
+
+- name: Create Slurm Group
+  group:
+    name: "{{slurm_user.group}}"
+    gid: "{{slurm_user.gid}}"
+    state: present
+    system: yes
+
+- name: Create Slurm User
+  user:
+    name: "{{slurm_user.user}}"
+    group: "{{slurm_user.group}}"
+    uid: "{{slurm_user.uid}}"
+    shell: /usr/bin/bash
+    home: /var/lib/slurm
+    create_home: yes
+    comment: SlurmUser
+    state: present
+    system: yes
+
+- name: Create Slurmrestd Group
+  group:
+    name: "{{slurmrestd_user.group}}"
+    gid: "{{slurmrestd_user.gid}}"
+    state: present
+    system: yes
+
+- name: Create Slurmrestd User
+  user:
+    name: "{{slurmrestd_user.user}}"
+    group: "{{slurmrestd_user.group}}"
+    uid: "{{slurmrestd_user.uid}}"
+    shell: /usr/bin/bash
+    home: /var/lib/slurmrestd
+    create_home: yes
+    comment: SlurmrestdUser
+    state: present
+    system: yes
+
+- name: Mkdir
+  file:
+    path: "{{item}}"
+    state: directory
+    owner: "{{slurm_user.user}}"
+    group: "{{slurm_user.group}}"
+  loop:
+    - "{{slurm_paths.build}}"
+    - "{{slurm_paths.etc}}"
+    - "{{slurm_paths.scripts}}"
+    - "{{slurm_paths.log}}"
+    - "{{slurm_paths.state}}"
+    - "{{slurm_paths.run}}"
+
+- name: Git Clone
+  git:
+    repo: "{{slurm_git_url}}"
+    dest: "{{slurm_paths.src}}"
+    version: "{{slurm_version}}"
+    clone: yes
+    # single_branch: yes # ansible 2.11
+    depth: "1"
+
+- name: Configure
+  shell:
+    cmd: >
+      {{slurm_paths.src}}/configure
+      --prefix={{slurm_paths.install}}
+      --sysconfdir={{slurm_paths.etc}}
+      --with-jwt={{slurm_paths.install}}
+      > /dev/null
+    chdir: "{{slurm_paths.build}}"
+
+- name: Make Install Slurm
+  shell:
+    cmd: make --jobs install > /dev/null
+    chdir: "{{slurm_paths.build}}"
+
+- name: Make Install Slurm Contribs
+  shell:
+    cmd: make --jobs install > /dev/null
+    chdir: "{{slurm_paths.build}}/contribs"
+
+- name: Add Conf to 'ld.so.conf.d/'
+  template:
+    src: ld.so.conf.d/slurm.conf.j2
+    dest: /etc/ld.so.conf.d/slurm.conf
+
+- name: Ldconfig
+  command:
+    cmd: ldconfig
+    chdir: "{{slurm_paths.src}}"
+
+- name: Add Slurm to 'profile.d/'
+  template:
+    src: profile.d/slurm.sh.j2
+    dest: /etc/profile.d/slurm.sh
+
+- name: Install Slurmdbd Service
+  template:
+    src: systemd/slurmdbd.service.j2
+    dest: /usr/lib/systemd/system/slurmdbd.service
+    mode: 0o644
+  notify: Handle Slurmdbd Service
+
+- name: Install Slurmctld Service
+  template:
+    src: systemd/slurmctld.service.j2
+    dest: /usr/lib/systemd/system/slurmctld.service
+    mode: 0o644
+  notify: Handle Slurmctld Service
+
+- name: Install Slurmrestd Service
+  template:
+    src: systemd/slurmrestd.service.j2
+    dest: /usr/lib/systemd/system/slurmrestd.service
+    mode: 0o644
+  notify: Handle Slurmrestd Service
+
+- name: Install Slurmd Service
+  template:
+    src: systemd/slurmd.service.j2
+    dest: /usr/lib/systemd/system/slurmd.service
+    mode: 0o644
+  notify: Handle Slurmd Service
+
+- name: Create Tmpfile
+  template:
+    src: tmpfiles.d/slurm.conf.j2
+    dest: /etc/tmpfiles.d/slurm.conf
+
+- name: Copy Scripts
+  copy:
+    src: scripts/{{item}}
+    dest: "{{slurm_paths.scripts}}/{{item}}"
+    owner: "{{slurm_user.user}}"
+    group: "{{slurm_user.group}}"
+    mode: 0o755
+  with_items:
+    - resume.py
+    - setup.py
+    - startup.sh
+    - slurmsync.py
+    - suspend.py
+    - util.py

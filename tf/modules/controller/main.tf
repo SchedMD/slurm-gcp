@@ -15,13 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+##########
+# LOCALS #
+##########
+
 locals {
+  compute_node_service_account = (var.compute_node_service_account == null
+    ? data.google_compute_default_service_account.default.email
+  : var.compute_node_service_account)
+
   controller_name = "${var.cluster_name}-controller"
+
   config = jsonencode({
     cloudsql                     = var.cloudsql
     cluster_name                 = var.cluster_name
     compute_node_scopes          = var.compute_node_scopes
-    compute_node_service_account = var.compute_node_service_account == null ? data.google_compute_default_service_account.default.email : var.compute_node_service_account
+    compute_node_service_account = local.compute_node_service_account
     controller_secondary_disk    = var.secondary_disk
     external_compute_ips         = !var.disable_compute_public_ips
     login_network_storage        = var.login_network_storage
@@ -37,7 +46,25 @@ locals {
     vpc_subnet                   = var.subnetwork_name
     zone                         = var.zone
   })
+
+  email = (var.service_account == null
+    ? data.google_compute_default_service_account.default.email
+  : var.service_account)
+
+  subnetwork = (var.subnetwork_name != null
+    ? var.subnetwork_name
+  : "${var.cluster_name}-${var.region}")
 }
+
+########
+# DATA #
+########
+
+data "google_compute_default_service_account" "default" {}
+
+########
+# DISK #
+########
 
 resource "google_compute_disk" "secondary" {
   count = var.secondary_disk ? 1 : 0
@@ -48,7 +75,9 @@ resource "google_compute_disk" "secondary" {
   zone = var.zone
 }
 
-data "google_compute_default_service_account" "default" {}
+###########
+# COMPUTE #
+###########
 
 resource "google_compute_instance" "controller_node" {
   count = var.instance_template == null ? 1 : 0
@@ -59,7 +88,10 @@ resource "google_compute_instance" "controller_node" {
   machine_type = var.machine_type
   zone         = var.zone
 
-  tags = ["${var.cluster_name}", "controller"]
+  tags = [
+    var.cluster_name,
+    "controller",
+  ]
 
   boot_disk {
     initialize_params {
@@ -89,15 +121,13 @@ resource "google_compute_instance" "controller_node" {
     #   a. subnetwork_project isn't set when shared_vpc_host_project is null
     # 2. var.project / var.subnetwork_name
     # 3. var.project / {cluster_name}-{region}
-    subnetwork = (var.subnetwork_name != null
-      ? var.subnetwork_name
-    : "${var.cluster_name}-${var.region}")
+    subnetwork = local.subnetwork
 
     subnetwork_project = var.shared_vpc_host_project
   }
 
   service_account {
-    email  = var.service_account == null ? data.google_compute_default_service_account.default.email : var.service_account
+    email  = local.email
     scopes = var.scopes
   }
 
@@ -130,6 +160,10 @@ resource "google_compute_instance" "controller_node" {
   }
 }
 
+####################
+# COMPUTE TEMPLATE #
+####################
+
 resource "google_compute_instance_from_template" "controller_node" {
   count = var.instance_template != null ? 1 : 0
 
@@ -141,7 +175,10 @@ resource "google_compute_instance_from_template" "controller_node" {
   machine_type = var.machine_type
   zone         = var.zone
 
-  tags = ["${var.cluster_name}", "controller"]
+  tags = [
+    var.cluster_name,
+    "controller",
+  ]
 
   dynamic "boot_disk" {
     for_each = var.image != null && var.boot_disk_type != null && var.boot_disk_size != null ? [1] : []
@@ -175,15 +212,13 @@ resource "google_compute_instance_from_template" "controller_node" {
     #   a. subnetwork_project isn't set when shared_vpc_host_project is null
     # 2. var.project / var.subnetwork_name
     # 3. var.project / {cluster_name}-{region}
-    subnetwork = (var.subnetwork_name != null
-      ? var.subnetwork_name
-    : "${var.cluster_name}-${var.region}")
+    subnetwork = local.subnetwork
 
     subnetwork_project = var.shared_vpc_host_project
   }
 
   service_account {
-    email  = var.service_account == null ? data.google_compute_default_service_account.default.email : var.service_account
+    email  = local.email
     scopes = var.scopes
   }
 

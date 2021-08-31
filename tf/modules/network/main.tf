@@ -15,10 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+##########
+# LOCALS #
+##########
+
 locals {
   tmp_list = [for part in var.partitions :
     join("-", slice(split("-", part.zone), 0, 2))
   if part.vpc_subnet == null]
+
   region_subnet_list = (var.subnetwork_name != null
     ? local.tmp_list
   : distinct(concat([var.region], local.tmp_list)))
@@ -29,6 +34,7 @@ locals {
       ? part.vpc_subnet
     : "${var.cluster_name}-${join("-", slice(split("-", part.zone), 0, 2))}")
   }]
+
   region_router_list = distinct(
     concat(local.tmp_map,
       [{ region = var.region
@@ -37,6 +43,10 @@ locals {
         : "${var.cluster_name}-${var.region}")
   }]))
 }
+
+###########
+# NETWORK #
+###########
 
 resource "google_compute_network" "cluster_network" {
   count = (var.network_name == null &&
@@ -47,6 +57,10 @@ resource "google_compute_network" "cluster_network" {
   name                    = "${var.cluster_name}-network"
   auto_create_subnetworks = false
 }
+
+##############
+# SUBNETWORK #
+##############
 
 resource "google_compute_subnetwork" "cluster_subnet" {
   count = (var.shared_vpc_host_project == null
@@ -59,6 +73,10 @@ resource "google_compute_subnetwork" "cluster_subnet" {
   ip_cidr_range            = "10.${count.index}.0.0/16"
   private_ip_google_access = var.private_ip_google_access
 }
+
+############
+# FIREWALL #
+############
 
 resource "google_compute_firewall" "cluster_ssh_firewall" {
   count = ((var.shared_vpc_host_project == null &&
@@ -120,6 +138,10 @@ resource "google_compute_firewall" "cluster_internal_firewall" {
     ports    = ["0-65535"]
   }
 }
+
+##########
+# ROUTER #
+##########
 
 resource "google_compute_router" "cluster_router" {
   count = ((var.shared_vpc_host_project == null &&

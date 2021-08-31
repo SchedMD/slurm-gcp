@@ -4,6 +4,9 @@ Changes in Slurm-GCP 5.0.0
  -- suspend.py - now handles "Quota exceeded" error
  -- Compute nodes are no longer orphaned on terraform destroy
  -- Changed Terraform minimum version to 1.0
+ -- Replaced `foundry/` with `packer/`
+ -- Terraform modules now use Google Cloudfoundry Toolkit
+ -- Added auto_create_subnetworks option
 
 Changes in Slurm-GCP 4.0.5
 ==========================
