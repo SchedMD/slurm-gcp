@@ -257,7 +257,7 @@ module "vpc" {
 ### Template ###
 
 module "controller_template" {
-  source = "./modules/node_template"
+  source = "./modules/instance_template"
 
   for_each = local.controller_templates
 
@@ -346,7 +346,7 @@ module "controller_instance" {
 ### Template ###
 
 module "login_template" {
-  source = "./modules/node_template"
+  source = "./modules/instance_template"
 
   for_each = local.login_templates
 
@@ -435,7 +435,7 @@ module "login_instance" {
 ### Template ###
 
 module "compute_template" {
-  source = "./modules/node_template"
+  source = "./modules/instance_template"
 
   for_each = local.compute_templates
 

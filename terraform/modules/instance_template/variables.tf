@@ -78,8 +78,8 @@ variable "instance_template" {
 
 variable "name_prefix" {
   type        = string
-  description = "Prefix for names."
-  default     = "node"
+  description = "Prefix for template resource."
+  default     = "instance-template"
 }
 
 ############
