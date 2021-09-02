@@ -113,7 +113,7 @@ module "vpc" {
 # ROUTER #
 ##########
 
-module "cluster_router" {
+module "router" {
   source  = "terraform-google-modules/cloud-router/google"
   version = "~> 1.0"
 
@@ -129,11 +129,11 @@ module "cluster_router" {
 # NAT #
 #######
 
-module "cluster_nat" {
+module "nat" {
   source  = "terraform-google-modules/cloud-nat/google"
   version = "~> 2.0"
 
-  for_each = module.cluster_router
+  for_each = module.router
 
   name       = "${var.cluster_name}-nat"
   project_id = var.project_id
