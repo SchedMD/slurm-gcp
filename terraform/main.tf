@@ -40,6 +40,8 @@ locals {
   common_metadata = {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
+
+    cluster_name = var.cluster_name
   }
 }
 
@@ -80,6 +82,7 @@ locals {
   })
 
   controller_metadata_slurm = {
+    instance_type             = "controller"
     config                    = local.controller_config
     cgroup_conf_tpl           = file("${path.module}/../etc/cgroup.conf.tpl")
     custom-compute-install    = file("${path.module}/../scripts/custom-compute-install")
@@ -131,6 +134,7 @@ locals {
   })
 
   login_metadata_slurm = {
+    instance_type          = "login"
     config                 = local.login_config
     custom-compute-install = file("${path.module}/../scripts/custom-compute-install")
   }
@@ -164,8 +168,9 @@ locals {
   })
 
   compute_metadata_slurm = {
-    instance_type = "compute"
-    config        = local.compute_config
+    instance_type          = "compute"
+    config                 = local.compute_config
+    custom-compute-install = file("${path.module}/../scripts/custom-compute-install")
   }
 
   compute_metadata_devel = (
@@ -295,17 +300,6 @@ module "controller_template" {
   enable_shielded_vm       = each.value.enable_shielded_vm
   preemptible              = each.value.preemptible
 
-  ### metadata ###
-  metadata = merge(
-    local.common_metadata,
-    local.controller_metadata_slurm,
-    local.controller_metadata_devel,
-    each.value.metadata,
-    {
-      google_mpi_tuning = each.value.disable_smt == true ? "--nosmt" : null
-    },
-  )
-
   ### source image ###
   source_image_project = each.value.source_image_project
   source_image_family  = each.value.source_image_family
@@ -322,8 +316,7 @@ module "controller_template" {
 ### Instance ###
 
 module "controller_instance" {
-  source  = "terraform-google-modules/vm/google//modules/compute_instance"
-  version = "~> 7.1"
+  source = "./modules/compute_instance"
 
   for_each = local.controller_instances_map
 
@@ -337,6 +330,16 @@ module "controller_instance" {
   instance_template = module.controller_template[each.value.template].self_link
   num_instances     = each.value.count_static
   hostname          = "${var.cluster_name}-controller-${each.value.subnet_region}"
+
+  ### metadata ###
+  metadata = merge(
+    local.common_metadata,
+    local.controller_metadata_slurm,
+    local.controller_metadata_devel,
+    {
+      google_mpi_tuning = local.controller_templates[each.value.template].disable_smt == true ? "--nosmt" : null
+    },
+  )
 }
 
 #########
@@ -384,17 +387,6 @@ module "login_template" {
   enable_shielded_vm       = each.value.enable_shielded_vm
   preemptible              = each.value.preemptible
 
-  ### metadata ###
-  metadata = merge(
-    local.common_metadata,
-    local.login_metadata_slurm,
-    local.login_metadata_devel,
-    each.value.metadata,
-    {
-      google_mpi_tuning = each.value.disable_smt == true ? "--nosmt" : null
-    }
-  )
-
   ### source image ###
   source_image_project = each.value.source_image_project
   source_image_family  = each.value.source_image_family
@@ -411,8 +403,7 @@ module "login_template" {
 ### Instance ###
 
 module "login_instance" {
-  source  = "terraform-google-modules/vm/google//modules/compute_instance"
-  version = "~> 7.1"
+  source = "./modules/compute_instance"
 
   for_each = local.login_instances_map
 
@@ -426,6 +417,16 @@ module "login_instance" {
   instance_template = module.login_template[each.value.template].self_link
   num_instances     = each.value.count_static
   hostname          = "${var.cluster_name}-login-${each.value.subnet_region}"
+
+  ### metadata ###
+  metadata = merge(
+    local.common_metadata,
+    local.login_metadata_slurm,
+    local.login_metadata_devel,
+    {
+      google_mpi_tuning = local.login_templates[each.value.template].disable_smt == true ? "--nosmt" : null
+    }
+  )
 }
 
 ###########
@@ -465,17 +466,6 @@ module "compute_template" {
   enable_shielded_vm       = each.value.enable_shielded_vm
   preemptible              = each.value.preemptible
 
-  ### metadata ###
-  metadata = merge(
-    local.common_metadata,
-    local.compute_metadata_slurm,
-    local.compute_metadata_devel,
-    each.value.metadata,
-    {
-      google_mpi_tuning = each.value.disable_smt == true ? "--nosmt" : null
-    }
-  )
-
   ### source image ###
   source_image_project = each.value.source_image_project
   source_image_family  = each.value.source_image_family
@@ -487,4 +477,18 @@ module "compute_template" {
   disk_labels      = each.value.disk_labels
   disk_auto_delete = each.value.disk_auto_delete
   additional_disks = each.value.additional_disks
+}
+
+### Metadata ###
+
+resource "google_compute_project_metadata_item" "compute_metadata" {
+  project = var.project_id
+
+  key = "${var.cluster_name}-compute-metadata"
+  value = jsonencode(merge(
+    local.common_metadata,
+    local.compute_metadata_slurm,
+    local.compute_metadata_devel,
+    module.compute_template,
+  ))
 }

@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-output "self_link" {
-  value = local.instance_template
-}
+terraform {
+  required_version = "~> 1.0"
 
-output "disable_smt" {
-  value = var.disable_smt
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 3.0"
+    }
+  }
 }

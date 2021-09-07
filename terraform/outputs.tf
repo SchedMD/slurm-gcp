@@ -37,3 +37,7 @@ output "login_template" {
 output "compute_template" {
   value = module.compute_template
 }
+
+output "partitions" {
+  value = var.partitions
+}

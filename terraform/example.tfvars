@@ -101,12 +101,6 @@ controller_templates = {
     disable_smt            = false
     preemptible            = false
 
-    ### metadata ###
-    metadata = {
-      # metadata0 = "value0"
-      # metadata1 = "value1"
-    }
-
     ### image ###
     source_image_project = null
     source_image_family  = null
@@ -180,12 +174,6 @@ login_templates = {
     enable_shielded_vm     = true
     disable_smt            = false
     preemptible            = false
-
-    ### metadata ###
-    metadata = {
-      # metadata0 = "value0"
-      # metadata1 = "value1"
-    }
 
     ### image ###
     source_image_project = null
@@ -261,12 +249,6 @@ compute_templates = {
     disable_smt            = false
     preemptible            = false
 
-    ### metadata ###
-    metadata = {
-      # "metadata0" = "value0"
-      # "metadata1" = "value1"
-    }
-
     ### image ###
     source_image_project = null
     source_image_family  = null
@@ -327,12 +309,6 @@ compute_templates = {
     enable_shielded_vm     = true
     disable_smt            = true
     preemptible            = false
-
-    ### metadata ###
-    metadata = {
-      # "metadata0" = "value0"
-      # "metadata1" = "value1"
-    }
 
     ### image ###
     source_image_project = null

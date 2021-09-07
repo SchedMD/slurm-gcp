@@ -144,9 +144,6 @@ variable "controller_templates" {
     disable_smt            = bool // description: Whether to disable Simultaneous Multi-Threading (SMT) on instance.
     preemptible            = bool // description: Allow the instance to be preempted.
 
-    ### metadata ###
-    metadata = map(string) // description: Metadata, provided as a map.
-
     ### source image ###
     source_image_project = string // description: Project where the source image comes from.
     source_image_family  = string // description: Source image family.
@@ -216,9 +213,6 @@ variable "login_templates" {
     disable_smt            = bool // description: Whether to disable Simultaneous Multi-Threading (SMT) on instance.
     preemptible            = bool // description: Allow the instance to be preempted.
 
-    ### metadata ###
-    metadata = map(string) // description: Metadata, provided as a map.
-
     ### source image ###
     source_image_project = string // description: Project where the source image comes from.
     source_image_family  = string // description: Source image family.
@@ -287,9 +281,6 @@ variable "compute_templates" {
     enable_shielded_vm     = bool // description: Whether to enable the Shielded VM configuration on the instance. Note that the instance image must support Shielded VMs. See https://cloud.google.com/compute/docs/images.
     disable_smt            = bool // description: Whether to disable Simultaneous Multi-Threading (SMT) on instance.
     preemptible            = bool // description: Allow the instance to be preempted.
-
-    ### metadata ###
-    metadata = map(string) // description: Metadata, provided as a map.
 
     ### source image ###
     source_image_project = string // description: Project where the source image comes from.

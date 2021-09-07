@@ -160,7 +160,7 @@ variable "preemptible" {
 variable "metadata" {
   type        = map(string)
   description = "Metadata, provided as a map"
-  default     = {}
+  default     = null
 }
 
 ################
@@ -204,7 +204,7 @@ variable "disk_size_gb" {
 variable "disk_labels" {
   type        = map(string)
   description = "Labels to be assigned to boot disk, provided as a map."
-  default     = {}
+  default     = null
 }
 
 variable "disk_auto_delete" {
@@ -224,5 +224,5 @@ variable "additional_disks" {
     boot         = bool
   }))
   description = "List of maps of disks."
-  default     = []
+  default     = null
 }
