@@ -37,7 +37,6 @@ module "slurm_cluster" {
     login_network_storage = null
     munge_key             = "basic-munge-key"
     network_storage       = null
-    suspend_time          = 300
   }
 
   controller_templates = {

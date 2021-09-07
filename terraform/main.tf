@@ -84,14 +84,15 @@ locals {
     login_network_storage = var.config.login_network_storage
 
     ### slurm.conf ###
-    suspend_time = var.config.suspend_time
-    partitions   = var.partitions
+    partitions = var.partitions
   })
 
   controller_metadata_slurm = {
     instance_type             = "controller"
     config                    = local.controller_config
+    slurm_conf_tpl            = file("${path.module}/../etc/slurm.conf.tpl")
     cgroup_conf_tpl           = file("${path.module}/../etc/cgroup.conf.tpl")
+    slurmdbd_conf_tpl         = file("${path.module}/../etc/slurmdbd.conf.tpl")
     custom-compute-install    = file("${path.module}/../scripts/custom-compute-install")
     custom-controller-install = file("${path.module}/../scripts/custom-controller-install")
   }
@@ -99,13 +100,11 @@ locals {
   controller_metadata_devel = (
     var.enable_devel == true
     ? {
-      setup-script      = file("${path.module}/../scripts/setup.py")
-      slurm-resume      = file("${path.module}/../scripts/resume.py")
-      slurm-suspend     = file("${path.module}/../scripts/suspend.py")
-      slurm_conf_tpl    = file("${path.module}/../etc/slurm.conf.tpl")
-      slurmdbd_conf_tpl = file("${path.module}/../etc/slurmdbd.conf.tpl")
-      slurmsync         = file("${path.module}/../scripts/slurmsync.py")
-      util-script       = file("${path.module}/../scripts/util.py")
+      setup-script  = file("${path.module}/../scripts/setup.py")
+      slurm-resume  = file("${path.module}/../scripts/resume.py")
+      slurm-suspend = file("${path.module}/../scripts/suspend.py")
+      slurmsync     = file("${path.module}/../scripts/slurmsync.py")
+      util-script   = file("${path.module}/../scripts/util.py")
     }
     : null
   )

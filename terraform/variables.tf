@@ -93,9 +93,6 @@ variable "config" {
       fs_type       = string              // description: Filesystem type (e.g. "nfs").
       mount_options = string              // description: Options to mount with.
     }))
-
-    ### slurm.conf ###
-    suspend_time = number // description: Number of seconds a node may be idle or down before being placed into power save mode by SuspendProgram.
   })
   sensitive = true
   default = {
@@ -104,7 +101,6 @@ variable "config" {
     login_network_storage = null
     munge_key             = null
     network_storage       = null
-    suspend_time          = null
   }
 }
 

@@ -58,9 +58,6 @@ config = {
     #   mount_options = null
     # },
   ]
-
-  ### slurm.conf ###
-  suspend_time = null
 }
 
 ##############
