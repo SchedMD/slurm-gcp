@@ -7,6 +7,7 @@ Changes in Slurm-GCP 5.0.0
  -- Replaced `foundry/` with `packer/`
  -- Terraform modules now use Google Cloudfoundry Toolkit
  -- Added auto_create_subnetworks option
+ -- ansible - scripts role for custom provisioning scripts
 
 Changes in Slurm-GCP 4.0.5
 ==========================

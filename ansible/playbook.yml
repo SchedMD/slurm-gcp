@@ -79,3 +79,4 @@
     - cloudagents
     - logrotate
     - python
+    - scripts

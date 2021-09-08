@@ -186,16 +186,20 @@ Steps:
     $ packer build -var-file=vars.pkrvars.hcl .
     ```
 
-Custom packages and other image configurations can be added by two methods:
-source image, and or ansible role(s).
+Custom packages and other image configurations can be added by a few methods.
+All methods below may be used together in any combination, if desired.
 
-  1. Slurm can be build on top of an existing image. Configure the
-    `source_image` / `source_image_family` to point to the desired image.
-    If the source image requires it, configure the `ssh_username` and
-    `ssh_password`.
-  2. Image configuration can be extended via ansible roles. Create more roles
-    as desired and add them to the end of the `roles` task in the
-    [ansible/playbook.yml](ansible/playbook.yml).
+- Role [`scripts`](./ansible/roles/scripts) runs custom provisioning scripts
+  located in [`ansible/scripts.d`](./ansible/scripts.d). This is intended for
+  simple configurations.
+- Image configuration can be extended via ansible roles. Create more roles
+  as desired and add them to the end of the `roles` task in the
+  [ansible/playbook.yml](ansible/playbook.yml). This is intended for complex
+  composible configurations.
+- The Slurm image can be build on top of an existing image. Configure packer
+  `source_image` / `source_image_family` to point to your image. If the source
+  image requires it, configure the `ssh_username` and `ssh_password`. This is
+  intended for more complex configurations because of workflow or pipelines.
 
 ### Accessing Compute Nodes Directly
 
