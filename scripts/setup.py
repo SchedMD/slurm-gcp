@@ -19,6 +19,7 @@ import logging
 import os
 import sys
 import shutil
+import subprocess
 import time
 from pathlib import Path
 from subprocess import DEVNULL
@@ -52,7 +53,8 @@ NSDict = util.NSDict
 
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
-util.config_root_logger(logfile='/tmp/setup.log')
+LOGFILE='/tmp/setup.log'
+util.config_root_logger(logfile=LOGFILE)
 log = logging.getLogger(Path(__file__).name)
 sys.excepthook = util.handle_exception
 
@@ -86,7 +88,6 @@ SUSPEND_TIMEOUT = 300
 CONTROL_MACHINE = cfg.cluster_name + '-controller'
 
 MOTD_HEADER = """
-
                                  SSSSSSS
                                 SSSSSSSSS
                                 SSSSSSSSS
@@ -123,16 +124,15 @@ SSSSSSSSSSSS    SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
 SSSSSSSSSSSSS   SSS   SSSSSSSSSSSSSSS   SSSS        SSSS     SSSS     SSSS
 SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
 
-
 """
 
 
 def start_motd():
     """ advise in motd that slurm is currently configuring """
-    msg = MOTD_HEADER + """
-*** Slurm is currently being configured in the background. ***
-"""
-    Path('/etc/motd').write_text(msg)
+    wall_msg = "*** Slurm is currently being configured in the background. ***"
+    motd_msg = MOTD_HEADER + wall_msg + '\n\n'
+    Path('/etc/motd').write_text(motd_msg)
+    util.run(f"wall -n '{wall_msg}'", timeout=30)
 # END start_motd()
 
 
@@ -144,13 +144,22 @@ def end_motd(broadcast=True):
         return
 
     util.run("wall -n '*** Slurm {} setup complete ***'"
-             .format(cfg.instance_type))
+             .format(cfg.instance_type), timeout=30)
     if cfg.instance_type != 'controller':
         util.run("""wall -n '
 /home on the controller was mounted over the existing /home.
 Log back in to ensure your home directory is correct.
-'""")
+'""", timeout=30)
 # END start_motd()
+
+
+def failed_motd():
+    """ modify motd to signal that setup is failed """
+    wall_msg = f"*** Slurm setup failed! Please view log: {LOGFILE} ***"
+    motd_msg = MOTD_HEADER + wall_msg + '\n\n'
+    Path('/etc/motd').write_text(motd_msg)
+    util.run(f"wall -n '{wall_msg}'", timeout=30)
+# END failed_motd()
 
 
 def expand_instance_templates():
@@ -391,9 +400,17 @@ def install_meta_files():
         path.chmod(0o755)
         shutil.chown(path, user='slurm', group='slurm')
 
+    future_list = []
     with ThreadPoolExecutor() as exe:
-        exe.map(lambda x: install_metafile(*x), meta_entries)
+        for meta_file in meta_entries:
+            future = exe.submit(lambda x: install_metafile(*x), meta_file)
+            future_list.append(future)
 
+        # Iterate over futures, checking for exceptions
+        for future in future_list:
+            result = future.exception(timeout=60)
+            if result is not None:
+                raise result
 # END install_meta_files()
 
 
@@ -519,14 +536,21 @@ def mount_fstab():
     global mounts
 
     def mount_path(path):
-        while not os.path.ismount(path):
-            log.info(f"Waiting for {path} to be mounted")
-            util.run(f"mount {path}", wait=5)
+        log.info(f"Waiting for '{path}' to be mounted...")
+        util.run(f"mount {path}", timeout=60)
+        log.info(f"Mount point '{path}' was mounted.")
 
+    future_list = []
     with ThreadPoolExecutor() as exe:
-        exe.map(mount_path, mounts.keys())
+        for path in mounts.keys():
+            future = exe.submit(mount_path, path)
+            future_list.append(future)
 
-    util.run("mount -a", wait=1)
+        # Iterate over futures, checking for exceptions
+        for future in future_list:
+            result = future.exception(timeout=60)
+            if result is not None:
+                raise result
 # END mount_external
 
 
@@ -547,7 +571,7 @@ def setup_nfs_exports():
     exports = []
     for path in con_mounts:
         Path(path).mkdirp()
-        util.run(rf"sed -i '\#{path}#d' /etc/exports")
+        util.run(rf"sed -i '\#{path}#d' /etc/exports", timeout=30)
         exports.append(f"{path}  *(rw,no_subtree_check,no_root_squash)")
 
     exportsd = Path('/etc/exports.d')
@@ -555,7 +579,7 @@ def setup_nfs_exports():
     with (exportsd/'slurm.exports').open('w') as f:
         f.write('\n')
         f.write('\n'.join(exports))
-    util.run("exportfs -a")
+    util.run("exportfs -a", timeout=30)
 # END setup_nfs_exports()
 
 
@@ -573,8 +597,7 @@ def setup_secondary_disks():
 
 def setup_sync_cronjob():
     """ Create cronjob for running slurmsync.py """
-    util.run("crontab -u slurm -", input=(
-        f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
+    util.run("crontab -u slurm -", input=(f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
 
 # END setup_sync_cronjob()
 
@@ -602,7 +625,7 @@ def setup_slurmd_cronjob():
             "systemctl restart munge; "
             "systemctl restart slurmd; "
             "fi\n"
-        ))
+        ), timeout=30)
 # END setup_slurmd_cronjob()
 
 
@@ -611,29 +634,35 @@ def setup_nss_slurm():
     # setup nss_slurm
     Path('/var/spool/slurmd').mkdirp()
     util.run("ln -s {}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2"
-             .format(dirs.prefix))
+             .format(dirs.prefix), check=False)
     util.run(
-        r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf"
-    )
+        r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
 # END setup_nss_slurm()
 
 
 def configure_dirs():
 
     for p in dirs.values():
-        p.mkdirp()
+        p.mkdir(parents=True, exist_ok=True)
     shutil.chown(dirs.slurm, user='slurm', group='slurm')
     shutil.chown(dirs.scripts, user='slurm', group='slurm')
 
     for p in slurmdirs.values():
-        p.mkdirp()
+        p.mkdir(parents=True, exist_ok=True)
         shutil.chown(p, user='slurm', group='slurm')
 
-    (dirs.scripts/'etc').symlink_to(slurmdirs.etc)
-    shutil.chown(dirs.scripts/'etc', user='slurm', group='slurm')
+    scripts_etc = dirs.scripts/'etc'
+    if os.path.islink(scripts_etc) or os.path.exists(scripts_etc):
+        os.unlink(scripts_etc)
+    (scripts_etc).symlink_to(slurmdirs.etc)
+    shutil.chown(scripts_etc, user='slurm', group='slurm')
 
-    (dirs.scripts/'log').symlink_to(slurmdirs.log)
-    shutil.chown(dirs.scripts/'log', user='slurm', group='slurm')
+    scripts_log = dirs.scripts/'log'
+    if os.path.islink(scripts_log) or os.path.exists(scripts_log):
+        os.unlink(scripts_log)
+    (scripts_log).symlink_to(slurmdirs.log)
+    shutil.chown(scripts_log, user='slurm', group='slurm')
+# END configure_dirs
 
 
 def setup_controller():
@@ -643,8 +672,8 @@ def setup_controller():
     install_slurm_conf()
     install_slurmdbd_conf()
     setup_jwt_key()
-    util.run("create-munge-key -f")
-    util.run("systemctl restart munge")
+    util.run("create-munge-key -f", timeout=30)
+    util.run("systemctl restart munge", timeout=30)
 
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
@@ -652,7 +681,7 @@ def setup_controller():
     mount_fstab()
 
     try:
-        util.run(str(dirs.scripts/'custom-controller-install'))
+        util.run(str(dirs.scripts/'custom-controller-install'), timeout=300)
     except Exception:
         # Ignore blank files with no shell magic.
         pass
@@ -669,35 +698,42 @@ innodb_buffer_pool_size=1024M
 innodb_log_file_size=64M
 innodb_lock_wait_timeout=900
 """)
-        util.run('systemctl enable mariadb')
-        util.run('systemctl restart mariadb')
+        util.run('systemctl enable mariadb', timeout=30)
+        util.run('systemctl start mariadb', timeout=30)
 
         mysql = "mysql -u root -e"
         util.run(
-            f"""{mysql} "create user 'slurm'@'localhost'";""")
+            f"""{mysql} "create user 'slurm'@'localhost'";""",
+            timeout=30)
         util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""")
+            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""",
+            timeout=30)
         util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
+            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""",
+                timeout=30)
 
-    util.run("systemctl enable slurmdbd")
-    util.run("systemctl start slurmdbd")
+    util.run("systemctl enable slurmdbd", timeout=30)
+    util.run("systemctl start slurmdbd", timeout=30)
 
     # Wait for slurmdbd to come up
     time.sleep(5)
 
     sacctmgr = f"{dirs.prefix}/bin/sacctmgr -i"
-    util.run(f"{sacctmgr} add cluster {cfg.cluster_name}")
+    result = util.run(f"{sacctmgr} add cluster {cfg.cluster_name}", timeout=30)
+    if "This cluster slurm already exists." in result.stdout:
+        log.info(result.stdout)
+    elif result.returncode > 1:
+        result.check_returncode() # will raise error
 
-    util.run("systemctl enable slurmctld")
-    util.run("systemctl start slurmctld")
+    util.run("systemctl enable slurmctld", timeout=30)
+    util.run("systemctl start slurmctld", timeout=30)
 
-    util.run("systemctl enable slurmrestd")
-    util.run("systemctl start slurmrestd")
+    util.run("systemctl enable slurmrestd", timeout=30)
+    util.run("systemctl start slurmrestd", timeout=30)
 
     # Export at the end to signal that everything is up
-    util.run("systemctl enable nfs-server")
-    util.run("systemctl start nfs-server")
+    util.run("systemctl enable nfs-server", timeout=30)
+    util.run("systemctl start nfs-server", timeout=30)
 
     setup_nfs_exports()
     setup_sync_cronjob()
@@ -729,7 +765,7 @@ def setup_compute():
     pid = util.get_pid(cfg.hostname)
     if (not cfg.instance_defs[pid].image_hyperthreads and
             shutil.which('google_mpi_tuning')):
-        util.run("google_mpi_tuning --nosmt")
+        util.run("google_mpi_tuning --nosmt", timeout=30)
     if cfg.instance_defs[pid].gpu_count:
         retries = n = 50
         while util.run("nvidia-smi").returncode != 0 and n > 0:
@@ -738,15 +774,19 @@ def setup_compute():
             time.sleep(5)
 
     try:
-        util.run(str(dirs.scripts/'custom-compute-install'))
+        result = util.run(str(dirs.scripts/'custom-compute-install'), timeout=300)
+        log.info(f"""returncode={result.returncode}
+stdout={result.stdout}
+stdout={result.stderr}
+""")
     except Exception:
         # Ignore blank files with no shell magic.
         pass
 
     setup_slurmd_cronjob()
-    util.run("systemctl restart munge")
-    util.run("systemctl enable slurmd")
-    util.run("systemctl start slurmd")
+    util.run("systemctl restart munge", timeout=30)
+    util.run("systemctl enable slurmd", timeout=30)
+    util.run("systemctl start slurmd", timeout=30)
 
     log.info("Done setting up compute")
 
@@ -774,4 +814,31 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except subprocess.TimeoutExpired as e:
+        log.error(f"""TimeoutExpired:
+    command={e.cmd}
+    timeout={e.timeout}
+    stdout:
+{e.stdout.strip()}
+    stderr:
+{e.stderr.strip()}
+""")
+        log.error("Aborting setup...")
+        failed_motd()
+    except subprocess.CalledProcessError as e:
+        log.error(f"""CalledProcessError:
+    command={e.cmd}
+    returncode={e.returncode}
+    stdout:
+{e.stdout.strip()}
+    stderr:
+{e.stderr.strip()}
+""")
+        log.error("Aborting setup...")
+        failed_motd()
+    except Exception as e:
+        log.exception(e)
+        log.error("Aborting setup...")
+        failed_motd()

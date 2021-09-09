@@ -255,8 +255,8 @@ def down_nodes(node_list, reason):
     with tempfile.NamedTemporaryFile(mode='w+t') as f:
         f.writelines("\n".join(node_list))
         f.flush()
-        hostlist = util.run(f"{SCONTROL} show hostlist {f.name}",
-                            check=True, get_stdout=True).stdout.rstrip()
+        hostlist = util.run(
+            f"{SCONTROL} show hostlist {f.name}").stdout.rstrip()
     util.run(
         f"{SCONTROL} update nodename={hostlist} state=down reason='{reason}'")
 # [END down_nodes]
@@ -320,8 +320,7 @@ def create_placement_groups(arg_job_id, vm_count, region):
 def main(arg_nodes, arg_job_id):
     log.debug(f"Bursting out: {arg_nodes} {arg_job_id}")
     # Get node list
-    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
-                         check=True, get_stdout=True).stdout
+    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}").stdout
     node_list = sorted(nodes_str.splitlines(), key=util.get_pid)
 
     placement_groups = None
