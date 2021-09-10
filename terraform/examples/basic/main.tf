@@ -32,11 +32,16 @@ module "slurm_cluster" {
   }
 
   config = {
+    cgroup_conf_tpl       = null
     cloudsql              = null
+    compute_d             = null
+    controller_d          = null
     jwt_key               = null
     login_network_storage = null
     munge_key             = "basic-munge-key"
     network_storage       = null
+    slurm_conf_tpl        = null
+    slurmdbd_conf_tpl     = null
   }
 
   controller_templates = {

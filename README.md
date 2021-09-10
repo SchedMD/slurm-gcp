@@ -157,13 +157,20 @@ Hello world from processor g1-compute-0-2, rank 2 out of 4 processors
 
 ### Installing Custom Packages
 
-There are two files, *custom-controller-install* and *custom-compute-install*, in
-the scripts directory that can be used to add custom installations for the
-given instance type. The files will be executed during startup of the
-instance types.
+There are two directories, [`controller.d`](./scripts/controller.d/) and
+[`compute.d`](./scripts/compute.d/), that can be used by adding configuration
+scripts to. The files will be executed during the startup of the instance.
+Depending on their slurm instance type, certain scripts will be run.
 
-Since the custom install scripts must be run when starting bursted nodes,
-long-running customizations should be added in a custom image instead.
+| Instance Type | Scripts Directory Type |
+| :---: | :---: |
+| login | compute.d |
+| controller | compute.d; controller.d |
+| compute | compute.d |
+
+**NOTE:** Long-running custom scripts should be added to a custom image instead.
+See [Creating Custom Slurm Images](#creating-custom-slurm-images) for more
+information.
 
 #### Creating Custom Slurm Images
 

@@ -93,14 +93,28 @@ variable "config" {
       fs_type       = string              // description: Filesystem type (e.g. "nfs").
       mount_options = string              // description: Options to mount with.
     }))
+
+    ### slurm conf files ###
+    cgroup_conf_tpl   = string // description: path to file 'cgroup.conf.tpl'
+    slurm_conf_tpl    = string // description: path to file 'slurm.conf.tpl'
+    slurmdbd_conf_tpl = string // description: path to file 'slurmdbd.conf.tpl'
+
+    ### scripts.d ###
+    controller_d = string // description: path to controller scripts directory (e.g. controller.d). Runs controller type nodes.
+    compute_d    = string // description: path to compute scripts directory (e.g. compute.d). Runs on compute, login, and controller type nodes.
   })
   sensitive = true
   default = {
+    cgroup_conf_tpl       = null
     cloudsql              = null
+    compute_d             = null
+    controller_d          = null
     jwt_key               = null
     login_network_storage = null
     munge_key             = null
     network_storage       = null
+    slurm_conf_tpl        = null
+    slurmdbd_conf_tpl     = null
   }
 }
 

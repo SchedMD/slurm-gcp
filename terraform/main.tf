@@ -41,6 +41,52 @@ locals {
   )
 }
 
+### Configuration ###
+
+locals {
+  cgroup_conf_tpl = (
+    var.config.cgroup_conf_tpl != null
+    ? var.config.cgroup_conf_tpl
+    : "${path.module}/../etc/cgroup.conf.tpl"
+  )
+
+  slurm_conf_tpl = (
+    var.config.slurm_conf_tpl != null
+    ? var.config.slurm_conf_tpl
+    : "${path.module}/../etc/slurm.conf.tpl"
+  )
+
+  slurmdbd_conf_tpl = (
+    var.config.slurmdbd_conf_tpl != null
+    ? var.config.slurmdbd_conf_tpl
+    : "${path.module}/../etc/slurmdbd.conf.tpl"
+  )
+
+  controller_d = (
+    var.config.controller_d != null
+    ? var.config.controller_d
+    : "${path.module}/../scripts/controller.d"
+  )
+
+  scripts_controller_d = {
+    for script in fileset(local.controller_d, "[^.]*")
+    : "custom-controller-${replace(script, "/[^a-zA-Z0-9-_]/", "_")}"
+    => file("${local.controller_d}/${script}")
+  }
+
+  compute_d = (
+    var.config.controller_d != null
+    ? var.config.controller_d
+    : "${path.module}/../scripts/compute.d"
+  )
+
+  scripts_compute_d = {
+    for script in fileset(local.compute_d, "[^.]*")
+    : "custom-compute-${replace(script, "/[^a-zA-Z0-9-_]/", "_")}"
+    => file("${local.compute_d}/${script}")
+  }
+}
+
 ### Metadata ###
 
 locals {
@@ -88,13 +134,12 @@ locals {
   })
 
   controller_metadata_slurm = {
-    instance_type             = "controller"
-    config                    = local.controller_config
-    slurm_conf_tpl            = file("${path.module}/../etc/slurm.conf.tpl")
-    cgroup_conf_tpl           = file("${path.module}/../etc/cgroup.conf.tpl")
-    slurmdbd_conf_tpl         = file("${path.module}/../etc/slurmdbd.conf.tpl")
-    custom-compute-install    = file("${path.module}/../scripts/custom-compute-install")
-    custom-controller-install = file("${path.module}/../scripts/custom-controller-install")
+    instance_type = "controller"
+    config        = local.controller_config
+
+    cgroup_conf_tpl   = file(local.cgroup_conf_tpl)
+    slurm_conf_tpl    = file(local.slurm_conf_tpl)
+    slurmdbd_conf_tpl = file(local.slurmdbd_conf_tpl)
   }
 
   controller_metadata_devel = (
@@ -140,9 +185,8 @@ locals {
   })
 
   login_metadata_slurm = {
-    instance_type          = "login"
-    config                 = local.login_config
-    custom-compute-install = file("${path.module}/../scripts/custom-compute-install")
+    instance_type = "login"
+    config        = local.login_config
   }
 
   login_metadata_devel = (
@@ -174,9 +218,8 @@ locals {
   })
 
   compute_metadata_slurm = {
-    instance_type          = "compute"
-    config                 = local.compute_config
-    custom-compute-install = file("${path.module}/../scripts/custom-compute-install")
+    instance_type = "compute"
+    config        = local.compute_config
   }
 
   compute_metadata_devel = (
@@ -342,6 +385,8 @@ module "controller_instance" {
     local.common_metadata,
     local.controller_metadata_slurm,
     local.controller_metadata_devel,
+    local.scripts_controller_d,
+    local.scripts_compute_d,
     {
       google_mpi_tuning = local.controller_templates[each.value.template].disable_smt == true ? "--nosmt" : null
     },
@@ -429,9 +474,10 @@ module "login_instance" {
     local.common_metadata,
     local.login_metadata_slurm,
     local.login_metadata_devel,
+    local.scripts_compute_d,
     {
       google_mpi_tuning = local.login_templates[each.value.template].disable_smt == true ? "--nosmt" : null
-    }
+    },
   )
 }
 
@@ -495,6 +541,7 @@ resource "google_compute_project_metadata_item" "compute_metadata" {
     local.common_metadata,
     local.compute_metadata_slurm,
     local.compute_metadata_devel,
+    local.scripts_compute_d,
     module.compute_template,
   ))
 }

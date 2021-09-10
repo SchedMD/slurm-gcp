@@ -58,6 +58,15 @@ config = {
     #   mount_options = null
     # },
   ]
+
+  ### slurm config ###
+  cgroup_conf_tpl   = null
+  slurm_conf_tpl    = null
+  slurmdbd_conf_tpl = null
+
+  ### scripts.d ###
+  controller_d = null
+  compute_d    = null
 }
 
 ##############
