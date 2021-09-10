@@ -1,4 +1,5 @@
 SCRIPTS=../scripts
+TFVARS=vars.tfvars
 
 .PHONY: init validate plan apply destroy format
 
@@ -9,13 +10,14 @@ validate:
 	terraform validate
 
 plan:
-	terraform plan -var-file=vars.tfvars -out terraform.tfplan
+	terraform plan -var-file=$(TFVARS) -out terraform.tfplan
 
 apply:
-	terraform apply -var-file=vars.tfvars -auto-approve
+	terraform apply -var-file=$(TFVARS) -auto-approve
 
 destroy:
-	terraform destroy -var-file=vars.tfvars -auto-approve
+	$(SCRIPTS)/destroy_nodes.py $(shell grep "cluster_name" $(TFVARS) | cut -d'=' -f2)
+	terraform destroy -var-file=$(TFVARS) -auto-approve
 
 format:
 	terraform fmt -recursive .

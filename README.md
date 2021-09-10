@@ -81,6 +81,11 @@ Steps:
     ```
 5. Tearing down the cluster
     ```sh
+    # Destroy compute nodes that have not been powered down by the slurm controller
+    $ CLUSTER_NAME=$(terraform output cluster_name)
+    $ ./scripts/destroy_nodes.py ${CLUSTER_NAME}
+
+    # Destroy terraform managed pieces of the slurm cluster
     $ terraform destroy -var-file=vars.tfvars
     ```
 
@@ -96,6 +101,10 @@ Steps:
     before all compute node instances are terminated, the cloud administrator
     must manually handle the termination of orpahned compute node instances.
     Failure to manually moderate resources may lead to additional cloud costs.
+
+    A convienance script, [`destroy_nodes.py`](../scripts/destroy_nodes.py), is
+    provided to assist with node cleanup. Although it can be ran at any time, it is
+    suggested to run this before `terraform destroy` would be run.
 
 #### Defining network storage mounts
 
