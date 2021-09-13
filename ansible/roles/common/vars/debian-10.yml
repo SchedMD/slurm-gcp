@@ -29,6 +29,7 @@ common_packages:
   - iputils-ping
   - libssl-dev
   - libtool
+  - llvm
   - lynx
   - make
   - pdsh
@@ -38,3 +39,4 @@ common_packages:
   - unzip
   - valgrind
   - vim
+  - wget

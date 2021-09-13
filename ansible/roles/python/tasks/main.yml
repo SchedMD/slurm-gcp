@@ -21,6 +21,33 @@
     name: "{{python_packages}}"
     state: present
 
+- name: Git Clone pyenv
+  git:
+    repo: "{{pyenv_git_url}}"
+    dest: "{{pyenv_root}}"
+    version: "{{pyenv_version}}"
+    clone: yes
+    depth: "1"
+
+- name: Make pyenv bash extension
+  shell:
+    cmd: "{{pyenv_root}}/src/configure && make -C src"
+    chdir: "{{pyenv_root}}"
+
+- name: Add pyenv to 'profile.d'
+  template:
+    src: profile.d/pyenv.sh.j2
+    dest: /etc/profile.d/pyenv.sh
+
+- name: Install python to /usr/local
+  command: "python-build {{python_version}} /usr/local"
+  environment:
+    PYENV_ROOT: "{{pyenv_root}}"
+    PATH: "{{pyenv_root}}/plugins/python-build/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin"
+
+- name: Install pipenv
+  command: /usr/local/bin/python -m pip install pipenv
+
 - name: Install Python Packages
   pip:
     name:

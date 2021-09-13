@@ -13,23 +13,8 @@
 # limitations under the License.
 ---
 
-- name: Include OS Vars
-  include_vars: "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version }}.yml"
+pyenv_git_url: https://github.com/pyenv/pyenv.git
+pyenv_version: master
+pyenv_root: /opt/pyenv
 
-- name: Include OS Family Dependent Tasks
-  include_tasks: "os/{{ansible_os_family}}.yml"
-
-- name: Install Packages
-  package:
-    name: "{{common_packages}}"
-    state: present
-
-- name: Add /usr/local/bin to PATH
-  template:
-    src: profile.d/00-local.sh.j2
-    dest: /etc/profile.d/00-local.sh
-
-- name: Add Conf to 'ld.so.conf.d/'
-  template:
-    src: ld.so.conf.d/usr-local.conf.j2
-    dest: /etc/ld.so.conf.d/usr-local.conf
+python_version: 3.8.12
