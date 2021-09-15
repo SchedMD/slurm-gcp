@@ -14,7 +14,9 @@
 ---
 
 slurm_git_url: https://github.com/SchedMD/slurm.git
-slurm_version: slurm-20.11
+slurm_tar_baseurl: https://download.schedmd.com/slurm
+slurm_version: 20.11.8
+
 slurm_paths: {
   install: "{{paths.install}}",
   src: "{{paths.src}}/slurm",
@@ -25,6 +27,7 @@ slurm_paths: {
   state: "/var/spool/slurmctld",
   run: "/var/run/slurm",
 }
+
 slurm_user: {
   user: slurm,
   uid: 981,

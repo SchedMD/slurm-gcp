@@ -18,6 +18,7 @@ common_packages:
   - autoconf
   - automake
   - clang
+  - curl
   - deltarpm
   - doxygen
   - emacs
@@ -36,6 +37,7 @@ common_packages:
   - pkgconfig
   - python3
   - tmux
+  - unzip
   - valgrind
   - vim
   - yum-utils

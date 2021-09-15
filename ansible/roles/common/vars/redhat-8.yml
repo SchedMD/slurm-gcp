@@ -18,6 +18,7 @@ common_packages:
   - autoconf
   - automake
   - clang
+  - curl
   - dnf-utils
   - doxygen
   - drpm
@@ -36,5 +37,6 @@ common_packages:
   - pkgconfig
   - python3
   - tmux
+  - unzip
   - valgrind
   - vim

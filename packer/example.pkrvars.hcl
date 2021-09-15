@@ -23,7 +23,7 @@ zone    = "us-central1-a"
 # IMAGE #
 #########
 
-# source_image_project_id = "<SOURCE_IMAGE-PROJECT_ID>"
+# source_image_project_id = "<SOURCE_IMAGE_PROJECT_ID>"
 
 # *NOT* intended for production use
 # skip_create_image = true

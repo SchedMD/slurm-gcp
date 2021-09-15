@@ -16,48 +16,13 @@
 - name: Include OS Vars
   include_vars: "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version }}.yml"
 
+- name: Include User Tasks
+  include_tasks: user.yml
+
 - name: Install Packages
   package:
     name: "{{slurm_packages}}"
     state: present
-
-- name: Create Slurm Group
-  group:
-    name: "{{slurm_user.group}}"
-    gid: "{{slurm_user.gid}}"
-    state: present
-    system: yes
-
-- name: Create Slurm User
-  user:
-    name: "{{slurm_user.user}}"
-    group: "{{slurm_user.group}}"
-    uid: "{{slurm_user.uid}}"
-    shell: /usr/bin/bash
-    home: /var/lib/slurm
-    create_home: yes
-    comment: SlurmUser
-    state: present
-    system: yes
-
-- name: Create Slurmrestd Group
-  group:
-    name: "{{slurmrestd_user.group}}"
-    gid: "{{slurmrestd_user.gid}}"
-    state: present
-    system: yes
-
-- name: Create Slurmrestd User
-  user:
-    name: "{{slurmrestd_user.user}}"
-    group: "{{slurmrestd_user.group}}"
-    uid: "{{slurmrestd_user.uid}}"
-    shell: /usr/bin/bash
-    home: /var/lib/slurmrestd
-    create_home: yes
-    comment: SlurmrestdUser
-    state: present
-    system: yes
 
 - name: Mkdir
   file:
@@ -73,77 +38,11 @@
     - "{{slurm_paths.state}}"
     - "{{slurm_paths.run}}"
 
-- name: Git Clone
-  git:
-    repo: "{{slurm_git_url}}"
-    dest: "{{slurm_paths.src}}"
-    version: "{{slurm_version}}"
-    clone: yes
-    # single_branch: yes # ansible 2.11
-    depth: "1"
+- name: Include Install Tasks
+  include_tasks: install.yml
 
-- name: Configure
-  shell:
-    cmd: >
-      {{slurm_paths.src}}/configure
-      --prefix={{slurm_paths.install}}
-      --sysconfdir={{slurm_paths.etc}}
-      --with-jwt={{slurm_paths.install}}
-      > /dev/null
-    chdir: "{{slurm_paths.build}}"
-
-- name: Make Install Slurm
-  shell:
-    cmd: make --jobs install > /dev/null
-    chdir: "{{slurm_paths.build}}"
-
-- name: Make Install Slurm Contribs
-  shell:
-    cmd: make --jobs install > /dev/null
-    chdir: "{{slurm_paths.build}}/contribs"
-
-- name: Add Conf to 'ld.so.conf.d/'
-  template:
-    src: ld.so.conf.d/slurm.conf.j2
-    dest: /etc/ld.so.conf.d/slurm.conf
-
-- name: Ldconfig
-  command:
-    cmd: ldconfig
-    chdir: "{{slurm_paths.src}}"
-
-- name: Add Slurm to 'profile.d/'
-  template:
-    src: profile.d/slurm.sh.j2
-    dest: /etc/profile.d/slurm.sh
-
-- name: Install Slurmdbd Service
-  template:
-    src: systemd/slurmdbd.service.j2
-    dest: /usr/lib/systemd/system/slurmdbd.service
-    mode: 0o644
-  notify: Handle Slurmdbd Service
-
-- name: Install Slurmctld Service
-  template:
-    src: systemd/slurmctld.service.j2
-    dest: /usr/lib/systemd/system/slurmctld.service
-    mode: 0o644
-  notify: Handle Slurmctld Service
-
-- name: Install Slurmrestd Service
-  template:
-    src: systemd/slurmrestd.service.j2
-    dest: /usr/lib/systemd/system/slurmrestd.service
-    mode: 0o644
-  notify: Handle Slurmrestd Service
-
-- name: Install Slurmd Service
-  template:
-    src: systemd/slurmd.service.j2
-    dest: /usr/lib/systemd/system/slurmd.service
-    mode: 0o644
-  notify: Handle Slurmd Service
+- name: Include Service Tasks
+  include_tasks: service.yml
 
 - name: Create Tmpfile
   template:

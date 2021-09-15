@@ -18,6 +18,7 @@ common_packages:
   - automake
   - build-essential
   - clang
+  - curl
   - doxygen
   - emacs
   - g++
@@ -34,5 +35,6 @@ common_packages:
   - pkg-config
   - python3
   - tmux
+  - unzip
   - valgrind
   - vim

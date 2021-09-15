@@ -17,7 +17,8 @@
 ##########
 
 locals {
-  slurm_semver = split(".", trimprefix(var.slurm_version, "slurm-"))
+  slurm_branch = trimprefix(trimprefix(var.slurm_version, "b:"), "slurm-")
+  slurm_semver = split(".", join(".", split("-", local.slurm_branch)))
 
   ansible_dir = "../ansible"
   scripts_dir = "../scripts"

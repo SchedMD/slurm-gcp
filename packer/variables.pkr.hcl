@@ -74,9 +74,13 @@ variable "tags" {
 #############
 
 variable "slurm_version" {
-  description = "Slurm version by git branch"
+  description = "Slurm version (e.g. 20.11.8, 20.11-latest) or branch (e.g. b:slurm-20-11-8-1)."
   type        = string
-  default     = "slurm-20.11"
+  default     = "20.11.8"
+  validation {
+    condition = can(regex("^\\d{2}\\.\\d{2}(\\.\\d+|-latest)$|^b:.+$", var.slurm_version))
+    error_message = "Slurm version must pass '^\\d{2}\\.\\d{2}(\\.\\d+|-latest)$|^b:.+$'."
+  }
 }
 
 ##########
