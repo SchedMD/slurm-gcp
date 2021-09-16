@@ -106,7 +106,6 @@ build {
       "ANSIBLE_CONFIG=${local.ansible_dir}/ansible.cfg",
     ]
     extra_arguments = [
-      "--verbose",
       "--extra-vars",
       "slurm_version=${var.slurm_version}",
     ]
