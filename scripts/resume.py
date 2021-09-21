@@ -209,7 +209,7 @@ def add_instances(node_chunk):
         log.error(f"failed to add {node_list[0]}*{len(node_list)} to slurm, {e}")
         if instance_def.exclusive:
             os._exit(1)
-        down_nodes(node_list, e)
+        down_nodes(node_list, e._get_reason())
         return
 
     result = util.wait_for_operation(compute, cfg.project, operation)

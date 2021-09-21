@@ -1,6 +1,7 @@
 Changes in Slurm-GCP 4.0.5
 ==========================
  -- suspend.py - now handles "Quota exceeded" error.
+ -- resume.py - fix state=down reason being malformed
 
 Changes in Slurm-GCP 4.0.4
 ==========================
