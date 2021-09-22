@@ -331,7 +331,7 @@ module "controller_template" {
   network            = local.network
   subnetwork         = each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name
   region             = each.value.subnet_region
-  tags = each.value.tags
+  tags               = each.value.tags
 
   ### template ###
   instance_template_project = each.value.instance_template_project
@@ -412,7 +412,7 @@ module "login_template" {
   network            = local.network
   subnetwork         = each.value.subnet_name != null ? each.value.subnet_name : local.subnet_default_name
   region             = each.value.subnet_region
-  tags = each.value.tags
+  tags               = each.value.tags
 
   ### template ###
   instance_template_project = each.value.instance_template_project

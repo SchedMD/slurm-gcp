@@ -22,7 +22,7 @@ locals {
   tags = var.tags != null ? var.tags : []
 
   service_account = {
-    email  = (
+    email = (
       var.service_account.email != null
       ? var.service_account.email
       : data.google_compute_default_service_account.default.email

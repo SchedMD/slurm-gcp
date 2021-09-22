@@ -94,9 +94,9 @@ controller_templates = {
     instance_template         = null
 
     ### instance ###
-    machine_type     = "n2d-standard-4"
-    min_cpu_platform = null
-    gpu              = null
+    machine_type             = "n2d-standard-4"
+    min_cpu_platform         = null
+    gpu                      = null
     shielded_instance_config = null
     # shielded_instance_config = {
     #   enable_secure_boot          = true
@@ -170,9 +170,9 @@ login_templates = {
     instance_template         = null
 
     ### instance ###
-    machine_type     = "n2d-standard-2"
-    min_cpu_platform = null
-    gpu              = null
+    machine_type             = "n2d-standard-2"
+    min_cpu_platform         = null
+    gpu                      = null
     shielded_instance_config = null
     # shielded_instance_config = {
     #   enable_secure_boot          = true
@@ -246,9 +246,9 @@ compute_templates = {
     instance_template         = null
 
     ### instance ###
-    machine_type     = "c2-standard-16"
-    min_cpu_platform = null
-    gpu              = null
+    machine_type             = "c2-standard-16"
+    min_cpu_platform         = null
+    gpu                      = null
     shielded_instance_config = null
     # shielded_instance_config = {
     #   enable_secure_boot          = true
