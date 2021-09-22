@@ -73,6 +73,13 @@ config = {
 # CONTROLLER #
 ##############
 
+controller_service_account = {
+  email = "default"
+  scopes = [
+    "https://www.googleapis.com/auth/cloud-platform",
+  ]
+}
+
 controller_templates = {
   "example-controller" = {
     ### network ###
@@ -91,11 +98,6 @@ controller_templates = {
     machine_type     = "n2d-standard-4"
     min_cpu_platform = null
     gpu              = null
-    service_account  = null
-    # service_account = {
-    #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
-    #   scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-    # }
     shielded_instance_config = null
     # shielded_instance_config = {
     #   enable_secure_boot          = true
@@ -147,6 +149,13 @@ controller_instances = [
 # LOGIN #
 #########
 
+login_service_account = {
+  email = "default"
+  scopes = [
+    "https://www.googleapis.com/auth/cloud-platform",
+  ]
+}
+
 login_templates = {
   "example-login" = {
     ### network ###
@@ -165,11 +174,6 @@ login_templates = {
     machine_type     = "n2d-standard-2"
     min_cpu_platform = null
     gpu              = null
-    service_account  = null
-    # service_account = {
-    #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
-    #   scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-    # }
     shielded_instance_config = null
     # shielded_instance_config = {
     #   enable_secure_boot          = true
@@ -221,6 +225,13 @@ login_instances = [
 # COMPUTE #
 ###########
 
+compute_service_account = {
+  email = "default"
+  scopes = [
+    "https://www.googleapis.com/auth/cloud-platform",
+  ]
+}
+
 compute_templates = {
   "example-cpu" = {
     ### network ###
@@ -239,11 +250,6 @@ compute_templates = {
     machine_type     = "c2-standard-16"
     min_cpu_platform = null
     gpu              = null
-    service_account  = null
-    # service_account = {
-    #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
-    #   scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-    # }
     shielded_instance_config = null
     # shielded_instance_config = {
     #   enable_secure_boot          = true
@@ -300,11 +306,6 @@ compute_templates = {
       type  = "nvidia-tesla-t4"
       count = 4
     }
-    service_account = null
-    # service_account = {
-    #   email  = "[ACCOUNT]@developer.gserviceaccount.com"
-    #   scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-    # }
     shielded_instance_config = null
     # shielded_instance_config = {
     #   enable_secure_boot          = true

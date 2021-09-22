@@ -122,6 +122,18 @@ variable "config" {
 # CONTROLLER #
 ##############
 
+variable "controller_service_account" {
+  type = object({
+    email  = string      // description: The service account email to use. If 'null' or 'default', then the default email will be used.
+    scopes = set(string) // description: Set of scopes for service account to operate under.
+  })
+  description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
+  default = {
+    email  = null
+    scopes = null
+  }
+}
+
 variable "controller_templates" {
   type = map(object({
     ### network ###
@@ -139,10 +151,6 @@ variable "controller_templates" {
     gpu = object({
       type  = string // description: GPU type. See https://cloud.google.com/compute/docs/gpus more details
       count = number // description: Number of GPUs to attach.
-    })
-    service_account = object({ // description: Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account. If 'null', then the 'default' account will be used.
-      email  = string          // description: The service account email to use.
-      scopes = set(string)     // description: Set of scopes for service account to operate under.
     })
     shielded_instance_config = object({  // description: Configuration not used unless 'enable_shielded_vm' is 'true'. If 'null', then the default configuration will be assumed. See https://cloud.google.com/security/shielded-cloud/shielded-vm.
       enable_secure_boot          = bool // description: Enables Secure Boot on instance. See https://cloud.google.com/security/shielded-cloud/shielded-vm#secure-boot.
@@ -191,6 +199,18 @@ variable "controller_instances" {
 # LOGIN #
 #########
 
+variable "login_service_account" {
+  type = object({
+    email  = string      // description: The service account email to use. If null, then the default will be used.
+    scopes = set(string) // description: Set of scopes for service account to operate under.
+  })
+  description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
+  default = {
+    email  = null
+    scopes = null
+  }
+}
+
 variable "login_templates" {
   type = map(object({
     ### network ###
@@ -208,10 +228,6 @@ variable "login_templates" {
     gpu = object({
       type  = string // description: GPU type. See https://cloud.google.com/compute/docs/gpus more details
       count = number // description: Number of GPUs to attach.
-    })
-    service_account = object({ // description: Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account. If 'null', then the 'default' account will be used.
-      email  = string          // description: The service account email to use.
-      scopes = set(string)     // description: Set of scopes for service account to operate under.
     })
     shielded_instance_config = object({  // description: Configuration not used unless 'enable_shielded_vm' is 'true'. If 'null', then the default configuration will be assumed. See https://cloud.google.com/security/shielded-cloud/shielded-vm.
       enable_secure_boot          = bool // description: Enables Secure Boot on instance. See https://cloud.google.com/security/shielded-cloud/shielded-vm#secure-boot.
@@ -260,6 +276,18 @@ variable "login_instances" {
 # COMPUTE #
 ###########
 
+variable "compute_service_account" {
+  type = object({
+    email  = string      // description: The service account email to use. If null, then the default will be used.
+    scopes = set(string) // description: Set of scopes for service account to operate under.
+  })
+  description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
+  default = {
+    email  = null
+    scopes = null
+  }
+}
+
 variable "compute_templates" {
   type = map(object({
     ### network ###
@@ -277,10 +305,6 @@ variable "compute_templates" {
     gpu = object({
       type  = string // description: GPU type. See https://cloud.google.com/compute/docs/gpus more details
       count = number // description: Number of GPUs to attach.
-    })
-    service_account = object({ // description: Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account. If 'null', then the 'default' account will be used.
-      email  = string          // description: The service account email to use.
-      scopes = set(string)     // description: Set of scopes for service account to operate under.
     })
     shielded_instance_config = object({  // description: Configuration not used unless 'enable_shielded_vm' is 'true'. If 'null', then the default configuration will be assumed. See https://cloud.google.com/security/shielded-cloud/shielded-vm.
       enable_secure_boot          = bool // description: Enables Secure Boot on instance. See https://cloud.google.com/security/shielded-cloud/shielded-vm#secure-boot.

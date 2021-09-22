@@ -101,6 +101,19 @@ locals {
 ### Controller ###
 
 locals {
+  controller_service_account = (
+    {
+      email = var.controller_service_account.email
+      scopes = (
+        var.controller_service_account.scopes != null
+        ? var.controller_service_account.scopes
+        : [
+          "https://www.googleapis.com/auth/cloud-platform",
+        ]
+      )
+    }
+  )
+
   controller_templates = (
     var.controller_templates != null
     ? var.controller_templates
@@ -158,6 +171,19 @@ locals {
 ### Login ###
 
 locals {
+  login_service_account = (
+    {
+      email = var.login_service_account.email
+      scopes = (
+        var.login_service_account.scopes != null
+        ? var.login_service_account.scopes
+        : [
+          "https://www.googleapis.com/auth/cloud-platform",
+        ]
+      )
+    }
+  )
+
   login_templates = (
     var.login_templates != null
     ? var.login_templates
@@ -202,6 +228,19 @@ locals {
 ### Compute ###
 
 locals {
+  compute_service_account = (
+    {
+      email = var.compute_service_account.email
+      scopes = (
+        var.compute_service_account.scopes != null
+        ? var.compute_service_account.scopes
+        : [
+          "https://www.googleapis.com/auth/cloud-platform",
+        ]
+      )
+    }
+  )
+
   compute_templates = (
     var.compute_templates != null
     ? var.compute_templates
@@ -340,7 +379,7 @@ module "controller_template" {
   name_prefix               = "${var.cluster_name}-controller"
 
   ### instance ###
-  service_account          = each.value.service_account
+  service_account          = var.controller_service_account
   machine_type             = each.value.machine_type
   min_cpu_platform         = each.value.min_cpu_platform
   gpu                      = each.value.gpu
@@ -429,7 +468,7 @@ module "login_template" {
   name_prefix               = "${var.cluster_name}-login"
 
   ### instance ###
-  service_account          = each.value.service_account
+  service_account          = var.login_service_account
   machine_type             = each.value.machine_type
   min_cpu_platform         = each.value.min_cpu_platform
   gpu                      = each.value.gpu
@@ -509,7 +548,7 @@ module "compute_template" {
   name_prefix               = "${var.cluster_name}-compute-${each.key}"
 
   ### instance ###
-  service_account          = each.value.service_account
+  service_account          = var.compute_service_account
   machine_type             = each.value.machine_type
   min_cpu_platform         = each.value.min_cpu_platform
   gpu                      = each.value.gpu

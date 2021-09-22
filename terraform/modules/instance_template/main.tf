@@ -21,14 +21,18 @@
 locals {
   tags = var.tags != null ? var.tags : []
 
-  service_account = (
-    var.service_account != null
-    ? var.service_account
-    : {
-      email  = data.google_compute_default_service_account.default.email
-      scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-    }
-  )
+  service_account = {
+    email  = (
+      var.service_account.email != null
+      ? var.service_account.email
+      : data.google_compute_default_service_account.default.email
+    )
+    scopes = (
+      var.service_account.scopes != null
+      ? var.service_account.scopes
+      : []
+    )
+  }
 
   shielded_instance_config = (
     var.shielded_instance_config != null

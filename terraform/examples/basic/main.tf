@@ -44,6 +44,11 @@ module "slurm_cluster" {
     slurmdbd_conf_tpl     = null
   }
 
+  controller_service_account = {
+    email  = null
+    scopes = null
+  }
+
   controller_templates = {
     "basic-controller" = {
       additional_disks          = []
@@ -81,6 +86,11 @@ module "slurm_cluster" {
     },
   ]
 
+  login_service_account = {
+    email  = null
+    scopes = null
+  }
+
   login_templates = {
     "basic-login" = {
       additional_disks          = []
@@ -117,6 +127,11 @@ module "slurm_cluster" {
       template      = "basic-login"
     },
   ]
+
+  compute_service_account = {
+    email  = null
+    scopes = null
+  }
 
   compute_templates = {
     "basic-node" = {
