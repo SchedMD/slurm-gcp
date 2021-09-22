@@ -40,11 +40,7 @@ variable "network" {
   type = object({
     ### attach ###
     subnetwork_project = string // description: The project where the network and subnetworks exists. If 'null', then 'project_id' is used.
-    network            = string // description: The name of the network to identify as available to attach slurm resources to.
-    subnets = list(object({
-      name   = string // description: The name of the subnetwork to identify as available to attach slurm resources to.
-      region = string // description: The region of the subnetwork to identify as available to attach slurm resources to.
-    }))
+    network            = string // description: The name of the network to attach slurm resources to. If not 'null', then no VPC will be generated.
 
     ### generate ###
     auto_create_subnetworks = bool // description: Enables auto-generation of subnetworks in network when creating vpc and subnets. If 'true' this will override/ignore 'subnets_spec'.
@@ -56,7 +52,6 @@ variable "network" {
   default = {
     auto_create_subnetworks = true
     network                 = null
-    subnets                 = null
     subnets_spec            = null
     subnetwork_project      = null
   }

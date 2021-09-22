@@ -17,7 +17,6 @@ network = {
   ### attach ###
   subnetwork_project = null
   network            = null
-  subnets            = null
 
   ### generate ###
   auto_create_subnetworks = false

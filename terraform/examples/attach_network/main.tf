@@ -21,12 +21,6 @@ module "slurm_cluster" {
   network = {
     auto_create_subnetworks = false
     network                 = "default"
-    subnets = [
-      {
-        name   = "default"
-        region = "us-central1"
-      },
-    ]
     subnets_spec       = null
     subnetwork_project = null
   }
