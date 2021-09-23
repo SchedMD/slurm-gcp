@@ -15,21 +15,20 @@
 
 import argparse
 import googleapiclient.discovery
-import json
 import logging
 import sys
 import time
-
 from pathlib import Path
 
 import util
-# import suspend
 
 LOGFILE = (Path(__file__).parent / Path(__file__).name).with_suffix('.log')
 TOT_REQ_CNT = 1000
 
 OPERATIONS = {}
 RETRY_LIST = []
+
+compute = googleapiclient.discovery.build('compute', 'v1', cache_discovery=False)
 
 
 def delete_instances_cb(request_id, response, exception):
@@ -43,8 +42,6 @@ def delete_instances_cb(request_id, response, exception):
 
 
 def delete_instances(node_list):
-    compute = googleapiclient.discovery.build('compute', 'v1',
-        cache_discovery=False)
     batch_list = []
     curr_batch = 0
     req_cnt = 0
@@ -53,7 +50,7 @@ def delete_instances(node_list):
         compute.new_batch_http_request(callback=delete_instances_cb))
 
     for node in node_list:
-        log.debug(f"deleting node: {node}")
+        log.info(f"terminating node: {node}")
         """
         DELETE https://compute.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances/{resourceId}
         """
@@ -92,24 +89,29 @@ def delete_instances(node_list):
 # [END delete_instances]
 
 
-def get_compute_list(cluster_name):
-    compute_list_output = util.run(
-        f"gcloud compute instances list --uri --format=json --filter='name ~ {cluster_name}-compute-*' --quiet --verbosity=none",
-        quiet=True, check=True, get_stdout=True
-    ).stdout.strip()
+def get_instances(project, cluster_name):
+    instance_list = []
+    result = compute.instances().aggregatedList(
+        project=project,
+        filter=f"name = {cluster_name}-compute-*"
+    ).execute()
 
-    compute_list = json.loads(compute_list_output)
+    for item in result['items'].values():
+        instances = item.get('instances')
+        if instances is not None:
+            for instance in instances:
+                instance_list.append(instance['selfLink'])
 
-    return compute_list
-# [END get_compute_list]
+    return instance_list
+# [END get_instance]
 
 
-def main(cluster_name):
-    node_list = get_compute_list(cluster_name)
+def main(project, cluster_name):
+    node_list = get_instances(project, cluster_name)
 
-    print("Found {} compute nodes still running.".format(len(node_list)))
+    log.info(f"Found {len(node_list)} compute nodes running on cluster '{cluster_name}'.")
     if len(node_list) > 0:
-        print("\n".join(node_list))
+        log.info("\n".join(node_list))
 
     while True:
         delete_instances(node_list)
@@ -127,8 +129,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('cluster_name', nargs=1,
-                        help="The cluster name to which the nodes belong")
+    parser.add_argument('project_id',
+                        help="Google Cloud Project ID")
+    parser.add_argument('cluster_name',
+                        help="The cluster name to destroy all nodes of")
     parser.add_argument('--debug', '-d', dest='debug', action='store_true',
                         help='Enable debugging output')
 
@@ -143,11 +147,9 @@ if __name__ == '__main__':
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 
-    if len(sys.argv) > 1:
-        cluster_name = sys.argv[1]
-    else:
-        print("No cluster name provided. Aborting...")
+    if args.cluster_name is None:
+        log.error("No cluster name provided. Aborting...")
         sys.exit(1)
     
-    main(cluster_name)
+    main(args.project_id, args.cluster_name)
 # [END __main__]

@@ -82,8 +82,7 @@ Steps:
 5. Tearing down the cluster
     ```sh
     # Destroy compute nodes that have not been powered down by the slurm controller
-    $ CLUSTER_NAME=$(terraform output cluster_name)
-    $ ./scripts/destroy_nodes.py ${CLUSTER_NAME}
+    $ ./scripts/destroy_nodes.py {PROJECT_ID} {CLUSTER_NAME}
 
     # Destroy terraform managed pieces of the slurm cluster
     $ terraform destroy -var-file=vars.tfvars
