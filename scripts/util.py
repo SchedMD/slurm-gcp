@@ -332,7 +332,7 @@ def ensure_execute(operation):
 
 
 def wait_for_operation(compute, project, operation):
-    print('Waiting for operation to finish...')
+    log.info(f"Waiting for operation {operation['id']} to finish...")
     while True:
         if 'zone' in operation:
             operation = compute.zoneOperations().wait(
@@ -351,7 +351,7 @@ def wait_for_operation(compute, project, operation):
 
         result = ensure_execute(operation)
         if result['status'] == 'DONE':
-            print("done.")
+            log.info(f"Operation {operation['id']} done.")
             return result
 
 

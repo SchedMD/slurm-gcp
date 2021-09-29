@@ -51,6 +51,18 @@ if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
 
+def get_hostlist(node_list):
+    hostlist = None
+    with tempfile.NamedTemporaryFile(mode='w+t') as f:
+        f.writelines("\n".join(node_list))
+        f.flush()
+        hostlist = util.run(
+            f"{SCONTROL} show hostlist {f.name}").stdout.rstrip()
+    log.debug(f"hostlist={hostlist}")
+    return hostlist
+# [END get_hostlist]
+
+
 def create_instance(compute, instance_def, node_list, placement_group_name):
 
     # Configure the machine
@@ -197,6 +209,7 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
 def add_instances(node_chunk):
 
     node_list = node_chunk['nodes']
+    hostlist = get_hostlist(node_list)
     pg_name = None
     if 'pg' in node_chunk:
         pg_name = node_chunk['pg']
@@ -217,16 +230,18 @@ def add_instances(node_chunk):
     try:
         operation = create_instance(compute, instance_def, node_list, pg_name)
     except googleapiclient.errors.HttpError as e:
-        log.error(f"failed to add {node_list[0]}*{len(node_list)} to slurm, {e}")
+        log.error(f"failed to create {hostlist}, {e}")
         if instance_def.exclusive:
             os._exit(1)
         down_nodes(node_list, e._get_reason())
         return
 
     result = util.wait_for_operation(compute, cfg.project, operation)
-    if not result or 'error' in result:
-        grp_err_msg = result['error']['errors'][0]['message']
-        log.error(f"group operation failed: {grp_err_msg}")
+    if not result or 'error' in result or 'warning' in result:
+        if 'warnings' in result:
+            log.warn(f"group operation {result['id']} for {hostlist} contains warnings: HttpError: {result['warnings']}")
+        if 'error' in result:
+            log.error(f"group operation {result['id']} for {hostlist} contains errors: HttpError: {result['error']['errors']}")
         if instance_def.exclusive:
             os._exit(1)
 
@@ -236,27 +251,24 @@ def add_instances(node_chunk):
             if op['operationType'] != 'insert':
                 continue
             if 'error' in op:
-                err_msg = op['error']['errors'][0]['message']
-                failed_node = op['targetLink'].split('/')[-1]
-                if err_msg not in failed_nodes:
-                    failed_nodes[err_msg] = [failed_node]
-                else:
-                    failed_nodes[err_msg].append(failed_node)
-        if failed_nodes:
-            log.error(f"insert requests failed: {failed_nodes}")
-            for msg, nodes in failed_nodes.items():
-                down_nodes(nodes, msg)
+                for error in op['error']['errors']:
+                    err_msg = error['message']
+                    failed_node = op['targetLink'].split('/')[-1]
+                    if err_msg not in failed_nodes:
+                        failed_nodes[err_msg] = [failed_node]
+                    else:
+                        failed_nodes[err_msg].append(failed_node)
+            if failed_nodes:
+                log.error(f"insert requests failed: {failed_nodes}")
+                for msg, nodes in failed_nodes.items():
+                    down_nodes(nodes, msg)
 
 # [END add_instances]
 
 
 def down_nodes(node_list, reason):
     """ set nodes in node_list down with given reason """
-    with tempfile.NamedTemporaryFile(mode='w+t') as f:
-        f.writelines("\n".join(node_list))
-        f.flush()
-        hostlist = util.run(
-            f"{SCONTROL} show hostlist {f.name}").stdout.rstrip()
+    hostlist = get_hostlist(node_list)
     util.run(
         f"{SCONTROL} update nodename={hostlist} state=down reason='{reason}'",
         timeout=30)
