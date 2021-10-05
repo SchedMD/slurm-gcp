@@ -21,6 +21,7 @@ import subprocess
 import sys
 import socket
 import time
+from functools import lru_cache, cached_property
 from itertools import chain, compress
 from pathlib import Path
 from contextlib import contextmanager
@@ -29,6 +30,7 @@ import googleapiclient.discovery
 
 import requests
 import yaml
+from addict import Dict as NSDict
 
 
 log = logging.getLogger(__name__)
@@ -171,58 +173,63 @@ class cached_property:
         return attr
 
 
-class NSDict(OrderedDict):
-    """ Simple nested dict namespace """
 
-    def __init__(self, *args, **kwargs):
-        def from_nested(value):
-            """ If value is dict, convert to NSDict. Also recurse lists. """
-            if isinstance(value, dict):
-                return type(self)({k: from_nested(v) for k, v in value.items()})
-            elif isinstance(value, list):
-                return [from_nested(v) for v in value]
-            else:
-                return value
 
-        super(NSDict, self).__init__(*args, **kwargs)
-        self.__dict__ = self  # all properties are member attributes
+class Lookup:
+    """ Wrapper class for cached data looked up from Google or derived from a
+    Config
+    """
 
-        # Convert nested elements
-        for k, v in self.items():
-            self[k] = from_nested(v)
+    def __init__(self, cfg):
+        self.compute_pool = make_compute_pool()
+        self.cfg = cfg
+
+    @cached_property
+    def node_role(self):
+        return get_metadata('attributes/instance_type')
+
+    @cached_property
+    def hostname(self):
+        return socket.gethostname()
+
+    @property
+    def exclusive(self):
+        return bool(self.cfg.exclusive or self.cfg.enable_placement)
+
 
 
 class Config(NSDict):
     """ Loads config from yaml and holds values in nested namespaces """
 
-    TYPES = set(('compute', 'login', 'controller'))
     # PROPERTIES defines which properties in slurm.jinja.schema are included
     #   in the config file. SAVED_PROPS are saved to file via save_config.
-    SAVED_PROPS = ('project',
-                   'zone',
-                   'cluster_name',
-                   'external_compute_ips',
-                   'shared_vpc_host_project',
-                   'compute_node_service_account',
-                   'compute_node_scopes',
-                   'slurm_cmd_path',
-                   'log_dir',
-                   'google_app_cred_path',
-                   'update_node_addrs',
-                   'network_storage',
-                   'login_network_storage',
-                   'instance_defs',
-                   )
-    PROPERTIES = (*SAVED_PROPS,
-                  'munge_key',
-                  'jwt_key',
-                  'external_compute_ips',
-                  'controller_secondary_disk',
-                  'suspend_time',
-                  'login_node_count',
-                  'cloudsql',
-                  'partitions',
-                  )
+    SAVED_PROPS = (
+        'project',
+        'zone',
+        'cluster_name',
+        'external_compute_ips',
+        'shared_vpc_host_project',
+        'compute_node_service_account',
+        'compute_node_scopes',
+        'slurm_cmd_path',
+        'log_dir',
+        'google_app_cred_path',
+        'update_node_addrs',
+        'network_storage',
+        'login_network_storage',
+        'templates',
+        'partitions',
+    )
+    PROPERTIES = (
+        *SAVED_PROPS,
+        'munge_key',
+        'jwt_key',
+        'external_compute_ips',
+        'controller_secondary_disk',
+        'suspend_time',
+        'login_node_count',
+        'cloudsql',
+    )
 
     def __init__(self, *args, **kwargs):
         super(Config, self).__init__(*args, **kwargs)
@@ -257,34 +264,6 @@ class Config(NSDict):
                 instance_type.pop('static_node_count', 0)
         Path(path).write_text(yaml.dump(save_dict, Dumper=Dumper))
 
-    @cached_property
-    def instance_type(self):
-        # get tags, intersect with possible types, get the first or none
-        tags = yaml.safe_load(get_metadata('tags'))
-        # TODO what to default to if no match found.
-        return next(iter(set(tags) & self.TYPES), None)
-
-    @cached_property
-    def hostname(self):
-        return socket.gethostname()
-
-    @property
-    def region(self):
-        if self.zone:
-            parts = self.zone.split('-')
-            if len(parts) > 2:
-                return '-'.join(parts[:-1])
-            else:
-                return self.zone
-        return None
-
-    @property
-    def exclusive(self):
-        return bool(self.get('exclusive', False) or self.enable_placement)
-
-    def __getattr__(self, item):
-        """ only called if item is not found in self """
-        return None
 
 
 class Dumper(yaml.SafeDumper):

@@ -27,6 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 import googleapiclient.discovery
 import requests
 import yaml
+from addict import Dict as NSDict
 
 # get util.py from metadata, if found
 SETUP_SCRIPT = Path(__file__)
@@ -71,6 +72,7 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
 # get setup config from metadata
 config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
 cfg = util.Config.new_config(config_yaml)
+lkp = Lookup(cfg)
 
 RESUME_TIMEOUT = 300
 SUSPEND_TIMEOUT = 300
@@ -135,10 +137,9 @@ def end_motd(broadcast=True):
     if not broadcast:
         return
 
-    util.run("wall -n '*** Slurm {} setup complete ***'"
-             .format(cfg.instance_type))
-    if cfg.instance_type != 'controller':
-        util.run("""wall -n '
+    run("wall -n '*** Slurm {} setup complete ***'".format(lkp.node_role))
+    if lkp.node_role != 'controller':
+        run("""wall -n '
 /home on the controller was mounted over the existing /home.
 Log back in to ensure your home directory is correct.
 '""")
@@ -438,7 +439,7 @@ def prepare_network_mounts(hostname, instance_type):
         return mount[1].server_ip == CONTROL_MACHINE
 
     def partition(pred, coll):
-        """ filter into 2 lists based on pred returning True or False 
+        """ filter into 2 lists based on pred returning True or False
             returns ([False], [True])
         """
         return reduce(
@@ -454,10 +455,9 @@ def setup_network_storage():
     """ prepare network fs mounts and add them to fstab """
 
     global mounts
-    ext_mounts, int_mounts = prepare_network_mounts(cfg.hostname,
-                                                    cfg.instance_type)
+    ext_mounts, int_mounts = prepare_network_mounts(lkp.node_role)
     mounts = ext_mounts
-    if cfg.instance_type != 'controller':
+    if lkp.node_role != 'controller':
         mounts.update(int_mounts)
 
     # Determine fstab entries and write them out
@@ -468,7 +468,7 @@ def setup_network_storage():
         server_ip = mount.server_ip
 
         # do not mount controller mounts to itself
-        if server_ip == CONTROL_MACHINE and cfg.instance_type == 'controller':
+        if server_ip == CONTROL_MACHINE and lkp.node_role == 'controller':
             continue
 
         log.info("Setting up mount ({}) {}{} to {}".format(
@@ -513,12 +513,12 @@ def mount_fstab():
     def mount_path(path):
         while not os.path.ismount(path):
             log.info(f"Waiting for {path} to be mounted")
-            util.run(f"mount {path}", wait=5)
+            run(f"mount {path}", wait=5)
 
     with ThreadPoolExecutor() as exe:
         exe.map(mount_path, mounts.keys())
 
-    util.run("mount -a", wait=1)
+    run("mount -a", wait=1)
 # END mount_external
 
 
@@ -539,7 +539,7 @@ def setup_nfs_exports():
     exports = []
     for path in con_mounts:
         Path(path).mkdirp()
-        util.run(rf"sed -i '\#{path}#d' /etc/exports")
+        run(rf"sed -i '\#{path}#d' /etc/exports")
         exports.append(f"{path}  *(rw,no_subtree_check,no_root_squash)")
 
     exportsd = Path('/etc/exports.d')
@@ -547,14 +547,13 @@ def setup_nfs_exports():
     with (exportsd/'slurm.exports').open('w') as f:
         f.write('\n')
         f.write('\n'.join(exports))
-    util.run("exportfs -a")
+    run("exportfs -a")
 # END setup_nfs_exports()
 
 
 def setup_secondary_disks():
     """ Format and mount secondary disk """
-    util.run(
-        "sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb")
+    run("sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb")
     with open('/etc/fstab', 'a') as f:
         f.write(
             "\n/dev/sdb     {0}     ext4    discard,defaults,nofail     0 2"
@@ -565,7 +564,7 @@ def setup_secondary_disks():
 
 def setup_sync_cronjob():
     """ Create cronjob for running slurmsync.py """
-    util.run("crontab -u slurm -", input=(
+    run("crontab -u slurm -", input=(
         f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
 
 # END setup_sync_cronjob()
@@ -578,23 +577,22 @@ def setup_jwt_key():
         with (jwt_key).open('w') as f:
             f.write(cfg.jwt_key)
     else:
-        util.run("dd if=/dev/urandom bs=32 count=1 >"+str(jwt_key), shell=True)
+        run("dd if=/dev/urandom bs=32 count=1 >"+str(jwt_key), shell=True)
 
-    util.run(f"chown -R slurm:slurm {jwt_key}")
+    run(f"chown -R slurm:slurm {jwt_key}")
     jwt_key.chmod(0o400)
 
 
 def setup_slurmd_cronjob():
     """ Create cronjob for keeping slurmd service up """
-    util.run(
-        "crontab -u root -", input=(
-            "*/2 * * * * "
-            "if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then "
-            "mount -a; "
-            "systemctl restart munge; "
-            "systemctl restart slurmd; "
-            "fi\n"
-        ))
+    run("crontab -u root -", input=(
+        "*/2 * * * * "
+        "if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then "
+        "mount -a; "
+        "systemctl restart munge; "
+        "systemctl restart slurmd; "
+        "fi\n"
+    ))
 # END setup_slurmd_cronjob()
 
 
@@ -602,11 +600,9 @@ def setup_nss_slurm():
     """ install and configure nss_slurm """
     # setup nss_slurm
     Path('/var/spool/slurmd').mkdirp()
-    util.run("ln -s {}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2"
-             .format(dirs.prefix))
-    util.run(
-        r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf"
-    )
+    run("ln -s {}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2"
+        .format(dirs.prefix))
+    run(r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
 # END setup_nss_slurm()
 
 
@@ -635,8 +631,8 @@ def setup_controller():
     install_slurm_conf()
     install_slurmdbd_conf()
     setup_jwt_key()
-    util.run("create-munge-key -f")
-    util.run("systemctl restart munge")
+    run("create-munge-key -f")
+    run("systemctl restart munge")
 
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
@@ -672,24 +668,24 @@ innodb_lock_wait_timeout=900
         util.run(
             f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
 
-    util.run("systemctl enable slurmdbd")
-    util.run("systemctl start slurmdbd")
+    run("systemctl enable slurmdbd")
+    run("systemctl start slurmdbd")
 
     # Wait for slurmdbd to come up
     time.sleep(5)
 
     sacctmgr = f"{dirs.prefix}/bin/sacctmgr -i"
-    util.run(f"{sacctmgr} add cluster {cfg.cluster_name}")
+    run(f"{sacctmgr} add cluster {cfg.cluster_name}")
 
-    util.run("systemctl enable slurmctld")
-    util.run("systemctl start slurmctld")
+    run("systemctl enable slurmctld")
+    run("systemctl start slurmctld")
 
-    util.run("systemctl enable slurmrestd")
-    util.run("systemctl start slurmrestd")
+    run("systemctl enable slurmrestd")
+    run("systemctl start slurmrestd")
 
     # Export at the end to signal that everything is up
-    util.run("systemctl enable nfs-server")
-    util.run("systemctl start nfs-server")
+    run("systemctl enable nfs-server")
+    run("systemctl start nfs-server")
 
     setup_nfs_exports()
     setup_sync_cronjob()
@@ -736,9 +732,9 @@ def setup_compute():
         pass
 
     setup_slurmd_cronjob()
-    util.run("systemctl restart munge")
-    util.run("systemctl enable slurmd")
-    util.run("systemctl start slurmd")
+    run("systemctl restart munge")
+    run("systemctl enable slurmd")
+    run("systemctl start slurmd")
 
     log.info("Done setting up compute")
 
@@ -756,8 +752,8 @@ def main():
             'compute': setup_compute,
             'login': setup_login
         },
-        cfg.instance_type,
-        lambda: log.fatal(f"Unknown instance type: {cfg.instance_type}")
+        lkp.node_role,
+        lambda: log.fatal(f"Unknown node role: {lkp.node_role}")
     )
     setup()
 
