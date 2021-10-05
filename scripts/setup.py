@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib
 import logging
 import os
 import sys
@@ -29,12 +28,12 @@ import googleapiclient.discovery
 import requests
 import yaml
 
-
-# get util.py from metadata
-UTIL_FILE = Path('/tmp/util.py')
+# get util.py from metadata, if found
+SETUP_SCRIPT = Path(__file__)
+UTIL_FILE = SETUP_SCRIPT.with_name('util.py')
 try:
-    resp = requests.get('http://metadata.google.internal/computeMetadata/v1/instance/attributes/util-script',
-                        headers={'Metadata-Flavor': 'Google'})
+    url = 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/util-script'
+    resp = requests.get(url, headers={'Metadata-Flavor': 'Google'})
     resp.raise_for_status()
     UTIL_FILE.write_text(resp.text)
 except requests.exceptions.RequestException:
@@ -43,22 +42,14 @@ except requests.exceptions.RequestException:
         print(f"{UTIL_FILE} also does not exist, aborting")
         sys.exit(1)
 
-spec = importlib.util.spec_from_file_location('util', UTIL_FILE)
-util = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = util
-spec.loader.exec_module(util)
-cd = util.cd  # import util.cd into local namespace
-NSDict = util.NSDict
+import util # noqa E402
+from util import run, Lookup # noqa E402
 
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
-util.config_root_logger(logfile='/tmp/setup.log')
-log = logging.getLogger(Path(__file__).name)
+util.config_root_logger(logfile=SETUP_SCRIPT.with_suffix('.log'))
+log = logging.getLogger(SETUP_SCRIPT.name)
 sys.excepthook = util.handle_exception
-
-# get setup config from metadata
-config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
-cfg = util.Config.new_config(config_yaml)
 
 # load all directories as Paths into a dict-like namespace
 dirs = NSDict({n: Path(p) for n, p in dict.items({
@@ -77,8 +68,9 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
     'state': '/var/spool/slurm',
 })})
 
-cfg['log_dir'] = slurmdirs.log
-cfg['slurm_cmd_path'] = dirs.prefix/'bin'
+# get setup config from metadata
+config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
+cfg = util.Config.new_config(config_yaml)
 
 RESUME_TIMEOUT = 300
 SUSPEND_TIMEOUT = 300
