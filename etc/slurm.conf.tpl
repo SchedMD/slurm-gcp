@@ -177,3 +177,4 @@ CommunicationParameters=NoAddrCache
 GresTypes=gpu
 #
 # COMPUTE NODES
+include cloud.conf

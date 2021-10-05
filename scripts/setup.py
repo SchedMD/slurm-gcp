@@ -16,15 +16,17 @@
 
 import logging
 import os
-import sys
+import re
 import shutil
+import sys
 import time
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, Future
+from functools import reduce, partialmethod
+from itertools import chain
 from pathlib import Path
 from subprocess import DEVNULL
-from functools import reduce, partialmethod
-from concurrent.futures import ThreadPoolExecutor
 
-import googleapiclient.discovery
 import requests
 import yaml
 from addict import Dict as NSDict
@@ -146,82 +148,131 @@ Log back in to ensure your home directory is correct.
 # END start_motd()
 
 
-def expand_instance_templates():
-    """ Expand instance template into instance_defs """
+def nodenames(node):
+    """ Return static and dynamic nodenames given a partition node type
+    definition
+    """
+    # ... hack... ensure template_nodes was generated so partition is in node
+    # dict
+    lkp.template_nodes
 
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              cache_discovery=False)
-    for pid, instance_def in cfg.instance_defs.items():
-        if (instance_def.instance_template and
-                (not instance_def.machine_type or not instance_def.gpu_count)):
-            template_resp = util.ensure_execute(
-                compute.instanceTemplates().get(
-                    project=cfg.project,
-                    instanceTemplate=instance_def.instance_template))
-            if template_resp:
-                template_props = template_resp['properties']
-                if not instance_def.machine_type:
-                    instance_def.machine_type = template_props['machineType']
-                if (not instance_def.gpu_count and
-                        'guestAccelerators' in template_props):
-                    accel_props = template_props['guestAccelerators'][0]
-                    instance_def.gpu_count = accel_props['acceleratorCount']
-                    instance_def.gpu_type = accel_props['acceleratorType']
-# END expand_instance_templates()
+    def node_range(count, start=0):
+        end = start + count - 1
+        return f"{start}" if count == 1 else f"[{start}-{end}]", end + 1
+
+    prefix = f"{cfg.cluster_name}-{node.template}-{node.partition}"
+    static_range, end = (
+        node_range(node.count_static)
+        if node.count_static else (None, 0)
+    )
+    dynamic_range, _ = (
+        node_range(node.count_dynamic, end)
+        if node.count_dynamic else (None, 0)
+    )
+
+    static_name = (
+        f"{prefix}-{static_range}" if node.count_static else None
+    )
+    dynamic_name = (
+        f"{prefix}-{dynamic_range}" if node.count_dynamic else None
+    )
+    return static_name, dynamic_name
 
 
-def expand_machine_type():
-    """ get machine type specs from api """
-    machines = {}
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              cache_discovery=False)
-    for pid, part in cfg.instance_defs.items():
-        machine = {'cpus': 1, 'memory': 1}
-        machines[pid] = machine
+def dict_to_conf(conf):
+    """ convert dict to space-delimited slurm-style key-value pairs """
+    return ' '.join(f'{k}={v}' for k, v in conf.items() if v is not None)
 
-        if not part.machine_type:
-            log.error("No machine type to get configuration from")
-            continue
 
-        type_resp = None
-        if part.regional_capacity:
-            filter = f"(zone={part.region}-*) AND (name={part.machine_type})"
-            list_resp = util.ensure_execute(
-                compute.machineTypes().aggregatedList(
-                    project=cfg.project, filter=filter))
+def gen_cloud_nodes_conf():
 
-            if 'items' in list_resp:
-                zone_types = list_resp['items']
-                for k, v in zone_types.items():
-                    if part.region in k and 'machineTypes' in v:
-                        type_resp = v['machineTypes'][0]
-                        break
-        else:
-            type_resp = util.ensure_execute(
-                compute.machineTypes().get(
-                    project=cfg.project, zone=part.zone,
-                    machineType=part.machine_type))
+    def nodeline(template):
+        props = lkp.template_details(template)
+        machine = props.machine
 
-        if type_resp:
-            cpus = type_resp['guestCpus']
-            machine['cpus'] = (
-                cpus // (1 if part.image_hyperthreads else 2) or 1
-            )
+        node_def = dict_to_conf({
+            'NodeName': 'DEFAULT',
+            'State': 'UNKNOWN',
+            'RealMemory': machine.memory,
+            'Sockets': 1,
+            'CoresPerSocket': machine.cpus,
+            'ThreadsPerCore': 1,
+        })
 
-            # Because the actual memory on the host will be different than
-            # what is configured (e.g. kernel will take it). From
-            # experiments, about 16 MB per GB are used (plus about 400 MB
-            # buffer for the first couple of GB's. Using 30 MB to be safe.
-            gb = type_resp['memoryMb'] // 1024
-            machine['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
+        node_line = {
+            'NodeName': None,
+            'State': None,
+            'Gres': f'gpu:{machine.gpu_count}' if machine.gpu_count else None,
+        }
 
-    return machines
-# END expand_machine_type()
+        nodelines = []
+        for node in lkp.template_nodes[template]:
+            static, dynamic = nodenames(node)
+            if static:
+                nodelines.append(dict_to_conf(
+                    {**node_line, 'NodeName': static}
+                ))
+            if dynamic:
+                nodelines.append(dict_to_conf(
+                    {**node_line, 'NodeName': dynamic, 'State': 'CLOUD'}
+                ))
 
+        return '\n'.join(chain([node_def], nodelines))
+
+    def partitionline(part_name):
+        """ Make a partition line for the slurm.conf """
+        partition = cfg.partitions[part_name]
+        node_names = ','.join(filter(None, chain.from_iterable(
+            name for node in partition.nodes if (name := nodenames(node))
+        )))
+
+        def defmempercpu(machine):
+            return max(100, machine.memory // machine.cpus)
+        defmem = min(
+            defmempercpu(lkp.template_details(node.template).machine)
+            for node in partition.nodes
+        )
+        line_elements = {
+            'PartitionName': part_name,
+            'Nodes': node_names,
+            'State': 'UP',
+            'DefMemPerCPU': defmem,
+            'LLN': 'yes',
+            'Oversubscribe': 'Exclusive' if partition.exclusive else None,
+            **partition.conf,
+        }
+        
+        return dict_to_conf(line_elements)
+
+    static_nodes = ','.join(filter(None, (
+        nodenames(node)[0]
+        for part in cfg.partitions.values()
+        for node in part.nodes
+    )))
+    suspend_exc = dict_to_conf({
+        'SuspendExcNodes': static_nodes,
+    }) if static_nodes else None
+
+    preamble = """
+# This file was generated by a script. It may be overwritten if the script is
+# run again.
+"""
+
+    # lkp.template_nodes triggers the long api lookup calls
+    lines = [
+        preamble,
+        *(nodeline(t) for t in lkp.template_nodes),
+        *(partitionline(p) for p in cfg.partitions),
+        suspend_exc,
+    ]
+    cloud_conf = slurmdirs.etc/'cloud.conf'
+
+    content = '\n\n'.join(filter(None, lines))
+    cloud_conf.write_text(content + '\n')
+        
 
 def install_slurm_conf():
     """ install slurm.conf """
-    machines = expand_machine_type()
 
     if cfg.ompi_version:
         mpi_default = "pmi2"
@@ -241,63 +292,6 @@ def install_slurm_conf():
     }
     conf_resp = util.get_metadata('attributes/slurm_conf_tpl')
     conf = conf_resp.format(**conf_options)
-
-    static_nodes = []
-    for i, (pid, machine) in enumerate(machines.items()):
-        part = cfg.instance_defs[pid]
-        static_range = ''
-        if part.static_node_count:
-            if part.static_node_count > 1:
-                static_range = '{}-[0-{}]'.format(
-                    pid, part.static_node_count - 1)
-            else:
-                static_range = f"{pid}-0"
-
-        cloud_range = ""
-        if (part.max_node_count and
-                (part.max_node_count != part.static_node_count)):
-            cloud_range = "{}-[{}-{}]".format(
-                pid, part.static_node_count,
-                part.max_node_count - 1)
-
-        conf += ("NodeName=DEFAULT "
-                 "Sockets=1 "
-                 f"CoresPerSocket={machine['cpus']} "
-                 "ThreadsPerCore=1 "
-                 f"RealMemory={machine['memory']} "
-                 "State=UNKNOWN")
-        conf += '\n'
-
-        # Nodes
-        gres = ""
-        if part.gpu_count:
-            gres = " Gres=gpu:" + str(part.gpu_count)
-        if static_range:
-            static_nodes.append(static_range)
-            conf += f"NodeName={static_range}{gres}\n"
-
-        if cloud_range:
-            conf += f"NodeName={cloud_range} State=CLOUD{gres}\n"
-
-        # instance_defs
-        part_nodes = f'{pid}-[0-{part.max_node_count - 1}]'
-
-        def_mem_per_cpu = max(100, machine['memory'] // machine['cpus'])
-
-        conf += ("PartitionName={} Nodes={} MaxTime=INFINITE "
-                 "State=UP DefMemPerCPU={} LLN=yes"
-                 .format(part.name, part_nodes,
-                         def_mem_per_cpu))
-        if part.exclusive:
-            conf += " Oversubscribe=Exclusive"
-
-        # First partition specified is treated as the default partition
-        if i == 0:
-            conf += " Default=YES"
-        conf += "\n\n"
-
-    if len(static_nodes):
-        conf += "\nSuspendExcNodes={}\n".format(','.join(static_nodes))
 
     conf_file = slurmdirs.etc/'slurm.conf'
     conf_file.write_text(conf)
@@ -346,19 +340,30 @@ def install_cgroup_conf():
     conf_file.write_text(conf)
     shutil.chown(conf_file, user='slurm', group='slurm')
 
-    gpu_conf = ""
-    for pid, part in cfg.instance_defs.items():
-        if not part.gpu_count:
-            continue
-        driver_range = '0'
-        if part.gpu_count > 1:
-            driver_range = '[0-{}]'.format(part.gpu_count-1)
 
-        gpu_conf += ("NodeName={}-[0-{}] Name=gpu File=/dev/nvidia{}\n"
-                     .format(pid, part.max_node_count - 1, driver_range))
-    if gpu_conf:
-        (slurmdirs.etc/'gres.conf').write_text(gpu_conf)
-# END install_cgroup_conf()
+def install_gres_conf():
+    """ install gres.conf """
+
+    gpu_nodes = defaultdict(list)
+    for part in cfg.partitions.values():
+        for node in part.nodes:
+            gpu_count = node.template_details.machine.gpu_count
+            if gpu_count == 0:
+                continue
+            gpu_nodes[gpu_count].extend(
+                filter(None, nodenames(node))
+            )
+
+    lines = [
+        dict_to_conf({
+            'NodeName': names,
+            'Name': 'gpu',
+            'File': '/dev/nvidia{}'.format(f'[0-{i-1}]' if i > 1 else '0'),
+        }) for i, names in gpu_nodes.items()
+    ]
+    if lines:
+        content = '\n'.join(lines)
+        (slurmdirs.etc/'gres.conf').write_text(content)
 
 
 def install_meta_files():
@@ -400,11 +405,13 @@ def install_meta_files():
 # END install_meta_files()
 
 
-def prepare_network_mounts(hostname, instance_type):
+def prepare_network_mounts(node_role, partition=None):
     """ Prepare separate lists of cluster-internal and external mounts for the
     given host instance, returning (external_mounts, internal_mounts)
     """
     log.info("Set up network storage")
+    if not partition and node_role == 'compute':
+        partition = lkp.node_partition(lkp.hostname)
 
     default_mounts = (
         slurmdirs.etc,
@@ -436,9 +443,11 @@ def prepare_network_mounts(hostname, instance_type):
     # default exports from the controller. Be careful, of course
     mounts.update(listtodict(cfg.network_storage))
 
-    if instance_type == 'compute':
-        pid = util.get_pid(hostname)
-        mounts.update(listtodict(cfg.instance_defs[pid].network_storage))
+    if node_role == 'compute' and partition is not None:
+        if partition:
+            mounts.update(listtodict(cfg.partitions[partition].network_storage))
+        else:
+            util.get_metadata('attributes/compute-network-storage')
     else:
         # login_network_storage is mounted on controller and login instances
         mounts.update(listtodict(cfg.login_network_storage))
@@ -536,12 +545,12 @@ def setup_nfs_exports():
     """ nfs export all needed directories """
     # The controller only needs to set up exports for cluster-internal mounts
     # switch the key to remote mount path since that is what needs exporting
-    _, con_mounts = prepare_network_mounts(cfg.hostname, cfg.instance_type)
+    _, con_mounts = prepare_network_mounts(cfg.hostname, lkp.node_role)
     con_mounts = {m.remote_mount: m for m in con_mounts.values()}
-    for pid, _ in cfg.instance_defs.items():
+    for part in cfg.partitions:
         # get internal mounts for each partition by calling
         # prepare_network_mounts as from a node in each partition
-        _, part_mounts = prepare_network_mounts(f'{pid}-n', 'compute')
+        _, part_mounts = prepare_network_mounts('compute', partition=part)
         part_mounts = {m.remote_mount: m for m in part_mounts.values()}
         con_mounts.update(part_mounts)
 
@@ -680,10 +689,13 @@ def run_custom_scripts():
 
 def setup_controller():
     """ Run controller setup """
-    expand_instance_templates()
-    install_cgroup_conf()
     install_slurm_conf()
     install_slurmdbd_conf()
+
+    gen_cloud_nodes_conf()
+    install_cgroup_conf()
+    install_gres_conf()
+
     setup_jwt_key()
     run("create-munge-key -f")
     run("systemctl restart munge")
@@ -741,16 +753,22 @@ def setup_compute():
     setup_network_storage()
     mount_fstab()
 
-    pid = util.get_pid(cfg.hostname)
-    if (not cfg.instance_defs[pid].image_hyperthreads and
-            shutil.which('google_mpi_tuning')):
-        util.run("google_mpi_tuning --nosmt")
-    if cfg.instance_defs[pid].gpu_count:
+    template = lkp.node_template_details(cfg.hostname)
+    # if (not cfg.instance_defs[pid].image_hyperthreads and
+    #         shutil.which('google_mpi_tuning')):
+    #     run("google_mpi_tuning --nosmt")
+
+    if template.machine.gpu_count:
         retries = n = 50
-        while util.run("nvidia-smi").returncode != 0 and n > 0:
+        while n:
+            if run("nvidia-smi").returncode == 0:
+                break
             n -= 1
             log.info(f"Nvidia driver not yet loaded, try {retries-n}")
             time.sleep(5)
+        else:
+            # nvidia driver failed to load
+            return
 
     run_custom_scripts()
 

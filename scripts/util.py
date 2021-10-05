@@ -16,18 +16,22 @@
 import logging
 import logging.config
 import os
+import re
 import shlex
+import socket
 import subprocess
 import sys
-import socket
-import time
+from collections import OrderedDict, namedtuple, defaultdict
+from concurrent.futures import ThreadPoolExecutor, Future
+from contextlib import contextmanager
 from functools import lru_cache, cached_property
 from itertools import chain, compress
+from operator import itemgetter
 from pathlib import Path
-from contextlib import contextmanager
-from collections import OrderedDict
-import googleapiclient.discovery
+from threading import Lock
+from time import sleep
 
+import googleapiclient.discovery
 import requests
 import yaml
 from addict import Dict as NSDict
@@ -116,7 +120,7 @@ def run(cmd, wait=0, quiet=False, get_stdout=False,
                          universal_newlines=universal_newlines,
                          **kwargs)
     if wait:
-        time.sleep(wait)
+        sleep(wait)
     return ret
 
 
@@ -126,12 +130,6 @@ def spawn(cmd, quiet=False, shell=False, **kwargs):
         log.debug(f"spawn: {cmd}")
     args = cmd if shell else shlex.split(cmd)
     return subprocess.Popen(args, shell=shell, **kwargs)
-
-
-def get_pid(node_name):
-    """Convert <prefix>-<pid>-<nid>"""
-
-    return '-'.join(node_name.split('-')[:-1])
 
 
 @contextmanager
@@ -157,28 +155,51 @@ def static_vars(**kwargs):
     return decorate
 
 
-class cached_property:
-    """
-    Descriptor for creating a property that is computed once and cached
-    """
-    def __init__(self, factory):
-        self._attr_name = factory.__name__
-        self._factory = factory
+class threadsafe_iterator:
+    """ make any iterator or generator thread-safe """
+    def __init__(self, iterator):
+        self.iterator = iterator
+        self.lock = Lock()
 
-    def __get__(self, instance, owner=None):
-        if instance is None:  # only if invoked from class
-            return self
-        attr = self._factory(instance)
-        setattr(instance, self._attr_name, attr)
-        return attr
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        with self.lock:
+            return self.iterator.__next__()
 
 
+def threadsafe_generator(func):
+    """ Decorator that applies threadsafe_iterator to a generator """
+    def wrapper(*args, **kwargs):
+        return threadsafe_iterator(func(*args, **kwargs))
+    return wrapper
+
+
+@threadsafe_generator
+def make_compute_pool(max_count=None, wait=1):
+    LockCompute = namedtuple('LockCompute', 'compute,lock')
+    computes = []
+    while True:
+        find_unlocked = (c for c in computes if not c.lock.locked())
+        if not (c := next(find_unlocked, None)):
+            if max_count and len(computes) >= max_count:
+                sleep(wait)
+                continue
+            compute = googleapiclient.discovery.build(
+                'compute', 'v1', cache_discovery=False)
+            c = LockCompute(compute, Lock())
+            computes.append(c)
+        c.lock.acquire()
+        yield c
 
 
 class Lookup:
     """ Wrapper class for cached data looked up from Google or derived from a
     Config
     """
+    regex = r'(?P<name>[^\s\-]+)-(?P<template>\S+)-(?P<partition>[^\s\-]+)-(?P<index>\d+)'
+    node_parts_regex = re.compile(regex)
 
     def __init__(self, cfg):
         self.compute_pool = make_compute_pool()
@@ -196,6 +217,140 @@ class Lookup:
     def exclusive(self):
         return bool(self.cfg.exclusive or self.cfg.enable_placement)
 
+    @cached_property
+    def template_nodes(self):
+        template_nodes = defaultdict(list)
+        with ThreadPoolExecutor() as exe:
+            futures = {}
+            for part, conf in self.cfg.partitions.items():
+                for node in conf.nodes:
+                    # shim in partition so template knows it for nodeline
+                    node.partition = part
+                    template_nodes[node.template].append(node)
+                    f = exe.submit(self.template_details, node.template)
+                    futures[f] = node
+            # not strictly necessary, but store a reference to the template
+            # details on each node just for fun
+            for f, node in futures.items():
+                node.template_details = f.result()
+        return template_nodes
+
+    @lru_cache(maxsize=None)
+    def _node_parts(self, node_name):
+        """ Get parts from node name """
+        m = self.node_parts_regex.match(node_name)
+        if not m:
+            raise Exception(f"node name {node_name} is not valid")
+        return NSDict(m.groupdict())
+
+    def node_template(self, node_name):
+        return self._node_parts(node_name).template
+
+    def node_template_props(self, node_name):
+        return self.template_props(self.node_template(node_name))
+    
+    def node_template_details(self, node_name):
+        return self.template_props(self.node_template(node_name))
+    
+    def node_partition(self, node_name):
+        return self._node_parts(node_name).partition
+
+    def node_index(self, node_name):
+        return self._node_parts(node_name).index
+
+    def get_node_conf(self, node_name):
+        parts = self._node_parts(node_name)
+        try:
+            node_conf = next(
+                n for n in self.cfg.partitions[parts.partition].nodes
+                if n.template == parts.template
+            )
+        except StopIteration:
+            raise Exception(f"node name {node_name} not found among partitions nodes")
+        return node_conf
+
+    def template_details(self, template, project=None):
+        template_props = self.template_props(template)
+        if template_props.machine:
+            return template_props
+
+        template_props.machine_details = self.machine_type(
+            template_props.machineType)
+        md = template_props.machine_details
+        machine = NSDict()
+
+        # TODO how is smt passed?
+        #machine['cpus'] = machine['guestCpus'] // (1 if part.image_hyperthreads else 2) or 1
+        machine.cpus = md.guestCpus
+        # Because the actual memory on the host will be different than
+        # what is configured (e.g. kernel will take it). From
+        # experiments, about 16 MB per GB are used (plus about 400 MB
+        # buffer for the first couple of GB's. Using 30 MB to be safe.
+        gb = md.memoryMb // 1024
+        machine.memory = md.memoryMb - (400 + (30 * gb))
+
+        machine.gpu_count = md.guestAccelerators.acceleratorCount or 0
+        machine.gpu_type = md.guestAccelerators.acceleratorType or None
+
+        template_props.machine = machine
+        return template_props
+
+    @lru_cache(maxsize=None)
+    def template_props(self, template, project=None):
+        if project is None:
+            project = self.cfg.project
+        compute, lock = next(self.compute_pool)
+        tpl_filter = f'(name={self.cfg.cluster_name}-{template}-*)'
+        template_list = ensure_execute(
+            compute.instanceTemplates().list(
+                project=project,
+                filter=tpl_filter)
+        ).get('items', [])
+        lock.release()
+        template_list.sort(key=itemgetter('creationTimestamp'))
+        try:
+            template_details = next(iter(template_list))
+        except StopIteration:
+            raise Exception(f"template {template} not found")
+        template_details = NSDict(template_details)
+        # name is above properties, so stick it into properties in order to just
+        # return properties
+        template_details.properties.name = template_details.name
+        template_details.properties.url = template_details.selfLink
+        return template_details.properties
+
+    @lru_cache(maxsize=None)
+    def machine_type(self, machine_type, project=None, zone=None):
+        """  """
+        if project is None:
+            project = self.cfg.project
+        compute, lock = next(self.compute_pool)
+        if zone:
+            machine_details = ensure_execute(compute.machineTypes().get(
+                project=project, zone=zone, machineType=machine_type
+            ))
+        else:
+            machines = defaultdict(dict)
+            page = None
+            while True:
+                result = ensure_execute(compute.machineTypes().aggregatedList(
+                    project=project, pageToken=page))
+                page = result.get('nextPageToken')
+                machine_iter = chain.from_iterable(
+                    m['machineTypes'] for m in result['items'].values() if
+                    'machineTypes' in m
+                )
+                for machine in machine_iter:
+                    name = machine['name']
+                    zone = machine['zone']
+                    machines[name][zone] = machine
+    
+                if not page:
+                    break
+            # without a zone, just get the first one
+            machine_details = next(iter(machines[machine_type].values()))
+        lock.release()
+        return NSDict(machine_details)
 
 
 class Config(NSDict):
@@ -238,14 +393,10 @@ class Config(NSDict):
     def new_config(cls, properties):
         # If k is ever not found, None will be inserted as the value
         cfg = cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
-        if cfg.partitions:
-            cfg['instance_defs'] = Config({
-                f'{cfg.cluster_name}-compute-{pid}': part
-                for pid, part in enumerate(cfg.partitions)
-            })
 
         for netstore in (*cfg.network_storage, *(cfg.login_network_storage or []),
-                         *chain(*(p.network_storage for p in (cfg.partitions or [])))):
+                         *chain(*(p.network_storage for p in
+                                  (cfg.partitions or {}).values()))):
             if netstore.server_ip == '$controller':
                 netstore.server_ip = cfg.cluster_name + '-controller'
         return cfg
@@ -257,13 +408,7 @@ class Config(NSDict):
 
     def save_config(self, path):
         save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
-        if save_dict.instance_defs:
-            for instance_type in save_dict.instance_defs.values():
-                instance_type.pop('max_node_count', 0)
-                instance_type.pop('name', 0)
-                instance_type.pop('static_node_count', 0)
         Path(path).write_text(yaml.dump(save_dict, Dumper=Dumper))
-
 
 
 class Dumper(yaml.SafeDumper):
@@ -299,7 +444,7 @@ def ensure_execute(operation):
                 retry += 1
                 sleep = min(sleep*2, max_sleep)
                 log.error(f"retry:{retry} sleep:{sleep} '{e}'")
-                time.sleep(sleep)
+                sleep(sleep)
                 continue
             raise
 
