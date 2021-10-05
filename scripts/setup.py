@@ -640,10 +640,16 @@ def configure_dirs():
         p.mkdirp()
         shutil.chown(p, user='slurm', group='slurm')
 
-    (dirs.scripts/'etc').symlink_to(slurmdirs.etc)
+    etcdir = dirs.scripts/'etc'
+    if etcdir.exists() and etcdir.is_symlink():
+        etcdir.unlink()
+    etcdir.symlink_to(slurmdirs.etc)
     shutil.chown(dirs.scripts/'etc', user='slurm', group='slurm')
 
-    (dirs.scripts/'log').symlink_to(slurmdirs.log)
+    logdir = dirs.scripts/'log'
+    if logdir.exists() and logdir.is_symlink():
+        logdir.unlink()
+    logdir.symlink_to(slurmdirs.log)
     shutil.chown(dirs.scripts/'log', user='slurm', group='slurm')
 
 
