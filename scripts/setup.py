@@ -366,6 +366,13 @@ def install_meta_files():
     cfg.save_config(dirs.scripts/'config.yaml')
     shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
 
+    custom_pattern = re.compile(r'^custom-(\S+)-(S+)$')
+    metadata = util.get_metadata('attributes/').split('\n')
+    custom_scripts = [
+        (f'custom/{m[1]}.d/{m[2]}', s)
+        for s in metadata if (m := custom_pattern.match(s))
+    ]
+
     meta_entries = [
         ('suspend.py', 'slurm-suspend'),
         ('resume.py', 'slurm-resume'),
@@ -373,15 +380,16 @@ def install_meta_files():
         ('util.py', 'util-script'),
         ('setup.py', 'setup-script'),
         ('startup.sh', 'startup-script'),
-        ('custom-compute-install', 'custom-compute-install'),
-        ('custom-controller-install', 'custom-controller-install'),
+        *custom_scripts,
     ]
 
     def install_metafile(filename, metaname):
         text = util.get_metadata('attributes/' + metaname)
         if not text:
             return
-        path = dirs.scripts/filename
+        path = (dirs.scripts/filename).resolve()
+        # make sure parent dir exists
+        path.parent.mkdirp()
         path.write_text(text)
         path.chmod(0o755)
         shutil.chown(path, user='slurm', group='slurm')
