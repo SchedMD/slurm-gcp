@@ -140,12 +140,13 @@ locals {
 
   controller_config = jsonencode({
     ### setup ###
-    cloudsql     = var.config.cloudsql
     cluster_name = var.cluster_name
     controller   = local.controller
     project      = var.project_id
-    munge_key    = var.config.munge_key
-    jwt_key      = var.config.jwt_key
+
+    cloudsql  = var.config.cloudsql
+    munge_key = var.config.munge_key
+    jwt_key   = var.config.jwt_key
 
     ### storage ###
     network_storage       = var.config.network_storage
