@@ -16,7 +16,7 @@ apply:
 	terraform apply -var-file=$(TFVARS) -auto-approve
 
 destroy:
-	$(SCRIPTS)/destroy_nodes.py $(shell grep "cluster_name" $(TFVARS) | cut -d'=' -f2)
+	$(SCRIPTS)/destroy_nodes.py $(shell grep "project_id" $(TFVARS) | cut -d'=' -f2) $(shell grep "cluster_name" $(TFVARS) | cut -d'=' -f2)
 	terraform destroy -var-file=$(TFVARS) -auto-approve
 
 format:
