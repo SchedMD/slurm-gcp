@@ -340,14 +340,24 @@ variable "compute_templates" {
 
 variable "partitions" {
   type = map(object({
+    region      = string      // description: The subnetwork region to create instances in.
+    subnet_name = string      // description: The subnetwork name to create instances in.
+    zone_policy = map(string) // description: Zone location policy for regional bulkInsert.
     nodes = list(object({
       template      = string // description: The compute template, by key, from 'compute_templates'.
       count_static  = number // description: Number of static nodes. These nodes are exempt from SuspendProgram and ResumeProgram.
       count_dynamic = number // description: Number of dynamic nodes. These nodes are subject to SuspendProgram and ResumeProgram.
-      subnet_name   = string // description: The subnetwork name to create instance in.
-      subnet_region = string // description: The subnetwork region to create instance in.
     }))
-    conf = map(string) // description: Partition configuration map.
+    network_storage = list(object({ // description: mounted on all instances
+      server_ip     = string        // description: Address of the storage server.
+      remote_mount  = string        // description: The location in the remote instance filesystem to mount from.
+      local_mount   = string        // description: The location on the instance filesystem to mount to.
+      fs_type       = string        // description: Filesystem type (e.g. "nfs").
+      mount_options = string        // description: Options to mount with.
+    }))
+    exclusive        = bool
+    placement_groups = bool
+    conf             = map(string) // description: Partition configuration map.
   }))
   default = {}
 }
