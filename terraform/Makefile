@@ -1,4 +1,6 @@
 SCRIPTS=../scripts
+PIPFILE=$(SCRIPTS)/Pipfile
+PIPENV=PIPENV_PIPFILE=$(PIPFILE) pipenv
 TFVARS=vars.tfvars
 
 .PHONY: init validate plan apply destroy format
@@ -15,8 +17,11 @@ plan:
 apply:
 	terraform apply -var-file=$(TFVARS) -auto-approve
 
-destroy:
-	$(SCRIPTS)/destroy_nodes.py $(shell grep "cluster_name" $(TFVARS) | cut -d'=' -f2)
+pipenv:
+	$(PIPENV) install
+
+destroy: pipenv
+	$(PIPENV) run $(SCRIPTS)/destroy_nodes.py $(shell grep "cluster_name" $(TFVARS) | cut -d'=' -f2)
 	terraform destroy -var-file=$(TFVARS) -auto-approve
 
 format:
