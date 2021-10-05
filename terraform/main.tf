@@ -503,7 +503,7 @@ module "compute_template" {
   ### template ###
   instance_template_project = each.value.instance_template_project
   instance_template         = each.value.instance_template
-  name_prefix               = "${var.cluster_name}-compute-${each.key}"
+  name_prefix               = "${var.cluster_name}-${each.key}"
 
   ### instance ###
   service_account          = var.compute_service_account
