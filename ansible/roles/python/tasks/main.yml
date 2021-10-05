@@ -45,15 +45,14 @@
     PYENV_ROOT: "{{pyenv_root}}"
     PATH: "{{pyenv_root}}/plugins/python-build/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin"
 
-- name: Install pipenv
-  command: /usr/local/bin/python -m pip install pipenv
-
 - name: Install Python Packages
   pip:
     name:
+      - pipenv
       - pyyaml
       - requests
       - google-api-python-client
+      - google-cloud-storage
     extra_args: --upgrade
-    executable: pip3
+    executable: /usr/local/bin/pip3
     state: present
