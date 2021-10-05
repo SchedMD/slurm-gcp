@@ -324,7 +324,9 @@ def install_slurmdbd_conf():
 
         db_host_str = cfg.cloudsql.server_ip.split(':')
         conf_options.db_host = db_host_str[0]
-        conf_options.db_port = db_host_str[1] if len(db_host_str) >= 2 else '3306'
+        conf_options.db_port = (
+            db_host_str[1] if len(db_host_str) >= 2 else '3306'
+        )
 
     conf_resp = util.get_metadata('attributes/slurmdbd_conf_tpl')
     conf = conf_resp.format(**conf_options)
@@ -606,6 +608,27 @@ def setup_nss_slurm():
 # END setup_nss_slurm()
 
 
+def configure_mysql():
+    cnfdir = Path('/etc/my.cnf.d')
+    if not cnfdir.exists():
+        cnfdir = Path('/etc/mysql/conf.d')
+    if not (cnfdir/'mysql_slurm.cnf').exists():
+        (cnfdir/'mysql_slurm.cnf').write_text("""
+[mysqld]
+bind-address=127.0.0.1
+innodb_buffer_pool_size=1024M
+innodb_log_file_size=64M
+innodb_lock_wait_timeout=900
+""")
+    run('systemctl enable mariadb')
+    run('systemctl restart mariadb')
+
+    mysql = "mysql -u root -e"
+    run(f"""{mysql} "create user 'slurm'@'localhost'";""")
+    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""")
+    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
+
+
 def configure_dirs():
 
     for p in dirs.values():
@@ -624,6 +647,23 @@ def configure_dirs():
     shutil.chown(dirs.scripts/'log', user='slurm', group='slurm')
 
 
+def run_custom_scripts():
+    """ run custom scripts based on node role """
+    custom_dir = dirs.scripts/'custom'
+    if lkp.node_role == 'controller':
+        custom_dir = custom_dir/'controller.d'
+    custom_scripts = (
+        p for p in custom_dir.rglob('*') if not p.name.endswith('.disabled')
+    )
+
+    try:
+        for script in custom_scripts:
+            run(str(script))
+    except Exception:
+        # Ignore blank files with no shell magic.
+        pass
+
+
 def setup_controller():
     """ Run controller setup """
     expand_instance_templates()
@@ -639,34 +679,10 @@ def setup_controller():
     setup_network_storage()
     mount_fstab()
 
-    try:
-        util.run(str(dirs.scripts/'custom-controller-install'))
-    except Exception:
-        # Ignore blank files with no shell magic.
-        pass
+    run_custom_scripts()
 
     if not cfg.cloudsql:
-        cnfdir = Path('/etc/my.cnf.d')
-        if not cnfdir.exists():
-            cnfdir = Path('/etc/mysql/conf.d')
-        if not (cnfdir/'mysql_slurm.cnf').exists():
-            (cnfdir/'mysql_slurm.cnf').write_text("""
-[mysqld]
-bind-address=127.0.0.1
-innodb_buffer_pool_size=1024M
-innodb_log_file_size=64M
-innodb_lock_wait_timeout=900
-""")
-        util.run('systemctl enable mariadb')
-        util.run('systemctl restart mariadb')
-
-        mysql = "mysql -u root -e"
-        util.run(
-            f"""{mysql} "create user 'slurm'@'localhost'";""")
-        util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""")
-        util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
+        configure_mysql()
 
     run("systemctl enable slurmdbd")
     run("systemctl start slurmdbd")
@@ -698,13 +714,10 @@ def setup_login():
     """ run login node setup """
     setup_network_storage()
     mount_fstab()
-    util.run("systemctl restart munge")
+    run("systemctl restart munge")
 
-    try:
-        util.run(str(dirs.scripts/'custom-compute-install'))
-    except Exception:
-        # Ignore blank files with no shell magic.
-        pass
+    run_custom_scripts()
+
     log.info("Done setting up login")
 
 
@@ -725,11 +738,7 @@ def setup_compute():
             log.info(f"Nvidia driver not yet loaded, try {retries-n}")
             time.sleep(5)
 
-    try:
-        util.run(str(dirs.scripts/'custom-compute-install'))
-    except Exception:
-        # Ignore blank files with no shell magic.
-        pass
+    run_custom_scripts()
 
     setup_slurmd_cronjob()
     run("systemctl restart munge")
