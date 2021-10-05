@@ -94,6 +94,8 @@ locals {
 
     cluster_name = var.cluster_name
   }
+
+  controller = "${var.cluster_name}-controller"
 }
 
 ### Controller ###
@@ -140,6 +142,7 @@ locals {
     ### setup ###
     cloudsql     = var.config.cloudsql
     cluster_name = var.cluster_name
+    controller   = local.controller
     project      = var.project_id
     munge_key    = var.config.munge_key
     jwt_key      = var.config.jwt_key
@@ -217,6 +220,7 @@ locals {
   login_config = jsonencode({
     ### setup ###
     cluster_name = var.cluster_name
+    controller   = local.controller
     munge_key    = var.config.munge_key
 
     ### storage ###
@@ -336,7 +340,7 @@ module "controller_template" {
   ### template ###
   instance_template_project = each.value.instance_template_project
   instance_template         = each.value.instance_template
-  name_prefix               = "${var.cluster_name}-controller"
+  name_prefix               = local.controller
 
   ### instance ###
   service_account          = var.controller_service_account
@@ -375,9 +379,10 @@ module "controller_instance" {
   region             = each.value.subnet_region
 
   ### instance ###
-  instance_template = module.controller_template[each.value.template].self_link
-  num_instances     = each.value.count_static
-  hostname          = "${var.cluster_name}-controller-${each.value.subnet_region}"
+  instance_template   = module.controller_template[each.value.template].self_link
+  num_instances       = each.value.count_static
+  hostname            = local.controller
+  add_hostname_suffix = false
 
   ### metadata ###
   metadata = merge(
