@@ -15,12 +15,15 @@
 
 set -e
 
-FLAGFILE=/slurm/slurm_configured_do_not_remove
+SLURM_DIR=/slurm
+SCRIPTS_DIR=$SLURM_DIR/scripts
+mkdir -p $SCRIPTS_DIR
+
+FLAGFILE=$SLURM_DIR/slurm_configured_do_not_remove
 if [ -f $FLAGFILE ]; then
 	echo "Slurm was previously configured, quitting"
 	exit 0
 fi
-mkdir -p $(dirname $FLAGFILE)
 touch $FLAGFILE
 
 PING_HOST=8.8.8.8
@@ -28,17 +31,17 @@ if ( ! ping -q -w1 -c1 $PING_HOST > /dev/null ) ; then
 	echo No internet access detected
 fi
 
-SETUP_SCRIPT="setup.py"
+# setup script in metadata takes precedence
 SETUP_META="setup-script"
-DIR="/tmp"
 URL="http://metadata.google.internal/computeMetadata/v1/instance/attributes/$SETUP_META"
 HEADER="Metadata-Flavor:Google"
-echo  "wget -nv --header $HEADER $URL -O $DIR/$SETUP_SCRIPT"
-if ! ( wget -nv --header $HEADER $URL -O $DIR/$SETUP_SCRIPT ) ; then
-    echo "Failed to fetch $SETUP_META:$SETUP_SCRIPT from metadata"
-    exit 1
+SETUP_SCRIPT="$SCRIPTS_DIR/setup.py"
+get_metadata="wget -nv --header $HEADER $URL -O $SETUP_SCRIPT"
+echo $get_metadata
+if ! ( $get_metadata ) ; then
+    echo "setup script $SETUP_META not found in metadata"
 fi
 
 echo "running python cluster setup script"
-chmod +x $DIR/$SETUP_SCRIPT
-$DIR/$SETUP_SCRIPT
+chmod +x $SETUP_SCRIPT
+exec $SETUP_SCRIPT
