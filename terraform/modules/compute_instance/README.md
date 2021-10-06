@@ -1,4 +1,4 @@
-# Slurm `compute_instance` Module
+# Terraform Module
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 Copyright 2021 SchedMD LLC
