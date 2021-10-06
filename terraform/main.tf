@@ -100,15 +100,11 @@ locals {
 
 locals {
   controller_service_account = (
-    {
-      email = var.controller_service_account.email
-      scopes = (
-        var.controller_service_account.scopes != null
-        ? var.controller_service_account.scopes
-        : [
-          "https://www.googleapis.com/auth/cloud-platform",
-        ]
-      )
+    var.controller_service_account != null
+    ? var.controller_service_account
+    : {
+      email  = null
+      scopes = null
     }
   )
 
@@ -117,14 +113,6 @@ locals {
     ? var.controller_templates
     : {}
   )
-
-  controller_template_map = {
-    for x in var.controller_templates
-    : "${x.subnet_region}/${x.subnet_name != null ? x.subnet_name : local.subnet_default_name}" => {
-      subnet_name   = x.subnet_name != null ? x.subnet_name : local.subnet_default_name
-      subnet_region = x.subnet_region
-    }
-  }
 
   controller_instances_map = {
     for x in var.controller_instances
@@ -178,15 +166,11 @@ locals {
 
 locals {
   login_service_account = (
-    {
-      email = var.login_service_account.email
-      scopes = (
-        var.login_service_account.scopes != null
-        ? var.login_service_account.scopes
-        : [
-          "https://www.googleapis.com/auth/cloud-platform",
-        ]
-      )
+    var.login_service_account != null
+    ? var.login_service_account
+    : {
+      email  = null
+      scopes = null
     }
   )
 
@@ -195,14 +179,6 @@ locals {
     ? var.login_templates
     : {}
   )
-
-  login_template_map = {
-    for x in var.login_templates
-    : "${x.subnet_region}/${x.subnet_name != null ? x.subnet_name : local.subnet_default_name}" => {
-      subnet_name   = x.subnet_name != null ? x.subnet_name : local.subnet_default_name
-      subnet_region = x.subnet_region
-    }
-  }
 
   login_instances_map = {
     for x in var.login_instances
@@ -243,15 +219,11 @@ locals {
 
 locals {
   compute_service_account = (
-    {
-      email = var.compute_service_account.email
-      scopes = (
-        var.compute_service_account.scopes != null
-        ? var.compute_service_account.scopes
-        : [
-          "https://www.googleapis.com/auth/cloud-platform",
-        ]
-      )
+    var.compute_service_account != null
+    ? var.compute_service_account
+    : {
+      email  = null
+      scopes = null
     }
   )
 
@@ -323,8 +295,7 @@ module "controller_template" {
   for_each = local.controller_templates
 
   ### general ###
-  project_id   = var.project_id
-  cluster_name = var.cluster_name
+  project_id = var.project_id
 
   ### network ###
   subnetwork_project = var.network.subnetwork_project
@@ -339,7 +310,7 @@ module "controller_template" {
   name_prefix               = "${var.cluster_name}-controller"
 
   ### instance ###
-  service_account          = var.controller_service_account
+  service_account          = local.controller_service_account
   machine_type             = each.value.machine_type
   min_cpu_platform         = each.value.min_cpu_platform
   gpu                      = each.value.gpu
@@ -404,8 +375,7 @@ module "login_template" {
   for_each = local.login_templates
 
   ### general ###
-  project_id   = var.project_id
-  cluster_name = var.cluster_name
+  project_id = var.project_id
 
   ### network ###
   subnetwork_project = var.network.subnetwork_project
@@ -420,7 +390,7 @@ module "login_template" {
   name_prefix               = "${var.cluster_name}-login"
 
   ### instance ###
-  service_account          = var.login_service_account
+  service_account          = local.login_service_account
   machine_type             = each.value.machine_type
   min_cpu_platform         = each.value.min_cpu_platform
   gpu                      = each.value.gpu
@@ -484,8 +454,7 @@ module "compute_template" {
   for_each = local.compute_templates
 
   ### general ###
-  project_id   = var.project_id
-  cluster_name = var.cluster_name
+  project_id = var.project_id
 
   ### network ###
   subnetwork_project = var.network.subnetwork_project
@@ -500,7 +469,7 @@ module "compute_template" {
   name_prefix               = "${var.cluster_name}-compute-${each.key}"
 
   ### instance ###
-  service_account          = var.compute_service_account
+  service_account          = local.compute_service_account
   machine_type             = each.value.machine_type
   min_cpu_platform         = each.value.min_cpu_platform
   gpu                      = each.value.gpu

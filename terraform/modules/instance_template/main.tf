@@ -30,7 +30,9 @@ locals {
     scopes = (
       var.service_account.scopes != null
       ? var.service_account.scopes
-      : []
+      : [
+        "https://www.googleapis.com/auth/cloud-platform",
+      ]
     )
   }
 

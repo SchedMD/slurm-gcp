@@ -18,8 +18,9 @@ output "cluster_name" {
 }
 
 output "config" {
-  value     = module.slurm_cluster.config
-  sensitive = true
+  description = "Cluster configuration details"
+  value       = module.slurm_cluster.config
+  sensitive   = true
 }
 
 output "vpc" {
@@ -28,13 +29,16 @@ output "vpc" {
 }
 
 output "controller_template" {
-  value = module.slurm_cluster.controller_template
+  description = "Controller template details"
+  value       = module.slurm_cluster.controller_template
 }
 
 output "login_template" {
-  value = module.slurm_cluster.login_template
+  description = "Login template details"
+  value       = module.slurm_cluster.login_template
 }
 
 output "compute_templates" {
-  value = module.slurm_cluster.compute_template
+  description = "Compute template details"
+  value       = module.slurm_cluster.compute_template
 }

@@ -13,9 +13,11 @@
 # limitations under the License.
 
 output "self_link" {
-  value = local.instance_template
+  description = "Template self_link"
+  value       = local.instance_template
 }
 
 output "disable_smt" {
-  value = var.disable_smt
+  description = "Template SMT disabled status"
+  value       = var.disable_smt
 }

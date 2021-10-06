@@ -23,21 +23,26 @@ output "vpc" {
 }
 
 output "config" {
-  value     = var.config
-  sensitive = true
+  description = "Cluster configuration details"
+  value       = var.config
+  sensitive   = true
 }
 output "controller_template" {
-  value = module.controller_template
+  description = "Controller template details"
+  value       = module.controller_template
 }
 
 output "login_template" {
-  value = module.login_template
+  description = "Login template details"
+  value       = module.login_template
 }
 
 output "compute_template" {
-  value = module.compute_template
+  description = "Compute template details"
+  value       = module.compute_template
 }
 
 output "partitions" {
-  value = var.partitions
+  description = "Partition Configuration details"
+  value       = var.partitions
 }
