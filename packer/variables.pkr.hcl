@@ -87,6 +87,18 @@ variable "slurm_version" {
 # BUILDS #
 ##########
 
+variable "service_account_email" {
+  description = "The service account email to use. If 'null' or 'default', then the default email will be used."
+  type        = string
+  default     = null
+}
+
+variable "service_account_scopes" {
+  description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
+  type        = list(string)
+  default     = null
+}
+
 variable "builds" {
   type = list(object({
     ### image ###

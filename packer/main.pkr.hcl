@@ -46,13 +46,8 @@ source "googlecompute" "image" {
   tags               = var.tags
 
   ### service account ###
-  scopes = [
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/compute",
-    "https://www.googleapis.com/auth/devstorage.full_control",
-    "https://www.googleapis.com/auth/logging.write",
-    "https://www.googleapis.com/auth/monitoring.write",
-  ]
+  service_account_email = var.service_account_email
+  scopes                = var.service_account_scopes
 }
 
 #########

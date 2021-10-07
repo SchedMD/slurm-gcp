@@ -53,6 +53,18 @@ slurm_version = "slurm-20.11"
 # BUILDS #
 ##########
 
+### Service Account ###
+
+service_account_email = "default"
+
+service_account_scopes = [
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/compute",
+  "https://www.googleapis.com/auth/devstorage.full_control",
+]
+
+### Builds ###
+
 builds = [
   {
     ### image ###
