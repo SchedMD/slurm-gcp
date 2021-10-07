@@ -93,18 +93,25 @@ def handle_exception(exc_type, exc_value, exc_trace):
     sys.__excepthook__(exc_type, exc_value, exc_trace)
 
 
-def get_metadata(path):
-    """ Get metadata relative to metadata/computeMetadata/v1/instance/ """
-    URL = 'http://metadata.google.internal/computeMetadata/v1/instance/'
+ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
+
+
+def get_metadata(path, root=ROOT_URL):
+    """ Get metadata relative to metadata/computeMetadata/v1 """
     HEADERS = {'Metadata-Flavor': 'Google'}
-    full_path = URL + path
+    url = f'{root}/{path}'
     try:
-        resp = requests.get(full_path, headers=HEADERS)
+        resp = requests.get(url, headers=HEADERS)
         resp.raise_for_status()
+        return resp.text
     except requests.exceptions.RequestException:
-        log.error(f"Error while getting metadata from {full_path}")
+        log.error(f"Error while getting metadata from {url}")
         return None
-    return resp.text
+
+
+def instance_metadata(path):
+    """Get instance metadata"""
+    return get_metadata(path, root=f"{ROOT_URL}/instance")
 
 
 def run(cmd, wait=0, quiet=False, get_stdout=False,
@@ -247,7 +254,13 @@ class Lookup:
 
     @cached_property
     def node_role(self):
-        return get_metadata('attributes/instance_type')
+        return instance_metadata('attributes/instance_type')
+
+    @cached_property
+    def project_metadata(self):
+        return get_metadata(
+            f'project/attributes/{self.cfg.cluster_name}-slurm-metadata'
+        )
 
     @cached_property
     def hostname(self):

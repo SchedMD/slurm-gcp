@@ -31,7 +31,7 @@ import yaml
 from addict import Dict as NSDict
 
 import util
-from util import run
+from util import run, instance_metadata
 
 SETUP_SCRIPT = Path(__file__)
 
@@ -59,7 +59,7 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
 })})
 
 # get setup config from metadata
-config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
+config_yaml = yaml.safe_load(instance_metadata('attributes/config'))
 cfg = util.Config.new_config(config_yaml)
 lkp = Lookup(cfg)
 
@@ -359,7 +359,7 @@ def install_meta_files():
     shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
 
     custom_pattern = re.compile(r'^custom-(\S+)-(S+)$')
-    metadata = util.get_metadata('attributes/').split('\n')
+    metadata = util.project_metadata('attributes/').split('\n')
     custom_scripts = [
         (f'custom/{m[1]}.d/{m[2]}', s)
         for s in metadata if (m := custom_pattern.match(s))
@@ -376,7 +376,7 @@ def install_meta_files():
     ]
 
     def install_metafile(filename, metaname):
-        text = util.get_metadata('attributes/' + metaname)
+        text = util.project_metadata('attributes/' + metaname)
         if not text:
             return
         path = (dirs.scripts/filename).resolve()
@@ -434,7 +434,7 @@ def prepare_network_mounts(node_role, partition=None):
         if partition:
             mounts.update(listtodict(cfg.partitions[partition].network_storage))
         else:
-            util.get_metadata('attributes/compute-network-storage')
+            instance_metadata('attributes/compute-network-storage')
     else:
         # login_network_storage is mounted on controller and login instances
         mounts.update(listtodict(cfg.login_network_storage))
