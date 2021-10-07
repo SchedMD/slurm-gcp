@@ -35,10 +35,11 @@ import util
 from util import run, instance_metadata
 
 SETUP_SCRIPT = Path(__file__)
+LOGFILE = SETUP_SCRIPT.with_suffix('.log')
 
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
-util.config_root_logger(logfile=SETUP_SCRIPT.with_suffix('.log'))
+util.config_root_logger(logfile=LOGFILE)
 log = logging.getLogger(SETUP_SCRIPT.name)
 sys.excepthook = util.handle_exception
 
@@ -61,8 +62,8 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
 
 # get setup config from metadata
 config_yaml = yaml.safe_load(instance_metadata('attributes/config'))
-cfg = util.Config.new_config(config_yaml)
-lkp = Lookup(cfg)
+cfg = util.new_config(config_yaml)
+lkp = util.Lookup(cfg)
 
 RESUME_TIMEOUT = 300
 SUSPEND_TIMEOUT = 300
@@ -218,9 +219,7 @@ def gen_cloud_nodes_conf():
     def partitionline(part_name):
         """ Make a partition line for the slurm.conf """
         partition = cfg.partitions[part_name]
-        nodesets = ','.join(filter(None, chain.from_iterable(
-            nodeset(node)for node in partition.nodes
-        )))
+        nodesets = ','.join(nodeset(node)for node in partition.nodes)
 
         def defmempercpu(machine):
             return max(100, machine.memory // machine.cpus)
@@ -287,7 +286,7 @@ def install_slurm_conf():
         'suspend_time': cfg.suspend_time,
         'mpi_default': mpi_default,
     }
-    conf_resp = util.get_metadata('attributes/slurm_conf_tpl')
+    conf_resp = instance_metadata('attributes/slurm_conf_tpl')
     conf = conf_resp.format(**conf_options)
 
     conf_file = slurmdirs.etc/'slurm.conf'
@@ -319,7 +318,7 @@ def install_slurmdbd_conf():
             db_host_str[1] if len(db_host_str) >= 2 else '3306'
         )
 
-    conf_resp = util.get_metadata('attributes/slurmdbd_conf_tpl')
+    conf_resp = instance_metadata('attributes/slurmdbd_conf_tpl')
     conf = conf_resp.format(**conf_options)
 
     conf_file = slurmdirs.etc/'slurmdbd.conf'
@@ -331,7 +330,7 @@ def install_slurmdbd_conf():
 
 def install_cgroup_conf():
     """ install cgroup.conf """
-    conf = util.get_metadata('attributes/cgroup_conf_tpl')
+    conf = instance_metadata('attributes/cgroup_conf_tpl')
 
     conf_file = slurmdirs.etc/'cgroup.conf'
     conf_file.write_text(conf)
@@ -363,17 +362,10 @@ def install_gres_conf():
         (slurmdirs.etc/'gres.conf').write_text(content)
 
 
-def install_meta_files():
-    """ save config.yaml and download all scripts from metadata """
-    cfg.save_config(dirs.scripts/'config.yaml')
-    shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
+def fetch_devel_scripts():
+    """download scripts from project metadata if they are present"""
 
-    custom_pattern = re.compile(r'^custom-(\S+)-(S+)$')
-    metadata = util.project_metadata('attributes/').split('\n')
-    custom_scripts = [
-        (f'custom/{m[1]}.d/{m[2]}', s)
-        for s in metadata if (m := custom_pattern.match(s))
-    ]
+    metadata = lkp.project_metadata
 
     meta_entries = [
         ('suspend.py', 'slurm-suspend'),
@@ -382,32 +374,33 @@ def install_meta_files():
         ('util.py', 'util-script'),
         ('setup.py', 'setup-script'),
         ('startup.sh', 'startup-script'),
-        *custom_scripts,
     ]
 
-    def install_metafile(filename, metaname):
-        text = util.project_metadata('attributes/' + metaname)
-        if not text:
-            return
-        path = (dirs.scripts/filename).resolve()
+    for script, name in meta_entries:
+        if name not in metadata:
+            continue
+        content = metadata[name]
+        path = (dirs.scripts/script).resolve()
         # make sure parent dir exists
-        path.parent.mkdirp()
-        path.write_text(text)
+        path.write_text(content)
         path.chmod(0o755)
         shutil.chown(path, user='slurm', group='slurm')
 
-    future_list = []
-    with ThreadPoolExecutor() as exe:
-        for meta_file in meta_entries:
-            future = exe.submit(lambda x: install_metafile(*x), meta_file)
-            future_list.append(future)
 
-        # Iterate over futures, checking for exceptions
-        for future in future_list:
-            result = future.exception(timeout=60)
-            if result is not None:
-                raise result
-# END install_meta_files()
+def install_custom_compute_scripts():
+    """"""
+    custom_pattern = re.compile(r'custom-compute-(S+)')
+    metadata = lkp.project_metadata
+    custom_scripts = [
+        (f'custom-compute.d/{m[1]}', content)
+        for name, content in metadata.items()
+        if (m := custom_pattern.match(name))
+    ]
+    for name, content in custom_scripts:
+        path = (dirs.scripts/name).resolve()
+        path.write_text(content)
+        path.chmod(0o755)
+        shutil.chown(path, user='slurm', group='slurm')
 
 
 def prepare_network_mounts(node_role, partition=None):
@@ -653,8 +646,8 @@ innodb_lock_wait_timeout=900
     run('systemctl restart mariadb', timeout=30)
 
     mysql = "mysql -u root -e"
-    run(f"""{mysql} "create user 'slurm'@'localhost'";""", timeout=30)
-    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""", timeout=30)
+    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""",
+        timeout=30)
     run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""",
         timeout=30)
 
@@ -707,6 +700,10 @@ stdout={result.stderr}
 
 def setup_controller():
     """ Run controller setup """
+    log.info("Setting up controller")
+    util.save_config(cfg, dirs.scripts/'config.yaml')
+    shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
+
     install_slurm_conf()
     install_slurmdbd_conf()
 
@@ -735,11 +732,12 @@ def setup_controller():
     time.sleep(5)
 
     sacctmgr = f"{dirs.prefix}/bin/sacctmgr -i"
-    result = run(f"{sacctmgr} add cluster {cfg.cluster_name}", timeout=30)
+    result = run(f"{sacctmgr} add cluster {cfg.cluster_name}",
+                 timeout=30, check=False)
     if "This cluster slurm already exists." in result.stdout:
         log.info(result.stdout)
     elif result.returncode > 1:
-        result.check_returncode() # will raise error
+        result.check_returncode()  # will raise error
 
     run("systemctl enable slurmctld", timeout=30)
     run("systemctl start slurmctld", timeout=30)
@@ -760,6 +758,8 @@ def setup_controller():
 
 def setup_login():
     """ run login node setup """
+    log.info("Setting up login")
+
     setup_network_storage()
     mount_fstab()
     run("systemctl restart munge")
@@ -771,11 +771,12 @@ def setup_login():
 
 def setup_compute():
     """ run compute node setup """
+    log.info("Setting up compute")
     setup_nss_slurm()
     setup_network_storage()
     mount_fstab()
 
-    template = lkp.node_template_details(cfg.hostname)
+    template = lkp.node_template_details(lkp.hostname)
     # if (not cfg.instance_defs[pid].image_hyperthreads and
     #         shutil.which('google_mpi_tuning')):
     #     run("google_mpi_tuning --nosmt")
@@ -806,7 +807,7 @@ def main():
 
     start_motd()
     configure_dirs()
-    install_meta_files()
+    fetch_devel_scripts()
 
     # call the setup function for the instance type
     setup = dict.get(
