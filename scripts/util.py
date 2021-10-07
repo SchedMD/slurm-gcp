@@ -21,7 +21,7 @@ import shlex
 import socket
 import subprocess
 import sys
-from collections import OrderedDict, namedtuple, defaultdict
+from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor, Future
 from contextlib import contextmanager
 from functools import lru_cache, cached_property
@@ -176,22 +176,62 @@ def threadsafe_generator(func):
     return wrapper
 
 
+class SyncCompute:
+    """
+    Synchronized wrapper for compute api handle
+    with SyncCompute() as compute:
+        compute.instance().get(...)
+    """
+    def __init__(self):
+        self._lock = Lock()
+        self._compute = googleapiclient.discovery.build(
+            'compute', 'v1', cache_discovery=False)
+
+    @property
+    def locked(self):
+        return self._lock.locked()
+
+    def lock(self):
+        self._lock.acquire()
+
+    def unlock(self):
+        self._lock.release()
+
+    def __enter__(self):
+        # we lock in compute_pool generator to avoid 
+        # very rare hypothetical race condition
+        # if this class was used outside a compute pool, lock here
+        if not self.locked:
+            self.lock()
+        return self._compute
+
+    def __exit__(self, type, value, traceback):
+        self.unlock()
+
+
 @threadsafe_generator
 def make_compute_pool(max_count=None, wait=1):
-    LockCompute = namedtuple('LockCompute', 'compute,lock')
-    computes = []
+    """ maintains a pool of SyncCompute objects, only yielding them when they
+    are not thread locked
+    pool = make_compute_pool()
+    with next(pool) as compute:
+        compute.instances.get(...)
+    """
+    pool = deque(maxlen=max_count)
     while True:
-        find_unlocked = (c for c in computes if not c.lock.locked())
-        if not (c := next(find_unlocked, None)):
-            if max_count and len(computes) >= max_count:
+        find_unlocked = (
+            (c, i) for i, c in enumerate(pool, start=1) if not c.locked
+        )
+        compute, i = next(find_unlocked, (None, 0))
+        if not compute:
+            if max_count and len(pool) >= max_count:
                 sleep(wait)
                 continue
-            compute = googleapiclient.discovery.build(
-                'compute', 'v1', cache_discovery=False)
-            c = LockCompute(compute, Lock())
-            computes.append(c)
-        c.lock.acquire()
-        yield c
+            compute = SyncCompute()
+            pool.append(compute)
+        pool.rotate(-i)  # optimization, move first i to the back
+        compute.lock()
+        yield compute
 
 
 class Lookup:
@@ -201,9 +241,9 @@ class Lookup:
     regex = r'(?P<name>[^\s\-]+)-(?P<template>\S+)-(?P<partition>[^\s\-]+)-(?P<index>\d+)'
     node_parts_regex = re.compile(regex)
 
-    def __init__(self, cfg):
+    def __init__(self, cfg=None):
         self.compute_pool = make_compute_pool()
-        self.cfg = cfg
+        self.cfg = cfg or Config()
 
     @cached_property
     def node_role(self):
@@ -216,6 +256,9 @@ class Lookup:
     @property
     def exclusive(self):
         return bool(self.cfg.exclusive or self.cfg.enable_placement)
+
+    def sync_compute(self):
+        return next(self.compute_pool)
 
     @cached_property
     def template_nodes(self):
@@ -299,14 +342,14 @@ class Lookup:
     def template_props(self, template, project=None):
         if project is None:
             project = self.cfg.project
-        compute, lock = next(self.compute_pool)
+
         tpl_filter = f'(name={self.cfg.cluster_name}-{template}-*)'
-        template_list = ensure_execute(
-            compute.instanceTemplates().list(
-                project=project,
-                filter=tpl_filter)
-        ).get('items', [])
-        lock.release()
+        with self.sync_compute() as compute:
+            template_list = ensure_execute(
+                compute.instanceTemplates().list(
+                    project=project,
+                    filter=tpl_filter)
+            ).get('items', [])
         template_list.sort(key=itemgetter('creationTimestamp'))
         try:
             template_details = next(iter(template_list))
@@ -324,32 +367,33 @@ class Lookup:
         """  """
         if project is None:
             project = self.cfg.project
-        compute, lock = next(self.compute_pool)
         if zone:
-            machine_details = ensure_execute(compute.machineTypes().get(
-                project=project, zone=zone, machineType=machine_type
-            ))
+            with self.sync_compute() as compute:
+                machine_details = ensure_execute(compute.machineTypes().get(
+                    project=project, zone=zone, machineType=machine_type
+                ))
         else:
             machines = defaultdict(dict)
             page = None
-            while True:
-                result = ensure_execute(compute.machineTypes().aggregatedList(
-                    project=project, pageToken=page))
-                page = result.get('nextPageToken')
-                machine_iter = chain.from_iterable(
-                    m['machineTypes'] for m in result['items'].values() if
-                    'machineTypes' in m
-                )
-                for machine in machine_iter:
-                    name = machine['name']
-                    zone = machine['zone']
-                    machines[name][zone] = machine
+            with self.sync_compute() as compute:
+                while True:
+                    op = compute.machineTypes().aggregatedList(
+                        project=project, pageToken=page)
+                    result = ensure_execute(op)
+                    page = result.get('nextPageToken')
+                    machine_iter = chain.from_iterable(
+                        m['machineTypes'] for m in result['items'].values() if
+                        'machineTypes' in m
+                    )
+                    for machine in machine_iter:
+                        name = machine['name']
+                        zone = machine['zone']
+                        machines[name][zone] = machine
     
-                if not page:
-                    break
+                    if not page:
+                        break
             # without a zone, just get the first one
             machine_details = next(iter(machines[machine_type].values()))
-        lock.release()
         return NSDict(machine_details)
 
 
