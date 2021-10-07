@@ -93,7 +93,21 @@ locals {
     VmDnsSetting   = "GlobalOnly"
 
     cluster_name = var.cluster_name
+    startup-script = file("${path.module}/../scripts/startup.sh")
   }
+
+  metadata_devel_scripts = (
+    var.enable_devel == true
+    ? {
+      startup-script = file("${path.module}/../scripts/startup.sh")
+      setup-script  = file("${path.module}/../scripts/setup.py")
+      slurm-resume  = file("${path.module}/../scripts/resume.py")
+      slurm-suspend = file("${path.module}/../scripts/suspend.py")
+      slurmsync     = file("${path.module}/../scripts/slurmsync.py")
+      util-script   = file("${path.module}/../scripts/util.py")
+    }
+    : null
+  )
 
   controller = "${var.cluster_name}-controller"
 }
@@ -141,7 +155,6 @@ locals {
   controller_config = jsonencode({
     ### setup ###
     cluster_name = var.cluster_name
-    controller   = local.controller
     project      = var.project_id
 
     cloudsql  = var.config.cloudsql
@@ -164,18 +177,6 @@ locals {
     slurm_conf_tpl    = file(local.slurm_conf_tpl)
     slurmdbd_conf_tpl = file(local.slurmdbd_conf_tpl)
   }
-
-  controller_metadata_devel = (
-    var.enable_devel == true
-    ? {
-      setup-script  = file("${path.module}/../scripts/setup.py")
-      slurm-resume  = file("${path.module}/../scripts/resume.py")
-      slurm-suspend = file("${path.module}/../scripts/suspend.py")
-      slurmsync     = file("${path.module}/../scripts/slurmsync.py")
-      util-script   = file("${path.module}/../scripts/util.py")
-    }
-    : null
-  )
 }
 
 ### Login ###
@@ -221,7 +222,6 @@ locals {
   login_config = jsonencode({
     ### setup ###
     cluster_name = var.cluster_name
-    controller   = local.controller
     munge_key    = var.config.munge_key
 
     ### storage ###
@@ -233,15 +233,6 @@ locals {
     instance_type = "login"
     config        = local.login_config
   }
-
-  login_metadata_devel = (
-    var.enable_devel == true
-    ? {
-      setup-script = file("${path.module}/../scripts/setup.py")
-      util-script  = file("${path.module}/../scripts/util.py")
-    }
-    : null
-  )
 }
 
 ### Compute ###
@@ -274,20 +265,6 @@ locals {
     ### storage ###
     network_storage = var.config.network_storage
   })
-
-  compute_metadata_slurm = {
-    instance_type = "compute"
-    config        = local.compute_config
-  }
-
-  compute_metadata_devel = (
-    var.enable_devel == true
-    ? {
-      setup-script = file("${path.module}/../scripts/setup.py")
-      util-script  = file("${path.module}/../scripts/util.py")
-    }
-    : null
-  )
 }
 
 ############
@@ -389,9 +366,7 @@ module "controller_instance" {
   metadata = merge(
     local.common_metadata,
     local.controller_metadata_slurm,
-    local.controller_metadata_devel,
     local.scripts_controller_d,
-    local.scripts_compute_d,
     {
       google_mpi_tuning = local.controller_templates[each.value.template].disable_smt == true ? "--nosmt" : null
     },
@@ -470,8 +445,6 @@ module "login_instance" {
   metadata = merge(
     local.common_metadata,
     local.login_metadata_slurm,
-    local.login_metadata_devel,
-    local.scripts_compute_d,
     {
       google_mpi_tuning = local.login_templates[each.value.template].disable_smt == true ? "--nosmt" : null
     },
@@ -530,15 +503,13 @@ module "compute_template" {
 
 ### Metadata ###
 
-resource "google_compute_project_metadata_item" "compute_metadata" {
+resource "google_compute_project_metadata_item" "slurm_metadata" {
   project = var.project_id
 
-  key = "${var.cluster_name}-compute-metadata"
+  key = "${var.cluster_name}-slurm-metadata"
   value = jsonencode(merge(
-    local.common_metadata,
-    local.compute_metadata_slurm,
-    local.compute_metadata_devel,
+    local.metadata_devel_scripts,
     local.scripts_compute_d,
-    module.compute_template,
+    #module.compute_template,
   ))
 }

@@ -31,16 +31,37 @@ if ( ! ping -q -w1 -c1 $PING_HOST > /dev/null ) ; then
 	echo No internet access detected
 fi
 
-# setup script in metadata takes precedence
-SETUP_META="setup-script"
-URL="http://metadata.google.internal/computeMetadata/v1/instance/attributes/$SETUP_META"
-HEADER="Metadata-Flavor:Google"
-SETUP_SCRIPT="$SCRIPTS_DIR/setup.py"
-get_metadata="wget -nv --header $HEADER $URL -O $SETUP_SCRIPT"
-echo $get_metadata
-if ! ( $get_metadata ) ; then
-    echo "setup script $SETUP_META not found in metadata"
-fi
+
+function fetch_scripts {
+	# fetch project metadata
+	URL="http://metadata.google.internal/computeMetadata/v1"
+	HEADER="Metadata-Flavor:Google"
+	CURL="curl --fail --header $HEADER"
+	if ! CLUSTER=$($CURL $URL/instance/attributes/cluster_name); then
+		echo cluster name not found in instance metadata, quitting
+		return 1
+	fi
+	if ! METADATA=$($CURL $URL/project/attributes/$CLUSTER-slurm-metadata); then
+		echo cluster data not found in project metadata, quitting
+		return 1
+	fi
+	if SETUP_SCRIPT=$(jq -re '."setup-script"' <<< $METADATA); then
+		echo updating setup.py from project metadata
+		printf '%s' "$SETUP_SCRIPT" > $SETUP_SCRIPT_FILE
+	else
+		echo setup-script not found in project metadata, skipping update
+	fi
+	if UTIL_SCRIPT=$(jq -re '."util-script"' <<< $METADATA); then
+		echo updating util.py from project metadata
+		printf '%s' "$UTIL_SCRIPT" > $UTIL_SCRIPT_FILE
+	else
+		echo util-script not found in project metadata, skipping update
+	fi
+}
+
+SETUP_SCRIPT_FILE=$SCRIPTS_DIR/setup.py
+UTIL_SCRIPT_FILE=$SCRIPTS_DIR/util.py
+fetch_scripts
 
 echo "running python cluster setup script"
 chmod +x $SETUP_SCRIPT

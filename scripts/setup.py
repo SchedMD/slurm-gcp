@@ -27,26 +27,13 @@ from itertools import chain
 from pathlib import Path
 from subprocess import DEVNULL
 
-import requests
 import yaml
 from addict import Dict as NSDict
 
-# get util.py from metadata, if found
-SETUP_SCRIPT = Path(__file__)
-UTIL_FILE = SETUP_SCRIPT.with_name('util.py')
-try:
-    url = 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/util-script'
-    resp = requests.get(url, headers={'Metadata-Flavor': 'Google'})
-    resp.raise_for_status()
-    UTIL_FILE.write_text(resp.text)
-except requests.exceptions.RequestException:
-    print("util.py script not found in metadata")
-    if not UTIL_FILE.exists():
-        print(f"{UTIL_FILE} also does not exist, aborting")
-        sys.exit(1)
+import util
+from util import run
 
-import util # noqa E402
-from util import run, Lookup # noqa E402
+SETUP_SCRIPT = Path(__file__)
 
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 

@@ -140,7 +140,6 @@ module "template" {
   on_host_maintenance      = "MIGRATE"
 
   ### metadata ###
-  startup_script = file("${path.module}/../../../scripts/startup.sh")
   metadata       = var.metadata
 
   ### source image ###

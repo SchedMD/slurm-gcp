@@ -29,6 +29,7 @@ common_packages:
   - graphviz
   - htop
   - iputils
+  - jq
   - libtool
   - lynx
   - make

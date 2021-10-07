@@ -27,6 +27,7 @@ common_packages:
   - graphviz
   - htop
   - iputils-ping
+  - jq
   - libssl-dev
   - libtool
   - llvm
