@@ -16,27 +16,24 @@
 set -e
 
 SLURM_DIR=/slurm
-SCRIPTS_DIR=$SLURM_DIR/scripts
-mkdir -p $SCRIPTS_DIR
-
 FLAGFILE=$SLURM_DIR/slurm_configured_do_not_remove
-if [ -f $FLAGFILE ]; then
-	echo "Slurm was previously configured, quitting"
-	exit 0
-fi
-touch $FLAGFILE
+SCRIPTS_DIR=$SLURM_DIR/scripts
 
-PING_HOST=8.8.8.8
-if ( ! ping -q -w1 -c1 $PING_HOST > /dev/null ) ; then
-	echo No internet access detected
-fi
-
+function show_help {
+cat << EOF
+usage:  ${0##*/} -f
+Check project metadata for startup-script, setup-script, and util-script.
+Download and copy to $SCRIPTS_DIR.
+	-f	Force run setup.py. Otherwise, $FLAGFILE will signal not to run
+		setup.py
+EOF
+}
 
 function fetch_scripts {
 	# fetch project metadata
 	URL="http://metadata.google.internal/computeMetadata/v1"
 	HEADER="Metadata-Flavor:Google"
-	CURL="curl --fail --header $HEADER"
+	CURL="curl -sS --fail --header $HEADER"
 	if ! CLUSTER=$($CURL $URL/instance/attributes/cluster_name); then
 		echo cluster name not found in instance metadata, quitting
 		return 1
@@ -45,13 +42,19 @@ function fetch_scripts {
 		echo cluster data not found in project metadata, quitting
 		return 1
 	fi
-	if SETUP_SCRIPT=$(jq -re '."setup-script"' <<< $METADATA); then
+	if STARTUP_SCRIPT=$(jq -re '."startup-script"' <<< "$METADATA"); then
+		echo updating startup.sh from project metadata
+		printf '%s' "$STARTUP_SCRIPT" > $STARTUP_SCRIPT_FILE
+	else
+		echo startup-script not found in project metadata, skipping update
+	fi
+	if SETUP_SCRIPT=$(jq -re '."setup-script"' <<< "$METADATA"); then
 		echo updating setup.py from project metadata
 		printf '%s' "$SETUP_SCRIPT" > $SETUP_SCRIPT_FILE
 	else
 		echo setup-script not found in project metadata, skipping update
 	fi
-	if UTIL_SCRIPT=$(jq -re '."util-script"' <<< $METADATA); then
+	if UTIL_SCRIPT=$(jq -re '."util-script"' <<< "$METADATA"); then
 		echo updating util.py from project metadata
 		printf '%s' "$UTIL_SCRIPT" > $UTIL_SCRIPT_FILE
 	else
@@ -59,10 +62,40 @@ function fetch_scripts {
 	fi
 }
 
+OPTIND=1
+force=false
+while getopts hf opt; do
+	case $opt in
+		f)	force=true
+			echo force run setup.py enabled
+		;;
+		h)	show_help >&2
+			exit 0
+		;;
+		*)	show_help >&2
+			exit 1
+		;;
+	esac
+done
+
+PING_HOST=8.8.8.8
+if ( ! ping -q -w1 -c1 $PING_HOST > /dev/null ) ; then
+	echo No internet access detected
+fi
+
+mkdir -p $SCRIPTS_DIR
+
 SETUP_SCRIPT_FILE=$SCRIPTS_DIR/setup.py
 UTIL_SCRIPT_FILE=$SCRIPTS_DIR/util.py
+STARTUP_SCRIPT_FILE=$SCRIPTS_DIR/startup.sh
 fetch_scripts
 
+if ! "$force" && [ -f $FLAGFILE ]; then
+	echo "Slurm was previously configured, quitting"
+	exit 0
+fi
+touch $FLAGFILE
+
 echo "running python cluster setup script"
-chmod +x $SETUP_SCRIPT
-exec $SETUP_SCRIPT
+chmod +x $SETUP_SCRIPT_FILE
+exec $SETUP_SCRIPT_FILE
