@@ -96,24 +96,6 @@ def handle_exception(exc_type, exc_value, exc_trace):
 ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
 
 
-def get_metadata(path, root=ROOT_URL):
-    """ Get metadata relative to metadata/computeMetadata/v1 """
-    HEADERS = {'Metadata-Flavor': 'Google'}
-    url = f'{root}/{path}'
-    try:
-        resp = requests.get(url, headers=HEADERS)
-        resp.raise_for_status()
-        return resp.text
-    except requests.exceptions.RequestException:
-        log.error(f"Error while getting metadata from {url}")
-        return None
-
-
-def instance_metadata(path):
-    """Get instance metadata"""
-    return get_metadata(path, root=f"{ROOT_URL}/instance")
-
-
 def run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False,
         timeout=None, check=True, universal_newlines=True, **kwargs):
     """Wrapper for subprocess.run() with convenient defaults"""
@@ -154,6 +136,134 @@ def static_vars(**kwargs):
             setattr(func, k, kwargs[k])
         return func
     return decorate
+
+
+ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
+
+
+def get_metadata(path, root=ROOT_URL):
+    """ Get metadata relative to metadata/computeMetadata/v1 """
+    HEADERS = {'Metadata-Flavor': 'Google'}
+    url = f'{root}/{path}'
+    try:
+        resp = requests.get(url, headers=HEADERS)
+        resp.raise_for_status()
+        return resp.text
+    except requests.exceptions.RequestException:
+        log.error(f"Error while getting metadata from {url}")
+        return None
+
+
+def instance_metadata(path):
+    """Get instance metadata"""
+    return get_metadata(path, root=f"{ROOT_URL}/instance")
+
+
+def ensure_execute(operation):
+    """ Handle rate limits and socket time outs """
+
+    retry = 0
+    sleep = 1
+    max_sleep = 60
+    while True:
+        try:
+            return operation.execute()
+
+        except googleapiclient.errors.HttpError as e:
+            if "Rate Limit Exceeded" in str(e):
+                retry += 1
+                sleep = min(sleep*2, max_sleep)
+                log.error(f"retry:{retry} sleep:{sleep} '{e}'")
+                sleep(sleep)
+                continue
+            raise
+
+        except socket.timeout as e:
+            # socket timed out, try again
+            log.debug(e)
+
+        except Exception as e:
+            log.error(e, exc_info=True)
+            raise
+
+        break
+
+
+def wait_for_operation(compute, project, operation):
+    print('Waiting for operation to finish...')
+    while True:
+        if 'zone' in operation:
+            operation = compute.zoneOperations().wait(
+                project=project,
+                zone=operation['zone'].split('/')[-1],
+                operation=operation['name'])
+        elif 'region' in operation:
+            operation = compute.regionOperations().wait(
+                project=project,
+                region=operation['region'].split('/')[-1],
+                operation=operation['name'])
+        else:
+            operation = compute.globalOperations().wait(
+                project=project,
+                operation=operation['name'])
+
+        result = ensure_execute(operation)
+        if result['status'] == 'DONE':
+            print("done.")
+            return result
+
+
+def get_group_operations(compute, project, operation):
+    """ get list of operations associated with group id """
+
+    group_id = operation['operationGroupId']
+    if 'zone' in operation:
+        operation = compute.zoneOperations().list(
+            project=project,
+            zone=operation['zone'].split('/')[-1],
+            filter=f"operationGroupId={group_id}")
+    elif 'region' in operation:
+        operation = compute.regionOperations().list(
+            project=project,
+            region=operation['region'].split('/')[-1],
+            filter=f"operationGroupId={group_id}")
+    else:
+        operation = compute.globalOperations().list(
+            project=project,
+            filter=f"operationGroupId={group_id}")
+
+    return ensure_execute(operation)
+
+
+def get_regional_instances(compute, project, def_list):
+    """ Get instances that exist in regional capacity instance defs """
+
+    fields = 'items.zones.instances(name,zone,status),nextPageToken'
+    regional_instances = {}
+
+    region_filter = ' OR '.join(f'(name={pid}-*)' for pid, d in
+                                def_list.items() if d.regional_capacity)
+    if region_filter:
+        page_token = ""
+        while True:
+            resp = ensure_execute(
+                compute.instances().aggregatedList(
+                    project=project, filter=region_filter, fields=fields,
+                    pageToken=page_token))
+            if not resp:
+                break
+            for zone, zone_value in resp['items'].items():
+                if 'instances' in zone_value:
+                    regional_instances.update(
+                        {instance['name']: instance
+                         for instance in zone_value['instances']}
+                    )
+            if "nextPageToken" in resp:
+                page_token = resp['nextPageToken']
+                continue
+            break
+
+    return regional_instances
 
 
 class threadsafe_iterator:
@@ -235,16 +345,62 @@ def make_compute_pool(max_count=None, wait=1):
         yield compute
 
 
+def load_config_data(config):
+    return NSDict(config)
+
+
+def new_config(config):
+    # If k is ever not found, None will be inserted as the value
+    cfg = NSDict(config)
+
+    network_storage_iter = filter(None,(
+        *cfg.network_storage,
+        *cfg.login_network_storage,
+        *chain.from_iterable(
+            p.network_storage for p in cfg.partitions.values()
+        )
+    ))
+    for netstore in network_storage_iter:
+        if netstore.server_ip == '$controller':
+            netstore.server_ip = cfg.cluster_name + '-controller'
+    return cfg
+    
+
+def load_config_file(path):
+    return load_config_data(yaml.safe_load(Path(path).read_text()))
+
+
+def save_config(cfg, path):
+    #save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
+    Path(path).write_text(yaml.dump(cfg, Dumper=Dumper))
+    
+
+class Dumper(yaml.SafeDumper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_representer(NSDict, self.represent_nsdict)
+        self.add_multi_representer(Path, self.represent_path)
+
+    @staticmethod
+    def represent_nsdict(dumper, data):
+        return dumper.represent_mapping('tag:yaml.org,2002:map',
+                                        data.items())
+
+    @staticmethod
+    def represent_path(dumper, path):
+        return dumper.represent_scalar('tag:yaml.org,2002:str',
+                                       str(path))
+
+
 class Lookup:
-    """ Wrapper class for cached data looked up from Google or derived from a
-    Config
+    """ Wrapper class for cached data access
     """
     regex = r'(?P<name>[^\s\-]+)-(?P<template>\S+)-(?P<partition>[^\s\-]+)-(?P<index>\d+)'
     node_parts_regex = re.compile(regex)
 
     def __init__(self, cfg=None):
         self.compute_pool = make_compute_pool()
-        self.cfg = cfg or Config()
+        self.cfg = cfg or NSDict()
 
     @cached_property
     def node_role(self):
@@ -252,9 +408,9 @@ class Lookup:
 
     @cached_property
     def project_metadata(self):
-        return get_metadata(
+        return NSDict(yaml.safe_load(get_metadata(
             f'project/attributes/{self.cfg.cluster_name}-slurm-metadata'
-        )
+        )))
 
     @cached_property
     def hostname(self):
@@ -403,185 +559,3 @@ class Lookup:
             machine_details = next(iter(machines[machine_type].values()))
         return NSDict(machine_details)
 
-
-class Config(NSDict):
-    """ Loads config from yaml and holds values in nested namespaces """
-
-    # PROPERTIES defines which properties in slurm.jinja.schema are included
-    #   in the config file. SAVED_PROPS are saved to file via save_config.
-    SAVED_PROPS = (
-        'project',
-        'zone',
-        'cluster_name',
-        'external_compute_ips',
-        'shared_vpc_host_project',
-        'compute_node_service_account',
-        'compute_node_scopes',
-        'slurm_cmd_path',
-        'log_dir',
-        'google_app_cred_path',
-        'update_node_addrs',
-        'network_storage',
-        'login_network_storage',
-        'templates',
-        'partitions',
-    )
-    PROPERTIES = (
-        *SAVED_PROPS,
-        'munge_key',
-        'jwt_key',
-        'external_compute_ips',
-        'controller_secondary_disk',
-        'suspend_time',
-        'login_node_count',
-        'cloudsql',
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(Config, self).__init__(*args, **kwargs)
-
-    @classmethod
-    def new_config(cls, properties):
-        # If k is ever not found, None will be inserted as the value
-        cfg = cls({k: properties.setdefault(k, None) for k in cls.PROPERTIES})
-
-        for netstore in (*cfg.network_storage, *(cfg.login_network_storage or []),
-                         *chain(*(p.network_storage for p in
-                                  (cfg.partitions or {}).values()))):
-            if netstore.server_ip == '$controller':
-                netstore.server_ip = cfg.cluster_name + '-controller'
-        return cfg
-
-    @classmethod
-    def load_config(cls, path):
-        config = yaml.safe_load(Path(path).read_text())
-        return cls(config)
-
-    def save_config(self, path):
-        save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
-        Path(path).write_text(yaml.dump(save_dict, Dumper=Dumper))
-
-
-class Dumper(yaml.SafeDumper):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.add_representer(Config, self.represent_nsdict)
-        self.add_representer(NSDict, self.represent_nsdict)
-        self.add_multi_representer(Path, self.represent_path)
-
-    @staticmethod
-    def represent_nsdict(dumper, data):
-        return dumper.represent_mapping('tag:yaml.org,2002:map',
-                                        data.items())
-
-    @staticmethod
-    def represent_path(dumper, path):
-        return dumper.represent_scalar('tag:yaml.org,2002:str',
-                                       str(path))
-
-
-def ensure_execute(operation):
-    """ Handle rate limits and socket time outs """
-
-    retry = 0
-    sleep = 1
-    max_sleep = 60
-    while True:
-        try:
-            return operation.execute()
-
-        except googleapiclient.errors.HttpError as e:
-            if "Rate Limit Exceeded" in str(e):
-                retry += 1
-                sleep = min(sleep*2, max_sleep)
-                log.error(f"retry:{retry} sleep:{sleep} '{e}'")
-                sleep(sleep)
-                continue
-            raise
-
-        except socket.timeout as e:
-            # socket timed out, try again
-            log.debug(e)
-
-        except Exception as e:
-            log.error(e, exc_info=True)
-            raise
-
-        break
-
-
-def wait_for_operation(compute, project, operation):
-    log.info(f"Waiting for operation {operation['id']} to finish...")
-    while True:
-        if 'zone' in operation:
-            operation = compute.zoneOperations().wait(
-                project=project,
-                zone=operation['zone'].split('/')[-1],
-                operation=operation['name'])
-        elif 'region' in operation:
-            operation = compute.regionOperations().wait(
-                project=project,
-                region=operation['region'].split('/')[-1],
-                operation=operation['name'])
-        else:
-            operation = compute.globalOperations().wait(
-                project=project,
-                operation=operation['name'])
-
-        result = ensure_execute(operation)
-        if result['status'] == 'DONE':
-            log.info(f"Operation {operation['id']} done.")
-            return result
-
-
-def get_group_operations(compute, project, operation):
-    """ get list of operations associated with group id """
-
-    group_id = operation['operationGroupId']
-    if 'zone' in operation:
-        operation = compute.zoneOperations().list(
-            project=project,
-            zone=operation['zone'].split('/')[-1],
-            filter=f"operationGroupId={group_id}")
-    elif 'region' in operation:
-        operation = compute.regionOperations().list(
-            project=project,
-            region=operation['region'].split('/')[-1],
-            filter=f"operationGroupId={group_id}")
-    else:
-        operation = compute.globalOperations().list(
-            project=project,
-            filter=f"operationGroupId={group_id}")
-
-    return ensure_execute(operation)
-
-
-def get_regional_instances(compute, project, def_list):
-    """ Get instances that exist in regional capacity instance defs """
-
-    fields = 'items.zones.instances(name,zone,status),nextPageToken'
-    regional_instances = {}
-
-    region_filter = ' OR '.join(f'(name={pid}-*)' for pid, d in
-                                def_list.items() if d.regional_capacity)
-    if region_filter:
-        page_token = ""
-        while True:
-            resp = ensure_execute(
-                compute.instances().aggregatedList(
-                    project=project, filter=region_filter, fields=fields,
-                    pageToken=page_token))
-            if not resp:
-                break
-            for zone, zone_value in resp['items'].items():
-                if 'instances' in zone_value:
-                    regional_instances.update(
-                        {instance['name']: instance
-                         for instance in zone_value['instances']}
-                    )
-            if "nextPageToken" in resp:
-                page_token = resp['nextPageToken']
-                continue
-            break
-
-    return regional_instances
