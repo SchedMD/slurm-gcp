@@ -106,7 +106,7 @@ def main():
         cmd = (f"{SCONTROL} show nodes | "
                r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
                "paste -sd',\n'")
-        nodes = util.run(cmd, shell=True, check=True, get_stdout=True).stdout
+        nodes = util.run(cmd, shell=True).stdout
         if nodes:
             # result is a list of tuples like:
             # (nodename, (base='base_state', flags=<set of state flags>))
@@ -194,8 +194,8 @@ def main():
             tmp_file.close()
             log.debug("tmp_file = {}".format(tmp_file.name))
 
-            hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-                                check=True, get_stdout=True).stdout.rstrip()
+            hostlist = util.run(
+                f"{SCONTROL} show hostlist {tmp_file.name}").stdout.rstrip()
             log.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 
@@ -223,8 +223,7 @@ def main():
             tmp_file.close()
             log.debug("tmp_file = {}".format(tmp_file.name))
 
-            hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-                                check=True, get_stdout=True).stdout.rstrip()
+            hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}").stdout.rstrip()
             log.debug("hostlist = {}".format(hostlist))
             os.remove(tmp_file.name)
 

@@ -114,21 +114,15 @@ def instance_metadata(path):
     return get_metadata(path, root=f"{ROOT_URL}/instance")
 
 
-def run(cmd, wait=0, quiet=False, get_stdout=False,
-        shell=False, universal_newlines=True, **kwargs):
-    """ run in subprocess. Optional wait after return. """
-    if not quiet:
-        log.debug(f"run: {cmd}")
-    if get_stdout:
-        kwargs['stdout'] = subprocess.PIPE
-
+def run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False,
+        timeout=None, check=True, universal_newlines=True, **kwargs):
+    """Wrapper for subprocess.run() with convenient defaults"""
+    log.debug(f"run: {cmd}")
     args = cmd if shell else shlex.split(cmd)
-    ret = subprocess.run(args, shell=shell,
-                         universal_newlines=universal_newlines,
-                         **kwargs)
-    if wait:
-        sleep(wait)
-    return ret
+    result = subprocess.run(args, stdout=stdout, stderr=stderr, shell=shell,
+                            timeout=timeout, check=check,
+                            universal_newlines=universal_newlines, **kwargs)
+    return result
 
 
 def spawn(cmd, quiet=False, shell=False, **kwargs):
@@ -517,7 +511,7 @@ def ensure_execute(operation):
 
 
 def wait_for_operation(compute, project, operation):
-    print('Waiting for operation to finish...')
+    log.info(f"Waiting for operation {operation['id']} to finish...")
     while True:
         if 'zone' in operation:
             operation = compute.zoneOperations().wait(
@@ -536,7 +530,7 @@ def wait_for_operation(compute, project, operation):
 
         result = ensure_execute(operation)
         if result['status'] == 'DONE':
-            print("done.")
+            log.info(f"Operation {operation['id']} done.")
             return result
 
 

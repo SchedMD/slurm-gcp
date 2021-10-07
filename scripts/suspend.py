@@ -135,8 +135,7 @@ def main(arg_nodes, arg_job_id):
                                               cache_discovery=False)
 
     # Get node list
-    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
-                         check=True, get_stdout=True).stdout
+    nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}").stdout
     node_list = nodes_str.splitlines()
 
     pid = util.get_pid(node_list[0])
@@ -152,8 +151,7 @@ def main(arg_nodes, arg_job_id):
         util.run(
             f"{SCONTROL} update node={arg_nodes} state=down reason='{arg_job_id} finishing'")
         # Power down nodes in slurm, so that they will become available again.
-        util.run(
-            f"{SCONTROL} update node={arg_nodes} state=power_down")
+        util.run(f"{SCONTROL} update node={arg_nodes} state=power_down")
 
     while True:
         delete_instances(compute, node_list, arg_job_id)
@@ -170,8 +168,7 @@ def main(arg_nodes, arg_job_id):
             try:
                 util.wait_for_operation(compute, cfg.project, operation)
                 # now that the instance is gone, resume to put back in service
-                util.run(
-                    f"{SCONTROL} update node={arg_nodes} state=resume")
+                util.run(f"{SCONTROL} update node={arg_nodes} state=resume")
             except Exception:
                 log.exception(f"Error in deleting {operation['name']} to slurm")
 

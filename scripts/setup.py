@@ -18,6 +18,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 from collections import defaultdict
@@ -69,7 +70,6 @@ SUSPEND_TIMEOUT = 300
 CONTROL_MACHINE = cfg.cluster_name + '-controller'
 
 MOTD_HEADER = """
-
                                  SSSSSSS
                                 SSSSSSSSS
                                 SSSSSSSSS
@@ -106,16 +106,15 @@ SSSSSSSSSSSS    SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
 SSSSSSSSSSSSS   SSS   SSSSSSSSSSSSSSS   SSSS        SSSS     SSSS     SSSS
 SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
 
-
 """
 
 
 def start_motd():
     """ advise in motd that slurm is currently configuring """
-    msg = MOTD_HEADER + """
-*** Slurm is currently being configured in the background. ***
-"""
-    Path('/etc/motd').write_text(msg)
+    wall_msg = "*** Slurm is currently being configured in the background. ***"
+    motd_msg = MOTD_HEADER + wall_msg + '\n\n'
+    Path('/etc/motd').write_text(motd_msg)
+    util.run(f"wall -n '{wall_msg}'", timeout=30)
 # END start_motd()
 
 
@@ -126,13 +125,22 @@ def end_motd(broadcast=True):
     if not broadcast:
         return
 
-    run("wall -n '*** Slurm {} setup complete ***'".format(lkp.node_role))
+    run("wall -n '*** Slurm {} setup complete ***'".format(lkp.node_role),
+        timeout=30)
     if lkp.node_role != 'controller':
         run("""wall -n '
 /home on the controller was mounted over the existing /home.
 Log back in to ensure your home directory is correct.
-'""")
+'""", timeout=30)
 # END start_motd()
+
+
+def failed_motd():
+    """ modify motd to signal that setup is failed """
+    wall_msg = f"*** Slurm setup failed! Please view log: {LOGFILE} ***"
+    motd_msg = MOTD_HEADER + wall_msg + '\n\n'
+    Path('/etc/motd').write_text(motd_msg)
+    util.run(f"wall -n '{wall_msg}'", timeout=30)
 
 
 def nodeset(node):
@@ -388,9 +396,17 @@ def install_meta_files():
         path.chmod(0o755)
         shutil.chown(path, user='slurm', group='slurm')
 
+    future_list = []
     with ThreadPoolExecutor() as exe:
-        exe.map(lambda x: install_metafile(*x), meta_entries)
+        for meta_file in meta_entries:
+            future = exe.submit(lambda x: install_metafile(*x), meta_file)
+            future_list.append(future)
 
+        # Iterate over futures, checking for exceptions
+        for future in future_list:
+            result = future.exception(timeout=60)
+            if result is not None:
+                raise result
 # END install_meta_files()
 
 
@@ -519,14 +535,21 @@ def mount_fstab():
     global mounts
 
     def mount_path(path):
-        while not os.path.ismount(path):
-            log.info(f"Waiting for {path} to be mounted")
-            run(f"mount {path}", wait=5)
+        log.info(f"Waiting for '{path}' to be mounted...")
+        run(f"mount {path}", timeout=60)
+        log.info(f"Mount point '{path}' was mounted.")
 
+    future_list = []
     with ThreadPoolExecutor() as exe:
-        exe.map(mount_path, mounts.keys())
+        for path in mounts.keys():
+            future = exe.submit(mount_path, path)
+            future_list.append(future)
 
-    run("mount -a", wait=1)
+        # Iterate over futures, checking for exceptions
+        for future in future_list:
+            result = future.exception(timeout=60)
+            if result is not None:
+                raise result
 # END mount_external
 
 
@@ -547,7 +570,7 @@ def setup_nfs_exports():
     exports = []
     for path in con_mounts:
         Path(path).mkdirp()
-        run(rf"sed -i '\#{path}#d' /etc/exports")
+        run(rf"sed -i '\#{path}#d' /etc/exports", timeout=30)
         exports.append(f"{path}  *(rw,no_subtree_check,no_root_squash)")
 
     exportsd = Path('/etc/exports.d')
@@ -555,7 +578,7 @@ def setup_nfs_exports():
     with (exportsd/'slurm.exports').open('w') as f:
         f.write('\n')
         f.write('\n'.join(exports))
-    run("exportfs -a")
+    run("exportfs -a", timeout=30)
 # END setup_nfs_exports()
 
 
@@ -572,8 +595,7 @@ def setup_secondary_disks():
 
 def setup_sync_cronjob():
     """ Create cronjob for running slurmsync.py """
-    run("crontab -u slurm -", input=(
-        f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
+    run("crontab -u slurm -", input=(f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
 
 # END setup_sync_cronjob()
 
@@ -600,7 +622,7 @@ def setup_slurmd_cronjob():
         "systemctl restart munge; "
         "systemctl restart slurmd; "
         "fi\n"
-    ))
+    ), timeout=30)
 # END setup_slurmd_cronjob()
 
 
@@ -609,8 +631,9 @@ def setup_nss_slurm():
     # setup nss_slurm
     Path('/var/spool/slurmd').mkdirp()
     run("ln -s {}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2"
-        .format(dirs.prefix))
-    run(r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
+        .format(dirs.prefix), check=False)
+    run(
+        r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
 # END setup_nss_slurm()
 
 
@@ -626,37 +649,38 @@ innodb_buffer_pool_size=1024M
 innodb_log_file_size=64M
 innodb_lock_wait_timeout=900
 """)
-    run('systemctl enable mariadb')
-    run('systemctl restart mariadb')
+    run('systemctl enable mariadb', timeout=30)
+    run('systemctl restart mariadb', timeout=30)
 
     mysql = "mysql -u root -e"
-    run(f"""{mysql} "create user 'slurm'@'localhost'";""")
-    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""")
-    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
+    run(f"""{mysql} "create user 'slurm'@'localhost'";""", timeout=30)
+    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""", timeout=30)
+    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""",
+        timeout=30)
 
 
 def configure_dirs():
 
     for p in dirs.values():
-        p.mkdirp()
+        p.mkdir(parents=True, exist_ok=True)
     shutil.chown(dirs.slurm, user='slurm', group='slurm')
     shutil.chown(dirs.scripts, user='slurm', group='slurm')
 
     for p in slurmdirs.values():
-        p.mkdirp()
+        p.mkdir(parents=True, exist_ok=True)
         shutil.chown(p, user='slurm', group='slurm')
 
-    etcdir = dirs.scripts/'etc'
-    if etcdir.exists() and etcdir.is_symlink():
-        etcdir.unlink()
-    etcdir.symlink_to(slurmdirs.etc)
-    shutil.chown(dirs.scripts/'etc', user='slurm', group='slurm')
+    scripts_etc = dirs.scripts/'etc'
+    if scripts_etc.exists() and scripts_etc.is_symlink():
+        scripts_etc.unlink()
+    scripts_etc.symlink_to(slurmdirs.etc)
+    shutil.chown(scripts_etc, user='slurm', group='slurm')
 
-    logdir = dirs.scripts/'log'
-    if logdir.exists() and logdir.is_symlink():
-        logdir.unlink()
-    logdir.symlink_to(slurmdirs.log)
-    shutil.chown(dirs.scripts/'log', user='slurm', group='slurm')
+    scripts_log = dirs.scripts/'log'
+    if scripts_log.exists() and scripts_log.is_symlink():
+        scripts_log.unlink()
+    scripts_log.symlink_to(slurmdirs.log)
+    shutil.chown(scripts_log, user='slurm', group='slurm')
 
 
 def run_custom_scripts():
@@ -670,7 +694,12 @@ def run_custom_scripts():
 
     try:
         for script in custom_scripts:
-            run(str(script))
+            result = run(str(script), timeout=300)
+        log.info(f"""
+returncode={result.returncode}
+stdout={result.stdout}
+stdout={result.stderr}
+"""[1:])
     except Exception:
         # Ignore blank files with no shell magic.
         pass
@@ -686,8 +715,8 @@ def setup_controller():
     install_gres_conf()
 
     setup_jwt_key()
-    run("create-munge-key -f")
-    run("systemctl restart munge")
+    run("create-munge-key -f", timeout=30)
+    run("systemctl restart munge", timeout=30)
 
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
@@ -699,24 +728,28 @@ def setup_controller():
     if not cfg.cloudsql:
         configure_mysql()
 
-    run("systemctl enable slurmdbd")
-    run("systemctl start slurmdbd")
+    run("systemctl enable slurmdbd", timeout=30)
+    run("systemctl start slurmdbd", timeout=30)
 
     # Wait for slurmdbd to come up
     time.sleep(5)
 
     sacctmgr = f"{dirs.prefix}/bin/sacctmgr -i"
-    run(f"{sacctmgr} add cluster {cfg.cluster_name}")
+    result = run(f"{sacctmgr} add cluster {cfg.cluster_name}", timeout=30)
+    if "This cluster slurm already exists." in result.stdout:
+        log.info(result.stdout)
+    elif result.returncode > 1:
+        result.check_returncode() # will raise error
 
-    run("systemctl enable slurmctld")
-    run("systemctl start slurmctld")
+    run("systemctl enable slurmctld", timeout=30)
+    run("systemctl start slurmctld", timeout=30)
 
-    run("systemctl enable slurmrestd")
-    run("systemctl start slurmrestd")
+    run("systemctl enable slurmrestd", timeout=30)
+    run("systemctl start slurmrestd", timeout=30)
 
     # Export at the end to signal that everything is up
-    run("systemctl enable nfs-server")
-    run("systemctl start nfs-server")
+    run("systemctl enable nfs-server", timeout=30)
+    run("systemctl start nfs-server", timeout=30)
 
     setup_nfs_exports()
     setup_sync_cronjob()
@@ -762,9 +795,9 @@ def setup_compute():
     run_custom_scripts()
 
     setup_slurmd_cronjob()
-    run("systemctl restart munge")
-    run("systemctl enable slurmd")
-    run("systemctl start slurmd")
+    run("systemctl restart munge", timeout=30)
+    run("systemctl enable slurmd", timeout=30)
+    run("systemctl start slurmd", timeout=30)
 
     log.info("Done setting up compute")
 
@@ -792,4 +825,31 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except subprocess.TimeoutExpired as e:
+        log.error(f"""TimeoutExpired:
+    command={e.cmd}
+    timeout={e.timeout}
+    stdout:
+{e.stdout.strip()}
+    stderr:
+{e.stderr.strip()}
+""")
+        log.error("Aborting setup...")
+        failed_motd()
+    except subprocess.CalledProcessError as e:
+        log.error(f"""CalledProcessError:
+    command={e.cmd}
+    returncode={e.returncode}
+    stdout:
+{e.stdout.strip()}
+    stderr:
+{e.stderr.strip()}
+""")
+        log.error("Aborting setup...")
+        failed_motd()
+    except Exception as e:
+        log.exception(e)
+        log.error("Aborting setup...")
+        failed_motd()
