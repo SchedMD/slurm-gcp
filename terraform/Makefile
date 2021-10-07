@@ -21,7 +21,7 @@ pipenv:
 	$(PIPENV) install
 
 destroy: pipenv
-	$(SCRIPTS)/destroy_nodes.py $(shell grep "project_id" $(TFVARS) | cut -d'=' -f2) $(shell grep "cluster_name" $(TFVARS) | cut -d'=' -f2)
+	$(PIPENV) run $(SCRIPTS)/destroy_nodes.py $(shell grep "project_id" $(TFVARS) | cut -d'=' -f2) $(shell grep "cluster_name" $(TFVARS) | cut -d'=' -f2)
 	terraform destroy -var-file=$(TFVARS) -auto-approve
 
 format:
