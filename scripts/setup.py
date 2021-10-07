@@ -135,6 +135,10 @@ Log back in to ensure your home directory is correct.
 # END start_motd()
 
 
+def nodeset(node):
+    return f'{cfg.cluster_name}-{node.template}-{node.partition}'
+
+
 def nodenames(node):
     """ Return static and dynamic nodenames given a partition node type
     definition
@@ -145,24 +149,18 @@ def nodenames(node):
 
     def node_range(count, start=0):
         end = start + count - 1
-        return f"{start}" if count == 1 else f"[{start}-{end}]", end + 1
+        return f'{start}' if count == 1 else f'[{start}-{end}]', end + 1
 
-    prefix = f"{cfg.cluster_name}-{node.template}-{node.partition}"
+    prefix = nodeset(node)
     static_range, end = (
-        node_range(node.count_static)
-        if node.count_static else (None, 0)
+        node_range(node.count_static) if node.count_static else (None, 0)
     )
     dynamic_range, _ = (
-        node_range(node.count_dynamic, end)
-        if node.count_dynamic else (None, 0)
+        node_range(node.count_dynamic, end) if node.count_dynamic else (None, 0)
     )
 
-    static_name = (
-        f"{prefix}-{static_range}" if node.count_static else None
-    )
-    dynamic_name = (
-        f"{prefix}-{dynamic_range}" if node.count_dynamic else None
-    )
+    static_name = f'{prefix}-{static_range}' if node.count_static else None
+    dynamic_name = f'{prefix}-{dynamic_range}' if node.count_dynamic else None
     return static_name, dynamic_name
 
 
@@ -172,7 +170,6 @@ def dict_to_conf(conf):
 
 
 def gen_cloud_nodes_conf():
-
     def nodeline(template):
         props = lkp.template_details(template)
         machine = props.machine
@@ -186,49 +183,54 @@ def gen_cloud_nodes_conf():
             'ThreadsPerCore': 1,
         })
 
-        node_line = {
-            'NodeName': None,
-            'State': None,
-            'Gres': f'gpu:{machine.gpu_count}' if machine.gpu_count else None,
-        }
+        gres = f'gpu:{machine.gpu_count}' if machine.gpu_count else None
 
         nodelines = []
         for node in lkp.template_nodes[template]:
             static, dynamic = nodenames(node)
-            if static:
-                nodelines.append(dict_to_conf(
-                    {**node_line, 'NodeName': static}
-                ))
-            if dynamic:
-                nodelines.append(dict_to_conf(
-                    {**node_line, 'NodeName': dynamic, 'State': 'CLOUD'}
-                ))
+            nodelines.append(dict_to_conf({
+                'NodeName': static,
+                'State': 'CLOUD',
+                'Gres': gres,
+            }) if static else None
+            )
+            nodelines.append(dict_to_conf({
+                'NodeName': dynamic,
+                'State': 'CLOUD',
+                'Gres': gres,
+            }) if dynamic else None
+            )
+            nodelines.append(dict_to_conf({
+                'NodeSet': nodeset(node),
+                'Nodes': ','.join(filter(None, (static, dynamic))),
+            }))
 
-        return '\n'.join(chain([node_def], nodelines))
+        return '\n'.join(filter(None, chain([node_def], nodelines)))
 
     def partitionline(part_name):
         """ Make a partition line for the slurm.conf """
         partition = cfg.partitions[part_name]
-        node_names = ','.join(filter(None, chain.from_iterable(
-            name for node in partition.nodes if (name := nodenames(node))
+        nodesets = ','.join(filter(None, chain.from_iterable(
+            nodeset(node)for node in partition.nodes
         )))
 
         def defmempercpu(machine):
             return max(100, machine.memory // machine.cpus)
+
         defmem = min(
             defmempercpu(lkp.template_details(node.template).machine)
             for node in partition.nodes
         )
         line_elements = {
             'PartitionName': part_name,
-            'Nodes': node_names,
+            'Nodes': nodesets,
             'State': 'UP',
             'DefMemPerCPU': defmem,
             'LLN': 'yes',
             'Oversubscribe': 'Exclusive' if partition.exclusive else None,
             **partition.conf,
         }
-        
+
         return dict_to_conf(line_elements)
 
     static_nodes = ','.join(filter(None, (
@@ -256,7 +258,7 @@ def gen_cloud_nodes_conf():
 
     content = '\n\n'.join(filter(None, lines))
     cloud_conf.write_text(content + '\n')
-        
+
 
 def install_slurm_conf():
     """ install slurm.conf """
