@@ -29,7 +29,6 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from itertools import groupby, chain, islice
 
-import googleapiclient.discovery
 from google.auth import compute_engine
 import google_auth_httplib2
 from googleapiclient.http import set_user_agent
@@ -38,37 +37,55 @@ from addict import Dict as NSDict
 
 import util
 from util import run
+from setup import resolve_network_storage
 
 
-cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
+cfg = util.load_config_file(Path(__file__).with_name('config.yaml'))
 lkp = util.Lookup(cfg)
 PREFIX = Path('/usr/local/bin')
 SCONTROL = PREFIX/'scontrol'
 
+cfg.log_dir = '/var/log/slurm'
 LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 SCRIPTS_DIR = Path(__file__).parent.resolve()
 
 TOT_REQ_CNT = 1000
 
+util.config_root_logger(level='DEBUG', util_level='DEBUG',
+                        logfile=LOGFILE)
+log = logging.getLogger(Path(__file__).name)
+
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
 
-def instance_properties(partition):
+def instance_properties(partition_name):
+    partition = cfg.partitions[partition_name]
     region = partition.region
     subnet = partition.subnet_name or f'{cfg.cluster_name}-subnet'
 
     props = NSDict()
-    iface = NSDict()
-    iface.subnetwork = (
-        f'projects/{cfg.project}/regions/{region}/subnetworks/{subnet}'
-    )
-    props.networkInterfaces = [iface]
+    props.networkInterfaces = [{
+        'subnetwork': f'projects/{cfg.project}/regions/{region}/subnetworks/{subnet}'
+    }]
 
-    metadata = NSDict()
-    metadata['compute-network-storage'] = json.dump(partition.network_storage)
+    compute_config = NSDict()
+    compute_config.cluster_name = cfg.cluster_name
+    compute_config.munge_key = cfg.munge_key
+    compute_config.network_storage = resolve_network_storage(partition_name)
 
-    props.metadata = [NSDict({'key': k, 'value': v}) for k, v in metadata]
+    metadata = {
+        'cluster_name': cfg.cluster_name,
+        'config': json.dumps(compute_config.to_dict()),
+        'startup-script': Path('/slurm/scripts/startup.sh').read_text(),
+        'instance_type': 'compute',
+        'enable-oslogin': 'TRUE',
+        'VmDnsSetting': 'GlobalOnly',
+    }
+
+    props.metadata['items'] = [
+        NSDict({'key': k, 'value': v}) for k, v in metadata.items()
+    ]
     return props
 
 
@@ -76,28 +93,28 @@ def create_instances(nodes):
     """ Call regionInstances.bulkInsert to create instances """
     if len(nodes) == 0:
         return
+    # model here indicates any node that can be used to describe the rest
     model = next(iter(nodes))
     template = lkp.node_template_props(model).url
-    partition = cfg.partitions[lkp.node_partition(model)]
+    partition_name = lkp.node_partition(model)
+    partition = cfg.partitions[partition_name]
 
     body = NSDict()
     body.count = len(nodes)
     body.sourceInstanceTemplate = template
     body.perInstanceProperties = {k: {} for k in nodes}
-    body.instanceProperties = instance_properties(partition)
+    body.instanceProperties = instance_properties(partition_name)
 
-    compute, lock = next(lkp.compute_pool)
-    result = util.ensure_execute(compute.regionInstances().bulkInsert(
-        project=cfg.project, region=partition.region, body=body
-    ))
-    lock.release()
+    with lkp.sync_compute() as compute:
+        result = util.ensure_execute(compute.regionInstances().bulkInsert(
+            project=cfg.project, region=partition.region, body=body
+        ))
     return result
 
 
 def expand_nodelist(nodelist):
     """ expand nodes in hostlist to hostnames """
-    nodes = run(f"{SCONTROL} show hostnames {nodelist}", check=True,
-                get_stdout=True).stdout.splitlines()
+    nodes = run(f"{SCONTROL} show hostnames {nodelist}").stdout.splitlines()
     return nodes
 
 
@@ -121,13 +138,16 @@ def resume_nodes(nodelist):
         for ident, nodes in groupby(nodes, ident_key)
         for chunk in chunks(nodes)
     ]
+    log.debug(f"grouped_nodes: {grouped_nodes}")
 
     with ThreadPoolExecutor() as exe:
         futures = []
         for _, nodes in grouped_nodes:
             futures.append(exe.submit(create_instances, nodes))
         for f in futures:
-            f.result()
+            result = f.exception(timeout=60)
+            if result:
+                raise result
 
 
 def prolog_resume_nodes(nodelist, job_id):
@@ -136,26 +156,28 @@ def prolog_resume_nodes(nodelist, job_id):
 
 def main(nodelist, job_id):
     """ main called when run as script """
+    log.debug(f"main {nodelist} {job_id}")
     if job_id is not None:
         prolog_resume_nodes(nodelist, job_id)
     else:
         resume_nodes(nodelist)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument(
-        'nodelist', help="list of nodes to resume"
-    )
-    parser.add_argument(
-        'job_id', nargs='?', default=None,
-        help="Optional job id for node list. Implies that PrologSlurmctld called program"
-    )
-    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
-                        help='Enable debugging output')
+parser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument(
+    'nodelist', help="list of nodes to resume"
+)
+parser.add_argument(
+    'job_id', nargs='?', default=None,
+    help="Optional job id for node list. Implies that PrologSlurmctld called program"
+)
+parser.add_argument('--debug', '-d', dest='debug', action='store_true',
+                    help='Enable debugging output')
 
+
+if __name__ == '__main__':
     if "SLURM_JOB_NODELIST" in os.environ:
         argv = [
             *sys.argv[1:],
@@ -176,4 +198,3 @@ if __name__ == '__main__':
     sys.excepthook = util.handle_exception
 
     main(args.nodelist, args.job_id)
-
