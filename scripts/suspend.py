@@ -145,13 +145,12 @@ def main(arg_nodes, arg_job_id):
 
     if arg_job_id:
         # Mark nodes as off limits to new jobs while powering down.
-        # Have to use "down" because it's the only, current, way to remove the
-        # power_up flag from the node -- followed by a power_down -- if the
-        # PrologSlurmctld fails with a non-zero exit code.
+        # Note: If PrologSlurmctld fails with a non-zero exit code, "power_up"
+        # flag would get stuck on the node. In 20.11 and prior: state=down
+        # followed by state=power_down could clear it. In 21.08,
+        # state=power_down_force can clear it.
         util.run(
-            f"{SCONTROL} update node={arg_nodes} state=down reason='{arg_job_id} finishing'")
-        # Power down nodes in slurm, so that they will become available again.
-        util.run(f"{SCONTROL} update node={arg_nodes} state=power_down")
+            f"{SCONTROL} update node={arg_nodes} state=power_down_force")
 
     while True:
         delete_instances(compute, node_list, arg_job_id)
