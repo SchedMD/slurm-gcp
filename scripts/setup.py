@@ -23,7 +23,7 @@ import sys
 import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, Future
-from functools import reduce, partialmethod
+from functools import reduce, partialmethod, lru_cache
 from itertools import chain
 from pathlib import Path
 from subprocess import DEVNULL
@@ -403,13 +403,19 @@ def install_custom_compute_scripts():
         shutil.chown(path, user='slurm', group='slurm')
 
 
-def prepare_network_mounts(node_role, partition=None):
-    """ Prepare separate lists of cluster-internal and external mounts for the
-    given host instance, returning (external_mounts, internal_mounts)
+def local_mounts(mountlist):
+    """convert network_storage list of mounts to dict of mounts,
+    local_mount as key
     """
-    log.info("Set up network storage")
-    if not partition and node_role == 'compute':
-        partition = lkp.node_partition(lkp.hostname)
+    return {str(Path(m.local_mount).resolve()): m for m in mountlist}
+
+
+@lru_cache(maxsize=None)
+def resolve_network_storage(partition_name=None):
+    """Combine appropriate network_storage fields to a single list
+    """
+
+    partition = cfg.partitions[partition_name] if partition_name else None
 
     default_mounts = (
         slurmdirs.etc,
@@ -426,73 +432,62 @@ def prepare_network_mounts(node_role, partition=None):
         'fs_type': 'nfs',
         'mount_options': 'defaults,hard,intr',
     }
-    # seed the non-controller mounts with the default controller mounts
-    mounts = {
-        path: util.Config(CONTROL_NFS, local_mount=path, remote_mount=path)
+
+    # seed mounts with the default controller mounts
+    mounts = local_mounts([
+        NSDict(CONTROL_NFS, local_mount=str(path), remote_mount=str(path))
         for path in default_mounts
-    }
-
-    # convert network_storage list of mounts to dict of mounts,
-    #   local_mount as key
-    def listtodict(mountlist):
-        return {Path(d['local_mount']).resolve(): d for d in mountlist}
-
+    ])
     # On non-controller instances, entries in network_storage could overwrite
     # default exports from the controller. Be careful, of course
-    mounts.update(listtodict(cfg.network_storage))
+    mounts.update(local_mounts(cfg.network_storage))
+    mounts.update(local_mounts(cfg.login_network_storage))
 
-    if node_role == 'compute' and partition is not None:
-        if partition:
-            mounts.update(listtodict(cfg.partitions[partition].network_storage))
-        else:
-            instance_metadata('attributes/compute-network-storage')
-    else:
-        # login_network_storage is mounted on controller and login instances
-        mounts.update(listtodict(cfg.login_network_storage))
+    # this part is not actually run from compute nodes. A pre-resolved
+    # network_storage will be passed to them.
+    if partition is not None:
+        mounts.update(local_mounts(partition.network_storage))
+    return list(mounts.values())
 
-    # filter mounts into two dicts, cluster-internal and external mounts, and
-    # return both. (external_mounts, internal_mounts)
+
+def partition_mounts(mounts):
+    """partition into cluster-external and internal mounts
+    """
     def internal_mount(mount):
-        return mount[1].server_ip == CONTROL_MACHINE
+        return mount.server_ip == CONTROL_MACHINE
 
     def partition(pred, coll):
         """ filter into 2 lists based on pred returning True or False
             returns ([False], [True])
         """
-        return reduce(
-            lambda acc, el: acc[pred(el)].append(el) or acc,
-            coll, ([], [])
-        )
-
-    return tuple(map(dict, partition(internal_mount, mounts.items())))
-# END prepare_network_mounts
+        return reduce(lambda acc, el: acc[pred(el)].append(el) or acc,
+                      coll, ([], []))
+    return partition(internal_mount, mounts)
 
 
 def setup_network_storage():
     """ prepare network fs mounts and add them to fstab """
+    log.info("Set up network storage")
+    # filter mounts into two dicts, cluster-internal and external mounts
 
-    global mounts
-    ext_mounts, int_mounts = prepare_network_mounts(lkp.node_role)
+    all_mounts = resolve_network_storage()
+    ext_mounts, int_mounts = partition_mounts(all_mounts)
     mounts = ext_mounts
     if lkp.node_role != 'controller':
-        mounts.update(int_mounts)
+        mounts.extend(int_mounts)
 
     # Determine fstab entries and write them out
     fstab_entries = []
-    for local_mount, mount in mounts.items():
+    for mount in mounts:
+        local_mount = Path(mount.local_mount)
         remote_mount = mount.remote_mount
         fs_type = mount.fs_type
         server_ip = mount.server_ip
-
-        # do not mount controller mounts to itself
-        if server_ip == CONTROL_MACHINE and lkp.node_role == 'controller':
-            continue
+        local_mount.mkdirp()
 
         log.info("Setting up mount ({}) {}{} to {}".format(
             fs_type, server_ip+':' if fs_type != 'gcsfuse' else "",
             remote_mount, local_mount))
-
-        local_mount.mkdirp()
 
         mount_options = (mount.mount_options.split(',') if mount.mount_options
                          else [])
@@ -507,25 +502,23 @@ def setup_network_storage():
                 .format(remote_mount, local_mount, fs_type,
                         ','.join(mount_options)))
         else:
-            remote_mount = Path(remote_mount).resolve()
             fstab_entries.append(
                 "{0}:{1}    {2}     {3}      {4}  0 0"
                 .format(server_ip, remote_mount, local_mount,
                         fs_type, ','.join(mount_options)))
 
-    for mount in mounts:
-        Path(mount).mkdirp()
     with open('/etc/fstab', 'a') as f:
         f.write('\n')
         for entry in fstab_entries:
             f.write(entry)
             f.write('\n')
+
+    mount_fstab(local_mounts(mounts))
 # END setup_network_storage()
 
 
-def mount_fstab():
+def mount_fstab(mounts):
     """ Wait on each mount, then make sure all fstab is mounted """
-    global mounts
 
     def mount_path(path):
         log.info(f"Waiting for '{path}' to be mounted...")
@@ -534,7 +527,7 @@ def mount_fstab():
 
     future_list = []
     with ThreadPoolExecutor() as exe:
-        for path in mounts.keys():
+        for path in mounts:
             future = exe.submit(mount_path, path)
             future_list.append(future)
 
@@ -550,13 +543,15 @@ def setup_nfs_exports():
     """ nfs export all needed directories """
     # The controller only needs to set up exports for cluster-internal mounts
     # switch the key to remote mount path since that is what needs exporting
-    _, con_mounts = prepare_network_mounts(cfg.hostname, lkp.node_role)
-    con_mounts = {m.remote_mount: m for m in con_mounts.values()}
+    mounts = resolve_network_storage()
+    # controller mounts
+    _, con_mounts = partition_mounts(mounts)
+    con_mounts = {m.remote_mount: m for m in mounts}
     for part in cfg.partitions:
         # get internal mounts for each partition by calling
         # prepare_network_mounts as from a node in each partition
-        _, part_mounts = prepare_network_mounts('compute', partition=part)
-        part_mounts = {m.remote_mount: m for m in part_mounts.values()}
+        part_mounts = resolve_network_storage(part)
+        part_mounts = {m.remote_mount: m for m in part_mounts}
         con_mounts.update(part_mounts)
 
     # export path if corresponding selector boolean is True
@@ -718,7 +713,6 @@ def setup_controller():
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
     setup_network_storage()
-    mount_fstab()
 
     run_custom_scripts()
 
@@ -761,7 +755,6 @@ def setup_login():
     log.info("Setting up login")
 
     setup_network_storage()
-    mount_fstab()
     run("systemctl restart munge")
 
     run_custom_scripts()
@@ -774,7 +767,6 @@ def setup_compute():
     log.info("Setting up compute")
     setup_nss_slurm()
     setup_network_storage()
-    mount_fstab()
 
     template = lkp.node_template_details(lkp.hostname)
     # if (not cfg.instance_defs[pid].image_hyperthreads and
