@@ -57,7 +57,7 @@ locals {
   source_image_family = (
     var.source_image_family != null
     ? var.source_image_family
-    : "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-20-11-7-centos-7"
+    : "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-21-08-2-hpc-centos-7"
   )
 
   source_image = (
