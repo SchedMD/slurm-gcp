@@ -23,7 +23,9 @@ zone    = "us-central1-a"
 # IMAGE #
 #########
 
-# source_image_project_id = "<SOURCE_IMAGE_PROJECT_ID>"
+source_image_project_id = [
+  "cloud-hpc-image-public",
+]
 
 # *NOT* intended for production use
 # skip_create_image = true
@@ -71,6 +73,30 @@ builds = [
     enable_secure_boot          = null
     enable_vtpm                 = null
     enable_integrity_monitoring = null
+
+    ### storage ###
+    disk_size = null
+    disk_type = null
+  },
+  {
+    ### image ###
+    source_image        = null
+    source_image_family = "hpc-centos-7"
+    image_licenses      = null
+    labels              = null
+
+    ### ssh ###
+    ssh_username = "packer"
+    ssh_password = null
+
+    ### instance ###
+    machine_type = "n2d-standard-4"
+    preemptible  = false
+
+    ### root of trust ###
+    enable_secure_boot          = true
+    enable_vtpm                 = true
+    enable_integrity_monitoring = true
 
     ### storage ###
     disk_size = null
