@@ -95,7 +95,7 @@ variable "service_account_email" {
 }
 
 variable "service_account_scopes" {
-  description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
+  description = "Service account scopes to attach to the instance. See https://cloud.google.com/compute/docs/access/service-accounts."
   type        = list(string)
   default     = null
 }
