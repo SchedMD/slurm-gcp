@@ -9,7 +9,6 @@ Changes in Slurm-GCP 5.0.0
  -- ansible - scripts role for custom provisioning scripts
  -- Replaced `tf/` with `terraform/`
  -- Added script to destroy nodes given cluster name
- -- Updated Slurm to 21.08.2
 
 Changes in Slurm-GCP 4.0.5
 ==========================
