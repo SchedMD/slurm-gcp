@@ -23,8 +23,12 @@ zone    = "us-central1-a"
 # IMAGE #
 #########
 
+# NOTE: Your Project ID will be automatically appended
 source_image_project_id = [
+  "rhel-cloud",
+  "centos-cloud",
   "cloud-hpc-image-public",
+  "debian-cloud",
 ]
 
 # *NOT* intended for production use

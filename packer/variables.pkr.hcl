@@ -38,8 +38,9 @@ variable "zone" {
 #########
 
 variable "source_image_project_id" {
+  description = "A list of project IDs to search for the source image. Packer will search the first project ID in the list first, and fall back to the next in the list, until it finds the source image."
   type    = list(string)
-  default = null
+  default = []
 }
 
 variable "skip_create_image" {

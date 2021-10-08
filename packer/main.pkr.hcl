@@ -34,7 +34,10 @@ source "googlecompute" "image" {
   zone       = var.zone
 
   ### image ###
-  source_image_project_id = var.source_image_project_id
+  source_image_project_id = setunion(
+    [ var.project ],
+    var.source_image_project_id,
+  )
   skip_create_image       = var.skip_create_image
 
   ### ssh ###
