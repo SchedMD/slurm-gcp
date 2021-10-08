@@ -35,10 +35,10 @@ source "googlecompute" "image" {
 
   ### image ###
   source_image_project_id = setunion(
-    [ var.project ],
+    [var.project],
     var.source_image_project_id,
   )
-  skip_create_image       = var.skip_create_image
+  skip_create_image = var.skip_create_image
 
   ### ssh ###
   ssh_clear_authorized_keys = true
