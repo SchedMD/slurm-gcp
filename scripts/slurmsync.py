@@ -111,7 +111,7 @@ def main():
             # result is a list of tuples like:
             # (nodename, (base='base_state', flags=<set of state flags>))
             # from 'nodename,base_state+flag1+flag2'
-            # state flags include: CLOUD, COMPLETING, DRAIN, FAIL, POWERED_DOWN,
+            # state flags include: CLOUD, COMPLETING, DRAIN, FAIL, POWER,
             #   POWERING_DOWN
             # Modifiers on base state still include: @ (reboot), $ (maint),
             #   * (nonresponsive), # (powering up)
@@ -152,7 +152,7 @@ def main():
             g_node = g_nodes.get(s_node, None)
             pid = util.get_pid(s_node)
 
-            if (('POWERED_DOWN' not in s_state.flags) and
+            if (('POWER' not in s_state.flags) and
                     ('POWERING_DOWN' not in s_state.flags)):
                 # slurm nodes that aren't in power_save and are stopped in GCP:
                 #   mark down in slurm
@@ -174,7 +174,7 @@ def main():
             elif g_node is None:
                 # find nodes that are down~ in slurm and don't exist in gcp:
                 #   mark idle~
-                if s_state.base.startswith('DOWN') and 'POWERED_DOWN' in s_state.flags:
+                if s_state.base.startswith('DOWN') and 'POWER' in s_state.flags:
                     to_idle.append(s_node)
                 elif 'POWERING_DOWN' in s_state.flags:
                     to_idle.append(s_node)
