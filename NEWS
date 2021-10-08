@@ -10,7 +10,6 @@ Changes in Slurm-GCP 5.0.0
  -- Replaced `tf/` with `terraform/`
  -- Added script to destroy nodes given cluster name
  -- Updated Slurm to 21.08.2
- -- Updated with 21.08 changes
 
 Changes in Slurm-GCP 4.0.5
 ==========================
