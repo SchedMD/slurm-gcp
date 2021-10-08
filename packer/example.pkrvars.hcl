@@ -110,9 +110,9 @@ builds = [
     preemptible  = false
 
     ### root of trust ###
-    enable_secure_boot          = true
-    enable_vtpm                 = true
-    enable_integrity_monitoring = true
+    enable_secure_boot          = null
+    enable_vtpm                 = null
+    enable_integrity_monitoring = null
 
     ### storage ###
     disk_size = null
