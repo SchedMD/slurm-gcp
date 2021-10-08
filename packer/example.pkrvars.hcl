@@ -47,7 +47,7 @@ tags = [
 # PROVISION #
 #############
 
-slurm_version = "slurm-20.11"
+slurm_version = "21.08.2"
 
 ##########
 # BUILDS #
