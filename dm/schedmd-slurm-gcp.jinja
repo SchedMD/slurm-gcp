@@ -5,7 +5,7 @@
 {% set _ = networks.append(path_utils.networkPath(network)) %}
 {% endfor %}
 
-{% set image = 'https://www.googleapis.com/compute/v1/projects/schedmd-slurm-public/global/images/schedmd-slurm-20-11-4-hpc-centos-7-2021-03-12-215000' %}
+{% set image = 'https://www.googleapis.com/compute/v1/projects/schedmd-slurm-public/global/images/schedmd-slurm-20-11-7-hpc-centos-7-2021-05-21-192614' %}
 
 resources:
 - name: {{ properties['cluster_name'] }}
@@ -33,20 +33,66 @@ resources:
     controller_machine_type:  {{ properties['controller_machine_type'] }}
     controller_disk_type: {{ properties['controller_disk_type'] }}
     controller_disk_size_gb: {{ properties['controller_disk_size_gb'] }}
+  {% if properties['controller_access'] == 'Default access' %}
+    controller_scopes: [
+        "https://www.googleapis.com/auth/compute",
+        "https://www.googleapis.com/auth/servicecontrol",
+        "https://www.googleapis.com/auth/service.management.readonly",
+        "https://www.googleapis.com/auth/sqlservice.admin",
+        "https://www.googleapis.com/auth/logging.write",
+        "https://www.googleapis.com/auth/monitoring.write",
+        "https://www.googleapis.com/auth/trace.append",
+        "https://www.googleapis.com/auth/devstorage.full_control",
+      ]
+  {% elif properties['controller_access'] == 'Full Cloud API access' %}
+    controller_scopes: ["https://www.googleapis.com/auth/cloud-platform"]
+  {% elif properties['controller_access'] == 'Custom scopes' %}
+    controller_scopes: {{ properties['controller_custom_scopes'].split(',') }}
+  {% endif %}
 
     login_node_count: 1
     login_image: {{ image }}
     login_machine_type: {{ properties['login_machine_type'] }}
     login_disk_type: {{ properties['login_disk_type'] }}
     login_disk_size_gb: {{ properties['login_disk_size_gb'] }}
+  {% if properties['login_access'] == 'Default access' %}
+    login_node_scopes: [
+        "https://www.googleapis.com/auth/compute.readonly",
+        "https://www.googleapis.com/auth/servicecontrol",
+        "https://www.googleapis.com/auth/service.management.readonly",
+        "https://www.googleapis.com/auth/logging.write",
+        "https://www.googleapis.com/auth/monitoring.write",
+        "https://www.googleapis.com/auth/trace.append",
+        "https://www.googleapis.com/auth/devstorage.read_write",
+      ]
+  {% elif properties['login_access'] == 'Full Cloud API access' %}
+    login_node_scopes: ["https://www.googleapis.com/auth/cloud-platform"]
+  {% elif properties['login_access'] == 'Custom scopes' %}
+    login_node_scopes: {{ properties['login_custom_scopes'].split(',') }}
+  {% endif %}
 
     suspend_time: {{ properties['suspend_time'] }}
 
+  {% if properties['compute_node_access'] == 'Default access' %}
+    compute_node_scopes: [
+        "https://www.googleapis.com/auth/compute.readonly",
+        "https://www.googleapis.com/auth/servicecontrol",
+        "https://www.googleapis.com/auth/service.management.readonly",
+        "https://www.googleapis.com/auth/logging.write",
+        "https://www.googleapis.com/auth/monitoring.write",
+        "https://www.googleapis.com/auth/trace.append",
+        "https://www.googleapis.com/auth/devstorage.read_write",
+      ]
+  {% elif properties['compute_node_access'] == 'Full Cloud API access' %}
+    compute_node_scopes: ["https://www.googleapis.com/auth/cloud-platform"]
+  {% elif properties['compute_node_access'] == 'Custom scopes' %}
+    compute_node_scopes: {{ properties['compute_node_custom_scopes'].split(',') }}
+  {% endif %}
     partitions:
       - name: {{ properties['compute1_partition_name'] }}
         zone: {{ properties['zone'] }}
         image: {{ image }}
-        image_hyperthreads: False
+        image_hyperthreads: True
         machine_type: {{ properties['compute1_machine_type'] }}
         compute_disk_type: {{ properties['compute1_disk_type'] }}
         compute_disk_size_gb: {{ properties['compute1_disk_size_gb'] }}
@@ -61,7 +107,7 @@ resources:
       - name: {{ properties['compute2_partition_name'] }}
         zone: {{ properties['zone'] }}
         image: {{ image }}
-        image_hyperthreads: False
+        image_hyperthreads: True
         machine_type: {{ properties['compute2_machine_type'] }}
         compute_disk_type: {{ properties['compute2_disk_type'] }}
         compute_disk_size_gb: {{ properties['compute2_disk_size_gb'] }}
@@ -77,7 +123,7 @@ resources:
       - name: {{ properties['compute3_partition_name'] }}
         zone: {{ properties['zone'] }}
         image: {{ image }}
-        image_hyperthreads: False
+        image_hyperthreads: True
         machine_type: {{ properties['compute3_machine_type'] }}
         compute_disk_type: {{ properties['compute3_disk_type'] }}
         compute_disk_size_gb: {{ properties['compute3_disk_size_gb'] }}

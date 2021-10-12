@@ -212,6 +212,7 @@ class Config(NSDict):
                    'network_storage',
                    'login_network_storage',
                    'instance_defs',
+                   'intel_select_solution',
                    )
     PROPERTIES = (*SAVED_PROPS,
                   'munge_key',

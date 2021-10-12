@@ -21,6 +21,7 @@ locals {
     cloudsql                     = var.cloudsql
     cluster_name                 = var.cluster_name
     compute_node_scopes          = var.compute_node_scopes
+    intel_select_solution        = var.intel_select_solution
     compute_node_service_account = var.compute_node_service_account == null ? data.google_compute_default_service_account.default.email : var.compute_node_service_account
     controller_secondary_disk    = var.secondary_disk
     external_compute_ips         = !var.disable_compute_public_ips
@@ -63,7 +64,7 @@ resource "google_compute_instance" "controller_node" {
 
   boot_disk {
     initialize_params {
-      image = var.image
+      image = var.intel_select_solution == "software_only" || var.intel_select_solution == "full_config" ? "projects/${var.project}/global/images/schedmd-slurm-hpc-intel-controller" : var.image
       type  = var.boot_disk_type
       size  = var.boot_disk_size
     }
@@ -196,4 +197,11 @@ resource "google_compute_instance_from_template" "controller_node" {
     slurmsync                 = file("${path.module}/../../../scripts/slurmsync.py")
     util-script               = file("${path.module}/../../../scripts/util.py")
   }
+}
+
+resource "null_resource" "check_intel_validation" {
+    triggers = (var.intel_select_solution == null || 
+                  var.intel_select_solution == "software_only" || 
+                  (var.intel_select_solution == "full_config" &&  var.boot_disk_size >=215) ? {} : 
+                  file("ERROR: Configuration failed as full_config requires boot_disk_size of the controller to be larger than 215 GB."))
 }

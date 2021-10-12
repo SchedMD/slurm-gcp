@@ -100,6 +100,9 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
     if instance_def.machine_type:
         config['machineType'] = instance_def.machine_type
 
+    if cfg.intel_select_solution == "software_only" or cfg.intel_select_solution == "full_config":
+        instance_def.image = "projects/{}/global/images/schedmd-slurm-hpc-intel-compute".format(cfg.project)
+
     if (instance_def.image and
             instance_def.compute_disk_type and
             instance_def.compute_disk_size_gb):
@@ -173,10 +176,8 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
     if instance_def.regional_capacity:
         if instance_def.regional_policy:
             body['locationPolicy'] = instance_def.regional_policy
-        op = compute.regionInstances().bulkInsert(
-            project=cfg.project, region=instance_def.region,
-            body=body)
-        return op.execute()
+        return util.ensure_execute(compute.regionInstances().bulkInsert(
+            project=cfg.project, region=instance_def.region, body=body))
 
     return util.ensure_execute(compute.instances().bulkInsert(
         project=cfg.project, zone=instance_def.zone, body=body))

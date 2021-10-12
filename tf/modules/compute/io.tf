@@ -134,3 +134,9 @@ variable "zone" {
   description = "Compute Platform zone where the notebook server will be located"
   default     = "us-central1-b"
 }
+
+variable "intel_select_solution" {
+  description = "Configure the cluster to meet the performance requirement of the Intel Select Solution"
+  default     = null
+  type        = string
+}

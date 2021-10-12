@@ -29,7 +29,7 @@ description:
   icon: '@media/slurm-logo-only-small.png'
   title: SchedMD Slurm GCP
   url: 'https://www.schedmd.com'
-  version: 4.0.0
+  version: 4.0.3
   softwareGroups:
   - type: SOFTWARE_GROUP_OS
     software:
@@ -37,7 +37,7 @@ description:
       version: '7'
   - software:
     - title: Slurm
-      version: 20.11.4
+      version: 20.11.7
   documentations:
   - title: Slurm on GCP Documentation
     url: 'https://github.com/schedmd/slurm-gcp'
@@ -66,9 +66,13 @@ input:
   properties:
     - name: cluster_name
       title: Cluster name
+      tooltip: Letters, numbers, and dashes only
     - name: zone
       title: Zone
       subtext: 'GPU availability is limited to certain zones. <a href="https://cloud.google.com/compute/docs/gpus">Learn more</a>'
+    - name: suspend_time
+      title: Suspend Time (in sec)
+      level: 1
     - name: network
       title: Network name
       section: NETWORK_TIER
@@ -122,8 +126,12 @@ input:
       title: Boot Disk Size (GB)
       section: CONTROLLER_TIER
       level: 1
-    - name: suspend_time
-      title: Suspend Time (in sec)
+    - name: controller_access
+      title: Controller API Access
+      section: CONTROLLER_TIER
+      level: 1
+    - name: controller_custom_scopes
+      title: Controller Custom Scopes
       section: CONTROLLER_TIER
       level: 1
 
@@ -137,6 +145,14 @@ input:
       level: 1
     - name: login_disk_size_gb
       title: Boot Disk Size (GB)
+      section: LOGIN_TIER
+      level: 1
+    - name: login_access
+      title: Login API Access
+      section: LOGIN_TIER
+      level: 1
+    - name: login_custom_scopes
+      title: Login Custom Scopes
       section: LOGIN_TIER
       level: 1
 
@@ -172,6 +188,15 @@ input:
       level: 1
     - name: compute1_gpu_type
       title: GPU type
+      section: COMPUTE1_CONFIG
+      level: 1
+    - name: compute_node_access
+      title: Compute node API access
+      subtext: This applies to all compute partitions
+      section: COMPUTE1_CONFIG
+      level: 1
+    - name: compute_node_custom_scopes
+      title: Compute node custom scopes
       section: COMPUTE1_CONFIG
       level: 1
 
