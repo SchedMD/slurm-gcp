@@ -537,6 +537,8 @@ ConditionPathExists={slurmdirs.etc}/slurm.conf
 
 [Service]
 Type=simple
+User=slurmrestd
+Group=slurmrestd
 EnvironmentFile=-/etc/sysconfig/slurmrestd
 Environment="SLURM_JWT=daemon"
 Environment="SLURMRESTD_BINDS=localhost:8383 0.0.0.0:6842 :::8642"
