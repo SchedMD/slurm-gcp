@@ -1,8 +1,13 @@
-Changes in Slurm-GCP 4.0.5
+Changes in Slurm-GCP 4.1.0
 ==========================
- -- suspend.py - now handles "Quota exceeded" error.
+ -- suspend.py - now handles "Quota exceeded" error
+ -- Support for Intel-select options
+ -- slurmrestd - changed user from root to user slurmrestd
  -- resume.py - fix state=down reason being malformed
- -- Updated Slurm to 21.08.2
+ -- suspend.py - scontrol update now specifies new state=power_down_force
+ -- slurm.conf - update to AccountingStoreFlags=job_comment
+ -- slurmsync.py - state flags use new POWERED_DOWN state
+ -- Updated Slurm to version 21.08.2
 
 Changes in Slurm-GCP 4.0.4
 ==========================
