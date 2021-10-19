@@ -38,8 +38,9 @@ variable "zone" {
 #########
 
 variable "source_image_project_id" {
-  type    = list(string)
-  default = null
+  description = "A list of project IDs to search for the source image. Packer will search the first project ID in the list first, and fall back to the next in the list, until it finds the source image."
+  type        = list(string)
+  default     = []
 }
 
 variable "skip_create_image" {
@@ -78,7 +79,7 @@ variable "slurm_version" {
   type        = string
   default     = "20.11.8"
   validation {
-    condition = can(regex("^\\d{2}\\.\\d{2}(\\.\\d+|-latest)$|^b:.+$", var.slurm_version))
+    condition     = can(regex("^\\d{2}\\.\\d{2}(\\.\\d+|-latest)$|^b:.+$", var.slurm_version))
     error_message = "Slurm version must pass '^\\d{2}\\.\\d{2}(\\.\\d+|-latest)$|^b:.+$'."
   }
 }
@@ -86,6 +87,18 @@ variable "slurm_version" {
 ##########
 # BUILDS #
 ##########
+
+variable "service_account_email" {
+  description = "The service account email to use. If 'null' or 'default', then the default email will be used."
+  type        = string
+  default     = null
+}
+
+variable "service_account_scopes" {
+  description = "Service account scopes to attach to the instance. See https://cloud.google.com/compute/docs/access/service-accounts."
+  type        = list(string)
+  default     = null
+}
 
 variable "builds" {
   type = list(object({

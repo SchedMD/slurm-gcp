@@ -23,7 +23,14 @@ zone    = "us-central1-a"
 # IMAGE #
 #########
 
-# source_image_project_id = "<SOURCE_IMAGE_PROJECT_ID>"
+# NOTE: Your Project ID will be automatically appended
+source_image_project_id = [
+  "rhel-cloud",
+  "centos-cloud",
+  "cloud-hpc-image-public",
+  "debian-cloud",
+  "ubuntu-os-cloud",
+]
 
 # *NOT* intended for production use
 # skip_create_image = true
@@ -45,17 +52,51 @@ tags = [
 # PROVISION #
 #############
 
-slurm_version = "slurm-20.11"
+slurm_version = "21.08.2"
 
 ##########
 # BUILDS #
 ##########
+
+### Service Account ###
+
+service_account_email = "default"
+
+service_account_scopes = [
+  "https://www.googleapis.com/auth/cloud-platform",
+]
+
+### Builds ###
 
 builds = [
   {
     ### image ###
     source_image        = null
     source_image_family = "centos-7"
+    image_licenses      = null
+    labels              = null
+
+    ### ssh ###
+    ssh_username = "packer"
+    ssh_password = null
+
+    ### instance ###
+    machine_type = "n2d-standard-4"
+    preemptible  = false
+
+    ### root of trust ###
+    enable_secure_boot          = null
+    enable_vtpm                 = null
+    enable_integrity_monitoring = null
+
+    ### storage ###
+    disk_size = null
+    disk_type = null
+  },
+  {
+    ### image ###
+    source_image        = null
+    source_image_family = "hpc-centos-7"
     image_licenses      = null
     labels              = null
 
@@ -104,6 +145,30 @@ builds = [
     ### image ###
     source_image        = null
     source_image_family = "debian-10"
+    image_licenses      = null
+    labels              = null
+
+    ### ssh ###
+    ssh_username = "packer"
+    ssh_password = null
+
+    ### instance ###
+    machine_type = "n2d-standard-4"
+    preemptible  = false
+
+    ### root of trust ###
+    enable_secure_boot          = null
+    enable_vtpm                 = null
+    enable_integrity_monitoring = null
+
+    ### storage ###
+    disk_size = null
+    disk_type = null
+  },
+  {
+    ### image ###
+    source_image        = null
+    source_image_family = "ubuntu-2004-lts"
     image_licenses      = null
     labels              = null
 

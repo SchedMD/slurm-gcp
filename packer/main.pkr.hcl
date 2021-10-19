@@ -34,8 +34,11 @@ source "googlecompute" "image" {
   zone       = var.zone
 
   ### image ###
-  source_image_project_id = var.source_image_project_id
-  skip_create_image       = var.skip_create_image
+  source_image_project_id = setunion(
+    [var.project],
+    var.source_image_project_id,
+  )
+  skip_create_image = var.skip_create_image
 
   ### ssh ###
   ssh_clear_authorized_keys = true
@@ -46,13 +49,8 @@ source "googlecompute" "image" {
   tags               = var.tags
 
   ### service account ###
-  scopes = [
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/compute",
-    "https://www.googleapis.com/auth/devstorage.full_control",
-    "https://www.googleapis.com/auth/logging.write",
-    "https://www.googleapis.com/auth/monitoring.write",
-  ]
+  service_account_email = var.service_account_email
+  scopes                = var.service_account_scopes
 }
 
 #########
