@@ -49,7 +49,7 @@ Platform. The scripts setup the following scenario:
   disk type, cpu platform, and maximum node count.
 
 Instances are created from images with Slurm and dependencies preinstalled. The default,
-`schedmd-slurm-public/schedmd-slurm-20-11-7-hpc-centos-7`, is based on the
+`schedmd-slurm-public/schedmd-slurm-21-08-2-hpc-centos-7`, is based on the
 Google-provided HPC-optimized CentOS 7 image.
 
 By default, `/opt/apps` and `/home` are mounted from the controller across all instances
@@ -132,12 +132,11 @@ access the mount.
 `fs_type` can be one of: `nfs`, `cifs`, `lustre`, `gcsfuse`
 
 ### Public Slurm images
-
-There are currently 3 public image families available for use with Slurm-GCP:
-`projects/schedmd-slurm-public/global/images/family/`
-* `schedmd-slurm-20-11-7-hpc-centos-7`
-* `schedmd-slurm-20-11-7-centos-7`
-* `schedmd-slurm-20-11-7-debian-10`
+There are currently 3 public image families available for use with Slurm-GCP:  
+`projects/schedmd-slurm-public/global/images/family/`  
+* `schedmd-slurm-21-08-2-hpc-centos-7`  
+* `schedmd-slurm-21-08-2-centos-7`  
+* `schedmd-slurm-21-08-2-debian-10`
 
 #### Simultaneous Multi-Threading (SMT)
 
