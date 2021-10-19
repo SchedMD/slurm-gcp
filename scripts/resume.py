@@ -18,7 +18,6 @@
 # limitations under the License.
 
 import argparse
-import httplib2
 import logging
 import os
 import sys
@@ -27,21 +26,16 @@ import json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from itertools import groupby, chain, islice
-
-from google.auth import compute_engine
-import google_auth_httplib2
-from googleapiclient.http import set_user_agent
+from itertools import groupby, islice
 
 from addict import Dict as NSDict
 
 import util
-from util import run
+from util import run, chunked
+from util import cfg, lkp, compute
 from setup import resolve_network_storage
 
 
-cfg = util.load_config_file(Path(__file__).with_name('config.yaml'))
-lkp = util.Lookup(cfg)
 PREFIX = Path('/usr/local/bin')
 SCONTROL = PREFIX/'scontrol'
 
@@ -49,14 +43,9 @@ cfg.log_dir = '/var/log/slurm'
 LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 SCRIPTS_DIR = Path(__file__).parent.resolve()
 
-TOT_REQ_CNT = 1000
-
 util.config_root_logger(level='DEBUG', util_level='DEBUG',
                         logfile=LOGFILE)
 log = logging.getLogger(Path(__file__).name)
-
-if cfg.google_app_cred_path:
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
 
 def instance_properties(partition_name):
@@ -105,10 +94,9 @@ def create_instances(nodes):
     body.perInstanceProperties = {k: {} for k in nodes}
     body.instanceProperties = instance_properties(partition_name)
 
-    with lkp.sync_compute() as compute:
-        result = util.ensure_execute(compute.regionInstances().bulkInsert(
-            project=cfg.project, region=partition.region, body=body
-        ))
+    result = util.ensure_execute(compute.regionInstances().bulkInsert(
+        project=cfg.project, region=partition.region, body=body
+    ))
     return result
 
 
@@ -116,13 +104,6 @@ def expand_nodelist(nodelist):
     """ expand nodes in hostlist to hostnames """
     nodes = run(f"{SCONTROL} show hostnames {nodelist}").stdout.splitlines()
     return nodes
-
-
-def chunks(it, n=TOT_REQ_CNT):
-    """ group iterator into chunks of max size n """
-    it = iter(it)
-    while (chunk := list(islice(it, n))):
-        yield chunk
 
 
 def resume_nodes(nodelist):
@@ -136,7 +117,7 @@ def resume_nodes(nodelist):
     grouped_nodes = [
         (ident, chunk)
         for ident, nodes in groupby(nodes, ident_key)
-        for chunk in chunks(nodes)
+        for chunk in chunked(nodes)
     ]
     log.debug(f"grouped_nodes: {grouped_nodes}")
 

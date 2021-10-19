@@ -18,36 +18,109 @@
 # limitations under the License.
 
 import argparse
+import httplib2
 import logging
 import os
 import sys
-import time
-from itertools import groupby
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
+from itertools import groupby, chain, islice
 
-import googleapiclient.discovery
+from addict import Dict as NSDict
 
 import util
+from util import run, batch_execute, ensure_execute, wait_for_operations
+from util import lkp, cfg, compute
+from setup import resolve_network_storage
 
-cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
-SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
+PREFIX = Path('/usr/local/bin')
+SCONTROL = PREFIX/'scontrol'
+
+cfg.log_dir = '/var/log/slurm'
 LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
+SCRIPTS_DIR = Path(__file__).parent.resolve()
 
 TOT_REQ_CNT = 1000
 
-operations = {}
-retry_list = []
+util.config_root_logger(level='DEBUG', util_level='DEBUG',
+                        logfile=LOGFILE)
+log = logging.getLogger(Path(__file__).name)
 
 if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
 
-def delete_instances_cb(request_id, response, exception):
-    if exception is not None:
-        log.error(f"delete exception for node {request_id}: {exception}")
-        if "Rate Limit Exceeded" in str(exception) or "Quota exceeded" in str(exception):
-            retry_list.append(request_id)
+def truncate_iter(iterable, max_count):
+    end = '...'
+    _iter = iter(iterable)
+    for i, el in enumerate(_iter, start=1):
+        if i >= max_count:
+            yield end
+            break
+        yield el
+
+
+def delete_instance_op(instance, project=None):
+    project = project or lkp.project
+    return compute.instances().delete(
+        project=project,
+        zone=lkp.instance_zone(instance),
+        instance=instance,
+    )
+
+
+def delete_instances(instances):
+    """ Call regionInstances.bulkInsert to create instances """
+    if len(instances) == 0:
+        return
+    ops = {
+        inst: delete_instance_op(inst) for inst in instances
+    }
+    done, failed = batch_execute(ops)
+    if failed:
+        failed_nodes = [f"{n}: {e}" for n, (_, e) in failed.items()]
+        node_str = '\n'.join(str(el) for el in truncate_iter(failed_nodes, 5))
+        log.error(f"some nodes failed to delete: {node_str}")
+    wait_for_operations(done)
+
+
+def expand_nodelist(nodelist):
+    """ expand nodes in hostlist to hostnames """
+    nodes = run(f"{SCONTROL} show hostnames {nodelist}").stdout.splitlines()
+    return nodes
+
+
+def suspend_nodes(nodelist):
+    """ resume nodes in nodelist """
+    nodes = expand_nodelist(nodelist)
+    delete_instances(nodes)
+
+
+def epilog_suspend_nodes(nodelist, job_id):
+    nodes = expand_nodelist(nodelist)
+    model = next(iter(nodes))
+    partition_name = lkp.node_partition(model)
+    partition = cfg.partitions[partition_name]
+    if not partition.exclusive:
+        return
+    # Mark nodes as off limits to new jobs while powering down.
+    # Have to use "down" because it's the only, current, way to remove the
+    # power_up flag from the node -- followed by a power_down -- if the
+    # PrologSlurmctld fails with a non-zero exit code.
+    run(f"{SCONTROL} update node={nodelist} state=down reason='{job_id} finishing'")
+    # Power down nodes in slurm, so that they will become available again.
+    run(f"{SCONTROL} update node={nodelist} state=power_down")
+
+    delete_instances()
+
+
+def main(nodelist, job_id):
+    """ main called when run as script """
+    log.debug(f"main {nodelist} {job_id}")
+    if job_id is not None:
+        epilog_suspend_nodes(nodelist, job_id)
     else:
         operations[request_id] = response
 # [END delete_instances_cb]
@@ -142,68 +215,87 @@ def main(arg_nodes, arg_job_id):
     if (arg_job_id and not cfg.instance_defs[pid].exclusive):
         # Don't delete from calls by EpilogSlurmctld
         return
+    # model here indicates any node that can be used to describe the rest
+    model = next(iter(nodes))
+    template = lkp.node_template_props(model).url
+    partition_name = lkp.node_partition(model)
+    partition = cfg.partitions[partition_name]
 
-    if arg_job_id:
-        # Mark nodes as off limits to new jobs while powering down.
-        # Have to use "down" because it's the only, current, way to remove the
-        # power_up flag from the node -- followed by a power_down -- if the
-        # PrologSlurmctld fails with a non-zero exit code.
-        util.run(
-            f"{SCONTROL} update node={arg_nodes} state=down reason='{arg_job_id} finishing'")
-        # Power down nodes in slurm, so that they will become available again.
-        util.run(f"{SCONTROL} update node={arg_nodes} state=power_down")
+    body = NSDict()
+    body.count = len(nodes)
+    body.sourceInstanceTemplate = template
+    body.perInstanceProperties = {k: {} for k in nodes}
+    body.instanceProperties = instance_properties(partition_name)
 
-    while True:
-        delete_instances(compute, node_list, arg_job_id)
-        if not len(retry_list):
-            break
+    with lkp.sync_compute() as compute:
+        result = util.ensure_execute(compute.regionInstances().bulkInsert(
+            project=cfg.project, region=partition.region, body=body
+        ))
+    return result
 
-        log.debug("got {} nodes to retry ({})"
-                  .format(len(retry_list), ','.join(retry_list)))
-        node_list = list(retry_list)
-        del retry_list[:]
 
-    if arg_job_id:
-        for operation in operations.values():
-            try:
-                util.wait_for_operation(compute, cfg.project, operation)
-                # now that the instance is gone, resume to put back in service
-                util.run(f"{SCONTROL} update node={arg_nodes} state=resume")
-            except Exception:
-                log.exception(f"Error in deleting {operation['name']} to slurm")
+def expand_nodelist(nodelist):
+    """ expand nodes in hostlist to hostnames """
+    nodes = run(f"{SCONTROL} show hostnames {nodelist}").stdout.splitlines()
+    return nodes
 
-    log.debug("done deleting instances")
 
-    if (arg_job_id and
-            cfg.instance_defs[pid].enable_placement and
-            cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
-            len(node_list) > 1):
-        delete_placement_groups(compute, node_list, arg_job_id)
+def suspend_nodes(nodelist):
+    """ resume nodes in nodelist """
+    nodes = expand_nodelist(nodelist)
 
-    log.info(f"done deleting nodes:{arg_nodes} job_id:{job_id}")
 
-# [END main]
+def epilog_suspend_nodes(nodelist, job_id):
+    nodes = expand_nodelist(nodelist)
+    model = next(iter(nodes))
+    partition_name = lkp.node_partition(model)
+    partition = cfg.partitions[partition_name]
+    if not partition.exclusive:
+        return
+    # Mark nodes as off limits to new jobs while powering down.
+    # Have to use "down" because it's the only, current, way to remove the
+    # power_up flag from the node -- followed by a power_down -- if the
+    # PrologSlurmctld fails with a non-zero exit code.
+    run(f"{SCONTROL} update node={nodelist} state=down reason='{job_id} finishing'")
+    # Power down nodes in slurm, so that they will become available again.
+    run(f"{SCONTROL} update node={nodelist} state=power_down")
+
+    delete_instances()
+
+
+def main(nodelist, job_id):
+    """ main called when run as script """
+    log.debug(f"main {nodelist} {job_id}")
+    if job_id is not None:
+        epilog_suspend_nodes(nodelist, job_id)
+    else:
+        suspend_nodes(nodelist)
+
+
+parser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument(
+    'nodelist', help="list of nodes to suspend"
+)
+parser.add_argument(
+    'job_id', nargs='?', default=None,
+    help="Optional job id for node list. Implies that PrologSlurmctld called program"
+)
+parser.add_argument('--debug', '-d', dest='debug', action='store_true',
+                    help='Enable debugging output')
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('args', nargs='+', help="nodes [jobid]")
-    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
-                        help='Enable debugging output')
-
     if "SLURM_JOB_NODELIST" in os.environ:
-        args = parser.parse_args(sys.argv[1:] +
-                                 [os.environ['SLURM_JOB_NODELIST'],
-                                  os.environ['SLURM_JOB_ID']])
+        argv = [
+            *sys.argv[1:],
+            os.environ['SLURM_JOB_NODELIST'],
+            os.environ['SLURM_JOB_ID'],
+        ]
+        args = parser.parse_args(argv)
     else:
         args = parser.parse_args()
-
-    nodes = args.args[0]
-    job_id = 0
-    if len(args.args) > 1:
-        job_id = args.args[1]
 
     if args.debug:
         util.config_root_logger(level='DEBUG', util_level='DEBUG',
@@ -214,4 +306,4 @@ if __name__ == '__main__':
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 
-    main(nodes, job_id)
+    main(args.nodelist, args.job_id)

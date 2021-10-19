@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import httplib2
 import logging
 import logging.config
 import os
@@ -21,23 +22,36 @@ import shlex
 import socket
 import subprocess
 import sys
-from collections import defaultdict, deque
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, Future
 from contextlib import contextmanager
 from functools import lru_cache, cached_property
-from itertools import chain, compress
+from itertools import chain, compress, islice
 from operator import itemgetter
 from pathlib import Path
-from threading import Lock
 from time import sleep
 
+import google.auth
 import googleapiclient.discovery
-import requests
+import google_auth_httplib2
+from googleapiclient.http import set_user_agent
+
+from requests import get as get_url
+from requests.exceptions import RequestException
+
 import yaml
 from addict import Dict as NSDict
 
 
+USER_AGENT = "Slurm_GCP_Scripts/1.5 (GPN:SchedMD)"
+API_REQ_LIMIT = 1000
+CONFIG_FILE = Path(__file__).with_name('config.yaml')
+
 log = logging.getLogger(__name__)
+_,  project = google.auth.default()
+compute = None
+cfg = None
+lkp = None
 
 
 def config_root_logger(level='DEBUG', util_level=None,
@@ -126,19 +140,14 @@ def cd(path):
         os.chdir(prev)
 
 
-def static_vars(**kwargs):
-    """
-    Add variables to the function namespace.
-    @static_vars(var=init): var must be referenced func.var
-    """
-    def decorate(func):
-        for k in kwargs:
-            setattr(func, k, kwargs[k])
-        return func
-    return decorate
-
-
 ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
+
+
+def chunked(iterable, n=API_REQ_LIMIT):
+    """ group iterator into chunks of max size n """
+    it = iter(iterable)
+    while (chunk := list(islice(it, n))):
+        yield chunk
 
 
 def get_metadata(path, root=ROOT_URL):
@@ -146,10 +155,10 @@ def get_metadata(path, root=ROOT_URL):
     HEADERS = {'Metadata-Flavor': 'Google'}
     url = f'{root}/{path}'
     try:
-        resp = requests.get(url, headers=HEADERS)
+        resp = get_url(url, headers=HEADERS)
         resp.raise_for_status()
         return resp.text
-    except requests.exceptions.RequestException:
+    except RequestException:
         log.error(f"Error while getting metadata from {url}")
         return None
 
@@ -159,22 +168,40 @@ def instance_metadata(path):
     return get_metadata(path, root=f"{ROOT_URL}/instance")
 
 
-def ensure_execute(operation):
+def compute_service(credentials=None, user_agent=USER_AGENT):
+    if credentials is None:
+        # TODO when can this fail? if it were to fail, credentials should be
+        # left None
+        credentials, _ = google.auth.default()
+
+    def build_request(http, *args, **kwargs):
+        new_http = httplib2.Http()
+        if user_agent is not None:
+            new_http = set_user_agent(new_http, user_agent)
+        if credentials is not None:
+            new_http = google_auth_httplib2.AuthorizedHttp(
+                credentials, http=new_http)
+        return googleapiclient.http.HttpRequest(new_http, *args, **kwargs)
+    return googleapiclient.discovery.build(
+        'compute', 'v1', requestBuilder=build_request)
+
+
+def ensure_execute(request):
     """ Handle rate limits and socket time outs """
 
     retry = 0
-    sleep = 1
-    max_sleep = 60
+    wait = 1
+    max_wait = 60
     while True:
         try:
-            return operation.execute()
+            return request.execute()
 
         except googleapiclient.errors.HttpError as e:
             if "Rate Limit Exceeded" in str(e):
                 retry += 1
-                sleep = min(sleep*2, max_sleep)
-                log.error(f"retry:{retry} sleep:{sleep} '{e}'")
-                sleep(sleep)
+                wait = min(wait*2, max_wait)
+                log.error(f"retry:{retry} sleep:{wait} '{e}'")
+                sleep(wait)
                 continue
             raise
 
@@ -189,31 +216,79 @@ def ensure_execute(operation):
         break
 
 
-def wait_for_operation(compute, project, operation):
-    print('Waiting for operation to finish...')
-    while True:
-        if 'zone' in operation:
-            operation = compute.zoneOperations().wait(
-                project=project,
-                zone=operation['zone'].split('/')[-1],
-                operation=operation['name'])
-        elif 'region' in operation:
-            operation = compute.regionOperations().wait(
-                project=project,
-                region=operation['region'].split('/')[-1],
-                operation=operation['name'])
-        else:
-            operation = compute.globalOperations().wait(
-                project=project,
-                operation=operation['name'])
+def retry_exception(exc):
+    retry_errors = (
+        "Rate Limit Exceeded",
+        "Quota Exceeded",
+    )
+    return any(e in str(exc) for e in retry_errors)
 
-        result = ensure_execute(operation)
+
+def wait_operation(operation, project=project, compute=compute):
+    if 'zone' in operation:
+        op = compute.zoneOperations().wait(
+            project=project,
+            zone=operation['zone'].split('/')[-1],
+            operation=operation['name'])
+    elif 'region' in operation:
+        op = compute.regionOperations().wait(
+            project=project,
+            region=operation['region'].split('/')[-1],
+            operation=operation['name'])
+    else:
+        op = compute.globalOperations().wait(
+            project=project,
+            operation=operation['name'])
+    return op
+
+
+def batch_execute(requests, compute=compute, retry_cb=None):
+    BATCH_LIMIT = 1000
+    if not isinstance(requests, dict):
+        requests = dict(enumerate(requests))  # rid generated here
+    done = {}
+    failed = {}
+
+    def batch_callback(rid, resp, exc):
+        if exc is not None:
+            log.error(f"compute request exception {rid}: {exc}")
+            if not retry_exception(exc):
+                req = requests.pop(rid)
+                failed[rid] = (req, exc)
+        else:
+            # if retry_cb is set, don't move to done until it returns false
+            if retry_cb is not None or not retry_cb(resp):
+                requests.pop(rid)
+                done[rid] = resp
+
+    while requests:
+        batch = compute.new_batch_http_request(callback=batch_callback)
+        chunk = list(islice(requests.items(), BATCH_LIMIT))
+        for rid, op in chunk:
+            batch.add(op, rid)
+        ensure_execute(batch)
+    return done, failed
+
+
+def wait_for_operations(operations, project=project, compute=compute):
+    def operation_retry(resp):
+        return resp['status'] != 'DONE'
+    requests = [wait_operation(op) for op in operations]
+    return batch_execute(requests, retry_cb=operation_retry)
+
+
+def wait_for_operation(operation, project=project, compute=compute):
+    print('Waiting for operation to finish...')
+    wait_op = wait_operation(operation)
+
+    while True:
+        result = ensure_execute(wait_op)
         if result['status'] == 'DONE':
             print("done.")
             return result
 
 
-def get_group_operations(compute, project, operation):
+def get_group_operations(operation, project=project, compute=compute):
     """ get list of operations associated with group id """
 
     group_id = operation['operationGroupId']
@@ -235,116 +310,6 @@ def get_group_operations(compute, project, operation):
     return ensure_execute(operation)
 
 
-def get_regional_instances(compute, project, def_list):
-    """ Get instances that exist in regional capacity instance defs """
-
-    fields = 'items.zones.instances(name,zone,status),nextPageToken'
-    regional_instances = {}
-
-    region_filter = ' OR '.join(f'(name={pid}-*)' for pid, d in
-                                def_list.items() if d.regional_capacity)
-    if region_filter:
-        page_token = ""
-        while True:
-            resp = ensure_execute(
-                compute.instances().aggregatedList(
-                    project=project, filter=region_filter, fields=fields,
-                    pageToken=page_token))
-            if not resp:
-                break
-            for zone, zone_value in resp['items'].items():
-                if 'instances' in zone_value:
-                    regional_instances.update(
-                        {instance['name']: instance
-                         for instance in zone_value['instances']}
-                    )
-            if "nextPageToken" in resp:
-                page_token = resp['nextPageToken']
-                continue
-            break
-
-    return regional_instances
-
-
-class threadsafe_iterator:
-    """ make any iterator or generator thread-safe """
-    def __init__(self, iterator):
-        self.iterator = iterator
-        self.lock = Lock()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        with self.lock:
-            return self.iterator.__next__()
-
-
-def threadsafe_generator(func):
-    """ Decorator that applies threadsafe_iterator to a generator """
-    def wrapper(*args, **kwargs):
-        return threadsafe_iterator(func(*args, **kwargs))
-    return wrapper
-
-
-class SyncCompute:
-    """
-    Synchronized wrapper for compute api handle
-    with SyncCompute() as compute:
-        compute.instance().get(...)
-    """
-    def __init__(self):
-        self._lock = Lock()
-        self._compute = googleapiclient.discovery.build(
-            'compute', 'v1', cache_discovery=False)
-
-    @property
-    def locked(self):
-        return self._lock.locked()
-
-    def lock(self):
-        self._lock.acquire()
-
-    def unlock(self):
-        self._lock.release()
-
-    def __enter__(self):
-        # we lock in compute_pool generator to avoid 
-        # very rare hypothetical race condition
-        # if this class was used outside a compute pool, lock here
-        if not self.locked:
-            self.lock()
-        return self._compute
-
-    def __exit__(self, type, value, traceback):
-        self.unlock()
-
-
-@threadsafe_generator
-def make_compute_pool(max_count=None, wait=1):
-    """ maintains a pool of SyncCompute objects, only yielding them when they
-    are not thread locked
-    pool = make_compute_pool()
-    with next(pool) as compute:
-        compute.instances.get(...)
-    """
-    pool = deque(maxlen=max_count)
-    while True:
-        find_unlocked = (
-            (c, i) for i, c in enumerate(pool, start=1) if not c.locked
-        )
-        compute, i = next(find_unlocked, (None, 0))
-        if not compute:
-            if max_count and len(pool) >= max_count:
-                sleep(wait)
-                continue
-            compute = SyncCompute()
-            pool.append(compute)
-        pool.rotate(-i)  # optimization, move first i to the back
-        compute.lock()
-        yield compute
-
-
 def load_config_data(config):
     return NSDict(config)
 
@@ -353,7 +318,7 @@ def new_config(config):
     # If k is ever not found, None will be inserted as the value
     cfg = NSDict(config)
 
-    network_storage_iter = filter(None,(
+    network_storage_iter = filter(None, (
         *cfg.network_storage,
         *cfg.login_network_storage,
         *chain.from_iterable(
@@ -367,7 +332,12 @@ def new_config(config):
     
 
 def load_config_file(path):
-    return load_config_data(yaml.safe_load(Path(path).read_text()))
+    content = None
+    try:
+        content = yaml.safe_load(Path(path).read_text())
+    except FileNotFoundError:
+        pass
+    return load_config_data(content)
 
 
 def save_config(cfg, path):
@@ -399,8 +369,11 @@ class Lookup:
     node_parts_regex = re.compile(regex)
 
     def __init__(self, cfg=None):
-        self.compute_pool = make_compute_pool()
         self.cfg = cfg or NSDict()
+
+    @property
+    def project(self):
+        return self.cfg.project or project
 
     @cached_property
     def node_role(self):
@@ -413,15 +386,18 @@ class Lookup:
         )))
 
     @cached_property
+    def compute(self):
+        if self.cfg.google_app_cred_path:
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.cfg.google_app_cred_path
+        return compute_service()
+
+    @cached_property
     def hostname(self):
         return socket.gethostname()
 
     @property
     def exclusive(self):
         return bool(self.cfg.exclusive or self.cfg.enable_placement)
-
-    def sync_compute(self):
-        return next(self.compute_pool)
 
     @cached_property
     def template_nodes(self):
@@ -475,7 +451,65 @@ class Lookup:
             raise Exception(f"node name {node_name} not found among partitions nodes")
         return node_conf
 
-    def template_details(self, template, project=None):
+    @lru_cache(maxsize=1)
+    def instance_zones(self, project=None, cluster_name=None):
+        cluster_name = cluster_name or self.cfg.cluster_name
+        project = project or self.project
+        fields = 'items.zones.instances(name,zone,status),nextPageToken'
+        flt = f'name={cluster_name}-*'
+        act = self.compute.instances()
+        op = act.aggregatedList(project=project, fields=fields, filter=flt)
+        while op is not None:
+            result = ensure_execute(op)
+            instances = {
+                inst['name']: inst['zone'] for inst in chain.from_iterable(
+                    m['instances'] for m in result['items'].values()
+                )
+            }
+            op = act.aggregatedList_next(op, result)
+        return instances
+
+    def instance_zone(self, instance_name, project=None, cluster_name=None):
+        instance_zones = self.instance_zones(project=project,
+                                             cluster_name=cluster_name)
+        return instance_zones[instance_name]
+
+    @lru_cache(maxsize=1)
+    def machine_types(self, project=None):
+        project = project or self.project
+        field_names = 'name,zone,guestCpus,memoryMb,accelerators'
+        fields = f'items.zones.machineTypes({field_names}),nextPageToken'
+
+        machines = defaultdict(dict)
+        act = self.compute.machineTypes()
+        op = act.aggregatedList(project=project, fields=fields)
+        while op is not None:
+            result = ensure_execute(op)
+            machine_iter = chain.from_iterable(
+                m['machineTypes'] for m in result['items'].values()
+                if 'machineTypes' in m
+            )
+            for machine in machine_iter:
+                name = machine['name']
+                zone = machine['zone']
+                machines[name][zone] = machine
+    
+            op = act.aggregatedList_next(op, result)
+        return machines
+
+    def machine_type(self, machine_type, project=None, zone=None):
+        """  """
+        if zone:
+            project = project or self.project
+            machine_details = ensure_execute(self.compute.machineTypes().get(
+                project=project, zone=zone, machineType=machine_type
+            ))
+        else:
+            machines = self.machine_types(project=project)
+            machine_details = next(iter(machines[machine_type].values()))
+        return NSDict(machine_details)
+
+    def template_details(self, template):
         template_props = self.template_props(template)
         if template_props.machine:
             return template_props
@@ -495,24 +529,27 @@ class Lookup:
         gb = md.memoryMb // 1024
         machine.memory = md.memoryMb - (400 + (30 * gb))
 
-        machine.gpu_count = md.guestAccelerators.acceleratorCount or 0
-        machine.gpu_type = md.guestAccelerators.acceleratorType or None
+        if md.accelerators:
+            machine.gpu_type = md.accelerators[0].guestAcceleratorType
+            machine.gpu_count = md.accelerators[0].guestAcceleratorCount
+        else:
+            machine.gpu_type = None
+            machine.gpu_count = 0
 
         template_props.machine = machine
         return template_props
 
     @lru_cache(maxsize=None)
     def template_props(self, template, project=None):
-        if project is None:
-            project = self.cfg.project
+        project = project or self.project
 
         tpl_filter = f'(name={self.cfg.cluster_name}-{template}-*)'
-        with self.sync_compute() as compute:
-            template_list = ensure_execute(
-                compute.instanceTemplates().list(
-                    project=project,
-                    filter=tpl_filter)
-            ).get('items', [])
+
+        template_list = ensure_execute(
+            self.compute.instanceTemplates().list(
+                project=project,
+                filter=tpl_filter)
+        ).get('items', [])
         template_list.sort(key=itemgetter('creationTimestamp'))
         try:
             template_details = next(iter(template_list))
@@ -525,37 +562,8 @@ class Lookup:
         template_details.properties.url = template_details.selfLink
         return template_details.properties
 
-    @lru_cache(maxsize=None)
-    def machine_type(self, machine_type, project=None, zone=None):
-        """  """
-        if project is None:
-            project = self.cfg.project
-        if zone:
-            with self.sync_compute() as compute:
-                machine_details = ensure_execute(compute.machineTypes().get(
-                    project=project, zone=zone, machineType=machine_type
-                ))
-        else:
-            machines = defaultdict(dict)
-            page = None
-            with self.sync_compute() as compute:
-                while True:
-                    op = compute.machineTypes().aggregatedList(
-                        project=project, pageToken=page)
-                    result = ensure_execute(op)
-                    page = result.get('nextPageToken')
-                    machine_iter = chain.from_iterable(
-                        m['machineTypes'] for m in result['items'].values() if
-                        'machineTypes' in m
-                    )
-                    for machine in machine_iter:
-                        name = machine['name']
-                        zone = machine['zone']
-                        machines[name][zone] = machine
-    
-                    if not page:
-                        break
-            # without a zone, just get the first one
-            machine_details = next(iter(machines[machine_type].values()))
-        return NSDict(machine_details)
 
+# Define late globals
+compute = compute_service()
+cfg = load_config_file(CONFIG_FILE)
+lkp = Lookup(cfg)
