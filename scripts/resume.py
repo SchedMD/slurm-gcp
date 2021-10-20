@@ -43,9 +43,8 @@ cfg.log_dir = '/var/log/slurm'
 LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 SCRIPTS_DIR = Path(__file__).parent.resolve()
 
-util.config_root_logger(level='DEBUG', util_level='DEBUG',
-                        logfile=LOGFILE)
-log = logging.getLogger(Path(__file__).name)
+logger_name = Path(__file__).name
+log = logging.getLogger(logger_name)
 
 
 def instance_properties(partition_name):
@@ -108,6 +107,7 @@ def expand_nodelist(nodelist):
 
 def resume_nodes(nodelist):
     """ resume nodes in nodelist """
+    log.info(f"resume {nodelist}")
     nodes = expand_nodelist(nodelist)
 
     def ident_key(n):
@@ -137,7 +137,7 @@ def prolog_resume_nodes(nodelist, job_id):
 
 def main(nodelist, job_id):
     """ main called when run as script """
-    log.debug(f"main {nodelist} {job_id}")
+    log.debug(f"main nodelist={nodelist} job_id={job_id}")
     if job_id is not None:
         prolog_resume_nodes(nodelist, job_id)
     else:
@@ -159,6 +159,10 @@ parser.add_argument('--debug', '-d', dest='debug', action='store_true',
 
 
 if __name__ == '__main__':
+    util.config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
+                            logfile=LOGFILE)
+    log = logging.getLogger(Path(__file__).name)
+
     if "SLURM_JOB_NODELIST" in os.environ:
         argv = [
             *sys.argv[1:],
@@ -170,10 +174,10 @@ if __name__ == '__main__':
         args = parser.parse_args()
 
     if args.debug:
-        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+        util.config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
     else:
-        util.config_root_logger(level='INFO', util_level='ERROR',
+        util.config_root_logger(logger_name, level='INFO', util_level='ERROR',
                                 logfile=LOGFILE)
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception

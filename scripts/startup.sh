@@ -60,6 +60,18 @@ function fetch_scripts {
 	else
 		echo util-script not found in project metadata, skipping update
 	fi
+	if RESUME_SCRIPT=$(jq -re '."slurm-resume"' <<< "$METADATA"); then
+		echo updating resume.py from project metadata
+		printf '%s' "$RESUME_SCRIPT" > $RESUME_SCRIPT_FILE
+	else
+		echo slurm-resume not found in project metadata, skipping update
+	fi
+	if SUSPEND_SCRIPT=$(jq -re '."slurm-suspend"' <<< "$METADATA"); then
+		echo updating suspend.py from project metadata
+		printf '%s' "$SUSPEND_SCRIPT" > $SUSPEND_SCRIPT_FILE
+	else
+		echo slurm-suspend not found in project metadata, skipping update
+	fi
 }
 
 OPTIND=1
@@ -85,9 +97,11 @@ fi
 
 mkdir -p $SCRIPTS_DIR
 
+STARTUP_SCRIPT_FILE=$SCRIPTS_DIR/startup.sh
 SETUP_SCRIPT_FILE=$SCRIPTS_DIR/setup.py
 UTIL_SCRIPT_FILE=$SCRIPTS_DIR/util.py
-STARTUP_SCRIPT_FILE=$SCRIPTS_DIR/startup.sh
+RESUME_SCRIPT_FILE=$SCRIPTS_DIR/resume.py
+SUSPEND_SCRIPT_FILE=$SCRIPTS_DIR/suspend.py
 fetch_scripts
 
 if ! "$force" && [ -f $FLAGFILE ]; then

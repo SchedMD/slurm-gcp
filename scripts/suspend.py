@@ -31,6 +31,7 @@ from addict import Dict as NSDict
 
 import util
 from util import run, batch_execute, ensure_execute, wait_for_operations
+from util import partition
 from util import lkp, cfg, compute
 from setup import resolve_network_storage
 
@@ -44,12 +45,8 @@ SCRIPTS_DIR = Path(__file__).parent.resolve()
 
 TOT_REQ_CNT = 1000
 
-util.config_root_logger(level='DEBUG', util_level='DEBUG',
-                        logfile=LOGFILE)
-log = logging.getLogger(Path(__file__).name)
-
-if cfg.google_app_cred_path:
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
+logger_name = Path(__file__).name
+log = logging.getLogger(logger_name)
 
 
 def truncate_iter(iterable, max_count):
@@ -66,7 +63,7 @@ def delete_instance_op(instance, project=None):
     project = project or lkp.project
     return compute.instances().delete(
         project=project,
-        zone=lkp.instance_zone(instance),
+        zone=lkp.instance(instance).zone,
         instance=instance,
     )
 
@@ -75,15 +72,19 @@ def delete_instances(instances):
     """ Call regionInstances.bulkInsert to create instances """
     if len(instances) == 0:
         return
-    ops = {
-        inst: delete_instance_op(inst) for inst in instances
-    }
+    invalid, valid = partition(
+        lambda inst: bool(lkp.instance(inst)),
+        instances
+    )
+    log.debug("instances do not exist: {}".format(','.join(invalid)))
+
+    ops = {inst: delete_instance_op(inst) for inst in valid}
     done, failed = batch_execute(ops)
     if failed:
         failed_nodes = [f"{n}: {e}" for n, (_, e) in failed.items()]
         node_str = '\n'.join(str(el) for el in truncate_iter(failed_nodes, 5))
         log.error(f"some nodes failed to delete: {node_str}")
-    wait_for_operations(done)
+    wait_for_operations(done.values())
 
 
 def expand_nodelist(nodelist):
@@ -93,7 +94,8 @@ def expand_nodelist(nodelist):
 
 
 def suspend_nodes(nodelist):
-    """ resume nodes in nodelist """
+    """suspend nodes in nodelist """
+    log.info(f"suspend {nodelist}")
     nodes = expand_nodelist(nodelist)
     delete_instances(nodes)
 
@@ -118,7 +120,7 @@ def epilog_suspend_nodes(nodelist, job_id):
 
 def main(nodelist, job_id):
     """ main called when run as script """
-    log.debug(f"main {nodelist} {job_id}")
+    log.debug(f"main nodelist={nodelist} job_id={job_id}")
     if job_id is not None:
         epilog_suspend_nodes(nodelist, job_id)
     else:
@@ -287,6 +289,8 @@ parser.add_argument('--debug', '-d', dest='debug', action='store_true',
 
 
 if __name__ == '__main__':
+    util.config_root_logger(logger_name, level='DEBUG', logfile=LOGFILE)
+
     if "SLURM_JOB_NODELIST" in os.environ:
         argv = [
             *sys.argv[1:],
@@ -298,10 +302,10 @@ if __name__ == '__main__':
         args = parser.parse_args()
 
     if args.debug:
-        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+        util.config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
     else:
-        util.config_root_logger(level='INFO', util_level='ERROR',
+        util.config_root_logger(logger_name, level='INFO', util_level='ERROR',
                                 logfile=LOGFILE)
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception

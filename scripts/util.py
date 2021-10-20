@@ -25,7 +25,7 @@ import sys
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, Future
 from contextlib import contextmanager
-from functools import lru_cache, cached_property
+from functools import lru_cache, cached_property, reduce
 from itertools import chain, compress, islice
 from operator import itemgetter
 from pathlib import Path
@@ -48,13 +48,89 @@ API_REQ_LIMIT = 1000
 CONFIG_FILE = Path(__file__).with_name('config.yaml')
 
 log = logging.getLogger(__name__)
-_,  project = google.auth.default()
+def_creds,  project = google.auth.default()
 compute = None
 cfg = None
 lkp = None
 
+# load all directories as Paths into a dict-like namespace
+dirs = NSDict({n: Path(p) for n, p in dict.items({
+    'home': '/home',
+    'apps': '/opt/apps',
+    'scripts': '/slurm/scripts',
+    'slurm': '/slurm',
+    'prefix': '/usr/local',
+    'munge': '/etc/munge',
+    'secdisk': '/mnt/disks/sec',
+})})
 
-def config_root_logger(level='DEBUG', util_level=None,
+slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
+    'etc': '/usr/local/etc/slurm',
+    'log': '/var/log/slurm',
+    'state': '/var/spool/slurm',
+})})
+
+
+def compute_service(credentials=None, user_agent=USER_AGENT):
+    if credentials is None:
+        # TODO when can this fail? if it were to fail, credentials should be
+        # left None
+        credentials = def_creds
+
+    def build_request(http, *args, **kwargs):
+        new_http = httplib2.Http()
+        if user_agent is not None:
+            new_http = set_user_agent(new_http, user_agent)
+        if credentials is not None:
+            new_http = google_auth_httplib2.AuthorizedHttp(
+                credentials, http=new_http)
+        return googleapiclient.http.HttpRequest(new_http, *args, **kwargs)
+    return googleapiclient.discovery.build(
+        'compute', 'v1', requestBuilder=build_request,
+        credentials=credentials,
+    )
+
+
+def load_config_data(config):
+    return NSDict(config)
+
+
+def new_config(config):
+    # If k is ever not found, None will be inserted as the value
+    cfg = NSDict(config)
+
+    network_storage_iter = filter(None, (
+        *cfg.network_storage,
+        *cfg.login_network_storage,
+        *chain.from_iterable(
+            p.network_storage for p in cfg.partitions.values()
+        )
+    ))
+    for netstore in network_storage_iter:
+        if netstore.server_ip == '$controller':
+            netstore.server_ip = cfg.cluster_name + '-controller'
+    return cfg
+    
+
+def load_config_file(path):
+    content = None
+    try:
+        content = yaml.safe_load(Path(path).read_text())
+    except FileNotFoundError:
+        pass
+    return load_config_data(content)
+
+
+def save_config(cfg, path):
+    #save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
+    Path(path).write_text(yaml.dump(cfg, Dumper=Dumper))
+
+
+compute = compute_service()
+cfg = load_config_file(CONFIG_FILE)
+
+
+def config_root_logger(caller_logger, level='DEBUG', util_level=None,
                        stdout=True, logfile=None):
     if not util_level:
         util_level = level
@@ -98,6 +174,7 @@ def config_root_logger(level='DEBUG', util_level=None,
             'filename': logfile,
         }
     logging.config.dictConfig(config)
+    logging.getLogger(caller_logger).disabled = False
 
 
 def handle_exception(exc_type, exc_value, exc_trace):
@@ -140,6 +217,14 @@ def cd(path):
         os.chdir(prev)
 
 
+def partition(pred, coll):
+    """ filter into 2 lists based on pred returning True or False
+        returns ([False], [True])
+    """
+    return reduce(lambda acc, el: acc[pred(el)].append(el) or acc,
+                  coll, ([], []))
+
+
 ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
 
 
@@ -166,24 +251,6 @@ def get_metadata(path, root=ROOT_URL):
 def instance_metadata(path):
     """Get instance metadata"""
     return get_metadata(path, root=f"{ROOT_URL}/instance")
-
-
-def compute_service(credentials=None, user_agent=USER_AGENT):
-    if credentials is None:
-        # TODO when can this fail? if it were to fail, credentials should be
-        # left None
-        credentials, _ = google.auth.default()
-
-    def build_request(http, *args, **kwargs):
-        new_http = httplib2.Http()
-        if user_agent is not None:
-            new_http = set_user_agent(new_http, user_agent)
-        if credentials is not None:
-            new_http = google_auth_httplib2.AuthorizedHttp(
-                credentials, http=new_http)
-        return googleapiclient.http.HttpRequest(new_http, *args, **kwargs)
-    return googleapiclient.discovery.build(
-        'compute', 'v1', requestBuilder=build_request)
 
 
 def ensure_execute(request):
@@ -224,6 +291,36 @@ def retry_exception(exc):
     return any(e in str(exc) for e in retry_errors)
 
 
+def batch_execute(requests, compute=compute, retry_cb=None):
+    BATCH_LIMIT = 1000
+    if not isinstance(requests, dict):
+        requests = {
+            str(k): v for k, v in enumerate(requests)
+        }  # rid generated here
+    done = {}
+    failed = {}
+
+    def batch_callback(rid, resp, exc):
+        if exc is not None:
+            log.error(f"compute request exception {rid}: {exc}")
+            if not retry_exception(exc):
+                req = requests.pop(rid)
+                failed[rid] = (req, exc)
+        else:
+            # if retry_cb is set, don't move to done until it returns false
+            if retry_cb is None or not retry_cb(resp):
+                requests.pop(rid)
+                done[rid] = resp
+
+    while requests:
+        batch = compute.new_batch_http_request(callback=batch_callback)
+        chunk = list(islice(requests.items(), BATCH_LIMIT))
+        for rid, op in chunk:
+            batch.add(op, request_id=rid)
+        ensure_execute(batch)
+    return done, failed
+
+
 def wait_operation(operation, project=project, compute=compute):
     if 'zone' in operation:
         op = compute.zoneOperations().wait(
@@ -240,34 +337,6 @@ def wait_operation(operation, project=project, compute=compute):
             project=project,
             operation=operation['name'])
     return op
-
-
-def batch_execute(requests, compute=compute, retry_cb=None):
-    BATCH_LIMIT = 1000
-    if not isinstance(requests, dict):
-        requests = dict(enumerate(requests))  # rid generated here
-    done = {}
-    failed = {}
-
-    def batch_callback(rid, resp, exc):
-        if exc is not None:
-            log.error(f"compute request exception {rid}: {exc}")
-            if not retry_exception(exc):
-                req = requests.pop(rid)
-                failed[rid] = (req, exc)
-        else:
-            # if retry_cb is set, don't move to done until it returns false
-            if retry_cb is not None or not retry_cb(resp):
-                requests.pop(rid)
-                done[rid] = resp
-
-    while requests:
-        batch = compute.new_batch_http_request(callback=batch_callback)
-        chunk = list(islice(requests.items(), BATCH_LIMIT))
-        for rid, op in chunk:
-            batch.add(op, rid)
-        ensure_execute(batch)
-    return done, failed
 
 
 def wait_for_operations(operations, project=project, compute=compute):
@@ -308,41 +377,6 @@ def get_group_operations(operation, project=project, compute=compute):
             filter=f"operationGroupId={group_id}")
 
     return ensure_execute(operation)
-
-
-def load_config_data(config):
-    return NSDict(config)
-
-
-def new_config(config):
-    # If k is ever not found, None will be inserted as the value
-    cfg = NSDict(config)
-
-    network_storage_iter = filter(None, (
-        *cfg.network_storage,
-        *cfg.login_network_storage,
-        *chain.from_iterable(
-            p.network_storage for p in cfg.partitions.values()
-        )
-    ))
-    for netstore in network_storage_iter:
-        if netstore.server_ip == '$controller':
-            netstore.server_ip = cfg.cluster_name + '-controller'
-    return cfg
-    
-
-def load_config_file(path):
-    content = None
-    try:
-        content = yaml.safe_load(Path(path).read_text())
-    except FileNotFoundError:
-        pass
-    return load_config_data(content)
-
-
-def save_config(cfg, path):
-    #save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
-    Path(path).write_text(yaml.dump(cfg, Dumper=Dumper))
     
 
 class Dumper(yaml.SafeDumper):
@@ -374,6 +408,12 @@ class Lookup:
     @property
     def project(self):
         return self.cfg.project or project
+
+    @property
+    def control_host(self):
+        if self.cfg.cluster_name:
+            return f'{self.cfg.cluster_name}-controller'
+        return None
 
     @cached_property
     def node_role(self):
@@ -452,27 +492,31 @@ class Lookup:
         return node_conf
 
     @lru_cache(maxsize=1)
-    def instance_zones(self, project=None, cluster_name=None):
+    def instances(self, project=None, cluster_name=None):
         cluster_name = cluster_name or self.cfg.cluster_name
         project = project or self.project
         fields = 'items.zones.instances(name,zone,status),nextPageToken'
         flt = f'name={cluster_name}-*'
         act = self.compute.instances()
         op = act.aggregatedList(project=project, fields=fields, filter=flt)
+
+        def cut_zone(inst):
+            inst['zone'] = inst['zone'].split('/')[-1]
+            return inst
         while op is not None:
             result = ensure_execute(op)
             instances = {
-                inst['name']: inst['zone'] for inst in chain.from_iterable(
+                inst['name']: cut_zone(inst) for inst in chain.from_iterable(
                     m['instances'] for m in result['items'].values()
                 )
             }
             op = act.aggregatedList_next(op, result)
-        return instances
+        return NSDict(instances)
 
-    def instance_zone(self, instance_name, project=None, cluster_name=None):
-        instance_zones = self.instance_zones(project=project,
-                                             cluster_name=cluster_name)
-        return instance_zones[instance_name]
+    def instance(self, instance_name, project=None, cluster_name=None):
+        instances = self.instances(project=project,
+                                   cluster_name=cluster_name)
+        return instances.get(instance_name)
 
     @lru_cache(maxsize=1)
     def machine_types(self, project=None):
@@ -564,6 +608,4 @@ class Lookup:
 
 
 # Define late globals
-compute = compute_service()
-cfg = load_config_file(CONFIG_FILE)
 lkp = Lookup(cfg)

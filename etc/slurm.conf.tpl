@@ -156,20 +156,20 @@ SlurmdLogFile={slurmlog}/slurmd-%n.log
 # enable_placement=true with c2-standards creates placement groups
 # enable_placement=true w/out c2-standards creates one-to-one mappings of nodes.
 # must set OverSubscribe=Exclusive on the corresponding partitions.
-PrologSlurmctld={scripts}/resume.py
-EpilogSlurmctld={scripts}/suspend.py
+PrologSlurmctld={scripts}/resume.sh
+EpilogSlurmctld={scripts}/suspend.sh
 
 # POWER SAVE SUPPORT FOR IDLE NODES (optional)
-SuspendProgram={scripts}/suspend.py
-ResumeProgram={scripts}/resume.py
-ResumeFailProgram={scripts}/suspend.py
+SuspendProgram={scripts}/suspend.sh
+ResumeProgram={scripts}/resume.sh
+ResumeFailProgram={scripts}/suspend.sh
 SuspendTimeout={suspend_timeout}
 ResumeTimeout={resume_timeout}
 ResumeRate=0
 #SuspendExcNodes=
 #SuspendExcParts=
 SuspendRate=0
-SuspendTime={suspend_time}
+SuspendTime=300
 #
 SchedulerParameters=salloc_wait_nodes
 SlurmctldParameters=cloud_dns,idle_on_node_suspend

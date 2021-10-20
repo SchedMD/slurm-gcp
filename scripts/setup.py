@@ -32,43 +32,18 @@ import yaml
 from addict import Dict as NSDict
 
 import util
-from util import run, instance_metadata
+from util import run, instance_metadata, partition
+from util import lkp, cfg, dirs, slurmdirs
 
 SETUP_SCRIPT = Path(__file__)
 LOGFILE = SETUP_SCRIPT.with_suffix('.log')
 
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
-
-util.config_root_logger(logfile=LOGFILE)
-log = logging.getLogger(SETUP_SCRIPT.name)
-sys.excepthook = util.handle_exception
-
-# load all directories as Paths into a dict-like namespace
-dirs = NSDict({n: Path(p) for n, p in dict.items({
-    'home': '/home',
-    'apps': '/opt/apps',
-    'scripts': '/slurm/scripts',
-    'slurm': '/slurm',
-    'prefix': '/usr/local',
-    'munge': '/etc/munge',
-    'secdisk': '/mnt/disks/sec',
-})})
-
-slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
-    'etc': '/usr/local/etc/slurm',
-    'log': '/var/log/slurm',
-    'state': '/var/spool/slurm',
-})})
-
-# get setup config from metadata
-config_yaml = yaml.safe_load(instance_metadata('attributes/config'))
-cfg = util.new_config(config_yaml)
-lkp = util.Lookup(cfg)
+logger_name = SETUP_SCRIPT.name
+log = logging.getLogger(logger_name)
 
 RESUME_TIMEOUT = 300
 SUSPEND_TIMEOUT = 300
-
-CONTROL_MACHINE = cfg.cluster_name + '-controller'
 
 MOTD_HEADER = """
                                  SSSSSSS
@@ -277,13 +252,12 @@ def install_slurm_conf():
 
     conf_options = {
         'name': cfg.cluster_name,
-        'control_host': CONTROL_MACHINE,
+        'control_host': lkp.control_host,
         'scripts': dirs.scripts,
         'slurmlog': slurmdirs.log,
         'state_save': slurmdirs.state,
         'resume_timeout': RESUME_TIMEOUT,
         'suspend_timeout': SUSPEND_TIMEOUT,
-        'suspend_time': cfg.suspend_time,
         'mpi_default': mpi_default,
     }
     conf_resp = instance_metadata('attributes/slurm_conf_tpl')
@@ -298,7 +272,7 @@ def install_slurm_conf():
 def install_slurmdbd_conf():
     """ install slurmdbd.conf """
     conf_options = NSDict({
-        'control_host': CONTROL_MACHINE,
+        'control_host': lkp.control_host,
         'slurmlog': slurmdirs.log,
         'state_save': slurmdirs.state,
         'db_name': 'slurm_acct_db',
@@ -378,7 +352,9 @@ def fetch_devel_scripts():
 
     for script, name in meta_entries:
         if name not in metadata:
+            log.debug(f"{name} not found in project metadata, not updating")
             continue
+        log.info(f"updating {script} from metadata")
         content = metadata[name]
         path = (dirs.scripts/script).resolve()
         # make sure parent dir exists
@@ -426,7 +402,7 @@ def resolve_network_storage(partition_name=None):
 
     # create dict of mounts, local_mount: mount_info
     CONTROL_NFS = {
-        'server_ip': CONTROL_MACHINE,
+        'server_ip': lkp.control_host,
         'remote_mount': 'none',
         'local_mount': 'none',
         'fs_type': 'nfs',
@@ -454,14 +430,7 @@ def partition_mounts(mounts):
     """partition into cluster-external and internal mounts
     """
     def internal_mount(mount):
-        return mount.server_ip == CONTROL_MACHINE
-
-    def partition(pred, coll):
-        """ filter into 2 lists based on pred returning True or False
-            returns ([False], [True])
-        """
-        return reduce(lambda acc, el: acc[pred(el)].append(el) or acc,
-                      coll, ([], []))
+        return mount.server_ip == lkp.control_host
     return partition(internal_mount, mounts)
 
 
@@ -643,7 +612,7 @@ innodb_lock_wait_timeout=900
     mysql = "mysql -u root -e"
     run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""",
         timeout=30)
-    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""",
+    run(f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{lkp.control_host}'";""",
         timeout=30)
 
 
@@ -818,6 +787,14 @@ def main():
 
 
 if __name__ == '__main__':
+    util.config_root_logger(logger_name, logfile=LOGFILE, util_level='DEBUG')
+    sys.excepthook = util.handle_exception
+
+    # get setup config from metadata
+    config_yaml = yaml.safe_load(instance_metadata('attributes/config'))
+    cfg = util.new_config(config_yaml)
+    lkp = util.Lookup(cfg)  # noqa F811
+
     try:
         main()
     except subprocess.TimeoutExpired as e:

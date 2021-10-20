@@ -21,26 +21,24 @@ import logging
 import os
 import sys
 import tempfile
-import time
 from pathlib import Path
-
-import googleapiclient.discovery
+from time import sleep
 
 import util
+from util import partition, batch_execute
+from util import lkp, cfg, compute
 
-
-cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
 
 SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
 LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
 SCRIPTS_DIR = Path(__file__).parent.resolve()
 
+logger_name = Path(__file__).name
+log = logging.getLogger(logger_name)
+
 TOT_REQ_CNT = 1000
 
 retry_list = []
-
-if cfg.google_app_cred_path:
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
 
 def start_instances_cb(request_id, response, exception):
@@ -53,54 +51,25 @@ def start_instances_cb(request_id, response, exception):
 # [END start_instances_cb]
 
 
-def start_instances(compute, node_list, gcp_nodes):
+def start_instance_op(inst, project=None):
+    project = project or lkp.project
+    return compute.instances().start(
+        project=project,
+        zone=lkp.instance(inst).zone,
+        instance=inst,
+    )
 
-    req_cnt = 0
-    curr_batch = 0
-    batch_list = []
-    batch_list.insert(
-        curr_batch,
-        compute.new_batch_http_request(callback=start_instances_cb))
 
-    for node in node_list:
+def start_instances(node_list):
 
-        pid = util.get_pid(node)
-        zone = cfg.instance_defs[pid].zone
+    invalid, valid = partition(lambda inst: bool(lkp.instance), node_list)
+    ops = {inst: start_instance_op(inst) for inst in valid}
 
-        if cfg.instance_defs[pid].regional_capacity:
-            g_node = gcp_nodes.get(node, None)
-            if not g_node:
-                log.error(f"Didn't find regional GCP record for '{node}'")
-                continue
-            zone = g_node['zone'].split('/')[-1]
-
-        if req_cnt >= TOT_REQ_CNT:
-            req_cnt = 0
-            curr_batch += 1
-            batch_list.insert(
-                curr_batch,
-                compute.new_batch_http_request(callback=start_instances_cb))
-
-        batch_list[curr_batch].add(
-            compute.instances().start(project=cfg.project, zone=zone,
-                                      instance=node),
-            request_id=node)
-        req_cnt += 1
-    try:
-        for i, batch in enumerate(batch_list):
-            util.ensure_execute(batch)
-            if i < (len(batch_list) - 1):
-                time.sleep(30)
-    except Exception:
-        log.exception("error in start batch: ")
-
+    done, failed = batch_execute(ops)
 # [END start_instances]
 
 
 def main():
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              cache_discovery=False)
-
     try:
         s_nodes = dict()
         cmd = (f"{SCONTROL} show nodes | "
@@ -124,32 +93,11 @@ def main():
                        map(lambda x: x.split(','), nodes.rstrip().splitlines())
                        if 'CLOUD' in args]
 
-        g_nodes = util.get_regional_instances(compute, cfg.project,
-                                              cfg.instance_defs)
-        for pid, part in cfg.instance_defs.items():
-            page_token = ""
-            while True:
-                if not part.regional_capacity:
-                    resp = util.ensure_execute(
-                        compute.instances().list(
-                            project=cfg.project, zone=part.zone,
-                            fields='items(name,zone,status),nextPageToken',
-                            pageToken=page_token, filter=f"name={pid}-*"))
-
-                    if "items" in resp:
-                        g_nodes.update({instance['name']: instance
-                                       for instance in resp['items']})
-                    if "nextPageToken" in resp:
-                        page_token = resp['nextPageToken']
-                        continue
-
-                break
-
         to_down = []
         to_idle = []
         to_start = []
         for s_node, s_state in s_nodes:
-            g_node = g_nodes.get(s_node, None)
+            g_node = lkp.instance(s_node)
             pid = util.get_pid(s_node)
 
             if (('POWERED_DOWN' not in s_state.flags) and
@@ -203,7 +151,7 @@ def main():
                      "reason='Instance stopped/deleted'")
 
             while True:
-                start_instances(compute, to_start, g_nodes)
+                start_instances(to_start)
                 if not len(retry_list):
                     break
 
@@ -245,12 +193,11 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.debug:
-        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+        util.config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
     else:
-        util.config_root_logger(level='INFO', util_level='ERROR',
+        util.config_root_logger(logger_name, level='INFO', util_level='ERROR',
                                 logfile=LOGFILE)
-    log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 
     # only run one instance at a time
