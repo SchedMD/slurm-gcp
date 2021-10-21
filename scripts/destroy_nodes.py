@@ -93,7 +93,7 @@ def get_instances(project, cluster_name):
     instance_list = []
     result = compute.instances().aggregatedList(
         project=project,
-        filter=f"name = {cluster_name}-compute-*"
+        filter=f"metadata.cluster_name = {cluster_name}"
     ).execute()
 
     for item in result['items'].values():
