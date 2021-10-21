@@ -167,7 +167,7 @@ def main():
                 # is booting because it might not have been created yet by the
                 # resume script.
                 # This should catch the completing states as well.
-                if (g_node is None and "#" not in s_state.base and
+                if (g_node is None and "POWERING_UP" not in s_state.flags and
                         not s_state.base.startswith('DOWN')):
                     to_down.append(s_node)
 

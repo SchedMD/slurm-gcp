@@ -1,3 +1,7 @@
+Changes in Slurm-GCP 4.1.1
+==========================
+ -- slurmsync.py - fix powering up nodes from being downed.
+
 Changes in Slurm-GCP 4.1.0
 ==========================
  -- suspend.py - now handles "Quota exceeded" error
