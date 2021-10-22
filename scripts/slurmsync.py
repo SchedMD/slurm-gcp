@@ -154,7 +154,7 @@ def main():
 
             if (('POWERED_DOWN' not in s_state.flags) and
                     ('POWERING_DOWN' not in s_state.flags)):
-                # slurm nodes that aren't in power_save and are stopped in GCP:
+                # slurm nodes that aren't powered down and are stopped in GCP:
                 #   mark down in slurm
                 #   start them in gcp
                 if g_node and (g_node['status'] == "TERMINATED"):
