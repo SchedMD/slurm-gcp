@@ -792,7 +792,7 @@ if __name__ == '__main__':
 
     # get setup config from metadata
     config_yaml = yaml.safe_load(instance_metadata('attributes/config'))
-    cfg = util.new_config(config_yaml)
+    cfg = util.new_config(config_yaml)  # noqa F811
     lkp = util.Lookup(cfg)  # noqa F811
 
     try:
