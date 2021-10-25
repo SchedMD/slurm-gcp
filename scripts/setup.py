@@ -101,9 +101,9 @@ def end_motd(broadcast=True):
     if not broadcast:
         return
 
-    run("wall -n '*** Slurm {} setup complete ***'".format(lkp.node_role),
+    run("wall -n '*** Slurm {} setup complete ***'".format(lkp.instance_role),
         timeout=30)
-    if lkp.node_role != 'controller':
+    if lkp.instance_role != 'controller':
         run("""wall -n '
 /home on the controller was mounted over the existing /home.
 Log back in to ensure your home directory is correct.
@@ -442,7 +442,7 @@ def setup_network_storage():
     all_mounts = resolve_network_storage()
     ext_mounts, int_mounts = partition_mounts(all_mounts)
     mounts = ext_mounts
-    if lkp.node_role != 'controller':
+    if lkp.instance_role != 'controller':
         mounts.extend(int_mounts)
 
     # Determine fstab entries and write them out
@@ -643,7 +643,7 @@ def configure_dirs():
 def run_custom_scripts():
     """ run custom scripts based on node role """
     custom_dir = dirs.scripts/'custom'
-    if lkp.node_role == 'controller':
+    if lkp.instance_role == 'controller':
         custom_dir = custom_dir/'controller.d'
     custom_scripts = (
         p for p in custom_dir.rglob('*') if not p.name.endswith('.disabled')
@@ -777,8 +777,8 @@ def main():
             'compute': setup_compute,
             'login': setup_login
         },
-        lkp.node_role,
-        lambda: log.fatal(f"Unknown node role: {lkp.node_role}")
+        lkp.instance_role,
+        lambda: log.fatal(f"Unknown node role: {lkp.instance_role}")
     )
     setup()
 

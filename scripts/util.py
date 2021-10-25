@@ -72,6 +72,9 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
 
 
 def compute_service(credentials=None, user_agent=USER_AGENT):
+    """Make thread-safe compute service handle
+    creates a new Http for each request
+    """
     if credentials is None:
         # TODO when can this fail? if it were to fail, credentials should be
         # left None
@@ -424,7 +427,7 @@ class Lookup:
         return None
 
     @cached_property
-    def node_role(self):
+    def instance_role(self):
         return instance_metadata('attributes/instance_type')
 
     @cached_property
@@ -435,6 +438,7 @@ class Lookup:
 
     @cached_property
     def compute(self):
+        # TODO evaluate when we need to use google_app_cred_path
         if self.cfg.google_app_cred_path:
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.cfg.google_app_cred_path
         return compute_service()
@@ -480,7 +484,7 @@ class Lookup:
         return self.template_props(self.node_template(node_name))
     
     def node_template_details(self, node_name):
-        return self.template_props(self.node_template(node_name))
+        return self.template_details(self.node_template(node_name))
     
     def node_partition(self, node_name):
         return self._node_parts(node_name).partition
@@ -503,18 +507,25 @@ class Lookup:
     def instances(self, project=None, cluster_name=None):
         cluster_name = cluster_name or self.cfg.cluster_name
         project = project or self.project
-        fields = 'items.zones.instances(name,zone,status),nextPageToken'
+        fields = 'items.zones.instances(name,zone,status,machineType,metadata),nextPageToken'
         flt = f'name={cluster_name}-*'
         act = self.compute.instances()
         op = act.aggregatedList(project=project, fields=fields, filter=flt)
 
-        def cut_zone(inst):
+        def properties(inst):
+            """change instance properties to a preferred format"""
             inst['zone'] = inst['zone'].split('/')[-1]
+            inst['machineType'] = inst['machineType'].split('/')[-1]
+            # metadata is fetched as a dict of dicts like:
+            # {'key': key, 'value': value}, kinda silly
+            metadata = {i['key']: i['value'] for i in inst['metadata']['items']}
+            inst['role'] = metadata['instance_type']
+            del inst['metadata']  # no need to store all the metadata
             return inst
         while op is not None:
             result = ensure_execute(op)
             instances = {
-                inst['name']: cut_zone(inst) for inst in chain.from_iterable(
+                inst['name']: properties(inst) for inst in chain.from_iterable(
                     m['instances'] for m in result['items'].values()
                 )
             }
