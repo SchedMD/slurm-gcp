@@ -10,11 +10,16 @@ Changes in Slurm-GCP 5.0.0
  -- Replaced `tf/` with `terraform/`
  -- Added script to destroy nodes given cluster name
 
-Changes in Slurm-GCP 4.0.5
+Changes in Slurm-GCP 4.1.0
 ==========================
- -- suspend.py - now handles "Quota exceeded" error.
+ -- suspend.py - now handles "Quota exceeded" error
+ -- Support for Intel-select options
+ -- slurmrestd - changed user from root to user slurmrestd
  -- resume.py - fix state=down reason being malformed
- -- Updated Slurm to 21.08.2
+ -- suspend.py - scontrol update now specifies new state=power_down_force
+ -- slurm.conf - update to AccountingStoreFlags=job_comment
+ -- slurmsync.py - state flags use new POWERED_DOWN state
+ -- Updated Slurm to version 21.08.2
 
 Changes in Slurm-GCP 4.0.4
 ==========================
@@ -25,7 +30,7 @@ Changes in Slurm-GCP 4.0.3
 ==========================
  -- Introduce NEWS file
  -- Recommended image is now
-	schedmd-slurm-public/hpc-centos-7-schedmd-slurm-20-11-7
+    schedmd-slurm-public/hpc-centos-7-schedmd-slurm-20-11-7
  -- Changed slurmrestd port to 6842 (from 80)
  -- partitions[].image_hyperthreads=false now actively disables hyperthreads
     on hpc-centos-7 images, starting with the now recommended image
