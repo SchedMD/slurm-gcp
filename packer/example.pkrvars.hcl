@@ -16,8 +16,8 @@
 # GENERAL #
 ###########
 
-project = "<PROJECT_ID>"
-zone    = "us-central1-a"
+project_id = "<PROJECT_ID>"
+zone       = "us-central1-a"
 
 #########
 # IMAGE #

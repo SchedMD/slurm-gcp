@@ -25,7 +25,7 @@ local "ssh_passwords" {
 # GENERAL #
 ###########
 
-variable "project" {
+variable "project_id" {
   type = string
 }
 

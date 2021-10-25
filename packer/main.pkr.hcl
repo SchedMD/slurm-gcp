@@ -30,12 +30,12 @@ locals {
 
 source "googlecompute" "image" {
   ### general ###
-  project_id = var.project
+  project_id = var.project_id
   zone       = var.zone
 
   ### image ###
   source_image_project_id = setunion(
-    [var.project],
+    [var.project_id],
     var.source_image_project_id,
   )
   skip_create_image = var.skip_create_image
