@@ -57,16 +57,16 @@ lkp = None
 dirs = NSDict({n: Path(p) for n, p in dict.items({
     'home': '/home',
     'apps': '/opt/apps',
-    'scripts': '/slurm/scripts',
     'slurm': '/slurm',
-    'prefix': '/usr/local',
+    'scripts': '/slurm/scripts',
     'munge': '/etc/munge',
     'secdisk': '/mnt/disks/sec',
+    'log': '/var/log/slurm'
 })})
 
 slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
+    'prefix': '/usr/local',
     'etc': '/usr/local/etc/slurm',
-    'log': '/var/log/slurm',
     'state': '/var/spool/slurm',
 })})
 
@@ -96,8 +96,15 @@ def load_config_data(config):
 
 
 def new_config(config):
-    # If k is ever not found, None will be inserted as the value
+    """initialize a new config object
+    necessary defaults are handled here
+    """
     cfg = NSDict(config)
+
+    if not cfg.log_dir:
+        cfg.log_dir = dirs.log
+    if not cfg.slurm_cmd_path:
+        cfg.slurm_cmd_path = slurmdirs.prefix/'bin'
 
     network_storage_iter = filter(None, (
         *cfg.network_storage,
@@ -113,16 +120,17 @@ def new_config(config):
     
 
 def load_config_file(path):
+    """load config from file
+    """
     content = None
     try:
         content = yaml.safe_load(Path(path).read_text())
     except FileNotFoundError:
-        pass
+        log.error(f"config file not found: {path}")
     return load_config_data(content)
 
 
 def save_config(cfg, path):
-    #save_dict = Config([(k, self[k]) for k in self.SAVED_PROPS])
     Path(path).write_text(yaml.dump(cfg, Dumper=Dumper))
 
 

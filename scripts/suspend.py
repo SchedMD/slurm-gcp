@@ -33,20 +33,16 @@ import util
 from util import run, batch_execute, ensure_execute, wait_for_operations
 from util import partition
 from util import lkp, cfg, compute
-from setup import resolve_network_storage
 
 
 PREFIX = Path('/usr/local/bin')
 SCONTROL = PREFIX/'scontrol'
 
-cfg.log_dir = '/var/log/slurm'
-LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
-SCRIPTS_DIR = Path(__file__).parent.resolve()
+filename = Path(__file__).name
+LOGFILE = (Path(cfg.log_dir)/filename).with_suffix('.log')
+log = logging.getLogger(filename)
 
 TOT_REQ_CNT = 1000
-
-logger_name = Path(__file__).name
-log = logging.getLogger(logger_name)
 
 
 def truncate_iter(iterable, max_count):
@@ -289,8 +285,6 @@ parser.add_argument('--debug', '-d', dest='debug', action='store_true',
 
 
 if __name__ == '__main__':
-    util.config_root_logger(logger_name, level='DEBUG', logfile=LOGFILE)
-
     if "SLURM_JOB_NODELIST" in os.environ:
         argv = [
             *sys.argv[1:],
@@ -302,10 +296,10 @@ if __name__ == '__main__':
         args = parser.parse_args()
 
     if args.debug:
-        util.config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
+        util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
     else:
-        util.config_root_logger(logger_name, level='INFO', util_level='ERROR',
+        util.config_root_logger(filename, level='INFO', util_level='ERROR',
                                 logfile=LOGFILE)
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception

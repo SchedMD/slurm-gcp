@@ -29,12 +29,11 @@ from util import partition, batch_execute
 from util import lkp, cfg, compute
 
 
+filename = Path(__file__).name
 SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
-LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
-SCRIPTS_DIR = Path(__file__).parent.resolve()
+LOGFILE = (Path(cfg.log_dir)/filename).with_suffix('.log')
 
-logger_name = Path(__file__).name
-log = logging.getLogger(logger_name)
+log = logging.getLogger(filename)
 
 TOT_REQ_CNT = 1000
 
@@ -193,10 +192,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.debug:
-        util.config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
+        util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
     else:
-        util.config_root_logger(logger_name, level='INFO', util_level='ERROR',
+        util.config_root_logger(filename, level='INFO', util_level='ERROR',
                                 logfile=LOGFILE)
     sys.excepthook = util.handle_exception
 

@@ -36,11 +36,11 @@ from util import run, instance_metadata, partition
 from util import lkp, cfg, dirs, slurmdirs
 
 SETUP_SCRIPT = Path(__file__)
-LOGFILE = SETUP_SCRIPT.with_suffix('.log')
+filename = SETUP_SCRIPT.name
+LOGFILE = dirs.log/SETUP_SCRIPT.with_suffix('.log')
+log = logging.getLogger(filename)
 
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
-logger_name = SETUP_SCRIPT.name
-log = logging.getLogger(logger_name)
 
 RESUME_TIMEOUT = 300
 SUSPEND_TIMEOUT = 300
@@ -254,7 +254,7 @@ def install_slurm_conf():
         'name': cfg.cluster_name,
         'control_host': lkp.control_host,
         'scripts': dirs.scripts,
-        'slurmlog': slurmdirs.log,
+        'slurmlog': dirs.log,
         'state_save': slurmdirs.state,
         'resume_timeout': RESUME_TIMEOUT,
         'suspend_timeout': SUSPEND_TIMEOUT,
@@ -273,7 +273,7 @@ def install_slurmdbd_conf():
     """ install slurmdbd.conf """
     conf_options = NSDict({
         'control_host': lkp.control_host,
-        'slurmlog': slurmdirs.log,
+        'slurmlog': dirs.log,
         'state_save': slurmdirs.state,
         'db_name': 'slurm_acct_db',
         'db_user': 'slurm',
@@ -588,7 +588,7 @@ def setup_nss_slurm():
     # setup nss_slurm
     Path('/var/spool/slurmd').mkdirp()
     run("ln -s {}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2"
-        .format(dirs.prefix), check=False)
+        .format(slurmdirs.prefix), check=False)
     run(
         r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
 # END setup_nss_slurm()
@@ -636,7 +636,7 @@ def configure_dirs():
     scripts_log = dirs.scripts/'log'
     if scripts_log.exists() and scripts_log.is_symlink():
         scripts_log.unlink()
-    scripts_log.symlink_to(slurmdirs.log)
+    scripts_log.symlink_to(dirs.log)
     shutil.chown(scripts_log, user='slurm', group='slurm')
 
 
@@ -694,7 +694,7 @@ def setup_controller():
     # Wait for slurmdbd to come up
     time.sleep(5)
 
-    sacctmgr = f"{dirs.prefix}/bin/sacctmgr -i"
+    sacctmgr = f"{slurmdirs.prefix}/bin/sacctmgr -i"
     result = run(f"{sacctmgr} add cluster {cfg.cluster_name}",
                  timeout=30, check=False)
     if "This cluster slurm already exists." in result.stdout:
@@ -787,7 +787,7 @@ def main():
 
 
 if __name__ == '__main__':
-    util.config_root_logger(logger_name, logfile=LOGFILE, util_level='DEBUG')
+    util.config_root_logger(filename, logfile=LOGFILE, util_level='DEBUG')
     sys.excepthook = util.handle_exception
 
     # get setup config from metadata
