@@ -36,8 +36,7 @@ from util import cfg, lkp, compute
 from setup import resolve_network_storage
 
 
-PREFIX = Path('/usr/local/bin')
-SCONTROL = PREFIX/'scontrol'
+SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.log_dir)/filename).with_suffix('.log')
