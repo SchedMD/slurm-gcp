@@ -264,6 +264,15 @@ def instance_metadata(path):
     return get_metadata(path, root=f"{ROOT_URL}/instance")
 
 
+def retry_exception(exc):
+    """return true for exceptions that should always be retried"""
+    retry_errors = (
+        "Rate Limit Exceeded",
+        "Quota Exceeded",
+    )
+    return any(e in str(exc) for e in retry_errors)
+
+
 def ensure_execute(request):
     """ Handle rate limits and socket time outs """
 
@@ -275,7 +284,7 @@ def ensure_execute(request):
             return request.execute()
 
         except googleapiclient.errors.HttpError as e:
-            if "Rate Limit Exceeded" in str(e):
+            if retry_exception(e):
                 retry += 1
                 wait = min(wait*2, max_wait)
                 log.error(f"retry:{retry} sleep:{wait} '{e}'")
@@ -292,14 +301,6 @@ def ensure_execute(request):
             raise
 
         break
-
-
-def retry_exception(exc):
-    retry_errors = (
-        "Rate Limit Exceeded",
-        "Quota Exceeded",
-    )
-    return any(e in str(exc) for e in retry_errors)
 
 
 def batch_execute(requests, compute=compute, retry_cb=None):
