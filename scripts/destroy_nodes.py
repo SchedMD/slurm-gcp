@@ -22,7 +22,9 @@ from pathlib import Path
 
 import util
 
-LOGFILE = (Path(__file__).parent / Path(__file__).name).with_suffix('.log')
+logger_name = Path(__file__).name
+log = logging.getLogger(logger_name)
+LOGFILE = (Path(__file__).parent / logger_name).with_suffix('.log')
 TOT_REQ_CNT = 1000
 
 OPERATIONS = {}
@@ -93,7 +95,7 @@ def get_instances(project, cluster_name):
     instance_list = []
     result = compute.instances().aggregatedList(
         project=project,
-        filter=f"metadata.cluster_name = {cluster_name}"
+        filter=f"name={cluster_name}-*"
     ).execute()
 
     for item in result['items'].values():
@@ -139,12 +141,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.debug:
-        util.config_root_logger(level='DEBUG', util_level='DEBUG',
+        util.config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
     else:
-        util.config_root_logger(level='INFO', util_level='ERROR',
+        util.config_root_logger(logger_name, level='INFO', util_level='ERROR',
                                 logfile=LOGFILE)
-    log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 
     if args.cluster_name is None:
