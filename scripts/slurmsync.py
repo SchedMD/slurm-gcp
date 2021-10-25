@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import argparse
-import collections
 import fcntl
 import logging
 import os
@@ -23,10 +22,12 @@ import sys
 import tempfile
 from pathlib import Path
 from time import sleep
+from collections import namedtuple
 
 import util
-from util import partition, batch_execute
-from util import lkp, cfg, compute
+from util import run, partition, batch_execute
+from util import lkp, cfg, compute, dirs
+from suspend import delete_instances
 
 
 filename = Path(__file__).name
@@ -36,18 +37,6 @@ LOGFILE = (Path(cfg.log_dir)/filename).with_suffix('.log')
 log = logging.getLogger(filename)
 
 TOT_REQ_CNT = 1000
-
-retry_list = []
-
-
-def start_instances_cb(request_id, response, exception):
-    if exception is not None:
-        log.error("start exception: " + str(exception))
-        if "Rate Limit Exceeded" in str(exception):
-            retry_list.append(request_id)
-        elif "was not found" in str(exception):
-            util.spawn(f"{SCRIPTS_DIR}/resume.py {request_id}")
-# [END start_instances_cb]
 
 
 def start_instance_op(inst, project=None):
@@ -60,6 +49,8 @@ def start_instance_op(inst, project=None):
 
 
 def start_instances(node_list):
+    log.info("{} instances to start ({})".format(
+        len(node_list), ",".join(node_list)))
 
     invalid, valid = partition(lambda inst: bool(lkp.instance), node_list)
     ops = {inst: start_instance_op(inst) for inst in valid}
@@ -68,117 +59,120 @@ def start_instances(node_list):
 # [END start_instances]
 
 
+def to_hostlist(nodelist):
+    """make hostlist from list of node names
+    """
+    # use tmp file because list could be large
+    tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+    tmp_file.writelines("\n".join(nodelist))
+    tmp_file.close()
+    log.debug("tmp_file = {}".format(tmp_file.name))
+
+    hostlist = run(
+        f"{SCONTROL} show hostlist {tmp_file.name}").stdout.rstrip()
+    log.debug("hostlist = {}".format(hostlist))
+    os.remove(tmp_file.name)
+    return hostlist
+
+
+StateTuple = namedtuple('StateTuple', 'base,flags')
+
+
+def make_node_tuple(node_line):
+    """turn node,state line to (node, StateTuple(state))
+    """
+    # state flags include: CLOUD, COMPLETING, DRAIN, FAIL, POWERED_DOWN,
+    #   POWERING_DOWN
+    node, fullstate = node_line.split(',')
+    state = fullstate.split('+')
+    state_tuple = StateTuple(state[0], set(state[1:]))
+    return (node, state_tuple)
+
+
+def sync_slurm():
+    cmd = (f"{SCONTROL} show nodes | "
+           r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
+           r"paste -sd',\n'")
+    node_lines = run(cmd, shell=True).stdout.rstrip().splitlines()
+    slurm_nodes = dict(
+        node_tuple for line in node_lines
+        if 'CLOUD' in (node_tuple := make_node_tuple(line))[1].flags
+    )
+
+    gcp_instances = lkp.instances()
+
+    to_down = []
+    to_idle = []
+    to_start = []
+    for node, state in slurm_nodes.items():
+        inst = lkp.instance(node)
+        props = lkp.node_template_props(node)
+
+        if (('POWERED_DOWN' not in state.flags) and
+                ('POWERING_DOWN' not in state.flags)):
+            # slurm nodes that aren't in power_save and are stopped in GCP:
+            #   mark down in slurm
+            #   start them in gcp
+            if inst and (inst.status == "TERMINATED"):
+                if not state.base.startswith('DOWN'):
+                    to_down.append(node)
+                if (props.scheduling.preemptible):
+                    to_start.append(node)
+
+            # can't check if the node doesn't exist in GCP while the node
+            # is booting because it might not have been created yet by the
+            # resume script.
+            # This should catch the completing states as well.
+            if (inst is None and "#" not in state.base and
+                    not state.base.startswith('DOWN')):
+                to_down.append(node)
+
+        elif inst is None:
+            # find nodes that are down~ in slurm and don't exist in gcp:
+            #   mark idle~
+            if state.base.startswith('DOWN') and 'POWERED_DOWN' in state.flags:
+                to_idle.append(node)
+            elif 'POWERING_DOWN' in state.flags:
+                to_idle.append(node)
+            elif state.base.startswith('COMPLETING'):
+                to_down.append(node)
+
+    if len(to_down):
+        log.info("{} stopped/deleted instances ({})".format(
+            len(to_down), ",".join(to_down)))
+        hostlist = to_hostlist(to_down)
+        run(f"{SCONTROL} update nodename={hostlist} state=down "
+            "reason='Instance stopped/deleted'")
+
+    if len(to_start):
+        start_instances(to_start)
+
+    if len(to_idle):
+        log.info("{} instances to idle ({})".format(
+            len(to_idle), ','.join(to_idle)))
+        hostlist = to_hostlist(to_idle)
+        run(f"{SCONTROL} update nodename={hostlist} state=resume")
+
+    # orphans are powered down in slurm but still running in GCP. They must be
+    # purged
+    orphans = [
+        name for name, inst in gcp_instances.items()
+        if inst.role == 'compute'
+        and inst.status == 'RUNNING'
+        and (name not in slurm_nodes
+             or 'POWERED_DOWN' in slurm_nodes[name].flags)
+    ]
+    if len(orphans):
+        hostlist = to_hostlist(orphans)
+        log.info(f"found orphaned instances, deleting {hostlist}")
+        delete_instances(orphans)
+
+
 def main():
     try:
-        s_nodes = dict()
-        cmd = (f"{SCONTROL} show nodes | "
-               r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
-               "paste -sd',\n'")
-        nodes = util.run(cmd, shell=True).stdout
-        if nodes:
-            # result is a list of tuples like:
-            # (nodename, (base='base_state', flags=<set of state flags>))
-            # from 'nodename,base_state+flag1+flag2'
-            # state flags include: CLOUD, COMPLETING, DRAIN, FAIL, POWERED_DOWN,
-            #   POWERING_DOWN
-            # Modifiers on base state still include: @ (reboot), $ (maint),
-            #   * (nonresponsive), # (powering up)
-            StateTuple = collections.namedtuple('StateTuple', 'base,flags')
-
-            def make_state_tuple(state):
-                return StateTuple(state[0], set(state[1:]))
-            s_nodes = [(node, make_state_tuple(args.split('+')))
-                       for node, args in
-                       map(lambda x: x.split(','), nodes.rstrip().splitlines())
-                       if 'CLOUD' in args]
-
-        to_down = []
-        to_idle = []
-        to_start = []
-        for s_node, s_state in s_nodes:
-            g_node = lkp.instance(s_node)
-            pid = util.get_pid(s_node)
-
-            if (('POWERED_DOWN' not in s_state.flags) and
-                    ('POWERING_DOWN' not in s_state.flags)):
-                # slurm nodes that aren't in power_save and are stopped in GCP:
-                #   mark down in slurm
-                #   start them in gcp
-                if g_node and (g_node['status'] == "TERMINATED"):
-                    if not s_state.base.startswith('DOWN'):
-                        to_down.append(s_node)
-                    if (cfg.instance_defs[pid].preemptible_bursting):
-                        to_start.append(s_node)
-
-                # can't check if the node doesn't exist in GCP while the node
-                # is booting because it might not have been created yet by the
-                # resume script.
-                # This should catch the completing states as well.
-                if (g_node is None and "#" not in s_state.base and
-                        not s_state.base.startswith('DOWN')):
-                    to_down.append(s_node)
-
-            elif g_node is None:
-                # find nodes that are down~ in slurm and don't exist in gcp:
-                #   mark idle~
-                if s_state.base.startswith('DOWN') and 'POWERED_DOWN' in s_state.flags:
-                    to_idle.append(s_node)
-                elif 'POWERING_DOWN' in s_state.flags:
-                    to_idle.append(s_node)
-                elif s_state.base.startswith('COMPLETING'):
-                    to_down.append(s_node)
-
-        if len(to_down):
-            log.info("{} stopped/deleted instances ({})".format(
-                len(to_down), ",".join(to_down)))
-            log.info("{} instances to start ({})".format(
-                len(to_start), ",".join(to_start)))
-
-            # write hosts to a file that can be given to get a slurm
-            # hostlist. Since the number of hosts could be large.
-            tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            tmp_file.writelines("\n".join(to_down))
-            tmp_file.close()
-            log.debug("tmp_file = {}".format(tmp_file.name))
-
-            hostlist = util.run(
-                f"{SCONTROL} show hostlist {tmp_file.name}").stdout.rstrip()
-            log.debug("hostlist = {}".format(hostlist))
-            os.remove(tmp_file.name)
-
-            util.run(f"{SCONTROL} update nodename={hostlist} state=down "
-                     "reason='Instance stopped/deleted'")
-
-            while True:
-                start_instances(to_start)
-                if not len(retry_list):
-                    break
-
-                log.debug("got {} nodes to retry ({})"
-                          .format(len(retry_list), ','.join(retry_list)))
-                to_start = list(retry_list)
-                del retry_list[:]
-
-        if len(to_idle):
-            log.info("{} instances to resume ({})".format(
-                len(to_idle), ','.join(to_idle)))
-
-            # write hosts to a file that can be given to get a slurm
-            # hostlist. Since the number of hosts could be large.
-            tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            tmp_file.writelines("\n".join(to_idle))
-            tmp_file.close()
-            log.debug("tmp_file = {}".format(tmp_file.name))
-
-            hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}").stdout.rstrip()
-            log.debug("hostlist = {}".format(hostlist))
-            os.remove(tmp_file.name)
-
-            util.run(f"{SCONTROL} update nodename={hostlist} state=resume")
-
+        sync_slurm()
     except Exception:
         log.exception("failed to sync instances")
-
 # [END main]
 
 

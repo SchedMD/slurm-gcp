@@ -72,6 +72,12 @@ function fetch_scripts {
 	else
 		echo slurm-suspend not found in project metadata, skipping update
 	fi
+	if SLURMSYNC_SCRIPT=$(jq -re '."slurmsync"' <<< "$METADATA"); then
+		echo updating slurmsync.py from project metadata
+		printf '%s' "$SLURMSYNC_SCRIPT" > $SLURMSYNC_SCRIPT_FILE
+	else
+		echo slurmsync not found in project metadata, skipping update
+	fi
 }
 
 OPTIND=1
@@ -102,6 +108,7 @@ SETUP_SCRIPT_FILE=$SCRIPTS_DIR/setup.py
 UTIL_SCRIPT_FILE=$SCRIPTS_DIR/util.py
 RESUME_SCRIPT_FILE=$SCRIPTS_DIR/resume.py
 SUSPEND_SCRIPT_FILE=$SCRIPTS_DIR/suspend.py
+SLURMSYNC_SCRIPT_FILE=$SCRIPTS_DIR/slurmsync.py
 fetch_scripts
 
 if ! "$force" && [ -f $FLAGFILE ]; then
