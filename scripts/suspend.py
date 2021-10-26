@@ -34,8 +34,7 @@ from util import partition
 from util import lkp, cfg, compute
 
 
-PREFIX = Path('/usr/local/bin')
-SCONTROL = PREFIX/'scontrol'
+SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.log_dir)/filename).with_suffix('.log')

@@ -95,6 +95,7 @@ def compute_service(credentials=None, user_agent=USER_AGENT):
 
 
 def load_config_data(config):
+    """load dict-like data into a config object"""
     return NSDict(config)
 
 
@@ -123,8 +124,7 @@ def new_config(config):
     
 
 def load_config_file(path):
-    """load config from file
-    """
+    """load config from file"""
     content = None
     try:
         content = yaml.safe_load(Path(path).read_text())
@@ -134,6 +134,7 @@ def load_config_file(path):
 
 
 def save_config(cfg, path):
+    """save given config to file at path"""
     Path(path).write_text(yaml.dump(cfg, Dumper=Dumper))
 
 
@@ -143,6 +144,8 @@ cfg = load_config_file(CONFIG_FILE)
 
 def config_root_logger(caller_logger, level='DEBUG', util_level=None,
                        stdout=True, logfile=None):
+    """configure the root logger, disabling all existing loggers
+    """
     if not util_level:
         util_level = level
     handlers = list(compress(('stdout_handler', 'file_handler'),
@@ -189,6 +192,8 @@ def config_root_logger(caller_logger, level='DEBUG', util_level=None,
 
 
 def handle_exception(exc_type, exc_value, exc_trace):
+    """log exceptions other than KeyboardInterrupt"""
+    # TODO does this work?
     if not issubclass(exc_type, KeyboardInterrupt):
         log.exception("Fatal exception",
                       exc_info=(exc_type, exc_value, exc_trace))
@@ -210,7 +215,7 @@ def run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False,
 
 
 def spawn(cmd, quiet=False, shell=False, **kwargs):
-    """ nonblocking spawn of subprocess """
+    """nonblocking spawn of subprocess"""
     if not quiet:
         log.debug(f"spawn: {cmd}")
     args = cmd if shell else shlex.split(cmd)
@@ -219,7 +224,7 @@ def spawn(cmd, quiet=False, shell=False, **kwargs):
 
 @contextmanager
 def cd(path):
-    """ Change working directory for context """
+    """Change working directory for context"""
     prev = Path.cwd()
     os.chdir(path)
     try:
@@ -229,8 +234,8 @@ def cd(path):
 
 
 def partition(pred, coll):
-    """ filter into 2 lists based on pred returning True or False
-        returns ([False], [True])
+    """filter into 2 lists based on pred returning True or False
+       returns ([False], [True])
     """
     return reduce(lambda acc, el: acc[pred(el)].append(el) or acc,
                   coll, ([], []))
@@ -240,14 +245,14 @@ ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
 
 
 def chunked(iterable, n=API_REQ_LIMIT):
-    """ group iterator into chunks of max size n """
+    """group iterator into chunks of max size n"""
     it = iter(iterable)
     while (chunk := list(islice(it, n))):
         yield chunk
 
 
 def get_metadata(path, root=ROOT_URL):
-    """ Get metadata relative to metadata/computeMetadata/v1 """
+    """Get metadata relative to metadata/computeMetadata/v1"""
     HEADERS = {'Metadata-Flavor': 'Google'}
     url = f'{root}/{path}'
     try:
@@ -264,8 +269,17 @@ def instance_metadata(path):
     return get_metadata(path, root=f"{ROOT_URL}/instance")
 
 
+def retry_exception(exc):
+    """return true for exceptions that should always be retried"""
+    retry_errors = (
+        "Rate Limit Exceeded",
+        "Quota Exceeded",
+    )
+    return any(e in str(exc) for e in retry_errors)
+
+
 def ensure_execute(request):
-    """ Handle rate limits and socket time outs """
+    """Handle rate limits and socket time outs"""
 
     retry = 0
     wait = 1
@@ -275,7 +289,7 @@ def ensure_execute(request):
             return request.execute()
 
         except googleapiclient.errors.HttpError as e:
-            if "Rate Limit Exceeded" in str(e):
+            if retry_exception(e):
                 retry += 1
                 wait = min(wait*2, max_wait)
                 log.error(f"retry:{retry} sleep:{wait} '{e}'")
@@ -294,15 +308,10 @@ def ensure_execute(request):
         break
 
 
-def retry_exception(exc):
-    retry_errors = (
-        "Rate Limit Exceeded",
-        "Quota Exceeded",
-    )
-    return any(e in str(exc) for e in retry_errors)
-
-
 def batch_execute(requests, compute=compute, retry_cb=None):
+    """execute list or dict<req_id, request> as batch requests
+    retry if retry_cb returns true
+    """
     BATCH_LIMIT = 1000
     if not isinstance(requests, dict):
         requests = {
@@ -326,50 +335,53 @@ def batch_execute(requests, compute=compute, retry_cb=None):
     while requests:
         batch = compute.new_batch_http_request(callback=batch_callback)
         chunk = list(islice(requests.items(), BATCH_LIMIT))
-        for rid, op in chunk:
-            batch.add(op, request_id=rid)
+        for rid, req in chunk:
+            batch.add(req, request_id=rid)
         ensure_execute(batch)
     return done, failed
 
 
-def wait_operation(operation, project=project, compute=compute):
+def wait_request(operation, project=project, compute=compute):
+    """makes the appropriate wait request for a given operation"""
     if 'zone' in operation:
-        op = compute.zoneOperations().wait(
+        req = compute.zoneOperations().wait(
             project=project,
             zone=operation['zone'].split('/')[-1],
             operation=operation['name'])
     elif 'region' in operation:
-        op = compute.regionOperations().wait(
+        req = compute.regionOperations().wait(
             project=project,
             region=operation['region'].split('/')[-1],
             operation=operation['name'])
     else:
-        op = compute.globalOperations().wait(
+        req = compute.globalOperations().wait(
             project=project,
             operation=operation['name'])
-    return op
+    return req
 
 
 def wait_for_operations(operations, project=project, compute=compute):
+    """wait for all operations"""
     def operation_retry(resp):
         return resp['status'] != 'DONE'
-    requests = [wait_operation(op) for op in operations]
+    requests = [wait_request(op) for op in operations]
     return batch_execute(requests, retry_cb=operation_retry)
 
 
 def wait_for_operation(operation, project=project, compute=compute):
+    """wait for given operation"""
     print('Waiting for operation to finish...')
-    wait_op = wait_operation(operation)
+    wait_req = wait_request(operation)
 
     while True:
-        result = ensure_execute(wait_op)
+        result = ensure_execute(wait_req)
         if result['status'] == 'DONE':
             print("done.")
             return result
 
 
 def get_group_operations(operation, project=project, compute=compute):
-    """ get list of operations associated with group id """
+    """get list of operations associated with group id"""
 
     group_id = operation['operationGroupId']
     if 'zone' in operation:
@@ -391,6 +403,8 @@ def get_group_operations(operation, project=project, compute=compute):
     
 
 class Dumper(yaml.SafeDumper):
+    """Add representers for pathlib.Path and NSDict for yaml serialization
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_representer(NSDict, self.represent_nsdict)
@@ -453,6 +467,9 @@ class Lookup:
 
     @cached_property
     def template_nodes(self):
+        """dict<template: list<node>> containing all nodes in all partitions
+        grouped by template. Save partition ref onto each node.
+        """
         template_nodes = defaultdict(list)
         with ThreadPoolExecutor() as exe:
             futures = {}
@@ -471,7 +488,7 @@ class Lookup:
 
     @lru_cache(maxsize=None)
     def _node_parts(self, node_name):
-        """ Get parts from node name """
+        """Get parts from node name"""
         m = self.node_parts_regex.match(node_name)
         if not m:
             raise Exception(f"node name {node_name} is not valid")
