@@ -11,8 +11,5 @@ remove:
 apply: remove
 	terraform apply -var-file=basic.tfvars -auto-approve
 
-import:
-	@python3 $(SCRIPTS)/import.py
-
-destroy: import
+destroy:
 	terraform destroy -var-file=basic.tfvars -auto-approve
