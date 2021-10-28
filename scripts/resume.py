@@ -321,7 +321,7 @@ def create_placement_groups(arg_job_id, vm_count, region):
 # [END create_placement_groups]
 
 
-def add_tpus(nodes_by_pid):
+def add_tpus(job_id, nodes_by_pid):
     metafiles = {
         'config': SCRIPTS_DIR/'config.yaml',
         'startup-script': SCRIPTS_DIR/'startup.sh',
@@ -374,11 +374,12 @@ def add_tpus(nodes_by_pid):
             # gcloud will wait till the TPU is created if given a pty.
             (master, slave) = pty.openpty()
             ret = run(cmd, get_stdout=True, stderr=master,
-                     stdin=subprocess.DEVNULL)
+                      stdin=subprocess.DEVNULL)
             if ret.returncode:
                 msg = os.read(master, 1024).decode().rstrip()
                 log.error(f"failed to create tpu {node_name}: '{msg}'")
-                hold_job(arg_job_id, msg)
+                if job_id:
+                    hold_job(job_id, msg)
                 os._exit(1)
 
 
@@ -386,7 +387,7 @@ def main(arg_nodes, arg_job_id):
     log.debug(f"Bursting out: {arg_nodes} {arg_job_id}")
     # Get node list
     nodes_str = run(f"{SCONTROL} show hostnames {arg_nodes}",
-                         check=True, get_stdout=True).stdout
+                    check=True, get_stdout=True).stdout
     node_list = sorted(nodes_str.splitlines(), key=get_pid)
 
     placement_groups = None
@@ -415,13 +416,12 @@ def main(arg_nodes, arg_job_id):
             placement_groups = create_placement_groups(
                 arg_job_id, len(node_list), cfg.instance_defs[pid].region)
 
-
     tpu_nodes_by_pid = {pid: nodes for pid, nodes in nodes_by_pid.items()
                         if cfg.instance_defs[pid].tpu_type}
     for pid in tpu_nodes_by_pid:
         nodes_by_pid.pop(pid)
     if tpu_nodes_by_pid:
-        add_tpus(tpu_nodes_by_pid)
+        add_tpus(arg_job_id, tpu_nodes_by_pid)
 
     def chunks(lst, pg_names):
         """ group list into chunks of max size n """
