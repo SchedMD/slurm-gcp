@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
 import os
 import re
@@ -33,7 +34,7 @@ from addict import Dict as NSDict
 
 import util
 from util import run, instance_metadata, partition
-from util import lkp, cfg, dirs, slurmdirs
+from util import lkp, cfg, dirs, slurmdirs, serf_dirs
 
 SETUP_SCRIPT = Path(__file__)
 filename = SETUP_SCRIPT.name
@@ -153,8 +154,8 @@ def dict_to_conf(conf):
     return ' '.join(f'{k}={v}' for k, v in conf.items() if v is not None)
 
 
-def gen_cloud_nodes_conf():
-    def nodeline(template):
+def gen_cloud_nodes_conf(lkp):
+    def nodeline(template, lkp):
         props = lkp.template_details(template)
         machine = props.machine
 
@@ -191,9 +192,9 @@ def gen_cloud_nodes_conf():
 
         return '\n'.join(filter(None, chain([node_def], nodelines)))
 
-    def partitionline(part_name):
+    def partitionline(part_name, lkp):
         """ Make a partition line for the slurm.conf """
-        partition = cfg.partitions[part_name]
+        partition = lkp.cfg.partitions[part_name]
         nodesets = ','.join(nodeset(node)for node in partition.nodes)
 
         def defmempercpu(machine):
@@ -217,7 +218,7 @@ def gen_cloud_nodes_conf():
 
     static_nodes = ','.join(filter(None, (
         nodenames(node)[0]
-        for part in cfg.partitions.values()
+        for part in lkp.cfg.partitions.values()
         for node in part.nodes
     )))
     suspend_exc = dict_to_conf({
@@ -232,8 +233,8 @@ def gen_cloud_nodes_conf():
     # lkp.template_nodes triggers the long api lookup calls
     lines = [
         preamble,
-        *(nodeline(t) for t in lkp.template_nodes),
-        *(partitionline(p) for p in cfg.partitions),
+        *(nodeline(t, lkp) for t in lkp.template_nodes),
+        *(partitionline(p, lkp) for p in lkp.cfg.partitions),
         suspend_exc,
     ]
     cloud_conf = slurmdirs.etc/'cloud.conf'
@@ -242,16 +243,15 @@ def gen_cloud_nodes_conf():
     cloud_conf.write_text(content + '\n')
 
 
-def install_slurm_conf():
+def install_slurm_conf(lkp):
     """ install slurm.conf """
-
-    if cfg.ompi_version:
+    if lkp.cfg.ompi_version:
         mpi_default = "pmi2"
     else:
         mpi_default = "none"
 
     conf_options = {
-        'name': cfg.cluster_name,
+        'name': lkp.cfg.cluster_name,
         'control_host': lkp.control_host,
         'scripts': dirs.scripts,
         'slurmlog': dirs.log,
@@ -264,12 +264,15 @@ def install_slurm_conf():
     conf = conf_resp.format(**conf_options)
 
     conf_file = slurmdirs.etc/'slurm.conf'
+    conf_file_bak = slurmdirs.etc/'slurm.conf.bak'
+    if conf_file.is_file():
+        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
     shutil.chown(conf_file, user='slurm', group='slurm')
 # END install_slurm_conf()
 
 
-def install_slurmdbd_conf():
+def install_slurmdbd_conf(lkp):
     """ install slurmdbd.conf """
     conf_options = NSDict({
         'control_host': lkp.control_host,
@@ -281,12 +284,12 @@ def install_slurmdbd_conf():
         'db_host': 'localhost',
         'db_port': '3306'
     })
-    if cfg.cloudsql:
-        conf_options.db_name = cfg.cloudsql.db_name
-        conf_options.db_user = cfg.cloudsql.user
-        conf_options.db_pass = cfg.cloudsql.password
+    if lkp.cfg.cloudsql:
+        conf_options.db_name = lkp.cfg.cloudsql.db_name
+        conf_options.db_user = lkp.cfg.cloudsql.user
+        conf_options.db_pass = lkp.cfg.cloudsql.password
 
-        db_host_str = cfg.cloudsql.server_ip.split(':')
+        db_host_str = lkp.cfg.cloudsql.server_ip.split(':')
         conf_options.db_host = db_host_str[0]
         conf_options.db_port = (
             db_host_str[1] if len(db_host_str) >= 2 else '3306'
@@ -296,6 +299,9 @@ def install_slurmdbd_conf():
     conf = conf_resp.format(**conf_options)
 
     conf_file = slurmdirs.etc/'slurmdbd.conf'
+    conf_file_bak = slurmdirs.etc/'slurmdbd.conf.bak'
+    if conf_file.is_file():
+        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
     shutil.chown(conf_file, user='slurm', group='slurm')
     conf_file.chmod(0o600)
@@ -307,15 +313,18 @@ def install_cgroup_conf():
     conf = instance_metadata('attributes/cgroup_conf_tpl')
 
     conf_file = slurmdirs.etc/'cgroup.conf'
+    conf_file_bak = slurmdirs.etc/'cgroup.conf.bak'
+    if conf_file.is_file():
+        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
     shutil.chown(conf_file, user='slurm', group='slurm')
 
 
-def install_gres_conf():
+def install_gres_conf(lkp):
     """ install gres.conf """
 
     gpu_nodes = defaultdict(list)
-    for part in cfg.partitions.values():
+    for part in lkp.cfg.partitions.values():
         for node in part.nodes:
             gpu_count = node.template_details.machine.gpu_count
             if gpu_count == 0:
@@ -333,7 +342,9 @@ def install_gres_conf():
     ]
     if lines:
         content = '\n'.join(lines)
-        (slurmdirs.etc/'gres.conf').write_text(content)
+        conf_file = slurmdirs.etc/'gres.conf'
+        shutil.copy2(conf_file, conf_file.conf_file.with_suffix('.bak'))
+        conf_file.write_text(content)
 
 
 def fetch_devel_scripts():
@@ -342,11 +353,13 @@ def fetch_devel_scripts():
     metadata = lkp.project_metadata
 
     meta_entries = [
+        ('clustersync.py', 'clustersync'),
         ('suspend.py', 'slurm-suspend'),
         ('resume.py', 'slurm-resume'),
         ('slurmsync.py', 'slurmsync'),
         ('util.py', 'util-script'),
         ('setup.py', 'setup-script'),
+        ('serf_events.py', 'slurm-serf-events'),
         ('startup.sh', 'startup-script'),
     ]
 
@@ -396,6 +409,7 @@ def resolve_network_storage(partition_name=None):
     default_mounts = (
         slurmdirs.etc,
         dirs.munge,
+        serf_dirs.share,
         dirs.home,
         dirs.apps,
     )
@@ -406,7 +420,7 @@ def resolve_network_storage(partition_name=None):
         'remote_mount': 'none',
         'local_mount': 'none',
         'fs_type': 'nfs',
-        'mount_options': 'defaults,hard,intr',
+        'mount_options': 'defaults,hard,intr,comment=systemd.automount',
     }
 
     # seed mounts with the default controller mounts
@@ -476,7 +490,11 @@ def setup_network_storage():
                 .format(server_ip, remote_mount, local_mount,
                         fs_type, ','.join(mount_options)))
 
-    with open('/etc/fstab', 'a') as f:
+    fstab = Path('/etc/fstab')
+    if not Path(fstab.with_suffix('.bak')).is_file():
+        shutil.copy2(fstab, fstab.with_suffix('.bak'))
+    shutil.copy2(fstab.with_suffix('.bak'), fstab)
+    with open(fstab, 'a') as f:
         f.write('\n')
         for entry in fstab_entries:
             f.write(entry)
@@ -491,7 +509,7 @@ def mount_fstab(mounts):
 
     def mount_path(path):
         log.info(f"Waiting for '{path}' to be mounted...")
-        run(f"mount {path}", timeout=60)
+        run(f"mount {path}", timeout=120)
         log.info(f"Mount point '{path}' was mounted.")
 
     future_list = []
@@ -502,7 +520,7 @@ def mount_fstab(mounts):
 
         # Iterate over futures, checking for exceptions
         for future in future_list:
-            result = future.exception(timeout=60)
+            result = future.exception(timeout=120)
             if result is not None:
                 raise result
 # END mount_external
@@ -581,6 +599,55 @@ def setup_slurmd_cronjob():
         "fi\n"
     ), timeout=30)
 # END setup_slurmd_cronjob()
+
+
+def setup_serf(lkp):
+    """ Configure and start serf agent for compute node """
+    log.info("Set up serf agent")
+
+    conf_options = NSDict({
+        'name': lkp.cfg.cluster_name,
+        'control_host': lkp.control_host,
+    })
+    config_file = Path(serf_dirs.etc/'config.json')
+    handler_file = Path(dirs.scripts/'serf_events.sh')
+    keyring_file = Path(serf_dirs.share/'keyring')
+    snapshot_file = Path(serf_dirs.spool/'snapshot')
+
+    Path(serf_dirs.etc).mkdirp()
+    Path(serf_dirs.share).mkdirp()
+    Path(serf_dirs.spool).mkdirp()
+
+    config = {
+        'tags': {
+            'role': lkp.instance_role,
+        },
+        'retry_join': [
+            conf_options.control_host,
+        ],
+        'rejoin_after_leave': True,
+        'snapshot_path': str(snapshot_file),
+        'event_handlers': [
+            str(handler_file),
+        ],
+        'keyring_file': str(keyring_file),
+        'log_level': 'INFO',
+    }
+    with open(config_file, 'w') as outfile:
+        json.dump(config, outfile, indent=2, sort_keys=True)
+
+    if util.lkp.instance_role == 'controller' and not keyring_file.is_file():
+        # Generate serf keys for encrypted communication
+        keyring = []
+        for i in range(5):
+            key = util.run("serf keygen").stdout.rstrip()
+            keyring.append(key)
+        with open(keyring_file, 'w') as outfile:
+            json.dump(keyring, outfile, indent=2, sort_keys=True)
+
+    run('systemctl enable serf', timeout=30)
+    run('systemctl restart serf', timeout=30)
+# END setup_serf()
 
 
 def setup_nss_slurm():
@@ -668,12 +735,14 @@ def setup_controller():
     util.save_config(cfg, dirs.scripts/'config.yaml')
     shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
 
-    install_slurm_conf()
-    install_slurmdbd_conf()
+    log.debug(lkp.cfg)
+    install_slurm_conf(lkp)
+    install_slurmdbd_conf(lkp)
 
-    gen_cloud_nodes_conf()
+    gen_cloud_nodes_conf(lkp)
     install_cgroup_conf()
-    install_gres_conf()
+    install_gres_conf(lkp)
+    util.save_config(lkp.template_map, dirs.scripts/'.template_map.yaml')
 
     setup_jwt_key()
     run("create-munge-key -f", timeout=30)
@@ -689,7 +758,7 @@ def setup_controller():
         configure_mysql()
 
     run("systemctl enable slurmdbd", timeout=30)
-    run("systemctl start slurmdbd", timeout=30)
+    run("systemctl restart slurmdbd", timeout=30)
 
     # Wait for slurmdbd to come up
     time.sleep(5)
@@ -697,16 +766,16 @@ def setup_controller():
     sacctmgr = f"{slurmdirs.prefix}/bin/sacctmgr -i"
     result = run(f"{sacctmgr} add cluster {cfg.cluster_name}",
                  timeout=30, check=False)
-    if "This cluster slurm already exists." in result.stdout:
+    if "already exists" in result.stdout:
         log.info(result.stdout)
     elif result.returncode > 1:
         result.check_returncode()  # will raise error
 
     run("systemctl enable slurmctld", timeout=30)
-    run("systemctl start slurmctld", timeout=30)
+    run("systemctl restart slurmctld", timeout=30)
 
     run("systemctl enable slurmrestd", timeout=30)
-    run("systemctl start slurmrestd", timeout=30)
+    run("systemctl restart slurmrestd", timeout=30)
 
     # Export at the end to signal that everything is up
     run("systemctl enable nfs-server", timeout=30)
@@ -714,6 +783,7 @@ def setup_controller():
 
     setup_nfs_exports()
     setup_sync_cronjob()
+    setup_serf(lkp)
 
     log.info("Done setting up controller")
     pass
@@ -725,6 +795,7 @@ def setup_login():
 
     setup_network_storage()
     run("systemctl restart munge")
+    setup_serf()
 
     run_custom_scripts()
 
@@ -757,9 +828,10 @@ def setup_compute():
     run_custom_scripts()
 
     setup_slurmd_cronjob()
+    setup_serf(lkp)
     run("systemctl restart munge", timeout=30)
     run("systemctl enable slurmd", timeout=30)
-    run("systemctl start slurmd", timeout=30)
+    run("systemctl restart slurmd", timeout=30)
 
     log.info("Done setting up compute")
 

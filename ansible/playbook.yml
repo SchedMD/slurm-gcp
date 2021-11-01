@@ -63,6 +63,7 @@
     - libjwt
     - lmod
     - slurm
+    - serf
     - ompi
     - lustre
     - gcsfuse

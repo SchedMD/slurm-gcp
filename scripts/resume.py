@@ -98,6 +98,9 @@ def create_instances(nodes):
 
 def expand_nodelist(nodelist):
     """ expand nodes in hostlist to hostnames """
+    if nodelist is None:
+        return []
+
     nodes = run(f"{SCONTROL} show hostnames {nodelist}").stdout.splitlines()
     return nodes
 

@@ -54,6 +54,7 @@
       - google-api-python-client
       - google-cloud-storage
       - addict
+      - numpy
     extra_args: --upgrade
     executable: /usr/local/bin/pip3
     state: present

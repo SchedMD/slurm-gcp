@@ -70,6 +70,12 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
     'state': '/var/spool/slurm',
 })})
 
+serf_dirs = NSDict({n: Path(p) for n, p in dict.items({
+    'etc': '/etc/serf',
+    'share': '/etc/serf/share',
+    'spool': '/var/spool/serf',
+})})
+
 
 def compute_service(credentials=None, user_agent=USER_AGENT):
     """Make thread-safe compute service handle
@@ -428,17 +434,26 @@ class Lookup:
     node_parts_regex = re.compile(regex)
 
     def __init__(self, cfg=None):
-        self.cfg = cfg or NSDict()
+        self._cfg = cfg or NSDict()
+        self.tm = NSDict()
+
+    @property
+    def cfg(self):
+        return self._cfg
 
     @property
     def project(self):
-        return self.cfg.project or project
+        return self._cfg.project or project
 
     @property
     def control_host(self):
-        if self.cfg.cluster_name:
-            return f'{self.cfg.cluster_name}-controller'
+        if self._cfg.cluster_name:
+            return f'{self._cfg.cluster_name}-controller'
         return None
+
+    @property
+    def template_map(self):
+        return self.tm
 
     @cached_property
     def instance_role(self):
@@ -447,14 +462,14 @@ class Lookup:
     @cached_property
     def project_metadata(self):
         return NSDict(yaml.safe_load(get_metadata(
-            f'project/attributes/{self.cfg.cluster_name}-slurm-metadata'
+            f'project/attributes/{self._cfg.cluster_name}-slurm-metadata'
         )))
 
     @cached_property
     def compute(self):
         # TODO evaluate when we need to use google_app_cred_path
-        if self.cfg.google_app_cred_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.cfg.google_app_cred_path
+        if self._cfg.google_app_cred_path:
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self._cfg.google_app_cred_path
         return compute_service()
 
     @cached_property
@@ -463,7 +478,7 @@ class Lookup:
 
     @property
     def exclusive(self):
-        return bool(self.cfg.exclusive or self.cfg.enable_placement)
+        return bool(self._cfg.exclusive or self._cfg.enable_placement)
 
     @cached_property
     def template_nodes(self):
@@ -473,7 +488,7 @@ class Lookup:
         template_nodes = defaultdict(list)
         with ThreadPoolExecutor() as exe:
             futures = {}
-            for part, conf in self.cfg.partitions.items():
+            for part, conf in self._cfg.partitions.items():
                 for node in conf.nodes:
                     # shim in partition so template knows it for nodeline
                     node.partition = part
@@ -483,7 +498,10 @@ class Lookup:
             # not strictly necessary, but store a reference to the template
             # details on each node just for fun
             for f, node in futures.items():
-                node.template_details = f.result()
+                template_details = f.result()
+                node.template_details = template_details
+                if node.template not in self.tm:
+                    self.tm[node.template] = template_details['url']
         return template_nodes
 
     @lru_cache(maxsize=None)
@@ -513,7 +531,7 @@ class Lookup:
         parts = self._node_parts(node_name)
         try:
             node_conf = next(
-                n for n in self.cfg.partitions[parts.partition].nodes
+                n for n in self._cfg.partitions[parts.partition].nodes
                 if n.template == parts.template
             )
         except StopIteration:
@@ -522,7 +540,7 @@ class Lookup:
 
     @lru_cache(maxsize=1)
     def instances(self, project=None, cluster_name=None):
-        cluster_name = cluster_name or self.cfg.cluster_name
+        cluster_name = cluster_name or self._cfg.cluster_name
         project = project or self.project
         fields = 'items.zones.instances(name,zone,status,machineType,metadata),nextPageToken'
         flt = f'name={cluster_name}-*'
@@ -623,7 +641,7 @@ class Lookup:
     def template_props(self, template, project=None):
         project = project or self.project
 
-        tpl_filter = f'(name={self.cfg.cluster_name}-{template}-*)'
+        tpl_filter = f'(name={self._cfg.cluster_name}-{template}-*)'
 
         template_list = ensure_execute(
             self.compute.instanceTemplates().list(

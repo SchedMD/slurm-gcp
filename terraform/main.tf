@@ -101,12 +101,14 @@ locals {
   metadata_devel_scripts = (
     var.enable_devel == true
     ? {
-      startup-script = file("${path.module}/../scripts/startup.sh")
-      setup-script  = file("${path.module}/../scripts/setup.py")
-      slurm-resume  = file("${path.module}/../scripts/resume.py")
-      slurm-suspend = file("${path.module}/../scripts/suspend.py")
-      slurmsync     = file("${path.module}/../scripts/slurmsync.py")
-      util-script   = file("${path.module}/../scripts/util.py")
+      clustersync       = file("${path.module}/../scripts/clustersync.py")
+      startup-script    = file("${path.module}/../scripts/startup.sh")
+      setup-script      = file("${path.module}/../scripts/setup.py")
+      slurm-resume      = file("${path.module}/../scripts/resume.py")
+      slurm-serf-events = file("${path.module}/../scripts/serf_events.py")
+      slurm-suspend     = file("${path.module}/../scripts/suspend.py")
+      slurmsync         = file("${path.module}/../scripts/slurmsync.py")
+      util-script       = file("${path.module}/../scripts/util.py")
     }
     : null
   )

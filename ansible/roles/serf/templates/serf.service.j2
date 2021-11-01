@@ -1,0 +1,15 @@
+[Unit]
+Description=Serf Agent
+After=syslog.target
+After=network.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/install -d -g {{slurm_user.group}} -o {{slurm_user.user}} {{serf_paths.etc}}
+ExecStart={{serf_paths.bin}}/serf agent -config-dir={{serf_paths.etc}}
+KillSignal=SIGINT
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

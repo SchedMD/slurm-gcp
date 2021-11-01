@@ -86,6 +86,25 @@ module "vpc" {
       }
     },
     {
+      name      = "${var.cluster_name}-allow-serf-ingress"
+      direction = "INGRESS"
+      ranges    = ["10.0.0.0/8"]
+      allow = [
+        {
+          protocol = "tcp"
+          ports    = ["7373", "7946"]
+        },
+        {
+          protocol = "udp"
+          ports    = ["7946"]
+        },
+      ]
+      deny = []
+      log_config = {
+        metadata = "INCLUDE_ALL_METADATA"
+      }
+    },
+    {
       name      = "${var.cluster_name}-allow-internal-ingress"
       direction = "INGRESS"
       ranges    = ["10.0.0.0/8"]
