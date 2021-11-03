@@ -402,6 +402,10 @@ module "login_template" {
 module "login_instance" {
   source = "./modules/compute_instance"
 
+  depends_on = [
+    module.controller_instance,
+  ]
+
   for_each = local.login_instances_map
 
   ### network ###
