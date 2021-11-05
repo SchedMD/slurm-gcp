@@ -1,3 +1,7 @@
+Changes in Slurm-GCP 4.1.2
+==========================
+ -- setup.py - change LLN=yes to LLN=no
+
 Changes in Slurm-GCP 4.1.1
 ==========================
  -- slurmsync.py - fix powering up nodes from being downed.

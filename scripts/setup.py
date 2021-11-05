@@ -292,7 +292,7 @@ def install_slurm_conf():
         def_mem_per_cpu = max(100, machine['memory'] // machine['cpus'])
 
         conf += ("PartitionName={} Nodes={} MaxTime=INFINITE "
-                 "State=UP DefMemPerCPU={} LLN=yes"
+                 "State=UP DefMemPerCPU={} LLN=no"
                  .format(part.name, part_nodes,
                          def_mem_per_cpu))
         if part.exclusive:
