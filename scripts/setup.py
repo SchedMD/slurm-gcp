@@ -761,17 +761,62 @@ def setup_compute():
     log.info("Done setting up compute")
 
 
+def setup_modules(modulefiles):
+    """ Add /apps/modulefiles as environment module dir """
+    url = 'https://github.com/TACC/Lmod.git'
+    prefix = Path('/opt')
+    src = prefix/'lmod/src'
+    lmod = prefix/'lmod/lmod'
+    run(f"git clone --single-branch --depth 1 {url} {src}")
+
+    modulespath = lmod/'init/modulespath'
+    with cd(src):
+        run(f"./configure --prefix={prefix} --with-ModulePathInit={modulespath}")
+        run("make install", stdout=DEVNULL)
+        lmodsh = Path('/etc/profile.d/z00_lmod.sh')
+        if lmodsh.exists():
+            lmodsh.unlink()
+        lmodsh.symlink_to(lmod/'init/bash')
+
+    modulespath.write_text(f"{modulefiles}")
+
+
 def setup_compute_tpu():
     #run("apt-get update")
     run("apt-get install -y libmunge-dev munge nfs-common hwloc")
+    module_depend = (
+        'lua5.3',
+        'lua-bit32:amd64',
+        'lua-posix:amd64',
+        'lua-posix-dev',
+        'liblua5.3-0:amd64',
+        'liblua5.3-dev:amd64',
+        'tcl',
+        'tcl-dev',
+        'tcl8.6',
+        'tcl8.6-dev:amd64',
+        'libtcl8.6:amd64',
+    )
+    run("apt-get install -y {}".format(' '.join(module_depend)))
+    modulefiles = Path('/apps/modulefiles')
+    setup_modules(modulefiles)
+    slurm_module = modulefiles/'slurm'
+    slurm_module.mkdir(parents=True, exist_ok=True)
 
     slurm_prefix = Path('/opt/slurm')
+    (slurm_module/'slurm.lua').write_text(f"""
+slurm_prefix={slurm_prefix}
+prepend_path("PATH", slurm_prefix.."/bin")
+prepend_path("LD_LIBRARY_PATH", slurm_prefix.."/lib")
+prepend_path("MANPATH", slurm_prefix.."/share/man")
+""")
 
     setup_nss_slurm(slurm_prefix)
     setup_network_storage()
     mount_fstab()
 
     # add nonstandard slurm prefix to bash profile PATH
+    # source this in salloc or batch script to access slurm client commands
     Path('/etc/profile.d/slurm.sh').write_text(f"""
 S_PATH={slurm_prefix}
 PATH=$S_PATH/bin:$S_PATH/sbin:$PATH
