@@ -68,44 +68,12 @@ To deploy, you must have a GCP account and either have the
 installed on your computer or use the GCP
 [Cloud Shell](https://cloud.google.com/shell/).
 
-Steps:
-1. cd to `terrafrom/`.
-2. Copy `example.tfvars` to `vars.tfvars`.
-3. Edit `vars.tfvars` with the desired configuration.
-  See the [terraform/variables.tf](terraform/variables.tf)
-  file for more detailed information on available configuration options.
-4. Deploy the cluster
-    ```sh
-    $ terraform init
-    $ terraform apply -var-file=vars.tfvars
-    ```
-5. Tearing down the cluster
-    ```sh
-    # Destroy compute nodes that have not been powered down by the slurm controller
-    $ ./scripts/destroy_nodes.py {PROJECT_ID} {CLUSTER_NAME}
-    $ CLUSTER_NAME=$(terraform output cluster_name)
-    $ ./scripts/destroy_nodes.py ${CLUSTER_NAME}
+[Terraform modules](./terraform/modules) are provided to be integrated into
+user created terraform infrastructure. [Terraform examples](./terraform/examples) have
+been provided to fascilitate such.
 
-    # Destroy terraform managed pieces of the slurm cluster
-    $ terraform destroy -var-file=vars.tfvars
-    ```
-
-    **NOTE:** If the VPC/network is managed by terraform, then all resources that
-    are not managed by terraform (compute nodes, non-slurm instances) and on said
-    VPC/network must be terminated before the VPC/network can be destroyed. This
-    may require manual termination of resources. This includes bursted instances
-    that Slurm has not yet suspended. Failure to do so may lead to errors when
-    using `terraform destroy`.
-
-    **NOTE:** Compute node instances are not managed by terraform, rather by the
-    controller instance via scripts. Ergo, if the controller is destroyed
-    before all compute node instances are terminated, the cloud administrator
-    must manually handle the termination of orpahned compute node instances.
-    Failure to manually moderate resources may lead to additional cloud costs.
-
-    A convienance script, [`destroy_nodes.py`](../scripts/destroy_nodes.py), is
-    provided to assist with node cleanup. Although it can be ran at any time, it is
-    suggested to run this before `terraform destroy` would be run.
+See the [complex cluster](./terraform/examples/slurm_cluster/complex) example
+for a robust and highly configurable example cluster.
 
 #### Defining network storage mounts
 

@@ -1,0 +1,105 @@
+/**
+ * Copyright 2021 SchedMD LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+##########
+# LOCALS #
+##########
+
+locals {
+  scripts_dir = "${path.module}/../../../scripts"
+
+  additional_disks = [
+    for disk in var.additional_disks : {
+      disk_name    = disk.disk_name
+      device_name  = disk.device_name
+      auto_delete  = disk.auto_delete
+      boot         = disk.boot
+      disk_size_gb = disk.disk_size_gb
+      disk_type    = disk.disk_type
+      disk_labels = merge(
+        { cluster_id = var.cluster_id },
+        disk.disk_labels
+      )
+    }
+  ]
+}
+
+########
+# DATA #
+########
+
+data "local_file" "startup" {
+  filename = "${local.scripts_dir}/startup.sh"
+}
+
+############
+# TEMPLATE #
+############
+
+module "instance_template" {
+  source  = "terraform-google-modules/vm/google//modules/instance_template"
+  version = "~> 7.1"
+
+  ### general ###
+  project_id  = var.project_id
+  name_prefix = var.name_prefix
+
+  ### network ###
+  subnetwork_project = var.subnetwork_project
+  network            = var.network
+  subnetwork         = var.subnetwork
+  region             = var.region
+  tags               = var.tags
+  can_ip_forward     = var.can_ip_forward
+  network_ip         = var.network_ip
+
+  ### instance ###
+  machine_type             = var.machine_type
+  min_cpu_platform         = var.min_cpu_platform
+  gpu                      = var.gpu
+  service_account          = var.service_account
+  shielded_instance_config = var.shielded_instance_config
+  enable_confidential_vm   = var.enable_confidential_vm
+  enable_shielded_vm       = var.enable_shielded_vm
+  preemptible              = var.preemptible
+  on_host_maintenance      = var.on_host_maintenance
+  labels = merge(
+    { cluster_id = var.cluster_id },
+    var.labels
+  )
+
+  ### metadata ###
+  startup_script = data.local_file.startup.content
+  metadata = merge(
+    { google_mpi_tuning = var.disable_smt == true ? "--nosmt" : null },
+    var.metadata
+  )
+
+  ### source image ###
+  source_image_project = var.source_image_project
+  source_image_family  = var.source_image_family
+  source_image         = var.source_image
+
+  ### disk ###
+  disk_type    = var.disk_type
+  disk_size_gb = var.disk_size_gb
+  auto_delete  = var.disk_auto_delete
+  disk_labels = merge(
+    { cluster_id = var.cluster_id },
+    var.disk_labels
+  )
+  additional_disks = local.additional_disks
+}
