@@ -735,7 +735,6 @@ def setup_controller():
     util.save_config(cfg, dirs.scripts/'config.yaml')
     shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
 
-    log.debug(lkp.cfg)
     install_slurm_conf(lkp)
     install_slurmdbd_conf(lkp)
 
