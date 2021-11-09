@@ -21,6 +21,7 @@ import re
 import shutil
 import subprocess
 import sys
+import stat
 import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, Future
@@ -601,14 +602,24 @@ def setup_slurmd_cronjob():
 # END setup_slurmd_cronjob()
 
 
+def setup_munge_key():
+    munge_key = dirs.munge/'munge.key'
+
+    if cfg.munge_key:
+        with (munge_key).open('w') as f:
+            f.write(cfg.munge_key)
+    else:
+        run("create-munge-key -f", timeout=30)
+
+    shutil.chown(munge_key, user='munge', group='munge')
+    os.chmod(munge_key, stat.S_IRUSR)
+    run("systemctl restart munge", timeout=30)
+
+
 def setup_serf(lkp):
     """ Configure and start serf agent for compute node """
     log.info("Set up serf agent")
 
-    conf_options = NSDict({
-        'name': lkp.cfg.cluster_name,
-        'control_host': lkp.control_host,
-    })
     config_file = Path(serf_dirs.etc/'config.json')
     handler_file = Path(dirs.scripts/'serf_events.sh')
     keyring_file = Path(serf_dirs.share/'keyring')
@@ -623,7 +634,7 @@ def setup_serf(lkp):
             'role': lkp.instance_role,
         },
         'retry_join': [
-            conf_options.control_host,
+            lkp.control_host,
         ],
         'rejoin_after_leave': True,
         'snapshot_path': str(snapshot_file),
@@ -636,12 +647,16 @@ def setup_serf(lkp):
     with open(config_file, 'w') as outfile:
         json.dump(config, outfile, indent=2, sort_keys=True)
 
-    if util.lkp.instance_role == 'controller' and not keyring_file.is_file():
+    if util.lkp.instance_role == 'controller' and cfg.serf_keys:
+        with open(keyring_file, 'w') as outfile:
+            json.dump(cfg.serf_keys, outfile, indent=2, sort_keys=True)
+    else:
         # Generate serf keys for encrypted communication
         keyring = []
         for i in range(5):
             key = util.run("serf keygen").stdout.rstrip()
             keyring.append(key)
+
         with open(keyring_file, 'w') as outfile:
             json.dump(keyring, outfile, indent=2, sort_keys=True)
 
@@ -743,8 +758,7 @@ def setup_controller():
     install_gres_conf(lkp)
 
     setup_jwt_key()
-    run("create-munge-key -f", timeout=30)
-    run("systemctl restart munge", timeout=30)
+    setup_munge_key()
 
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
