@@ -20,6 +20,7 @@
 import argparse
 import logging
 import os
+import re
 import sys
 import tempfile
 import json
@@ -46,17 +47,19 @@ log = logging.getLogger(filename)
 
 def instance_properties(partition_name):
     partition = cfg.partitions[partition_name]
-    region = partition.region
-    subnet = partition.subnet_name or f'{cfg.cluster_name}-subnet'
+    project = cfg.project or re.search('projects/([^/]*)', partition.subnetwork).group(1)
+    region = partition.region or re.search('regions/([^/]*)', partition.subnetwork).group(1)
+    subnetwork = re.search('subnetworks/([^/]*)', partition.subnetwork).group(1)
 
     props = NSDict()
     props.networkInterfaces = [{
-        'subnetwork': f'projects/{cfg.project}/regions/{region}/subnetworks/{subnet}'
+        'subnetwork': f'projects/{project}/regions/{region}/subnetworks/{subnetwork}'
     }]
 
     compute_config = NSDict()
     compute_config.cluster_name = cfg.cluster_name
     compute_config.munge_key = cfg.munge_key
+    compute_config.template_map = cfg.template_map
     compute_config.network_storage = resolve_network_storage(partition_name)
 
     metadata = {

@@ -124,7 +124,7 @@ def nodeset(node):
     return f'{cfg.cluster_name}-{node.template}-{node.partition}'
 
 
-def nodenames(node):
+def nodenames(node, lkp):
     """ Return static and dynamic nodenames given a partition node type
     definition
     """
@@ -172,7 +172,7 @@ def gen_cloud_nodes_conf(lkp):
 
         nodelines = []
         for node in lkp.template_nodes[template]:
-            static, dynamic = nodenames(node)
+            static, dynamic = nodenames(node, lkp)
             nodelines.append(dict_to_conf({
                 'NodeName': static,
                 'State': 'CLOUD',
@@ -217,7 +217,7 @@ def gen_cloud_nodes_conf(lkp):
         return dict_to_conf(line_elements)
 
     static_nodes = ','.join(filter(None, (
-        nodenames(node)[0]
+        nodenames(node, lkp)[0]
         for part in lkp.cfg.partitions.values()
         for node in part.nodes
     )))
@@ -330,7 +330,7 @@ def install_gres_conf(lkp):
             if gpu_count == 0:
                 continue
             gpu_nodes[gpu_count].extend(
-                filter(None, nodenames(node))
+                filter(None, nodenames(node, lkp))
             )
 
     lines = [
@@ -420,7 +420,7 @@ def resolve_network_storage(partition_name=None):
         'remote_mount': 'none',
         'local_mount': 'none',
         'fs_type': 'nfs',
-        'mount_options': 'defaults,hard,intr,comment=systemd.automount',
+        'mount_options': 'defaults,hard,intr',
     }
 
     # seed mounts with the default controller mounts
@@ -741,7 +741,6 @@ def setup_controller():
     gen_cloud_nodes_conf(lkp)
     install_cgroup_conf()
     install_gres_conf(lkp)
-    util.save_config(lkp.template_map, dirs.scripts/'.template_map.yaml')
 
     setup_jwt_key()
     run("create-munge-key -f", timeout=30)
@@ -794,7 +793,7 @@ def setup_login():
 
     setup_network_storage()
     run("systemctl restart munge")
-    setup_serf()
+    setup_serf(lkp)
 
     run_custom_scripts()
 

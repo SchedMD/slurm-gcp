@@ -435,7 +435,6 @@ class Lookup:
 
     def __init__(self, cfg=None):
         self._cfg = cfg or NSDict()
-        self.tm = NSDict()
 
     @property
     def cfg(self):
@@ -453,7 +452,7 @@ class Lookup:
 
     @property
     def template_map(self):
-        return self.tm
+        return self._cfg.template_map
 
     @cached_property
     def instance_role(self):
@@ -498,10 +497,7 @@ class Lookup:
             # not strictly necessary, but store a reference to the template
             # details on each node just for fun
             for f, node in futures.items():
-                template_details = f.result()
-                node.template_details = template_details
-                if node.template not in self.tm:
-                    self.tm[node.template] = template_details['url']
+                node.template_details = f.result()
         return template_nodes
 
     @lru_cache(maxsize=None)
@@ -641,7 +637,8 @@ class Lookup:
     def template_props(self, template, project=None):
         project = project or self.project
 
-        tpl_filter = f'(name={self._cfg.cluster_name}-{template}-*)'
+        template_name = self._cfg.template_map[template].split('/')[-1]
+        tpl_filter = f"(name={template_name})"
 
         template_list = ensure_execute(
             self.compute.instanceTemplates().list(

@@ -108,31 +108,18 @@ def diff_plan(lkp0, lkp1):
         'suspend': [],
     }
 
-    template_map_file = dirs.scripts/'.template_map.yaml'
-    template_map_file_bak = dirs.scripts/'.template_map.yaml.bak'
-    if template_map_file_bak.is_file() and not template_map_file.is_file():
-        log.info(f"Restoring '{template_map_file}' from backup")
-        copy2(template_map_file_bak, template_map_file)
-    elif (dirs.scripts/'.template_map').is_file():
-        copy2(template_map_file, template_map_file_bak)
-    template_map0 = load_config_file(template_map_file) or lkp0.template_map
-
-    nodelist0 = []
-    for template in lkp0.template_nodes:
-        for node in lkp0.template_nodes[template]:
-            static, dynamic = setup.nodenames(node)
-            nodelist0.extend(resume.expand_nodelist(static))
-            nodelist0.extend(resume.expand_nodelist(dynamic))
-
+    nodelist0 = list(get_nodes().keys())
     nodelist1 = []
     nodelist2 = []
     for template in lkp1.template_nodes:
         for node in lkp1.template_nodes[template]:
-            static, dynamic = setup.nodenames(node)
+            static, dynamic = setup.nodenames(node, lkp1)
             static_nodelist = resume.expand_nodelist(static)
             dynamic_nodelist = resume.expand_nodelist(dynamic)
 
-            if node['template_details']['url'] != template_map0[template]:
+            template0_name = lkp0.template_map.get(template, "").split('/')[-1]
+            template1_name = node['template_details']['url'].split('/')[-1]
+            if template1_name != template0_name:
                 nodelist2.extend(static_nodelist)
                 nodelist2.extend(dynamic_nodelist)
 
@@ -165,7 +152,6 @@ def diff_apply(plan):
             # These nodes have not changed in slurm.conf.
             # Nothing to do here but notify.
             if len(nodelist):
-                delta = True
                 hostlist = slurmsync.to_hostlist(nodelist)
                 log.info(
                     f"NodeName={hostlist} will remain present in cluster.")
@@ -199,17 +185,26 @@ def diff_apply(plan):
 
 
 def update_conf():
-    # Generate new config files
+    log.info("Generating new cloud.conf for slurm.conf")
     setup.gen_cloud_nodes_conf(util.lkp)
+
+    log.info("Generating new slurm.conf")
     setup.install_slurm_conf(util.lkp)
+
+    log.info("Generating new slurmdbd.conf")
     setup.install_slurmdbd_conf(util.lkp)
+
+    log.info("Generating new gres.conf")
     setup.install_gres_conf(util.lkp)
 
-    # Save conf changes
-    save_config(util.cfg, dirs.scripts/'config.yaml')
+    log.info("Generating new cgroup.conf")
+    setup.install_cgroup_conf()
+
+    # NOTE: lkp.cfg contains extraneous data: template_details
+    config_yaml = yaml.safe_load(util.instance_metadata('attributes/config'))
+    cfg = util.new_config(config_yaml)
+    save_config(cfg, dirs.scripts/'config.yaml')
     chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
-    save_config(util.lkp.template_map, dirs.scripts/'.template_map.yaml')
-    chown(dirs.scripts/'.template_map.yaml', user='slurm', group='slurm')
 
 
 def restart_cluster():
@@ -220,7 +215,7 @@ def restart_cluster():
     time.sleep(5)  # Allow time for slurmdbd to start
     run("systemctl restart slurmctld")
     time.sleep(5)  # Allow time for slurmctld to start
-    run("serf event -coalesce=false 'restart-slurmd'")
+    run("/usr/local/bin/serf event -coalesce=false 'restart-slurmd'")
 
 
 def main():
@@ -228,8 +223,8 @@ def main():
         log.error("Only the controller can run this script. Aborting...")
         return
 
-    log.info("Updating cluster development scripts")
-    run("serf event -coalesce=false 'update-scripts'")
+    log.debug("Updating cluster development scripts")
+    run("/usr/local/bin/serf event -coalesce=false 'update-scripts'")
 
     lkp0 = util.lkp
 
