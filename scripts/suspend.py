@@ -37,7 +37,6 @@ from util import lkp, cfg, compute
 SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
 
 filename = Path(__file__).name
-LOGFILE = (Path(cfg.log_dir)/filename).with_suffix('.log')
 log = logging.getLogger(filename)
 
 TOT_REQ_CNT = 1000
@@ -53,11 +52,11 @@ def truncate_iter(iterable, max_count):
         yield el
 
 
-def delete_instance_op(instance, project=None):
+def delete_instance_op(instance, project=None, zone=None):
     project = project or lkp.project
     return compute.instances().delete(
         project=project,
-        zone=lkp.instance(instance).zone,
+        zone=(zone or lkp.instance(instance).zone),
         instance=instance,
     )
 
@@ -146,12 +145,14 @@ if __name__ == '__main__':
     else:
         args = parser.parse_args()
 
+
+    logfile = (Path(cfg.log_dir)/filename).with_suffix('.log')
     if args.debug:
         util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
-                                logfile=LOGFILE)
+                                logfile=logfile)
     else:
         util.config_root_logger(filename, level='INFO', util_level='ERROR',
-                                logfile=LOGFILE)
+                                logfile=logfile)
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 

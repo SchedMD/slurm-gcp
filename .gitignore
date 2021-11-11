@@ -16,6 +16,7 @@ output-*/
 __pycache__/
 *.py[cod]
 *$py.class
+*.lock
 
 ### Terraform ###
 **/.terraform/*

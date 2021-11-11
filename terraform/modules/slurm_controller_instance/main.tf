@@ -310,3 +310,32 @@ resource "google_compute_project_metadata_item" "slurm_metadata" {
     var.metadata_compute,
   ))
 }
+
+#################
+# DESTROY NODES #
+#################
+
+resource "null_resource" "destroy_nodes" {
+  triggers = {
+    scripts_dir = local.scripts_dir
+    cluster_id  = local.cluster_id
+  }
+
+  provisioner "local-exec" {
+    working_dir = self.triggers.scripts_dir
+    environment = {
+      PIPENV_PIPFILE = "Pipfile"
+    }
+    command = "pipenv install"
+    when    = create
+  }
+
+  provisioner "local-exec" {
+    working_dir = self.triggers.scripts_dir
+    environment = {
+      PIPENV_PIPFILE = "Pipfile"
+    }
+    command = "pipenv run ./destroy_nodes.py ${self.triggers.cluster_id}"
+    when    = destroy
+  }
+}

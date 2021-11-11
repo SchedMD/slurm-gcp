@@ -14,143 +14,84 @@
 # limitations under the License.
 
 import argparse
-import googleapiclient.discovery
 import logging
-import sys
-import time
 from pathlib import Path
+from time import sleep
 
-import util
+from suspend import (
+    batch_execute, delete_instance_op, truncate_iter, wait_for_operations
+)
+from util import compute, config_root_logger, project, parse_self_link
 
 logger_name = Path(__file__).name
 log = logging.getLogger(logger_name)
-LOGFILE = (Path(__file__).parent / logger_name).with_suffix('.log')
-TOT_REQ_CNT = 1000
-
-OPERATIONS = {}
-RETRY_LIST = []
-
-compute = googleapiclient.discovery.build('compute', 'v1', cache_discovery=False)
 
 
-def delete_instances_cb(request_id, response, exception):
-    if exception is not None:
-        log.error(f"delete exception for node {request_id}: {exception}")
-        if "Rate Limit Exceeded" in str(exception) or "Quota exceeded" in str(exception):
-            RETRY_LIST.append(request_id)
-    else:
-        OPERATIONS[request_id] = response
-# [END delete_instances_cb]
+def delete_instances(compute_list):
+    log.info("Deleting {0} compute instances:\n{1}".format(
+        len(compute_list), '\n'.join(compute_list)))
+
+    ops = {}
+    for self_link in compute_list:
+        (project, zone, name) = parse_self_link(self_link)
+        ops[self_link] = delete_instance_op(
+            instance=name, project=project, zone=zone)
+    done, failed = batch_execute(ops)
+    if failed:
+        failed_nodes = [f"{n}: {e}" for n, (_, e) in failed.items()]
+        node_str = '\n'.join(str(el)
+                             for el in truncate_iter(failed_nodes, 5))
+        log.error(f"some nodes failed to delete: {node_str}")
+    wait_for_operations(done.values())
 
 
-def delete_instances(node_list):
-    batch_list = []
-    curr_batch = 0
-    req_cnt = 0
-    batch_list.insert(
-        curr_batch,
-        compute.new_batch_http_request(callback=delete_instances_cb))
-
-    for node in node_list:
-        log.info(f"terminating node: {node}")
-        """
-        DELETE https://compute.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances/{resourceId}
-        """
-        node_uri_split = node.split('/')
-        node_dict = dict({
-            'project': node_uri_split[-5],
-            'zone': node_uri_split[-3],
-            'resourceId': node_uri_split[-1],
-        })
-
-        if req_cnt >= TOT_REQ_CNT:
-            req_cnt = 0
-            curr_batch += 1
-            batch_list.insert(
-                curr_batch,
-                compute.new_batch_http_request(callback=delete_instances_cb))
-
-        batch_list[curr_batch].add(
-            compute.instances().delete(
-                project=node_dict['project'],
-                zone=node_dict['zone'],
-                instance=node_dict['resourceId']
-            ),
-            request_id=f"{node_dict['project']}/{node_dict['zone']}/{node_dict['resourceId']}"
-        )
-
-        req_cnt += 1
-
-    try:
-        for i, batch in enumerate(batch_list):
-            util.ensure_execute(batch)
-            if i < (len(batch_list) - 1):
-                time.sleep(30)
-    except Exception:
-        log.exception("error in batch:")
-# [END delete_instances]
-
-
-def get_instances(project, cluster_name):
-    instance_list = []
+def main(args):
+    # NOTE: It is not technically possible to filter by metadata or other
+    #       complex nested items
     result = compute.instances().aggregatedList(
         project=project,
-        filter=f"name={cluster_name}-*"
+        filter=f"labels.cluster_id={args.cluster_id}"
     ).execute()
 
+    compute_list = []
     for item in result['items'].values():
         instances = item.get('instances')
         if instances is not None:
             for instance in instances:
-                instance_list.append(instance['selfLink'])
+                try:
+                    metadata = {
+                        item['key']: item['value'] for item in instance['metadata']['items']
+                    }
+                except KeyError:
+                    metadata = {}
 
-    return instance_list
-# [END get_instance]
+                if metadata.get('instance_type') == 'compute':
+                    compute_list.append(instance['selfLink'])
 
+    delete_instances(compute_list)
 
-def main(project, cluster_name):
-    node_list = get_instances(project, cluster_name)
-
-    log.info(f"Found {len(node_list)} compute nodes running on cluster '{cluster_name}'.")
-    if len(node_list) > 0:
-        log.info("\n".join(node_list))
-
-    while True:
-        delete_instances(node_list)
-        if not len(RETRY_LIST):
-            break
-
-        log.debug("got {} nodes to retry ({})"
-                .format(len(RETRY_LIST), ','.join(RETRY_LIST)))
-        node_list = list(RETRY_LIST)
-        del RETRY_LIST[:]
-# [END main]
+    sleep_dur = 30
+    log.info(f"Done. Sleeping for {sleep_dur} seconds.")
+    sleep(sleep_dur)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('project_id',
-                        help="Google Cloud Project ID")
-    parser.add_argument('cluster_name',
-                        help="The cluster name to destroy all nodes of")
+    parser.add_argument('cluster_id',
+                        help="The cluster ID, of which the node belong to")
     parser.add_argument('--debug', '-d', dest='debug', action='store_true',
                         help='Enable debugging output')
 
     args = parser.parse_args()
 
+    logfile = (Path(__file__).parent / logger_name).with_suffix('.log')
     if args.debug:
-        util.config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
-                                logfile=LOGFILE)
+        config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
+                           logfile=logfile)
     else:
-        util.config_root_logger(logger_name, level='INFO', util_level='ERROR',
-                                logfile=LOGFILE)
-    sys.excepthook = util.handle_exception
+        config_root_logger(logger_name, level='INFO', util_level='ERROR',
+                           logfile=logfile)
 
-    if args.cluster_name is None:
-        log.error("No cluster name provided. Aborting...")
-        sys.exit(1)
-    
-    main(args.project_id, args.cluster_name)
-# [END __main__]
+    main(args)

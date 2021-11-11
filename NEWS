@@ -8,7 +8,7 @@ Changes in Slurm-GCP 5.0.0
  -- Added auto_create_subnetworks option
  -- ansible - scripts role for custom provisioning scripts
  -- Replaced `tf/` with `terraform/`
- -- Added script to destroy nodes given cluster name
+ -- Added destroy_nodes - script to destroy cluster compute nodes
  -- Added clustersync - script to propagate changes to running cluster
 
 Changes in Slurm-GCP 4.1.0

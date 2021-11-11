@@ -30,6 +30,7 @@ from itertools import chain, compress, islice
 from operator import itemgetter
 from pathlib import Path
 from time import sleep
+from urllib import parse
 
 import google.auth
 import googleapiclient.discovery
@@ -75,6 +76,16 @@ serf_dirs = NSDict({n: Path(p) for n, p in dict.items({
     'share': '/etc/serf/share',
     'spool': '/var/spool/serf',
 })})
+
+
+def parse_self_link(self_link: str):
+    """ Parse an instance self link and return its project, zone, and name. """
+    psl = parse.urlparse(self_link)
+    split_path = psl.path.split('/')
+    project = split_path[split_path.index('projects') + 1]
+    zone = split_path[split_path.index('zones') + 1]
+    name = split_path[split_path.index('instances') + 1]
+    return (project, zone, name)
 
 
 def compute_service(credentials=None, user_agent=USER_AGENT):
@@ -127,7 +138,7 @@ def new_config(config):
         if netstore.server_ip == '$controller':
             netstore.server_ip = cfg.cluster_name + '-controller'
     return cfg
-    
+
 
 def load_config_file(path):
     """load config from file"""
@@ -406,11 +417,12 @@ def get_group_operations(operation, project=project, compute=compute):
             filter=f"operationGroupId={group_id}")
 
     return ensure_execute(operation)
-    
+
 
 class Dumper(yaml.SafeDumper):
     """Add representers for pathlib.Path and NSDict for yaml serialization
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_representer(NSDict, self.represent_nsdict)
@@ -513,10 +525,10 @@ class Lookup:
 
     def node_template_props(self, node_name):
         return self.template_props(self.node_template(node_name))
-    
+
     def node_template_details(self, node_name):
         return self.template_details(self.node_template(node_name))
-    
+
     def node_partition(self, node_name):
         return self._node_parts(node_name).partition
 
@@ -531,7 +543,8 @@ class Lookup:
                 if n.template == parts.template
             )
         except StopIteration:
-            raise Exception(f"node name {node_name} not found among partitions nodes")
+            raise Exception(
+                f"node name {node_name} not found among partitions nodes")
         return node_conf
 
     @lru_cache(maxsize=1)
@@ -549,7 +562,8 @@ class Lookup:
             inst['machineType'] = inst['machineType'].split('/')[-1]
             # metadata is fetched as a dict of dicts like:
             # {'key': key, 'value': value}, kinda silly
-            metadata = {i['key']: i['value'] for i in inst['metadata']['items']}
+            metadata = {i['key']: i['value']
+                        for i in inst['metadata']['items']}
             inst['role'] = metadata['instance_type']
             del inst['metadata']  # no need to store all the metadata
             return inst
@@ -587,7 +601,7 @@ class Lookup:
                 name = machine['name']
                 zone = machine['zone']
                 machines[name][zone] = machine
-    
+
             op = act.aggregatedList_next(op, result)
         return machines
 
