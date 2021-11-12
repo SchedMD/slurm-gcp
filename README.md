@@ -5,6 +5,8 @@ Platform](https://cloud.google.com), bursting out from an on-premise cluster to
 nodes in Google Cloud Platform and setting a multi-cluster/federated setup with
 a cluster that resides in Google Cloud Platform.
 
+A more detailed guide is found in the [Slurm on Google Cloud User Guide](https://goo.gle/slurm-gcp-user-guide).
+
 The supplied scripts can be modified to work with your environment.
 
 SchedMD provides professional services to help you get up and running in the
