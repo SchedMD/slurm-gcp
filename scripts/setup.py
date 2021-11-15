@@ -327,7 +327,7 @@ def install_gres_conf(lkp):
     gpu_nodes = defaultdict(list)
     for part in lkp.cfg.partitions.values():
         for node in part.nodes:
-            gpu_count = node.template_details.machine.gpu_count
+            gpu_count = lkp.template_details(node.template).machine.gpu_count
             if gpu_count == 0:
                 continue
             gpu_nodes[gpu_count].extend(
