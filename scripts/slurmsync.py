@@ -25,8 +25,10 @@ import time
 from pathlib import Path
 
 import googleapiclient.discovery
+import yaml
 
 import util
+from util import run
 
 
 cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
@@ -102,20 +104,20 @@ def start_instances(compute, node_list, gcp_nodes):
 
 def get_tpus():
     """ get tpus via gcloud """
-    zones = [p.zone for p in cfg.partitions if p.tpu_type]
+    zones = [p.zone for _, p in cfg.instance_defs.items() if p.tpu_type]
     tpu_nodes = {}
     for zone in zones:
         tpus = yaml.safe_load_all(
             run(f"gcloud alpha compute tpus list --zone={zone} --format=yaml --quiet",
                 get_stdout=True).stdout
         )
-        # it gives the full url for the name, so just get the end
-        # the only part of the result we care about right now apart from
-        # the name is ['status']=='TERMINATED', which luckily is the same between compute api
-        # and here
-        tpus_nodes.update({
+        tpu_nodes.update({
             tpu['name'].split('/')[-1]: tpu for tpu in tpus
         })
+    tpu_nodes = {
+        name: {'status': tpu['state']} for name, tpu in tpu_nodes.items()
+        if util.get_pid(name) in cfg.instance_defs
+    }
     return tpu_nodes
 
 
