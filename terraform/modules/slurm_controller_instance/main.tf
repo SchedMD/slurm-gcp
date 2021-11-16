@@ -43,12 +43,6 @@ locals {
     : var.cluster_name
   )
 
-  cluster_id = (
-    var.cluster_id == null
-    ? random_uuid.cluster_id.result
-    : var.cluster_id
-  )
-
   munge_key = (
     var.munge_key == null
     ? random_id.munge_key.b64_std
@@ -246,9 +240,6 @@ resource "random_string" "cluster_name" {
   number  = false
 }
 
-resource "random_uuid" "cluster_id" {
-}
-
 resource "random_id" "munge_key" {
   byte_length = 256
 }
@@ -314,27 +305,8 @@ resource "google_compute_project_metadata_item" "slurm_metadata" {
 # DESTROY NODES #
 #################
 
-resource "null_resource" "destroy_nodes" {
-  triggers = {
-    scripts_dir = local.scripts_dir
-    cluster_id  = local.cluster_id
-  }
+module "slurm_destroy_nodes" {
+  source = "../slurm_destroy_nodes"
 
-  provisioner "local-exec" {
-    working_dir = self.triggers.scripts_dir
-    environment = {
-      PIPENV_PIPFILE = "Pipfile"
-    }
-    command = "pipenv install"
-    when    = create
-  }
-
-  provisioner "local-exec" {
-    working_dir = self.triggers.scripts_dir
-    environment = {
-      PIPENV_PIPFILE = "Pipfile"
-    }
-    command = "pipenv run ./destroy_nodes.py ${self.triggers.cluster_id}"
-    when    = destroy
-  }
+  cluster_id = var.cluster_id
 }

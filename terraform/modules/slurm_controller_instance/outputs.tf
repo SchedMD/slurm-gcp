@@ -33,8 +33,8 @@ output "cluster_name" {
 }
 
 output "cluster_id" {
-  description = "Cluster ID for labeling."
-  value       = local.cluster_id
+  description = "Cluster ID for cluster resource labeling."
+  value       = module.slurm_destroy_nodes.cluster_id
 }
 
 output "munge_key" {

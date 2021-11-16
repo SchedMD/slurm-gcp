@@ -104,7 +104,7 @@ variable "cluster_name" {
 
 variable "cluster_id" {
   type        = string
-  description = "The Cluster ID, used to label resources. If 'null', then an ID will be generated instead."
+  description = "The Cluster ID to use. If 'null', then an ID will be generated."
   default     = null
 }
 
