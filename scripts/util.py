@@ -300,8 +300,7 @@ class Config(NSDict):
     @property
     def exclusive(self):
         return bool(self.get('exclusive', False) or
-                    self.enable_placement or
-                    self.tpu_type)
+                    self.enable_placement)
 
     def __getattr__(self, item):
         """ only called if item is not found in self """
