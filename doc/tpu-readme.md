@@ -4,6 +4,9 @@ This is not as straightforward as typical Slurm GCP because you are not able to
 customize the image used by the TPU VM instances. So, we have to make Slurm
 binaries available from an external mount. You can use the Slurm GCP image
 foundry to install Slurm to just such an external mount.
+
+Create a filestore or use some other preexisting network mount. It is passed to
+the foundry instance using the metadata key in image.yaml:
 ```
 # foundry/images.yaml
   images:
@@ -11,16 +14,15 @@ foundry to install Slurm to just such an external mount.
       base_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
       metadata:
         external-slurm-install: |
-          remote: external-slurm-master-install
+          remote: <filestore ip>:/<filestore location>
           mount: /opt/slurm
-          type: gcsfuse
+          type: nfs
 ```
 
 Currently, the TPU VM instances run Ubuntu 20.04, so that is the base on which
 we will use foundry to compile Slurm. There is a script
 (`foundry/custom.d/external_install_slurm.py`) that will compile and install
-slurm to the external mount location in the metadata. I use a GCS bucket here,
-but it could alternatively be an NFS mount. The process of creating preparing
+slurm to the external mount location in the metadata. The process of creating
 this image and installing Slurm to the external mount could take as much as 40
 minutes.
 
@@ -31,7 +33,12 @@ pipenv run ./foundry.py slurm-image-foundry --pause
 `--pause` causes foundry not to actually make the image. We don't need it; we
 only want the binaries.
 
-Add the TPU partition to the partitions array in the tfvars file.
+Add the TPU partition to the `instance_defs` array in the tfvars file. `machine_type`
+is not particularly important, so long as the number of cpus and the amount of
+memory on the machine_type is not less than you want to be available on the tpu
+vm and not more than is actually on the tpu vm. This is because the setup
+process looks up the machine type to configure the CPUs and available memory in
+Slurm.
 ```
   { name                 = "v2_32_v2_alpha"
     machine_type         = "n1-356-96-tpu"
@@ -62,6 +69,7 @@ Add the TPU partition to the partitions array in the tfvars file.
     instance_template    = null
     tpu_type             = "v2-32"
     tpu_version          = "v2-alpha"
+	tpu_args			 = "--reserved"
   },
 ```
 
@@ -71,6 +79,7 @@ The network_storage section is important; it should have the same path as where
 the slurm binaries were installed to.  
 The partition is not strictly required to be `exclusive`, but it
 is preferred. That way the TPU is allocated and torn down for each job.
+Only a single node is allowed per job on this partition.
 
 This will make a job and put you on the TPU VM:
 `salloc -N1 -p <TPU partition name>`
