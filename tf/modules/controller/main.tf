@@ -38,6 +38,8 @@ locals {
     vpc_subnet                   = var.subnetwork_name
     zone                         = var.zone
   })
+  custom-controller-install = var.controller_startup_script != null? var.controller_startup_script : file("${path.module}/../../../scripts/custom-controller-install")
+  custom-compute-install = var.compute_startup_script != null? var.compute_startup_script : file("${path.module}/../../../scripts/custom-compute-install")
 }
 
 resource "google_compute_disk" "secondary" {
@@ -110,8 +112,8 @@ resource "google_compute_instance" "controller_node" {
 
     config = local.config
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
-    custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
-    custom-controller-install = file("${path.module}/../../../scripts/custom-controller-install")
+    custom-compute-install    = local.custom-compute-install
+    custom-controller-install = local.custom-controller-install
     setup-script              = file("${path.module}/../../../scripts/setup.py")
     slurm-resume              = file("${path.module}/../../../scripts/resume.py")
     slurm-suspend             = file("${path.module}/../../../scripts/suspend.py")
@@ -184,11 +186,11 @@ resource "google_compute_instance_from_template" "controller_node" {
   metadata = {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
-	config = local.config
+	  config = local.config
 
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
-    custom-compute-install    = file("${path.module}/../../../scripts/custom-compute-install")
-    custom-controller-install = file("${path.module}/../../../scripts/custom-controller-install")
+    custom-compute-install    = local.custom-compute-install
+    custom-controller-install = local.custom-controller-install
     setup-script              = file("${path.module}/../../../scripts/setup.py")
     slurm-resume              = file("${path.module}/../../../scripts/resume.py")
     slurm-suspend             = file("${path.module}/../../../scripts/suspend.py")
@@ -200,8 +202,8 @@ resource "google_compute_instance_from_template" "controller_node" {
 }
 
 resource "null_resource" "check_intel_validation" {
-    triggers = (var.intel_select_solution == null || 
-                  var.intel_select_solution == "software_only" || 
-                  (var.intel_select_solution == "full_config" &&  var.boot_disk_size >=215) ? {} : 
+    triggers = (var.intel_select_solution == null ||
+                  var.intel_select_solution == "software_only" ||
+                  (var.intel_select_solution == "full_config" &&  var.boot_disk_size >=215) ? {} :
                   file("ERROR: Configuration failed as full_config requires boot_disk_size of the controller to be larger than 215 GB."))
 }

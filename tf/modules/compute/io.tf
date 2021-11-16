@@ -87,6 +87,13 @@ variable "partitions" {
   static_node_count = number }))
 }
 
+variable "compute_startup_script" {
+  description = "Custom startup script to run on the compute nodes"
+  type        = string
+  default     = null
+}
+
+
 variable "project" {
   description = "Cloud Platform project that hosts the notebook server(s)"
   type        = string

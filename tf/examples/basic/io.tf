@@ -30,6 +30,25 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "controller_startup_script" {
+  description = "Custom startup script to run on the controller"
+  type        = string
+  default     = null
+}
+
+variable "compute_startup_script" {
+  description = "Custom startup script to run on the compute nodes"
+  type        = string
+  default     = null
+}
+
+variable "login_startup_script" {
+  description = "Custom startup script to run on the login nodes"
+  type        = string
+  default     = null
+}
+
+
 variable "compute_node_scopes" {
   description = "Scopes to apply to compute nodes."
   type        = list(string)

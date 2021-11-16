@@ -36,6 +36,11 @@ controller_disk_size_gb = 50
 # override the template properties.
 # controller_instance_template = null
 
+# controller_startup_script = <<-EOT
+# #!/bin/bash
+# echo startup script in the tfvars > custom-controller-ran-var.txt
+# EOT
+
 login_machine_type = "n1-standard-2"
 login_image        = "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-21-08-2-hpc-centos-7"
 login_disk_type    = "pd-standard"
@@ -54,6 +59,11 @@ login_disk_size_gb = 20
 # When specifying an instance template, specified login fields will
 # override the template properties.
 # login_instance_template = null
+
+# login_startup_script = <<-EOT
+# #!/bin/bash
+# echo startup script in the tfvars > custom-login-ran-var.txt
+# EOT
 
 # Optional network storage fields
 # network_storage is mounted on all instances
@@ -79,6 +89,11 @@ login_disk_size_gb = 20
 #   "https://www.googleapis.com/auth/monitoring.write",
 #   "https://www.googleapis.com/auth/logging.write"
 # ]
+
+# compute_startup_script = <<-EOT
+# #!/bin/bash
+# echo startup script in the tfvars > custom-compute-ran-var.txt
+# EOT
 
 partitions = [
   { name                 = "debug"

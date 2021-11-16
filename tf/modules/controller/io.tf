@@ -166,6 +166,18 @@ variable "partitions" {
   static_node_count = number }))
 }
 
+variable "controller_startup_script" {
+  description = "Custom startup script to run on the controller"
+  type        = string
+  default     = null
+}
+
+variable "compute_startup_script" {
+  description = "Custom startup script to run on the compute nodes"
+  type        = string
+  default     = null
+}
+
 variable "project" {
   description = "Compute Platform project that will host the Slurm cluster"
   type        = string

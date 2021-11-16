@@ -45,6 +45,9 @@ locals {
   template_map = {
     for static in local.static_list : static.name => static if static.template != null
   }
+
+  custom-compute-install = var.compute_startup_script != null? var.compute_startup_script : file("${path.module}/../../../scripts/custom-compute-install")
+
 }
 
 
@@ -109,6 +112,7 @@ resource "google_compute_instance" "compute_node" {
     VmDnsSetting      = "GlobalOnly"
     instance_type     = "compute"
     google_mpi_tuning = each.value.image_hyperthreads ? null : "--nosmt"
+    custom-compute-install    = local.custom-compute-install
 
     config = jsonencode({
       cluster_name              = var.cluster_name,
@@ -191,6 +195,7 @@ resource "google_compute_instance_from_template" "compute_node" {
     VmDnsSetting                                                 = "GlobalOnly"
     instance_type     = "compute"
     google_mpi_tuning = each.value.image_hyperthreads ? null : "--nosmt"
+    custom-compute-install    = local.custom-compute-install
 
     config = jsonencode({
       cluster_name              = var.cluster_name,
