@@ -77,7 +77,6 @@ locals {
   metadata_controller = {
     instance_type = "controller"
     cluster_name  = var.cluster_name
-    cluster_id    = var.cluster_id
     config = jsonencode({
       cluster_name = var.cluster_name
       project      = local.project_id
