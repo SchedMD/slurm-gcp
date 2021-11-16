@@ -263,6 +263,7 @@ variable "partitions" {
     instance_template    = string,
     tpu_type             = string,
     tpu_version          = string,
+    tpu_args             = string,
     static_node_count = number }))
 }
 

@@ -358,16 +358,19 @@ def add_tpus(job_id, nodes_by_pid):
         tpu_inst = cfg.instance_defs[pid]
         for node_name in nodes_by_pid[pid]:
             network = tpu_inst.vpc_subnet or f'{cfg.cluster_name}-network'
-            cmd = (
-                f"gcloud alpha compute tpus tpu-vm create {node_name} "
-                f"--zone={tpu_inst.zone} "
-                f"--accelerator-type={tpu_inst.tpu_type} "
-                f"--version={tpu_inst.tpu_version} "
-                f"--network={network} "
-                f"--scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append "
-                f"--metadata-from-file={metafiles_str} "
-                f"--quiet"
-            )
+            cmd_args = [
+                f"gcloud alpha compute tpus tpu-vm create {node_name}",
+                "--quiet",
+                f"--zone={tpu_inst.zone}",
+                f"--accelerator-type={tpu_inst.tpu_type}",
+                f"--version={tpu_inst.tpu_version}",
+                f"--network={network}",
+                "--scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append",
+                f"--metadata-from-file={metafiles_str}",
+            ]
+            if tpu_inst.tpu_args:
+                cmd_args.append(tpu_inst.tpu_args)
+            cmd = ' '.join(cmd_args)
             log.debug(cmd)
 
             # gcloud crashes if stdin is closed.
