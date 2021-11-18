@@ -54,11 +54,11 @@ Slurm.
     gpu_count            = 0
     gpu_type             = null
     network_storage      = [{
-      server_ip     = "none"
-      remote_mount  = "external-slurm-install"
+      server_ip     = "<server ip>"
+      remote_mount  = "<external-slurm-install>"
       local_mount   = "/opt/slurm"
-      fs_type       = "gcsfuse"
-      mount_options = "file_mode=775,dir_mode=775,allow_other"
+      fs_type       = "nfs"
+	  mount_options = null
     }]
     preemptible_bursting = false
     vpc_subnet           = "default"

@@ -106,7 +106,41 @@ partitions = [
     regional_capacity    = false
     regional_policy      = {}
     instance_template    = null
+    tpu_type             = null
+    tpu_version          = null
+	tpu_args			 = null
   },
+  #  { name                 = "v2_32_v2_alpha"
+  #    machine_type         = "n1-356-96-tpu"
+  #    static_node_count    = 0
+  #    max_node_count       = 10
+  #    zone                 = "europe-west4-a"
+  #    image                = null
+  #    image_hyperthreads   = true
+  #    compute_disk_type    = "pd-standard"
+  #    compute_disk_size_gb = 20
+  #    compute_labels       = {}
+  #    cpu_platform         = null
+  #    gpu_count            = 0
+  #    gpu_type             = null
+  #    network_storage      = [{
+  #      server_ip     = "<server ip>"
+  #      remote_mount  = "<external-slurm-install>"
+  #      local_mount   = "/opt/slurm"
+  #      fs_type       = "nfs"
+  #	     mount_options = null
+  #    }]
+  #    preemptible_bursting = false
+  #    vpc_subnet           = "default"
+  #    exclusive            = true
+  #    enable_placement     = false
+  #    regional_capacity    = false
+  #    regional_policy      = {}
+  #    instance_template    = null
+  #    tpu_type             = "v2-32"
+  #    tpu_version          = "v2-alpha"
+  #	   tpu_args			    = "--reserved"
+  #  },
   # {
   #   name               = "partition2"
   #   machine_type       = "c2-standard-16"
@@ -150,6 +184,10 @@ partitions = [
   #       }
   #     }
   #   }
+  #   # tpu options
+  #   tpu_type             = null
+  #   tpu_version          = null
+  #	  tpu_args			   = null
 
   #   # When specifying an instance template, specified compute fields will
   #   # override the template properties.
