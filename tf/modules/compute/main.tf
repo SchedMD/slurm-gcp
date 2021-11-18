@@ -191,8 +191,8 @@ resource "google_compute_instance_from_template" "compute_node" {
   metadata_startup_script = file("${path.module}/../../../scripts/startup.sh")
 
   metadata = {
-    enable-oslogin                                               = "TRUE"
-    VmDnsSetting                                                 = "GlobalOnly"
+    enable-oslogin    = "TRUE"
+    VmDnsSetting      = "GlobalOnly"
     instance_type     = "compute"
     google_mpi_tuning = each.value.image_hyperthreads ? null : "--nosmt"
     custom-compute-install    = local.custom-compute-install

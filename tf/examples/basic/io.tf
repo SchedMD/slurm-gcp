@@ -318,6 +318,6 @@ output "login_network_ips" {
 }
 
 output "config" {
-  value = module.slurm_cluster_controller.config
+  value     = module.slurm_cluster_controller.config
   sensitive = true
 }

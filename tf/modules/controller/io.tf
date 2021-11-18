@@ -242,6 +242,6 @@ output "instance_network_ips" {
 }
 
 output "config" {
-  value = local.config
+  value     = local.config
   sensitive = true
 }
