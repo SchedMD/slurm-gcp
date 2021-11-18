@@ -137,7 +137,13 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
         }]
         config['scheduling'] = {'onHostMaintenance': 'TERMINATE'}
 
-    if instance_def.preemptible_bursting:
+    if instance_def.preemptible_bursting.lower() == 'spot':
+        config['scheduling'] = {
+            'provisioningModel': 'SPOT',
+            'onHostMaintenance': 'TERMINATE',
+            'automaticRestart': False
+        }
+    elif instance_def.preemptible_bursting.lower() != 'false':
         config['scheduling'] = {
             'preemptible': True,
             'onHostMaintenance': 'TERMINATE',
@@ -198,7 +204,7 @@ def add_instances(node_chunk):
                               "Slurm_GCP_Scripts/1.2 (GPN:SchedMD)")
         creds = compute_engine.Credentials()
         auth_http = google_auth_httplib2.AuthorizedHttp(creds, http=http)
-    compute = googleapiclient.discovery.build('compute', 'v1',
+    compute = googleapiclient.discovery.build('compute', 'beta',
                                               http=auth_http,
                                               cache_discovery=False)
     pid = util.get_pid(node_list[0])
@@ -272,7 +278,7 @@ def create_placement_groups(arg_job_id, vm_count, region):
                               "Slurm_GCP_Scripts/1.2 (GPN:SchedMD)")
         creds = compute_engine.Credentials()
         auth_http = google_auth_httplib2.AuthorizedHttp(creds, http=http)
-    compute = googleapiclient.discovery.build('compute', 'v1',
+    compute = googleapiclient.discovery.build('compute', 'beta',
                                               http=auth_http,
                                               cache_discovery=False)
 

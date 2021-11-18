@@ -215,6 +215,18 @@ Hello world from processor g1-compute-0-2, rank 2 out of 4 processors
    restart the node. If there were any batch jobs on the preempted node, they
    will be requeued -- interactive (e.g. srun, salloc) jobs can't be requeued.
 
+   Setting `preemptible_bursting="spot"` will create Spot instances instead.
+   Currently, they are functionally equivalent to preemptible instances from the
+   Slurm-GCP point of view.
+
+   > Spot VMs are the latest version of preemptible VM instances. Preemptible
+   > VMs continue to be supported for new and existing VMs, and preemptible VMs
+   > now use the same pricing model as Spot VMs. However, Spot VMs provide new
+   > features that are not supported for preemptible VMs. For example,
+   > preemptible VMs can only run for up to 24 hours at a time, but Spot VMs do
+   > not have a maximum runtime.
+   [More information about Spot VMs](https://cloud.google.com/compute/docs/instances/spot)
+
 ## Hybrid Cluster for Bursting from On-Premise
 
 Bursting out from an on-premise cluster is done by configuring the

@@ -160,7 +160,7 @@ def main():
                 if g_node and (g_node['status'] == "TERMINATED"):
                     if not s_state.base.startswith('DOWN'):
                         to_down.append(s_node)
-                    if (cfg.instance_defs[pid].preemptible_bursting):
+                    if cfg.instance_defs[pid].preemptible_bursting != 'false':
                         to_start.append(s_node)
 
                 # can't check if the node doesn't exist in GCP while the node
