@@ -727,9 +727,11 @@ def main():
     create_users()
     install_dependencies()
 
-    with ThreadPoolExecutor() as exe:
-        exe.submit(install_compiled_apps)
-        exe.submit(install_apps)
+    #with ThreadPoolExecutor() as exe:
+    #    exe.submit(install_compiled_apps)
+    #    exe.submit(install_apps)
+    install_apps()
+    install_compiled_apps()
 
     setup_munge()
     setup_bash_profile()
