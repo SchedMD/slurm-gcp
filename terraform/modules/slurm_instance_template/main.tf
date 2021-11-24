@@ -19,7 +19,7 @@
 ##########
 
 locals {
-  scripts_dir = "${path.module}/../../../scripts"
+  scripts_dir = abspath("${path.module}/../../../scripts")
 
   additional_disks = [
     for disk in var.additional_disks : {
@@ -42,7 +42,7 @@ locals {
 ########
 
 data "local_file" "startup" {
-  filename = "${local.scripts_dir}/startup.sh"
+  filename = abspath("${local.scripts_dir}/startup.sh")
 }
 
 ############

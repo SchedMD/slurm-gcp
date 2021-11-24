@@ -31,7 +31,7 @@ locals {
     : var.region
   )
 
-  scripts_dir = "${path.module}/../../../scripts"
+  scripts_dir = abspath("${path.module}/../../../scripts")
 
   metadata = {
     enable-oslogin = "TRUE"
@@ -64,7 +64,7 @@ locals {
 ########
 
 data "local_file" "startup" {
-  filename = "${local.scripts_dir}/startup.sh"
+  filename = abspath("${local.scripts_dir}/startup.sh")
 }
 
 ############

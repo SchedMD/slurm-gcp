@@ -226,12 +226,12 @@ module "slurm_controller_instance" {
   network_storage       = var.config.network_storage
   login_network_storage = var.config.login_network_storage
 
-  slurm_conf_tpl    = var.config.slurm_conf_tpl
-  slurmdbd_conf_tpl = var.config.slurmdbd_conf_tpl
-  cgroup_conf_tpl   = var.config.cgroup_conf_tpl
+  slurm_conf_tpl    = var.config.slurm_conf_tpl != null ? abspath(var.config.slurm_conf_tpl) : null
+  slurmdbd_conf_tpl = var.config.slurmdbd_conf_tpl != null ? abspath(var.config.slurmdbd_conf_tpl) : null
+  cgroup_conf_tpl   = var.config.cgroup_conf_tpl != null ? abspath(var.config.cgroup_conf_tpl) : null
 
-  controller_d = var.config.controller_d
-  compute_d    = var.config.compute_d
+  controller_d = var.config.controller_d != null ? abspath(var.config.controller_d) : null
+  compute_d    = var.config.compute_d != null ? abspath(var.config.compute_d) : null
 
   template_map = local.template_map
   partitions   = local.partitions

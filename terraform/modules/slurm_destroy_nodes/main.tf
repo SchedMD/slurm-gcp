@@ -25,9 +25,9 @@ locals {
     : var.cluster_id
   )
 
-  scripts_dir = "${path.module}/../../../scripts"
+  scripts_dir = abspath("${path.module}/../../../scripts")
 
-  destroy_nodes = "${local.scripts_dir}/destroy_nodes.py"
+  destroy_nodes = abspath("${local.scripts_dir}/destroy_nodes.py")
 }
 
 ########
