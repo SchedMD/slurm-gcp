@@ -26,6 +26,16 @@ locals {
   )
 
   scripts_dir = "${path.module}/../../../scripts"
+
+  destroy_nodes = "${local.scripts_dir}/destroy_nodes.py"
+}
+
+########
+# DATA #
+########
+
+data "local_file" "destroy_nodes" {
+  filename = local.destroy_nodes
 }
 
 ##########
@@ -42,13 +52,14 @@ resource "random_uuid" "cluster_id" {
 resource "null_resource" "destroy_nodes" {
   triggers = {
     scripts_dir = local.scripts_dir
+    script_path = data.local_file.destroy_nodes.filename
     cluster_id  = local.cluster_id
   }
 
   provisioner "local-exec" {
     working_dir = self.triggers.scripts_dir
     environment = {
-      PIPENV_PIPFILE = "Pipfile"
+      PIPENV_PIPFILE = "${self.triggers.scripts_dir}/Pipfile"
     }
     command = "pipenv install"
     when    = create
@@ -57,9 +68,9 @@ resource "null_resource" "destroy_nodes" {
   provisioner "local-exec" {
     working_dir = self.triggers.scripts_dir
     environment = {
-      PIPENV_PIPFILE = "Pipfile"
+      PIPENV_PIPFILE = "${self.triggers.scripts_dir}/Pipfile"
     }
-    command = "pipenv run ./destroy_nodes.py ${self.triggers.cluster_id}"
+    command = "pipenv run ${self.triggers.script_path} ${self.triggers.cluster_id}"
     when    = destroy
   }
 }
