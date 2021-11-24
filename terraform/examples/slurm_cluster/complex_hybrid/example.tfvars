@@ -58,176 +58,20 @@ config = {
     # },
   ]
 
-  ### slurm config ###
-  cgroup_conf_tpl   = null
-  slurm_conf_tpl    = null
-  slurmdbd_conf_tpl = null
+  ### scripts.d ###
+  controller_d = null
+  compute_d    = null
+
+  ### Slurm ###
+  slurm_bin_dir = null
+  slurm_log_dir = null
   cloud_parameters = {
     ResumeRate     = 0
     ResumeTimeout  = 300
     SuspendRate    = 0
     SuspendTimeout = 300
   }
-
-  ### scripts.d ###
-  controller_d = null
-  compute_d    = null
 }
-
-##############
-# CONTROLLER #
-##############
-
-### Service Account ###
-
-controller_service_account = {
-  email = "default"
-  scopes = [
-    "https://www.googleapis.com/auth/cloud-platform",
-  ]
-}
-
-### Templates ###
-
-controller_template = {
-  ### network ###
-  subnetwork = "default"
-  region     = "us-east1"
-  tags = [
-    # "tag0",
-    # "tag1",
-  ]
-
-  ### template ###
-  instance_template_project = null
-  instance_template         = null
-
-  ### instance ###
-  machine_type     = "n2d-standard-4"
-  min_cpu_platform = null
-  gpu              = null
-  shielded_instance_config = {
-    enable_secure_boot          = true
-    enable_vtpm                 = true
-    enable_integrity_monitoring = true
-  }
-  enable_confidential_vm = false
-  enable_shielded_vm     = false
-  disable_smt            = false
-  preemptible            = false
-  labels = {
-    # label0 = "value0"
-    # label1 = "value1"
-  }
-
-  ### image ###
-  source_image_project = ""
-  source_image_family  = ""
-  source_image         = ""
-
-  ### disk ###
-  disk_labels = {
-    # label0 = "value0"
-    # label1 = "value1"
-  }
-  disk_size_gb     = 32
-  disk_type        = "pd-ssd"
-  disk_auto_delete = true
-  additional_disks = [
-    # {
-    #   disk_name    = null
-    #   device_name  = null
-    #   disk_size_gb = 1024
-    #   disk_type    = "pd-standard"
-    #   disk_labels  = null
-    #   auto_delete  = true
-    #   boot         = false
-    # },
-  ]
-}
-
-#########
-# LOGIN #
-#########
-
-### Service Account ###
-
-login_service_account = {
-  email = "default"
-  scopes = [
-    "https://www.googleapis.com/auth/cloud-platform",
-  ]
-}
-
-### Templates ###
-
-login_templates = {
-  "example-login" = {
-    ### network ###
-    subnetwork = "default"
-    region     = "us-east1"
-    tags = [
-      # "tag0",
-      # "tag1",
-    ]
-
-    ### template ###
-    instance_template_project = null
-    instance_template         = null
-
-    ### instance ###
-    machine_type     = "n1-standard-2"
-    min_cpu_platform = null
-    gpu              = null
-    shielded_instance_config = {
-      enable_secure_boot          = true
-      enable_vtpm                 = true
-      enable_integrity_monitoring = true
-    }
-    enable_confidential_vm = false
-    enable_shielded_vm     = false
-    disable_smt            = false
-    preemptible            = false
-    labels = {
-      # label0 = "value0"
-      # label1 = "value1"
-    }
-
-    ### image ###
-    source_image_project = ""
-    source_image_family  = ""
-    source_image         = ""
-
-    ### disk ###
-    disk_labels = {
-      # label0 = "value0"
-      # label1 = "value1"
-    }
-    disk_size_gb     = 32
-    disk_type        = "pd-ssd"
-    disk_auto_delete = true
-    additional_disks = [
-      # {
-      #   disk_name    = null
-      #   device_name  = null
-      #   disk_size_gb = 1024
-      #   disk_type    = "pd-standard"
-      #   disk_labels  = null
-      #   auto_delete  = true
-      #   boot         = false
-      # },
-    ]
-  }
-}
-
-### Instances ###
-
-login_instances = [
-  {
-    template = "example-login"
-    count    = 1
-  },
-]
 
 ###########
 # COMPUTE #

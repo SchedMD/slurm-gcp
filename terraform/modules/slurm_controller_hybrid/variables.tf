@@ -15,68 +15,17 @@
  */
 
 ###########
-# NETWORK #
+# GENERAL #
 ###########
 
-variable "network" {
+variable "project_id" {
   type        = string
-  description = "Network to deploy to. Only one of network or subnetwork should be specified."
-  default     = ""
-}
-
-variable "subnetwork" {
-  type        = string
-  description = "Subnet to deploy to. Only one of network or subnetwork should be specified."
-  default     = ""
-}
-
-variable "subnetwork_project" {
-  type        = string
-  description = "The project that subnetwork belongs to."
-  default     = ""
-}
-
-variable "region" {
-  type        = string
-  description = "Region where the instances should be created."
-  default     = null
+  description = "Project ID to create resources in."
 }
 
 ############
-# INSTANCE #
+# METADATA #
 ############
-
-variable "instance_template" {
-  type        = string
-  description = "Instance template self_link used to create compute instances."
-}
-
-variable "static_ips" {
-  type        = list(string)
-  description = "List of static IPs for VM instances."
-  default     = []
-}
-
-variable "access_config" {
-  description = "Access configurations, i.e. IPs via which the VM instance can be accessed via the Internet."
-  type = list(object({
-    nat_ip       = string
-    network_tier = string
-  }))
-  default = []
-}
-
-variable "zone" {
-  type        = string
-  description = "Zone where the instances should be created. If not specified, instances will be spread across available zones in the region."
-  default     = null
-}
-
-variable "metadata_controller" {
-  type        = map(string)
-  description = "Metadata key/value pairs to make available from within the controller instances."
-  default     = null
-}
 
 variable "metadata_compute" {
   type        = map(string)
@@ -151,42 +100,6 @@ variable "serf_keys" {
     )
     error_message = "Serf keys must be either 16, 24, or 32 bytes."
   }
-}
-
-variable "slurmdbd_conf_tpl" {
-  type        = string
-  description = "Slurm slurmdbd.conf template file path."
-  default     = null
-}
-
-variable "slurm_conf_tpl" {
-  type        = string
-  description = "Slurm slurm.conf template file path."
-  default     = null
-}
-
-variable "cgroup_conf_tpl" {
-  type        = string
-  description = "Slurm cgroup.conf template file path."
-  default     = null
-}
-
-variable "cloudsql" {
-  description = "Use this database instead of the one on the controller."
-  type = object({
-    server_ip = string # description: Address of the database server.
-    user      = string # description: The user to access the database as.
-    password  = string # description: The password, given the user, to access the given database. (sensitive)
-    db_name   = string # description: The database to access.
-  })
-  default   = null
-  sensitive = true
-}
-
-variable "controller_d" {
-  type        = string
-  description = "Path to directory containing user controller provisioning scripts."
-  default     = null
 }
 
 variable "compute_d" {
@@ -264,8 +177,41 @@ variable "partitions" {
   }
 }
 
+variable "google_app_cred_path" {
+  type        = string
+  description = "Path to Google Applicaiton Credentials."
+  default     = null
+}
+
+variable "slurm_scripts_dir" {
+  type        = string
+  description = "Path to slurm-gcp scripts."
+  default     = null
+}
+
+variable "slurm_bin_dir" {
+  type        = string
+  description = "Path to directroy of Slurm binary commands (e.g. scontrol, sinfo). If 'null', then it will be assumed that binaries are in $PATH."
+  default     = null
+}
+
+variable "slurm_log_dir" {
+  type        = string
+  description = "Directory where Slurm logs to."
+  default     = "/var/log/slurm"
+}
+
 variable "cloud_parameters" {
   description = "cloud.conf key/value as a map."
   type        = map(string)
   default     = {}
+}
+
+variable "output_dir" {
+  type        = string
+  description = <<EOD
+Directory where this module will write files to. If '' or 'null', then the path
+to main.tf will be assumed."
+EOD
+  default     = "."
 }

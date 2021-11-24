@@ -34,9 +34,10 @@ from util import partition
 from util import lkp, cfg, compute
 
 
-SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
+SCONTROL = Path(cfg.slurm_bin_dir or '')/'scontrol'
 
 filename = Path(__file__).name
+LOGFILE = (Path(cfg.slurm_log_dir or '.')/filename).with_suffix('.log')
 log = logging.getLogger(filename)
 
 TOT_REQ_CNT = 1000
@@ -146,13 +147,12 @@ if __name__ == '__main__':
         args = parser.parse_args()
 
 
-    logfile = (Path(cfg.log_dir)/filename).with_suffix('.log')
     if args.debug:
         util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
-                                logfile=logfile)
+                                logfile=LOGFILE)
     else:
         util.config_root_logger(filename, level='INFO', util_level='ERROR',
-                                logfile=logfile)
+                                logfile=LOGFILE)
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 

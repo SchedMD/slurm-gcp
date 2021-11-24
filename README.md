@@ -247,11 +247,10 @@ will be requeued -- interactive (e.g. srun, salloc) jobs can't be requeued.
 
 ## Hybrid Cluster for Bursting from On-Premise
 
-Bursting out from an on-premise cluster is done by configuring the
-**ResumeProgram** and the **SuspendProgram** in the slurm.conf to
-*resume.py*, *suspend.py* in the scripts directory. *config.yaml* should
-be configured so that the scripts can create and destroy compute instances in a
-GCP project.
+Bursting out from an on-premise cluster is done by using terraform to manage
+Slurm cloud configuration files (e.g. *cloud.conf*, *config.yaml*) and cloud
+resources (e.g. *instance templates*). It configures Slurm to use power save
+to create and terminate instances in the cloud, as configured.
 See [Cloud Scheduling Guide](https://slurm.schedmd.com/elastic_computing.html)
 for more information.
 
@@ -296,57 +295,50 @@ able to communicate with the controller.
   and [service account key](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account)
   that will have access to create and delete instances in the remote project.
 
-3. Install scripts
+3. Clone `slurm-gcp` to a directory accessible for `slurmctld` by `SlurmUser`.
 
-    Install the *resume.py*, *suspend.py*, *slurmsync.py*, *util.py* and
-    *config.yaml.example* from the slurm-gcp repository's [scripts](scripts) directory to a
-    location on the slurmctld. Rename *config.yaml.example* to *config.yaml* and
-    modify the approriate values.
+4. Configure Slurm:
 
-    Add the path of the service account key to *google_app_cred_path* in *config.yaml*.
+    * Use terraform and [slurm_controller_hybrid](./terraform/modules/slurm_controller_hybrid)
+      module to create the cloud infrastructure and configuration files required
+      to support a hybrid Slurm cluster.
 
-    Add the image URL (path to the image or family) to each instance defintion.
+      See the [complex cluster](./terraform/examples/slurm_cluster/complex_hybrid)
+      example for a highly configurable example hybrid cluster.
 
-4. Modify slurm.conf:
+      **NODE:** `terraform apply` will generate slurm configuration files to
+      support a hybrid configuration.
 
-    ```ini
-    PrivateData=cloud
+    * Include generated Slurm hybrid configuration files:
+      Append each file the given lines. Resolve include conflicts if duplicate
+      items are included.
 
-    SuspendProgram=/path/to/suspend.py
-    ResumeProgram=/path/to/resume.py
-    ResumeFailProgram=/path/to/suspend.py
-    SuspendTimeout=600
-    ResumeTimeout=600
-    ResumeRate=0
-    SuspendRate=0
-    SuspendTime=300
+      ```ini
+      # slurm.conf
+      include /abs/path/to/cloud.conf
+      ```
 
-    # Tell Slurm to not power off nodes. By default, it will want to power
-    # everything off. SuspendExcParts will probably be the easiest one to use.
-    #SuspendExcNodes=
-    #SuspendExcParts=
+      ```ini
+      # gres.conf
+      include /abs/path/to/gres.conf
+      ```
 
-    SchedulerParameters=salloc_wait_nodes
-    SlurmctldParameters=cloud_dns,idle_on_node_suspend
-    CommunicationParameters=NoAddrCache
-    LaunchParameters=enable_nss_slurm
+    * Add a cronjob/crontab to call slurmsync.py to be called by SlurmUser.
 
-    SrunPortRange=60001-63000
-    ```
+      e.g.
+      ```ini
+      */1 * * * * $SLURM_GCP/scripts/slurmsync.py
+      ```
 
-5. Add a cronjob/crontab to call slurmsync.py to be called by SlurmUser.
-
-    e.g.
-    ```ini
-    */1 * * * * /path/to/slurmsync.py
-    ```
-
-6. Test
+5. Test
 
     Try creating and deleting instances in GCP by calling the commands directly as SlurmUser.
+    
+    e.g.
     ```sh
-    ./resume.py g1-compute-0-0
-    ./suspend.py g1-compute-0-0
+    # TODO: update this
+    ./resume.py g1-cpu-debug-0
+    ./suspend.py g1-cpu-debug-0
     ```
 
 ### Users and Groups in a Hybrid Cluster

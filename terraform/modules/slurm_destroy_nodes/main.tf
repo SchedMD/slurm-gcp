@@ -58,19 +58,7 @@ resource "null_resource" "destroy_nodes" {
 
   provisioner "local-exec" {
     working_dir = self.triggers.scripts_dir
-    environment = {
-      PIPENV_PIPFILE = "${self.triggers.scripts_dir}/Pipfile"
-    }
-    command = "pipenv install"
-    when    = create
-  }
-
-  provisioner "local-exec" {
-    working_dir = self.triggers.scripts_dir
-    environment = {
-      PIPENV_PIPFILE = "${self.triggers.scripts_dir}/Pipfile"
-    }
-    command = "pipenv run ${self.triggers.script_path} ${self.triggers.cluster_id}"
-    when    = destroy
+    command     = "${self.triggers.script_path} ${self.triggers.cluster_id}"
+    when        = destroy
   }
 }

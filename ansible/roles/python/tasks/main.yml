@@ -45,16 +45,14 @@
     PYENV_ROOT: "{{pyenv_root}}"
     PATH: "{{pyenv_root}}/plugins/python-build/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin"
 
-- name: Install Python Packages
+- name: Copy Pip Requirements File
+  copy:
+    src: scripts/requirements.txt
+    dest: /tmp/requirements.txt
+
+- name: Install Pip Packages
   pip:
-    name:
-      - pipenv
-      - pyyaml
-      - requests
-      - google-api-python-client
-      - google-cloud-storage
-      - addict
-      - numpy
+    requirements: /tmp/requirements.txt
     extra_args: --upgrade
     executable: /usr/local/bin/pip3
     state: present

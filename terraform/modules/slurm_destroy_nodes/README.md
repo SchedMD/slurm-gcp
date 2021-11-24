@@ -8,10 +8,11 @@ compute nodes with the corresponding `cluster_id` labels.
 See the [simple](../../examples/slurm_destroy_nodes/simple) example for a usage
 example.
 
-## Dependencies
+## Additional Dependencies
 
-This module has an external dependency of `python3` and `pipenv`. They must be
-installed for this module to function correctly.
+* [**python**](https://www.python.org/) must be installed and in `$PATH` of the
+user running `terraform apply`.
+  * Required Version: `~3.6, >= 3.6.0, < 4.0.0`
 
 ## License
 

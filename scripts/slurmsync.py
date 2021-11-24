@@ -31,8 +31,8 @@ from suspend import delete_instances
 
 
 filename = Path(__file__).name
-SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
-LOGFILE = (Path(cfg.log_dir)/filename).with_suffix('.log')
+SCONTROL = Path(cfg.slurm_bin_dir or '')/'scontrol'
+LOGFILE = (Path(cfg.slurm_log_dir or '.')/filename).with_suffix('.log')
 
 log = logging.getLogger(filename)
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 # Copyright 2019 SchedMD LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,8 +47,11 @@ from addict import Dict as NSDict
 
 USER_AGENT = "Slurm_GCP_Scripts/1.5 (GPN:SchedMD)"
 API_REQ_LIMIT = 1000
-CONFIG_FILE = Path(__file__).with_name('config.yaml')
-
+ENV_CONFIG_YAML = os.getenv('SLURM_CONFIG_YAML')
+if ENV_CONFIG_YAML:
+    CONFIG_FILE = ENV_CONFIG_YAML
+else:
+    CONFIG_FILE = Path(__file__).with_name('config.yaml')
 log = logging.getLogger(__name__)
 def_creds,  project = google.auth.default()
 compute = None
@@ -124,8 +128,8 @@ def new_config(config):
 
     if not cfg.log_dir:
         cfg.log_dir = dirs.log
-    if not cfg.slurm_cmd_path:
-        cfg.slurm_cmd_path = slurmdirs.prefix/'bin'
+    if not cfg.slurm_bin_dir:
+        cfg.slurm_bin_dir = slurmdirs.prefix/'bin'
 
     network_storage_iter = filter(None, (
         *cfg.network_storage,

@@ -37,10 +37,10 @@ from util import cfg, lkp, compute
 from setup import resolve_network_storage
 
 
-SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
+SCONTROL = Path(cfg.slurm_bin_dir or '')/'scontrol'
 
 filename = Path(__file__).name
-LOGFILE = (Path(cfg.log_dir)/filename).with_suffix('.log')
+LOGFILE = (Path(cfg.slurm_log_dir or '.')/filename).with_suffix('.log')
 
 log = logging.getLogger(filename)
 
@@ -65,7 +65,7 @@ def instance_properties(partition_name):
     metadata = {
         'cluster_name': cfg.cluster_name,
         'config': json.dumps(compute_config.to_dict()),
-        'startup-script': Path('/slurm/scripts/startup.sh').read_text(),
+        'startup-script': (Path(cfg.slurm_scripts_dir or util.dirs.scripts)/'startup.sh').read_text(),
         'instance_type': 'compute',
         'enable-oslogin': 'TRUE',
         'VmDnsSetting': 'GlobalOnly',

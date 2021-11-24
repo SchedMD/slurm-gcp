@@ -19,7 +19,8 @@ import time
 import numpy as np
 from pathlib import Path
 import re
-from shutil import copy2, chown
+from shutil import chown
+import sys
 import subprocess
 import yaml
 
@@ -27,20 +28,18 @@ import resume
 import slurmsync
 import setup
 import util
-from util import dirs, load_config_file, run, save_config
+from util import dirs, run, save_config
 
 
 filename = Path(__file__).name
-logfile = (Path(util.dirs.log/filename)).with_suffix('.log')
-util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
-                        logfile=logfile)
+logfile = (Path(util.cfg.slurm_log_dir or '.')/filename).with_suffix('.log')
 log = logging.getLogger(filename)
 setup.log.disabled = False
 slurmsync.log.disabled = False
 resume.log.disabled = False
 util.log.disabled = False
 
-SCONTROL = Path(util.cfg.slurm_cmd_path or '')/'scontrol'
+SCONTROL = Path(util.cfg.slurm_bin_dir or '')/'scontrol'
 StateTuple = namedtuple('StateTuple', 'base,flags')
 
 
@@ -186,7 +185,7 @@ def diff_apply(plan):
 
 def update_conf():
     log.info("Generating new cloud.conf for slurm.conf")
-    setup.gen_cloud_nodes_conf(util.lkp)
+    setup.gen_cloud_conf(util.lkp)
 
     log.info("Generating new slurm.conf")
     setup.install_slurm_conf(util.lkp)
@@ -249,6 +248,9 @@ def main():
 
 if __name__ == '__main__':
     try:
+        util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
+                                logfile=logfile)
+        sys.excepthook = util.handle_exception
         main()
     except subprocess.TimeoutExpired as e:
         log.error(f"""TimeoutExpired:
