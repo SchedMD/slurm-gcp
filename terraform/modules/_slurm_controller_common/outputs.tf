@@ -14,19 +14,6 @@
  * limitations under the License.
  */
 
-############
-# INSTANCE #
-############
-
-output "slurm_controller_instance" {
-  description = "Controller instance"
-  value       = module.slurm_controller_instance
-}
-
-#########
-# SLURM #
-#########
-
 output "cluster_name" {
   description = "Cluster name for resource naming and slurm accounting."
   value       = local.cluster_name
@@ -54,20 +41,20 @@ output "serf_keys" {
 
 output "template_map" {
   description = "Compute template map."
-  value       = local.template_map
+  value       = var.template_map
 }
 
 output "partitions" {
   description = "Cluster partitions."
-  value       = local.partitions
+  value       = var.partitions
 }
 
 output "compute_instance_templates" {
   description = "Compute instance template details."
-  value       = module.slurm_controller_common.compute_instance_templates
+  value       = data.google_compute_instance_template.compute_instance_templates
 }
 
 output "partition_subnetworks" {
   description = "Partition subnetwork details."
-  value       = module.slurm_controller_common.partition_subnetworks
+  value       = data.google_compute_subnetwork.partition_subnetworks
 }
