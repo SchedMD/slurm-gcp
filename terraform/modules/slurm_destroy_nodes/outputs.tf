@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-output "cluster_id" {
+output "slurm_cluster_id" {
   description = "Cluster ID for cluster resource labeling."
-  value       = local.cluster_id
+  value       = local.slurm_cluster_id
 }

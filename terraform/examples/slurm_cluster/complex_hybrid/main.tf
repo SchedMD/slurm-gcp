@@ -156,6 +156,6 @@ module "slurm_compute_instance_templates" {
   additional_disks = each.value.additional_disks
 
   ### slurm ###
-  cluster_id  = module.slurm_controller_hybrid.cluster_id
-  disable_smt = each.value.disable_smt
+  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
+  disable_smt      = each.value.disable_smt
 }

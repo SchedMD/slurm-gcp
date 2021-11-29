@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-output "cluster_id" {
+output "slurm_cluster_id" {
   description = "Slurm cluster ID."
-  value       = module.slurm_controller_hybrid.cluster_id
+  value       = module.slurm_controller_hybrid.slurm_cluster_id
 }
 
 output "cluster_name" {

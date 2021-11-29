@@ -18,7 +18,7 @@ provider "google" {
   project = var.project_id
 }
 
-resource "random_uuid" "cluster_id" {
+resource "random_uuid" "slurm_cluster_id" {
 }
 
 data "google_compute_network" "default" {
@@ -31,5 +31,5 @@ module "slurm_instance_template" {
   project_id = var.project_id
   network    = data.google_compute_network.default.self_link
 
-  cluster_id = random_uuid.cluster_id.result
+  slurm_cluster_id = random_uuid.slurm_cluster_id.result
 }

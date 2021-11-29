@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-variable "cluster_id" {
+variable "slurm_cluster_id" {
   type        = string
   description = "The Cluster ID to use. If 'null', then an ID will be generated."
   default     = null

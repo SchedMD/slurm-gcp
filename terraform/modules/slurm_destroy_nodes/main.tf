@@ -19,10 +19,10 @@
 ##########
 
 locals {
-  cluster_id = (
-    var.cluster_id == null
-    ? random_uuid.cluster_id.result
-    : var.cluster_id
+  slurm_cluster_id = (
+    var.slurm_cluster_id == null
+    ? random_uuid.slurm_cluster_id.result
+    : var.slurm_cluster_id
   )
 
   scripts_dir = abspath("${path.module}/../../../scripts")
@@ -42,7 +42,7 @@ data "local_file" "destroy_nodes" {
 # RANDOM #
 ##########
 
-resource "random_uuid" "cluster_id" {
+resource "random_uuid" "slurm_cluster_id" {
 }
 
 #################
@@ -51,14 +51,14 @@ resource "random_uuid" "cluster_id" {
 
 resource "null_resource" "destroy_nodes" {
   triggers = {
-    scripts_dir = local.scripts_dir
-    script_path = data.local_file.destroy_nodes.filename
-    cluster_id  = local.cluster_id
+    scripts_dir      = local.scripts_dir
+    script_path      = data.local_file.destroy_nodes.filename
+    slurm_cluster_id = local.slurm_cluster_id
   }
 
   provisioner "local-exec" {
     working_dir = self.triggers.scripts_dir
-    command     = "${self.triggers.script_path} ${self.triggers.cluster_id}"
+    command     = "${self.triggers.script_path} ${self.triggers.slurm_cluster_id}"
     when        = destroy
   }
 }

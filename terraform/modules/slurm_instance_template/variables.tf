@@ -234,7 +234,7 @@ variable "additional_disks" {
 # SLURM #
 #########
 
-variable "cluster_id" {
+variable "slurm_cluster_id" {
   type        = string
   description = "The Cluster ID, used to label resource."
   default     = null

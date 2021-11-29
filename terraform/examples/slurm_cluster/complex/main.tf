@@ -127,8 +127,8 @@ module "slurm_login_instance_templates" {
   additional_disks = each.value.additional_disks
 
   ### slurm ###
-  cluster_id  = module.slurm_controller_instance.cluster_id
-  disable_smt = each.value.disable_smt
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
+  disable_smt      = each.value.disable_smt
 }
 
 ###################
@@ -148,8 +148,8 @@ module "slurm_login_instances" {
   num_instances     = each.value.count
 
   ### slurm ###
-  cluster_name = module.slurm_controller_instance.cluster_name
-  cluster_id   = module.slurm_controller_instance.cluster_id
+  cluster_name     = module.slurm_controller_instance.cluster_name
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
 
   depends_on = [
     # NOTE: changes to `module.slurm_controller_instance` will cause a
@@ -196,8 +196,8 @@ module "slurm_controller_instance_template" {
   additional_disks = var.controller_template.additional_disks
 
   ### slurm ###
-  cluster_id  = module.slurm_controller_instance.cluster_id
-  disable_smt = var.controller_template.disable_smt
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
+  disable_smt      = var.controller_template.disable_smt
 }
 
 ########################
@@ -281,6 +281,6 @@ module "slurm_compute_instance_templates" {
   additional_disks = each.value.additional_disks
 
   ### slurm ###
-  cluster_id  = module.slurm_controller_instance.cluster_id
-  disable_smt = each.value.disable_smt
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
+  disable_smt      = each.value.disable_smt
 }

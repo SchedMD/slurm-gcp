@@ -66,7 +66,7 @@ module "login_instance_template" {
   project_id = var.project_id
   subnetwork = module.network.network.subnets_self_links[0]
 
-  cluster_id = module.slurm_controller_instance.cluster_id
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
 }
 
 ###################
@@ -79,8 +79,8 @@ module "slurm_login_instance" {
   instance_template = module.login_instance_template.instance_template.self_link
   subnetwork        = module.network.network.subnets_self_links[0]
 
-  cluster_name = module.slurm_controller_instance.cluster_name
-  cluster_id   = module.slurm_controller_instance.cluster_id
+  cluster_name     = module.slurm_controller_instance.cluster_name
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
 
   depends_on = [
     # NOTE: changes to `module.slurm_controller_instance` will cause a
@@ -99,7 +99,7 @@ module "controller_instance_template" {
   project_id = var.project_id
   subnetwork = module.network.network.subnets_self_links[0]
 
-  cluster_id = module.slurm_controller_instance.cluster_id
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
 }
 
 ########################
@@ -152,5 +152,5 @@ module "compute_instance_template" {
   project_id = var.project_id
   subnetwork = module.network.network.subnets_self_links[0]
 
-  cluster_id = module.slurm_controller_instance.cluster_id
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
 }

@@ -19,9 +19,9 @@ output "slurm_controller_instance" {
   value       = module.slurm_controller_instance.slurm_controller_instance.instances_self_links
 }
 
-output "cluster_id" {
+output "slurm_cluster_id" {
   description = "Slurm cluster ID"
-  value       = module.slurm_controller_instance.cluster_id
+  value       = module.slurm_controller_instance.slurm_cluster_id
 }
 
 output "cluster_name" {

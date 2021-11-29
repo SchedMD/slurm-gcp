@@ -19,9 +19,9 @@ output "cluster_name" {
   value       = local.cluster_name
 }
 
-output "cluster_id" {
+output "slurm_cluster_id" {
   description = "Cluster ID for cluster resource labeling."
-  value       = local.cluster_id
+  value       = local.slurm_cluster_id
 }
 
 output "munge_key" {

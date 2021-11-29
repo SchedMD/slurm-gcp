@@ -30,7 +30,7 @@ locals {
       disk_size_gb = disk.disk_size_gb
       disk_type    = disk.disk_type
       disk_labels = merge(
-        { cluster_id = var.cluster_id },
+        { slurm_cluster_id = var.slurm_cluster_id },
         disk.disk_labels
       )
     }
@@ -77,7 +77,7 @@ module "instance_template" {
   preemptible              = var.preemptible
   on_host_maintenance      = var.on_host_maintenance
   labels = merge(
-    { cluster_id = var.cluster_id },
+    { slurm_cluster_id = var.slurm_cluster_id },
     var.labels
   )
 
@@ -98,7 +98,7 @@ module "instance_template" {
   disk_size_gb = var.disk_size_gb
   auto_delete  = var.disk_auto_delete
   disk_labels = merge(
-    { cluster_id = var.cluster_id },
+    { slurm_cluster_id = var.slurm_cluster_id },
     var.disk_labels
   )
   additional_disks = local.additional_disks

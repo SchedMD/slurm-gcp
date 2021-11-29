@@ -50,7 +50,7 @@ def main(args):
     #       complex nested items
     result = compute.instances().aggregatedList(
         project=project,
-        filter=f"labels.cluster_id={args.cluster_id}"
+        filter=f"labels.slurm_cluster_id={args.slurm_cluster_id}"
     ).execute()
 
     compute_list = []
@@ -79,8 +79,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('cluster_id',
-                        help="The cluster ID, of which the node belong to")
+    parser.add_argument('slurm_cluster_id',
+                        help="Compute node slurm cluster ID label.")
     parser.add_argument('--debug', '-d', dest='debug', action='store_true',
                         help='Enable debugging output')
 

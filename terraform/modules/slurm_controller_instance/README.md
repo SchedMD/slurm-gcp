@@ -76,7 +76,6 @@ limitations under the License.
 | <a name="input_cgroup_conf_tpl"></a> [cgroup\_conf\_tpl](#input\_cgroup\_conf\_tpl) | Slurm cgroup.conf template file path. | `string` | `null` | no |
 | <a name="input_cloud_parameters"></a> [cloud\_parameters](#input\_cloud\_parameters) | cloud.conf key/value as a map. | `map(string)` | `{}` | no |
 | <a name="input_cloudsql"></a> [cloudsql](#input\_cloudsql) | Use this database instead of the one on the controller. | <pre>object({<br>    server_ip = string # description: Address of the database server.<br>    user      = string # description: The user to access the database as.<br>    password  = string # description: The password, given the user, to access the given database. (sensitive)<br>    db_name   = string # description: The database to access.<br>  })</pre> | `null` | no |
-| <a name="input_cluster_id"></a> [cluster\_id](#input\_cluster\_id) | The Cluster ID to use. If 'null', then an ID will be generated. | `string` | `null` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used resource naming and slurm accounting. | `string` | `null` | no |
 | <a name="input_compute_d"></a> [compute\_d](#input\_compute\_d) | Path to directory containing user compute provisioning scripts. | `string` | `null` | no |
 | <a name="input_controller_d"></a> [controller\_d](#input\_controller\_d) | Path to directory containing user controller provisioning scripts. | `string` | `null` | no |
@@ -92,6 +91,7 @@ limitations under the License.
 | <a name="input_partitions"></a> [partitions](#input\_partitions) | Cluster partitions as a map. | <pre>map(object({<br>    subnetwork  = string      # description: The subnetwork name to create instances in.<br>    region      = string      # description: The subnetwork region to create instances in.<br>    zone_policy = map(string) # description: Zone location policy for regional bulkInsert.<br>    nodes = list(object({<br>      template      = string # description: Slurm template key from variable 'compute_template'.<br>      count_static  = number # description: Number of static nodes. These nodes are exempt from SuspendProgram.<br>      count_dynamic = number # description: Number of dynamic nodes. These nodes are subject to SuspendProgram and ResumeProgram.<br>    }))<br>    network_storage = list(object({<br>      server_ip     = string # description: Address of the storage server.<br>      remote_mount  = string # description: The location in the remote instance filesystem to mount from.<br>      local_mount   = string # description: The location on the instance filesystem to mount to.<br>      fs_type       = string # description: Filesystem type (e.g. "nfs").<br>      mount_options = string # description: Options to mount with.<br>    }))<br>    exclusive        = bool        # description: Enables job exclusivity.<br>    placement_groups = bool        # description: Enables partition placement groups.<br>    conf             = map(string) # description: Slurm partition configurations as a map.<br>  }))</pre> | `{}` | no |
 | <a name="input_region"></a> [region](#input\_region) | Region where the instances should be created. | `string` | `null` | no |
 | <a name="input_serf_keys"></a> [serf\_keys](#input\_serf\_keys) | Cluster serf agent keys. If 'null' or '[]', then keys will be generated instead. | `list(string)` | `null` | no |
+| <a name="input_slurm_cluster_id"></a> [slurm\_cluster\_id](#input\_slurm\_cluster\_id) | The Cluster ID to use. If 'null', then an ID will be generated. | `string` | `null` | no |
 | <a name="input_slurm_conf_tpl"></a> [slurm\_conf\_tpl](#input\_slurm\_conf\_tpl) | Slurm slurm.conf template file path. | `string` | `null` | no |
 | <a name="input_slurmdbd_conf_tpl"></a> [slurmdbd\_conf\_tpl](#input\_slurmdbd\_conf\_tpl) | Slurm slurmdbd.conf template file path. | `string` | `null` | no |
 | <a name="input_static_ips"></a> [static\_ips](#input\_static\_ips) | List of static IPs for VM instances. | `list(string)` | `[]` | no |
@@ -104,7 +104,6 @@ limitations under the License.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_cluster_id"></a> [cluster\_id](#output\_cluster\_id) | Cluster ID for cluster resource labeling. |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Cluster name for resource naming and slurm accounting. |
 | <a name="output_compute_instance_templates"></a> [compute\_instance\_templates](#output\_compute\_instance\_templates) | Compute instance template details. |
 | <a name="output_jwt_key"></a> [jwt\_key](#output\_jwt\_key) | Cluster jwt authentication key. |
@@ -112,6 +111,7 @@ limitations under the License.
 | <a name="output_partition_subnetworks"></a> [partition\_subnetworks](#output\_partition\_subnetworks) | Partition subnetwork details. |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Cluster partitions. |
 | <a name="output_serf_keys"></a> [serf\_keys](#output\_serf\_keys) | Cluster serf agent keys. |
+| <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Cluster ID for cluster resource labeling. |
 | <a name="output_slurm_controller_instance"></a> [slurm\_controller\_instance](#output\_slurm\_controller\_instance) | Controller instance |
 | <a name="output_template_map"></a> [template\_map](#output\_template\_map) | Compute template map. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

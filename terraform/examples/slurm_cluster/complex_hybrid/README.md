@@ -71,8 +71,8 @@ No resources.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_cluster_id"></a> [cluster\_id](#output\_cluster\_id) | Slurm cluster ID. |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Slurm cluster name. |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Configured Slurm partitions. |
+| <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Slurm cluster ID. |
 | <a name="output_template_map"></a> [template\_map](#output\_template\_map) | Slurm compute isntance template map. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

@@ -39,9 +39,9 @@ locals {
   }
 
   metadata_login = {
-    cluster_name  = var.cluster_name
-    cluster_id    = var.cluster_id
-    instance_type = "login"
+    cluster_name     = var.cluster_name
+    slurm_cluster_id = var.slurm_cluster_id
+    instance_type    = "login"
 
     network_storage       = jsonencode(var.network_storage)
     login_network_storage = jsonencode(var.login_network_storage)

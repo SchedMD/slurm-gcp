@@ -27,7 +27,7 @@ locals {
     : var.cluster_name
   )
 
-  cluster_id = module.slurm_destroy_nodes.cluster_id
+  slurm_cluster_id = module.slurm_destroy_nodes.slurm_cluster_id
 
   munge_key = (
     var.munge_key == null
@@ -200,5 +200,5 @@ resource "google_compute_project_metadata_item" "slurm_metadata" {
 module "slurm_destroy_nodes" {
   source = "../slurm_destroy_nodes"
 
-  cluster_id = var.cluster_id
+  slurm_cluster_id = var.slurm_cluster_id
 }

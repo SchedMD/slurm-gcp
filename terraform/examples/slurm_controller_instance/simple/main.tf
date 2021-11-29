@@ -29,7 +29,7 @@ module "slurm_instance_template" {
   project_id = var.project_id
   subnetwork = data.google_compute_subnetwork.default.self_link
 
-  cluster_id = module.slurm_controller_instance.cluster_id
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
 }
 
 module "slurm_controller_instance" {

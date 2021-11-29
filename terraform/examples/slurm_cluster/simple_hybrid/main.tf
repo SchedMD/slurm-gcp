@@ -107,5 +107,5 @@ module "compute_instance_template" {
   project_id = var.project_id
   subnetwork = module.network.network.subnets_self_links[0]
 
-  cluster_id = module.slurm_controller_hybrid.cluster_id
+  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
 }

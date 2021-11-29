@@ -53,7 +53,7 @@ locals {
 locals {
   cluster_name = module.slurm_controller_common.cluster_name
 
-  cluster_id = module.slurm_controller_common.cluster_id
+  slurm_cluster_id = module.slurm_controller_common.slurm_cluster_id
 
   munge_key = module.slurm_controller_common.munge_key
 
@@ -181,7 +181,7 @@ module "slurm_controller_common" {
 
   project_id = var.project_id
 
-  cluster_id       = var.cluster_id
+  slurm_cluster_id = var.slurm_cluster_id
   cluster_name     = var.cluster_name
   munge_key        = var.munge_key
   jwt_key          = var.jwt_key
