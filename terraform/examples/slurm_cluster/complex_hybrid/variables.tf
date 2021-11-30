@@ -107,7 +107,10 @@ variable "compute_service_account" {
     email  = string
     scopes = set(string)
   })
-  description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
+  description = <<EOD
+Service account to attach to the instance. See
+https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account.
+EOD
   default = {
     email  = null
     scopes = null

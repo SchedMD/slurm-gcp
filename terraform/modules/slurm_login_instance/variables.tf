@@ -74,7 +74,10 @@ variable "num_instances" {
 
 variable "zone" {
   type        = string
-  description = "Zone where the instances should be created. If not specified, instances will be spread across available zones in the region."
+  description = <<EOD
+Zone where the instances should be created. If not specified, instances will be
+spread across available zones in the region.
+EOD
   default     = null
 }
 
@@ -140,25 +143,39 @@ variable "serf_keys" {
 }
 
 variable "network_storage" {
-  description = "Storage to mounted on all instances"
+  description = <<EOD
+Storage to mounted on all instances.
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Raw options to pass to 'mount'.
+EOD
   type = list(object({
-    server_ip     = string # description: Address of the storage server.
-    remote_mount  = string # description: The location in the remote instance filesystem to mount from.
-    local_mount   = string # description: The location on the instance filesystem to mount to.
-    fs_type       = string # description: Filesystem type (e.g. "nfs").
-    mount_options = string # description: Options to mount with.
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
   }))
   default = []
 }
 
 variable "login_network_storage" {
-  description = "Storage to mounted on login and controller instances"
+  description = <<EOD
+Storage to mounted on login and controller instances.
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Raw options to pass to 'mount'.
+EOD
   type = list(object({
-    server_ip     = string # description: Address of the storage server.
-    remote_mount  = string # description: The location in the remote instance filesystem to mount from.
-    local_mount   = string # description: The location on the instance filesystem to mount to.
-    fs_type       = string # description: Filesystem type (e.g. "nfs").
-    mount_options = string # description: Options to mount with.
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
   }))
   default = []
 }

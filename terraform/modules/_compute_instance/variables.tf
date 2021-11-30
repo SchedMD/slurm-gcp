@@ -72,7 +72,9 @@ variable "access_config" {
 
 variable "num_instances" {
   type        = number
-  description = "Number of instances to create. This value is ignored if static_ips is provided."
+  description = <<EOD
+Number of instances to create. This value is ignored if static_ips is provided.
+EOD
   default     = 1
 }
 
@@ -89,7 +91,10 @@ variable "region" {
 
 variable "zone" {
   type        = string
-  description = "Zone where the instances should be created. If not specified, instances will be spread across available zones in the region."
+  description = <<EOD
+Zone where the instances should be created. If not specified, instances will be
+spread across available zones in the region.
+EOD
   default     = null
 }
 
@@ -99,7 +104,14 @@ variable "zone" {
 
 variable "metadata_startup_script" {
   type        = string
-  description = "An alternative to using the startup-script metadata key, except this one forces the instance to be recreated (thus re-running the script) if it is changed. This replaces the startup-script metadata key on the created instance and thus the two mechanisms are not allowed to be used simultaneously. Users are free to use either mechanism - the only distinction is that this separate attribute will cause a recreate on modification."
+  description = <<EOD
+An alternative to using the startup-script metadata key, except this one forces
+the instance to be recreated (thus re-running the script) if it is changed. This
+replaces the startup-script metadata key on the created instance and thus the
+two mechanisms are not allowed to be used simultaneously. Users are free to use
+either mechanism - the only distinction is that this separate attribute will
+cause a recreate on modification.
+EOD
   default     = null
 }
 

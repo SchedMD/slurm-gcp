@@ -47,13 +47,21 @@ variable "subnetwork_project" {
 
 variable "network" {
   type        = string
-  description = "The name or self_link of the network to attach this interface to. Use network attribute for Legacy or Auto subnetted networks and subnetwork for custom subnetted networks."
+  description = <<EOD
+The name or self_link of the network to attach this interface to. Use network
+attribute for Legacy or Auto subnetted networks and subnetwork for custom
+subnetted networks.
+EOD
   default     = null
 }
 
 variable "subnetwork" {
   type        = string
-  description = "The name of the subnetwork to attach this interface to. The subnetwork must exist in the same region this instance will be created in. Either network or subnetwork must be provided."
+  description = <<EOD
+The name of the subnetwork to attach this interface to. The subnetwork must
+exist in the same region this instance will be created in. Either network or
+subnetwork must be provided.
+EOD
   default     = null
 }
 
@@ -99,7 +107,11 @@ variable "machine_type" {
 
 variable "min_cpu_platform" {
   type        = string
-  description = "Specifies a minimum CPU platform. Applicable values are the friendly names of CPU platforms, such as Intel Haswell or Intel Skylake. See the complete list: https://cloud.google.com/compute/docs/instances/specify-min-cpu-platform"
+  description = <<EOD
+Specifies a minimum CPU platform. Applicable values are the friendly names of
+CPU platforms, such as Intel Haswell or Intel Skylake. See the complete list:
+https://cloud.google.com/compute/docs/instances/specify-min-cpu-platform
+EOD
   default     = null
 }
 
@@ -108,7 +120,12 @@ variable "gpu" {
     type  = string
     count = number
   })
-  description = "GPU information. Type and count of GPU to attach to the instance template. See https://cloud.google.com/compute/docs/gpus more details"
+  description = <<EOD
+GPU information. Type and count of GPU to attach to the instance template. See
+https://cloud.google.com/compute/docs/gpus more details.
+* type : the GPU type
+* count : number of GPUs
+EOD
   default     = null
 }
 
@@ -117,7 +134,11 @@ variable "service_account" {
     email  = string
     scopes = set(string)
   })
-  description = "Service account to attach to the instances."
+  description = <<EOD
+Service account to attach to the instances.
+* email : Service account email.
+* scopes : Set of service account scopes.
+EOD
   default = {
     email  = "default"
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -126,11 +147,22 @@ variable "service_account" {
 
 variable "shielded_instance_config" {
   type = object({
+    enable_integrity_monitoring = bool
     enable_secure_boot          = bool
     enable_vtpm                 = bool
-    enable_integrity_monitoring = bool
   })
-  description = "Shielded VM configuration for the instance. Note: not used unless enable_shielded_vm is 'true'"
+  description = <<EOD
+Shielded VM configuration for the instance. Note: not used unless
+enable_shielded_vm is 'true'.
+* enable_integrity_monitoring : Compare the most recent boot measurements to the
+  integrity policy baseline and return a pair of pass/fail results depending on
+  whether they match or not.
+* enable_secure_boot : Verify the digital signature of all boot components, and
+  halt the boot process if signature verification fails.
+* enable_vtpm : Use a virtualized trusted platform module, which is a
+  specialized computer chip you can use to encrypt objects like keys and
+  certificates.
+EOD
   default = {
     enable_integrity_monitoring = true
     enable_secure_boot          = true

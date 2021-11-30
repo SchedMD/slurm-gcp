@@ -38,7 +38,11 @@ variable "zone" {
 #########
 
 variable "source_image_project_id" {
-  description = "A list of project IDs to search for the source image. Packer will search the first project ID in the list first, and fall back to the next in the list, until it finds the source image."
+  description = <<EOD
+A list of project IDs to search for the source image. Packer will search the
+first project ID in the list first, and fall back to the next in the list,
+until it finds the source image.
+EOD
   type        = list(string)
   default     = []
 }
@@ -95,34 +99,64 @@ variable "service_account_email" {
 }
 
 variable "service_account_scopes" {
-  description = "Service account scopes to attach to the instance. See https://cloud.google.com/compute/docs/access/service-accounts."
+  description = <<EOD
+Service account scopes to attach to the instance. See
+https://cloud.google.com/compute/docs/access/service-accounts.
+EOD
   type        = list(string)
   default     = null
 }
 
 variable "builds" {
+  description = <<EOD
+Set of build configurations.
+* source_image : Source disk image.
+* source_image_family : Source image family.
+* image_licenses : Licenses to apply to the created image.
+* labels : Key/value pair labels to apply to the launched instance and image.
+
+* ssh_username : The username to connect to SSH with. Default: "packer"
+* ssh_password : A plaintext password to use to authenticate with SSH. (sensitive)
+
+* machine_type : Machine type to create (e.g. n1-standard-1).
+* preemptible : If true, launch a preemptible instance.
+
+* enable_secure_boot : Create a Shielded VM image with Secure Boot enabled. See
+  https://cloud.google.com/security/shielded-cloud/shielded-vm#secure-boot.
+* enable_vtpm : Create a Shielded VM image with virtual trusted platform module
+  Measured Boot enabled. See
+  https://cloud.google.com/security/shielded-cloud/shielded-vm#vtpm.
+* enable_integrity_monitoring : Integrity monitoring helps you understand and
+  make decisions about the state of your VM instances. Note: integrity
+  monitoring relies on having vTPM enabled. See
+  https://cloud.google.com/security/shielded-cloud/shielded-vm#integrity-monitoring.
+
+* disk_size : The size of the disk in GB. This defaults to 10, which is 10GB.
+* disk_type : Type of disk used to back your instance, like pd-ssd or
+  pd-standard. Defaults to pd-standard.
+EOD
   type = list(object({
     ### image ###
-    source_image        = string       // description: Source disk image.
-    source_image_family = string       // description: Source image family.
-    image_licenses      = list(string) // description: Licenses to apply to the created image.
-    labels              = map(string)  // description: Key/value pair labels to apply to the launched instance and image.
+    source_image        = string
+    source_image_family = string
+    image_licenses      = list(string)
+    labels              = map(string)
 
     ### ssh ###
-    ssh_username = string // description: The username to connect to SSH with. Default: "packer"
-    ssh_password = string // description: A plaintext password to use to authenticate with SSH. (sensitive)
+    ssh_username = string
+    ssh_password = string
 
     ### instance ###
-    machine_type = string // description: Machine type to create (e.g. n1-standard-1).
-    preemptible  = bool   // description: If true, launch a preemptible instance.
+    machine_type = string
+    preemptible  = bool
 
     ### root of trust ###
-    enable_secure_boot          = bool // description: Create a Shielded VM image with Secure Boot enabled. See https://cloud.google.com/security/shielded-cloud/shielded-vm#secure-boot.
-    enable_vtpm                 = bool // description: Create a Shielded VM image with virtual trusted platform module Measured Boot enabled. See https://cloud.google.com/security/shielded-cloud/shielded-vm#vtpm.
-    enable_integrity_monitoring = bool // description: Integrity monitoring helps you understand and make decisions about the state of your VM instances. Note: integrity monitoring relies on having vTPM enabled. See https://cloud.google.com/security/shielded-cloud/shielded-vm#integrity-monitoring.
+    enable_secure_boot          = bool
+    enable_vtpm                 = bool
+    enable_integrity_monitoring = bool
 
     ### storage ###
-    disk_size = number // description: The size of the disk in GB. This defaults to 10, which is 10GB.
-    disk_type = string // description: Type of disk used to back your instance, like pd-ssd or pd-standard. Defaults to pd-standard.
+    disk_size = number
+    disk_type = string
   }))
 }

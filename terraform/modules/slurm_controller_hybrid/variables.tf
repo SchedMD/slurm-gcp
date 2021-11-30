@@ -109,25 +109,39 @@ variable "compute_d" {
 }
 
 variable "network_storage" {
-  description = "Storage to mounted on all instances"
+  description = <<EOD
+Storage to mounted on all instances.
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Options to mount with.
+EOD
   type = list(object({
-    server_ip     = string # description: Address of the storage server.
-    remote_mount  = string # description: The location in the remote instance filesystem to mount from.
-    local_mount   = string # description: The location on the instance filesystem to mount to.
-    fs_type       = string # description: Filesystem type (e.g. "nfs").
-    mount_options = string # description: Options to mount with.
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
   }))
   default = []
 }
 
 variable "login_network_storage" {
-  description = "Storage to mounted on login and controller instances"
+  description = <<EOD
+Storage to mounted on login and controller instances
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Options to mount with.
+EOD
   type = list(object({
-    server_ip     = string # description: Address of the storage server.
-    remote_mount  = string # description: The location in the remote instance filesystem to mount from.
-    local_mount   = string # description: The location on the instance filesystem to mount to.
-    fs_type       = string # description: Filesystem type (e.g. "nfs").
-    mount_options = string # description: Options to mount with.
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
   }))
   default = []
 }
@@ -146,26 +160,46 @@ variable "template_map" {
 }
 
 variable "partitions" {
-  description = "Cluster partitions as a map."
+  description = <<EOD
+Cluster partitions as a map.
+
+* subnetwork  : The subnetwork name to create instances in.
+* region      : The subnetwork region to create instances in.
+* zone_policy : Zone location policy for regional bulkInsert.
+
+* template      : Slurm template key from variable 'compute_template'.
+* count_static  : Number of static nodes. These nodes are exempt from SuspendProgram.
+* count_dynamic : Number of dynamic nodes. These nodes are subject to SuspendProgram and ResumeProgram.
+
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Options to mount with.
+
+* exclusive        : Enables job exclusivity.
+* placement_groups : Enables partition placement groups.
+* conf             : Slurm partition configurations as a map.
+EOD
   type = map(object({
-    subnetwork  = string      # description: The subnetwork name to create instances in.
-    region      = string      # description: The subnetwork region to create instances in.
-    zone_policy = map(string) # description: Zone location policy for regional bulkInsert.
+    subnetwork  = string
+    region      = string
+    zone_policy = map(string)
     nodes = list(object({
-      template      = string # description: Slurm template key from variable 'compute_template'.
-      count_static  = number # description: Number of static nodes. These nodes are exempt from SuspendProgram.
-      count_dynamic = number # description: Number of dynamic nodes. These nodes are subject to SuspendProgram and ResumeProgram.
+      template      = string
+      count_static  = number
+      count_dynamic = number
     }))
     network_storage = list(object({
-      server_ip     = string # description: Address of the storage server.
-      remote_mount  = string # description: The location in the remote instance filesystem to mount from.
-      local_mount   = string # description: The location on the instance filesystem to mount to.
-      fs_type       = string # description: Filesystem type (e.g. "nfs").
-      mount_options = string # description: Options to mount with.
+      server_ip     = string
+      remote_mount  = string
+      local_mount   = string
+      fs_type       = string
+      mount_options = string
     }))
-    exclusive        = bool        # description: Enables job exclusivity.
-    placement_groups = bool        # description: Enables partition placement groups.
-    conf             = map(string) # description: Slurm partition configurations as a map.
+    exclusive        = bool
+    placement_groups = bool
+    conf             = map(string)
   }))
   default = {}
 
@@ -191,7 +225,10 @@ variable "slurm_scripts_dir" {
 
 variable "slurm_bin_dir" {
   type        = string
-  description = "Path to directroy of Slurm binary commands (e.g. scontrol, sinfo). If 'null', then it will be assumed that binaries are in $PATH."
+  description = <<EOD
+Path to directroy of Slurm binary commands (e.g. scontrol, sinfo). If 'null',
+then it will be assumed that binaries are in $PATH.
+EOD
   default     = null
 }
 
