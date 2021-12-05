@@ -79,3 +79,9 @@
   template:
     src: profile.d/slurm.sh.j2
     dest: /etc/profile.d/slurm.sh
+
+- name: Symbolic Link Directory
+  file:
+    src: "{{slurm_paths.etc}}"
+    dest: /etc/slurm
+    state: link
