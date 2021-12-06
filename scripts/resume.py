@@ -22,7 +22,6 @@ import logging
 import os
 import re
 import sys
-import tempfile
 import json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
@@ -34,7 +33,7 @@ from addict import Dict as NSDict
 import util
 from util import run, chunked
 from util import cfg, lkp, compute
-from setup import resolve_network_storage
+from setup import resolve_network_storage, batch_execute
 
 
 SCONTROL = Path(cfg.slurm_bin_dir or '')/'scontrol'
@@ -78,7 +77,7 @@ def instance_properties(partition_name):
     return props
 
 
-def create_instances(nodes):
+def create_instances_request(nodes):
     """ Call regionInstances.bulkInsert to create instances """
     if len(nodes) == 0:
         return
@@ -94,9 +93,9 @@ def create_instances(nodes):
     body.perInstanceProperties = {k: {} for k in nodes}
     body.instanceProperties = instance_properties(partition_name)
 
-    result = util.ensure_execute(compute.regionInstances().bulkInsert(
+    result = compute.regionInstances().bulkInsert(
         project=cfg.project, region=partition.region, body=body
-    ))
+    )
     return result
 
 
@@ -125,14 +124,11 @@ def resume_nodes(nodelist):
     ]
     log.debug(f"grouped_nodes: {grouped_nodes}")
 
-    with ThreadPoolExecutor() as exe:
-        futures = []
-        for _, nodes in grouped_nodes:
-            futures.append(exe.submit(create_instances, nodes))
-        for f in futures:
-            result = f.exception(timeout=60)
-            if result:
-                raise result
+    inserts = [create_instances_request(nodes) for _, nodes in grouped_nodes]
+    done, failed = batch_execute(inserts)
+    if failed:
+        failed_reqs = [f"{e}" for _, (_, e) in failed.items()]
+        log.error("bulkInsert failures: {}".format('\n'.join(failed_reqs)))
 
 
 def prolog_resume_nodes(nodelist, job_id):
