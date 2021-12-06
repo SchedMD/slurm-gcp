@@ -19,7 +19,7 @@ from pathlib import Path
 from time import sleep
 
 from suspend import (
-    batch_execute, delete_instance_op, truncate_iter, wait_for_operations
+    batch_execute, delete_instance_request, truncate_iter, wait_for_operations
 )
 from util import compute, config_root_logger, project, parse_self_link
 
@@ -34,7 +34,7 @@ def delete_instances(compute_list):
     ops = {}
     for self_link in compute_list:
         (project, zone, name) = parse_self_link(self_link)
-        ops[self_link] = delete_instance_op(
+        ops[self_link] = delete_instance_request(
             instance=name, project=project, zone=zone)
     done, failed = batch_execute(ops)
     if failed:

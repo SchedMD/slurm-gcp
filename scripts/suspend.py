@@ -53,7 +53,7 @@ def truncate_iter(iterable, max_count):
         yield el
 
 
-def delete_instance_op(instance, project=None, zone=None):
+def delete_instance_request(instance, project=None, zone=None):
     project = project or lkp.project
     return compute.instances().delete(
         project=project,
@@ -72,7 +72,7 @@ def delete_instances(instances):
     )
     log.debug("instances do not exist: {}".format(','.join(invalid)))
 
-    ops = {inst: delete_instance_op(inst) for inst in valid}
+    ops = {inst: delete_instance_request(inst) for inst in valid}
     done, failed = batch_execute(ops)
     if failed:
         failed_nodes = [f"{n}: {e}" for n, (_, e) in failed.items()]
