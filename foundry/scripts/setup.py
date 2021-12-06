@@ -259,16 +259,15 @@ def install_lustre():
         srpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/SRPMS/'
 
         util.run('yum update -y')
-        util.run('yum install -y wget libyaml')
 
         rpmlist = ','.join(('kmod-lustre-client-2*.rpm', 'lustre-client-2*.rpm'))
         util.run(
-            f"wget -r -l1 -np -nd -A '{rpmlist}' '{rpm_url}' -P {lustre_tmp}")
+            f"wget -nv -r -l1 -np -nd -A '{rpmlist}' '{rpm_url}' -P {lustre_tmp}")
         util.run(
             f"find {lustre_tmp} -name '*.rpm' -execdir rpm -ivh {{}} ';'")
 
         srpm = 'lustre-client-dkms-2*.src.rpm'
-        util.run(f"wget -r -l1 -np -nd -A {srpm} {srpm_url} -P {lustre_tmp}")
+        util.run(f"wget -nv -r -l1 -np -nd -A {srpm} {srpm_url} -P {lustre_tmp}")
         srpm = next(lustre_tmp.glob(srpm))
         with cd(lustre_tmp):
             util.run(f"rpm2cpio {srpm} | cpio -idmv", shell=True)
@@ -280,7 +279,7 @@ def install_lustre():
     elif cfg.os_name in ('debian10', 'ubuntu2004'):
         deb_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/ubuntu1804/client/'
         deblist = ','.join(('lustre-client-*_amd64.deb', 'lustre-source*.deb'))
-        util.run(f"wget -r -l1 -np -nd -A {deblist} {deb_url} -P {lustre_tmp}")
+        util.run(f"wget -nv -r -l1 -np -nd -A {deblist} {deb_url} -P {lustre_tmp}")
         for deb in lustre_tmp.glob('*.deb'):
             util.run(f"dpkg -i {deb}")
         util.run("apt-get install -f -y")
