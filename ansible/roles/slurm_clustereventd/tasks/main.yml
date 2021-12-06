@@ -13,12 +13,15 @@
 # limitations under the License.
 ---
 
-serf_os: linux
-serf_arch: amd64
-serf_version: 0.8.2
-serf_url: "https://releases.hashicorp.com/serf/{{serf_version}}/serf_{{serf_version}}_{{serf_os}}_{{serf_arch}}.zip"
+- name: Copy Service Scripts
+  copy:
+    src: scripts/{{item}}
+    dest: "{{slurm_paths.scripts}}/{{item}}"
+    mode: 0o755
+  with_items:
+    - clustereventd.py
 
-serf_paths: {
-  bin: '/usr/local/bin',
-  etc: '/etc/serf',
-}
+- name: Install Service
+  template:
+    src: slurm-clustereventd.service.j2
+    dest: /usr/lib/systemd/system/slurm-clustereventd.service

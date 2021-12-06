@@ -63,7 +63,7 @@
     - libjwt
     - lmod
     - slurm
-    - serf
+    - slurm_clustereventd
     - ompi
     - lustre
     - gcsfuse

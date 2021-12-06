@@ -16,6 +16,5 @@
 
 variable "slurm_cluster_id" {
   type        = string
-  description = "The Cluster ID to use. If 'null', then an ID will be generated."
-  default     = null
+  description = "Destroy compute nodes labeled with this slurm_cluster_id."
 }

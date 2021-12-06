@@ -34,11 +34,6 @@ output "jwt_key" {
   value       = local.jwt_key
 }
 
-output "serf_keys" {
-  description = "Cluster serf agent keys."
-  value       = local.serf_keys
-}
-
 output "template_map" {
   description = "Compute template map."
   value       = local.template_map

@@ -206,24 +206,63 @@ def update_conf():
     chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
 
 
-def restart_cluster():
+def publish_message(project_id, topic_id, message) -> None:
+    """Publishes message to a Pub/Sub topic."""
+    from google.cloud import pubsub_v1
+    from google import api_core
+
+    publisher = pubsub_v1.PublisherClient()
+    topic_path = publisher.topic_path(project_id, topic_id)
+
+    retry_handler = api_core.retry.Retry(
+        initial=0.250,  # seconds (default: 0.1)
+        maximum=90.0,  # seconds (default: 60.0)
+        multiplier=1.45,  # default: 1.3
+        deadline=300.0,  # seconds (default: 60.0)
+        predicate=api_core.retry.if_exception_type(
+            api_core.exceptions.Aborted,
+            api_core.exceptions.DeadlineExceeded,
+            api_core.exceptions.InternalServerError,
+            api_core.exceptions.ResourceExhausted,
+            api_core.exceptions.ServiceUnavailable,
+            api_core.exceptions.Unknown,
+            api_core.exceptions.Cancelled,
+        ),
+    )
+
+    message_bytes = message.encode("utf-8")
+    future = publisher.publish(topic_path, message_bytes, retry=retry_handler)
+    result = future.exception()
+    if result is not None:
+        raise result
+
+    log.info(f"Published message to '{topic_path}'.")
+
+
+def restart_cluster(cfg):
     """ Restart daemons to use new slurm.conf """
+    from datetime import datetime
+    import json
+
     log.info("Sleeping for 30 seconds to allow slurm to process RPCs")
     time.sleep(30)
     run("systemctl restart slurmdbd")
     time.sleep(5)  # Allow time for slurmdbd to start
     run("systemctl restart slurmctld")
     time.sleep(5)  # Allow time for slurmctld to start
-    run("/usr/local/bin/serf event -coalesce=false 'restart-slurmd'")
+
+    # _slurm_common_controller/main.tf:google_pubsub_schema.this.definition
+    message_json = json.dumps({
+        'request': 'RESTART',
+        'timestamp': datetime.utcnow().isoformat(),
+    })
+    publish_message(util.project, cfg.pubsub.topic_id, message_json)
 
 
 def main():
     if util.lkp.instance_role != 'controller':
         log.error("Only the controller can run this script. Aborting...")
         return
-
-    log.debug("Updating cluster development scripts")
-    run("/usr/local/bin/serf event -coalesce=false 'update-scripts'")
 
     lkp0 = util.lkp
 
@@ -241,7 +280,7 @@ def main():
         update_partitions(partitions, 'INACTIVE')
 
         update_conf()
-        restart_cluster()
+        restart_cluster(util.cfg)
     else:
         log.info("Cluster configuration has not changed. Nothing to update.")
 

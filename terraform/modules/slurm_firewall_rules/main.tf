@@ -57,28 +57,6 @@ locals {
       }
     },
     {
-      name                    = "${var.cluster_name}-allow-serf-ingress"
-      direction               = "INGRESS"
-      ranges                  = ["0.0.0.0/0"]
-      source_tags             = var.source_tags
-      source_service_accounts = var.source_service_accounts
-      target_tags             = var.target_tags
-      target_service_accounts = var.target_service_accounts
-      allow = [
-        {
-          protocol = "tcp"
-          ports    = ["7373", "7946"]
-        },
-        {
-          protocol = "udp"
-          ports    = ["7946"]
-        },
-      ]
-      log_config = {
-        metadata = "INCLUDE_ALL_METADATA"
-      }
-    },
-    {
       name                    = "${var.cluster_name}-allow-internal-ingress"
       direction               = "INGRESS"
       ranges                  = ["0.0.0.0/0"]

@@ -60,7 +60,6 @@ variable "config" {
     })
     jwt_key   = string
     munge_key = string
-    serf_keys = list(string)
 
     ### storage ###
     network_storage = list(object({
@@ -99,7 +98,6 @@ variable "config" {
     login_network_storage = null
     munge_key             = null
     network_storage       = null
-    serf_keys             = null
     slurm_conf_tpl        = null
     slurmdbd_conf_tpl     = null
   }

@@ -21,14 +21,6 @@
 locals {
   scripts_dir = abspath("${path.module}/../../../scripts")
 
-  cluster_name = (
-    var.cluster_name == null
-    ? random_string.cluster_name.result
-    : var.cluster_name
-  )
-
-  slurm_cluster_id = module.slurm_destroy_nodes.slurm_cluster_id
-
   munge_key = (
     var.munge_key == null
     ? random_id.munge_key.b64_std
@@ -40,12 +32,6 @@ locals {
     ? random_id.jwt_key.b64_std
     : var.jwt_key
   )
-
-  serf_keys = (
-    var.serf_keys == null || var.serf_keys == []
-    ? random_id.serf_keys[*].b64_std
-    : var.serf_keys
-  )
 }
 
 ####################
@@ -56,14 +42,14 @@ locals {
   metadata_devel = (
     var.enable_devel == true
     ? {
-      startup-script    = data.local_file.startup.content
-      clustersync       = data.local_file.clustersync.content
-      setup-script      = data.local_file.setup.content
-      slurm-resume      = data.local_file.resume.content
-      slurm-serf-events = data.local_file.serf_events.content
-      slurm-suspend     = data.local_file.suspend.content
-      slurmsync         = data.local_file.slurmsync.content
-      util-script       = data.local_file.util.content
+      startup-script = data.local_file.startup.content
+      clustereventd  = data.local_file.clustereventd.content
+      clustersync    = data.local_file.clustersync.content
+      setup-script   = data.local_file.setup.content
+      slurm-resume   = data.local_file.resume.content
+      slurm-suspend  = data.local_file.suspend.content
+      slurmsync      = data.local_file.slurmsync.content
+      util-script    = data.local_file.util.content
     }
     : null
   )
@@ -124,6 +110,10 @@ data "local_file" "startup" {
   filename = abspath("${local.scripts_dir}/startup.sh")
 }
 
+data "local_file" "clustereventd" {
+  filename = abspath("${local.scripts_dir}/clustereventd.py")
+}
+
 data "local_file" "clustersync" {
   filename = abspath("${local.scripts_dir}/clustersync.py")
 }
@@ -134,10 +124,6 @@ data "local_file" "setup" {
 
 data "local_file" "resume" {
   filename = abspath("${local.scripts_dir}/resume.py")
-}
-
-data "local_file" "serf_events" {
-  filename = abspath("${local.scripts_dir}/serf_events.py")
 }
 
 data "local_file" "suspend" {
@@ -156,26 +142,12 @@ data "local_file" "util" {
 # RANDOM #
 ##########
 
-resource "random_string" "cluster_name" {
-  length  = 8
-  lower   = true
-  upper   = false
-  special = false
-  number  = false
-}
-
 resource "random_id" "munge_key" {
   byte_length = 256
 }
 
 resource "random_id" "jwt_key" {
   byte_length = 256
-}
-
-resource "random_id" "serf_keys" {
-  count = 3
-
-  byte_length = 32
 }
 
 ############
@@ -185,7 +157,7 @@ resource "random_id" "serf_keys" {
 resource "google_compute_project_metadata_item" "slurm_metadata" {
   project = var.project_id
 
-  key = "${local.cluster_name}-slurm-metadata"
+  key = "${var.cluster_name}-slurm-metadata"
   value = jsonencode(merge(
     local.metadata_devel,
     local.scripts_compute_d,
@@ -201,4 +173,67 @@ module "slurm_destroy_nodes" {
   source = "../slurm_destroy_nodes"
 
   slurm_cluster_id = var.slurm_cluster_id
+}
+
+##########
+# PUBSUB #
+##########
+
+resource "google_pubsub_schema" "this" {
+  name       = "${var.cluster_name}-slurm-events"
+  type       = "PROTOCOL_BUFFER"
+  definition = <<EOD
+syntax = "proto3";
+message Results {
+  string request = 1;
+  string timestamp = 2;
+}
+EOD
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "google_pubsub_topic" "this" {
+  name = "${var.cluster_name}-slurm-events"
+
+  schema_settings {
+    schema   = google_pubsub_schema.this.id
+    encoding = "JSON"
+  }
+
+  labels = {
+    slurm_cluster_id = var.slurm_cluster_id
+  }
+
+  message_retention_duration = "86400s"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+module "pubsub" {
+  source  = "terraform-google-modules/pubsub/google"
+  version = "~> 3.0"
+
+  project_id = var.project_id
+  topic      = google_pubsub_topic.this.id
+
+  create_topic = false
+
+  pull_subscriptions = [
+    {
+      name                    = "${var.cluster_name}-slurm-pull"
+      ack_deadline_seconds    = 30
+      maximum_backoff         = "300s"
+      minimum_backoff         = "30s"
+      enable_message_ordering = true
+    },
+  ]
+
+  subscription_labels = {
+    slurm_cluster_id = var.slurm_cluster_id
+  }
 }

@@ -51,15 +51,21 @@ locals {
 ##################
 
 locals {
-  cluster_name = module.slurm_controller_common.cluster_name
+  cluster_name = (
+    var.cluster_name == null
+    ? random_string.cluster_name.result
+    : var.cluster_name
+  )
 
-  slurm_cluster_id = module.slurm_controller_common.slurm_cluster_id
+  slurm_cluster_id = (
+    var.slurm_cluster_id == null
+    ? random_uuid.slurm_cluster_id.result
+    : var.slurm_cluster_id
+  )
 
   munge_key = module.slurm_controller_common.munge_key
 
   jwt_key = module.slurm_controller_common.jwt_key
-
-  serf_keys = module.slurm_controller_common.serf_keys
 
   template_map = module.slurm_controller_common.template_map
 
@@ -97,7 +103,10 @@ locals {
 
     munge_key = local.munge_key
     jwt_key   = local.jwt_key
-    serf_keys = local.serf_keys
+    pubsub = {
+      topic_id        = module.slurm_controller_common.pubsub_topic
+      subscription_id = module.slurm_controller_common.pubsub.subscription_names[0]
+    }
 
     network_storage       = var.network_storage
     login_network_storage = var.login_network_storage
@@ -124,6 +133,21 @@ locals {
 
 data "local_file" "setup_hybrid" {
   filename = local.setup_hybrid
+}
+
+##########
+# RANDOM #
+##########
+
+resource "random_string" "cluster_name" {
+  length  = 8
+  lower   = true
+  upper   = false
+  special = false
+  number  = false
+}
+
+resource "random_uuid" "slurm_cluster_id" {
 }
 
 ##########
@@ -181,11 +205,10 @@ module "slurm_controller_common" {
 
   project_id = var.project_id
 
-  slurm_cluster_id = var.slurm_cluster_id
-  cluster_name     = var.cluster_name
+  slurm_cluster_id = local.slurm_cluster_id
+  cluster_name     = local.cluster_name
   munge_key        = var.munge_key
   jwt_key          = var.jwt_key
-  serf_keys        = var.serf_keys
   template_map     = var.template_map
   partitions       = var.partitions
   metadata_compute = var.metadata_compute

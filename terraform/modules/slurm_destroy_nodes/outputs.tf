@@ -13,8 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-output "slurm_cluster_id" {
-  description = "Cluster ID for cluster resource labeling."
-  value       = local.slurm_cluster_id
-}

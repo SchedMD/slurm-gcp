@@ -35,7 +35,7 @@ from addict import Dict as NSDict
 
 import util
 from util import run, instance_metadata, partition
-from util import lkp, cfg, dirs, slurmdirs, serf_dirs
+from util import lkp, cfg, dirs, slurmdirs
 
 SETUP_SCRIPT = Path(__file__)
 filename = SETUP_SCRIPT.name
@@ -410,13 +410,13 @@ def fetch_devel_scripts():
     metadata = lkp.project_metadata
 
     meta_entries = [
+        ('clustereventd.py', 'clustereventd'),
         ('clustersync.py', 'clustersync'),
         ('suspend.py', 'slurm-suspend'),
         ('resume.py', 'slurm-resume'),
         ('slurmsync.py', 'slurmsync'),
         ('util.py', 'util-script'),
         ('setup.py', 'setup-script'),
-        ('serf_events.py', 'slurm-serf-events'),
         ('startup.sh', 'startup-script'),
     ]
 
@@ -466,7 +466,6 @@ def resolve_network_storage(partition_name=None):
     default_mounts = (
         slurmdirs.etc,
         dirs.munge,
-        serf_dirs.share,
         dirs.home,
         dirs.apps,
     )
@@ -672,55 +671,6 @@ def setup_munge_key():
     run("systemctl restart munge", timeout=30)
 
 
-def setup_serf(lkp):
-    """ Configure and start serf agent for compute node """
-    log.info("Set up serf agent")
-
-    config_file = Path(serf_dirs.etc/'config.json')
-    handler_file = Path(dirs.scripts/'serf_events.sh')
-    keyring_file = Path(serf_dirs.share/'keyring')
-    snapshot_file = Path(serf_dirs.spool/'snapshot')
-
-    Path(serf_dirs.etc).mkdirp()
-    Path(serf_dirs.share).mkdirp()
-    Path(serf_dirs.spool).mkdirp()
-
-    config = {
-        'tags': {
-            'role': lkp.instance_role,
-        },
-        'retry_join': [
-            lkp.control_host,
-        ],
-        'rejoin_after_leave': True,
-        'snapshot_path': str(snapshot_file),
-        'event_handlers': [
-            str(handler_file),
-        ],
-        'keyring_file': str(keyring_file),
-        'log_level': 'INFO',
-    }
-    with open(config_file, 'w') as outfile:
-        json.dump(config, outfile, indent=2, sort_keys=True)
-
-    if util.lkp.instance_role == 'controller' and cfg.serf_keys:
-        with open(keyring_file, 'w') as outfile:
-            json.dump(cfg.serf_keys, outfile, indent=2, sort_keys=True)
-    else:
-        # Generate serf keys for encrypted communication
-        keyring = []
-        for i in range(5):
-            key = util.run("serf keygen").stdout.rstrip()
-            keyring.append(key)
-
-        with open(keyring_file, 'w') as outfile:
-            json.dump(keyring, outfile, indent=2, sort_keys=True)
-
-    run('systemctl enable serf', timeout=30)
-    run('systemctl restart serf', timeout=30)
-# END setup_serf()
-
-
 def setup_nss_slurm():
     """ install and configure nss_slurm """
     # setup nss_slurm
@@ -849,9 +799,10 @@ def setup_controller():
     run("systemctl enable nfs-server", timeout=30)
     run("systemctl start nfs-server", timeout=30)
 
+    run("systemctl restart slurm-clustereventd", timeout=30)
+
     setup_nfs_exports()
     setup_sync_cronjob()
-    setup_serf(lkp)
 
     log.info("Done setting up controller")
     pass
@@ -863,7 +814,7 @@ def setup_login():
 
     setup_network_storage()
     run("systemctl restart munge")
-    setup_serf(lkp)
+    run("systemctl restart slurm-clustereventd", timeout=30)
 
     run_custom_scripts()
 
@@ -873,6 +824,9 @@ def setup_login():
 def setup_compute():
     """ run compute node setup """
     log.info("Setting up compute")
+    util.save_config(cfg, dirs.scripts/'config.yaml')
+    shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
+
     setup_nss_slurm()
     setup_network_storage()
 
@@ -896,10 +850,11 @@ def setup_compute():
     run_custom_scripts()
 
     setup_slurmd_cronjob()
-    setup_serf(lkp)
     run("systemctl restart munge", timeout=30)
     run("systemctl enable slurmd", timeout=30)
     run("systemctl restart slurmd", timeout=30)
+
+    run("systemctl restart slurm-clustereventd", timeout=30)
 
     log.info("Done setting up compute")
 

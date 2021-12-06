@@ -36,7 +36,6 @@ config = {
   cloudsql  = null
   jwt_key   = null
   munge_key = null
-  serf_keys = null
 
   ### storage ###
   network_storage = [

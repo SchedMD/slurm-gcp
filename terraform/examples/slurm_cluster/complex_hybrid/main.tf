@@ -95,7 +95,6 @@ module "slurm_controller_hybrid" {
 
   munge_key = var.config.munge_key
   jwt_key   = var.config.jwt_key
-  serf_keys = var.config.serf_keys
 
   network_storage       = var.config.network_storage
   login_network_storage = var.config.login_network_storage

@@ -58,7 +58,6 @@ variable "config" {
     })
     jwt_key   = string
     munge_key = string
-    serf_keys = list(string)
 
     network_storage = list(object({
       server_ip     = string
@@ -92,7 +91,6 @@ variable "config" {
     login_network_storage = null
     munge_key             = null
     network_storage       = null
-    serf_keys             = null
     slurm_bin_dir         = null
     slurm_log_dir         = null
   }

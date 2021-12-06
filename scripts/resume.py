@@ -61,6 +61,7 @@ def instance_properties(partition_name):
     compute_config.munge_key = cfg.munge_key
     compute_config.template_map = cfg.template_map
     compute_config.network_storage = resolve_network_storage(partition_name)
+    compute_config.pubsub = cfg.pubsub
 
     metadata = {
         'cluster_name': cfg.cluster_name,

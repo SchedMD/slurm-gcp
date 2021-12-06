@@ -75,12 +75,6 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
     'state': '/var/spool/slurm',
 })})
 
-serf_dirs = NSDict({n: Path(p) for n, p in dict.items({
-    'etc': '/etc/serf',
-    'share': '/etc/serf/share',
-    'spool': '/var/spool/serf',
-})})
-
 
 def parse_self_link(self_link: str):
     """ Parse an instance self link and return its project, zone, and name. """

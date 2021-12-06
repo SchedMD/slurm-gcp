@@ -39,6 +39,7 @@ limitations under the License.
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.0 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.0 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.0 |
 
 ## Providers
 
@@ -46,6 +47,7 @@ limitations under the License.
 |------|---------|
 | <a name="provider_local"></a> [local](#provider\_local) | 2.1.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.1.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.1.0 |
 
 ## Modules
 
@@ -59,6 +61,8 @@ limitations under the License.
 |------|------|
 | [local_file.config_yaml](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [null_resource.setup_hybrid](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [random_string.cluster_name](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
+| [random_uuid.slurm_cluster_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
 | [local_file.setup_hybrid](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 
 ## Inputs
@@ -78,9 +82,8 @@ limitations under the License.
 | <a name="input_output_dir"></a> [output\_dir](#input\_output\_dir) | Directory where this module will write files to. If '' or 'null', then the path<br>to main.tf will be assumed." | `string` | `"."` | no |
 | <a name="input_partitions"></a> [partitions](#input\_partitions) | Cluster partitions as a map.<br><br>* subnetwork  : The subnetwork name to create instances in.<br>* region      : The subnetwork region to create instances in.<br>* zone\_policy : Zone location policy for regional bulkInsert.<br><br>* template      : Slurm template key from variable 'compute\_template'.<br>* count\_static  : Number of static nodes. These nodes are exempt from SuspendProgram.<br>* count\_dynamic : Number of dynamic nodes. These nodes are subject to SuspendProgram and ResumeProgram.<br><br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Options to mount with.<br><br>* exclusive        : Enables job exclusivity.<br>* placement\_groups : Enables partition placement groups.<br>* conf             : Slurm partition configurations as a map. | <pre>map(object({<br>    subnetwork  = string<br>    region      = string<br>    zone_policy = map(string)<br>    nodes = list(object({<br>      template      = string<br>      count_static  = number<br>      count_dynamic = number<br>    }))<br>    network_storage = list(object({<br>      server_ip     = string<br>      remote_mount  = string<br>      local_mount   = string<br>      fs_type       = string<br>      mount_options = string<br>    }))<br>    exclusive        = bool<br>    placement_groups = bool<br>    conf             = map(string)<br>  }))</pre> | `{}` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
-| <a name="input_serf_keys"></a> [serf\_keys](#input\_serf\_keys) | Cluster serf agent keys. If 'null' or '[]', then keys will be generated instead. | `list(string)` | `null` | no |
 | <a name="input_slurm_bin_dir"></a> [slurm\_bin\_dir](#input\_slurm\_bin\_dir) | Path to directroy of Slurm binary commands (e.g. scontrol, sinfo). If 'null',<br>then it will be assumed that binaries are in $PATH. | `string` | `null` | no |
-| <a name="input_slurm_cluster_id"></a> [slurm\_cluster\_id](#input\_slurm\_cluster\_id) | The Cluster ID to use. If 'null', then an ID will be generated. | `string` | `null` | no |
+| <a name="input_slurm_cluster_id"></a> [slurm\_cluster\_id](#input\_slurm\_cluster\_id) | The Cluster ID to label resources. If 'null', then an ID will be generated. | `string` | `null` | no |
 | <a name="input_slurm_log_dir"></a> [slurm\_log\_dir](#input\_slurm\_log\_dir) | Directory where Slurm logs to. | `string` | `"/var/log/slurm"` | no |
 | <a name="input_slurm_scripts_dir"></a> [slurm\_scripts\_dir](#input\_slurm\_scripts\_dir) | Path to slurm-gcp scripts. | `string` | `null` | no |
 | <a name="input_template_map"></a> [template\_map](#input\_template\_map) | Slurm compute templates as a map. Key=slurm\_template\_name Value=template\_self\_link | `map(string)` | `{}` | no |
@@ -96,7 +99,6 @@ limitations under the License.
 | <a name="output_output_dir"></a> [output\_dir](#output\_output\_dir) | Directory where configuration files are written to. |
 | <a name="output_partition_subnetworks"></a> [partition\_subnetworks](#output\_partition\_subnetworks) | Partition subnetwork details. |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Cluster partitions. |
-| <a name="output_serf_keys"></a> [serf\_keys](#output\_serf\_keys) | Cluster serf agent keys. |
 | <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Cluster ID for cluster resource labeling. |
 | <a name="output_template_map"></a> [template\_map](#output\_template\_map) | Compute template map. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

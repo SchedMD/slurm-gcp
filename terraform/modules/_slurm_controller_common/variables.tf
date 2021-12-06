@@ -39,22 +39,12 @@ variable "metadata_compute" {
 
 variable "cluster_name" {
   type        = string
-  description = "Cluster name, used resource naming and slurm accounting. If 'null', then one will be generated."
-  default     = null
-
-  validation {
-    condition = (
-      can(regex("(^[a-z][-a-z0-9]{0,15}$)", var.cluster_name))
-      || var.cluster_name == null
-    )
-    error_message = "Must be a match of regex '(^[a-z][-a-z0-9]{0,15}$)'."
-  }
+  description = "Cluster name, used resource naming and slurm accounting."
 }
 
 variable "slurm_cluster_id" {
   type        = string
-  description = "The Cluster ID to use. If 'null', then an ID will be generated."
-  default     = null
+  description = "The Cluster ID."
 }
 
 variable "enable_devel" {
@@ -82,24 +72,6 @@ variable "jwt_key" {
   type        = string
   description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
   default     = null
-}
-
-variable "serf_keys" {
-  type        = list(string)
-  description = "Cluster serf agent keys. If 'null' or '[]', then keys will be generated instead."
-  default     = null
-
-  validation {
-    condition = (
-      var.serf_keys == null
-      ? true
-      : alltrue([
-        for key in var.serf_keys
-        : length(key) == 16 || length(key) == 24 || length(key) == 32
-      ])
-    )
-    error_message = "Serf keys must be either 16, 24, or 32 bytes."
-  }
 }
 
 variable "compute_d" {

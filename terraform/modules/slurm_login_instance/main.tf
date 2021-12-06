@@ -51,7 +51,6 @@ locals {
       project      = local.project_id
 
       munge_key = var.munge_key
-      serf_keys = var.serf_keys
 
       network_storage       = var.network_storage
       login_network_storage = var.login_network_storage

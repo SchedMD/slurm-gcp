@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-output "cluster_name" {
-  description = "Cluster name for resource naming and slurm accounting."
-  value       = local.cluster_name
-}
-
-output "slurm_cluster_id" {
-  description = "Cluster ID for cluster resource labeling."
-  value       = local.slurm_cluster_id
-}
-
 output "munge_key" {
   description = "Cluster munge authentication key."
   value       = local.munge_key
@@ -32,11 +22,6 @@ output "munge_key" {
 output "jwt_key" {
   description = "Cluster jwt authentication key."
   value       = local.jwt_key
-}
-
-output "serf_keys" {
-  description = "Cluster serf agent keys."
-  value       = local.serf_keys
 }
 
 output "template_map" {
@@ -57,4 +42,14 @@ output "compute_instance_templates" {
 output "partition_subnetworks" {
   description = "Partition subnetwork details."
   value       = data.google_compute_subnetwork.partition_subnetworks
+}
+
+output "pubsub" {
+  description = "Slurm Pub/Sub details."
+  value       = module.pubsub
+}
+
+output "pubsub_topic" {
+  description = "Slurm Pub/Sub topic ID."
+  value       = google_pubsub_topic.this.name
 }
