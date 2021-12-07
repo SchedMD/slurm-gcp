@@ -40,7 +40,7 @@ No providers.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_nat"></a> [nat](#module\_nat) | terraform-google-modules/cloud-nat/google | ~> 2.0 |
-| <a name="module_network"></a> [network](#module\_network) | terraform-google-modules/network/google | ~> 3.0 |
+| <a name="module_network"></a> [network](#module\_network) | terraform-google-modules/network/google | ~> 4.0 |
 | <a name="module_router"></a> [router](#module\_router) | terraform-google-modules/cloud-router/google | ~> 1.0 |
 
 ## Resources

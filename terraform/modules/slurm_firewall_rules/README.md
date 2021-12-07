@@ -38,7 +38,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_firewall_rules"></a> [firewall\_rules](#module\_firewall\_rules) | terraform-google-modules/network/google//modules/firewall-rules | ~> 3.0 |
+| <a name="module_firewall_rules"></a> [firewall\_rules](#module\_firewall\_rules) | terraform-google-modules/network/google//modules/firewall-rules | ~> 4.0 |
 
 ## Resources
 
