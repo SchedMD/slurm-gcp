@@ -149,3 +149,9 @@ output "names" {
 output "instance_network_ips" {
   value = google_compute_instance.login_node.*.network_interface.0.network_ip
 }
+
+variable "login_startup_script" {
+  description = "Custom startup script to run on the login node"
+  type        = string
+  default     = null
+}
