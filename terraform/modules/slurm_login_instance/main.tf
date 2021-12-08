@@ -31,8 +31,6 @@ locals {
     : var.region
   )
 
-  scripts_dir = abspath("${path.module}/../../../scripts")
-
   metadata = {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
@@ -58,14 +56,6 @@ locals {
   }
 }
 
-########
-# DATA #
-########
-
-data "local_file" "startup" {
-  filename = abspath("${local.scripts_dir}/startup.sh")
-}
-
 ############
 # INSTANCE #
 ############
@@ -88,7 +78,6 @@ module "slurm_login_instance" {
   num_instances     = var.num_instances
 
   ### metadata ###
-  metadata_startup_script = data.local_file.startup.content
   metadata = merge(
     local.metadata,
     local.metadata_login,

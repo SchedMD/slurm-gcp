@@ -52,6 +52,15 @@ provider "google" {
   project = var.project_id
 }
 
+########
+# DATA #
+########
+
+data "google_compute_zones" "available" {
+  project = var.project_id
+  region  = var.region
+}
+
 ###########
 # NETWORK #
 ###########
@@ -142,6 +151,7 @@ module "slurm_login_instances" {
 
   ### network ###
   subnetwork = module.network.network.subnets_self_links[0]
+  zone       = data.google_compute_zones.available.names[0]
 
   ### instance ###
   instance_template = module.slurm_login_instance_templates[each.value.template].instance_template.self_link
@@ -152,8 +162,7 @@ module "slurm_login_instances" {
   slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
 
   depends_on = [
-    # NOTE: changes to `module.slurm_controller_instance` will cause a
-    # delta in `module.slurm_login_instances` force a replacement.
+    # Must be created after the controller to mount NFS
     module.slurm_controller_instance,
   ]
 }

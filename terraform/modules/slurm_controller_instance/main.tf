@@ -148,14 +148,6 @@ locals {
   )
 }
 
-#################
-# DATA: SCRIPTS #
-#################
-
-data "local_file" "startup" {
-  filename = abspath("${local.scripts_dir}/startup.sh")
-}
-
 ##############
 # DATA: CONF #
 ##############
@@ -209,7 +201,6 @@ module "slurm_controller_instance" {
   add_hostname_suffix = false
 
   ### metadata ###
-  metadata_startup_script = data.local_file.startup.content
   metadata = merge(
     local.metadata,
     local.metadata_controller,
