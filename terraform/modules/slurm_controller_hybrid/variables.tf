@@ -40,15 +40,6 @@ variable "metadata_compute" {
 variable "cluster_name" {
   type        = string
   description = "Cluster name, used resource naming and slurm accounting."
-  default     = null
-
-  validation {
-    condition = (
-      can(regex("(^[a-z][-a-z0-9]{0,15}$)", var.cluster_name))
-      || var.cluster_name == null || var.cluster_name == ""
-    )
-    error_message = "Must be a match of regex '(^[a-z][-a-z0-9]{0,15}$)'."
-  }
 }
 
 variable "slurm_cluster_id" {

@@ -18,3 +18,9 @@ variable "project_id" {
   type        = string
   description = "Project ID to create resources in."
 }
+
+variable "cluster_name" {
+  type        = string
+  description = "Cluster name. Used to name resources."
+  default     = "simple"
+}

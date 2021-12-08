@@ -18,17 +18,6 @@ provider "google" {
   project = var.project_id
 }
 
-resource "random_string" "cluster_name" {
-  length  = 8
-  lower   = true
-  upper   = false
-  special = false
-  number  = false
-}
-
-resource "random_uuid" "slurm_cluster_id" {
-}
-
 data "google_compute_subnetwork" "default" {
   name   = "default"
   region = var.region
@@ -39,8 +28,6 @@ module "slurm_instance_template" {
 
   project_id = var.project_id
   subnetwork = data.google_compute_subnetwork.default.self_link
-
-  slurm_cluster_id = random_uuid.slurm_cluster_id.result
 }
 
 module "slurm_login_instance" {
@@ -48,7 +35,5 @@ module "slurm_login_instance" {
 
   instance_template = module.slurm_instance_template.instance_template.self_link
   subnetwork        = data.google_compute_subnetwork.default.self_link
-
-  cluster_name     = random_string.cluster_name.result
-  slurm_cluster_id = random_uuid.slurm_cluster_id.result
+  cluster_name      = var.cluster_name
 }

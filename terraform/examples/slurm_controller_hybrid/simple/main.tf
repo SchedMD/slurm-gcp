@@ -21,5 +21,6 @@ provider "google" {
 module "slurm_controller_hybrid" {
   source = "../../../modules/slurm_controller_hybrid"
 
-  project_id = var.project_id
+  project_id   = var.project_id
+  cluster_name = var.cluster_name
 }

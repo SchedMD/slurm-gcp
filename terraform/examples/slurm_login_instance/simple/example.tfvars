@@ -16,4 +16,6 @@
 
 project_id = "<PROJECT_ID>"
 
-cluster_name = "<REGION>"
+cluster_name = "simple"
+
+region = "<REGION>"

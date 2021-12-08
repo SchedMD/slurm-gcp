@@ -37,4 +37,5 @@ module "slurm_controller_instance" {
 
   instance_template = module.slurm_instance_template.instance_template.self_link
   subnetwork        = data.google_compute_subnetwork.default.self_link
+  cluster_name      = var.cluster_name
 }

@@ -93,11 +93,7 @@ variable "metadata_compute" {
 
 variable "cluster_name" {
   type        = string
-  description = <<EOD
-The cluster name, used for resource naming and slurm accounting. If 'null'
-or '', then one will be generated.
-EOD
-  default     = null
+  description = "The cluster name, used for resource naming and slurm accounting."
 }
 
 variable "slurm_cluster_id" {

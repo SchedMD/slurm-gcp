@@ -16,7 +16,7 @@
 
 output "cluster_name" {
   description = "Cluster name for resource naming and slurm accounting."
-  value       = local.cluster_name
+  value       = var.cluster_name
 }
 
 output "slurm_cluster_id" {

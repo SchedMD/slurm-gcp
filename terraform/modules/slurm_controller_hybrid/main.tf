@@ -51,12 +51,6 @@ locals {
 ##################
 
 locals {
-  cluster_name = (
-    var.cluster_name == null
-    ? random_string.cluster_name.result
-    : var.cluster_name
-  )
-
   slurm_cluster_id = (
     var.slurm_cluster_id == null
     ? random_uuid.slurm_cluster_id.result
@@ -96,7 +90,7 @@ locals {
   )
 
   config = yamlencode({
-    cluster_name = local.cluster_name
+    cluster_name = var.cluster_name
     project      = var.project_id
     etc          = local.output_dir
     scripts      = local.scripts_dir
@@ -138,14 +132,6 @@ data "local_file" "setup_hybrid" {
 ##########
 # RANDOM #
 ##########
-
-resource "random_string" "cluster_name" {
-  length  = 8
-  lower   = true
-  upper   = false
-  special = false
-  number  = false
-}
 
 resource "random_uuid" "slurm_cluster_id" {
 }
@@ -206,7 +192,7 @@ module "slurm_controller_common" {
   project_id = var.project_id
 
   slurm_cluster_id = local.slurm_cluster_id
-  cluster_name     = local.cluster_name
+  cluster_name     = var.cluster_name
   munge_key        = var.munge_key
   jwt_key          = var.jwt_key
   template_map     = var.template_map

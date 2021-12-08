@@ -41,12 +41,6 @@ locals {
 ##################
 
 locals {
-  cluster_name = (
-    var.cluster_name == null || var.cluster_name == ""
-    ? random_string.cluster_name.result
-    : var.cluster_name
-  )
-
   slurm_cluster_id = (
     var.slurm_cluster_id == null || var.slurm_cluster_id == ""
     ? random_uuid.slurm_cluster_id.result
@@ -74,9 +68,9 @@ locals {
 
   metadata_controller = {
     instance_type = "controller"
-    cluster_name  = local.cluster_name
+    cluster_name  = var.cluster_name
     config = jsonencode({
-      cluster_name = local.cluster_name
+      cluster_name = var.cluster_name
       project      = local.project_id
 
       cloudsql  = var.cloudsql
@@ -197,7 +191,7 @@ module "slurm_controller_instance" {
 
   ### instance ###
   instance_template   = var.instance_template
-  hostname            = "${local.cluster_name}-controller"
+  hostname            = "${var.cluster_name}-controller"
   add_hostname_suffix = false
 
   ### metadata ###
@@ -219,7 +213,7 @@ module "slurm_controller_common" {
   project_id = local.project_id
 
   slurm_cluster_id = local.slurm_cluster_id
-  cluster_name     = local.cluster_name
+  cluster_name     = var.cluster_name
   munge_key        = var.munge_key
   jwt_key          = var.jwt_key
   template_map     = var.template_map
