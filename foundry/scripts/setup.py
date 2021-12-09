@@ -375,6 +375,13 @@ def install_libjwt():
     util.run("ldconfig")
 
 
+def set_gcloud_version():
+    if cfg.os_name.startswith('centos'):
+        gcloud_version = '365.0.1-1'
+        util.run(f"yum downgrade -y google-cloud-sdk-{gcloud_version}")
+        util.run(f"yum versionlock add google-cloud-sdk-{gcloud_version}")
+
+
 def install_dependencies():
     """ Install all dependencies """
 
@@ -382,13 +389,13 @@ def install_dependencies():
 /usr/local/lib
 /usr/local/lib64
 """)
-
     if cfg.os_name in ('centos7', 'centos8'):
         util.run(f"{cfg.pacman} -y groupinstall 'Development Tools'")
     packages = util.get_metadata('attributes/packages').splitlines()
     util.run(f"{cfg.pacman} install -y {' '.join(packages)}", shell=True,
              env=dict(os.environ, DEBIAN_FRONTEND='noninteractive'))
     install_libjwt()
+    set_gcloud_version()
 
 
 def install_apps():
