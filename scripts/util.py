@@ -262,7 +262,10 @@ ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
 def chunked(iterable, n=API_REQ_LIMIT):
     """group iterator into chunks of max size n"""
     it = iter(iterable)
-    while (chunk := list(islice(it, n))):
+    while True:
+        chunk = list(islice(it, n))
+        if not chunk:
+            return
         yield chunk
 
 

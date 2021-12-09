@@ -76,10 +76,10 @@ def get_nodes():
     cmd = (f"{SCONTROL} show nodes | grep -oP '^NodeName=\K(\S+)|State=\K(\S+)'"
            r" | paste -sd',\n'")
     node_lines = run(cmd, shell=True).stdout.rstrip().splitlines()
-    slurm_nodes = dict(
-        node_tuple for line in node_lines
-        if 'CLOUD' in (node_tuple := make_tuple(line))[1].flags
-    )
+    slurm_nodes = {
+        part: state for part, state in map(make_tuple, node_lines)
+        if 'CLOUD' in state.flags
+    }
     return slurm_nodes
 
 

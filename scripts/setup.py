@@ -437,10 +437,15 @@ def install_custom_compute_scripts():
     """"""
     custom_pattern = re.compile(r'custom-compute-(S+)')
     metadata = lkp.project_metadata
+
+    def match_name(metadata):
+        name, content = metadata
+        return custom_pattern.match(name), content
+
     custom_scripts = [
         (f'custom-compute.d/{m[1]}', content)
-        for name, content in metadata.items()
-        if (m := custom_pattern.match(name))
+        for m, content in map(match_name, metadata.items())
+        if m
     ]
     for name, content in custom_scripts:
         path = (dirs.scripts/name).resolve()

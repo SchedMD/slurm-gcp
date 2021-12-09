@@ -94,10 +94,10 @@ def sync_slurm():
            r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
            r"paste -sd',\n'")
     node_lines = run(cmd, shell=True).stdout.rstrip().splitlines()
-    slurm_nodes = dict(
-        node_tuple for line in node_lines
-        if 'CLOUD' in (node_tuple := make_node_tuple(line))[1].flags
-    )
+    slurm_nodes = {
+        node: state for node, state in map(make_node_tuple, node_lines)
+        if 'CLOUD' in state.flags
+    }
 
     gcp_instances = lkp.instances()
 
