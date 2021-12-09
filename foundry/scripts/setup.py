@@ -658,6 +658,16 @@ SELINUXTYPE=targeted
 """)
 
 
+def setup_grub():
+    if cfg.os_name == 'debian10':
+        grubd = Path('/etc/default/grub.d')
+        if grubd.exists():
+            (grubd/'slurm_cgroup.cfg').write_text("""
+GRUB_CMDLINE_LINUX="${GRUB_CMDLINE_LINUX} cgroup_enable=memory swapaccount=1"
+""")
+            util.run("update-grub")
+
+
 def install_ompi():
     """ compile and install OMPI """
 
@@ -750,6 +760,7 @@ def main():
     setup_munge()
     setup_bash_profile()
     setup_modules()
+    setup_grub()
 
     install_controller_service_scripts()
     install_compute_service_scripts()
