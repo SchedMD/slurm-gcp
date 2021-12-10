@@ -2,6 +2,7 @@ apt-transport-https
 bind9-utils
 build-essential
 cifs-utils
+dkms
 flex
 gcc
 git

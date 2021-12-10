@@ -14,9 +14,11 @@ hwloc-devel
 jansson-devel
 json-c-devel
 libcurl-devel
+libglvnd-devel
 libibmad
 libibumad
 libtool
+libyaml
 libyaml-devel
 lua
 lua-devel

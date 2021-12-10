@@ -110,7 +110,7 @@ resource "google_compute_instance" "controller_node" {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
 
-    config = local.config
+    config                    = local.config
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
     custom-compute-install    = local.custom-compute-install
     custom-controller-install = local.custom-controller-install
@@ -186,7 +186,7 @@ resource "google_compute_instance_from_template" "controller_node" {
   metadata = {
     enable-oslogin = "TRUE"
     VmDnsSetting   = "GlobalOnly"
-	  config = local.config
+    config         = local.config
 
     cgroup_conf_tpl           = file("${path.module}/../../../etc/cgroup.conf.tpl")
     custom-compute-install    = local.custom-compute-install
@@ -202,8 +202,8 @@ resource "google_compute_instance_from_template" "controller_node" {
 }
 
 resource "null_resource" "check_intel_validation" {
-    triggers = (var.intel_select_solution == null ||
-                  var.intel_select_solution == "software_only" ||
-                  (var.intel_select_solution == "full_config" &&  var.boot_disk_size >=215) ? {} :
-                  file("ERROR: Configuration failed as full_config requires boot_disk_size of the controller to be larger than 215 GB."))
+  triggers = (var.intel_select_solution == null ||
+    var.intel_select_solution == "software_only" ||
+    (var.intel_select_solution == "full_config" && var.boot_disk_size >= 215) ? {} :
+  file("ERROR: Configuration failed as full_config requires boot_disk_size of the controller to be larger than 215 GB."))
 }

@@ -43,6 +43,20 @@ if cfg.google_app_cred_path:
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
 
 
+def to_hostlist(hostnames):
+    tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+    tmp_file.writelines('\n'.join(hostnames))
+    tmp_file.close()
+    log.debug(f"tmp_file = {tmp_file.name}")
+
+    hostlist = util.run(
+        f"{SCONTROL} show hostlist {tmp_file.name}",
+        get_stdout=True).stdout.rstrip()
+    log.debug(f"hostlist = {hostlist}")
+    os.remove(tmp_file.name)
+    return hostlist
+
+
 def start_instances_cb(request_id, response, exception):
     if exception is not None:
         log.error("start exception: " + str(exception))
@@ -119,10 +133,10 @@ def main():
 
             def make_state_tuple(state):
                 return StateTuple(state[0], set(state[1:]))
-            s_nodes = [(node, make_state_tuple(args.split('+')))
+            s_nodes = {node: make_state_tuple(args.split('+'))
                        for node, args in
                        map(lambda x: x.split(','), nodes.rstrip().splitlines())
-                       if 'CLOUD' in args]
+                       if 'CLOUD' in args}
 
         g_nodes = util.get_regional_instances(compute, cfg.project,
                                               cfg.instance_defs)
@@ -148,7 +162,7 @@ def main():
         to_down = []
         to_idle = []
         to_start = []
-        for s_node, s_state in s_nodes:
+        for s_node, s_state in s_nodes.items():
             g_node = g_nodes.get(s_node, None)
             pid = util.get_pid(s_node)
 
@@ -160,7 +174,7 @@ def main():
                 if g_node and (g_node['status'] == "TERMINATED"):
                     if not s_state.base.startswith('DOWN'):
                         to_down.append(s_node)
-                    if (cfg.instance_defs[pid].preemptible_bursting):
+                    if cfg.instance_defs[pid].preemptible_bursting != 'false':
                         to_start.append(s_node)
 
                 # can't check if the node doesn't exist in GCP while the node
@@ -186,18 +200,7 @@ def main():
                 len(to_down), ",".join(to_down)))
             log.info("{} instances to start ({})".format(
                 len(to_start), ",".join(to_start)))
-
-            # write hosts to a file that can be given to get a slurm
-            # hostlist. Since the number of hosts could be large.
-            tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            tmp_file.writelines("\n".join(to_down))
-            tmp_file.close()
-            log.debug("tmp_file = {}".format(tmp_file.name))
-
-            hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-                                check=True, get_stdout=True).stdout.rstrip()
-            log.debug("hostlist = {}".format(hostlist))
-            os.remove(tmp_file.name)
+            hostlist = to_hostlist(to_down)
 
             util.run(f"{SCONTROL} update nodename={hostlist} state=down "
                      "reason='Instance stopped/deleted'")
@@ -216,19 +219,24 @@ def main():
             log.info("{} instances to resume ({})".format(
                 len(to_idle), ','.join(to_idle)))
 
-            # write hosts to a file that can be given to get a slurm
-            # hostlist. Since the number of hosts could be large.
-            tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            tmp_file.writelines("\n".join(to_idle))
-            tmp_file.close()
-            log.debug("tmp_file = {}".format(tmp_file.name))
-
-            hostlist = util.run(f"{SCONTROL} show hostlist {tmp_file.name}",
-                                check=True, get_stdout=True).stdout.rstrip()
-            log.debug("hostlist = {}".format(hostlist))
-            os.remove(tmp_file.name)
-
+            hostlist = to_hostlist(to_idle)
             util.run(f"{SCONTROL} update nodename={hostlist} state=resume")
+
+        orphans = [
+            inst for inst, info in g_nodes.items()
+            if info['status'] == 'RUNNING' and (
+                inst not in s_nodes or 'POWERED_DOWN' in s_nodes[inst].flags
+            )
+        ]
+        if orphans:
+            if args.debug:
+                for orphan in orphans:
+                    info = g_nodes.get(orphan)
+                    state = s_nodes.get(orphan, None)
+                    log.debug(f"orphan {orphan}: status={info['status']} state={state}")
+            hostlist = to_hostlist(orphans)
+            log.info(f"{len(orphans)} orphan instances found to terminate: {hostlist}")
+            util.run(f"{SCRIPTS_DIR}/suspend.py {hostlist}")
 
     except Exception:
         log.exception("failed to sync instances")
