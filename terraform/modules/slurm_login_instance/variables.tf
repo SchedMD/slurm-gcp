@@ -106,6 +106,7 @@ variable "munge_key" {
   type        = string
   description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
   default     = null
+  sensitive   = true
 
   validation {
     condition = (

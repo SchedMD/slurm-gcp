@@ -32,6 +32,7 @@ output "munge_key" {
 output "jwt_key" {
   description = "Cluster jwt authentication key."
   value       = local.jwt_key
+  sensitive   = true
 }
 
 output "template_map" {
