@@ -48,7 +48,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used resource naming. | `string` | n/a | yes |
+| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | n/a | yes |
 | <a name="input_network_name"></a> [network\_name](#input\_network\_name) | Name of the network this set of firewall rules applies to. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID of the project that holds the network. | `string` | n/a | yes |
 | <a name="input_source_service_accounts"></a> [source\_service\_accounts](#input\_source\_service\_accounts) | If source service accounts are specified, the firewall will apply only to<br>traffic originating from an instance with a service account in this list. Source<br>service accounts cannot be used to control traffic to an instance's external IP<br>address because service accounts are associated with an instance, not an IP<br>address. sourceRanges can be set at the same time as sourceServiceAccounts. If<br>both are set, the firewall will apply to traffic that has source IP address<br>within sourceRanges OR the source IP belongs to an instance with service account<br>listed in sourceServiceAccount. The connection does not need to match both<br>properties for the firewall to apply. sourceServiceAccounts cannot be used at<br>the same time as sourceTags or targetTags. | `list(string)` | `null` | no |

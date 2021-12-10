@@ -30,7 +30,7 @@ variable "network_name" {
 
 variable "cluster_name" {
   type        = string
-  description = "Cluster name, used resource naming."
+  description = "Cluster name, used for resource naming."
 }
 
 ##############

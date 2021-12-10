@@ -74,7 +74,7 @@ variable "region" {
 variable "tags" {
   type        = list(string)
   description = "Network tag list."
-  default     = null
+  default     = []
 }
 
 variable "can_ip_forward" {
@@ -205,13 +205,13 @@ variable "metadata" {
 variable "source_image_project" {
   type        = string
   description = "Project where the source image comes from. If it is not provided, the provider project is used."
-  default     = ""
+  default     = "schedmd-slurm-public"
 }
 
 variable "source_image_family" {
   type        = string
   description = "Source image family."
-  default     = "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-21-08-2-hpc-centos-7"
+  default     = "schedmd-slurm-21-08-2-hpc-centos-7"
 }
 
 variable "source_image" {
@@ -239,7 +239,7 @@ variable "disk_size_gb" {
 variable "disk_labels" {
   type        = map(string)
   description = "Labels to be assigned to boot disk, provided as a map."
-  default     = null
+  default     = {}
 }
 
 variable "disk_auto_delete" {

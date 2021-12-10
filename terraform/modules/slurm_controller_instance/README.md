@@ -65,7 +65,6 @@ limitations under the License.
 
 | Name | Type |
 |------|------|
-| [random_string.cluster_name](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [random_uuid.slurm_cluster_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
 | [local_file.cgroup_conf_tpl](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.slurm_conf_tpl](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |

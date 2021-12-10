@@ -162,14 +162,6 @@ data "local_file" "cgroup_conf_tpl" {
 # RANDOM #
 ##########
 
-resource "random_string" "cluster_name" {
-  length  = 8
-  lower   = true
-  upper   = false
-  special = false
-  number  = false
-}
-
 resource "random_uuid" "slurm_cluster_id" {
 }
 

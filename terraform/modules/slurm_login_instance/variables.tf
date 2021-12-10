@@ -93,7 +93,7 @@ variable "metadata" {
 
 variable "cluster_name" {
   type        = string
-  description = "Cluster name, used resource naming and slurm accounting."
+  description = "Cluster name, used for resource naming."
 }
 
 variable "slurm_cluster_id" {

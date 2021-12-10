@@ -26,6 +26,6 @@ variable "region" {
 
 variable "cluster_name" {
   type        = string
-  description = "The cluster name, to name resources with."
+  description = "Cluster name, used for resource naming."
   default     = "simple"
 }
