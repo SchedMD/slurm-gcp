@@ -85,11 +85,10 @@ locals {
       login_network_storage = var.login_network_storage
 
       cloud_parameters = {
-        ResumeRate          = lookup(var.cloud_parameters, "ResumeRate", 0)
-        SuspendRate         = lookup(var.cloud_parameters, "SuspendRate", 0)
-        ResumeTimeout       = lookup(var.cloud_parameters, "ResumeTimeout", 300)
-        SuspendTimeout      = lookup(var.cloud_parameters, "SuspendTimeout", 300)
-        SlurmctldParameters = lookup(var.cloud_parameters, "SlurmctldParameters", "")
+        ResumeRate     = lookup(var.cloud_parameters, "ResumeRate", 0)
+        SuspendRate    = lookup(var.cloud_parameters, "SuspendRate", 0)
+        ResumeTimeout  = lookup(var.cloud_parameters, "ResumeTimeout", 300)
+        SuspendTimeout = lookup(var.cloud_parameters, "SuspendTimeout", 300)
       }
       template_map = module.slurm_controller_common.template_map
       partitions   = module.slurm_controller_common.partitions
