@@ -73,35 +73,6 @@ locals {
   }
 }
 
-########
-# DATA #
-########
-
-/**
- * Verify that each node in 'var.partitions' references an existing instance
- * template as mapped by 'var.template_map'.
- */
-data "google_compute_instance_template" "compute_instance_templates" {
-  for_each = toset(flatten(
-    [for p, o in var.partitions : [for n in o.nodes : n.template]]
-  ))
-
-  project = var.project_id
-  name    = var.template_map[each.value]
-}
-
-/**
- * Verify that each partition has subnetworks that exist.
- */
-data "google_compute_subnetwork" "partition_subnetworks" {
-  for_each = var.partitions
-
-  self_link = each.value.subnetwork
-  project   = var.project_id
-  name      = each.value.subnetwork
-  region    = each.value.region
-}
-
 #################
 # DATA: SCRIPTS #
 #################

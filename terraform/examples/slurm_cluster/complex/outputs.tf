@@ -24,12 +24,7 @@ output "cluster_name" {
   value       = module.slurm_controller_instance.cluster_name
 }
 
-output "template_map" {
-  description = "Slurm compute isntance template map."
-  value       = local.template_map
-}
-
 output "partitions" {
   description = "Configured Slurm partitions."
-  value       = local.partitions
+  value       = module.slurm_controller_instance.partitions
 }

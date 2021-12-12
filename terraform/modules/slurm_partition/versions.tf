@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-project_id = "<PROJECT_ID>"
+terraform {
+  required_version = "~> 1.0"
 
-region = "<REGION>"
-
-cluster_name = "simple"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 4.0"
+    }
+  }
+}

@@ -31,45 +31,42 @@ region = "<REGION>"
 # CONFIGURATION #
 #################
 
-config = {
-  ### setup ###
-  cloudsql  = null
-  jwt_key   = null
-  munge_key = null
+### setup ###
+cloudsql  = null
+jwt_key   = null
+munge_key = null
 
-  ### storage ###
-  network_storage = [
-    # {
-    #   server_ip     = "<storage host>"
-    #   remote_mount  = "/home"
-    #   local_mount   = "/home"
-    #   fs_type       = "nfs"
-    #   mount_options = null
-    # },
-  ]
-  login_network_storage = [
-    # {
-    #   server_ip     = "<storage host>"
-    #   remote_mount  = "/net_storage"
-    #   local_mount   = "/shared"
-    #   fs_type       = "nfs"
-    #   mount_options = null
-    # },
-  ]
+### storage ###
+network_storage = [
+  # {
+  #   server_ip     = "<storage host>"
+  #   remote_mount  = "/home"
+  #   local_mount   = "/home"
+  #   fs_type       = "nfs"
+  #   mount_options = null
+  # },
+]
+login_network_storage = [
+  # {
+  #   server_ip     = "<storage host>"
+  #   remote_mount  = "/net_storage"
+  #   local_mount   = "/shared"
+  #   fs_type       = "nfs"
+  #   mount_options = null
+  # },
+]
 
-  ### scripts.d ###
-  controller_d = null
-  compute_d    = null
+### scripts.d ###
+compute_d = null
 
-  ### Slurm ###
-  slurm_bin_dir = null
-  slurm_log_dir = null
-  cloud_parameters = {
-    ResumeRate     = 0
-    ResumeTimeout  = 300
-    SuspendRate    = 0
-    SuspendTimeout = 300
-  }
+### Slurm ###
+slurm_bin_dir = null
+slurm_log_dir = null
+cloud_parameters = {
+  ResumeRate     = 0
+  ResumeTimeout  = 300
+  SuspendRate    = 0
+  SuspendTimeout = 300
 }
 
 ###########
@@ -87,8 +84,10 @@ compute_service_account = {
 
 ### Templates ###
 
-compute_templates = {
-  "cpu" = {
+compute_templates = [
+  {
+    alias = "cpu"
+
     ### network ###
     tags = [
       # "tag0",
@@ -137,8 +136,10 @@ compute_templates = {
       #   boot         = false
       # },
     ]
-  }
-  "gpu" = {
+  },
+  {
+    alias = "gpu"
+
     ### network ###
     tags = [
       # "tag0",
@@ -192,29 +193,35 @@ compute_templates = {
       # },
     ]
   }
-}
+]
 
 ##############
 # PARTITIONS #
 ##############
 
-partitions = {
-  "debug" = {
-    zone_policy = {}
-    nodes = [
+partitions = [
+  {
+    partition_name = "debug"
+    partition_conf = {
+      Default     = "YES"
+      SuspendTime = 300
+    }
+    partition_nodes = [
       {
-        template      = "cpu"
-        count_static  = 0
-        count_dynamic = 20
+        node_group_name            = "n1"
+        compute_template_alias_ref = "cpu"
+        count_static               = 0
+        count_dynamic              = 20
       },
       {
-        template      = "gpu"
-        count_static  = 0
-        count_dynamic = 10
+        node_group_name            = "tesla"
+        compute_template_alias_ref = "gpu"
+        count_static               = 0
+        count_dynamic              = 5
       },
     ]
-    exclusive        = false
-    placement_groups = false
+    zone_policy_allow = []
+    zone_policy_deny  = []
     network_storage = [
       # {
       #   server_ip     = "<storage host>"
@@ -224,11 +231,7 @@ partitions = {
       #   mount_options = null
       # },
     ]
-    conf = {
-      Default         = "YES"
-      DisableRootJobs = "NO"
-      MaxTime         = "UNLIMITED"
-      SuspendTime     = 300
-    }
+    enable_job_exclusive    = false
+    enable_placement_groups = false
   },
-}
+]

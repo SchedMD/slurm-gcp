@@ -22,6 +22,15 @@ provider "google" {
   project = var.project_id
 }
 
+########
+# DATA #
+########
+
+data "google_compute_zones" "available" {
+  project = module.network.network.project_id
+  region  = module.network.network.subnets_regions[0]
+}
+
 ###########
 # NETWORK #
 ###########
@@ -56,6 +65,67 @@ module "slurm_firewall_rules" {
   cluster_name = var.cluster_name
 }
 
+#########################
+# CONTROLLER: TEMPLATES #
+#########################
+
+module "slurm_controller_hybrid_template" {
+  source = "../../../modules/slurm_instance_template"
+
+  name_prefix      = "${var.cluster_name}-controller"
+  project_id       = var.project_id
+  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
+  subnetwork       = module.network.network.subnets_self_links[0]
+}
+
+###################
+# LOGIN: TEMPLATE #
+###################
+
+module "slurm_login_instance_template" {
+  source = "../../../modules/slurm_instance_template"
+
+  name_prefix      = "${var.cluster_name}-login"
+  project_id       = var.project_id
+  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
+  subnetwork       = module.network.network.subnets_self_links[0]
+}
+
+######################
+# COMPUTE: TEMPLATES #
+######################
+
+module "slurm_compute_instance_template" {
+  source = "../../../modules/slurm_instance_template"
+
+  name_prefix      = "${var.cluster_name}-n1"
+  project_id       = var.project_id
+  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
+  subnetwork       = module.network.network.subnets_self_links[0]
+}
+
+###################
+# SLURM PARTITION #
+###################
+
+module "slurm_partition_0" {
+  source = "../../../modules/slurm_partition"
+
+  partition_name = "debug"
+  partition_conf = {
+    Default = "YES"
+  }
+  partition_nodes = [
+    {
+      node_group_name   = "n1"
+      instance_template = module.slurm_compute_instance_template.self_link
+      count_static      = 0
+      count_dynamic     = 20
+    },
+  ]
+  subnetwork = module.network.network.subnets_self_links[0]
+}
+
 ######################
 # CONTROLLER: HYBRID #
 ######################
@@ -63,49 +133,34 @@ module "slurm_firewall_rules" {
 module "slurm_controller_hybrid" {
   source = "../../../modules/slurm_controller_hybrid"
 
-  project_id = var.project_id
-
-  ### slurm ###
-  cluster_name = var.cluster_name
-  template_map = {
-    "cpu" = module.compute_instance_template.instance_template.self_link
-  }
-  partitions = {
-    "debug" = {
-      conf = {
-        Default = "YES"
-      }
-      exclusive       = false
-      network_storage = []
-      nodes = [{
-        count_dynamic = 5
-        count_static  = 1
-        template      = "cpu"
-      }]
-      placement_groups = false
-      region           = null
-      subnetwork       = module.network.network.subnets_self_links[0]
-      zone_policy      = {}
-    }
-  }
-
-  output_dir       = "./config"
   cloud_parameters = var.cloud_parameters
+  cluster_name     = var.cluster_name
+  output_dir       = "./config"
+  partitions = [
+    module.slurm_partition_0.partition,
+  ]
+  project_id = var.project_id
 
   depends_on = [
     module.slurm_firewall_rules,
   ]
 }
 
-#####################
-# COMPUTE: TEMPLATE #
-#####################
+###################
+# LOGIN: INSTANCE #
+###################
 
-module "compute_instance_template" {
-  source = "../../../modules/slurm_instance_template"
+module "slurm_login" {
+  source = "../../../modules/slurm_login_instance"
 
-  project_id = var.project_id
-  subnetwork = module.network.network.subnets_self_links[0]
+  cluster_name      = var.cluster_name
+  instance_template = module.slurm_login_instance_template.self_link
+  region            = var.region
+  slurm_cluster_id  = module.slurm_controller_hybrid.slurm_cluster_id
+  subnetwork        = module.network.network.subnets_self_links[0]
+  zone              = data.google_compute_zones.available.names[0]
 
-  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
+  depends_on = [
+    module.slurm_controller_hybrid,
+  ]
 }

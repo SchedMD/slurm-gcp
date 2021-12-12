@@ -27,8 +27,8 @@ provider "google" {
 ########
 
 data "google_compute_zones" "available" {
-  project = var.project_id
-  region  = var.region
+  project = module.network.network.project_id
+  region  = module.network.network.subnets_regions[0]
 }
 
 ###########
@@ -65,50 +65,52 @@ module "slurm_firewall_rules" {
   cluster_name = var.cluster_name
 }
 
-###################
-# LOGIN: TEMPLATE #
-###################
+#########################
+# CONTROLLER: TEMPLATES #
+#########################
 
-module "login_instance_template" {
+module "slurm_controller_instance_template" {
   source = "../../../modules/slurm_instance_template"
 
-  project_id = var.project_id
-  subnetwork = module.network.network.subnets_self_links[0]
-
+  name_prefix      = "${var.cluster_name}-controller"
+  project_id       = var.project_id
   slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
+  subnetwork       = module.network.network.subnets_self_links[0]
+}
+
+######################
+# COMPUTE: TEMPLATES #
+######################
+
+module "slurm_compute_instance_template" {
+  source = "../../../modules/slurm_instance_template"
+
+  name_prefix      = "${var.cluster_name}-n1"
+  project_id       = var.project_id
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
+  subnetwork       = module.network.network.subnets_self_links[0]
 }
 
 ###################
-# LOGIN: INSTANCE #
+# SLURM PARTITION #
 ###################
 
-module "slurm_login_instance" {
-  source = "../../../modules/slurm_login_instance"
+module "slurm_partition_0" {
+  source = "../../../modules/slurm_partition"
 
-  instance_template = module.login_instance_template.instance_template.self_link
-  subnetwork        = module.network.network.subnets_self_links[0]
-  zone              = data.google_compute_zones.available.names[0]
-
-  cluster_name     = module.slurm_controller_instance.cluster_name
-  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
-
-  depends_on = [
-    # Must be created after the controller to mount NFS
-    module.slurm_controller_instance,
+  partition_name = "debug"
+  partition_conf = {
+    Default = "YES"
+  }
+  partition_nodes = [
+    {
+      node_group_name   = "n1"
+      instance_template = module.slurm_compute_instance_template.self_link
+      count_static      = 0
+      count_dynamic     = 20
+    },
   ]
-}
-
-########################
-# CONTROLLER: TEMPLATE #
-########################
-
-module "controller_instance_template" {
-  source = "../../../modules/slurm_instance_template"
-
-  project_id = var.project_id
   subnetwork = module.network.network.subnets_self_links[0]
-
-  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
 }
 
 ########################
@@ -118,48 +120,48 @@ module "controller_instance_template" {
 module "slurm_controller_instance" {
   source = "../../../modules/slurm_controller_instance"
 
-  instance_template = module.controller_instance_template.instance_template.self_link
+  cluster_name      = var.cluster_name
+  instance_template = module.slurm_controller_instance_template.self_link
   subnetwork        = module.network.network.subnets_self_links[0]
+  zone              = data.google_compute_zones.available.names[0]
 
-  cluster_name = var.cluster_name
-
-  template_map = {
-    "cpu" = module.compute_instance_template.instance_template.self_link
-  }
-
-  partitions = {
-    "debug" = {
-      conf = {
-        Default = "YES"
-      }
-      exclusive       = false
-      network_storage = []
-      nodes = [{
-        count_dynamic = 5
-        count_static  = 1
-        template      = "cpu"
-      }]
-      placement_groups = false
-      region           = null
-      subnetwork       = module.network.network.subnets_self_links[0]
-      zone_policy      = {}
-    }
-  }
+  partitions = [
+    module.slurm_partition_0.partition,
+  ]
 
   depends_on = [
     module.slurm_firewall_rules,
   ]
 }
 
-#####################
-# COMPUTE: TEMPLATE #
-#####################
+###################
+# LOGIN: TEMPLATE #
+###################
 
-module "compute_instance_template" {
+module "slurm_login_instance_template" {
   source = "../../../modules/slurm_instance_template"
 
-  project_id = var.project_id
-  subnetwork = module.network.network.subnets_self_links[0]
-
+  name_prefix      = "${var.cluster_name}-login"
+  project_id       = var.project_id
   slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
+  subnetwork       = module.network.network.subnets_self_links[0]
+}
+
+###################
+# LOGIN: INSTANCE #
+###################
+
+module "slurm_login" {
+  source = "../../../modules/slurm_login_instance"
+
+  cluster_name      = var.cluster_name
+  instance_template = module.slurm_login_instance_template.self_link
+  region            = var.region
+  slurm_cluster_id  = module.slurm_controller_instance.slurm_cluster_id
+  subnetwork        = module.network.network.subnets_self_links[0]
+  zone              = data.google_compute_zones.available.names[0]
+
+  depends_on = [
+    module.slurm_controller_instance,
+  ]
 }

@@ -61,9 +61,7 @@ locals {
 
   jwt_key = module.slurm_controller_common.jwt_key
 
-  template_map = module.slurm_controller_common.template_map
-
-  partitions = module.slurm_controller_common.partitions
+  partitions = { for p in var.partitions : p.partition_name => p }
 
   google_app_cred_path = (
     var.google_app_cred_path != null
@@ -111,8 +109,7 @@ locals {
       SuspendRate     = local.suspend_rate
       suspend_timeout = local.suspend_timeout
     }
-    template_map = module.slurm_controller_common.template_map
-    partitions   = module.slurm_controller_common.partitions
+    partitions = local.partitions
 
     google_app_cred_path = local.google_app_cred_path
     slurm_scripts_dir    = local.slurm_scripts_dir
@@ -195,8 +192,6 @@ module "slurm_controller_common" {
   cluster_name     = var.cluster_name
   munge_key        = var.munge_key
   jwt_key          = var.jwt_key
-  template_map     = var.template_map
-  partitions       = var.partitions
   metadata_compute = var.metadata_compute
   compute_d        = var.compute_d
   enable_devel     = var.enable_devel

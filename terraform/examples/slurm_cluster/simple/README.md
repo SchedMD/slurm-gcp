@@ -48,13 +48,14 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_compute_instance_template"></a> [compute\_instance\_template](#module\_compute\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
-| <a name="module_controller_instance_template"></a> [controller\_instance\_template](#module\_controller\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
-| <a name="module_login_instance_template"></a> [login\_instance\_template](#module\_login\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
 | <a name="module_network"></a> [network](#module\_network) | ../../../modules/_network | n/a |
+| <a name="module_slurm_compute_instance_template"></a> [slurm\_compute\_instance\_template](#module\_slurm\_compute\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
 | <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | ../../../modules/slurm_controller_instance | n/a |
+| <a name="module_slurm_controller_instance_template"></a> [slurm\_controller\_instance\_template](#module\_slurm\_controller\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../modules/slurm_firewall_rules | n/a |
-| <a name="module_slurm_login_instance"></a> [slurm\_login\_instance](#module\_slurm\_login\_instance) | ../../../modules/slurm_login_instance | n/a |
+| <a name="module_slurm_login"></a> [slurm\_login](#module\_slurm\_login) | ../../../modules/slurm_login_instance | n/a |
+| <a name="module_slurm_login_instance_template"></a> [slurm\_login\_instance\_template](#module\_slurm\_login\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_partition_0"></a> [slurm\_partition\_0](#module\_slurm\_partition\_0) | ../../../modules/slurm_partition | n/a |
 
 ## Resources
 
@@ -75,6 +76,6 @@ limitations under the License.
 | Name | Description |
 |------|-------------|
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Slurm cluster name |
+| <a name="output_partitions"></a> [partitions](#output\_partitions) | Slurm partitions |
 | <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Slurm cluster ID. |
-| <a name="output_slurm_controller_instance"></a> [slurm\_controller\_instance](#output\_slurm\_controller\_instance) | Slurm controller instance self\_links |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

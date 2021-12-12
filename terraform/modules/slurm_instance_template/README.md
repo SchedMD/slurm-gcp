@@ -90,4 +90,7 @@ limitations under the License.
 | Name | Description |
 |------|-------------|
 | <a name="output_instance_template"></a> [instance\_template](#output\_instance\_template) | Instance template details |
+| <a name="output_name"></a> [name](#output\_name) | Name of instance template |
+| <a name="output_self_link"></a> [self\_link](#output\_self\_link) | Self\_link of instance template |
+| <a name="output_tags"></a> [tags](#output\_tags) | Tags that will be associated with instance(s) |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

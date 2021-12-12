@@ -39,20 +39,28 @@ limitations under the License.
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_google"></a> [google](#provider\_google) | 4.3.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_compute_instance_template"></a> [compute\_instance\_template](#module\_compute\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
 | <a name="module_network"></a> [network](#module\_network) | ../../../modules/_network | n/a |
+| <a name="module_slurm_compute_instance_template"></a> [slurm\_compute\_instance\_template](#module\_slurm\_compute\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
 | <a name="module_slurm_controller_hybrid"></a> [slurm\_controller\_hybrid](#module\_slurm\_controller\_hybrid) | ../../../modules/slurm_controller_hybrid | n/a |
+| <a name="module_slurm_controller_hybrid_template"></a> [slurm\_controller\_hybrid\_template](#module\_slurm\_controller\_hybrid\_template) | ../../../modules/slurm_instance_template | n/a |
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../modules/slurm_firewall_rules | n/a |
+| <a name="module_slurm_login"></a> [slurm\_login](#module\_slurm\_login) | ../../../modules/slurm_login_instance | n/a |
+| <a name="module_slurm_login_instance_template"></a> [slurm\_login\_instance\_template](#module\_slurm\_login\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_partition_0"></a> [slurm\_partition\_0](#module\_slurm\_partition\_0) | ../../../modules/slurm_partition | n/a |
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [google_compute_zones.available](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones) | data source |
 
 ## Inputs
 

@@ -21,10 +21,10 @@ output "slurm_cluster_id" {
 
 output "cluster_name" {
   description = "Slurm cluster name"
-  value       = module.slurm_controller_instance.cluster_name
+  value       = var.cluster_name
 }
 
-output "slurm_controller_instance" {
-  description = "Slurm controller instance self_links"
-  value       = module.slurm_controller_instance.slurm_controller_instance.instances_self_links
+output "partitions" {
+  description = "Slurm partitions"
+  value       = module.slurm_controller_instance.partitions
 }

@@ -121,68 +121,16 @@ EOD
   default = []
 }
 
-variable "template_map" {
-  type        = map(string)
-  description = "Slurm compute templates as a map. Key=slurm_template_name Value=template_self_link"
-  default     = {}
-
-  validation {
-    condition = alltrue([
-      for t, l in var.template_map : can(regex("(^[a-z][-a-z0-9]*$)", t))
-    ])
-    error_message = "Keys must be a match of regex '(^[a-z][-a-z0-9]*$)'."
-  }
-}
-
 variable "partitions" {
-  description = <<EOD
-Cluster partitions as a map.
-
-* subnetwork  : The subnetwork name to create instances in.
-* region      : The subnetwork region to create instances in.
-* zone_policy : Zone location policy for regional bulkInsert.
-
-* template      : Slurm template key from variable 'compute_template'.
-* count_static  : Number of static nodes. These nodes are exempt from SuspendProgram.
-* count_dynamic : Number of dynamic nodes. These nodes are subject to SuspendProgram and ResumeProgram.
-
-* server_ip     : Address of the storage server.
-* remote_mount  : The location in the remote instance filesystem to mount from.
-* local_mount   : The location on the instance filesystem to mount to.
-* fs_type       : Filesystem type (e.g. "nfs").
-* mount_options : Options to mount with.
-
-* exclusive        : Enables job exclusivity.
-* placement_groups : Enables partition placement groups.
-* conf             : Slurm partition configurations as a map.
-EOD
-  type = map(object({
-    subnetwork  = string
-    region      = string
-    zone_policy = map(string)
-    nodes = list(object({
-      template      = string
-      count_static  = number
-      count_dynamic = number
-    }))
-    network_storage = list(object({
-      server_ip     = string
-      remote_mount  = string
-      local_mount   = string
-      fs_type       = string
-      mount_options = string
-    }))
-    exclusive        = bool
-    placement_groups = bool
-    conf             = map(string)
-  }))
-  default = {}
+  description = "Cluster partitions as a list. See module slurm_partition."
+  type        = list(any)
+  default     = []
 
   validation {
     condition = alltrue([
-      for k, v in var.partitions : can(regex("(^[a-z][a-z0-9]*$)", k))
+      for x in var.partitions : can(regex("(^[a-z][a-z0-9]*$)", x.partition_name))
     ])
-    error_message = "Keys must be a match of regex '(^[a-z][a-z0-9]*$)'."
+    error_message = "Items 'partition_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
   }
 }
 

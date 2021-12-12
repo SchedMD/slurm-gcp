@@ -19,23 +19,7 @@
 ##########
 
 locals {
-  template_map = {
-    for k, v in var.compute_templates
-    : k => module.slurm_compute_instance_templates[k].instance_template.self_link
-  }
-
-  partitions = {
-    for k, v in var.partitions : k => {
-      conf             = v.conf
-      exclusive        = v.exclusive
-      network_storage  = v.network_storage
-      nodes            = v.nodes
-      placement_groups = v.placement_groups
-      region           = module.network.network.subnets_regions[0]
-      subnetwork       = module.network.network.subnets_self_links[0]
-      zone_policy      = v.zone_policy
-    }
-  }
+  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
 }
 
 ############
@@ -78,7 +62,63 @@ module "slurm_firewall_rules" {
   project_id   = var.project_id
   network_name = module.network.network.network_name
   cluster_name = var.cluster_name
-  source_tags  = [var.cluster_name]
+}
+
+######################
+# COMPUTE: TEMPLATES #
+######################
+
+module "slurm_compute_instance_template" {
+  source = "../../../modules/slurm_instance_template"
+
+  for_each = { for x in var.compute_templates : x.alias => x }
+
+  additional_disks         = each.value.additional_disks
+  disable_smt              = each.value.disable_smt
+  disk_labels              = each.value.disk_labels
+  disk_size_gb             = each.value.disk_size_gb
+  disk_type                = each.value.disk_type
+  enable_confidential_vm   = each.value.enable_confidential_vm
+  enable_shielded_vm       = each.value.enable_shielded_vm
+  gpu                      = each.value.gpu
+  labels                   = each.value.labels
+  machine_type             = each.value.machine_type
+  name_prefix              = "${var.cluster_name}-compute-${each.key}"
+  preemptible              = each.value.preemptible
+  project_id               = var.project_id
+  service_account          = var.compute_service_account
+  shielded_instance_config = each.value.shielded_instance_config
+  slurm_cluster_id         = local.slurm_cluster_id
+  source_image             = each.value.source_image
+  source_image_family      = each.value.source_image_family
+  source_image_project     = each.value.source_image_project
+  subnetwork               = module.network.network.subnets_self_links[0]
+  tags                     = each.value.tags
+}
+
+###################
+# SLURM PARTITION #
+###################
+
+module "slurm_partition" {
+  source = "../../../modules/slurm_partition"
+
+  for_each = { for x in var.partitions : x.partition_name => x }
+
+  partition_name = each.value.partition_name
+  partition_conf = each.value.partition_conf
+  partition_nodes = [for n in each.value.partition_nodes : {
+    node_group_name   = n.node_group_name
+    instance_template = module.slurm_compute_instance_template[n.compute_template_alias_ref].self_link
+    count_static      = n.count_static
+    count_dynamic     = n.count_dynamic
+  }]
+  subnetwork              = module.network.network.subnets_self_links[0]
+  zone_policy_allow       = each.value.zone_policy_allow
+  zone_policy_deny        = each.value.zone_policy_deny
+  network_storage         = each.value.network_storage
+  enable_job_exclusive    = each.value.enable_job_exclusive
+  enable_placement_groups = each.value.enable_placement_groups
 }
 
 ######################
@@ -93,68 +133,23 @@ module "slurm_controller_hybrid" {
   cluster_name = var.cluster_name
   enable_devel = var.enable_devel
 
-  munge_key = var.config.munge_key
-  jwt_key   = var.config.jwt_key
+  munge_key = var.munge_key
+  jwt_key   = var.jwt_key
 
-  network_storage       = var.config.network_storage
-  login_network_storage = var.config.login_network_storage
+  network_storage       = var.network_storage
+  login_network_storage = var.login_network_storage
 
-  compute_d = var.config.compute_d
+  compute_d = var.compute_d
 
-  template_map = local.template_map
-  partitions   = local.partitions
+  partitions = values(module.slurm_partition)[*].partition
 
-  slurm_bin_dir = var.config.slurm_bin_dir
-  slurm_log_dir = var.config.slurm_log_dir
+  slurm_bin_dir = var.slurm_bin_dir
+  slurm_log_dir = var.slurm_log_dir
 
   output_dir       = "./config"
-  cloud_parameters = var.config.cloud_parameters
+  cloud_parameters = var.cloud_parameters
 
   depends_on = [
     module.slurm_firewall_rules,
   ]
-}
-
-#####################
-# COMPUTE: TEMPLATE #
-#####################
-
-module "slurm_compute_instance_templates" {
-  source = "../../../modules/slurm_instance_template"
-
-  for_each = var.compute_templates
-
-  project_id = var.project_id
-
-  ### network ###
-  subnetwork = module.network.network.subnets_self_links[0]
-  tags       = concat([var.cluster_name], each.value.tags)
-
-  ### instance ###
-  name_prefix              = "${var.cluster_name}-compute-${each.key}"
-  service_account          = var.compute_service_account
-  machine_type             = each.value.machine_type
-  min_cpu_platform         = each.value.min_cpu_platform
-  gpu                      = each.value.gpu
-  shielded_instance_config = each.value.shielded_instance_config
-  enable_confidential_vm   = each.value.enable_confidential_vm
-  enable_shielded_vm       = each.value.enable_shielded_vm
-  preemptible              = each.value.preemptible
-  labels                   = each.value.labels
-
-  ### source image ###
-  source_image_project = each.value.source_image_project
-  source_image_family  = each.value.source_image_family
-  source_image         = each.value.source_image
-
-  ### disk ###
-  disk_type        = each.value.disk_type
-  disk_size_gb     = each.value.disk_size_gb
-  disk_labels      = each.value.disk_labels
-  disk_auto_delete = each.value.disk_auto_delete
-  additional_disks = each.value.additional_disks
-
-  ### slurm ###
-  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
-  disable_smt      = each.value.disable_smt
 }

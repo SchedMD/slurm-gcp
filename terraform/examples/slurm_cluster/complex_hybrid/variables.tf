@@ -48,52 +48,80 @@ variable "region" {
 # CONFIGURATION #
 #################
 
-variable "config" {
-  type = object({
-    cloudsql = object({
-      server_ip = string
-      user      = string
-      password  = string # (sensitive)
-      db_name   = string
-    })
-    jwt_key   = string
-    munge_key = string
+variable "cloud_parameters" {
+  description = "cloud.conf key/value as a map."
+  type        = map(string)
+  default     = {}
+}
 
-    network_storage = list(object({
-      server_ip     = string
-      remote_mount  = string
-      local_mount   = string
-      fs_type       = string
-      mount_options = string
-    }))
-    login_network_storage = list(object({
-      server_ip     = string
-      remote_mount  = string
-      local_mount   = string
-      fs_type       = string
-      mount_options = string
-    }))
-
-    compute_d = string
-
-    slurm_bin_dir = string
-    slurm_log_dir = string
-
-    cloud_parameters = map(string)
-  })
-  description = "General cluster configuration."
+variable "munge_key" {
+  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
+  type        = string
+  default     = ""
   sensitive   = true
-  default = {
-    cloud_parameters      = {}
-    cloudsql              = null
-    compute_d             = null
-    jwt_key               = null
-    login_network_storage = null
-    munge_key             = null
-    network_storage       = null
-    slurm_bin_dir         = null
-    slurm_log_dir         = null
-  }
+}
+
+variable "jwt_key" {
+  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "network_storage" {
+  description = <<EOD
+Storage to mounted on all instances.
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Options to mount with.
+EOD
+  type = list(object({
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
+  default = []
+}
+
+variable "login_network_storage" {
+  description = <<EOD
+Storage to mounted on login and controller instances
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Options to mount with.
+EOD
+  type = list(object({
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
+  default = []
+}
+
+variable "compute_d" {
+  description = "Path to directory containing user compute provisioning scripts."
+  type        = string
+  default     = null
+}
+
+variable "slurm_bin_dir" {
+  description = "Path to directory slurm binary."
+  type        = string
+  default     = null
+}
+
+variable "slurm_log_dir" {
+  description = "Path to slurm log directory."
+  type        = string
+  default     = null
 }
 
 ###########
@@ -105,10 +133,7 @@ variable "compute_service_account" {
     email  = string
     scopes = set(string)
   })
-  description = <<EOD
-Service account to attach to the instance. See
-https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account.
-EOD
+  description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
   default = {
     email  = null
     scopes = null
@@ -116,7 +141,10 @@ EOD
 }
 
 variable "compute_templates" {
-  type = map(object({
+  description = "List of slurm compute instance templates."
+  type = list(object({
+    alias = string
+
     ### network ###
     tags = list(string)
 
@@ -158,8 +186,7 @@ variable "compute_templates" {
       disk_labels  = map(string)
     }))
   }))
-  description = "Maps slurm compute template name to instance definition."
-  default     = {}
+  default = []
 }
 
 ##############
@@ -167,13 +194,18 @@ variable "compute_templates" {
 ##############
 
 variable "partitions" {
-  type = map(object({
-    zone_policy = map(string)
-    nodes = list(object({
-      template      = string
-      count_static  = number
-      count_dynamic = number
+  description = "Cluster partition configuration as a list."
+  type = list(object({
+    partition_name = string
+    partition_conf = map(string)
+    partition_nodes = list(object({
+      node_group_name            = string
+      compute_template_alias_ref = string
+      count_static               = number
+      count_dynamic              = number
     }))
+    zone_policy_allow = list(string)
+    zone_policy_deny  = list(string)
     network_storage = list(object({
       server_ip     = string
       remote_mount  = string
@@ -181,10 +213,8 @@ variable "partitions" {
       fs_type       = string
       mount_options = string
     }))
-    exclusive        = bool
-    placement_groups = bool
-    conf             = map(string)
+    enable_job_exclusive    = bool
+    enable_placement_groups = bool
   }))
-  description = "Cluster partition configuration."
-  default     = {}
+  default = []
 }

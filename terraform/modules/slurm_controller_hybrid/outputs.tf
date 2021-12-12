@@ -35,24 +35,9 @@ output "jwt_key" {
   sensitive   = true
 }
 
-output "template_map" {
-  description = "Compute template map."
-  value       = local.template_map
-}
-
 output "partitions" {
   description = "Cluster partitions."
   value       = local.partitions
-}
-
-output "compute_instance_templates" {
-  description = "Compute instance template details."
-  value       = module.slurm_controller_common.compute_instance_templates
-}
-
-output "partition_subnetworks" {
-  description = "Partition subnetwork details."
-  value       = module.slurm_controller_common.partition_subnetworks
 }
 
 output "output_dir" {

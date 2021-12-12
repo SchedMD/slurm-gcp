@@ -51,9 +51,7 @@ locals {
 
   jwt_key = module.slurm_controller_common.jwt_key
 
-  template_map = module.slurm_controller_common.template_map
-
-  partitions = module.slurm_controller_common.partitions
+  partitions = { for p in var.partitions : p.partition_name => p }
 }
 
 ####################
@@ -90,8 +88,7 @@ locals {
         ResumeTimeout  = lookup(var.cloud_parameters, "ResumeTimeout", 300)
         SuspendTimeout = lookup(var.cloud_parameters, "SuspendTimeout", 300)
       }
-      template_map = module.slurm_controller_common.template_map
-      partitions   = module.slurm_controller_common.partitions
+      partitions = local.partitions
     })
     cgroup_conf_tpl   = data.local_file.cgroup_conf_tpl.content
     slurm_conf_tpl    = data.local_file.slurm_conf_tpl.content
@@ -207,8 +204,6 @@ module "slurm_controller_common" {
   cluster_name     = var.cluster_name
   munge_key        = var.munge_key
   jwt_key          = var.jwt_key
-  template_map     = var.template_map
-  partitions       = var.partitions
   metadata_compute = var.metadata_compute
   compute_d        = var.compute_d
   enable_devel     = var.enable_devel

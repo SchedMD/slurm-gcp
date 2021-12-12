@@ -90,7 +90,7 @@ limitations under the License.
 | <a name="input_munge_key"></a> [munge\_key](#input\_munge\_key) | Cluster munge authentication key. If 'null', then a key will be generated instead. | `string` | `null` | no |
 | <a name="input_network"></a> [network](#input\_network) | Network to deploy to. Only one of network or subnetwork should be specified. | `string` | `""` | no |
 | <a name="input_network_storage"></a> [network\_storage](#input\_network\_storage) | Storage to mounted on all instances.<br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Options to mount with. | <pre>list(object({<br>    server_ip     = string<br>    remote_mount  = string<br>    local_mount   = string<br>    fs_type       = string<br>    mount_options = string<br>  }))</pre> | `[]` | no |
-| <a name="input_partitions"></a> [partitions](#input\_partitions) | Cluster partitions as a map.<br><br>* subnetwork  : The subnetwork name to create instances in.<br>* region      : The subnetwork region to create instances in.<br>* zone\_policy : Zone location policy for regional bulkInsert.<br><br>* template      : Slurm template key from variable 'compute\_template'.<br>* count\_static  : Number of static nodes. These nodes are exempt from SuspendProgram.<br>* count\_dynamic : Number of dynamic nodes. These nodes are subject to SuspendProgram and ResumeProgram.<br><br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Options to mount with.<br><br>* exclusive        : Enables job exclusivity.<br>* placement\_groups : Enables partition placement groups.<br>* conf             : Slurm partition configurations as a map. | <pre>map(object({<br>    subnetwork  = string<br>    region      = string<br>    zone_policy = map(string)<br>    nodes = list(object({<br>      template      = string<br>      count_static  = number<br>      count_dynamic = number<br>    }))<br>    network_storage = list(object({<br>      server_ip     = string<br>      remote_mount  = string<br>      local_mount   = string<br>      fs_type       = string<br>      mount_options = string<br>    }))<br>    exclusive        = bool<br>    placement_groups = bool<br>    conf             = map(string)<br>  }))</pre> | `{}` | no |
+| <a name="input_partitions"></a> [partitions](#input\_partitions) | Cluster partitions as a list. See module slurm\_partition. | `list(any)` | `[]` | no |
 | <a name="input_region"></a> [region](#input\_region) | Region where the instances should be created. | `string` | `null` | no |
 | <a name="input_slurm_cluster_id"></a> [slurm\_cluster\_id](#input\_slurm\_cluster\_id) | The Cluster ID to use. If 'null' or '', then an ID will be generated. | `string` | `null` | no |
 | <a name="input_slurm_conf_tpl"></a> [slurm\_conf\_tpl](#input\_slurm\_conf\_tpl) | Slurm slurm.conf template file path. | `string` | `null` | no |
@@ -98,7 +98,6 @@ limitations under the License.
 | <a name="input_static_ips"></a> [static\_ips](#input\_static\_ips) | List of static IPs for VM instances. | `list(string)` | `[]` | no |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Subnet to deploy to. Only one of network or subnetwork should be specified. | `string` | `""` | no |
 | <a name="input_subnetwork_project"></a> [subnetwork\_project](#input\_subnetwork\_project) | The project that subnetwork belongs to. | `string` | `""` | no |
-| <a name="input_template_map"></a> [template\_map](#input\_template\_map) | Slurm compute templates as a map. Key=slurm\_template\_name Value=template\_self\_link | `map(string)` | `{}` | no |
 | <a name="input_zone"></a> [zone](#input\_zone) | Zone where the instances should be created. If not specified, instances will be<br>spread across available zones in the region. | `string` | `null` | no |
 
 ## Outputs
@@ -106,12 +105,9 @@ limitations under the License.
 | Name | Description |
 |------|-------------|
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Cluster name for resource naming and slurm accounting. |
-| <a name="output_compute_instance_templates"></a> [compute\_instance\_templates](#output\_compute\_instance\_templates) | Compute instance template details. |
 | <a name="output_jwt_key"></a> [jwt\_key](#output\_jwt\_key) | Cluster jwt authentication key. |
 | <a name="output_munge_key"></a> [munge\_key](#output\_munge\_key) | Cluster munge authentication key. |
-| <a name="output_partition_subnetworks"></a> [partition\_subnetworks](#output\_partition\_subnetworks) | Partition subnetwork details. |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Cluster partitions. |
 | <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Cluster ID for cluster resource labeling. |
 | <a name="output_slurm_controller_instance"></a> [slurm\_controller\_instance](#output\_slurm\_controller\_instance) | Controller instance |
-| <a name="output_template_map"></a> [template\_map](#output\_template\_map) | Compute template map. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

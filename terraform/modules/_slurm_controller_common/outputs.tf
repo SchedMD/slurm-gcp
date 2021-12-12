@@ -26,26 +26,6 @@ output "jwt_key" {
   sensitive   = true
 }
 
-output "template_map" {
-  description = "Compute template map."
-  value       = var.template_map
-}
-
-output "partitions" {
-  description = "Cluster partitions."
-  value       = var.partitions
-}
-
-output "compute_instance_templates" {
-  description = "Compute instance template details."
-  value       = data.google_compute_instance_template.compute_instance_templates
-}
-
-output "partition_subnetworks" {
-  description = "Partition subnetwork details."
-  value       = data.google_compute_subnetwork.partition_subnetworks
-}
-
 output "pubsub" {
   description = "Slurm Pub/Sub details."
   value       = module.pubsub

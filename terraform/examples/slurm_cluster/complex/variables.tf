@@ -48,59 +48,110 @@ variable "region" {
 # CONFIGURATION #
 #################
 
-variable "config" {
-  ### setup ###
+variable "cloud_parameters" {
+  description = "cloud.conf key/value as a map."
+  type        = map(string)
+  default     = {}
+}
+
+variable "cloudsql" {
+  description = <<EOD
+Use this database instead of the one on the controller.
+* server_ip : Address of the database server.
+* user      : The user to access the database as.
+* password  : The password, given the user, to access the given database. (sensitive)
+* db_name   : The database to access.
+EOD
   type = object({
-    cloud_parameters = map(string)
-    cloudsql = object({
-      server_ip = string
-      user      = string
-      password  = string # (sensitive)
-      db_name   = string
-    })
-    jwt_key   = string
-    munge_key = string
-
-    ### storage ###
-    network_storage = list(object({
-      server_ip     = string
-      remote_mount  = string
-      local_mount   = string
-      fs_type       = string
-      mount_options = string
-    }))
-    login_network_storage = list(object({
-      server_ip     = string
-      remote_mount  = string
-      local_mount   = string
-      fs_type       = string
-      mount_options = string
-    }))
-
-    ### slurm conf files ###
-    cgroup_conf_tpl   = string
-    slurm_conf_tpl    = string
-    slurmdbd_conf_tpl = string
-
-    ### scripts.d ###
-    controller_d = string
-    compute_d    = string
+    server_ip = string
+    user      = string
+    password  = string # sensitive
+    db_name   = string
   })
-  description = "General cluster configuration."
+  default   = null
+  sensitive = true
+}
+
+variable "munge_key" {
+  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
+  type        = string
+  default     = ""
   sensitive   = true
-  default = {
-    cloud_parameters      = {}
-    cgroup_conf_tpl       = null
-    cloudsql              = null
-    compute_d             = null
-    controller_d          = null
-    jwt_key               = null
-    login_network_storage = null
-    munge_key             = null
-    network_storage       = null
-    slurm_conf_tpl        = null
-    slurmdbd_conf_tpl     = null
-  }
+}
+
+variable "jwt_key" {
+  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "network_storage" {
+  description = <<EOD
+Storage to mounted on all instances.
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Options to mount with.
+EOD
+  type = list(object({
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
+  default = []
+}
+
+variable "login_network_storage" {
+  description = <<EOD
+Storage to mounted on login and controller instances
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Options to mount with.
+EOD
+  type = list(object({
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
+  default = []
+}
+
+variable "slurmdbd_conf_tpl" {
+  description = "Slurm slurmdbd.conf template file path."
+  type        = string
+  default     = null
+}
+
+variable "slurm_conf_tpl" {
+  description = "Slurm slurm.conf template file path."
+  type        = string
+  default     = null
+}
+
+variable "cgroup_conf_tpl" {
+  description = "Slurm cgroup.conf template file path."
+  type        = string
+  default     = null
+}
+
+variable "controller_d" {
+  description = "Path to directory containing user controller provisioning scripts."
+  type        = string
+  default     = null
+}
+
+variable "compute_d" {
+  description = "Path to directory containing user compute provisioning scripts."
+  type        = string
+  default     = null
 }
 
 ##############
@@ -113,13 +164,11 @@ variable "controller_service_account" {
     scopes = set(string)
   })
   description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
-  default = {
-    email  = null
-    scopes = null
-  }
+  default     = null
 }
 
 variable "controller_template" {
+  description = "Slurm controller template."
   type = object({
     ### network ###
     tags = list(string)
@@ -162,7 +211,6 @@ variable "controller_template" {
       disk_labels  = map(string)
     }))
   })
-  description = "Slurm controller template."
 }
 
 #########
@@ -175,14 +223,15 @@ variable "login_service_account" {
     scopes = set(string)
   })
   description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
-  default = {
-    email  = null
-    scopes = null
-  }
+  default     = null
 }
 
-variable "login_templates" {
-  type = map(object({
+variable "login" {
+  description = "List of slurm login instance definitions."
+  type = list(object({
+    alias         = string
+    num_instances = number
+
     ### network ###
     tags = list(string)
 
@@ -224,17 +273,7 @@ variable "login_templates" {
       disk_labels  = map(string)
     }))
   }))
-  description = "Maps slurm login template name to instance definition."
-  default     = {}
-}
-
-variable "login_instances" {
-  type = list(object({
-    template = string
-    count    = number
-  }))
-  description = "Instantiates login node(s) from slurm 'login_template'."
-  default     = []
+  default = []
 }
 
 ###########
@@ -254,7 +293,10 @@ variable "compute_service_account" {
 }
 
 variable "compute_templates" {
-  type = map(object({
+  description = "List of slurm compute instance templates."
+  type = list(object({
+    alias = string
+
     ### network ###
     tags = list(string)
 
@@ -296,8 +338,7 @@ variable "compute_templates" {
       disk_labels  = map(string)
     }))
   }))
-  description = "Maps slurm compute template name to instance definition."
-  default     = {}
+  default = []
 }
 
 ##############
@@ -305,13 +346,18 @@ variable "compute_templates" {
 ##############
 
 variable "partitions" {
-  type = map(object({
-    zone_policy = map(string)
-    nodes = list(object({
-      template      = string
-      count_static  = number
-      count_dynamic = number
+  description = "Cluster partition configuration as a list."
+  type = list(object({
+    partition_name = string
+    partition_conf = map(string)
+    partition_nodes = list(object({
+      node_group_name            = string
+      compute_template_alias_ref = string
+      count_static               = number
+      count_dynamic              = number
     }))
+    zone_policy_allow = list(string)
+    zone_policy_deny  = list(string)
     network_storage = list(object({
       server_ip     = string
       remote_mount  = string
@@ -319,10 +365,8 @@ variable "partitions" {
       fs_type       = string
       mount_options = string
     }))
-    exclusive        = bool
-    placement_groups = bool
-    conf             = map(string)
+    enable_job_exclusive    = bool
+    enable_placement_groups = bool
   }))
-  description = "Cluster partition configuration."
-  default     = {}
+  default = []
 }
