@@ -310,7 +310,7 @@ compute_templates = [
     }
     enable_confidential_vm = false
     enable_shielded_vm     = false
-    disable_smt            = true
+    disable_smt            = false
     preemptible            = false
     labels = {
       # label0 = "value0"
