@@ -73,6 +73,7 @@ module "slurm_firewall_rules" {
   project_id   = var.project_id
   network_name = module.network.network.network_name
   cluster_name = var.cluster_name
+  target_tags  = [var.cluster_name]
 }
 
 #########################
@@ -102,7 +103,7 @@ module "slurm_controller_instance_template" {
   source_image_family      = var.controller_template.source_image_family
   source_image_project     = var.controller_template.source_image_project
   subnetwork               = module.network.network.subnets_self_links[0]
-  tags                     = var.controller_template.tags
+  tags                     = concat([var.cluster_name], var.controller_template.tags)
 }
 
 ######################
@@ -134,7 +135,7 @@ module "slurm_compute_instance_template" {
   source_image_family      = each.value.source_image_family
   source_image_project     = each.value.source_image_project
   subnetwork               = module.network.network.subnets_self_links[0]
-  tags                     = each.value.tags
+  tags                     = concat([var.cluster_name], each.value.tags)
 }
 
 ###################
@@ -222,7 +223,7 @@ module "slurm_login_instance_template" {
   source_image_family      = each.value.source_image_family
   source_image_project     = each.value.source_image_project
   subnetwork               = module.network.network.subnets_self_links[0]
-  tags                     = each.value.tags
+  tags                     = concat([var.cluster_name], each.value.tags)
 }
 
 ###################
