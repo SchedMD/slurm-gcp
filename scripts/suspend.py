@@ -30,7 +30,7 @@ from addict import Dict as NSDict
 
 import util
 from util import run, batch_execute, ensure_execute, wait_for_operations
-from util import seperate
+from util import seperate, split_nodelist, is_exclusive_node
 from util import lkp, cfg, compute
 
 
@@ -72,8 +72,8 @@ def delete_instances(instances):
     )
     log.debug("instances do not exist: {}".format(','.join(invalid)))
 
-    ops = {inst: delete_instance_request(inst) for inst in valid}
-    done, failed = batch_execute(ops)
+    requests = {inst: delete_instance_request(inst) for inst in valid}
+    done, failed = batch_execute(requests)
     if failed:
         failed_nodes = [f"{n}: {e}" for n, (_, e) in failed.items()]
         node_str = '\n'.join(str(el) for el in truncate_iter(failed_nodes, 5))
@@ -89,17 +89,38 @@ def expand_nodelist(nodelist):
 
 def suspend_nodes(nodelist):
     """suspend nodes in nodelist """
-    log.info(f"suspend {nodelist}")
     nodes = expand_nodelist(nodelist)
     delete_instances(nodes)
 
 
-def epilog_suspend_nodes(nodelist, job_id):
-    nodes = expand_nodelist(nodelist)
-    model = next(iter(nodes))
-    partition = lkp.node_partition(model)
-    if not partition.exclusive:
+def delete_placement_groups(job_id, region):
+    def delete_placement_request(pg_name):
+        return compute.resourcePolicies().delete(
+            project=cfg.project, region=region, resourcePolicy=pg_name
+        )
+
+    flt = f"name={cfg.cluster_name}-{job_id}-*"
+    req = compute.resourcePolicies().list(
+        project=cfg.project, region=region, filter=flt
+    )
+    result = ensure_execute(req).get('items')
+    if not result:
+        log.debug(f"No placement groups found to delete for job id {job_id}")
         return
+    requests = {
+        pg['name']: delete_placement_request(pg['name']) for pg in result
+    }
+    done, failed = batch_execute(requests)
+    if failed:
+        failed_pg = [f"{n}: {e}" for n, (_, e) in failed.items()]
+        log.error(f"some nodes failed to delete: {failed_pg}")
+
+
+def epilog_suspend_nodes(nodelist, job_id):
+    """epilog suspend"""
+    node_groups = split_nodelist(nodelist)
+    if any(not is_exclusive_node(node) for node in node_groups):
+        log.fatal(f"nodelist includes non-exclusive nodes: {nodelist}")
     # Mark nodes as off limits to new jobs while powering down.
     # Have to use "down" because it's the only, current, way to remove the
     # power_up flag from the node -- followed by a power_down -- if the
@@ -108,16 +129,26 @@ def epilog_suspend_nodes(nodelist, job_id):
     # Power down nodes in slurm, so that they will become available again.
     run(f"{SCONTROL} update node={nodelist} state=power_down")
 
-    delete_instances()
+    model = next(iter(node_groups))
+    region = lkp.node_region(model)
+    suspend_nodes(nodelist)
+    if lkp.node_partition(model).placement_groups:
+        delete_placement_groups(job_id, region)
 
 
 def main(nodelist, job_id):
     """ main called when run as script """
     log.debug(f"main {nodelist} {job_id}")
+    node_groups = split_nodelist(nodelist)
+    normal, exclusive = seperate(is_exclusive_node, node_groups)
     if job_id is not None:
-        epilog_suspend_nodes(nodelist, job_id)
+        if exclusive:
+            log.info(f"epilog suspend {exclusive} job_id={job_id}")
+            epilog_suspend_nodes(','.join(exclusive), job_id)
     else:
-        suspend_nodes(nodelist)
+        if normal:
+            log.info(f"suspend {normal}")
+            suspend_nodes(','.join(normal))
 
 
 parser = argparse.ArgumentParser(
@@ -144,7 +175,6 @@ if __name__ == '__main__':
         args = parser.parse_args(argv)
     else:
         args = parser.parse_args()
-
 
     if args.debug:
         util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',

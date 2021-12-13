@@ -18,21 +18,22 @@
 # limitations under the License.
 
 import argparse
+import json
 import logging
 import os
+import re
 import sys
-import json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from itertools import groupby, islice
+from itertools import groupby, islice, filterfalse
 
 from addict import Dict as NSDict
 
 import util
 from util import run, chunked, parse_self_link
 from util import cfg, lkp, compute
-from util import batch_execute
+from util import batch_execute, seperate, split_nodelist, is_exclusive_node
 
 
 SCONTROL = Path(cfg.slurm_bin_dir if cfg else '')/'scontrol'
@@ -41,6 +42,8 @@ filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else '.')/filename).with_suffix('.log')
 
 log = logging.getLogger(filename)
+
+BULK_INSERT_LIMIT = 1000
 
 
 def instance_properties(partition):
@@ -69,21 +72,31 @@ def instance_properties(partition):
     return props
 
 
-def create_instances_request(nodes):
+def create_instances_request(nodes, placement_groups=None):
     """ Call regionInstances.bulkInsert to create instances """
-    if len(nodes) == 0:
-        return
+    assert len(nodes) > 0
+    assert len(nodes) <= BULK_INSERT_LIMIT
     # model here indicates any node that can be used to describe the rest
     model = next(iter(nodes))
     template = lkp.node_template(model)
     partition = lkp.node_partition(model)
-    region = parse_self_link(partition.subnetwork).region
+    region = lkp.node_region(model)
 
     body = NSDict()
     body.count = len(nodes)
     body.sourceInstanceTemplate = template
     # this chooses the names for each instance
-    body.perInstanceProperties = {k: {} for k in nodes}
+    if placement_groups is None:
+        body.perInstanceProperties = {k: {} for k in nodes}
+    else:
+        # if there are placement groups, all nodes should have one
+        body.perInstanceProperties = {k: {
+            'scheduling': {
+                'onHostMaintenance': 'TERMINATE',
+                'automaticRestart': False,
+            },
+            'resourcePolicies': [placement_groups[k]],
+        } for k in nodes}
     body.instanceProperties = instance_properties(partition)
 
     request = compute.regionInstances().bulkInsert(
@@ -97,44 +110,127 @@ def expand_nodelist(nodelist):
     if nodelist is None:
         return []
 
+    # TODO use a python library instead?
     nodes = run(f"{SCONTROL} show hostnames {nodelist}").stdout.splitlines()
     return nodes
 
 
-def resume_nodes(nodelist):
+def resume_nodes(nodelist, placement_groups=None):
     """ resume nodes in nodelist """
-    log.info(f"resume {nodelist}")
-    nodes = expand_nodelist(nodelist)
-
     def ident_key(n):
         # ident here will refer to the combination of partition and group
         return lkp.node_partition_name(n), lkp.node_group_name(n),
-    nodes.sort(key=ident_key)
+
+    # support already expanded list
+    if isinstance(nodelist, str):
+        log.info(f"resume {nodelist}")
+        nodelist = expand_nodelist(nodelist)
+
+    nodes = sorted(nodelist, key=ident_key)
+    if len(nodes) == 0:
+        return
     grouped_nodes = [
         (ident, chunk)
         for ident, nodes in groupby(nodes, ident_key)
-        for chunk in chunked(nodes)
+        for chunk in chunked(nodes, n=BULK_INSERT_LIMIT)
     ]
     log.debug(f"grouped_nodes: {grouped_nodes}")
 
-    inserts = [create_instances_request(nodes) for _, nodes in grouped_nodes]
+    inserts = [
+        create_instances_request(nodes, placement_groups)
+        for _, nodes in grouped_nodes
+    ]
     done, failed = batch_execute(inserts)
     if failed:
         failed_reqs = [f"{e}" for _, (_, e) in failed.items()]
         log.error("bulkInsert failures: {}".format('\n'.join(failed_reqs)))
 
 
-def prolog_resume_nodes(nodelist, job_id):
-    pass
+def create_placement_request(pg_name, region, count):
+    config = {
+        'name': pg_name,
+        'region': region,
+        'groupPlacementPolicy': {
+            'collocation': 'COLLOCATED',
+            'vmCount': count,
+        }
+    }
+    return compute.resourcePolicies().insert(
+        project=cfg.project, region=region, body=config
+    )
 
+
+def create_placement_groups(job_id, node_list):
+    PLACEMENT_MAX_CNT = 22
+    groups = {
+        f'{cfg.cluster_name}-{job_id}-{i}': nodes
+        for i, nodes in enumerate(chunked(node_list, n=PLACEMENT_MAX_CNT))
+    }
+    reverse_groups = {
+        node: group for group, nodes in groups.items() for node in nodes
+    }
+
+    model = next(iter(node_list))
+    region = lkp.node_region(model)
+
+    requests = [
+        create_placement_request(group, region, len(incl_nodes))
+        for group, incl_nodes in groups.items()
+    ]
+    done, failed = batch_execute(requests)
+    if failed:
+        reqs = [f"{e}" for _, e in failed.values()]
+        log.fatal("failed to create placement policies: {}".format(
+            '\n'.join(reqs)
+        ))
+    return reverse_groups
+
+
+def prolog_resume_nodes(nodelist, job_id):
+    """resume exclusive nodes in the node list"""
+    # called from PrologSlurmctld, these nodes are expected to be in the same
+    # partition and part of the same job
+    nodes = expand_nodelist(nodelist)
+    if len(nodes) == 0:
+        return
+    log.info(f"exclusive resume {nodelist=} {job_id=}")
+    machine_types = {
+        lkp.node_prefix(node): lkp.node_template_info(node).machineType
+        for node in split_nodelist(nodelist)
+    }
+    fail = False
+    for prefix, machine_type in machine_types.items():
+        if machine_type.split('-')[0] not in ('c2', 'c2d'):
+            log.error(
+                "Unsupported machine type for placement policy: "
+                f"{machine_type}."
+            )
+            fail = True
+    if fail:
+        log.fatal("Please use c2 or c2d machine types with placement policy")
+        return
+
+    model = next(iter(nodes))
+    partition = lkp.node_partition(model)
+    placement_groups = None
+    if partition.placement_groups:
+        placement_groups = create_placement_groups(job_id, nodes)
+    resume_nodes(nodes, placement_groups)
+    
 
 def main(nodelist, job_id):
     """ main called when run as script """
-    log.debug(f"main nodelist={nodelist} job_id={job_id}")
+    log.debug(f"main {nodelist} {job_id}")
+    # nodes are split between normal and exclusive
+    # exclusive nodes are handled by PrologSlurmctld
+    node_groups = split_nodelist(nodelist)
+    normal, exclusive = seperate(is_exclusive_node, node_groups)
     if job_id is not None:
-        prolog_resume_nodes(nodelist, job_id)
+        if exclusive:
+            prolog_resume_nodes(','.join(exclusive), job_id)
     else:
-        resume_nodes(nodelist)
+        if normal:
+            resume_nodes(','.join(normal))
 
 
 parser = argparse.ArgumentParser(

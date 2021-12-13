@@ -23,14 +23,14 @@ import shlex
 import socket
 import subprocess
 import sys
-from collections import defaultdict
+from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor, Future
 from contextlib import contextmanager
 from functools import lru_cache, reduce
 from itertools import chain, compress, islice
 from operator import itemgetter
 from pathlib import Path
-from time import sleep
+from time import sleep, time
 from urllib import parse
 
 import google.auth
@@ -46,12 +46,13 @@ from addict import Dict as NSDict
 
 
 USER_AGENT = "Slurm_GCP_Scripts/1.5 (GPN:SchedMD)"
-API_REQ_LIMIT = 1000
 ENV_CONFIG_YAML = os.getenv('SLURM_CONFIG_YAML')
 if ENV_CONFIG_YAML:
     CONFIG_FILE = Path(ENV_CONFIG_YAML)
 else:
     CONFIG_FILE = Path(__file__).with_name('config.yaml')
+API_REQ_LIMIT = 2000
+
 log = logging.getLogger(__name__)
 def_creds,  project = google.auth.default()
 
@@ -117,6 +118,21 @@ def parse_self_link(self_link: str):
     """
     link_patt = re.compile(r'(?P<key>[^\/\s]+)s\/(?P<value>[^\s\/]+)')
     return NSDict(link_patt.findall(self_link))
+
+
+def split_nodelist(nodelist):
+    """split nodelist expression into independent host expressions"""
+    # We do this in order to eliminate nodes we don't need to handle prior to
+    # expansion
+    # split on commas that are not within brackets
+    hostlist_patt = re.compile(r',(?![^\[]*\])')
+    nodes = hostlist_patt.split(nodelist)
+    return nodes
+
+
+def is_exclusive_node(node):
+    partition = lkp.node_partition(node)
+    return partition.exclusive or partition.placement_groups
 
 
 def compute_service(credentials=None, user_agent=USER_AGENT):
@@ -393,11 +409,16 @@ def batch_execute(requests, compute=compute, retry_cb=None):
         }  # rid generated here
     done = {}
     failed = {}
+    timestamps = []
+    rate_limited = False
 
     def batch_callback(rid, resp, exc):
+        nonlocal rate_limited
         if exc is not None:
             log.error(f"compute request exception {rid}: {exc}")
-            if not retry_exception(exc):
+            if retry_exception(exc):
+                rate_limited = True
+            else:
                 req = requests.pop(rid)
                 failed[rid] = (req, exc)
         else:
@@ -406,12 +427,38 @@ def batch_execute(requests, compute=compute, retry_cb=None):
                 requests.pop(rid)
                 done[rid] = resp
 
-    while requests:
+    def batch_request(reqs):
         batch = compute.new_batch_http_request(callback=batch_callback)
-        chunk = list(islice(requests.items(), BATCH_LIMIT))
-        for rid, req in chunk:
+        for rid, req in reqs:
             batch.add(req, request_id=rid)
-        ensure_execute(batch)
+        return batch
+
+    while requests:
+        if timestamps:
+            timestamps = [stamp for stamp in timestamps if stamp > time()]
+        if rate_limited and timestamps:
+            stamp = next(iter(timestamps))
+            sleep(max(stamp - time(), 0))
+            rate_limited = False
+        # up to API_REQ_LIMIT (2000) requests
+        # in chunks of up to BATCH_LIMIT (1000)
+        batches = [
+            batch_request(chunk) for chunk in
+            chunked(islice(requests.items(), API_REQ_LIMIT),
+                    BATCH_LIMIT)
+        ]
+        timestamps.append(time() + 100)
+        with ThreadPoolExecutor() as exe:
+            futures = []
+            for batch in batches:
+                future = exe.submit(ensure_execute, batch)
+                futures.append(future)
+            for future in futures:
+                # TODO 120s timeout - reasonable?
+                result = future.exception(timeout=120)
+                if result is not None:
+                    raise result
+
     return done, failed
 
 
@@ -499,7 +546,17 @@ class Dumper(yaml.SafeDumper):
 class Lookup:
     """ Wrapper class for cached data access
     """
-    regex = r'(?P<name>[^\s\-]+)-(?P<partition>[^\s\-]+)-(?P<group>\S+)-(?P<index>\d+)'
+    regex = (
+        r'^(?P<prefix>'
+            r'(?P<name>[^\s\-]+)'
+            r'-(?P<partition>[^\s\-]+)'
+            r'-(?P<group>\S+)'
+        r')'
+        r'-(?P<node>'
+            r'(?P<index>\d+)|'
+            r'(?P<range>\[[\d,-]+\])'
+        r')$'
+    )
     node_desc_regex = re.compile(regex)
 
     def __init__(self, cfg=None):
@@ -556,6 +613,9 @@ class Lookup:
             raise Exception(f"node name {node_name} is not valid")
         return NSDict(m.groupdict())
 
+    def node_prefix(self, node_name=None):
+        return self._node_desc(node_name).prefix
+
     def node_partition_name(self, node_name=None):
         return self._node_desc(node_name).partition
 
@@ -577,6 +637,10 @@ class Lookup:
 
     def node_template_info(self, node_name=None):
         return self.template_info(self.node_template(node_name))
+
+    def node_region(self, node_name=None):
+        partition = self.node_partition(node_name)
+        return parse_self_link(partition.subnetwork).region
 
     @lru_cache(maxsize=1)
     def instances(self, project=None, cluster_name=None):
