@@ -20,7 +20,7 @@
 
 project_id = "<PROJECT_ID>"
 
-cluster_name = "<CLUSTER_NAME>"
+cluster_name = "advanced"
 
 region = "<REGION>"
 

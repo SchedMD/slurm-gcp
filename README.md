@@ -72,8 +72,7 @@ installed on your computer or use the GCP
 user created terraform infrastructure. [Terraform examples](./terraform/examples) have
 been provided to fascilitate such.
 
-See the [complex cluster](./terraform/examples/slurm_cluster/complex) example
-for a robust and highly configurable example cluster.
+See the [cloud cluster](./terraform/examples/slurm_cluster/cloud) examples.
 
 #### Defining network storage mounts
 
@@ -303,8 +302,8 @@ able to communicate with the controller.
       module to create the cloud infrastructure and configuration files required
       to support a hybrid Slurm cluster.
 
-      See the [complex cluster](./terraform/examples/slurm_cluster/complex_hybrid)
-      example for a highly configurable example hybrid cluster.
+      See the [hybrid cluster](./terraform/examples/slurm_cluster/hybrid)
+      examples.
 
       **NODE:** `terraform apply` will generate slurm configuration files to
       support a hybrid configuration.

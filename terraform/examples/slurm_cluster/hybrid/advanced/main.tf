@@ -35,7 +35,7 @@ provider "google" {
 ###########
 
 module "network" {
-  source = "../../../modules/_network"
+  source = "../../../../modules/_network"
 
   project_id = var.project_id
 
@@ -57,7 +57,7 @@ module "network" {
 ##################
 
 module "slurm_firewall_rules" {
-  source = "../../../modules/slurm_firewall_rules"
+  source = "../../../../modules/slurm_firewall_rules"
 
   project_id   = var.project_id
   network_name = module.network.network.network_name
@@ -69,7 +69,7 @@ module "slurm_firewall_rules" {
 ######################
 
 module "slurm_compute_instance_template" {
-  source = "../../../modules/slurm_instance_template"
+  source = "../../../../modules/slurm_instance_template"
 
   for_each = { for x in var.compute_templates : x.alias => x }
 
@@ -101,7 +101,7 @@ module "slurm_compute_instance_template" {
 ###################
 
 module "slurm_partition" {
-  source = "../../../modules/slurm_partition"
+  source = "../../../../modules/slurm_partition"
 
   for_each = { for x in var.partitions : x.partition_name => x }
 
@@ -126,7 +126,7 @@ module "slurm_partition" {
 ######################
 
 module "slurm_controller_hybrid" {
-  source = "../../../modules/slurm_controller_hybrid"
+  source = "../../../../modules/slurm_controller_hybrid"
 
   project_id = var.project_id
 

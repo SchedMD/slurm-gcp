@@ -36,7 +36,7 @@ data "google_compute_zones" "available" {
 ###########
 
 module "network" {
-  source = "../../../modules/_network"
+  source = "../../../../modules/_network"
 
   project_id = var.project_id
 
@@ -58,7 +58,7 @@ module "network" {
 ##################
 
 module "slurm_firewall_rules" {
-  source = "../../../modules/slurm_firewall_rules"
+  source = "../../../../modules/slurm_firewall_rules"
 
   project_id   = var.project_id
   network_name = module.network.network.network_name
@@ -69,25 +69,12 @@ module "slurm_firewall_rules" {
 # CONTROLLER: TEMPLATES #
 #########################
 
-module "slurm_controller_hybrid_template" {
-  source = "../../../modules/slurm_instance_template"
+module "slurm_controller_instance_template" {
+  source = "../../../../modules/slurm_instance_template"
 
   name_prefix      = "${var.cluster_name}-controller"
   project_id       = var.project_id
-  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
-  subnetwork       = module.network.network.subnets_self_links[0]
-}
-
-###################
-# LOGIN: TEMPLATE #
-###################
-
-module "slurm_login_instance_template" {
-  source = "../../../modules/slurm_instance_template"
-
-  name_prefix      = "${var.cluster_name}-login"
-  project_id       = var.project_id
-  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
   subnetwork       = module.network.network.subnets_self_links[0]
 }
 
@@ -96,11 +83,11 @@ module "slurm_login_instance_template" {
 ######################
 
 module "slurm_compute_instance_template" {
-  source = "../../../modules/slurm_instance_template"
+  source = "../../../../modules/slurm_instance_template"
 
   name_prefix      = "${var.cluster_name}-n1"
   project_id       = var.project_id
-  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
   subnetwork       = module.network.network.subnets_self_links[0]
 }
 
@@ -109,7 +96,7 @@ module "slurm_compute_instance_template" {
 ###################
 
 module "slurm_partition_0" {
-  source = "../../../modules/slurm_partition"
+  source = "../../../../modules/slurm_partition"
 
   partition_name = "debug"
   partition_conf = {
@@ -126,20 +113,21 @@ module "slurm_partition_0" {
   subnetwork = module.network.network.subnets_self_links[0]
 }
 
-######################
-# CONTROLLER: HYBRID #
-######################
+########################
+# CONTROLLER: INSTANCE #
+########################
 
-module "slurm_controller_hybrid" {
-  source = "../../../modules/slurm_controller_hybrid"
+module "slurm_controller_instance" {
+  source = "../../../../modules/slurm_controller_instance"
 
-  cloud_parameters = var.cloud_parameters
-  cluster_name     = var.cluster_name
-  output_dir       = "./config"
+  cluster_name      = var.cluster_name
+  instance_template = module.slurm_controller_instance_template.self_link
+  subnetwork        = module.network.network.subnets_self_links[0]
+  zone              = data.google_compute_zones.available.names[0]
+
   partitions = [
     module.slurm_partition_0.partition,
   ]
-  project_id = var.project_id
 
   depends_on = [
     module.slurm_firewall_rules,
@@ -147,20 +135,33 @@ module "slurm_controller_hybrid" {
 }
 
 ###################
+# LOGIN: TEMPLATE #
+###################
+
+module "slurm_login_instance_template" {
+  source = "../../../../modules/slurm_instance_template"
+
+  name_prefix      = "${var.cluster_name}-login"
+  project_id       = var.project_id
+  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
+  subnetwork       = module.network.network.subnets_self_links[0]
+}
+
+###################
 # LOGIN: INSTANCE #
 ###################
 
 module "slurm_login" {
-  source = "../../../modules/slurm_login_instance"
+  source = "../../../../modules/slurm_login_instance"
 
   cluster_name      = var.cluster_name
   instance_template = module.slurm_login_instance_template.self_link
   region            = var.region
-  slurm_cluster_id  = module.slurm_controller_hybrid.slurm_cluster_id
+  slurm_cluster_id  = module.slurm_controller_instance.slurm_cluster_id
   subnetwork        = module.network.network.subnets_self_links[0]
   zone              = data.google_compute_zones.available.names[0]
 
   depends_on = [
-    module.slurm_controller_hybrid,
+    module.slurm_controller_instance,
   ]
 }

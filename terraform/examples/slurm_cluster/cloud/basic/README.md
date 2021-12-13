@@ -1,7 +1,7 @@
-# Example: Simple Slurm Cluster
+# Example: Basic Slurm Cluster
 
-This example creates a simple cluster with one controller, one login node, and
-capable of bursting out multiple compute nodes.
+This example creates a basic cluster with one controller, one login node, and
+capable of bursting out multiple compute nodes from a pre-configured partition.
 
 ## Usage
 
@@ -48,14 +48,14 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_network"></a> [network](#module\_network) | ../../../modules/_network | n/a |
-| <a name="module_slurm_compute_instance_template"></a> [slurm\_compute\_instance\_template](#module\_slurm\_compute\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
-| <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | ../../../modules/slurm_controller_instance | n/a |
-| <a name="module_slurm_controller_instance_template"></a> [slurm\_controller\_instance\_template](#module\_slurm\_controller\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
-| <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../modules/slurm_firewall_rules | n/a |
-| <a name="module_slurm_login"></a> [slurm\_login](#module\_slurm\_login) | ../../../modules/slurm_login_instance | n/a |
-| <a name="module_slurm_login_instance_template"></a> [slurm\_login\_instance\_template](#module\_slurm\_login\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
-| <a name="module_slurm_partition_0"></a> [slurm\_partition\_0](#module\_slurm\_partition\_0) | ../../../modules/slurm_partition | n/a |
+| <a name="module_network"></a> [network](#module\_network) | ../../../../modules/_network | n/a |
+| <a name="module_slurm_compute_instance_template"></a> [slurm\_compute\_instance\_template](#module\_slurm\_compute\_instance\_template) | ../../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | ../../../../modules/slurm_controller_instance | n/a |
+| <a name="module_slurm_controller_instance_template"></a> [slurm\_controller\_instance\_template](#module\_slurm\_controller\_instance\_template) | ../../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../../modules/slurm_firewall_rules | n/a |
+| <a name="module_slurm_login"></a> [slurm\_login](#module\_slurm\_login) | ../../../../modules/slurm_login_instance | n/a |
+| <a name="module_slurm_login_instance_template"></a> [slurm\_login\_instance\_template](#module\_slurm\_login\_instance\_template) | ../../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_partition_0"></a> [slurm\_partition\_0](#module\_slurm\_partition\_0) | ../../../../modules/slurm_partition | n/a |
 
 ## Resources
 
@@ -67,7 +67,7 @@ limitations under the License.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"simple"` | no |
+| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"basic"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The region to place resources in. | `string` | n/a | yes |
 

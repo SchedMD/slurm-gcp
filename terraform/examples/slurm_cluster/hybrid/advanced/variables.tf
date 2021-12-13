@@ -26,7 +26,7 @@ variable "project_id" {
 variable "cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."
-  default     = "complex"
+  default     = "advanced"
 }
 
 variable "enable_devel" {
