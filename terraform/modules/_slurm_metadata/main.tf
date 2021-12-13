@@ -20,18 +20,6 @@
 
 locals {
   scripts_dir = abspath("${path.module}/../../../scripts")
-
-  munge_key = (
-    var.munge_key == null
-    ? random_id.munge_key.b64_std
-    : var.munge_key
-  )
-
-  jwt_key = (
-    var.jwt_key == null
-    ? random_id.jwt_key.b64_std
-    : var.jwt_key
-  )
 }
 
 ####################
@@ -109,18 +97,6 @@ data "local_file" "util" {
   filename = abspath("${local.scripts_dir}/util.py")
 }
 
-##########
-# RANDOM #
-##########
-
-resource "random_id" "munge_key" {
-  byte_length = 256
-}
-
-resource "random_id" "jwt_key" {
-  byte_length = 256
-}
-
 ############
 # METADATA #
 ############
@@ -134,77 +110,4 @@ resource "google_compute_project_metadata_item" "slurm_metadata" {
     local.scripts_compute_d,
     var.metadata_compute,
   ))
-}
-
-#################
-# DESTROY NODES #
-#################
-
-module "slurm_destroy_nodes" {
-  source = "../slurm_destroy_nodes"
-
-  slurm_cluster_id = var.slurm_cluster_id
-}
-
-##########
-# PUBSUB #
-##########
-
-resource "google_pubsub_schema" "this" {
-  name       = "${var.cluster_name}-slurm-events"
-  type       = "PROTOCOL_BUFFER"
-  definition = <<EOD
-syntax = "proto3";
-message Results {
-  string request = 1;
-  string timestamp = 2;
-}
-EOD
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "google_pubsub_topic" "this" {
-  name = "${var.cluster_name}-slurm-events"
-
-  schema_settings {
-    schema   = google_pubsub_schema.this.id
-    encoding = "JSON"
-  }
-
-  labels = {
-    slurm_cluster_id = var.slurm_cluster_id
-  }
-
-  message_retention_duration = "86400s"
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-module "pubsub" {
-  source  = "terraform-google-modules/pubsub/google"
-  version = "~> 3.0"
-
-  project_id = var.project_id
-  topic      = google_pubsub_topic.this.id
-
-  create_topic = false
-
-  pull_subscriptions = [
-    {
-      name                    = "${var.cluster_name}-slurm-pull"
-      ack_deadline_seconds    = 30
-      maximum_backoff         = "300s"
-      minimum_backoff         = "30s"
-      enable_message_ordering = true
-    },
-  ]
-
-  subscription_labels = {
-    slurm_cluster_id = var.slurm_cluster_id
-  }
 }

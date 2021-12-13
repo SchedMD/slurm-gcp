@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-provider "google" {
-  project = var.project_id
-}
+terraform {
+  required_version = "~> 1.0"
 
-module "slurm_controller_hybrid" {
-  source = "../../../modules/slurm_controller_hybrid"
-
-  project_id   = var.project_id
-  cluster_name = var.cluster_name
-  output_dir   = "./config"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 4.0"
+    }
+  }
 }

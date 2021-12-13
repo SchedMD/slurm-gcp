@@ -1,6 +1,6 @@
-# Module: Slurm Controller Common
+# Module: Slurm Pubsub
 
-This module contains common components for `slurm_controller_*` modules.
+This module creates project metadata for a Slurm cluster.
 
 **NOTE:** This module is only intended to be used by Slurm modules.
 
@@ -28,7 +28,6 @@ limitations under the License.
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | ~> 4.0 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.0 |
 
 ## Providers
 
@@ -36,24 +35,16 @@ limitations under the License.
 |------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | 4.3.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | 2.1.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.1.0 |
 
 ## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_pubsub"></a> [pubsub](#module\_pubsub) | terraform-google-modules/pubsub/google | ~> 3.0 |
-| <a name="module_slurm_destroy_nodes"></a> [slurm\_destroy\_nodes](#module\_slurm\_destroy\_nodes) | ../slurm_destroy_nodes | n/a |
+No modules.
 
 ## Resources
 
 | Name | Type |
 |------|------|
 | [google_compute_project_metadata_item.slurm_metadata](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
-| [google_pubsub_schema.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_schema) | resource |
-| [google_pubsub_topic.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
-| [random_id.jwt_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
-| [random_id.munge_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [local_file.clustereventd](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.clustersync](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.resume](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
@@ -67,21 +58,16 @@ limitations under the License.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming and slurm accounting. | `string` | n/a | yes |
+| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | n/a | yes |
 | <a name="input_compute_d"></a> [compute\_d](#input\_compute\_d) | Path to directory containing user compute provisioning scripts. | `string` | `null` | no |
 | <a name="input_enable_devel"></a> [enable\_devel](#input\_enable\_devel) | Enables development mode. Not for production use. | `bool` | `false` | no |
-| <a name="input_jwt_key"></a> [jwt\_key](#input\_jwt\_key) | Cluster jwt authentication key. If 'null', then a key will be generated instead. | `string` | `null` | no |
-| <a name="input_metadata_compute"></a> [metadata\_compute](#input\_metadata\_compute) | Metadata key/value pairs to make available from within the compute instances. | `map(string)` | `null` | no |
-| <a name="input_munge_key"></a> [munge\_key](#input\_munge\_key) | Cluster munge authentication key. If 'null', then a key will be generated instead. | `string` | `null` | no |
+| <a name="input_metadata_compute"></a> [metadata\_compute](#input\_metadata\_compute) | Metadata key/value pairs to make available from within the compute instances. | `map(string)` | `{}` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID. | `string` | n/a | yes |
-| <a name="input_slurm_cluster_id"></a> [slurm\_cluster\_id](#input\_slurm\_cluster\_id) | The Cluster ID. | `string` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_jwt_key"></a> [jwt\_key](#output\_jwt\_key) | Cluster jwt authentication key. |
-| <a name="output_munge_key"></a> [munge\_key](#output\_munge\_key) | Cluster munge authentication key. |
-| <a name="output_pubsub"></a> [pubsub](#output\_pubsub) | Slurm Pub/Sub details. |
-| <a name="output_pubsub_topic"></a> [pubsub\_topic](#output\_pubsub\_topic) | Slurm Pub/Sub topic ID. |
+| <a name="output_metadata"></a> [metadata](#output\_metadata) | Project metadata for slurm cluster. |
+| <a name="output_scripts"></a> [scripts](#output\_scripts) | Scripts in compute.d |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

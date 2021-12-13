@@ -32,7 +32,6 @@ region = "<REGION>"
 #################
 
 ### setup ###
-cloudsql  = null
 jwt_key   = null
 munge_key = null
 

@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = "~> 1.0"
+###########
+# GENERAL #
+###########
 
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 4.0"
-    }
+variable "project_id" {
+  description = "Project ID."
+  type        = string
+}
 
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
+#########
+# SLURM #
+#########
 
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
-  }
+variable "cluster_name" {
+  description = "Cluster name, used for resource naming."
+  type        = string
+}
+
+variable "slurm_cluster_id" {
+  description = "The Slurm cluster ID label."
+  type        = string
 }

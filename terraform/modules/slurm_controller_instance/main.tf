@@ -47,9 +47,17 @@ locals {
     : var.slurm_cluster_id
   )
 
-  munge_key = module.slurm_controller_common.munge_key
+  munge_key = (
+    var.munge_key == null
+    ? random_id.munge_key.b64_std
+    : var.munge_key
+  )
 
-  jwt_key = module.slurm_controller_common.jwt_key
+  jwt_key = (
+    var.jwt_key == null
+    ? random_id.jwt_key.b64_std
+    : var.jwt_key
+  )
 
   partitions = { for p in var.partitions : p.partition_name => p }
 }
@@ -75,8 +83,8 @@ locals {
       munge_key = local.munge_key
       jwt_key   = local.jwt_key
       pubsub = {
-        topic_id        = module.slurm_controller_common.pubsub_topic
-        subscription_id = module.slurm_controller_common.pubsub.subscription_names[0]
+        topic_id        = module.slurm_pubsub.topic
+        subscription_id = module.slurm_pubsub.pubsub.subscription_names[0]
       }
 
       network_storage       = var.network_storage
@@ -161,6 +169,14 @@ data "local_file" "cgroup_conf_tpl" {
 resource "random_uuid" "slurm_cluster_id" {
 }
 
+resource "random_id" "munge_key" {
+  byte_length = 256
+}
+
+resource "random_id" "jwt_key" {
+  byte_length = 256
+}
+
 ############
 # INSTANCE #
 ############
@@ -191,20 +207,38 @@ module "slurm_controller_instance" {
   )
 }
 
-##########
-# COMMON #
-##########
+############
+# METADATA #
+############
 
-module "slurm_controller_common" {
-  source = "../_slurm_controller_common"
+module "slurm_metadata" {
+  source = "../_slurm_metadata"
 
-  project_id = local.project_id
-
-  slurm_cluster_id = local.slurm_cluster_id
   cluster_name     = var.cluster_name
-  munge_key        = var.munge_key
-  jwt_key          = var.jwt_key
-  metadata_compute = var.metadata_compute
   compute_d        = var.compute_d
   enable_devel     = var.enable_devel
+  metadata_compute = var.metadata_compute
+  project_id       = local.project_id
+}
+
+##########
+# PUBSUB #
+##########
+
+module "slurm_pubsub" {
+  source = "../_slurm_pubsub"
+
+  cluster_name     = var.cluster_name
+  project_id       = local.project_id
+  slurm_cluster_id = local.slurm_cluster_id
+}
+
+#################
+# DESTROY NODES #
+#################
+
+module "slurm_destroy_nodes" {
+  source = "../slurm_destroy_nodes"
+
+  slurm_cluster_id = local.slurm_cluster_id
 }

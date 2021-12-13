@@ -19,8 +19,8 @@
 ###########
 
 variable "project_id" {
-  type        = string
   description = "Project ID."
+  type        = string
 }
 
 ############
@@ -28,9 +28,9 @@ variable "project_id" {
 ############
 
 variable "metadata_compute" {
-  type        = map(string)
   description = "Metadata key/value pairs to make available from within the compute instances."
-  default     = null
+  type        = map(string)
+  default     = {}
 }
 
 #########
@@ -38,46 +38,18 @@ variable "metadata_compute" {
 #########
 
 variable "cluster_name" {
+  description = "Cluster name, used for resource naming."
   type        = string
-  description = "Cluster name, used for resource naming and slurm accounting."
-}
-
-variable "slurm_cluster_id" {
-  type        = string
-  description = "The Cluster ID."
-}
-
-variable "enable_devel" {
-  type        = bool
-  description = "Enables development mode. Not for production use."
-  default     = false
-}
-
-variable "munge_key" {
-  type        = string
-  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
-  default     = null
-  sensitive   = true
-
-  validation {
-    condition = (
-      var.munge_key == null
-      ? true
-      : length(var.munge_key) >= 32 && length(var.munge_key) <= 1024
-    )
-    error_message = "Munge key must be between 32 and 1024 bytes."
-  }
-}
-
-variable "jwt_key" {
-  type        = string
-  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
-  default     = null
-  sensitive   = true
 }
 
 variable "compute_d" {
-  type        = string
   description = "Path to directory containing user compute provisioning scripts."
+  type        = string
   default     = null
+}
+
+variable "enable_devel" {
+  description = "Enables development mode. Not for production use."
+  type        = bool
+  default     = false
 }

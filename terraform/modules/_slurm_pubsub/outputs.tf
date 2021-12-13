@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-provider "google" {
-  project = var.project_id
+output "schema" {
+  description = "Slurm Pub/Sub topic ID."
+  value       = google_pubsub_schema.this.id
 }
 
-module "slurm_controller_hybrid" {
-  source = "../../../modules/slurm_controller_hybrid"
+output "topic" {
+  description = "Slurm Pub/Sub topic ID."
+  value       = google_pubsub_topic.this.name
+}
 
-  project_id   = var.project_id
-  cluster_name = var.cluster_name
-  output_dir   = "./config"
+output "pubsub" {
+  description = "Slurm Pub/Sub module details."
+  value       = module.pubsub
 }

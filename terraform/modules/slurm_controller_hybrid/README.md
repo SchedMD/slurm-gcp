@@ -53,7 +53,9 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_slurm_controller_common"></a> [slurm\_controller\_common](#module\_slurm\_controller\_common) | ../_slurm_controller_common | n/a |
+| <a name="module_slurm_destroy_nodes"></a> [slurm\_destroy\_nodes](#module\_slurm\_destroy\_nodes) | ../slurm_destroy_nodes | n/a |
+| <a name="module_slurm_metadata"></a> [slurm\_metadata](#module\_slurm\_metadata) | ../_slurm_metadata | n/a |
+| <a name="module_slurm_pubsub"></a> [slurm\_pubsub](#module\_slurm\_pubsub) | ../_slurm_pubsub | n/a |
 
 ## Resources
 
@@ -61,6 +63,8 @@ limitations under the License.
 |------|------|
 | [local_file.config_yaml](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [null_resource.setup_hybrid](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [random_id.jwt_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
+| [random_id.munge_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [random_uuid.slurm_cluster_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
 | [local_file.setup_hybrid](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 

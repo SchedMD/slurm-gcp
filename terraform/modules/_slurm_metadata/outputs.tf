@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-output "munge_key" {
-  description = "Cluster munge authentication key."
-  value       = local.munge_key
-  sensitive   = true
+output "metadata" {
+  description = "Project metadata for slurm cluster."
+  value       = google_compute_project_metadata_item.slurm_metadata
 }
 
-output "jwt_key" {
-  description = "Cluster jwt authentication key."
-  value       = local.jwt_key
-  sensitive   = true
-}
-
-output "pubsub" {
-  description = "Slurm Pub/Sub details."
-  value       = module.pubsub
-}
-
-output "pubsub_topic" {
-  description = "Slurm Pub/Sub topic ID."
-  value       = google_pubsub_topic.this.name
+output "scripts" {
+  description = "Scripts in compute.d"
+  value       = local.scripts_compute_d
 }
