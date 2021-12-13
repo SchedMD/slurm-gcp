@@ -82,25 +82,39 @@ variable "region" {
 }
 
 variable "zone_policy_allow" {
-  description = "Partition nodes will prefer to be created in the listed zones."
-  type        = list(string)
+  description = <<EOD
+Partition nodes will prefer to be created in the listed zones. If a zone appears
+in both zone_policy_allow and zone_policy_deny, then zone_policy_deny will take
+priority for that zone.
+EOD
+  type        = set(string)
   default     = []
 }
 
 variable "zone_policy_deny" {
-  description = "Partition nodes will not be created in the listed zones."
-  type        = list(string)
+  description = <<EOD
+Partition nodes will not be created in the listed zones. If a zone appears in
+both zone_policy_allow and zone_policy_deny, then zone_policy_deny will take
+priority for that zone.
+EOD
+  type        = set(string)
   default     = []
 }
 
 variable "enable_job_exclusive" {
-  description = "Enables job exclusivity. One job to job one placement."
+  description = <<EOD
+Enables job exclusivity. A job will run exclusively on the scheduled nodes.
+NOTE: enable_placement_groups=true will force enable_job_exclusive=true.
+EOD
   type        = bool
   default     = false
 }
 
 variable "enable_placement_groups" {
-  description = "Enables job placement groups. Instances will be colocated for a job."
+  description = <<EOD
+Enables job placement groups. Instances will be colocated for a job.
+NOTE: enable_placement_groups=true will force enable_job_exclusive=true.
+EOD
   type        = bool
   default     = false
 }

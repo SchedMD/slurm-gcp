@@ -24,9 +24,9 @@ locals {
     partition_conf    = var.partition_conf
     partition_nodes   = { for n in var.partition_nodes : n.node_group_name => n }
     subnetwork        = data.google_compute_subnetwork.partition_subnetwork.self_link
-    zone_policy_allow = var.zone_policy_allow
+    zone_policy_allow = setsubtract(var.zone_policy_allow, var.zone_policy_deny)
     zone_policy_deny  = var.zone_policy_deny
-    exclusive         = var.enable_job_exclusive
+    exclusive         = var.enable_placement_groups == true ? true : var.enable_job_exclusive
     placement_groups  = var.enable_placement_groups
     network_storage   = var.network_storage
   }
