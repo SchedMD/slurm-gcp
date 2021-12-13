@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-variable "slurm_cluster_id" {
-  description = "Destroy compute nodes labeled with this slurm_cluster_id."
-  type        = string
-
-  validation {
-    condition     = length(var.slurm_cluster_id) > 0
-    error_message = "The slurm_cluster_id must not be empty."
-  }
+terraform {
+  required_version = "~> 1.0"
 }

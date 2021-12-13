@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-variable "slurm_cluster_id" {
-  description = "Destroy compute nodes labeled with this slurm_cluster_id."
-  type        = string
+module "slurm_destroy_nodes" {
+  source = "../../../modules/slurm_destroy_nodes"
 
-  validation {
-    condition     = length(var.slurm_cluster_id) > 0
-    error_message = "The slurm_cluster_id must not be empty."
-  }
+  slurm_cluster_id = var.slurm_cluster_id
 }
