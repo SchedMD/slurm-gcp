@@ -13,4 +13,4 @@
 # limitations under the License.
 ---
 
-lustre_artifacts_dir: /root/lustre_pkgs
+lustre_artifacts_dir: /tmp/lustre_pkgs
