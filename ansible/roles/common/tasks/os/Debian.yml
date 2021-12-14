@@ -13,13 +13,6 @@
 # limitations under the License.
 ---
 
-- name: Install Aptitude
-  apt:
-    name:
-      - aptitude
-      - software-properties-common
-    state: present
-
 - name: Wait for APT Lock
   shell: while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
 
