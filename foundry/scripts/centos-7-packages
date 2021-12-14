@@ -17,9 +17,11 @@ kernel-devel
 kernel-headers
 libcurl-devel
 libevent-devel
+libglvnd-devel
 libibmad
 libibumad
 libtool
+libyaml
 libyaml-devel
 lua
 lua-devel
@@ -46,4 +48,5 @@ rrdtool-devel
 tmux
 vim
 wget
+yum-plugin-versionlock
 yum-utils

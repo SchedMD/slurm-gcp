@@ -34,6 +34,7 @@ import yaml
 
 
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
+TMPDIR = Path('/tmp')
 SCRIPTSDIR = Path('/root/image-scripts')
 SCRIPTSDIR.mkdirp()
 # get util.py from metadata
@@ -258,16 +259,15 @@ def install_lustre():
         srpm_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/el7/client/SRPMS/'
 
         util.run('yum update -y')
-        util.run('yum install -y wget libyaml')
 
         rpmlist = ','.join(('kmod-lustre-client-2*.rpm', 'lustre-client-2*.rpm'))
         util.run(
-            f"wget -r -l1 -np -nd -A '{rpmlist}' '{rpm_url}' -P {lustre_tmp}")
+            f"wget -nv -r -l1 -np -nd -A '{rpmlist}' '{rpm_url}' -P {lustre_tmp}")
         util.run(
             f"find {lustre_tmp} -name '*.rpm' -execdir rpm -ivh {{}} ';'")
 
         srpm = 'lustre-client-dkms-2*.src.rpm'
-        util.run(f"wget -r -l1 -np -nd -A {srpm} {srpm_url} -P {lustre_tmp}")
+        util.run(f"wget -nv -r -l1 -np -nd -A {srpm} {srpm_url} -P {lustre_tmp}")
         srpm = next(lustre_tmp.glob(srpm))
         with cd(lustre_tmp):
             util.run(f"rpm2cpio {srpm} | cpio -idmv", shell=True)
@@ -279,7 +279,7 @@ def install_lustre():
     elif cfg.os_name in ('debian10', 'ubuntu2004'):
         deb_url = 'https://downloads.whamcloud.com/public/lustre/latest-release/ubuntu1804/client/'
         deblist = ','.join(('lustre-client-*_amd64.deb', 'lustre-source*.deb'))
-        util.run(f"wget -r -l1 -np -nd -A {deblist} {deb_url} -P {lustre_tmp}")
+        util.run(f"wget -nv -r -l1 -np -nd -A {deblist} {deb_url} -P {lustre_tmp}")
         for deb in lustre_tmp.glob('*.deb'):
             util.run(f"dpkg -i {deb}")
         util.run("apt-get install -f -y")
@@ -313,34 +313,44 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 
 def install_cuda():
     """ Install cuda """
-    if cfg.os_name in ('centos7', 'centos8'):
-        vers = 'rhel' + cfg.os_name[-1]
-        repo = f'http://developer.download.nvidia.com/compute/cuda/repos/{vers}/x86_64/cuda-{vers}.repo'
-        util.run(f"yum-config-manager --add-repo {repo}")
-        util.run("yum clean all")
-        util.run("yum -y install nvidia-driver-latest-dkms cuda")
-        util.run("yum -y install cuda-drivers")
-        # Creates the device files
-    elif cfg.os_name == 'debian10':
-        util.run("apt-get install linux-headers-$(uname -r)")
-        repo = 'https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/'
-        util.run(f"add-apt-repository 'deb {repo} /'")
-        util.run("apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/7fa2af80.pub")
-        util.run("add-apt-repository contrib")
-        util.run("apt-get update")
-        util.run("apt-get -y install nvidia-kernel-dkms cuda")
-    elif cfg.os_name == 'ubuntu2004':
-        pin_url = 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin'
-        pinfile = Path('/etc/apt/preferences.d/cuda-repository-pin')
-        pinfile.write_text(requests.get(pin_url).text)
+    nvidia_version = '460.106.00'
+    nvidia_run = TMPDIR/f'NVIDIA-Linux-x86_64-{nvidia_version}.run'
+    nvidia_url = f'https://us.download.nvidia.com/tesla/{nvidia_version}/{nvidia_run.name}'
+    util.run(f"wget -nv {nvidia_url} -O {nvidia_run}")
+    util.run(f"bash {nvidia_run} --silent --dkms")
 
-        key_url = 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub'
-        util.run(f"apt-key adv --fetch-keys {key_url}")
+    cuda_version = '11.2.2'
+    cuda_driver_version = '460.32.03'
+    cuda_run = TMPDIR/f'cuda_{cuda_version}_{cuda_driver_version}_linux.run'
+    cuda_url = f'https://developer.download.nvidia.com/compute/cuda/{cuda_version}/local_installers/{cuda_run.name}'
+    cuda_samples_dir = Path('/usr/local/share/cuda/samples')
+    util.run(f"wget -nv {cuda_url} -O {cuda_run}")
+    util.run(f"bash {cuda_run} --silent --toolkit --samples --samplespath={cuda_samples_dir}")
 
-        repo_url = 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/'
-        util.run(f"add-apt-repository 'deb {repo_url} /'")
-        util.run("apt-get update")
-        util.run("apt-get -y install cuda")
+    # delete run files to save space, but record the url
+    (SCRIPTSDIR/'nvidia_url').write_text(nvidia_url)
+    nvidia_run.unlink()
+    (SCRIPTSDIR/'cuda_url').write_text(cuda_url)
+    cuda_run.unlink()
+
+    # add cuda to path and LD
+    Path('/etc/profile.d/cuda.sh').write_text("""
+CUDA_PATH=/usr/local/cuda
+PATH=$CUDA_PATH/bin${PATH:+:${PATH}}
+LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+""")
+
+    # compile cuda samples
+    samples_dir = next(cuda_samples_dir.glob('NVIDIA_CUDA-*'))
+    with cd(samples_dir):
+        cuda_install = Path('/usr/local/cuda')
+        env = os.environ.copy()
+        path = env.get('PATH')
+        ld_path = env.get('LD_LIBRARY_PATH', None)
+        env['PATH'] = f"{cuda_install}/bin:{path}"
+        env['LD_LIBRARY_PATH'] = ':'.join(
+            e for e in [f'{cuda_install}/lib64', ld_path] if e)
+        util.run("make", stdout=DEVNULL, env=env)
 
 
 def install_libjwt():
@@ -365,6 +375,13 @@ def install_libjwt():
     util.run("ldconfig")
 
 
+def set_gcloud_version():
+    if cfg.os_name.startswith('centos'):
+        gcloud_version = '365.0.1-1'
+        util.run(f"yum downgrade -y google-cloud-sdk-{gcloud_version}")
+        util.run(f"yum versionlock add google-cloud-sdk-{gcloud_version}")
+
+
 def install_dependencies():
     """ Install all dependencies """
 
@@ -372,13 +389,13 @@ def install_dependencies():
 /usr/local/lib
 /usr/local/lib64
 """)
-
     if cfg.os_name in ('centos7', 'centos8'):
         util.run(f"{cfg.pacman} -y groupinstall 'Development Tools'")
     packages = util.get_metadata('attributes/packages').splitlines()
     util.run(f"{cfg.pacman} install -y {' '.join(packages)}", shell=True,
              env=dict(os.environ, DEBIAN_FRONTEND='noninteractive'))
     install_libjwt()
+    set_gcloud_version()
 
 
 def install_apps():
@@ -590,12 +607,6 @@ S_PATH={dirs.install}
 PATH=$PATH:$S_PATH/bin:$S_PATH/sbin
 """)
 
-    Path('/etc/profile.d/cuda.sh').write_text("""
-CUDA_PATH=/usr/local/cuda
-PATH=$CUDA_PATH/bin${PATH:+:${PATH}}
-LD_LIBRARY_PATH=$CUDA_PATH/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-""")
-
 
 def setup_logrotate():
     """ configure logrotate for power scripts and slurm logs """
@@ -645,6 +656,16 @@ def setup_selinux():
 SELINUX=disabled
 SELINUXTYPE=targeted
 """)
+
+
+def setup_grub():
+    if cfg.os_name == 'debian10':
+        grubd = Path('/etc/default/grub.d')
+        if grubd.exists():
+            (grubd/'slurm_cgroup.cfg').write_text("""
+GRUB_CMDLINE_LINUX="${GRUB_CMDLINE_LINUX} cgroup_enable=memory swapaccount=1"
+""")
+            util.run("update-grub")
 
 
 def install_ompi():
@@ -711,7 +732,6 @@ def remove_metadata():
     meta_keys = "startup-script,setup-script,util-script,fluentd-conf"
 
     util.run(f"{cmd} {cfg.hostname} --zone={cfg.zone} --keys={meta_keys}")
-    util.run("systemctl enable tmp.mount")
 
 
 def stop_instance():
@@ -720,6 +740,10 @@ def stop_instance():
 
 def main():
 
+    # start tmpfs at /tmp now
+    util.run("systemctl enable tmp.mount")
+    util.run("systemctl start tmp.mount")
+
     setup_selinux()
 
     start_motd()
@@ -727,13 +751,16 @@ def main():
     create_users()
     install_dependencies()
 
-    with ThreadPoolExecutor() as exe:
-        exe.submit(install_compiled_apps)
-        exe.submit(install_apps)
+    #with ThreadPoolExecutor() as exe:
+    #    exe.submit(install_compiled_apps)
+    #    exe.submit(install_apps)
+    install_apps()
+    install_compiled_apps()
 
     setup_munge()
     setup_bash_profile()
     setup_modules()
+    setup_grub()
 
     install_controller_service_scripts()
     install_compute_service_scripts()

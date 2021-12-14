@@ -257,7 +257,7 @@ variable "partitions" {
       local_mount  = string,
       fs_type      = string,
     mount_options = string })),
-    preemptible_bursting = bool,
+    preemptible_bursting = string,
     vpc_subnet           = string,
     exclusive            = bool,
     enable_placement     = bool,
@@ -318,6 +318,6 @@ output "login_network_ips" {
 }
 
 output "config" {
-  value = module.slurm_cluster_controller.config
+  value     = module.slurm_cluster_controller.config
   sensitive = true
 }
