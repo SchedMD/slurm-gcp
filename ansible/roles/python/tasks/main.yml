@@ -21,38 +21,14 @@
     name: "{{python_packages}}"
     state: present
 
-- name: Git Clone pyenv
-  git:
-    repo: "{{pyenv_git_url}}"
-    dest: "{{pyenv_root}}"
-    version: "{{pyenv_version}}"
-    clone: yes
-    depth: "1"
-
-- name: Make pyenv bash extension
-  shell:
-    cmd: "{{pyenv_root}}/src/configure && make -C src"
-    chdir: "{{pyenv_root}}"
-
-- name: Add pyenv to 'profile.d'
-  template:
-    src: profile.d/pyenv.sh.j2
-    dest: /etc/profile.d/pyenv.sh
-
-- name: Install python to /usr/local
-  command: "python-build {{python_version}} /usr/local"
-  environment:
-    PYENV_ROOT: "{{pyenv_root}}"
-    PATH: "{{pyenv_root}}/plugins/python-build/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin"
-
 - name: Copy Pip Requirements File
   copy:
-    src: scripts/requirements.txt
-    dest: /tmp/requirements.txt
+    src: "{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}_requirements.txt"
+    dest: "/tmp/{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}_requirements.txt"
 
 - name: Install Pip Packages
   pip:
-    requirements: /tmp/requirements.txt
+    requirements: "/tmp/{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}_requirements.txt"
     extra_args: --upgrade
-    executable: /usr/local/bin/pip3
+    executable: pip3
     state: present

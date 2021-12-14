@@ -1,9 +1,0 @@
-addict
-google-api-python-client
-google-cloud-storage
-google-cloud-pubsub
-httplib2
-numpy
-pip
-pyyaml
-requests

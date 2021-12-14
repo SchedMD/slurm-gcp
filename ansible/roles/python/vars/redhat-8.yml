@@ -14,18 +14,7 @@
 ---
 
 python_packages:
-  - bzip2
-  - bzip2-devel
-  - gcc
-  - libffi-devel
-  - openssl-devel
   - python3
   - python3-pip
   - python3-setuptools
   - python3-virtualenv
-  - readline-devel
-  - sqlite
-  - sqlite-devel
-  - tk-devel
-  - xz-devel
-  - zlib-devel

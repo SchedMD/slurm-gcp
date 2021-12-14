@@ -58,8 +58,6 @@
     mode: 0o755
   with_items:
     - clustersync.py
-    - resume.sh
-    - suspend.sh
     - resume.py
     - setup.py
     - startup.sh
