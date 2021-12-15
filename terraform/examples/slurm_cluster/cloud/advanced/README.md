@@ -1,6 +1,20 @@
 # Example: Advanced Slurm Cluster
 
 This example creates a Slurm cluster that is highly configurable through tfvars.
+It creates a controller, login nodes, and is capable of bursting out multiple
+compute nodes as defined in partitions. Additionally, a VPC will be created only
+if a subnetwork is not specified.
+
+## Additional Dependencies
+
+* [**python**](https://www.python.org/) must be installed and in `$PATH` of the
+user running `terraform apply`.
+  * Required Version: `~3.6, >= 3.6.0, < 4.0.0`
+* **Private Google Access** must be
+[enabled](https://cloud.google.com/vpc/docs/configure-private-google-access)
+on the input `subnetwork`.
+* [*Shared VPC*](https://cloud.google.com/vpc/docs/shared-vpc) must be enabled
+when `subnetwork_project` != `project_id`.
 
 ## Usage
 
