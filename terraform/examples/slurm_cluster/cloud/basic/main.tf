@@ -77,6 +77,7 @@ module "slurm_controller_instance_template" {
   project_id       = var.project_id
   slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
   subnetwork       = module.network.network.subnets_self_links[0]
+  tags             = [var.cluster_name]
 }
 
 ######################
@@ -97,7 +98,7 @@ module "slurm_compute_instance_template" {
 # SLURM PARTITION #
 ###################
 
-module "slurm_partition_0" {
+module "slurm_partition" {
   source = "../../../../modules/slurm_partition"
 
   partition_name = "debug"
@@ -128,7 +129,7 @@ module "slurm_controller_instance" {
   zone              = data.google_compute_zones.available.names[0]
 
   partitions = [
-    module.slurm_partition_0.partition,
+    module.slurm_partition.partition,
   ]
 
   depends_on = [

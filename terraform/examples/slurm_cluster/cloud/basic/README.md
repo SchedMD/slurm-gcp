@@ -2,6 +2,14 @@
 
 This example creates a basic cluster with one controller, one login node, and
 capable of bursting out multiple compute nodes from a pre-configured partition.
+The cluster will create a network and subnetwork to which resources will be
+attached.
+
+## Additional Dependencies
+
+* [**python**](https://www.python.org/) must be installed and in `$PATH` of the
+user running `terraform apply`.
+  * Required Version: `~3.6, >= 3.6.0, < 4.0.0`
 
 ## Usage
 
@@ -55,7 +63,7 @@ limitations under the License.
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../../modules/slurm_firewall_rules | n/a |
 | <a name="module_slurm_login"></a> [slurm\_login](#module\_slurm\_login) | ../../../../modules/slurm_login_instance | n/a |
 | <a name="module_slurm_login_instance_template"></a> [slurm\_login\_instance\_template](#module\_slurm\_login\_instance\_template) | ../../../../modules/slurm_instance_template | n/a |
-| <a name="module_slurm_partition_0"></a> [slurm\_partition\_0](#module\_slurm\_partition\_0) | ../../../../modules/slurm_partition | n/a |
+| <a name="module_slurm_partition"></a> [slurm\_partition](#module\_slurm\_partition) | ../../../../modules/slurm_partition | n/a |
 
 ## Resources
 
