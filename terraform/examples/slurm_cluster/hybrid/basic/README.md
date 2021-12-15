@@ -1,6 +1,7 @@
-# Example: basic Hybrid Slurm Cluster
+# Example: Basic Hybrid Slurm Cluster
 
-This example creates a basic hybrid cluster.
+This example creates a basic hybrid cluster. The cluster will create a network
+and subnetwork to which resources will be attached.
 
 ## Usage
 
@@ -39,9 +40,7 @@ limitations under the License.
 
 ## Providers
 
-| Name | Version |
-|------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.3.0 |
+No providers.
 
 ## Modules
 
@@ -52,15 +51,11 @@ limitations under the License.
 | <a name="module_slurm_controller_hybrid"></a> [slurm\_controller\_hybrid](#module\_slurm\_controller\_hybrid) | ../../../../modules/slurm_controller_hybrid | n/a |
 | <a name="module_slurm_controller_hybrid_template"></a> [slurm\_controller\_hybrid\_template](#module\_slurm\_controller\_hybrid\_template) | ../../../../modules/slurm_instance_template | n/a |
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../../modules/slurm_firewall_rules | n/a |
-| <a name="module_slurm_login"></a> [slurm\_login](#module\_slurm\_login) | ../../../../modules/slurm_login_instance | n/a |
-| <a name="module_slurm_login_instance_template"></a> [slurm\_login\_instance\_template](#module\_slurm\_login\_instance\_template) | ../../../../modules/slurm_instance_template | n/a |
-| <a name="module_slurm_partition_0"></a> [slurm\_partition\_0](#module\_slurm\_partition\_0) | ../../../../modules/slurm_partition | n/a |
+| <a name="module_slurm_partition"></a> [slurm\_partition](#module\_slurm\_partition) | ../../../../modules/slurm_partition | n/a |
 
 ## Resources
 
-| Name | Type |
-|------|------|
-| [google_compute_zones.available](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones) | data source |
+No resources.
 
 ## Inputs
 
