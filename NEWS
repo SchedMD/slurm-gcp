@@ -4,6 +4,8 @@ Changes in Slurm-GCP 4.1.4
  -- Fix static compute nodes being destroyed when exclusive=true
  -- Add CompleteWait to mitigate a race of latent operations from
     (Epilog|Prolog)Slurmctld from causing node failure on subsequent jobs.
+ -- Fix calling "scontrol ... state=resume" in suspend.py for all nodes
+    multiple times for exclusive jobs.
 
 Changes in Slurm-GCP 4.1.3
 ==========================
@@ -17,8 +19,6 @@ Changes in Slurm-GCP 4.1.3
  -- Enable swap cgroup control on debian images - fixes a slurm compute node
     error.
  -- Add startup scripts as terraform vars.
- -- Fix calling "scontrol ... state=resume" in suspend.py for all nodes
-    multiple times for exclusive jobs.
 
 Changes in Slurm-GCP 4.1.2
 ==========================
