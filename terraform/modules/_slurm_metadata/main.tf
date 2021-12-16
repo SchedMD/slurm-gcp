@@ -27,20 +27,16 @@ locals {
 ####################
 
 locals {
-  metadata_devel = (
-    var.enable_devel == true
-    ? {
-      startup-script = data.local_file.startup.content
-      clustereventd  = data.local_file.clustereventd.content
-      clustersync    = data.local_file.clustersync.content
-      setup-script   = data.local_file.setup.content
-      slurm-resume   = data.local_file.resume.content
-      slurm-suspend  = data.local_file.suspend.content
-      slurmsync      = data.local_file.slurmsync.content
-      util-script    = data.local_file.util.content
-    }
-    : null
-  )
+  metadata_devel = {
+    startup-script = var.enable_devel ? data.local_file.startup[0].content : null
+    clustereventd  = var.enable_devel ? data.local_file.clustereventd[0].content : null
+    clustersync    = var.enable_devel ? data.local_file.clustersync[0].content : null
+    setup-script   = var.enable_devel ? data.local_file.setup[0].content : null
+    slurm-resume   = var.enable_devel ? data.local_file.resume[0].content : null
+    slurm-suspend  = var.enable_devel ? data.local_file.suspend[0].content : null
+    slurmsync      = var.enable_devel ? data.local_file.slurmsync[0].content : null
+    util-script    = var.enable_devel ? data.local_file.util[0].content : null
+  }
 }
 
 #################
@@ -48,34 +44,50 @@ locals {
 #################
 
 data "local_file" "startup" {
+  count = var.enable_devel ? 1 : 0
+
   filename = abspath("${local.scripts_dir}/startup.sh")
 }
 
 data "local_file" "clustereventd" {
+  count = var.enable_devel ? 1 : 0
+
   filename = abspath("${local.scripts_dir}/clustereventd.py")
 }
 
 data "local_file" "clustersync" {
+  count = var.enable_devel ? 1 : 0
+
   filename = abspath("${local.scripts_dir}/clustersync.py")
 }
 
 data "local_file" "setup" {
+  count = var.enable_devel ? 1 : 0
+
   filename = abspath("${local.scripts_dir}/setup.py")
 }
 
 data "local_file" "resume" {
+  count = var.enable_devel ? 1 : 0
+
   filename = abspath("${local.scripts_dir}/resume.py")
 }
 
 data "local_file" "suspend" {
+  count = var.enable_devel ? 1 : 0
+
   filename = abspath("${local.scripts_dir}/suspend.py")
 }
 
 data "local_file" "slurmsync" {
+  count = var.enable_devel ? 1 : 0
+
   filename = abspath("${local.scripts_dir}/slurmsync.py")
 }
 
 data "local_file" "util" {
+  count = var.enable_devel ? 1 : 0
+
   filename = abspath("${local.scripts_dir}/util.py")
 }
 
