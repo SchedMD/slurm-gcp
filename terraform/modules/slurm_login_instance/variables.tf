@@ -81,12 +81,6 @@ EOD
   default     = null
 }
 
-variable "metadata" {
-  type        = map(string)
-  description = "Metadata key/value pairs to make available from within the instances."
-  default     = null
-}
-
 #########
 # SLURM #
 #########
@@ -94,64 +88,4 @@ variable "metadata" {
 variable "cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."
-}
-
-variable "slurm_cluster_id" {
-  type        = string
-  description = "The Cluster ID, used to label resources."
-  default     = null
-}
-
-variable "munge_key" {
-  type        = string
-  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
-  default     = null
-  sensitive   = true
-
-  validation {
-    condition = (
-      var.munge_key == null
-      ? true
-      : length(var.munge_key) >= 32 && length(var.munge_key) <= 1024
-    )
-    error_message = "Munge key must be between 32 and 1024 bytes."
-  }
-}
-
-variable "network_storage" {
-  description = <<EOD
-Storage to mounted on all instances.
-* server_ip     : Address of the storage server.
-* remote_mount  : The location in the remote instance filesystem to mount from.
-* local_mount   : The location on the instance filesystem to mount to.
-* fs_type       : Filesystem type (e.g. "nfs").
-* mount_options : Raw options to pass to 'mount'.
-EOD
-  type = list(object({
-    server_ip     = string
-    remote_mount  = string
-    local_mount   = string
-    fs_type       = string
-    mount_options = string
-  }))
-  default = []
-}
-
-variable "login_network_storage" {
-  description = <<EOD
-Storage to mounted on login and controller instances.
-* server_ip     : Address of the storage server.
-* remote_mount  : The location in the remote instance filesystem to mount from.
-* local_mount   : The location on the instance filesystem to mount to.
-* fs_type       : Filesystem type (e.g. "nfs").
-* mount_options : Raw options to pass to 'mount'.
-EOD
-  type = list(object({
-    server_ip     = string
-    remote_mount  = string
-    local_mount   = string
-    fs_type       = string
-    mount_options = string
-  }))
-  default = []
 }

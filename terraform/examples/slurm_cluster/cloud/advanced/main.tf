@@ -80,10 +80,11 @@ module "slurm_firewall_rules" {
 # CONTROLLER: TEMPLATES #
 #########################
 
-module "slurm_controller_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
+module "slurm_controller_template" {
+  source = "../../../../modules/slurm_controller_template"
 
   additional_disks         = var.controller_template.additional_disks
+  cluster_name             = var.cluster_name
   disable_smt              = var.controller_template.disable_smt
   disk_labels              = var.controller_template.disk_labels
   disk_size_gb             = var.controller_template.disk_size_gb
@@ -93,7 +94,6 @@ module "slurm_controller_instance_template" {
   gpu                      = var.controller_template.gpu
   labels                   = var.controller_template.labels
   machine_type             = var.controller_template.machine_type
-  name_prefix              = "${var.cluster_name}-controller"
   preemptible              = var.controller_template.preemptible
   project_id               = var.project_id
   service_account          = var.controller_service_account
@@ -110,12 +110,13 @@ module "slurm_controller_instance_template" {
 # COMPUTE: TEMPLATES #
 ######################
 
-module "slurm_compute_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
+module "slurm_compute_template" {
+  source = "../../../../modules/slurm_compute_template"
 
   for_each = { for x in var.compute_templates : x.alias => x }
 
   additional_disks         = each.value.additional_disks
+  cluster_name             = var.cluster_name
   disable_smt              = each.value.disable_smt
   disk_labels              = each.value.disk_labels
   disk_size_gb             = each.value.disk_size_gb
@@ -125,7 +126,7 @@ module "slurm_compute_instance_template" {
   gpu                      = each.value.gpu
   labels                   = each.value.labels
   machine_type             = each.value.machine_type
-  name_prefix              = "${var.cluster_name}-compute-${each.key}"
+  name_prefix              = each.key
   preemptible              = each.value.preemptible
   project_id               = var.project_id
   service_account          = var.compute_service_account
@@ -151,7 +152,7 @@ module "slurm_partition" {
   partition_conf = each.value.partition_conf
   partition_nodes = [for n in each.value.partition_nodes : {
     node_group_name   = n.node_group_name
-    instance_template = module.slurm_compute_instance_template[n.compute_template_alias_ref].self_link
+    instance_template = module.slurm_compute_template[n.compute_template_alias_ref].self_link
     count_static      = n.count_static
     count_dynamic     = n.count_dynamic
   }]
@@ -177,7 +178,7 @@ module "slurm_controller_instance" {
   controller_d          = var.controller_d
   compute_d             = var.compute_d
   enable_devel          = var.enable_devel
-  instance_template     = module.slurm_controller_instance_template.self_link
+  instance_template     = module.slurm_controller_template.self_link
   jwt_key               = var.jwt_key
   login_network_storage = var.login_network_storage
   munge_key             = var.munge_key
@@ -198,12 +199,13 @@ module "slurm_controller_instance" {
 # LOGIN: TEMPLATE #
 ###################
 
-module "slurm_login_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
+module "slurm_login_template" {
+  source = "../../../../modules/slurm_login_template"
 
   for_each = local.login_map
 
   additional_disks         = each.value.additional_disks
+  cluster_name             = var.cluster_name
   disable_smt              = each.value.disable_smt
   disk_labels              = each.value.disk_labels
   disk_size_gb             = each.value.disk_size_gb
@@ -213,7 +215,7 @@ module "slurm_login_instance_template" {
   gpu                      = each.value.gpu
   labels                   = each.value.labels
   machine_type             = each.value.machine_type
-  name_prefix              = "${var.cluster_name}-login-${each.value.alias}"
+  name_prefix              = each.key
   preemptible              = each.value.preemptible
   project_id               = var.project_id
   service_account          = var.login_service_account
@@ -235,15 +237,11 @@ module "slurm_login_instance" {
 
   for_each = local.login_map
 
-  cluster_name          = var.cluster_name
-  instance_template     = module.slurm_login_instance_template[each.value.alias].self_link
-  login_network_storage = var.login_network_storage
-  munge_key             = var.munge_key
-  network_storage       = var.network_storage
-  num_instances         = each.value.num_instances
-  slurm_cluster_id      = local.slurm_cluster_id
-  subnetwork            = module.network.network.subnets_self_links[0]
-  zone                  = data.google_compute_zones.available.names[0]
+  cluster_name      = var.cluster_name
+  instance_template = module.slurm_login_template[each.value.alias].self_link
+  num_instances     = each.value.num_instances
+  subnetwork        = module.network.network.subnets_self_links[0]
+  zone              = data.google_compute_zones.available.names[0]
 
   depends_on = [
     # Must be created after the controller to mount NFS

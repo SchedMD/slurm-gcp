@@ -23,19 +23,20 @@ data "google_compute_subnetwork" "default" {
   region = var.region
 }
 
-module "slurm_instance_template" {
-  source = "../../../modules/slurm_instance_template"
+module "slurm_controller_template" {
+  source = "../../../modules/slurm_controller_template"
 
   project_id = var.project_id
   subnetwork = data.google_compute_subnetwork.default.self_link
 
+  cluster_name     = var.cluster_name
   slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
 }
 
 module "slurm_controller_instance" {
   source = "../../../modules/slurm_controller_instance"
 
-  instance_template = module.slurm_instance_template.instance_template.self_link
+  instance_template = module.slurm_controller_template.self_link
   subnetwork        = data.google_compute_subnetwork.default.self_link
   cluster_name      = var.cluster_name
 }

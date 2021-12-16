@@ -25,12 +25,6 @@ locals {
     : null
   )
 
-  region = (
-    length(regexall("/regions/([^/]*)", var.subnetwork)) > 0
-    ? flatten(regexall("/regions/([^/]*)", var.subnetwork))[0]
-    : var.region
-  )
-
   scripts_dir = abspath("${path.module}/../../../scripts")
 
   etc_dir = abspath("${path.module}/../../../etc")
@@ -67,37 +61,31 @@ locals {
 ####################
 
 locals {
-  metadata = {
-    enable-oslogin = "TRUE"
-    VmDnsSetting   = "GlobalOnly"
+  metadata_config = {
+    cluster_name = var.cluster_name
+    project      = local.project_id
+
+    cloudsql  = jsonencode(var.cloudsql)
+    munge_key = local.munge_key
+    jwt_key   = local.jwt_key
+    pubsub = jsonencode({
+      topic_id        = module.slurm_pubsub.topic
+      subscription_id = module.slurm_pubsub.pubsub.subscription_names[0]
+    })
+
+    network_storage       = jsonencode(var.network_storage)
+    login_network_storage = jsonencode(var.login_network_storage)
+
+    cloud_parameters = jsonencode({
+      ResumeRate     = lookup(var.cloud_parameters, "ResumeRate", 0)
+      SuspendRate    = lookup(var.cloud_parameters, "SuspendRate", 0)
+      ResumeTimeout  = lookup(var.cloud_parameters, "ResumeTimeout", 300)
+      SuspendTimeout = lookup(var.cloud_parameters, "SuspendTimeout", 300)
+    })
+    partitions = jsonencode(local.partitions)
   }
 
-  metadata_controller = {
-    instance_type = "controller"
-    cluster_name  = var.cluster_name
-    config = jsonencode({
-      cluster_name = var.cluster_name
-      project      = local.project_id
-
-      cloudsql  = var.cloudsql
-      munge_key = local.munge_key
-      jwt_key   = local.jwt_key
-      pubsub = {
-        topic_id        = module.slurm_pubsub.topic
-        subscription_id = module.slurm_pubsub.pubsub.subscription_names[0]
-      }
-
-      network_storage       = var.network_storage
-      login_network_storage = var.login_network_storage
-
-      cloud_parameters = {
-        ResumeRate     = lookup(var.cloud_parameters, "ResumeRate", 0)
-        SuspendRate    = lookup(var.cloud_parameters, "SuspendRate", 0)
-        ResumeTimeout  = lookup(var.cloud_parameters, "ResumeTimeout", 300)
-        SuspendTimeout = lookup(var.cloud_parameters, "SuspendTimeout", 300)
-      }
-      partitions = local.partitions
-    })
+  metadata_tpl = {
     cgroup_conf_tpl   = data.local_file.cgroup_conf_tpl.content
     slurm_conf_tpl    = data.local_file.slurm_conf_tpl.content
     slurmdbd_conf_tpl = data.local_file.slurmdbd_conf_tpl.content
@@ -110,7 +98,7 @@ locals {
 
 locals {
   controller_d = (
-    var.controller_d == null
+    var.controller_d == null || var.controller_d == ""
     ? abspath("${local.scripts_dir}/controller.d")
     : abspath(var.controller_d)
   )
@@ -119,6 +107,18 @@ locals {
     for script in fileset(local.controller_d, "[^.]*")
     : "custom-controller-${replace(script, "/[^a-zA-Z0-9-_]/", "_")}"
     => file("${local.controller_d}/${script}")
+  }
+
+  compute_d = (
+    var.compute_d == null || var.compute_d == ""
+    ? abspath("${local.scripts_dir}/compute.d")
+    : abspath(var.compute_d)
+  )
+
+  scripts_compute_d = {
+    for script in fileset(local.compute_d, "[^.]*")
+    : "custom-compute-${replace(script, "/[^a-zA-Z0-9-_]/", "_")}"
+    => file("${local.compute_d}/${script}")
   }
 }
 
@@ -182,13 +182,14 @@ resource "random_id" "jwt_key" {
 ############
 
 module "slurm_controller_instance" {
-  source = "../_compute_instance"
+  source  = "terraform-google-modules/vm/google//modules/compute_instance"
+  version = "~> 7.1"
 
   ### network ###
   subnetwork_project = var.subnetwork_project
   network            = var.network
   subnetwork         = var.subnetwork
-  region             = local.region
+  region             = var.region
   zone               = var.zone
   static_ips         = var.static_ips
   access_config      = var.access_config
@@ -198,13 +199,9 @@ module "slurm_controller_instance" {
   hostname            = "${var.cluster_name}-controller"
   add_hostname_suffix = false
 
-  ### metadata ###
-  metadata = merge(
-    local.metadata,
-    local.metadata_controller,
-    local.scripts_controller_d,
-    var.metadata_controller,
-  )
+  depends_on = [
+    module.slurm_metadata,
+  ]
 }
 
 ############
@@ -214,11 +211,15 @@ module "slurm_controller_instance" {
 module "slurm_metadata" {
   source = "../_slurm_metadata"
 
-  cluster_name     = var.cluster_name
-  compute_d        = var.compute_d
-  enable_devel     = var.enable_devel
-  metadata_compute = var.metadata_compute
-  project_id       = local.project_id
+  cluster_name = var.cluster_name
+  enable_devel = var.enable_devel
+  metadata = merge(
+    local.metadata_config,
+    local.metadata_tpl,
+    local.scripts_controller_d,
+    local.scripts_compute_d,
+  )
+  project_id = local.project_id
 }
 
 ##########

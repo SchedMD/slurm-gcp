@@ -43,24 +43,6 @@ locals {
   )
 }
 
-###################
-# LOCALS: SCRIPTS #
-###################
-
-locals {
-  compute_d = (
-    var.compute_d == null
-    ? abspath("${local.scripts_dir}/compute.d")
-    : abspath(var.compute_d)
-  )
-
-  scripts_compute_d = {
-    for script in fileset(local.compute_d, "[^.]*")
-    : "custom-compute-${replace(script, "/[^a-zA-Z0-9-_]/", "_")}"
-    => file("${local.compute_d}/${script}")
-  }
-}
-
 #################
 # DATA: SCRIPTS #
 #################
@@ -106,8 +88,7 @@ resource "google_compute_project_metadata_item" "slurm_metadata" {
 
   key = "${var.cluster_name}-slurm-metadata"
   value = jsonencode(merge(
+    var.metadata,
     local.metadata_devel,
-    local.scripts_compute_d,
-    var.metadata_compute,
   ))
 }

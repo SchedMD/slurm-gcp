@@ -57,42 +57,14 @@ module "slurm_firewall_rules" {
   target_tags  = [var.cluster_name]
 }
 
-#########################
-# CONTROLLER: TEMPLATES #
-#########################
-
-module "slurm_controller_hybrid_template" {
-  source = "../../../../modules/slurm_instance_template"
-
-  name_prefix      = "${var.cluster_name}-controller"
-  project_id       = var.project_id
-  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
-  subnetwork       = local.subnetwork
-  tags             = [var.cluster_name]
-}
-
-###################
-# LOGIN: TEMPLATE #
-###################
-
-module "slurm_login_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
-
-  name_prefix      = "${var.cluster_name}-login"
-  project_id       = var.project_id
-  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
-  subnetwork       = local.subnetwork
-  tags             = [var.cluster_name]
-}
-
 ######################
 # COMPUTE: TEMPLATES #
 ######################
 
-module "slurm_compute_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
+module "slurm_compute_template" {
+  source = "../../../../modules/slurm_compute_template"
 
-  name_prefix      = "${var.cluster_name}-n1"
+  cluster_name     = var.cluster_name
   network          = var.project_id != local.subnetwork_project ? var.instance_template_network : local.network
   project_id       = var.project_id
   slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
@@ -113,7 +85,7 @@ module "slurm_partition" {
   partition_nodes = [
     {
       node_group_name   = "n1"
-      instance_template = module.slurm_compute_instance_template.self_link
+      instance_template = module.slurm_compute_template.self_link
       count_static      = 0
       count_dynamic     = 20
     },

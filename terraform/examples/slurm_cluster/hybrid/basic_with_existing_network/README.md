@@ -42,17 +42,15 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.3.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | 4.4.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_slurm_compute_instance_template"></a> [slurm\_compute\_instance\_template](#module\_slurm\_compute\_instance\_template) | ../../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_compute_template"></a> [slurm\_compute\_template](#module\_slurm\_compute\_template) | ../../../../modules/slurm_compute_template | n/a |
 | <a name="module_slurm_controller_hybrid"></a> [slurm\_controller\_hybrid](#module\_slurm\_controller\_hybrid) | ../../../../modules/slurm_controller_hybrid | n/a |
-| <a name="module_slurm_controller_hybrid_template"></a> [slurm\_controller\_hybrid\_template](#module\_slurm\_controller\_hybrid\_template) | ../../../../modules/slurm_instance_template | n/a |
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../../modules/slurm_firewall_rules | n/a |
-| <a name="module_slurm_login_instance_template"></a> [slurm\_login\_instance\_template](#module\_slurm\_login\_instance\_template) | ../../../../modules/slurm_instance_template | n/a |
 | <a name="module_slurm_partition"></a> [slurm\_partition](#module\_slurm\_partition) | ../../../../modules/slurm_partition | n/a |
 
 ## Resources

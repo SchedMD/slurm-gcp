@@ -46,6 +46,24 @@ locals {
   suspend_timeout = lookup(var.cloud_parameters, "SuspendTimeout", 300)
 }
 
+####################
+# LOCALS: METADATA #
+####################
+
+locals {
+  compute_d = (
+    var.compute_d == null || var.compute_d == ""
+    ? abspath("${local.scripts_dir}/compute.d")
+    : abspath(var.compute_d)
+  )
+
+  scripts_compute_d = {
+    for script in fileset(local.compute_d, "[^.]*")
+    : "custom-compute-${replace(script, "/[^a-zA-Z0-9-_]/", "_")}"
+    => file("${local.compute_d}/${script}")
+  }
+}
+
 ##################
 # LOCALS: CONFIG #
 ##################
@@ -202,11 +220,13 @@ EOC
 module "slurm_metadata" {
   source = "../_slurm_metadata"
 
-  cluster_name     = var.cluster_name
-  compute_d        = var.compute_d
-  enable_devel     = var.enable_devel
-  metadata_compute = var.metadata_compute
-  project_id       = var.project_id
+  cluster_name = var.cluster_name
+  enable_devel = var.enable_devel
+  metadata = merge(
+    local.scripts_compute_d,
+    var.metadata,
+  )
+  project_id = var.project_id
 }
 
 ##########

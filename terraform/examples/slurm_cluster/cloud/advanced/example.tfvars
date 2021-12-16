@@ -88,16 +88,10 @@ controller_service_account = {
 
 controller_template = {
   ### network ###
-  subnetwork = "default"
-  region     = "us-east1"
   tags = [
     # "tag0",
     # "tag1",
   ]
-
-  ### template ###
-  instance_template_project = null
-  instance_template         = null
 
   ### instance ###
   machine_type     = "n2d-standard-4"
@@ -158,20 +152,14 @@ login_service_account = {
 
 login = [
   {
-    alias         = "login"
+    alias         = "default"
     num_instances = 1
 
     ### network ###
-    subnetwork = "default"
-    region     = "us-east1"
     tags = [
       # "tag0",
       # "tag1",
     ]
-
-    ### template ###
-    instance_template_project = null
-    instance_template         = null
 
     ### instance ###
     machine_type     = "n1-standard-2"

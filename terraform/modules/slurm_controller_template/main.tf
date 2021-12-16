@@ -55,7 +55,7 @@ module "instance_template" {
 
   ### general ###
   project_id  = var.project_id
-  name_prefix = var.name_prefix
+  name_prefix = "${var.cluster_name}-controller-${var.name_prefix}"
 
   ### network ###
   subnetwork_project = var.subnetwork_project
@@ -84,7 +84,15 @@ module "instance_template" {
   ### metadata ###
   startup_script = data.local_file.startup.content
   metadata = merge(
-    { google_mpi_tuning = var.disable_smt == true ? "--nosmt" : null },
+    {
+      enable-oslogin    = "TRUE"
+      google_mpi_tuning = var.disable_smt == true ? "--nosmt" : null
+      VmDnsSetting      = "GlobalOnly"
+    },
+    {
+      cluster_name  = var.cluster_name
+      instance_type = "controller"
+    },
     var.metadata
   )
 

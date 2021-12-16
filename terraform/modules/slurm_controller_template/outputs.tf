@@ -14,7 +14,22 @@
  * limitations under the License.
  */
 
-output "slurm_instance_template" {
-  description = "Slurm instance template details"
-  value       = module.slurm_instance_template
+output "instance_template" {
+  description = "Instance template details"
+  value       = module.instance_template
+}
+
+output "self_link" {
+  description = "Self_link of instance template"
+  value       = module.instance_template.self_link
+}
+
+output "name" {
+  description = "Name of instance template"
+  value       = module.instance_template.name
+}
+
+output "tags" {
+  description = "Tags that will be associated with instance(s)"
+  value       = module.instance_template.tags
 }

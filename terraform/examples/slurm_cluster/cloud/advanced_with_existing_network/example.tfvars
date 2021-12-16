@@ -99,10 +99,6 @@ controller_template = {
     # "tag1",
   ]
 
-  ### template ###
-  instance_template_project = null
-  instance_template         = null
-
   ### instance ###
   machine_type     = "n2d-standard-4"
   min_cpu_platform = null
@@ -162,7 +158,7 @@ login_service_account = {
 
 login = [
   {
-    alias         = "login"
+    alias         = "default"
     num_instances = 1
 
     ### network ###
@@ -170,10 +166,6 @@ login = [
       # "tag0",
       # "tag1",
     ]
-
-    ### template ###
-    instance_template_project = null
-    instance_template         = null
 
     ### instance ###
     machine_type     = "n1-standard-2"

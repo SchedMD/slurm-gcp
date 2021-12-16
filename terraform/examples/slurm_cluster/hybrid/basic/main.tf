@@ -56,27 +56,14 @@ module "slurm_firewall_rules" {
   cluster_name = var.cluster_name
 }
 
-#########################
-# CONTROLLER: TEMPLATES #
-#########################
-
-module "slurm_controller_hybrid_template" {
-  source = "../../../../modules/slurm_instance_template"
-
-  name_prefix      = "${var.cluster_name}-controller"
-  project_id       = var.project_id
-  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
-  subnetwork       = module.network.network.subnets_self_links[0]
-}
-
 ######################
 # COMPUTE: TEMPLATES #
 ######################
 
-module "slurm_compute_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
+module "slurm_compute_template" {
+  source = "../../../../modules/slurm_compute_template"
 
-  name_prefix      = "${var.cluster_name}-n1"
+  cluster_name     = var.cluster_name
   project_id       = var.project_id
   slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
   subnetwork       = module.network.network.subnets_self_links[0]
@@ -96,7 +83,7 @@ module "slurm_partition" {
   partition_nodes = [
     {
       node_group_name   = "n1"
-      instance_template = module.slurm_compute_instance_template.self_link
+      instance_template = module.slurm_compute_template.self_link
       count_static      = 0
       count_dynamic     = 20
     },

@@ -41,14 +41,14 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.3.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | 4.4.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | ../../../modules/slurm_controller_instance | n/a |
-| <a name="module_slurm_instance_template"></a> [slurm\_instance\_template](#module\_slurm\_instance\_template) | ../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_controller_template"></a> [slurm\_controller\_template](#module\_slurm\_controller\_template) | ../../../modules/slurm_controller_template | n/a |
 
 ## Resources
 

@@ -66,10 +66,10 @@ module "slurm_firewall_rules" {
 # CONTROLLER: TEMPLATES #
 #########################
 
-module "slurm_controller_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
+module "slurm_controller_template" {
+  source = "../../../../modules/slurm_controller_template"
 
-  name_prefix      = "${var.cluster_name}-controller"
+  cluster_name     = var.cluster_name
   network          = var.project_id != local.subnetwork_project ? var.instance_template_network : local.network
   project_id       = var.project_id
   slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
@@ -80,10 +80,10 @@ module "slurm_controller_instance_template" {
 # COMPUTE: TEMPLATES #
 ######################
 
-module "slurm_compute_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
+module "slurm_compute_template" {
+  source = "../../../../modules/slurm_compute_template"
 
-  name_prefix      = "${var.cluster_name}-n1"
+  cluster_name     = var.cluster_name
   network          = var.project_id != local.subnetwork_project ? var.instance_template_network : local.network
   project_id       = var.project_id
   slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
@@ -104,7 +104,7 @@ module "slurm_partition" {
   partition_nodes = [
     {
       node_group_name   = "n1"
-      instance_template = module.slurm_compute_instance_template.self_link
+      instance_template = module.slurm_compute_template.self_link
       count_static      = 0
       count_dynamic     = 20
     },
@@ -120,7 +120,7 @@ module "slurm_controller_instance" {
   source = "../../../../modules/slurm_controller_instance"
 
   cluster_name      = var.cluster_name
-  instance_template = module.slurm_controller_instance_template.self_link
+  instance_template = module.slurm_controller_template.self_link
   subnetwork        = local.subnetwork
   zone              = data.google_compute_zones.available.names[0]
 
@@ -137,10 +137,10 @@ module "slurm_controller_instance" {
 # LOGIN: TEMPLATE #
 ###################
 
-module "slurm_login_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
+module "slurm_login_template" {
+  source = "../../../../modules/slurm_login_template"
 
-  name_prefix      = "${var.cluster_name}-login"
+  cluster_name     = var.cluster_name
   network          = var.project_id != local.subnetwork_project ? var.instance_template_network : local.network
   project_id       = var.project_id
   slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
@@ -155,9 +155,7 @@ module "slurm_login" {
   source = "../../../../modules/slurm_login_instance"
 
   cluster_name      = var.cluster_name
-  instance_template = module.slurm_login_instance_template.self_link
-  region            = var.region
-  slurm_cluster_id  = module.slurm_controller_instance.slurm_cluster_id
+  instance_template = module.slurm_login_template.self_link
   subnetwork        = local.subnetwork
   zone              = data.google_compute_zones.available.names[0]
 

@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-variable "project_id" {
-  type        = string
-  description = "Project ID to create resources in."
+terraform {
+  required_version = "~> 1.0"
+
+  required_providers {
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
+  }
 }

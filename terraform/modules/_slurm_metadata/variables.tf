@@ -27,8 +27,8 @@ variable "project_id" {
 # METADATA #
 ############
 
-variable "metadata_compute" {
-  description = "Metadata key/value pairs to make available from within the compute instances."
+variable "metadata" {
+  description = "Metadata key/value pairs to make available via project metadata."
   type        = map(string)
   default     = {}
 }
@@ -40,12 +40,6 @@ variable "metadata_compute" {
 variable "cluster_name" {
   description = "Cluster name, used for resource naming."
   type        = string
-}
-
-variable "compute_d" {
-  description = "Path to directory containing user compute provisioning scripts."
-  type        = string
-  default     = null
 }
 
 variable "enable_devel" {

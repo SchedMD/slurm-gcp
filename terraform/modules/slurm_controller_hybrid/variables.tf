@@ -27,9 +27,9 @@ variable "project_id" {
 # METADATA #
 ############
 
-variable "metadata_compute" {
+variable "metadata" {
   type        = map(string)
-  description = "Metadata key/value pairs to make available from within the compute instances."
+  description = "Metadata key/value pairs."
   default     = null
 }
 

@@ -19,41 +19,11 @@
 ##########
 
 locals {
-  project_id = (
-    length(regexall("/projects/([^/]*)", var.instance_template)) > 0
-    ? flatten(regexall("/projects/([^/]*)", var.instance_template))[0]
-    : null
-  )
-
   region = (
     length(regexall("/regions/([^/]*)", var.subnetwork)) > 0
     ? flatten(regexall("/regions/([^/]*)", var.subnetwork))[0]
     : var.region
   )
-
-  metadata = {
-    enable-oslogin = "TRUE"
-    VmDnsSetting   = "GlobalOnly"
-  }
-
-  metadata_login = {
-    cluster_name     = var.cluster_name
-    slurm_cluster_id = var.slurm_cluster_id
-    instance_type    = "login"
-
-    network_storage       = jsonencode(var.network_storage)
-    login_network_storage = jsonencode(var.login_network_storage)
-
-    config = jsonencode({
-      cluster_name = var.cluster_name
-      project      = local.project_id
-
-      munge_key = var.munge_key
-
-      network_storage       = var.network_storage
-      login_network_storage = var.login_network_storage
-    })
-  }
 }
 
 ############
@@ -61,13 +31,14 @@ locals {
 ############
 
 module "slurm_login_instance" {
-  source = "../_compute_instance"
+  source  = "terraform-google-modules/vm/google//modules/compute_instance"
+  version = "~> 7.1"
 
   ### network ###
   subnetwork_project = var.subnetwork_project
   network            = var.network
   subnetwork         = var.subnetwork
-  region             = local.region
+  region             = var.region
   zone               = var.zone
   static_ips         = var.static_ips
   access_config      = var.access_config
@@ -76,11 +47,4 @@ module "slurm_login_instance" {
   instance_template = var.instance_template
   hostname          = "${var.cluster_name}-login-${local.region}"
   num_instances     = var.num_instances
-
-  ### metadata ###
-  metadata = merge(
-    local.metadata,
-    local.metadata_login,
-    var.metadata,
-  )
 }

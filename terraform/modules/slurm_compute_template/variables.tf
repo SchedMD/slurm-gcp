@@ -92,7 +92,7 @@ variable "network_ip" {
 variable "name_prefix" {
   type        = string
   description = "Prefix for template resource."
-  default     = "slurm-template"
+  default     = "default"
 }
 
 ############
@@ -265,6 +265,11 @@ variable "additional_disks" {
 #########
 # SLURM #
 #########
+
+variable "cluster_name" {
+  type        = string
+  description = "Cluster name, used for resource naming."
+}
 
 variable "slurm_cluster_id" {
   type        = string

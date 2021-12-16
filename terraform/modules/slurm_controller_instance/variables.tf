@@ -75,18 +75,6 @@ EOD
   default     = null
 }
 
-variable "metadata_controller" {
-  type        = map(string)
-  description = "Metadata key/value pairs to make available from within the controller instances."
-  default     = null
-}
-
-variable "metadata_compute" {
-  type        = map(string)
-  description = "Metadata key/value pairs to make available from within the compute instances."
-  default     = null
-}
-
 #########
 # SLURM #
 #########

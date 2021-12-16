@@ -63,12 +63,13 @@ module "slurm_firewall_rules" {
 # COMPUTE: TEMPLATES #
 ######################
 
-module "slurm_compute_instance_template" {
-  source = "../../../../modules/slurm_instance_template"
+module "slurm_compute_template" {
+  source = "../../../../modules/slurm_compute_template"
 
   for_each = { for x in var.compute_templates : x.alias => x }
 
   additional_disks         = each.value.additional_disks
+  cluster_name             = var.cluster_name
   disable_smt              = each.value.disable_smt
   disk_labels              = each.value.disk_labels
   disk_size_gb             = each.value.disk_size_gb
@@ -78,7 +79,7 @@ module "slurm_compute_instance_template" {
   gpu                      = each.value.gpu
   labels                   = each.value.labels
   machine_type             = each.value.machine_type
-  name_prefix              = "${var.cluster_name}-compute-${each.key}"
+  name_prefix              = each.key
   network                  = var.project_id != local.subnetwork_project ? var.instance_template_network : local.network
   preemptible              = each.value.preemptible
   project_id               = var.project_id
@@ -104,7 +105,7 @@ module "slurm_partition" {
   partition_conf = each.value.partition_conf
   partition_nodes = [for n in each.value.partition_nodes : {
     node_group_name   = n.node_group_name
-    instance_template = module.slurm_compute_instance_template[n.compute_template_alias_ref].self_link
+    instance_template = module.slurm_compute_template[n.compute_template_alias_ref].self_link
     count_static      = n.count_static
     count_dynamic     = n.count_dynamic
   }]

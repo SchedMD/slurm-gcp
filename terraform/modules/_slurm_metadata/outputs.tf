@@ -18,8 +18,3 @@ output "metadata" {
   description = "Project metadata for slurm cluster."
   value       = google_compute_project_metadata_item.slurm_metadata
 }
-
-output "scripts" {
-  description = "Scripts in compute.d"
-  value       = local.scripts_compute_d
-}

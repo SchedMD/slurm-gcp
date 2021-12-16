@@ -33,7 +33,7 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.3.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | 4.4.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | 2.1.0 |
 
 ## Modules
@@ -59,9 +59,8 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | n/a | yes |
-| <a name="input_compute_d"></a> [compute\_d](#input\_compute\_d) | Path to directory containing user compute provisioning scripts. | `string` | `null` | no |
 | <a name="input_enable_devel"></a> [enable\_devel](#input\_enable\_devel) | Enables development mode. Not for production use. | `bool` | `false` | no |
-| <a name="input_metadata_compute"></a> [metadata\_compute](#input\_metadata\_compute) | Metadata key/value pairs to make available from within the compute instances. | `map(string)` | `{}` | no |
+| <a name="input_metadata"></a> [metadata](#input\_metadata) | Metadata key/value pairs to make available via project metadata. | `map(string)` | `{}` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID. | `string` | n/a | yes |
 
 ## Outputs
@@ -69,5 +68,4 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_metadata"></a> [metadata](#output\_metadata) | Project metadata for slurm cluster. |
-| <a name="output_scripts"></a> [scripts](#output\_scripts) | Scripts in compute.d |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
