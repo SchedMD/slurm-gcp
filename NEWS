@@ -16,6 +16,7 @@ Changes in Slurm-GCP 4.1.3
  -- Add startup scripts as terraform vars.
  -- Fix calling "scontrol ... state=resume" in suspend.py for all nodes
     multiple times for exclusive jobs.
+ -- Fix static compute nodes being destroyed when exclusive=true
 
 Changes in Slurm-GCP 4.1.2
 ==========================
