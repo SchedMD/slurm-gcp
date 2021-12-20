@@ -1,7 +1,7 @@
 # Slurm on Google Cloud Platform
 
 The following describes setting up a Slurm cluster using [Google Cloud
-Platform](https://cloud.google.com), bursting out from an on-premise cluster to
+Platform](https://cloud.google.com), bursting out from an on-premises cluster to
 nodes in Google Cloud Platform and setting a multi-cluster/federated setup with
 a cluster that resides in Google Cloud Platform.
 
@@ -33,7 +33,7 @@ Also, join comunity discussions on either the
   * [Accessing Compute Nodes Directly](#accessing-compute-nodes-directly)
   * [OS Login](#os-login)
   * [Preemptible VMs](#preemptible-vms)
-* [Hybrid Cluster for Bursting from On-Premise](#hybrid-cluster-for-bursting-from-on-premise)
+* [Hybrid Cluster for Bursting from On-Premises](#hybrid-cluster-for-bursting-from-on-premises)
   * [Node Addressing](#node-addressing)
   * [Configuration Steps](#configuration-steps)
   * [Users and Groups in a Hybrid Cluster](#users-and-groups-in-a-hybrid-cluster)
@@ -227,9 +227,9 @@ Hello world from processor g1-compute-0-2, rank 2 out of 4 processors
    > not have a maximum runtime.
    [More information about Spot VMs](https://cloud.google.com/compute/docs/instances/spot)
 
-## Hybrid Cluster for Bursting from On-Premise
+## Hybrid Cluster for Bursting from On-Premises
 
-Bursting out from an on-premise cluster is done by configuring the
+Bursting out from an on-premises cluster is done by configuring the
 **ResumeProgram** and the **SuspendProgram** in the slurm.conf to 
 *resume.py*, *suspend.py* in the scripts directory. *config.yaml* should
 be configured so that the scripts can create and destroy compute instances in a
@@ -238,16 +238,16 @@ See [Cloud Scheduling Guide](https://slurm.schedmd.com/elastic_computing.html)
 for more information.
 
 Pre-reqs:
-1. VPN between on-premise and GCP
-2. bidirectional DNS between on-premise and GCP
-3. Open ports to on-premise
+1. VPN between on-premises and GCP
+2. bidirectional DNS between on-premises and GCP
+3. Open ports to on-premises
    1. slurmctld
    2. slurmdbd
    3. SrunPortRange
-4. Open ports in GCP for NFS from on-premise
+4. Open ports in GCP for NFS from on-premises
 
 ### Node Addressing  
-There are two options: 1) setup DNS between the on-premise network and the GCP
+There are two options: 1) setup DNS between the on-premises network and the GCP
 network or 2) configure Slurm to use NodeAddr to communicate with cloud compute
 nodes. In the end, the slurmctld and any login nodes should be able to
 communicate with cloud compute nodes, and the cloud compute nodes should be
