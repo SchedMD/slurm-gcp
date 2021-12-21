@@ -64,3 +64,11 @@
     - slurmsync.py
     - suspend.py
     - util.py
+
+- name: Copy Jobs
+  copy:
+    src: jobs
+    dest: "{{slurm_paths.jobs}}"
+    owner: "{{slurm_user.user}}"
+    group: "{{slurm_user.group}}"
+    mode: 0o755

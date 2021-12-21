@@ -36,6 +36,7 @@ Also, join comunity discussions on either the
   * [Configuration Steps](#configuration-steps)
   * [Users and Groups in a Hybrid Cluster](#users-and-groups-in-a-hybrid-cluster)
 * [Multi-Cluster / Federation](#multi-cluster-\/-federation)
+* [Data Migration](#data-migration)
 * [Troubleshooting](#troubleshooting)
 
 ## Stand-alone Cluster in Google Cloud Platform
@@ -393,6 +394,13 @@ The following considerations are needed for these scenarios:
 For more information see:
 [Multi-Cluster Operation](https://slurm.schedmd.com/multi_cluster.html)
 [Federated Scheduling Guide](https://slurm.schedmd.com/federation.html)
+
+## Data Migration
+
+Data can be migrated to and from external sources using a worflow of dependant
+jobs. A [workflow script](./jobs/data_migrate.py) and
+[helper jobs](./jobs/data_migrate/) are provided. See [README](./jobs/README.md)
+for more information.
 
 ## Troubleshooting
 

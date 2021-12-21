@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Copyright 2021 SchedMD LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,33 +13,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
 
-slurm_git_url: https://github.com/SchedMD/slurm.git
-slurm_tar_baseurl: https://download.schedmd.com/slurm
-slurm_version: 20.11.8
+set -ex
 
-slurm_paths: {
-  install: "{{paths.install}}",
-  src: "{{paths.src}}/slurm",
-  etc: "{{paths.install}}/etc/slurm",
-  scripts: "/slurm/scripts",
-  jobs: "/slurm/jobs",
-  build: "{{paths.build}}/slurm",
-  log: "/var/log/slurm",
-  state: "/var/spool/slurmctld",
-  run: "/var/run/slurm",
-}
+if [ -z "$MIGRATE_INPUT" ]
+then
+	echo "Error: missing required environment variable 'MIGRATE_INPUT'. \
+		Aboring." >&2
+	exit 1
+elif [ -z "$MIGRATE_OUTPUT" ]
+then
+	echo "Error: missing required environment variable 'MIGRATE_OUTPUT'. \
+		Aboring." >&2
+	exit 1
+fi
 
-slurm_user: {
-  user: slurm,
-  uid: 981,
-  group: slurm,
-  gid: 981,
-}
-slurmrestd_user: {
-  user: slurmrestd,
-  uid: 982,
-  group: slurmrestd,
-  gid: 982,
-}
+shuf --output=$MIGRATE_OUTPUT $MIGRATE_INPUT
