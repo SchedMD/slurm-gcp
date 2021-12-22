@@ -411,3 +411,25 @@ def get_regional_instances(compute, project, def_list):
             break
 
     return regional_instances
+
+
+def to_hostlist(scontrol, nodelist=[]):
+    """make hostlist from list of node names
+    """
+    import tempfile
+
+    if len(nodelist) == 0:
+        return None
+
+    # use tmp file because list could be large
+    tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+    tmp_file.writelines("\n".join(nodelist))
+    tmp_file.close()
+    log.debug("tmp_file = {}".format(tmp_file.name))
+
+    hostlist = run(
+        f"{scontrol} show hostlist {tmp_file.name}", shell=True,
+        get_stdout=True).stdout.rstrip()
+    log.debug("hostlist = {}".format(hostlist))
+    os.remove(tmp_file.name)
+    return hostlist

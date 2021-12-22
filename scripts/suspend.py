@@ -139,6 +139,24 @@ def main(arg_nodes, arg_job_id):
                          check=True, get_stdout=True).stdout
     node_list = nodes_str.splitlines()
 
+    # Get static node list
+    exc_nodes_hostlist = util.run(
+        f"{SCONTROL} show config | "
+        "awk '/SuspendExcNodes.*=/{print $3}'", shell=True,
+        get_stdout=True).stdout
+    nodes_exc_str = util.run(f"{SCONTROL} show hostnames {exc_nodes_hostlist}",
+                             check=True, get_stdout=True).stdout
+    node_exc_list = sorted(nodes_exc_str.splitlines(), key=util.get_pid)
+
+    # Generate new arg_nodes without static nodes
+    dynamic_nodes = list((set(node_exc_list) ^ set(node_list)) & set(node_list))
+    node_list = dynamic_nodes
+    arg_nodes = util.to_hostlist(SCONTROL, dynamic_nodes)
+
+    if len(node_list) == 0:
+        log.debug(f"Static nodes removed from request. No nodes remain in request.")
+        return
+
     pid = util.get_pid(node_list[0])
     if (arg_job_id and not cfg.instance_defs[pid].exclusive):
         # Don't delete from calls by EpilogSlurmctld

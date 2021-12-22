@@ -315,10 +315,20 @@ def create_placement_groups(arg_job_id, vm_count, region):
 
 def main(arg_nodes, arg_job_id):
     log.debug(f"Bursting out: {arg_nodes} {arg_job_id}")
+
     # Get node list
     nodes_str = util.run(f"{SCONTROL} show hostnames {arg_nodes}",
                          check=True, get_stdout=True).stdout
     node_list = sorted(nodes_str.splitlines(), key=util.get_pid)
+
+   # Get static node list
+    exc_nodes_hostlist = util.run(
+        f"{SCONTROL} show config | "
+        "awk '/SuspendExcNodes.*=/{print $3}'", shell=True,
+        get_stdout=True).stdout
+    nodes_exc_str = util.run(f"{SCONTROL} show hostnames {exc_nodes_hostlist}",
+                             check=True, get_stdout=True).stdout
+    node_exc_list = sorted(nodes_exc_str.splitlines(), key=util.get_pid)
 
     placement_groups = None
     pid = util.get_pid(node_list[0])
@@ -328,6 +338,15 @@ def main(arg_nodes, arg_job_id):
 
     nodes_by_pid = {k: tuple(nodes)
                     for k, nodes in groupby(node_list, util.get_pid)}
+
+    req_static = list(set(node_exc_list).intersection(node_list))
+    if req_static:
+        static_nodes_by_pid = {k: tuple(nodes)
+                               for k, nodes in groupby(node_exc_list, util.get_pid)}
+        for pid in [pid for pid in nodes_by_pid
+                    if pid in static_nodes_by_pid]:
+            # Remove static nodes from request to prevent request failure
+            del nodes_by_pid[pid]
 
     if not arg_job_id:
         for pid in [pid for pid in nodes_by_pid
