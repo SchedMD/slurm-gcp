@@ -220,6 +220,7 @@ class Config(NSDict):
                   'external_compute_ips',
                   'controller_secondary_disk',
                   'suspend_time',
+                  'complete_wait_time',
                   'login_node_count',
                   'cloudsql',
                   'partitions',

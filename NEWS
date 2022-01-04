@@ -2,6 +2,8 @@ Changes in Slurm-GCP 4.1.4
 ==========================
  -- Updated Singularity download URL in custom-controller-install script.
  -- Fix static compute nodes being destroyed when exclusive=true
+ -- Add CompleteWait to mitigate a race of latent operations from
+    (Epilog|Prolog)Slurmctld from causing node failure on subsequent jobs.
 
 Changes in Slurm-GCP 4.1.3
 ==========================
