@@ -73,6 +73,7 @@ module "slurm_cluster_controller" {
   subnet_depend                 = module.slurm_cluster_network.subnet_depend
   subnetwork_name               = var.subnetwork_name
   suspend_time                  = var.suspend_time
+  complete_wait_time            = var.complete_wait_time
   zone                          = var.zone
   intel_select_solution         = var.intel_select_solution
   controller_startup_script     = var.controller_startup_script

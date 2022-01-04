@@ -10,7 +10,8 @@ zone         = "us-west1-b"
 # disable_login_public_ips      = true
 # disable_compute_public_ips    = true
 
-# suspend_time  = 300
+# suspend_time       = 300
+# complete_wait_time = 0
 
 controller_machine_type = "n1-standard-2"
 controller_image        = "projects/schedmd-slurm-public/global/images/family/schedmd-slurm-21-08-4-hpc-centos-7"

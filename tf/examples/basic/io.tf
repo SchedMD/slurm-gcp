@@ -287,6 +287,11 @@ variable "suspend_time" {
   default     = 300
 }
 
+variable "complete_wait_time" {
+  description = "Time (in sec) to wait before considering a completing job as completed. Warning: high values will reduce schduling throughput. Suggested to keep between 0 and 'suspend_timeout'."
+  default     = 60
+}
+
 variable "zone" {
   type = string
 }

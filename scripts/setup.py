@@ -244,6 +244,7 @@ def install_slurm_conf():
         'resume_timeout': RESUME_TIMEOUT,
         'suspend_timeout': SUSPEND_TIMEOUT,
         'suspend_time': cfg.suspend_time,
+        'complete_wait_time': cfg.complete_wait_time,
         'mpi_default': mpi_default,
     }
     conf_resp = util.get_metadata('attributes/slurm_conf_tpl')
