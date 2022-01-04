@@ -135,14 +135,10 @@ variable "service_account" {
     scopes = set(string)
   })
   description = <<EOD
-Service account to attach to the instances.
-* email : Service account email.
-* scopes : Set of service account scopes.
+Service account to attach to the instances. See
+'main.tf:local.service_account' for the default.
 EOD
-  default = {
-    email  = "default"
-    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-  }
+  default     = null
 }
 
 variable "shielded_instance_config" {
@@ -205,13 +201,13 @@ variable "metadata" {
 variable "source_image_project" {
   type        = string
   description = "Project where the source image comes from. If it is not provided, the provider project is used."
-  default     = "schedmd-slurm-public"
+  default     = ""
 }
 
 variable "source_image_family" {
   type        = string
   description = "Source image family."
-  default     = "schedmd-slurm-21-08-2-hpc-centos-7"
+  default     = ""
 }
 
 variable "source_image" {

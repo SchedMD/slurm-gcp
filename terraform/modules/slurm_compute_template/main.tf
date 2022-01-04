@@ -35,6 +35,26 @@ locals {
       )
     }
   ]
+
+  service_account = (
+    var.service_account != null
+    ? var.service_account
+    : {
+      email  = "default"
+      scopes = []
+    }
+  )
+
+  source_image_family = (
+    var.source_image_family != ""
+    ? var.source_image_family
+    : "schedmd-slurm-21-08-2-hpc-centos-7"
+  )
+  source_image_project = (
+    var.source_image_project != ""
+    ? var.source_image_project
+    : "schedmd-slurm-public"
+  )
 }
 
 ########
@@ -70,7 +90,7 @@ module "instance_template" {
   machine_type             = var.machine_type
   min_cpu_platform         = var.min_cpu_platform
   gpu                      = var.gpu
-  service_account          = var.service_account
+  service_account          = local.service_account
   shielded_instance_config = var.shielded_instance_config
   enable_confidential_vm   = var.enable_confidential_vm
   enable_shielded_vm       = var.enable_shielded_vm
@@ -97,8 +117,8 @@ module "instance_template" {
   )
 
   ### source image ###
-  source_image_project = var.source_image_project
-  source_image_family  = var.source_image_family
+  source_image_project = local.source_image_project
+  source_image_family  = local.source_image_family
   source_image         = var.source_image
 
   ### disk ###
