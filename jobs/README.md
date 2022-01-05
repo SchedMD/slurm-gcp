@@ -15,18 +15,29 @@ $ sbatch --export=MIGRATE_INPUT=/tmp/seq.txt,MIGRATE_OUTPUT=/tmp/shuffle.txt \
 	/slurm/jobs/shuffle.sh
 ```
 
-## data_migrate.py
+## submit_workflow.py
 
-This script is a sample workflow for data migration using
-[**gsutil**](https://cloud.google.com/storage/docs/gsutil). It will create three
-jobs derived from the input configuration yaml file. Simply the stage_in job
-moves data from an external source to a filesystem that a node can read from.
-Then the main job runs, typically consuming that moved data. After, the
-stage_out runs to move data from the compute node to an external destination.
+This script is a runner that submits a sequence of 3 jobs as defined in the
+input structured yaml file. The three jobs submitted can be refered to as:
+`stage_in`; `main`; and `stage_out`. `stage_in` should move data for `main` to
+consume. `main` is the main script that may consume and generate data.
+`stage_out` should move data generated from `main` to an external location.
 
-It is quite simple to modify for your use. Copy it and fill in the yaml with
-your configuration. Try it out!
-
+Example usage:
 ```sh
-$ /slurm/jobs/data_migrate.py /slurm/jobs/data_migrate.yaml
+$ /slurm/jobs/submit_workflow.py /slurm/jobs/shuffle.yaml
 ```
+
+For your specific workload, prepare `stage_in` and `stage_out` scripts for your
+desired `main` job. Configure a workflow yaml and submit it with the
+`submit_workflow.py` runner.
+
+### shuffle.yaml
+
+This is a structured yaml file which defines a sequence of jobs to be submitted.
+The sample configuration copies an arbitrary multiline file from a GCP bucket to
+`$HOME`. An output file is generated from the main script and the input file,
+which is copied to an arbitrary location (another GCP bucket).
+
+**Warning:** This workflow yaml will fail unless the defined GCP buckets and
+input file exist.
