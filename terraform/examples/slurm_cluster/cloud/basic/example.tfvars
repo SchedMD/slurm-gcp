@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
+###########
+# GENERAL #
+###########
+
 project_id = "<PROJECT_ID>"
 
-region = "<REGION>"
+cluster_name = "basic-cloud"
 
-cluster_name = "basic"
+region = "<REGION>"

@@ -23,25 +23,21 @@ data "google_compute_subnetwork" "default" {
   region = var.region
 }
 
-module "slurm_compute_template" {
-  source = "../../../modules/slurm_compute_template"
-
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
-  network      = data.google_compute_subnetwork.default.network
-}
-
 module "slurm_partition" {
   source = "../../../modules/slurm_partition"
 
   partition_name = "default"
-  partition_nodes = [
+  partition_conf = {
+    Default = "YES"
+  }
+  compute_node_groups = [
     {
-      count_dynamic     = 1
-      count_static      = 0
-      instance_template = module.slurm_compute_template.self_link
-      node_group_name   = "default"
+      count_dynamic = 1
+      count_static  = 0
+      group_name    = "default"
     },
   ]
-  subnetwork = data.google_compute_subnetwork.default.self_link
+  cluster_name = var.cluster_name
+  project_id   = var.project_id
+  subnetwork   = data.google_compute_subnetwork.default.self_link
 }

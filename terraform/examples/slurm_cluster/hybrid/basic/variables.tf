@@ -19,19 +19,27 @@ variable "project_id" {
   description = "Project ID to create resources in."
 }
 
-variable "region" {
-  type        = string
-  description = "The region to place resources in."
-}
-
 variable "cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."
-  default     = "simple-hybrid"
+  default     = "basic-hybrid"
 }
 
-variable "cloud_parameters" {
-  description = "cloud.conf key/value as a map."
-  type        = map(string)
-  default     = {}
+variable "region" {
+  type        = string
+  description = "The default region to place resources in."
+}
+
+variable "munge_key" {
+  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "jwt_key" {
+  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
+  type        = string
+  default     = ""
+  sensitive   = true
 }

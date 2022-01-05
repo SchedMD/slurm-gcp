@@ -14,34 +14,63 @@
  * limitations under the License.
  */
 
+##########
+# LOCALS #
+##########
+
+locals {
+  partitions = [
+    {
+      partition_name = "default"
+      compute_node_groups = [
+        {
+          count_dynamic = 1
+          count_static  = 0
+          group_name    = "default"
+        },
+      ]
+      cluster_name = var.cluster_name
+      project_id   = var.project_id
+      subnetwork   = data.google_compute_subnetwork.default.self_link
+    },
+  ]
+
+  controller_hybrid_config = {
+    output_dir = "./config"
+  }
+}
+
 ############
 # PROVIDER #
 ############
 
 provider "google" {
   project = var.project_id
+  region  = var.region
 }
 
-###########
-# NETWORK #
-###########
+########
+# DATA #
+########
 
-module "network" {
-  source = "../../../../modules/_network"
+data "google_compute_subnetwork" "default" {
+  name = "default"
+}
 
-  project_id = var.project_id
+#################
+# SLURM CLUSTER #
+#################
 
-  network_name = "${var.cluster_name}-network"
-  subnets = [
-    {
-      subnet_name   = "${var.cluster_name}-subnetwork"
-      subnet_ip     = "10.0.0.0/20"
-      subnet_region = var.region
+module "slurm_cluster" {
+  source = "../../../../modules/slurm_cluster"
 
-      subnet_private_access = true
-      subnet_flow_logs      = true
-    },
-  ]
+  cluster_name             = var.cluster_name
+  controller_hybrid_config = local.controller_hybrid_config
+  enable_hybrid            = true
+  jwt_key                  = var.jwt_key
+  munge_key                = var.munge_key
+  partitions               = local.partitions
+  project_id               = var.project_id
 }
 
 ##################
@@ -51,62 +80,7 @@ module "network" {
 module "slurm_firewall_rules" {
   source = "../../../../modules/slurm_firewall_rules"
 
-  project_id   = var.project_id
-  network_name = module.network.network.network_name
   cluster_name = var.cluster_name
-}
-
-######################
-# COMPUTE: TEMPLATES #
-######################
-
-module "slurm_compute_template" {
-  source = "../../../../modules/slurm_compute_template"
-
-  cluster_name     = var.cluster_name
-  project_id       = var.project_id
-  slurm_cluster_id = module.slurm_controller_hybrid.slurm_cluster_id
-  subnetwork       = module.network.network.subnets_self_links[0]
-}
-
-###################
-# SLURM PARTITION #
-###################
-
-module "slurm_partition" {
-  source = "../../../../modules/slurm_partition"
-
-  partition_name = "debug"
-  partition_conf = {
-    Default = "YES"
-  }
-  partition_nodes = [
-    {
-      node_group_name   = "n1"
-      instance_template = module.slurm_compute_template.self_link
-      count_static      = 0
-      count_dynamic     = 20
-    },
-  ]
-  subnetwork = module.network.network.subnets_self_links[0]
-}
-
-######################
-# CONTROLLER: HYBRID #
-######################
-
-module "slurm_controller_hybrid" {
-  source = "../../../../modules/slurm_controller_hybrid"
-
-  cloud_parameters = var.cloud_parameters
-  cluster_name     = var.cluster_name
-  output_dir       = "./config"
-  partitions = [
-    module.slurm_partition.partition,
-  ]
-  project_id = var.project_id
-
-  depends_on = [
-    module.slurm_firewall_rules,
-  ]
+  network_name = data.google_compute_subnetwork.default.network
+  project_id   = var.project_id
 }

@@ -16,15 +16,10 @@
 
 output "slurm_cluster_id" {
   description = "Slurm cluster ID."
-  value       = module.slurm_controller_hybrid.slurm_cluster_id
+  value       = module.slurm_cluster.slurm_cluster_id
 }
 
-output "cluster_name" {
-  description = "Slurm cluster name."
-  value       = module.slurm_controller_hybrid.cluster_name
-}
-
-output "partitions" {
-  description = "Configured Slurm partitions."
-  value       = module.slurm_controller_hybrid.partitions
+output "slurm_partitions" {
+  description = "Slurm partition details."
+  value       = module.slurm_cluster.slurm_partition
 }

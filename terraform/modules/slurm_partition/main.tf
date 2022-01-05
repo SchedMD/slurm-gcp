@@ -19,10 +19,55 @@
 ##########
 
 locals {
+  compute_node_groups = { for x in var.compute_node_groups : x.group_name => x }
+
+  compute_node_groups_defaults_defaults = {
+    additional_disks       = []
+    can_ip_forward         = null
+    disable_smt            = false
+    disk_auto_delete       = true
+    disk_labels            = {}
+    disk_size_gb           = null
+    disk_type              = null
+    enable_confidential_vm = false
+    enable_shielded_vm     = false
+    gpu                    = null
+    machine_type           = "n1-standard-1"
+    min_cpu_platform       = null
+    network_ip             = ""
+    network                = "default"
+    on_host_maintenance    = null
+    preemptible            = false
+    region                 = null
+    service_account = {
+      email  = "default"
+      scopes = []
+    }
+    shielded_instance_config = null
+    source_image_family      = ""
+    source_image_project     = ""
+    source_image             = ""
+    subnetwork_project       = null
+    subnetwork               = "default"
+    tags                     = []
+  }
+
+  compute_node_groups_defaults = merge(
+    local.compute_node_groups_defaults_defaults,
+    var.compute_node_groups_defaults,
+  )
+
   partition = {
-    partition_name    = var.partition_name
-    partition_conf    = var.partition_conf
-    partition_nodes   = { for n in var.partition_nodes : n.node_group_name => n }
+    partition_name = var.partition_name
+    partition_conf = var.partition_conf
+    partition_nodes = {
+      for x in local.compute_node_groups : x.group_name => {
+        group_name        = x.group_name
+        instance_template = module.slurm_compute_template[x.group_name].self_link
+        count_dynamic     = lookup(x, "count_dynamic", 1)
+        count_static      = lookup(x, "count_static", 0)
+      }
+    }
     subnetwork        = data.google_compute_subnetwork.partition_subnetwork.self_link
     zone_policy_allow = setsubtract(var.zone_policy_allow, var.zone_policy_deny)
     zone_policy_deny  = var.zone_policy_deny
@@ -48,17 +93,41 @@ data "google_compute_subnetwork" "partition_subnetwork" {
   )
 }
 
-##################
-# DATA: TEMPLATE #
-##################
+#####################
+# COMPUTE: TEMPLATE #
+#####################
 
-data "google_compute_instance_template" "partition_template" {
-  for_each = { for x in var.partition_nodes : x.node_group_name => x }
+module "slurm_compute_template" {
+  source = "../slurm_compute_template"
 
-  project = (
-    length(regexall("/projects/([^/]*)", each.value.instance_template)) > 0
-    ? flatten(regexall("/projects/([^/]*)", each.value.instance_template))[0]
-    : null
-  )
-  name = each.value.instance_template
+  for_each = local.compute_node_groups
+
+  additional_disks         = lookup(each.value, "additional_disks", local.compute_node_groups_defaults["additional_disks"])
+  can_ip_forward           = lookup(each.value, "can_ip_forward", local.compute_node_groups_defaults["can_ip_forward"])
+  cluster_name             = var.cluster_name
+  disable_smt              = lookup(each.value, "disable_smt", local.compute_node_groups_defaults["disable_smt"])
+  disk_auto_delete         = lookup(each.value, "disk_auto_delete", local.compute_node_groups_defaults["disk_auto_delete"])
+  disk_labels              = lookup(each.value, "disk_labels", local.compute_node_groups_defaults["disk_labels"])
+  disk_size_gb             = lookup(each.value, "disk_size_gb", local.compute_node_groups_defaults["disk_size_gb"])
+  disk_type                = lookup(each.value, "disk_type", local.compute_node_groups_defaults["disk_type"])
+  enable_confidential_vm   = lookup(each.value, "enable_confidential_vm", local.compute_node_groups_defaults["enable_confidential_vm"])
+  enable_shielded_vm       = lookup(each.value, "enable_shielded_vm", local.compute_node_groups_defaults["enable_shielded_vm"])
+  gpu                      = lookup(each.value, "gpu", local.compute_node_groups_defaults["gpu"])
+  machine_type             = lookup(each.value, "machine_type", local.compute_node_groups_defaults["machine_type"])
+  min_cpu_platform         = lookup(each.value, "min_cpu_platform", local.compute_node_groups_defaults["min_cpu_platform"])
+  name_prefix              = each.value.group_name
+  network_ip               = lookup(each.value, "network_ip", local.compute_node_groups_defaults["network_ip"])
+  network                  = lookup(each.value, "network", local.compute_node_groups_defaults["network"])
+  on_host_maintenance      = lookup(each.value, "on_host_maintenance", local.compute_node_groups_defaults["on_host_maintenance"])
+  preemptible              = lookup(each.value, "preemptible", local.compute_node_groups_defaults["preemptible"])
+  project_id               = var.project_id
+  service_account          = lookup(each.value, "service_account", local.compute_node_groups_defaults["service_account"])
+  shielded_instance_config = lookup(each.value, "shielded_instance_config", local.compute_node_groups_defaults["shielded_instance_config"])
+  slurm_cluster_id         = var.slurm_cluster_id
+  source_image_family      = lookup(each.value, "source_image_family", local.compute_node_groups_defaults["source_image_family"])
+  source_image_project     = lookup(each.value, "source_image_project", local.compute_node_groups_defaults["source_image_project"])
+  source_image             = lookup(each.value, "source_image", local.compute_node_groups_defaults["source_image"])
+  subnetwork_project       = lookup(each.value, "subnetwork_project", local.compute_node_groups_defaults["subnetwork_project"])
+  subnetwork               = data.google_compute_subnetwork.partition_subnetwork.self_link
+  tags                     = concat([var.cluster_name], lookup(each.value, "tags", local.compute_node_groups_defaults["tags"]))
 }

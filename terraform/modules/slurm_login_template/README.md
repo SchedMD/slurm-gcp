@@ -2,6 +2,8 @@
 
 This module creates an instance template for a Slurm cluster login node.
 
+**NOTE:** `cluster_name` is appended to network `tag`. More can be added.
+
 ## Usage
 
 See the [simple](../../examples/slurm_instance_template/simple) example for a

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-output "slurm_compute_template" {
-  description = "Slurm compute instance template details."
-  value       = module.slurm_compute_template
+output "slurm_partition" {
+  description = "Slurm partition details."
+  value       = module.slurm_partition
 }

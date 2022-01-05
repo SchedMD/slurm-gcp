@@ -1,7 +1,19 @@
 # Example: Basic Hybrid Slurm Cluster
 
-This example creates a basic hybrid cluster. The cluster will create a network
-and subnetwork to which resources will be attached.
+This example creates a hybrid slurm cluster capable of bursting out multiple
+compute nodes from a pre-configured partition.
+
+## Additional Dependencies
+
+* [**python**](https://www.python.org/) must be installed and in `$PATH` of the
+user running `terraform apply`.
+  * Required Version: `~3.6, >= 3.6.0, < 4.0.0`
+* **Private Google Access** must be
+[enabled](https://cloud.google.com/vpc/docs/configure-private-google-access)
+on the input `subnetwork`.
+* [*Shared VPC*](https://cloud.google.com/vpc/docs/shared-vpc) must be enabled
+when `subnetwork_project` != `project_id`.
+* Munge and JWT key must be readable by the user running `terraform apply`.
 
 ## Usage
 
@@ -40,35 +52,34 @@ limitations under the License.
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_google"></a> [google](#provider\_google) | 4.5.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_network"></a> [network](#module\_network) | ../../../../modules/_network | n/a |
-| <a name="module_slurm_compute_template"></a> [slurm\_compute\_template](#module\_slurm\_compute\_template) | ../../../../modules/slurm_compute_template | n/a |
-| <a name="module_slurm_controller_hybrid"></a> [slurm\_controller\_hybrid](#module\_slurm\_controller\_hybrid) | ../../../../modules/slurm_controller_hybrid | n/a |
+| <a name="module_slurm_cluster"></a> [slurm\_cluster](#module\_slurm\_cluster) | ../../../../modules/slurm_cluster | n/a |
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../../modules/slurm_firewall_rules | n/a |
-| <a name="module_slurm_partition"></a> [slurm\_partition](#module\_slurm\_partition) | ../../../../modules/slurm_partition | n/a |
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [google_compute_subnetwork.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_cloud_parameters"></a> [cloud\_parameters](#input\_cloud\_parameters) | cloud.conf key/value as a map. | `map(string)` | `{}` | no |
-| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"simple-hybrid"` | no |
+| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"basic-hybrid"` | no |
+| <a name="input_jwt_key"></a> [jwt\_key](#input\_jwt\_key) | Cluster jwt authentication key. If 'null', then a key will be generated instead. | `string` | `""` | no |
+| <a name="input_munge_key"></a> [munge\_key](#input\_munge\_key) | Cluster munge authentication key. If 'null', then a key will be generated instead. | `string` | `""` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
-| <a name="input_region"></a> [region](#input\_region) | The region to place resources in. | `string` | n/a | yes |
+| <a name="input_region"></a> [region](#input\_region) | The default region to place resources in. | `string` | n/a | yes |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Slurm cluster name |
-| <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Slurm cluster ID. |
+No outputs.
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

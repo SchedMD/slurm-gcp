@@ -26,6 +26,16 @@ locals {
   )
 }
 
+##########
+# RANDOM #
+##########
+
+resource "random_string" "suffix" {
+  length  = 8
+  upper   = false
+  special = false
+}
+
 ############
 # INSTANCE #
 ############
@@ -38,13 +48,13 @@ module "slurm_login_instance" {
   subnetwork_project = var.subnetwork_project
   network            = var.network
   subnetwork         = var.subnetwork
-  region             = var.region
+  region             = local.region
   zone               = var.zone
   static_ips         = var.static_ips
   access_config      = var.access_config
 
   ### instance ###
   instance_template = var.instance_template
-  hostname          = "${var.cluster_name}-login-${local.region}"
+  hostname          = "${var.cluster_name}-login-${random_string.suffix.result}"
   num_instances     = var.num_instances
 }

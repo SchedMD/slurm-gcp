@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-project_id = "<PROJECT_ID>"
+output "slurm_cluster_id" {
+  description = "Slurm cluster ID."
+  value       = local.slurm_cluster_id
+}
 
-region = "<REGION>"
-
-cluster_name = "basic"
-
-subnetwork_project = "<SUBNETWORK_PROJECT>"
-
-subnetwork = "<SUBNETWORK>"
-
-instance_template_network = "default"
+output "slurm_partition" {
+  description = "Slurm partition details."
+  value       = module.slurm_partition
+}

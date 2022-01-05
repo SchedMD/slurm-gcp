@@ -19,6 +19,8 @@
 ##########
 
 locals {
+  target_tags = concat([var.cluster_name], var.target_tags)
+
   firewall_rules = [
     {
       name                    = "${var.cluster_name}-allow-ssh-ingress"
@@ -26,7 +28,7 @@ locals {
       ranges                  = ["0.0.0.0/0"]
       source_tags             = var.source_tags
       source_service_accounts = var.source_service_accounts
-      target_tags             = var.target_tags
+      target_tags             = local.target_tags
       target_service_accounts = var.target_service_accounts
       allow = [
         {
@@ -44,7 +46,7 @@ locals {
       ranges                  = ["35.235.240.0/20"]
       source_tags             = var.source_tags
       source_service_accounts = var.source_service_accounts
-      target_tags             = var.target_tags
+      target_tags             = local.target_tags
       target_service_accounts = var.target_service_accounts
       allow = [
         {
@@ -62,7 +64,7 @@ locals {
       ranges                  = ["0.0.0.0/0"]
       source_tags             = var.source_tags
       source_service_accounts = var.source_service_accounts
-      target_tags             = var.target_tags
+      target_tags             = local.target_tags
       target_service_accounts = var.target_service_accounts
       allow = [
         {

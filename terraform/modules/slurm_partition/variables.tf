@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+
+variable "project_id" {
+  type        = string
+  description = "Project ID to create resources in."
+}
+
+variable "cluster_name" {
+  type        = string
+  description = "Cluster name, used for resource naming and slurm accounting."
+}
+
+variable "slurm_cluster_id" {
+  type        = string
+  description = "The Cluster ID, used to label resource."
+  default     = null
+}
+
 variable "partition_name" {
   description = "Name of Slurm partition."
   type        = string
@@ -28,39 +45,41 @@ EOD
   default     = {}
 }
 
-variable "partition_nodes" {
+variable "compute_node_groups" {
   description = "Grouped nodes in the partition."
-  type = list(object({
-    node_group_name   = string
-    instance_template = string
-    count_static      = number
-    count_dynamic     = number
-  }))
+  type        = any
 
   validation {
-    condition     = length(var.partition_nodes) > 0
+    condition     = length(var.compute_node_groups) > 0
     error_message = "Partition must contain nodes."
   }
 
   validation {
     condition = alltrue([
-      for x in var.partition_nodes : can(regex("(^[a-z][a-z0-9]*$)", x.node_group_name))
+      for x in var.compute_node_groups : can(regex("(^[a-z][a-z0-9]*$)", x.group_name))
     ])
-    error_message = "Items 'node_group_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
+    error_message = "Items 'group_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
   }
 
   validation {
     condition = alltrue([
-      for x in var.partition_nodes : x.count_static >= 0
+      for x in var.compute_node_groups : x.count_static >= 0
     ])
     error_message = "Items 'count_static' must be >= 0."
   }
 
   validation {
     condition = alltrue([
-      for x in var.partition_nodes : x.count_dynamic >= 0
+      for x in var.compute_node_groups : x.count_dynamic >= 0
     ])
     error_message = "Items 'count_dynamic' must be >= 0."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.compute_node_groups : sum([x.count_static, x.count_dynamic]) > 0
+    ])
+    error_message = "Sum of 'count_static' and 'count_dynamic' must be > 0."
   }
 }
 
@@ -136,4 +155,10 @@ EOD
     mount_options = string
   }))
   default = []
+}
+
+variable "compute_node_groups_defaults" {
+  description = "Defaults for compute_node_groups in partitions."
+  type        = any
+  default     = {}
 }

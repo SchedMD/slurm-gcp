@@ -19,13 +19,13 @@ variable "project_id" {
   description = "Project ID to create resources in."
 }
 
-variable "region" {
-  type        = string
-  description = "The region to place resources in."
-}
-
 variable "cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."
-  default     = "basic"
+  default     = "simple-cloud"
+}
+
+variable "region" {
+  type        = string
+  description = "The default region to place resources in."
 }

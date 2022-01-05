@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
+###########
+# GENERAL #
+###########
+
 project_id = "<PROJECT_ID>"
+
+cluster_name = "basic-hybrid"
 
 region = "<REGION>"
 
-cluster_name = "basic"
+munge_key = "<MUNGE_KEY>"
+jwt_key   = "<JWT_KEY>"

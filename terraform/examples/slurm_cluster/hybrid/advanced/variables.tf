@@ -35,13 +35,19 @@ variable "enable_devel" {
   default     = false
 }
 
-###########
-# NETWORK #
-###########
-
 variable "region" {
   type        = string
-  description = "The region to place resources in."
+  description = "The default region to place resources in."
+}
+
+############
+# FIREWALL #
+############
+
+variable "firewall_network_name" {
+  type        = string
+  description = "Name of the network this set of firewall rules applies to."
+  default     = "default"
 }
 
 #################
@@ -112,81 +118,27 @@ variable "compute_d" {
   default     = null
 }
 
-variable "slurm_bin_dir" {
-  description = "Path to directory slurm binary."
-  type        = string
-  default     = null
-}
+##############
+# CONTROLLER #
+##############
 
-variable "slurm_log_dir" {
-  description = "Path to slurm log directory."
-  type        = string
-  default     = null
+variable "controller_hybrid_config" {
+  description = <<EOD
+Creates a hybrid controller with given configuration.
+See 'main.tf' for valid keys.
+EOD
+  type        = map(any)
+  default     = {}
 }
 
 ###########
 # COMPUTE #
 ###########
 
-variable "compute_service_account" {
-  type = object({
-    email  = string
-    scopes = set(string)
-  })
-  description = "Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account."
-  default = {
-    email  = null
-    scopes = null
-  }
-}
-
-variable "compute_templates" {
-  description = "List of slurm compute instance templates."
-  type = list(object({
-    alias = string
-
-    ### network ###
-    tags = list(string)
-
-    ### instance ###
-    machine_type     = string
-    min_cpu_platform = string
-    gpu = object({
-      type  = string
-      count = number
-    })
-    shielded_instance_config = object({
-      enable_secure_boot          = bool
-      enable_vtpm                 = bool
-      enable_integrity_monitoring = bool
-    })
-    enable_confidential_vm = bool
-    enable_shielded_vm     = bool
-    disable_smt            = bool
-    preemptible            = bool
-    labels                 = map(string)
-
-    ### source image ###
-    source_image_project = string
-    source_image_family  = string
-    source_image         = string
-
-    ### disk ###
-    disk_type        = string
-    disk_size_gb     = number
-    disk_labels      = map(string)
-    disk_auto_delete = bool
-    additional_disks = list(object({
-      disk_name    = string
-      device_name  = string
-      auto_delete  = bool
-      boot         = bool
-      disk_size_gb = number
-      disk_type    = string
-      disk_labels  = map(string)
-    }))
-  }))
-  default = []
+variable "compute_node_groups_defaults" {
+  description = "Defaults for compute_node_groups in partitions."
+  type        = any
+  default     = {}
 }
 
 ##############
@@ -195,26 +147,6 @@ variable "compute_templates" {
 
 variable "partitions" {
   description = "Cluster partition configuration as a list."
-  type = list(object({
-    partition_name = string
-    partition_conf = map(string)
-    partition_nodes = list(object({
-      node_group_name            = string
-      compute_template_alias_ref = string
-      count_static               = number
-      count_dynamic              = number
-    }))
-    zone_policy_allow = list(string)
-    zone_policy_deny  = list(string)
-    network_storage = list(object({
-      server_ip     = string
-      remote_mount  = string
-      local_mount   = string
-      fs_type       = string
-      mount_options = string
-    }))
-    enable_job_exclusive    = bool
-    enable_placement_groups = bool
-  }))
-  default = []
+  type        = list(any)
+  default     = []
 }

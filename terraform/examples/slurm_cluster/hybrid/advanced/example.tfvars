@@ -20,7 +20,7 @@
 
 project_id = "<PROJECT_ID>"
 
-cluster_name = "advanced"
+cluster_name = "hybrid-advanced"
 
 region = "<REGION>"
 
@@ -31,11 +31,12 @@ region = "<REGION>"
 # CONFIGURATION #
 #################
 
-### setup ###
-jwt_key   = null
-munge_key = null
+firewall_network_name = "default"
 
-### storage ###
+munge_key = "<MUNGE_KEY>"
+jwt_key   = "<JWT_KEY>"
+
+# Network storage
 network_storage = [
   # {
   #   server_ip     = "<storage host>"
@@ -55,12 +56,7 @@ login_network_storage = [
   # },
 ]
 
-### scripts.d ###
-compute_d = null
-
-### Slurm ###
-slurm_bin_dir = null
-slurm_log_dir = null
+# Slurm config
 cloud_parameters = {
   ResumeRate     = 0
   ResumeTimeout  = 300
@@ -68,131 +64,67 @@ cloud_parameters = {
   SuspendTimeout = 300
 }
 
+# scripts.d
+compute_d = null
+
+##############
+# CONTROLLER #
+##############
+
+controller_hybrid_config = {
+  google_app_cred_path = null
+  slurm_scripts_dir    = null
+  slurm_bin_dir        = "/usr/local/bin"
+  slurm_log_dir        = "/var/log/slurm"
+  output_dir           = "./config"
+}
+
 ###########
 # COMPUTE #
 ###########
 
-### Service Account ###
+compute_node_groups_defaults = {
+  # Instance
+  machine_type     = "n1-standard-1"
+  min_cpu_platform = null
+  gpu              = null
+  service_account = {
+    email = "default"
+    scopes = [
+      "https://www.googleapis.com/auth/monitoring.write",
+      "https://www.googleapis.com/auth/logging.write",
 
-compute_service_account = {
-  email = "default"
-  scopes = [
-    "https://www.googleapis.com/auth/cloud-platform",
-  ]
-}
-
-### Templates ###
-
-compute_templates = [
-  {
-    alias = "cpu"
-
-    ### network ###
-    tags = [
-      # "tag0",
-      # "tag1",
-    ]
-
-    ### instance ###
-    machine_type     = "n1-standard-1"
-    min_cpu_platform = null
-    gpu              = null
-    shielded_instance_config = {
-      enable_secure_boot          = true
-      enable_vtpm                 = true
-      enable_integrity_monitoring = true
-    }
-    enable_confidential_vm = false
-    enable_shielded_vm     = false
-    disable_smt            = false
-    preemptible            = false
-    labels = {
-      # label0 = "value0"
-      # label1 = "value1"
-    }
-
-    ### image ###
-    source_image_project = ""
-    source_image_family  = ""
-    source_image         = ""
-
-    ### disk ###
-    disk_labels = {
-      # "label0" = "value0"
-      # "label1" = "value1"
-    }
-    disk_size_gb     = 32
-    disk_type        = "pd-ssd"
-    disk_auto_delete = true
-    additional_disks = [
-      # {
-      #   disk_name    = null
-      #   device_name  = null
-      #   disk_size_gb = 1024
-      #   disk_type    = "pd-standard"
-      #   disk_labels  = null
-      #   auto_delete  = true
-      #   boot         = false
-      # },
-    ]
-  },
-  {
-    alias = "gpu"
-
-    ### network ###
-    tags = [
-      # "tag0",
-      # "tag1",
-    ]
-
-    ### instance ###
-    machine_type     = "n1-standard-4"
-    min_cpu_platform = null
-    gpu              = null
-    gpu = {
-      type  = "nvidia-tesla-t4"
-      count = 1
-    }
-    shielded_instance_config = {
-      enable_secure_boot          = true
-      enable_vtpm                 = true
-      enable_integrity_monitoring = true
-    }
-    enable_confidential_vm = false
-    enable_shielded_vm     = false
-    disable_smt            = true
-    preemptible            = false
-    labels = {
-      # label0 = "value0"
-      # label1 = "value1"
-    }
-
-    ### image ###
-    source_image_project = ""
-    source_image_family  = ""
-    source_image         = ""
-
-    ### disk ###
-    disk_labels = {
-      # "label0" = "value0"
-      # "label1" = "value1"
-    }
-    disk_size_gb     = 32
-    disk_type        = "pd-ssd"
-    disk_auto_delete = true
-    additional_disks = [
-      # {
-      #   disk_name    = null
-      #   device_name  = null
-      #   disk_size_gb = 1024
-      #   disk_type    = "pd-standard"
-      #   disk_labels  = null
-      #   auto_delete  = true
-      #   boot         = false
-      # },
     ]
   }
-]
+  shielded_instance_config = {
+    enable_secure_boot          = true
+    enable_vtpm                 = true
+    enable_integrity_monitoring = true
+  }
+  labels = {
+    # label0 = "value0"
+    # label1 = "value1"
+  }
+  tags = [
+    # "tag0",
+    # "tag1",
+  ]
+  enable_confidential_vm = false
+  enable_shielded_vm     = false
+  disable_smt            = false
+  preemptible            = false
+
+  # Image
+  source_image_project = ""
+  source_image_family  = ""
+  source_image         = ""
+
+  # Disk
+  disk_labels = {
+    # label0 = "value0"
+    # label1 = "value1"
+  }
+}
 
 ##############
 # PARTITIONS #
@@ -205,20 +137,46 @@ partitions = [
       Default     = "YES"
       SuspendTime = 300
     }
-    partition_nodes = [
+    compute_node_groups = [
       {
-        node_group_name            = "n1"
-        compute_template_alias_ref = "cpu"
-        count_static               = 0
-        count_dynamic              = 20
+        group_name    = "c0"
+        count_static  = 0
+        count_dynamic = 20
+
+        # Instance
+        machine_type           = "n1-standard-1"
+        gpu                    = null
+        enable_confidential_vm = false
+        enable_shielded_vm     = false
+        disable_smt            = false
+        preemptible            = false
+
+        # Disk
+        disk_size_gb = 32
+        disk_type    = "pd-standard"
       },
       {
-        node_group_name            = "tesla"
-        compute_template_alias_ref = "gpu"
-        count_static               = 0
-        count_dynamic              = 5
+        group_name    = "g0"
+        count_static  = 0
+        count_dynamic = 10
+
+        # Instance
+        machine_type = "n1-standard-1"
+        gpu = {
+          type  = "nvidia-tesla-t4"
+          count = 1
+        }
+        enable_confidential_vm = false
+        enable_shielded_vm     = false
+        disable_smt            = false
+        preemptible            = false
+
+        # Disk
+        disk_size_gb = 32
+        disk_type    = "pd-standard"
       },
     ]
+    subnetwork        = "default"
     zone_policy_allow = []
     zone_policy_deny  = []
     network_storage = [

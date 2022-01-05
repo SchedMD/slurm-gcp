@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-project_id = "<PROJECT_ID>"
+terraform {
+  required_version = "~> 1.0"
 
-region = "<REGION>"
-
-cluster_name = "basic"
-
-subnetwork_project = "<SUBNETWORK_PROJECT>"
-
-subnetwork = "<SUBNETWORK>"
-
-instance_template_network = "default"
+  required_providers {
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+  }
+}

@@ -13,13 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-output "slurm_cluster_id" {
-  description = "Slurm cluster ID."
-  value       = module.slurm_controller_hybrid.slurm_cluster_id
-}
-
-output "cluster_name" {
-  description = "Slurm cluster name"
-  value       = module.slurm_controller_hybrid.cluster_name
-}

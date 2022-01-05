@@ -1,15 +1,18 @@
-# Example: Basic Slurm Cluster
+# Example: Basic Cloud Slurm Cluster
 
-This example creates a basic cluster with one controller, one login node, and
-capable of bursting out multiple compute nodes from a pre-configured partition.
-The cluster will create a network and subnetwork to which resources will be
-attached.
+This example creates a slurm cluster capable of bursting out multiple compute
+nodes from a pre-configured partition.
 
 ## Additional Dependencies
 
 * [**python**](https://www.python.org/) must be installed and in `$PATH` of the
 user running `terraform apply`.
   * Required Version: `~3.6, >= 3.6.0, < 4.0.0`
+* **Private Google Access** must be
+[enabled](https://cloud.google.com/vpc/docs/configure-private-google-access)
+on the input `subnetwork`.
+* [*Shared VPC*](https://cloud.google.com/vpc/docs/shared-vpc) must be enabled
+when `subnetwork_project` != `project_id`.
 
 ## Usage
 
@@ -56,34 +59,24 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_network"></a> [network](#module\_network) | ../../../../modules/_network | n/a |
-| <a name="module_slurm_compute_template"></a> [slurm\_compute\_template](#module\_slurm\_compute\_template) | ../../../../modules/slurm_compute_template | n/a |
-| <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | ../../../../modules/slurm_controller_instance | n/a |
-| <a name="module_slurm_controller_template"></a> [slurm\_controller\_template](#module\_slurm\_controller\_template) | ../../../../modules/slurm_controller_template | n/a |
+| <a name="module_slurm_cluster"></a> [slurm\_cluster](#module\_slurm\_cluster) | ../../../../modules/slurm_cluster | n/a |
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../../modules/slurm_firewall_rules | n/a |
-| <a name="module_slurm_login"></a> [slurm\_login](#module\_slurm\_login) | ../../../../modules/slurm_login_instance | n/a |
-| <a name="module_slurm_login_template"></a> [slurm\_login\_template](#module\_slurm\_login\_template) | ../../../../modules/slurm_login_template | n/a |
-| <a name="module_slurm_partition"></a> [slurm\_partition](#module\_slurm\_partition) | ../../../../modules/slurm_partition | n/a |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [google_compute_zones.available](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones) | data source |
+| [google_compute_subnetwork.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"basic"` | no |
+| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"simple-cloud"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
-| <a name="input_region"></a> [region](#input\_region) | The region to place resources in. | `string` | n/a | yes |
+| <a name="input_region"></a> [region](#input\_region) | The default region to place resources in. | `string` | n/a | yes |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Slurm cluster name |
-| <a name="output_partitions"></a> [partitions](#output\_partitions) | Slurm partitions |
-| <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Slurm cluster ID. |
+No outputs.
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

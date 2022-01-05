@@ -48,7 +48,6 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_slurm_compute_template"></a> [slurm\_compute\_template](#module\_slurm\_compute\_template) | ../../../modules/slurm_compute_template | n/a |
 | <a name="module_slurm_partition"></a> [slurm\_partition](#module\_slurm\_partition) | ../../../modules/slurm_partition | n/a |
 
 ## Resources
@@ -69,5 +68,5 @@ limitations under the License.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_slurm_compute_template"></a> [slurm\_compute\_template](#output\_slurm\_compute\_template) | Slurm compute instance template details. |
+| <a name="output_slurm_partition"></a> [slurm\_partition](#output\_slurm\_partition) | Slurm partition details. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

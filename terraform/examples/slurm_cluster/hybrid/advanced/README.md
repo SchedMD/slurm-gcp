@@ -1,6 +1,21 @@
 # Example: Advanced Hybrid Slurm Cluster
 
-This example creates a Slurm cluster that is highly configurable through tfvars.
+This example creates a hybrid Slurm cluster that is highly configurable through
+tfvars. It creates a hybrid controller and is capable of bursting out multiple
+compute nodes as defined in partitions. Additionally, a VPC will be created only
+if a subnetwork is not specified.
+
+## Additional Dependencies
+
+* [**python**](https://www.python.org/) must be installed and in `$PATH` of the
+user running `terraform apply`.
+  * Required Version: `~3.6, >= 3.6.0, < 4.0.0`
+* **Private Google Access** must be
+[enabled](https://cloud.google.com/vpc/docs/configure-private-google-access)
+on the input `subnetwork`.
+* [*Shared VPC*](https://cloud.google.com/vpc/docs/shared-vpc) must be enabled
+when `subnetwork_project` != `project_id`.
+* Munge and JWT key must be readable by the user running `terraform apply`.
 
 ## Usage
 
@@ -45,11 +60,8 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_network"></a> [network](#module\_network) | ../../../../modules/_network | n/a |
-| <a name="module_slurm_compute_template"></a> [slurm\_compute\_template](#module\_slurm\_compute\_template) | ../../../../modules/slurm_compute_template | n/a |
-| <a name="module_slurm_controller_hybrid"></a> [slurm\_controller\_hybrid](#module\_slurm\_controller\_hybrid) | ../../../../modules/slurm_controller_hybrid | n/a |
+| <a name="module_slurm_cluster"></a> [slurm\_cluster](#module\_slurm\_cluster) | ../../../../modules/slurm_cluster | n/a |
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../../modules/slurm_firewall_rules | n/a |
-| <a name="module_slurm_partition"></a> [slurm\_partition](#module\_slurm\_partition) | ../../../../modules/slurm_partition | n/a |
 
 ## Resources
 
@@ -62,24 +74,22 @@ No resources.
 | <a name="input_cloud_parameters"></a> [cloud\_parameters](#input\_cloud\_parameters) | cloud.conf key/value as a map. | `map(string)` | `{}` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"advanced"` | no |
 | <a name="input_compute_d"></a> [compute\_d](#input\_compute\_d) | Path to directory containing user compute provisioning scripts. | `string` | `null` | no |
-| <a name="input_compute_service_account"></a> [compute\_service\_account](#input\_compute\_service\_account) | Service account to attach to the instance. See https://www.terraform.io/docs/providers/google/r/compute_instance_template.html#service_account. | <pre>object({<br>    email  = string<br>    scopes = set(string)<br>  })</pre> | <pre>{<br>  "email": null,<br>  "scopes": null<br>}</pre> | no |
-| <a name="input_compute_templates"></a> [compute\_templates](#input\_compute\_templates) | List of slurm compute instance templates. | <pre>list(object({<br>    alias = string<br><br>    ### network ###<br>    tags = list(string)<br><br>    ### instance ###<br>    machine_type     = string<br>    min_cpu_platform = string<br>    gpu = object({<br>      type  = string<br>      count = number<br>    })<br>    shielded_instance_config = object({<br>      enable_secure_boot          = bool<br>      enable_vtpm                 = bool<br>      enable_integrity_monitoring = bool<br>    })<br>    enable_confidential_vm = bool<br>    enable_shielded_vm     = bool<br>    disable_smt            = bool<br>    preemptible            = bool<br>    labels                 = map(string)<br><br>    ### source image ###<br>    source_image_project = string<br>    source_image_family  = string<br>    source_image         = string<br><br>    ### disk ###<br>    disk_type        = string<br>    disk_size_gb     = number<br>    disk_labels      = map(string)<br>    disk_auto_delete = bool<br>    additional_disks = list(object({<br>      disk_name    = string<br>      device_name  = string<br>      auto_delete  = bool<br>      boot         = bool<br>      disk_size_gb = number<br>      disk_type    = string<br>      disk_labels  = map(string)<br>    }))<br>  }))</pre> | `[]` | no |
+| <a name="input_compute_node_groups_defaults"></a> [compute\_node\_groups\_defaults](#input\_compute\_node\_groups\_defaults) | Defaults for compute\_node\_groups in partitions. | `any` | `{}` | no |
+| <a name="input_controller_hybrid_config"></a> [controller\_hybrid\_config](#input\_controller\_hybrid\_config) | Creates a hybrid controller with given configuration.<br>See 'main.tf' for valid keys. | `map(any)` | `{}` | no |
 | <a name="input_enable_devel"></a> [enable\_devel](#input\_enable\_devel) | Enables development process for faster iterations. NOTE: *NOT* intended for production use. | `bool` | `false` | no |
+| <a name="input_firewall_network_name"></a> [firewall\_network\_name](#input\_firewall\_network\_name) | Name of the network this set of firewall rules applies to. | `string` | `"default"` | no |
 | <a name="input_jwt_key"></a> [jwt\_key](#input\_jwt\_key) | Cluster jwt authentication key. If 'null', then a key will be generated instead. | `string` | `""` | no |
 | <a name="input_login_network_storage"></a> [login\_network\_storage](#input\_login\_network\_storage) | Storage to mounted on login and controller instances<br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Options to mount with. | <pre>list(object({<br>    server_ip     = string<br>    remote_mount  = string<br>    local_mount   = string<br>    fs_type       = string<br>    mount_options = string<br>  }))</pre> | `[]` | no |
 | <a name="input_munge_key"></a> [munge\_key](#input\_munge\_key) | Cluster munge authentication key. If 'null', then a key will be generated instead. | `string` | `""` | no |
 | <a name="input_network_storage"></a> [network\_storage](#input\_network\_storage) | Storage to mounted on all instances.<br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Options to mount with. | <pre>list(object({<br>    server_ip     = string<br>    remote_mount  = string<br>    local_mount   = string<br>    fs_type       = string<br>    mount_options = string<br>  }))</pre> | `[]` | no |
-| <a name="input_partitions"></a> [partitions](#input\_partitions) | Cluster partition configuration as a list. | <pre>list(object({<br>    partition_name = string<br>    partition_conf = map(string)<br>    partition_nodes = list(object({<br>      node_group_name            = string<br>      compute_template_alias_ref = string<br>      count_static               = number<br>      count_dynamic              = number<br>    }))<br>    zone_policy_allow = list(string)<br>    zone_policy_deny  = list(string)<br>    network_storage = list(object({<br>      server_ip     = string<br>      remote_mount  = string<br>      local_mount   = string<br>      fs_type       = string<br>      mount_options = string<br>    }))<br>    enable_job_exclusive    = bool<br>    enable_placement_groups = bool<br>  }))</pre> | `[]` | no |
+| <a name="input_partitions"></a> [partitions](#input\_partitions) | Cluster partition configuration as a list. | `list(any)` | `[]` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
-| <a name="input_region"></a> [region](#input\_region) | The region to place resources in. | `string` | n/a | yes |
-| <a name="input_slurm_bin_dir"></a> [slurm\_bin\_dir](#input\_slurm\_bin\_dir) | Path to directory slurm binary. | `string` | `null` | no |
-| <a name="input_slurm_log_dir"></a> [slurm\_log\_dir](#input\_slurm\_log\_dir) | Path to slurm log directory. | `string` | `null` | no |
+| <a name="input_region"></a> [region](#input\_region) | The default region to place resources in. | `string` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Slurm cluster name. |
-| <a name="output_partitions"></a> [partitions](#output\_partitions) | Configured Slurm partitions. |
 | <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Slurm cluster ID. |
+| <a name="output_slurm_partitions"></a> [slurm\_partitions](#output\_slurm\_partitions) | Slurm partition details. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

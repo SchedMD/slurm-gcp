@@ -18,13 +18,3 @@ output "partition" {
   description = "Partition for slurm controller."
   value       = local.partition
 }
-
-output "partition_subnetwork" {
-  description = "Partition subnetwork."
-  value       = data.google_compute_subnetwork.partition_subnetwork
-}
-
-output "partition_template" {
-  description = "Instance templates in partition."
-  value       = data.google_compute_instance_template.partition_template
-}

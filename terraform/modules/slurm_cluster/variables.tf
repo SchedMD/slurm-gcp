@@ -25,71 +25,118 @@ variable "project_id" {
 
 variable "cluster_name" {
   type        = string
-  description = "Cluster name, used for resource naming."
-  default     = "advanced"
+  description = "Cluster name, used for resource naming and slurm accounting."
 }
 
-variable "enable_devel" {
+#####################
+# CONTROLLER: CLOUD #
+#####################
+
+variable "controller_instance_config" {
+  description = <<EOD
+Creates a controller instance with given configuration.
+See 'main.tf' for valid keys.
+EOD
+  type        = any
+  default     = {}
+}
+
+######################
+# CONTROLLER: HYBRID #
+######################
+
+variable "enable_hybrid" {
+  description = <<EOD
+Enables use of hybrid controller mode. When true, controller_hybrid_config will
+be used instead of controller_instance_config and will disable login instances.
+EOD
   type        = bool
-  description = "Enables development process for faster iterations. NOTE: *NOT* intended for production use."
   default     = false
 }
 
-variable "region" {
-  type        = string
-  description = "The default region to place resources in."
+variable "controller_hybrid_config" {
+  description = <<EOD
+Creates a hybrid controller with given configuration.
+See 'main.tf' for valid keys.
+EOD
+  type        = map(any)
+  default     = {}
 }
 
-############
-# FIREWALL #
-############
+#########
+# LOGIN #
+#########
 
-variable "firewall_network_name" {
-  type        = string
-  description = "Name of the network this set of firewall rules applies to."
-  default     = "default"
+variable "login_node_groups" {
+  description = "List of slurm login instance definitions."
+  type        = list(any)
+  default     = []
 }
 
-#################
-# CONFIGURATION #
-#################
+###########
+# COMPUTE #
+###########
+
+variable "compute_node_groups_defaults" {
+  description = "Defaults for compute_node_groups in partitions."
+  type        = any
+  default     = {}
+}
+
+#############
+# PARTITION #
+#############
+
+variable "partitions" {
+  description = "Cluster partitions as a list. See module slurm_partition."
+  type        = list(any)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for x in var.partitions : can(regex("(^[a-z][a-z0-9]*$)", x.partition_name))
+    ])
+    error_message = "Items 'partition_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
+  }
+}
+
+#########
+# SLURM #
+#########
+
+variable "enable_devel" {
+  type        = bool
+  description = "Enables development mode. Not for production use."
+  default     = false
+}
+
+variable "munge_key" {
+  type        = string
+  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
+  default     = null
+  sensitive   = true
+
+  validation {
+    condition = (
+      var.munge_key == null
+      ? true
+      : length(var.munge_key) >= 32 && length(var.munge_key) <= 1024
+    )
+    error_message = "Munge key must be between 32 and 1024 bytes."
+  }
+}
+
+variable "jwt_key" {
+  type        = string
+  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
+  default     = null
+  sensitive   = true
+}
 
 variable "cloud_parameters" {
   description = "cloud.conf key/value as a map."
   type        = map(string)
   default     = {}
-}
-
-variable "cloudsql" {
-  description = <<EOD
-Use this database instead of the one on the controller.
-* server_ip : Address of the database server.
-* user      : The user to access the database as.
-* password  : The password, given the user, to access the given database. (sensitive)
-* db_name   : The database to access.
-EOD
-  type = object({
-    server_ip = string
-    user      = string
-    password  = string # sensitive
-    db_name   = string
-  })
-  default   = null
-  sensitive = true
-}
-
-variable "munge_key" {
-  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "jwt_key" {
-  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
-  type        = string
-  default     = ""
-  sensitive   = true
 }
 
 variable "network_storage" {
@@ -160,42 +207,20 @@ variable "compute_d" {
   default     = null
 }
 
-##############
-# CONTROLLER #
-##############
-
-variable "controller_instance_config" {
-  description = "Creates a controller instance with given configuration."
-  type        = any
-  default     = {}
-}
-
-#########
-# LOGIN #
-#########
-
-variable "login_node_groups" {
-  description = "List of slurm login instance definitions."
-  type        = list(any)
-  default     = []
-}
-
-###########
-# COMPUTE #
-###########
-
-variable "compute_node_groups_defaults" {
-  description = "Defaults for compute_node_groups in partitions."
-  type        = any
-  default     = {}
-}
-
-##############
-# PARTITIONS #
-##############
-
-variable "partitions" {
-  description = "Cluster partition configuration as a list."
-  type        = list(any)
-  default     = []
+variable "cloudsql" {
+  description = <<EOD
+Use this database instead of the one on the controller.
+* server_ip : Address of the database server.
+* user      : The user to access the database as.
+* password  : The password, given the user, to access the given database. (sensitive)
+* db_name   : The database to access.
+EOD
+  type = object({
+    server_ip = string
+    user      = string
+    password  = string # sensitive
+    db_name   = string
+  })
+  default   = null
+  sensitive = true
 }
