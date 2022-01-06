@@ -93,7 +93,6 @@ compute_node_groups_defaults = {
     scopes = [
       "https://www.googleapis.com/auth/monitoring.write",
       "https://www.googleapis.com/auth/logging.write",
-
     ]
   }
   shielded_instance_config = {

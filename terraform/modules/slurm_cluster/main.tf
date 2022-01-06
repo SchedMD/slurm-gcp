@@ -128,14 +128,6 @@ module "slurm_controller_instance" {
   partitions            = values(module.slurm_partition)[*].partition
   slurmdbd_conf_tpl     = var.slurmdbd_conf_tpl
   slurm_conf_tpl        = var.slurm_conf_tpl
-
-  depends_on = [
-    /**
-     * Ensures cluster communication is allowed before controller and compute
-     * nodes are created otherwise nodes cannot checkin to slurmctld.
-     */
-    # module.slurm_firewall_rules,
-  ]
 }
 
 ######################
@@ -161,14 +153,6 @@ module "slurm_controller_hybrid" {
   jwt_key              = var.jwt_key
   munge_key            = var.munge_key
   partitions           = values(module.slurm_partition)[*].partition
-
-  depends_on = [
-    /**
-     * Ensures cluster communication is allowed before controller and compute
-     * nodes are created otherwise nodes cannot checkin to slurmctld.
-     */
-    # module.slurm_firewall_rules,
-  ]
 }
 
 ###################
