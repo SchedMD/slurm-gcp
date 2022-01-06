@@ -106,10 +106,14 @@ module "slurm_controller_instance" {
 
   count = var.enable_hybrid ? 0 : 1
 
+  access_config     = lookup(var.controller_instance_config, "access_config", [])
   cluster_name      = var.cluster_name
   instance_template = module.slurm_controller_template[0].self_link
+  region            = lookup(var.controller_instance_config, "region", null)
   slurm_cluster_id  = local.slurm_cluster_id
+  static_ips        = lookup(var.controller_instance_config, "static_ips", [])
   subnetwork        = lookup(var.controller_instance_config, "subnetwork", "default")
+  zone              = lookup(var.controller_instance_config, "zone", null)
 
   cgroup_conf_tpl       = var.cgroup_conf_tpl
   cloud_parameters      = var.cloud_parameters
@@ -215,10 +219,14 @@ module "slurm_login_instance" {
 
   for_each = local.login_map
 
+  access_config     = lookup(each.value, "access_config", [])
   cluster_name      = var.cluster_name
   instance_template = module.slurm_login_template[each.value.group_name].self_link
   num_instances     = lookup(each.value, "num_instances", 1)
+  region            = lookup(each.value, "region", null)
+  static_ips        = lookup(each.value, "static_ips", [])
   subnetwork        = lookup(each.value, "subnetwork", "default")
+  zone              = lookup(each.value, "zone", null)
 
   depends_on = [
     # Ensure Controller is up before attempting to mount file systems from it
