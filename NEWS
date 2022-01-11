@@ -11,6 +11,7 @@ Changes in Slurm-GCP 5.0.0
  -- Added destroy_nodes - script to destroy cluster compute nodes
  -- Added clustersync - script to propagate changes to running cluster
  -- Added data migration workflow example jobs and configuration
+ -- oslogin can be disabled to allow other user and authentication methods
 
 Changes in Slurm-GCP 4.1.0
 ==========================

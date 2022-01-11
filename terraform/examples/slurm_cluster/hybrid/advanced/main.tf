@@ -37,6 +37,7 @@ module "slurm_cluster" {
   controller_hybrid_config     = var.controller_hybrid_config
   enable_devel                 = var.enable_devel
   enable_hybrid                = true
+  enable_oslogin               = var.enable_oslogin
   jwt_key                      = var.jwt_key
   login_network_storage        = var.login_network_storage
   munge_key                    = var.munge_key

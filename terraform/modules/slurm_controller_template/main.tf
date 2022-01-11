@@ -105,7 +105,7 @@ module "instance_template" {
   startup_script = data.local_file.startup.content
   metadata = merge(
     {
-      enable-oslogin    = "TRUE"
+      enable-oslogin    = upper(var.enable_oslogin)
       google_mpi_tuning = var.disable_smt == true ? "--nosmt" : null
       VmDnsSetting      = "GlobalOnly"
     },

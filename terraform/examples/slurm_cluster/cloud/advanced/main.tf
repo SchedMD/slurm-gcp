@@ -39,6 +39,7 @@ module "slurm_cluster" {
   controller_instance_config   = var.controller_instance_config
   controller_d                 = var.controller_d
   enable_devel                 = var.enable_devel
+  enable_oslogin               = var.enable_oslogin
   jwt_key                      = var.jwt_key
   login_network_storage        = var.login_network_storage
   login_node_groups            = var.login_node_groups

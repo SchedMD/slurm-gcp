@@ -80,4 +80,5 @@
     - cloudagents
     - logrotate
     - python
+    - ldap
     - scripts

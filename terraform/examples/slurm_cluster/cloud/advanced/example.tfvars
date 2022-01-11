@@ -33,6 +33,8 @@ region = "<REGION>"
 
 firewall_network_name = "default"
 
+enable_oslogin = true
+
 cloudsql  = null
 jwt_key   = null
 munge_key = null

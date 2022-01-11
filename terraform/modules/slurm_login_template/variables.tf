@@ -35,6 +35,14 @@ variable "labels" {
   default     = {}
 }
 
+variable "enable_oslogin" {
+  type        = bool
+  description = <<EOD
+Enables Google Cloud os-login for user login and authentication for VMs.
+See https://cloud.google.com/compute/docs/oslogin
+EOD
+  default     = true
+}
 ###########
 # NETWORK #
 ###########

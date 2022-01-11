@@ -76,6 +76,7 @@ module "slurm_controller_template" {
   disk_size_gb             = lookup(var.controller_instance_config, "disk_size_gb", null)
   disk_type                = lookup(var.controller_instance_config, "disk_type", null)
   enable_confidential_vm   = lookup(var.controller_instance_config, "enable_confidential_vm", false)
+  enable_oslogin           = var.enable_oslogin
   enable_shielded_vm       = lookup(var.controller_instance_config, "enable_shielded_vm", false)
   gpu                      = lookup(var.controller_instance_config, "gpu", null)
   machine_type             = lookup(var.controller_instance_config, "machine_type", "n1-standard-1")
@@ -173,6 +174,7 @@ module "slurm_login_template" {
   disk_size_gb             = lookup(each.value, "disk_size_gb", null)
   disk_type                = lookup(each.value, "disk_type", null)
   enable_confidential_vm   = lookup(each.value, "enable_confidential_vm", false)
+  enable_oslogin           = var.enable_oslogin
   enable_shielded_vm       = lookup(each.value, "enable_shielded_vm", false)
   gpu                      = lookup(each.value, "gpu", null)
   machine_type             = lookup(each.value, "machine_type", "n1-standard-1")

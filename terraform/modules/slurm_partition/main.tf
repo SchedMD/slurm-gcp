@@ -30,6 +30,7 @@ locals {
     disk_size_gb           = null
     disk_type              = null
     enable_confidential_vm = false
+    enable_oslogin         = true
     enable_shielded_vm     = false
     gpu                    = null
     machine_type           = "n1-standard-1"
@@ -111,6 +112,7 @@ module "slurm_compute_template" {
   disk_size_gb             = lookup(each.value, "disk_size_gb", local.compute_node_groups_defaults["disk_size_gb"])
   disk_type                = lookup(each.value, "disk_type", local.compute_node_groups_defaults["disk_type"])
   enable_confidential_vm   = lookup(each.value, "enable_confidential_vm", local.compute_node_groups_defaults["enable_confidential_vm"])
+  enable_oslogin           = lookup(each.value, "enable_oslogin", local.compute_node_groups_defaults["enable_oslogin"])
   enable_shielded_vm       = lookup(each.value, "enable_shielded_vm", local.compute_node_groups_defaults["enable_shielded_vm"])
   gpu                      = lookup(each.value, "gpu", local.compute_node_groups_defaults["gpu"])
   machine_type             = lookup(each.value, "machine_type", local.compute_node_groups_defaults["machine_type"])

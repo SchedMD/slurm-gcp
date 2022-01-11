@@ -54,6 +54,15 @@ variable "firewall_network_name" {
 # CONFIGURATION #
 #################
 
+variable "enable_oslogin" {
+  type        = bool
+  description = <<EOD
+Enables Google Cloud os-login for user login and authentication for VMs.
+See https://cloud.google.com/compute/docs/oslogin
+EOD
+  default     = true
+}
+
 variable "cloud_parameters" {
   description = "cloud.conf key/value as a map."
   type        = map(string)

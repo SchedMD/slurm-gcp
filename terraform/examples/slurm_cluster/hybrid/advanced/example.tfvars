@@ -33,6 +33,8 @@ region = "<REGION>"
 
 firewall_network_name = "default"
 
+enable_oslogin = true
+
 munge_key = "<MUNGE_KEY>"
 jwt_key   = "<JWT_KEY>"
 
