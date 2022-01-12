@@ -25,8 +25,6 @@ locals {
     : null
   )
 
-  scripts_dir = abspath("${path.module}/../../../scripts")
-
   etc_dir = abspath("${path.module}/../../../etc")
 }
 
@@ -97,28 +95,16 @@ locals {
 ###################
 
 locals {
-  controller_d = (
-    var.controller_d == null || var.controller_d == ""
-    ? abspath("${local.scripts_dir}/controller.d")
-    : abspath(var.controller_d)
-  )
-
   scripts_controller_d = {
-    for script in fileset(local.controller_d, "[^.]*")
-    : "custom-controller-${replace(script, "/[^a-zA-Z0-9-_]/", "_")}"
-    => file("${local.controller_d}/${script}")
+    for script in var.controller_d
+    : "custom-controller-${basename(script.filename)}"
+    => script.content
   }
 
-  compute_d = (
-    var.compute_d == null || var.compute_d == ""
-    ? abspath("${local.scripts_dir}/compute.d")
-    : abspath(var.compute_d)
-  )
-
   scripts_compute_d = {
-    for script in fileset(local.compute_d, "[^.]*")
-    : "custom-compute-${replace(script, "/[^a-zA-Z0-9-_]/", "_")}"
-    => file("${local.compute_d}/${script}")
+    for script in var.compute_d
+    : "custom-compute-${basename(script.filename)}"
+    => script.content
   }
 }
 

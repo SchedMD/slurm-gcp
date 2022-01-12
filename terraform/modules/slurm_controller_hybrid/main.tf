@@ -51,16 +51,10 @@ locals {
 ####################
 
 locals {
-  compute_d = (
-    var.compute_d == null || var.compute_d == ""
-    ? abspath("${local.scripts_dir}/compute.d")
-    : abspath(var.compute_d)
-  )
-
   scripts_compute_d = {
-    for script in fileset(local.compute_d, "[^.]*")
-    : "custom-compute-${replace(script, "/[^a-zA-Z0-9-_]/", "_")}"
-    => file("${local.compute_d}/${script}")
+    for script in var.compute_d
+    : "custom-compute-${basename(script.filename)}"
+    => script.content
   }
 }
 

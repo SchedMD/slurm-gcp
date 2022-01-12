@@ -113,9 +113,12 @@ EOD
 }
 
 variable "compute_d" {
-  description = "Path to directory containing user compute provisioning scripts."
-  type        = string
-  default     = null
+  description = "List of scripts to be ran on compute VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
 }
 
 ##############

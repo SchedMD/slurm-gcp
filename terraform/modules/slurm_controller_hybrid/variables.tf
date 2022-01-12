@@ -78,9 +78,12 @@ variable "jwt_key" {
 }
 
 variable "compute_d" {
-  type        = string
-  description = "Path to directory containing user compute provisioning scripts."
-  default     = null
+  description = "List of scripts to be ran on compute VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
 }
 
 variable "network_storage" {

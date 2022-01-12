@@ -69,8 +69,26 @@ cloud_parameters = {
 }
 
 # scripts.d
-controller_d = null
-compute_d    = null
+controller_d = [
+  #   {
+  #     filename = "hello_controller.sh"
+  #     content  = <<EOF
+  # #!/bin/bash
+  # set -ex
+  # echo "Hello, $(hostname) !"
+  #     EOF
+  #   },
+]
+compute_d = [
+  #   {
+  #     filename = "hello_compute.sh"
+  #     content  = <<EOF
+  # #!/bin/bash
+  # set -ex
+  # echo "Hello, $(hostname) !"
+  #       EOF
+  #   },
+]
 
 ##############
 # CONTROLLER #

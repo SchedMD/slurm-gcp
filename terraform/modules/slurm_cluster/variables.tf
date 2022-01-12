@@ -196,15 +196,21 @@ variable "cgroup_conf_tpl" {
 }
 
 variable "controller_d" {
-  description = "Path to directory containing user controller provisioning scripts."
-  type        = string
-  default     = null
+  description = "List of scripts to be ran on controller VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
 }
 
 variable "compute_d" {
-  description = "Path to directory containing user compute provisioning scripts."
-  type        = string
-  default     = null
+  description = "List of scripts to be ran on compute VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
 }
 
 variable "cloudsql" {
