@@ -35,7 +35,7 @@ locals {
     machine_type           = "n1-standard-1"
     min_cpu_platform       = null
     network_ip             = ""
-    network                = "default"
+    network                = null
     on_host_maintenance    = null
     preemptible            = false
     region                 = null

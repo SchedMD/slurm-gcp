@@ -81,7 +81,7 @@ module "slurm_controller_template" {
   machine_type             = lookup(var.controller_instance_config, "machine_type", "n1-standard-1")
   min_cpu_platform         = lookup(var.controller_instance_config, "min_cpu_platform", null)
   network_ip               = lookup(var.controller_instance_config, "network_ip", "")
-  network                  = lookup(var.controller_instance_config, "network", "default")
+  network                  = lookup(var.controller_instance_config, "network", null)
   on_host_maintenance      = lookup(var.controller_instance_config, "on_host_maintenance", null)
   preemptible              = lookup(var.controller_instance_config, "preemptible", false)
   project_id               = var.project_id
@@ -178,7 +178,7 @@ module "slurm_login_template" {
   machine_type             = lookup(each.value, "machine_type", "n1-standard-1")
   min_cpu_platform         = lookup(each.value, "min_cpu_platform", null)
   network_ip               = lookup(each.value, "network_ip", "")
-  network                  = lookup(each.value, "network", "default")
+  network                  = lookup(each.value, "network", null)
   on_host_maintenance      = lookup(each.value, "on_host_maintenance", null)
   preemptible              = lookup(each.value, "preemptible", false)
   project_id               = var.project_id
