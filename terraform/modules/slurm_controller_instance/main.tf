@@ -168,24 +168,35 @@ module "slurm_controller_instance" {
   add_hostname_suffix = false
 
   depends_on = [
-    module.slurm_metadata,
+    module.slurm_metadata_devel,
   ]
 }
 
-############
-# METADATA #
-############
+####################
+# METADATA: CONFIG #
+####################
 
-module "slurm_metadata" {
-  source = "../_slurm_metadata"
+resource "google_compute_project_metadata_item" "config" {
+  project = local.project_id
 
-  cluster_name = var.cluster_name
-  enable_devel = var.enable_devel
-  metadata = merge(
+  key = "${var.cluster_name}-slurm-config"
+  value = jsonencode(merge(
     local.metadata_config,
     local.metadata_tpl,
-  )
-  project_id = local.project_id
+  ))
+}
+
+###################
+# METADATA: DEVEL #
+###################
+
+module "slurm_metadata_devel" {
+  source = "../_slurm_metadata_devel"
+
+  count = var.enable_devel ? 1 : 0
+
+  cluster_name = var.cluster_name
+  project_id   = local.project_id
 }
 
 #####################

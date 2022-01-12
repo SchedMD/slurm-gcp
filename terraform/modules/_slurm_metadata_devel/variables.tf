@@ -23,16 +23,6 @@ variable "project_id" {
   type        = string
 }
 
-############
-# METADATA #
-############
-
-variable "metadata" {
-  description = "Metadata key/value pairs to make available via project metadata."
-  type        = map(string)
-  default     = {}
-}
-
 #########
 # SLURM #
 #########
@@ -40,10 +30,4 @@ variable "metadata" {
 variable "cluster_name" {
   description = "Cluster name, used for resource naming."
   type        = string
-}
-
-variable "enable_devel" {
-  description = "Enables development mode. Not for production use."
-  type        = bool
-  default     = false
 }

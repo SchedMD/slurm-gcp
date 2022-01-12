@@ -1,6 +1,7 @@
-# Module: Slurm Pubsub
+# Module: Slurm Metadata Devel
 
-This module creates project metadata for a Slurm cluster.
+This module creates development project metadata for a Slurm cluster. Said
+metadata contains scripts and other data for development purposes.
 
 **NOTE:** This module is only intended to be used by Slurm modules.
 
@@ -44,7 +45,7 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [google_compute_project_metadata_item.config](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
+| [google_compute_project_metadata_item.devel](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
 | [local_file.clustereventd](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.clustersync](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.resume](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
@@ -59,13 +60,11 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | n/a | yes |
-| <a name="input_enable_devel"></a> [enable\_devel](#input\_enable\_devel) | Enables development mode. Not for production use. | `bool` | `false` | no |
-| <a name="input_metadata"></a> [metadata](#input\_metadata) | Metadata key/value pairs to make available via project metadata. | `map(string)` | `{}` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID. | `string` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_metadata"></a> [metadata](#output\_metadata) | Project metadata for slurm cluster. |
+| <a name="output_metadata"></a> [metadata](#output\_metadata) | Development project metadata for slurm cluster. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

@@ -195,16 +195,27 @@ EOC
   }
 }
 
-############
-# METADATA #
-############
+####################
+# METADATA: CONFIG #
+####################
 
-module "slurm_metadata" {
-  source = "../_slurm_metadata"
+resource "google_compute_project_metadata_item" "config" {
+  project = var.project_id
+
+  key   = "${var.cluster_name}-slurm-config"
+  value = jsonencode(var.metadata)
+}
+
+###################
+# METADATA: DEVEL #
+###################
+
+module "slurm_metadata_devel" {
+  source = "../_slurm_metadata_devel"
+
+  count = var.enable_devel ? 1 : 0
 
   cluster_name = var.cluster_name
-  enable_devel = var.enable_devel
-  metadata     = var.metadata
   project_id   = var.project_id
 }
 
