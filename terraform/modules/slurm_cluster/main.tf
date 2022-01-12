@@ -50,6 +50,7 @@ module "slurm_partition" {
   network_storage              = lookup(each.value, "network_storage", [])
   partition_name               = each.value.partition_name
   partition_conf               = lookup(each.value, "partition_conf", {})
+  partition_d                  = lookup(each.value, "partition_d", [])
   project_id                   = var.project_id
   region                       = lookup(each.value, "region", null)
   subnetwork_project           = lookup(each.value, "subnetwork_project", null)

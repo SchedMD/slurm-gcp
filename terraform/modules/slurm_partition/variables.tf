@@ -45,6 +45,15 @@ EOD
   default     = {}
 }
 
+variable "partition_d" {
+  description = "List of scripts to be ran on compute VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
 variable "compute_node_groups" {
   description = "Grouped nodes in the partition."
   type        = any

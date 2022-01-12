@@ -147,6 +147,16 @@ partitions = [
       Default     = "YES"
       SuspendTime = 300
     }
+    partition_d = [
+      #     {
+      #       filename = "hello_partition.sh"
+      #       content  = <<EOF
+      # #!/bin/bash
+      # set -ex
+      # echo "Hello, $(hostname) !"
+      #     EOF
+      #     },
+    ]
     compute_node_groups = [
       {
         group_name    = "c0"

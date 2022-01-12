@@ -133,3 +133,19 @@ module "slurm_compute_template" {
   subnetwork               = data.google_compute_subnetwork.partition_subnetwork.self_link
   tags                     = concat([var.cluster_name], lookup(each.value, "tags", local.compute_node_groups_defaults["tags"]))
 }
+
+############
+# METADATA #
+############
+
+resource "google_compute_project_metadata_item" "partition_d" {
+  project = var.project_id
+
+  for_each = {
+    for x in var.partition_d
+    : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
+  }
+
+  key   = "${var.cluster_name}-slurm-partition-${var.partition_name}-script-${each.key}"
+  value = each.value.content
+}
