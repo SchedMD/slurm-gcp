@@ -35,6 +35,7 @@ locals {
     region                       = var.region
     shared_vpc_host_project      = var.shared_vpc_host_project
     suspend_time                 = var.suspend_time
+    complete_wait_time           = var.complete_wait_time
     vpc_subnet                   = var.subnetwork_name
     zone                         = var.zone
   })

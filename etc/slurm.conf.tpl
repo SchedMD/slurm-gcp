@@ -83,7 +83,7 @@ TaskPlugin=task/affinity,task/cgroup
 #
 # TIMERS
 #BatchStartTimeout=10
-#CompleteWait=0
+CompleteWait={complete_wait_time}
 #EpilogMsgTime=2000
 #GetEnvTimeout=2
 #HealthCheckInterval=0
