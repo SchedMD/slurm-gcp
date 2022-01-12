@@ -2,6 +2,7 @@
 
 init:
 	packer init .
+	ansible-galaxy install --role-file ../ansible/requirements.yml
 
 validate:
 	packer validate -var-file=vars.pkrvars.hcl .
@@ -9,10 +10,10 @@ validate:
 inspect:
 	packer inspect -var-file=vars.pkrvars.hcl .
 
-build:
+build: init validate
 	packer build -var-file=vars.pkrvars.hcl .
 
-debug:
+debug: init validate
 	packer build -var-file=vars.pkrvars.hcl -debug .
 
 format:
