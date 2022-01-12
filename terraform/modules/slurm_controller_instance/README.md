@@ -44,6 +44,7 @@ limitations under the License.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.0 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | ~> 4.0 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.0 |
 
@@ -51,6 +52,7 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
+| <a name="provider_google"></a> [google](#provider\_google) | 4.4.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | 2.1.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.1.0 |
 
@@ -67,6 +69,8 @@ limitations under the License.
 
 | Name | Type |
 |------|------|
+| [google_compute_project_metadata_item.compute_d](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
+| [google_compute_project_metadata_item.controller_d](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
 | [random_id.jwt_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [random_id.munge_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [random_uuid.slurm_cluster_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |

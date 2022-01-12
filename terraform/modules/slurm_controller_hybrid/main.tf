@@ -46,18 +46,6 @@ locals {
   suspend_timeout = lookup(var.cloud_parameters, "SuspendTimeout", 300)
 }
 
-####################
-# LOCALS: METADATA #
-####################
-
-locals {
-  scripts_compute_d = {
-    for script in var.compute_d
-    : "custom-compute-${basename(script.filename)}"
-    => script.content
-  }
-}
-
 ##################
 # LOCALS: CONFIG #
 ##################
@@ -216,11 +204,24 @@ module "slurm_metadata" {
 
   cluster_name = var.cluster_name
   enable_devel = var.enable_devel
-  metadata = merge(
-    local.scripts_compute_d,
-    var.metadata,
-  )
-  project_id = var.project_id
+  metadata     = var.metadata
+  project_id   = var.project_id
+}
+
+#####################
+# METADATA: SCRIPTS #
+#####################
+
+resource "google_compute_project_metadata_item" "compute_d" {
+  project = var.project_id
+
+  for_each = {
+    for x in var.compute_d
+    : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
+  }
+
+  key   = "${var.cluster_name}-slurm-compute-script-${each.key}"
+  value = each.value.content
 }
 
 ##########

@@ -90,24 +90,6 @@ locals {
   }
 }
 
-###################
-# LOCALS: SCRIPTS #
-###################
-
-locals {
-  scripts_controller_d = {
-    for script in var.controller_d
-    : "custom-controller-${basename(script.filename)}"
-    => script.content
-  }
-
-  scripts_compute_d = {
-    for script in var.compute_d
-    : "custom-compute-${basename(script.filename)}"
-    => script.content
-  }
-}
-
 ################
 # LOCALS: CONF #
 ################
@@ -202,10 +184,36 @@ module "slurm_metadata" {
   metadata = merge(
     local.metadata_config,
     local.metadata_tpl,
-    local.scripts_controller_d,
-    local.scripts_compute_d,
   )
   project_id = local.project_id
+}
+
+#####################
+# METADATA: SCRIPTS #
+#####################
+
+resource "google_compute_project_metadata_item" "controller_d" {
+  project = local.project_id
+
+  for_each = {
+    for x in var.controller_d
+    : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
+  }
+
+  key   = "${var.cluster_name}-slurm-controller-script-${each.key}"
+  value = each.value.content
+}
+
+resource "google_compute_project_metadata_item" "compute_d" {
+  project = local.project_id
+
+  for_each = {
+    for x in var.compute_d
+    : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
+  }
+
+  key   = "${var.cluster_name}-slurm-compute-script-${each.key}"
+  value = each.value.content
 }
 
 ##########

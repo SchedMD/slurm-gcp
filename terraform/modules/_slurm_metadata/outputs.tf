@@ -16,5 +16,5 @@
 
 output "metadata" {
   description = "Project metadata for slurm cluster."
-  value       = google_compute_project_metadata_item.slurm_metadata
+  value       = google_compute_project_metadata_item.config
 }

@@ -95,10 +95,10 @@ data "local_file" "util" {
 # METADATA #
 ############
 
-resource "google_compute_project_metadata_item" "slurm_metadata" {
+resource "google_compute_project_metadata_item" "config" {
   project = var.project_id
 
-  key = "${var.cluster_name}-slurm-metadata"
+  key = "${var.cluster_name}-slurm-config"
   value = jsonencode(merge(
     var.metadata,
     local.metadata_devel,

@@ -44,7 +44,7 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [google_compute_project_metadata_item.slurm_metadata](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
+| [google_compute_project_metadata_item.config](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
 | [local_file.clustereventd](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.clustersync](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.resume](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
