@@ -26,7 +26,7 @@ import sys
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, Future
 from contextlib import contextmanager
-from functools import lru_cache, cached_property, reduce
+from functools import lru_cache, reduce
 from itertools import chain, compress, islice
 from operator import itemgetter
 from pathlib import Path
@@ -246,6 +246,10 @@ def cd(path):
         yield
     finally:
         os.chdir(prev)
+
+
+def cached_property(f):
+    return property(lru_cache()(f))
 
 
 def partition(pred, coll):
