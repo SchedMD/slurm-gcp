@@ -2,8 +2,8 @@
 
 This example creates a Slurm cluster that is highly configurable through tfvars.
 It creates a controller, login nodes, and is capable of bursting out multiple
-compute nodes as defined in partitions. Additionally, a VPC will be created only
-if a subnetwork is not specified.
+compute nodes as defined in partitions. A set of firewall rules will be created
+to control communication for the cluster.
 
 ## Additional Dependencies
 
