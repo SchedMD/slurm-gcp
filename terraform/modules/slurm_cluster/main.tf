@@ -131,6 +131,7 @@ module "slurm_controller_instance" {
   controller_d          = var.controller_d
   compute_d             = var.compute_d
   enable_devel          = var.enable_devel
+  enable_bigquery_load  = var.enable_bigquery_load
   epilog_d              = var.epilog_d
   jwt_key               = var.jwt_key
   login_network_storage = var.login_network_storage
@@ -162,6 +163,7 @@ module "slurm_controller_hybrid" {
   cloud_parameters     = var.cloud_parameters
   compute_d            = var.compute_d
   enable_devel         = var.enable_devel
+  enable_bigquery_load = var.enable_bigquery_load
   epilog_d             = var.epilog_d
   munge_key            = var.munge_key
   partitions           = values(module.slurm_partition)[*]

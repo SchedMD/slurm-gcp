@@ -46,6 +46,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [google_compute_project_metadata_item.devel](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
+| [local_file.loadbq](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.resume](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.setup](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.slurmeventd](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |

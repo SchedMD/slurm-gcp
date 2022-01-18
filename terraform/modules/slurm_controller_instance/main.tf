@@ -70,6 +70,8 @@ locals {
 
     slurm_cluster_id = local.slurm_cluster_id
 
+    enable_bigquery_load = var.enable_bigquery_load
+
     network_storage       = var.network_storage
     login_network_storage = var.login_network_storage
 

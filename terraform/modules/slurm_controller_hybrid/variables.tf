@@ -54,6 +54,12 @@ variable "enable_devel" {
   default     = false
 }
 
+variable "enable_bigquery_load" {
+  description = "Enable loading of cluster job usage into big query"
+  type        = bool
+  default     = false
+}
+
 variable "munge_key" {
   type        = string
   description = "Cluster munge authentication key."

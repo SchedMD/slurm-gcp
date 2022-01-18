@@ -35,6 +35,7 @@ locals {
     slurmeventd    = data.local_file.slurmeventd.content
     slurmsync      = data.local_file.slurmsync.content
     util-script    = data.local_file.util.content
+    loadbq         = data.local_file.loadbq.content
   }
 }
 
@@ -68,6 +69,10 @@ data "local_file" "slurmeventd" {
 
 data "local_file" "util" {
   filename = abspath("${local.scripts_dir}/util.py")
+}
+
+data "local_file" "loadbq" {
+  filename = abspath("${local.scripts_dir}/load_bq.py")
 }
 
 ############

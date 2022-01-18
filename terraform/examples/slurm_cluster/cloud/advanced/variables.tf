@@ -35,6 +35,12 @@ variable "enable_devel" {
   default     = false
 }
 
+variable "enable_bigquery_load" {
+  description = "Enable loading of cluster job usage into big query"
+  type        = bool
+  default     = false
+}
+
 variable "region" {
   type        = string
   description = "The default region to place resources in."

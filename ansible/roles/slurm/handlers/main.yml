@@ -36,3 +36,15 @@
     name: slurmd
     enabled: no
     state: stopped
+
+- name: Handle slurm_load_bigquery Service
+  systemd:
+    name: slurm_load_bq.service
+    enabled: no
+    state: stopped
+
+- name: Handle slurm_load_bigquery Timer
+  systemd:
+    name: slurm_load_bq.timer
+    enabled: no
+    state: stopped

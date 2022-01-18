@@ -35,6 +35,7 @@ module "slurm_cluster" {
   compute_d                = var.compute_d
   controller_hybrid_config = var.controller_hybrid_config
   enable_devel             = var.enable_devel
+  enable_bigquery_load     = var.enable_bigquery_load
   epilog_d                 = var.epilog_d
   enable_hybrid            = true
   login_network_storage    = var.login_network_storage

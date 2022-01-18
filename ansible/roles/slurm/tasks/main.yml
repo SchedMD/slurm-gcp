@@ -63,6 +63,7 @@
     - slurmsync.py
     - suspend.py
     - util.py
+    - load_bq.py
 
 - name: Copy Jobs
   copy:
