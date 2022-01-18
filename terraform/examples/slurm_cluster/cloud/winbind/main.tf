@@ -19,16 +19,15 @@
 ##########
 
 locals {
-  controller_instance_config = {
+  slurm_cluster_defaults = {
     network    = data.google_compute_subnetwork.this.network
     subnetwork = data.google_compute_subnetwork.this.self_link
   }
 
   login_node_groups = [
     {
-      group_name = "l0"
-      network    = data.google_compute_subnetwork.this.network
-      subnetwork = data.google_compute_subnetwork.this.self_link
+      group_name    = "l0"
+      num_instances = 1
     }
   ]
 
@@ -44,8 +43,6 @@ locals {
       ]
       cluster_name = var.cluster_name
       project_id   = var.project_id
-      network      = data.google_compute_subnetwork.this.network
-      subnetwork   = data.google_compute_subnetwork.this.self_link
     },
   ]
 }
@@ -83,14 +80,13 @@ data "local_file" "winbind_sh" {
 module "slurm_cluster" {
   source = "../../../../modules/slurm_cluster"
 
-  cluster_name               = var.cluster_name
-  compute_d                  = [data.local_file.winbind_sh]
-  controller_d               = [data.local_file.winbind_sh]
-  controller_instance_config = local.controller_instance_config
-  enable_oslogin             = false
-  login_node_groups          = local.login_node_groups
-  partitions                 = local.partitions
-  project_id                 = var.project_id
+  cluster_name           = var.cluster_name
+  compute_d              = [data.local_file.winbind_sh]
+  controller_d           = [data.local_file.winbind_sh]
+  login_node_groups      = local.login_node_groups
+  partitions             = local.partitions
+  project_id             = var.project_id
+  slurm_cluster_defaults = local.slurm_cluster_defaults
 }
 
 ##################

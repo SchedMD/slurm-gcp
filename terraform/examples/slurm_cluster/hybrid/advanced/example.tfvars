@@ -33,8 +33,6 @@ region = "<REGION>"
 
 firewall_network_name = "default"
 
-enable_oslogin = true
-
 munge_key = "<MUNGE_KEY>"
 jwt_key   = "<JWT_KEY>"
 
@@ -78,6 +76,67 @@ compute_d = [
   #   },
 ]
 
+############
+# DEFAULTS #
+############
+
+slurm_cluster_defaults = {
+  additional_disks = [
+    # {
+    #   disk_name    = null
+    #   device_name  = null
+    #   disk_size_gb = 1024
+    #   disk_type    = "pd-standard"
+    #   disk_labels  = {}
+    #   auto_delete  = true
+    #   boot         = false
+    # },
+  ]
+  can_ip_forward   = null
+  disable_smt      = false
+  disk_auto_delete = true
+  disk_labels = {
+    # label0 = "value0"
+    # label1 = "value1"
+  }
+  disk_size_gb           = "32"
+  disk_type              = "pd-standard"
+  enable_confidential_vm = false
+  enable_oslogin         = true
+  enable_shielded_vm     = false
+  gpu                    = null
+  labels = {
+    # label0 = "value0"
+    # label1 = "value1"
+  }
+  machine_type        = "n1-standard-1"
+  min_cpu_platform    = null
+  network_ip          = ""
+  network             = null
+  on_host_maintenance = null
+  preemptible         = false
+  region              = null
+  service_account = {
+    email  = "default"
+    scopes = []
+  }
+  shielded_instance_config = {
+    enable_integrity_monitoring = true
+    enable_secure_boot          = true
+    enable_vtpm                 = true
+  }
+  source_image_family  = ""
+  source_image_project = ""
+  source_image         = ""
+  subnetwork_project   = null
+  subnetwork           = "default"
+  tags = [
+    # "tag0",
+    # "tag1",
+  ]
+  zone = null
+}
+
 ##############
 # CONTROLLER #
 ##############
@@ -94,45 +153,18 @@ controller_hybrid_config = {
 # COMPUTE #
 ###########
 
+# See 'slurm_cluster_defaults' for valid key/value
 compute_node_groups_defaults = {
-  # Instance
-  machine_type     = "n1-standard-1"
-  min_cpu_platform = null
-  gpu              = null
+  disk_size_gb       = 32
+  disk_type          = "pd-standard"
+  enable_shielded_vm = true
+  machine_type       = "n1-standard-4"
   service_account = {
     email = "default"
     scopes = [
       "https://www.googleapis.com/auth/monitoring.write",
       "https://www.googleapis.com/auth/logging.write",
     ]
-  }
-  shielded_instance_config = {
-    enable_secure_boot          = true
-    enable_vtpm                 = true
-    enable_integrity_monitoring = true
-  }
-  labels = {
-    # label0 = "value0"
-    # label1 = "value1"
-  }
-  tags = [
-    # "tag0",
-    # "tag1",
-  ]
-  enable_confidential_vm = false
-  enable_shielded_vm     = false
-  disable_smt            = false
-  preemptible            = false
-
-  # Image
-  source_image_project = ""
-  source_image_family  = ""
-  source_image         = ""
-
-  # Disk
-  disk_labels = {
-    # label0 = "value0"
-    # label1 = "value1"
   }
 }
 
@@ -157,43 +189,32 @@ partitions = [
       #     EOF
       #     },
     ]
+    # See 'slurm_cluster_defaults' for valid key/value
     compute_node_groups = [
       {
         group_name    = "c0"
         count_static  = 0
         count_dynamic = 20
 
-        # Instance
-        machine_type           = "n1-standard-1"
-        gpu                    = null
-        enable_confidential_vm = false
-        enable_shielded_vm     = false
-        disable_smt            = false
-        preemptible            = false
-
-        # Disk
         disk_size_gb = 32
         disk_type    = "pd-standard"
+        machine_type = "n1-standard-1"
+        disable_smt  = false
+        preemptible  = false
       },
       {
         group_name    = "g0"
         count_static  = 0
         count_dynamic = 10
 
-        # Instance
+        disk_size_gb = 32
+        disk_type    = "pd-standard"
         machine_type = "n1-standard-1"
         gpu = {
           type  = "nvidia-tesla-t4"
           count = 1
         }
-        enable_confidential_vm = false
-        enable_shielded_vm     = false
-        disable_smt            = false
-        preemptible            = false
-
-        # Disk
-        disk_size_gb = 32
-        disk_type    = "pd-standard"
+        enable_shielded_vm = false
       },
     ]
     subnetwork        = "default"

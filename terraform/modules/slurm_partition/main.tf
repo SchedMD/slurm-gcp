@@ -33,6 +33,7 @@ locals {
     enable_oslogin         = true
     enable_shielded_vm     = false
     gpu                    = null
+    labels                 = {}
     machine_type           = "n1-standard-1"
     min_cpu_platform       = null
     network_ip             = ""
@@ -44,13 +45,17 @@ locals {
       email  = "default"
       scopes = []
     }
-    shielded_instance_config = null
-    source_image_family      = ""
-    source_image_project     = ""
-    source_image             = ""
-    subnetwork_project       = null
-    subnetwork               = "default"
-    tags                     = []
+    shielded_instance_config = {
+      enable_integrity_monitoring = true
+      enable_secure_boot          = true
+      enable_vtpm                 = true
+    }
+    source_image_family  = ""
+    source_image_project = ""
+    source_image         = ""
+    subnetwork_project   = null
+    subnetwork           = "default"
+    tags                 = []
   }
 
   compute_node_groups_defaults = merge(
@@ -83,13 +88,13 @@ locals {
 ####################
 
 data "google_compute_subnetwork" "partition_subnetwork" {
-  project = var.subnetwork_project
-  region  = var.region
-  name    = var.subnetwork
+  project = local.compute_node_groups_defaults["subnetwork_project"]
+  region  = local.compute_node_groups_defaults["region"]
+  name    = local.compute_node_groups_defaults["subnetwork"]
   self_link = (
-    length(regexall("/projects/([^/]*)", var.subnetwork)) > 0
-    && length(regexall("/regions/([^/]*)", var.subnetwork)) > 0
-    ? var.subnetwork
+    length(regexall("/projects/([^/]*)", local.compute_node_groups_defaults["subnetwork"])) > 0
+    && length(regexall("/regions/([^/]*)", local.compute_node_groups_defaults["subnetwork"])) > 0
+    ? local.compute_node_groups_defaults["subnetwork"]
     : null
   )
 }
@@ -115,6 +120,7 @@ module "slurm_compute_template" {
   enable_oslogin           = lookup(each.value, "enable_oslogin", local.compute_node_groups_defaults["enable_oslogin"])
   enable_shielded_vm       = lookup(each.value, "enable_shielded_vm", local.compute_node_groups_defaults["enable_shielded_vm"])
   gpu                      = lookup(each.value, "gpu", local.compute_node_groups_defaults["gpu"])
+  labels                   = lookup(each.value, "labels", local.compute_node_groups_defaults["labels"])
   machine_type             = lookup(each.value, "machine_type", local.compute_node_groups_defaults["machine_type"])
   min_cpu_platform         = lookup(each.value, "min_cpu_platform", local.compute_node_groups_defaults["min_cpu_platform"])
   name_prefix              = each.value.group_name

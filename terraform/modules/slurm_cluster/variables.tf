@@ -28,13 +28,32 @@ variable "cluster_name" {
   description = "Cluster name, used for resource naming and slurm accounting."
 }
 
-variable "enable_oslogin" {
-  type        = bool
+############
+# DEFAULTS #
+############
+
+variable "slurm_cluster_defaults" {
   description = <<EOD
-Enables Google Cloud os-login for user login and authentication for VMs.
-See https://cloud.google.com/compute/docs/oslogin
+Defaults for cluster controller, login, and compute nodes.
+
+Controller node default value priority order:
+- controller_instance_config
+- slurm_cluster_defaults
+
+Login node default value priority order:
+- login_node_groups
+- login_node_groups_defaults
+- slurm_cluster_defaults
+
+Compute node default value priority order:
+- compute_node_groups
+- compute_node_groups_defaults
+- slurm_cluster_defaults
+
+See 'locals.tf' for valid key/value.
 EOD
-  default     = true
+  type        = any
+  default     = {}
 }
 
 #####################
@@ -44,7 +63,12 @@ EOD
 variable "controller_instance_config" {
   description = <<EOD
 Creates a controller instance with given configuration.
-See 'main.tf' for valid keys.
+
+Default value priority order:
+- controller_instance_config
+- slurm_cluster_defaults
+
+See 'locals.tf' for valid key/value.
 EOD
   type        = any
   default     = {}
@@ -72,9 +96,28 @@ EOD
   default     = {}
 }
 
-#########
-# LOGIN #
-#########
+###################
+# LOGIN: DEFAULTS #
+###################
+
+variable "login_node_groups_defaults" {
+  description = <<EOD
+Defaults for login_node_groups.
+
+Default value priority order:
+- login_node_groups
+- login_node_groups_defaults
+- slurm_cluster_defaults
+
+See 'locals.tf' for valid key/value.
+EOD
+  type        = any
+  default     = {}
+}
+
+#################
+# LOGIN: GROUPS #
+#################
 
 variable "login_node_groups" {
   description = "List of slurm login instance definitions."
@@ -82,12 +125,21 @@ variable "login_node_groups" {
   default     = []
 }
 
-###########
-# COMPUTE #
-###########
+#####################
+# COMPUTE: DEFAULTS #
+#####################
 
 variable "compute_node_groups_defaults" {
-  description = "Defaults for compute_node_groups in partitions."
+  description = <<EOD
+Defaults for compute_node_groups in partitions.
+
+Default value priority order:
+- compute_node_groups
+- compute_node_groups_defaults
+- slurm_cluster_defaults
+
+See 'locals.tf' for valid key/value.
+EOD
   type        = any
   default     = {}
 }
@@ -97,7 +149,16 @@ variable "compute_node_groups_defaults" {
 #############
 
 variable "partitions" {
-  description = "Cluster partitions as a list. See module slurm_partition."
+  description = <<EOD
+Cluster partitions as a list. See module slurm_partition.
+
+Default value priority order:
+- compute_node_groups
+- compute_node_groups_defaults
+- slurm_cluster_defaults
+
+See 'module.slurm_partition:main.tf' for valid key/value.
+EOD
   type        = list(any)
   default     = []
 

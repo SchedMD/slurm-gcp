@@ -39,15 +39,16 @@ module "slurm_cluster" {
   controller_instance_config   = var.controller_instance_config
   controller_d                 = var.controller_d
   enable_devel                 = var.enable_devel
-  enable_oslogin               = var.enable_oslogin
   jwt_key                      = var.jwt_key
   login_network_storage        = var.login_network_storage
   login_node_groups            = var.login_node_groups
+  login_node_groups_defaults   = var.login_node_groups_defaults
   munge_key                    = var.munge_key
   network_storage              = var.network_storage
   partitions                   = var.partitions
   project_id                   = var.project_id
   slurmdbd_conf_tpl            = var.slurmdbd_conf_tpl
+  slurm_cluster_defaults       = var.slurm_cluster_defaults
   slurm_conf_tpl               = var.slurm_conf_tpl
 }
 

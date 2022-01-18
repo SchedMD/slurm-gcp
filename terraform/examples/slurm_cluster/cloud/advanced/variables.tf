@@ -54,15 +54,6 @@ variable "firewall_network_name" {
 # CONFIGURATION #
 #################
 
-variable "enable_oslogin" {
-  type        = bool
-  description = <<EOD
-Enables Google Cloud os-login for user login and authentication for VMs.
-See https://cloud.google.com/compute/docs/oslogin
-EOD
-  default     = true
-}
-
 variable "cloud_parameters" {
   description = "cloud.conf key/value as a map."
   type        = map(string)
@@ -175,19 +166,68 @@ variable "compute_d" {
   default = []
 }
 
+############
+# DEFAULTS #
+############
+
+variable "slurm_cluster_defaults" {
+  description = <<EOD
+Defaults for cluster controller, login, and compute nodes.
+
+Controller node default value priority order:
+- controller_instance_config
+- slurm_cluster_defaults
+
+Login node default value priority order:
+- login_node_groups
+- login_node_groups_defaults
+- slurm_cluster_defaults
+
+Compute node default value priority order:
+- compute_node_groups
+- compute_node_groups_defaults
+- slurm_cluster_defaults
+EOD
+  type        = any
+  default     = {}
+}
+
 ##############
 # CONTROLLER #
 ##############
 
 variable "controller_instance_config" {
-  description = "Creates a controller instance with given configuration."
+  description = <<EOD
+Creates a controller instance with given configuration.
+
+Default value priority order:
+- controller_instance_config
+- slurm_cluster_defaults
+EOD
   type        = any
   default     = {}
 }
 
-#########
-# LOGIN #
-#########
+###################
+# LOGIN: DEFAULTS #
+###################
+
+variable "login_node_groups_defaults" {
+  description = <<EOD
+Defaults for login_node_groups.
+
+Default value priority order:
+- login_node_groups
+- login_node_groups_defaults
+- slurm_cluster_defaults
+EOD
+  type        = any
+  default     = {}
+}
+
+#################
+# LOGIN: GROUPS #
+#################
 
 variable "login_node_groups" {
   description = "List of slurm login instance definitions."
@@ -195,12 +235,19 @@ variable "login_node_groups" {
   default     = []
 }
 
-###########
-# COMPUTE #
-###########
+#####################
+# COMPUTE: DEFAULTS #
+#####################
 
 variable "compute_node_groups_defaults" {
-  description = "Defaults for compute_node_groups in partitions."
+  description = <<EOD
+Defaults for compute_node_groups in partitions.
+
+Default value priority order:
+- compute_node_groups
+- compute_node_groups_defaults
+- slurm_cluster_defaults
+EOD
   type        = any
   default     = {}
 }
