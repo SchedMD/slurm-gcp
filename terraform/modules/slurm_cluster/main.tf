@@ -40,6 +40,9 @@ module "slurm_partition" {
   partition_conf               = lookup(each.value, "partition_conf", {})
   partition_d                  = lookup(each.value, "partition_d", [])
   project_id                   = var.project_id
+  region                       = lookup(each.value, "region", null)
+  subnetwork_project           = lookup(each.value, "subnetwork_project", null)
+  subnetwork                   = each.value.subnetwork
   zone_policy_allow            = lookup(each.value, "zone_policy_allow", [])
   zone_policy_deny             = lookup(each.value, "zone_policy_deny", [])
 }

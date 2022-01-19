@@ -217,9 +217,11 @@ partitions = [
         enable_shielded_vm = false
       },
     ]
-    subnetwork        = "default"
-    zone_policy_allow = []
-    zone_policy_deny  = []
+    subnetwork_project = null
+    subnetwork         = "default"
+    region             = null
+    zone_policy_allow  = []
+    zone_policy_deny   = []
     network_storage = [
       # {
       #   server_ip     = "<storage host>"

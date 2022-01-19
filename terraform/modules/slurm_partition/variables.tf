@@ -92,6 +92,24 @@ variable "compute_node_groups" {
   }
 }
 
+variable "subnetwork_project" {
+  description = "The project the subnetwork belongs to."
+  type        = string
+  default     = ""
+}
+
+variable "subnetwork" {
+  description = "The subnetwork to attach instances to. A self_link is prefered."
+  type        = string
+  default     = "default"
+}
+
+variable "region" {
+  description = "The region of the subnetwork."
+  type        = string
+  default     = ""
+}
+
 variable "zone_policy_allow" {
   description = <<EOD
 Partition nodes will prefer to be created in the listed zones. If a zone appears
