@@ -95,6 +95,7 @@ locals {
     partition_nodes = {
       for x in local.compute_node_groups : x.group_name => {
         group_name        = x.group_name
+        partition_name    = var.partition_name
         instance_template = module.slurm_compute_template[x.group_name].self_link
         count_dynamic     = lookup(x, "count_dynamic", 1)
         count_static      = lookup(x, "count_static", 0)
@@ -107,6 +108,16 @@ locals {
     placement_groups  = var.enable_placement_groups
     network_storage   = var.network_storage
   }
+
+  compute_list = flatten([
+    for x in local.partition.partition_nodes
+    : formatlist("%s-%s-%s-%g",
+      var.cluster_name,
+      x.partition_name,
+      x.group_name,
+      range(0, max(x.count_static, x.count_dynamic))
+    )
+  ])
 }
 
 ####################

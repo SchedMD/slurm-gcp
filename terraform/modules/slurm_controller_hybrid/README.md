@@ -57,7 +57,7 @@ limitations under the License.
 |------|--------|---------|
 | <a name="module_slurm_destroy_nodes"></a> [slurm\_destroy\_nodes](#module\_slurm\_destroy\_nodes) | ../slurm_destroy_nodes | n/a |
 | <a name="module_slurm_metadata_devel"></a> [slurm\_metadata\_devel](#module\_slurm\_metadata\_devel) | ../_slurm_metadata_devel | n/a |
-| <a name="module_slurm_pubsub"></a> [slurm\_pubsub](#module\_slurm\_pubsub) | ../_slurm_pubsub | n/a |
+| <a name="module_slurm_pubsub"></a> [slurm\_pubsub](#module\_slurm\_pubsub) | terraform-google-modules/pubsub/google | ~> 3.0 |
 
 ## Resources
 
@@ -65,6 +65,8 @@ limitations under the License.
 |------|------|
 | [google_compute_project_metadata_item.compute_d](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
 | [google_compute_project_metadata_item.config](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
+| [google_pubsub_schema.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_schema) | resource |
+| [google_pubsub_topic.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
 | [local_file.config_yaml](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [null_resource.setup_hybrid](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [random_id.jwt_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
@@ -79,6 +81,7 @@ limitations under the License.
 | <a name="input_cloud_parameters"></a> [cloud\_parameters](#input\_cloud\_parameters) | cloud.conf key/value as a map. | `map(string)` | `{}` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming and slurm accounting. | `string` | n/a | yes |
 | <a name="input_compute_d"></a> [compute\_d](#input\_compute\_d) | List of scripts to be ran on compute VM startup. | <pre>list(object({<br>    filename = string<br>    content  = string<br>  }))</pre> | `[]` | no |
+| <a name="input_compute_list"></a> [compute\_list](#input\_compute\_list) | List of compute node hostnames. See module slurm\_partition. | `list(string)` | `[]` | no |
 | <a name="input_enable_devel"></a> [enable\_devel](#input\_enable\_devel) | Enables development mode. Not for production use. | `bool` | `false` | no |
 | <a name="input_google_app_cred_path"></a> [google\_app\_cred\_path](#input\_google\_app\_cred\_path) | Path to Google Applicaiton Credentials. | `string` | `null` | no |
 | <a name="input_jwt_key"></a> [jwt\_key](#input\_jwt\_key) | Cluster jwt authentication key. If 'null', then a key will be generated instead. | `string` | `null` | no |

@@ -18,3 +18,8 @@ output "partition" {
   description = "Partition for slurm controller."
   value       = local.partition
 }
+
+output "compute_list" {
+  description = "List of compute node hostnames."
+  value       = local.compute_list
+}

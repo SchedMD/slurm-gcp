@@ -120,6 +120,7 @@ module "slurm_controller_instance" {
   munge_key             = var.munge_key
   network_storage       = var.network_storage
   partitions            = values(module.slurm_partition)[*].partition
+  compute_list          = flatten(values(module.slurm_partition)[*].compute_list)
   slurmdbd_conf_tpl     = var.slurmdbd_conf_tpl
   slurm_conf_tpl        = var.slurm_conf_tpl
 }

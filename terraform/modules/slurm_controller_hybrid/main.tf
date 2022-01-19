@@ -103,10 +103,8 @@ locals {
 
     munge_key = local.munge_key
     jwt_key   = local.jwt_key
-    pubsub = {
-      topic_id        = module.slurm_pubsub.pubsub
-      subscription_id = module.slurm_pubsub.pubsub.subscription_names[0]
-    }
+
+    pubsub_topic_id = google_pubsub_topic.this.name
 
     network_storage       = var.network_storage
     login_network_storage = var.login_network_storage
@@ -235,16 +233,74 @@ resource "google_compute_project_metadata_item" "compute_d" {
   value = each.value.content
 }
 
+##################
+# PUBSUB: SCHEMA #
+##################
+
+resource "google_pubsub_schema" "this" {
+  name       = "${var.cluster_name}-slurm-events"
+  type       = "PROTOCOL_BUFFER"
+  definition = <<EOD
+syntax = "proto3";
+message Results {
+  string request = 1;
+  string timestamp = 2;
+}
+EOD
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+#################
+# PUBSUB: TOPIC #
+#################
+
+resource "google_pubsub_topic" "this" {
+  name = "${var.cluster_name}-slurm-events"
+
+  schema_settings {
+    schema   = google_pubsub_schema.this.id
+    encoding = "JSON"
+  }
+
+  labels = {
+    slurm_cluster_id = local.slurm_cluster_id
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 ##########
 # PUBSUB #
 ##########
 
 module "slurm_pubsub" {
-  source = "../_slurm_pubsub"
+  source  = "terraform-google-modules/pubsub/google"
+  version = "~> 3.0"
 
-  cluster_name     = var.cluster_name
-  project_id       = var.project_id
-  slurm_cluster_id = local.slurm_cluster_id
+  project_id = var.project_id
+  topic      = google_pubsub_topic.this.id
+
+  create_topic = false
+
+  pull_subscriptions = [
+    for nodename in var.compute_list
+    : {
+      name                    = nodename
+      ack_deadline_seconds    = 60
+      enable_message_ordering = true
+      maximum_backoff         = "300s"
+      minimum_backoff         = "30s"
+    }
+  ]
+
+  subscription_labels = {
+    slurm_cluster_id = local.slurm_cluster_id
+  }
 }
 
 #################

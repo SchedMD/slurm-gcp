@@ -30,7 +30,7 @@ config_root_logger(filename, level='DEBUG', util_level='DEBUG',
 log = logging.getLogger(filename)
 
 project_id = project
-subscription_id = cfg.pubsub.subscription_id
+subscription_id = cfg.hostname
 
 subscriber = pubsub_v1.SubscriberClient()
 subscription_path = subscriber.subscription_path(project_id, subscription_id)

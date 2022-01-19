@@ -137,6 +137,12 @@ variable "partitions" {
   }
 }
 
+variable "compute_list" {
+  description = "List of compute node hostnames. See module slurm_partition."
+  type        = list(string)
+  default     = []
+}
+
 variable "google_app_cred_path" {
   type        = string
   description = "Path to Google Applicaiton Credentials."

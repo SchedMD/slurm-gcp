@@ -223,6 +223,12 @@ variable "partitions" {
   }
 }
 
+variable "compute_list" {
+  description = "List of compute node hostnames. See module slurm_partition."
+  type        = list(string)
+  default     = []
+}
+
 variable "cloud_parameters" {
   description = "cloud.conf key/value as a map."
   type        = map(string)

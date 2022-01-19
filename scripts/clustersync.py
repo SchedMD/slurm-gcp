@@ -256,7 +256,7 @@ def restart_cluster(cfg):
         'request': 'RESTART',
         'timestamp': datetime.utcnow().isoformat(),
     })
-    publish_message(util.project, cfg.pubsub.topic_id, message_json)
+    publish_message(util.project, cfg.pubsub_topic_id, message_json)
 
 
 def main():

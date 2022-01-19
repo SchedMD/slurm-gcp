@@ -63,7 +63,7 @@ limitations under the License.
 | <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | terraform-google-modules/vm/google//modules/compute_instance | ~> 7.1 |
 | <a name="module_slurm_destroy_nodes"></a> [slurm\_destroy\_nodes](#module\_slurm\_destroy\_nodes) | ../slurm_destroy_nodes | n/a |
 | <a name="module_slurm_metadata_devel"></a> [slurm\_metadata\_devel](#module\_slurm\_metadata\_devel) | ../_slurm_metadata_devel | n/a |
-| <a name="module_slurm_pubsub"></a> [slurm\_pubsub](#module\_slurm\_pubsub) | ../_slurm_pubsub | n/a |
+| <a name="module_slurm_pubsub"></a> [slurm\_pubsub](#module\_slurm\_pubsub) | terraform-google-modules/pubsub/google | ~> 3.0 |
 
 ## Resources
 
@@ -75,6 +75,8 @@ limitations under the License.
 | [google_compute_project_metadata_item.controller_d](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
 | [google_compute_project_metadata_item.slurm_conf](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
 | [google_compute_project_metadata_item.slurmdbd_conf](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
+| [google_pubsub_schema.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_schema) | resource |
+| [google_pubsub_topic.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
 | [random_id.jwt_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [random_id.munge_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [random_uuid.slurm_cluster_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
@@ -92,6 +94,7 @@ limitations under the License.
 | <a name="input_cloudsql"></a> [cloudsql](#input\_cloudsql) | Use this database instead of the one on the controller.<br>* server\_ip : Address of the database server.<br>* user      : The user to access the database as.<br>* password  : The password, given the user, to access the given database. (sensitive)<br>* db\_name   : The database to access. | <pre>object({<br>    server_ip = string<br>    user      = string<br>    password  = string # sensitive<br>    db_name   = string<br>  })</pre> | `null` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The cluster name, used for resource naming and slurm accounting. | `string` | n/a | yes |
 | <a name="input_compute_d"></a> [compute\_d](#input\_compute\_d) | List of scripts to be ran on compute VM startup. | <pre>list(object({<br>    filename = string<br>    content  = string<br>  }))</pre> | `[]` | no |
+| <a name="input_compute_list"></a> [compute\_list](#input\_compute\_list) | List of compute node hostnames. See module slurm\_partition. | `list(string)` | `[]` | no |
 | <a name="input_controller_d"></a> [controller\_d](#input\_controller\_d) | List of scripts to be ran on controller VM startup. | <pre>list(object({<br>    filename = string<br>    content  = string<br>  }))</pre> | `[]` | no |
 | <a name="input_enable_devel"></a> [enable\_devel](#input\_enable\_devel) | Enables development mode. Not for production use. | `bool` | `false` | no |
 | <a name="input_instance_template"></a> [instance\_template](#input\_instance\_template) | Instance template self\_link used to create compute instances. | `string` | n/a | yes |
