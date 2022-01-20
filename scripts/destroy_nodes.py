@@ -47,11 +47,29 @@ def delete_instances(compute_list):
 
 
 def main(args):
+    required_map = {
+        'labels.slurm_cluster_id': args.slurm_cluster_id,
+        'labels.slurm_instance_type': 'compute',
+    }
+    required_list = [f"{k}={v}" for k, v in required_map.items()]
+    required_logic = ' AND '.join(required_list)
+
+    target_list = ' OR '.join(
+        [f"name={x}" for x in args.target.split(',')]) if args.target else ''
+    target_logic = f"AND ({target_list})" if args.target else ''
+
+    exclude_list = ' AND '.join(
+        [f"name!={x}" for x in args.exclude.split(',')]) if args.exclude else ''
+    exclude_logic = f"AND ({exclude_list})" if args.exclude else ''
+
+    filter = f"{required_logic} {target_logic} {exclude_logic}"
+    log.debug(f"filter = \"{filter}\"")
+
     # NOTE: It is not technically possible to filter by metadata or other
     #       complex nested items
     result = compute.instances().aggregatedList(
         project=project,
-        filter=f"labels.slurm_cluster_id={args.slurm_cluster_id}"
+        filter=filter
     ).execute()
 
     compute_list = []
@@ -59,21 +77,14 @@ def main(args):
         instances = item.get('instances')
         if instances is not None:
             for instance in instances:
-                try:
-                    metadata = {
-                        item['key']: item['value'] for item in instance['metadata']['items']
-                    }
-                except KeyError:
-                    metadata = {}
-
-                if metadata.get('instance_type') == 'compute':
-                    compute_list.append(instance['selfLink'])
+                compute_list.append(instance['selfLink'])
 
     delete_instances(compute_list)
 
-    sleep_dur = 30
-    log.info(f"Done. Sleeping for {sleep_dur} seconds.")
-    sleep(sleep_dur)
+    if len(compute_list) > 0:
+        sleep_dur = 30
+        log.info(f"Done. Sleeping for {sleep_dur} seconds.")
+        sleep(sleep_dur)
 
 
 if __name__ == '__main__':
@@ -81,7 +92,11 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('slurm_cluster_id',
-                        help="Compute node slurm cluster ID label.")
+                        help="Slurm cluster ID label filter")
+    parser.add_argument('--target', help="NodeNames targeted for destroyed",
+                        type=str, default=None)
+    parser.add_argument('--exclude', help="NodeNames excluded from destruction",
+                        type=str, default=None)
     parser.add_argument('--debug', '-d', dest='debug', action='store_true',
                         help='Enable debugging output')
 

@@ -41,6 +41,7 @@ module "slurm_partition" {
   compute_node_groups_defaults = {
     subnetwork = data.google_compute_subnetwork.default.self_link
   }
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
+  cluster_name     = var.cluster_name
+  project_id       = var.project_id
+  slurm_cluster_id = "x"
 }

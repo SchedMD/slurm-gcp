@@ -78,23 +78,11 @@ function fetch_scripts {
 	else
 		echo slurmsync not found in project metadata, skipping update
 	fi
-	if CLUSTERSYNC_SCRIPT=$(jq -re '."clustersync"' <<< "$META_DEVEL"); then
-		echo "updating clustersync.py from project metadata"
-		printf '%s' "$CLUSTERSYNC_SCRIPT" > $CLUSTERSYNC_SCRIPT_FILE
+	if SLURMEVENTD_SCRIPT=$(jq -re '."slurmeventd"' <<< "$META_DEVEL"); then
+		echo "updating slurmeventd.py from project metadata"
+		printf '%s' "$SLURMEVENTD_SCRIPT" > $SLURMEVENTD_SCRIPT_FILE
 	else
-		echo "clustersync not found in project metadata, skipping update"
-	fi
-	if CLUSTEREVENTD_SCRIPT=$(jq -re '."clustereventd"' <<< "$META_DEVEL"); then
-		echo "updating clustereventd.py from project metadata"
-		printf '%s' "$CLUSTEREVENTD_SCRIPT" > $CLUSTEREVENTD_SCRIPT_FILE
-	else
-		echo "clustereventd not found in project metadata, skipping update"
-	fi
-	if SERF_EVENTS_SCRIPT=$(jq -re '."slurm-serf-events"' <<< "$META_DEVEL"); then
-		echo "updating serf_events.py from project metadata"
-		printf '%s' "$SERF_EVENTS_SCRIPT" > $SERF_EVENTS_SCRIPT_FILE
-	else
-		echo "slurm-serf-events not found in project metadata, skipping update"
+		echo "slurmeventd not found in project metadata, skipping update"
 	fi
 }
 
@@ -127,9 +115,7 @@ UTIL_SCRIPT_FILE=$SCRIPTS_DIR/util.py
 RESUME_SCRIPT_FILE=$SCRIPTS_DIR/resume.py
 SUSPEND_SCRIPT_FILE=$SCRIPTS_DIR/suspend.py
 SLURMSYNC_SCRIPT_FILE=$SCRIPTS_DIR/slurmsync.py
-CLUSTEREVENTD_SCRIPT_FILE=$SCRIPTS_DIR/clustereventd.py
-CLUSTERSYNC_SCRIPT_FILE=$SCRIPTS_DIR/clustersync.py
-SERF_EVENTS_SCRIPT_FILE=$SCRIPTS_DIR/serf_events.py
+SLURMEVENTD_SCRIPT_FILE=$SCRIPTS_DIR/slurmeventd.py
 fetch_scripts
 
 if ! "$force" && [ -f $FLAGFILE ]; then

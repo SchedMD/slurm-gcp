@@ -190,3 +190,59 @@ resource "google_compute_project_metadata_item" "partition_d" {
   key   = "${var.cluster_name}-slurm-partition-${var.partition_name}-script-${each.key}"
   value = each.value.content
 }
+
+###########################
+# DESTROY NODES: CRITICAL #
+###########################
+
+# Destroy all compute nodes when partition environment changes
+module "delta_critical" {
+  source = "../slurm_destroy_nodes"
+
+  slurm_cluster_id = var.slurm_cluster_id
+  target_list      = local.compute_list
+
+  triggers = merge(
+    {
+      for x in var.partition_d
+      : "partition_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
+      => sha256(x.content)
+    },
+    {
+      subnetwork = local.partition.subnetwork
+    }
+  )
+
+  depends_on = [
+    # Ensure partition_d metadata is updated before destroying nodes
+    google_compute_project_metadata_item.partition_d,
+  ]
+}
+
+##############################
+# DESTROY NODES: NODE GROUPS #
+##############################
+
+# Destroy compute group when instance_template changes
+module "delta_instance_template" {
+  source = "../slurm_destroy_nodes"
+
+  for_each = local.partition.partition_nodes
+
+  slurm_cluster_id = var.slurm_cluster_id
+  target_list = flatten([formatlist("%s-%s-%s-%g",
+    var.cluster_name,
+    each.value.partition_name,
+    each.value.group_name,
+    range(0, max(each.value.count_static, each.value.count_dynamic))
+  )])
+
+  triggers = {
+    instance_template = each.value.instance_template
+  }
+
+  depends_on = [
+    # Prevent race condition
+    module.delta_critical,
+  ]
+}

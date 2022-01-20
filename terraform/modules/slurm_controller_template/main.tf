@@ -55,6 +55,8 @@ locals {
     ? var.source_image_project
     : "schedmd-slurm-public"
   )
+
+  slurm_instance_type = "controller"
 }
 
 ########
@@ -97,7 +99,10 @@ module "instance_template" {
   preemptible              = var.preemptible
   on_host_maintenance      = var.on_host_maintenance
   labels = merge(
-    { slurm_cluster_id = var.slurm_cluster_id },
+    {
+      slurm_cluster_id    = var.slurm_cluster_id
+      slurm_instance_type = local.slurm_instance_type
+    },
     var.labels
   )
 
@@ -111,7 +116,7 @@ module "instance_template" {
     },
     {
       cluster_name  = var.cluster_name
-      instance_type = "controller"
+      instance_type = local.slurm_instance_type
     },
     var.metadata
   )

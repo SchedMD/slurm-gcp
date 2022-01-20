@@ -19,9 +19,12 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from datetime import datetime
+import json
 import setup
 import util
-from util import lkp, config_root_logger, handle_exception
+from util import project, lkp, config_root_logger, handle_exception
+from slurmeventd import publish_message
 
 
 filename = Path(__file__).name
@@ -44,6 +47,13 @@ def main(args):
 
     log.info("Generating new cloud gres.conf for gres.conf")
     setup.install_gres_conf(lkp)
+
+    # Send restart message to cluster topic
+    message_json = json.dumps({
+        'request': 'restart',
+        'timestamp': datetime.utcnow().isoformat(),
+    })
+    publish_message(project, lkp.cfg.pubsub_topic_id, message_json)
 
     log.info("Done.")
 

@@ -36,7 +36,8 @@ locals {
   ]
 
   controller_hybrid_config = {
-    output_dir = "./config"
+    slurm_log_dir = "."
+    output_dir    = "./config"
   }
 }
 

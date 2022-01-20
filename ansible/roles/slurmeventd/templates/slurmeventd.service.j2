@@ -5,7 +5,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart={{slurm_paths.scripts}}/clustereventd.py
+ExecStart={{slurm_paths.scripts}}/slurmeventd.py
 KillSignal=SIGINT
 Restart=always
 RestartSec=10

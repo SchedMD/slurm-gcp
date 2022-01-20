@@ -426,9 +426,7 @@ def fetch_devel_scripts():
     metadata_devel = json.loads(project_metadata(f'{cfg.cluster_name}-slurm-devel'))
 
     meta_entries = [
-        ('clustereventd.py', 'clustereventd'),
-        ('clustersync.py', 'clustersync'),
-        ('suspend.py', 'slurm-suspend'),
+        ('slurmeventd.py', 'slurmeventd'),
         ('resume.py', 'slurm-resume'),
         ('slurmsync.py', 'slurmsync'),
         ('util.py', 'util-script'),
@@ -842,7 +840,7 @@ def setup_controller():
     run("systemctl enable nfs-server", timeout=30)
     run("systemctl start nfs-server", timeout=30)
 
-    run("systemctl restart slurm-clustereventd", timeout=30)
+    run("systemctl restart slurmeventd", timeout=30)
 
     setup_nfs_exports()
     setup_sync_cronjob()
@@ -858,7 +856,7 @@ def setup_login():
 
     setup_network_storage()
     run("systemctl restart munge")
-    run("systemctl restart slurm-clustereventd", timeout=30)
+    run("systemctl restart slurmeventd", timeout=30)
 
     run_custom_scripts()
 
@@ -888,7 +886,7 @@ def setup_compute():
     run("systemctl enable slurmd", timeout=30)
     run("systemctl restart slurmd", timeout=30)
 
-    run("systemctl restart slurm-clustereventd", timeout=30)
+    run("systemctl restart slurmeventd", timeout=30)
 
     log.info("Done setting up compute")
 

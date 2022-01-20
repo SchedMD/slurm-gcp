@@ -80,6 +80,35 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
 })})
 
 
+def publish_message(project_id, topic_id, message) -> None:
+    """Publishes message to a Pub/Sub topic."""
+    from google.cloud import pubsub_v1
+    from google import api_core
+
+    publisher = pubsub_v1.PublisherClient()
+    topic_path = publisher.topic_path(project_id, topic_id)
+
+    retry_handler = api_core.retry.Retry(
+        predicate=api_core.retry.if_exception_type(
+            api_core.exceptions.Aborted,
+            api_core.exceptions.DeadlineExceeded,
+            api_core.exceptions.InternalServerError,
+            api_core.exceptions.ResourceExhausted,
+            api_core.exceptions.ServiceUnavailable,
+            api_core.exceptions.Unknown,
+            api_core.exceptions.Cancelled,
+        ),
+    )
+
+    message_bytes = message.encode("utf-8")
+    future = publisher.publish(topic_path, message_bytes, retry=retry_handler)
+    result = future.exception()
+    if result is not None:
+        raise result
+
+    print(f"Published message to '{topic_path}'.")
+
+
 def parse_self_link(self_link: str):
     """Parse a selfLink url, extracting all useful values
     https://.../v1/projects/<project>/regions/<region>/...
@@ -145,12 +174,17 @@ def new_config(config):
     return cfg
 
 
-def config_from_metadata():
+def config_from_metadata(use_cache=True):
     # get setup config from metadata
     cluster_name = instance_metadata('attributes/cluster_name')
     if not cluster_name:
         return None
-    config_yaml = yaml.safe_load(project_metadata(f'{cluster_name}-slurm-config'))
+    
+    metadata_key = f'{cluster_name}-slurm-config'
+    if use_cache:
+        config_yaml = yaml.safe_load(project_metadata(metadata_key))
+    else:
+        config_yaml = yaml.safe_load(project_metadata.__wrapped__(metadata_key))
     cfg = new_config(config_yaml)  # noqa F811
     return cfg
 

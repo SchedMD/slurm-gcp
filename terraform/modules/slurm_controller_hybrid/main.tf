@@ -307,8 +307,49 @@ module "slurm_pubsub" {
 # DESTROY NODES #
 #################
 
-module "slurm_destroy_nodes" {
+# Destroy all compute nodes on `terraform destroy`
+module "cleanup" {
   source = "../slurm_destroy_nodes"
 
   slurm_cluster_id = local.slurm_cluster_id
+  when_destroy     = true
+}
+
+# Destroy all compute nodes when the compute node environment changes
+module "delta_critical" {
+  source = "../slurm_destroy_nodes"
+
+  slurm_cluster_id = local.slurm_cluster_id
+
+  triggers = merge(
+    {
+      for x in var.compute_d
+      : "compute_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}" => sha256(x.content)
+    },
+    {
+      controller_id = null_resource.setup_hybrid.id
+    },
+  )
+
+  depends_on = [
+    # Ensure compute_d metadata is updated before destroying nodes
+    google_compute_project_metadata_item.compute_d,
+  ]
+}
+
+# Destroy all removed compute nodes when partitions change
+module "delta_compute_list" {
+  source = "../slurm_destroy_nodes"
+
+  slurm_cluster_id = var.slurm_cluster_id
+  exclude_list     = var.compute_list
+
+  triggers = {
+    compute_list = join(",", var.compute_list)
+  }
+
+  depends_on = [
+    # Prevent race condition
+    module.delta_critical,
+  ]
 }

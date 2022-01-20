@@ -167,6 +167,9 @@ module "slurm_controller_instance" {
 
   depends_on = [
     module.slurm_metadata_devel,
+    google_compute_project_metadata_item.controller_d,
+    # Ensure nodes are destroyed before controller is
+    module.cleanup,
   ]
 }
 
@@ -324,12 +327,79 @@ module "slurm_pubsub" {
   }
 }
 
+####################
+# NOTIFY: RECONFIG #
+####################
+
+module "notify_reconfigure" {
+  source = "../slurm_notify_cluster"
+
+  topic = google_pubsub_topic.this.name
+  type  = "reconfig"
+  triggers = {
+    compute_list  = join(",", var.compute_list)
+    config        = sha256(google_compute_project_metadata_item.config.value)
+    cgroup_conf   = sha256(google_compute_project_metadata_item.cgroup_conf.value)
+    slurm_conf    = sha256(google_compute_project_metadata_item.slurm_conf.value)
+    slurmdbd_conf = sha256(google_compute_project_metadata_item.slurmdbd_conf.value)
+  }
+
+  depends_on = [
+    # Ensure subscriptions are created
+    module.slurm_pubsub,
+    # Ensure controller is created
+    module.slurm_controller_instance,
+  ]
+}
+
 #################
 # DESTROY NODES #
 #################
 
-module "slurm_destroy_nodes" {
+# Destroy all compute nodes on `terraform destroy`
+module "cleanup" {
   source = "../slurm_destroy_nodes"
 
   slurm_cluster_id = local.slurm_cluster_id
+  when_destroy     = true
+}
+
+# Destroy all compute nodes when the compute node environment changes
+module "delta_critical" {
+  source = "../slurm_destroy_nodes"
+
+  slurm_cluster_id = local.slurm_cluster_id
+
+  triggers = merge(
+    {
+      for x in var.compute_d
+      : "compute_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
+      => sha256(x.content)
+    },
+    {
+      controller_id = module.slurm_controller_instance.instances_details[0].instance_id
+    },
+  )
+
+  depends_on = [
+    # Ensure compute_d metadata is updated before destroying nodes
+    google_compute_project_metadata_item.compute_d,
+  ]
+}
+
+# Destroy all removed compute nodes when partitions change
+module "delta_compute_list" {
+  source = "../slurm_destroy_nodes"
+
+  slurm_cluster_id = var.slurm_cluster_id
+  exclude_list     = var.compute_list
+
+  triggers = {
+    compute_list = join(",", var.compute_list)
+  }
+
+  depends_on = [
+    # Prevent race condition
+    module.delta_critical,
+  ]
 }

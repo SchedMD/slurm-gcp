@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-variable "slurm_cluster_id" {
-  description = "Destroy compute nodes labeled with this slurm_cluster_id."
+variable "topic" {
+  description = "Pubsub topic name or ID."
   type        = string
+}
+
+variable "type" {
+  description = "Notification type."
+  type        = string
+  default     = "reconfig"
 
   validation {
-    condition     = length(var.slurm_cluster_id) > 0
-    error_message = "The slurm_cluster_id must not be empty."
+    condition     = contains(["reconfig", "restart"], lower(var.type))
+    error_message = "Type can only be one of: reconfig; restart."
   }
 }
 
@@ -28,22 +34,4 @@ variable "triggers" {
   description = "Additional Terraform triggers."
   type        = map(string)
   default     = {}
-}
-
-variable "target_list" {
-  description = "Target destruction of these compute nodes, by instance name."
-  type        = list(string)
-  default     = []
-}
-
-variable "exclude_list" {
-  description = "Exclude destruction of these compute nodes, by instance name."
-  type        = list(string)
-  default     = []
-}
-
-variable "when_destroy" {
-  description = "Run only on `terraform destroy`?"
-  type        = bool
-  default     = false
 }

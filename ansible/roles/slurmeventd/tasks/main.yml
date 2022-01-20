@@ -19,9 +19,9 @@
     dest: "{{slurm_paths.scripts}}/{{item}}"
     mode: 0o755
   with_items:
-    - clustereventd.py
+    - slurmeventd.py
 
 - name: Install Service
   template:
-    src: slurm-clustereventd.service.j2
-    dest: /usr/lib/systemd/system/slurm-clustereventd.service
+    src: slurmeventd.service.j2
+    dest: /usr/lib/systemd/system/slurmeventd.service

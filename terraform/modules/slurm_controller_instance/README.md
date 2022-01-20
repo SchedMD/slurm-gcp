@@ -60,8 +60,11 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_cleanup"></a> [cleanup](#module\_cleanup) | ../slurm_destroy_nodes | n/a |
+| <a name="module_delta_compute_list"></a> [delta\_compute\_list](#module\_delta\_compute\_list) | ../slurm_destroy_nodes | n/a |
+| <a name="module_delta_critical"></a> [delta\_critical](#module\_delta\_critical) | ../slurm_destroy_nodes | n/a |
+| <a name="module_notify_reconfigure"></a> [notify\_reconfigure](#module\_notify\_reconfigure) | ../slurm_notify_cluster | n/a |
 | <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | terraform-google-modules/vm/google//modules/compute_instance | ~> 7.1 |
-| <a name="module_slurm_destroy_nodes"></a> [slurm\_destroy\_nodes](#module\_slurm\_destroy\_nodes) | ../slurm_destroy_nodes | n/a |
 | <a name="module_slurm_metadata_devel"></a> [slurm\_metadata\_devel](#module\_slurm\_metadata\_devel) | ../_slurm_metadata_devel | n/a |
 | <a name="module_slurm_pubsub"></a> [slurm\_pubsub](#module\_slurm\_pubsub) | terraform-google-modules/pubsub/google | ~> 3.0 |
 

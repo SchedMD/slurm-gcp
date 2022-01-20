@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 variable "project_id" {
   type        = string
   description = "Project ID to create resources in."
@@ -28,7 +27,6 @@ variable "cluster_name" {
 variable "slurm_cluster_id" {
   type        = string
   description = "The Cluster ID, used to label resource."
-  default     = null
 }
 
 variable "partition_name" {

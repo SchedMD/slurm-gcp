@@ -32,20 +32,60 @@ data "local_file" "destroy_nodes" {
   filename = local.destroy_nodes
 }
 
-#################
-# DESTROY NODES #
-#################
+#########################
+# DESTROY NODES: CREATE #
+#########################
 
-resource "null_resource" "destroy_nodes" {
-  triggers = {
-    scripts_dir      = local.scripts_dir
-    script_path      = data.local_file.destroy_nodes.filename
-    slurm_cluster_id = var.slurm_cluster_id
-  }
+resource "null_resource" "destroy_nodes_on_create" {
+  count = var.when_destroy ? 0 : 1
+
+  triggers = merge(
+    var.triggers,
+    {
+      scripts_dir      = local.scripts_dir
+      script_path      = data.local_file.destroy_nodes.filename
+      slurm_cluster_id = var.slurm_cluster_id
+    }
+  )
 
   provisioner "local-exec" {
     working_dir = self.triggers.scripts_dir
-    command     = "${self.triggers.script_path} ${self.triggers.slurm_cluster_id}"
+    command     = <<EOF
+${self.triggers.script_path} \
+${join(",", var.target_list) != "" ? "--target='${join(",", var.target_list)}'" : ""} \
+${join(",", var.exclude_list) != "" ? "--exclude='${join(",", var.exclude_list)}'" : ""} \
+'${self.triggers.slurm_cluster_id}'
+EOF
+    when        = create
+  }
+}
+
+##########################
+# DESTROY NODES: DESTROY #
+##########################
+
+resource "null_resource" "destroy_nodes_on_destroy" {
+  count = var.when_destroy ? 1 : 0
+
+  triggers = merge(
+    var.triggers,
+    {
+      scripts_dir      = local.scripts_dir
+      script_path      = data.local_file.destroy_nodes.filename
+      slurm_cluster_id = var.slurm_cluster_id
+      target_list      = join(",", var.target_list)
+      exclude_list     = join(",", var.exclude_list)
+    }
+  )
+
+  provisioner "local-exec" {
+    working_dir = self.triggers.scripts_dir
+    command     = <<EOF
+${self.triggers.script_path} \
+${self.triggers.target_list != "" ? "--target='${self.triggers.target_list}'" : ""} \
+${self.triggers.exclude_list != "" ? "--exclude='${self.triggers.exclude_list}'" : ""} \
+'${self.triggers.slurm_cluster_id}'
+EOF
     when        = destroy
   }
 }
