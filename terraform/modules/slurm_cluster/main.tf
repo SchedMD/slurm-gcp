@@ -41,6 +41,7 @@ module "slurm_partition" {
   partition_d                  = lookup(each.value, "partition_d", [])
   project_id                   = var.project_id
   region                       = lookup(each.value, "region", null)
+  slurm_cluster_id             = local.slurm_cluster_id
   subnetwork_project           = lookup(each.value, "subnetwork_project", null)
   subnetwork                   = each.value.subnetwork
   zone_policy_allow            = lookup(each.value, "zone_policy_allow", [])
