@@ -49,7 +49,7 @@ USER_AGENT = "Slurm_GCP_Scripts/1.5 (GPN:SchedMD)"
 API_REQ_LIMIT = 1000
 ENV_CONFIG_YAML = os.getenv('SLURM_CONFIG_YAML')
 if ENV_CONFIG_YAML:
-    CONFIG_FILE = ENV_CONFIG_YAML
+    CONFIG_FILE = Path(ENV_CONFIG_YAML)
 else:
     CONFIG_FILE = Path(__file__).with_name('config.yaml')
 log = logging.getLogger(__name__)
@@ -109,6 +109,9 @@ def compute_service(credentials=None, user_agent=USER_AGENT):
     )
 
 
+compute = compute_service()
+
+
 def load_config_data(config):
     """load dict-like data into a config object"""
     return NSDict(config)
@@ -120,11 +123,6 @@ def new_config(config):
     """
     cfg = NSDict(config)
 
-    if not cfg.log_dir:
-        cfg.log_dir = dirs.log
-    if not cfg.slurm_bin_dir:
-        cfg.slurm_bin_dir = slurmdirs.prefix/'bin'
-
     network_storage_iter = filter(None, (
         *cfg.network_storage,
         *cfg.login_network_storage,
@@ -135,6 +133,14 @@ def new_config(config):
     for netstore in network_storage_iter:
         if netstore.server_ip == '$controller':
             netstore.server_ip = cfg.cluster_name + '-controller'
+    return cfg
+
+
+def config_from_metadata():
+    # get setup config from metadata
+    cluster_name = instance_metadata('attributes/cluster_name')
+    config_yaml = yaml.safe_load(project_metadata(f'{cluster_name}-slurm-config'))
+    cfg = new_config(config_yaml)  # noqa F811
     return cfg
 
 
@@ -151,10 +157,6 @@ def load_config_file(path):
 def save_config(cfg, path):
     """save given config to file at path"""
     Path(path).write_text(yaml.dump(cfg, Dumper=Dumper))
-
-
-compute = compute_service()
-cfg = load_config_file(CONFIG_FILE)
 
 
 def config_root_logger(caller_logger, level='DEBUG', util_level=None,
@@ -286,9 +288,16 @@ def get_metadata(path, root=ROOT_URL):
         return None
 
 
+@lru_cache(maxsize=None)
 def instance_metadata(path):
     """Get instance metadata"""
     return get_metadata(path, root=f"{ROOT_URL}/instance")
+
+
+@lru_cache(maxsize=None)
+def project_metadata(key):
+    """Get project metadata project/attributes/<cluster_name>-<path>"""
+    return get_metadata(key, root=f"{ROOT_URL}/project/attributes")
 
 
 def retry_exception(exc):
@@ -476,12 +485,6 @@ class Lookup:
         return instance_metadata('attributes/instance_type')
 
     @cached_property
-    def project_metadata(self):
-        return NSDict(yaml.safe_load(get_metadata(
-            f'project/attributes/{self._cfg.cluster_name}-slurm-metadata'
-        )))
-
-    @cached_property
     def compute(self):
         # TODO evaluate when we need to use google_app_cred_path
         if self._cfg.google_app_cred_path:
@@ -590,68 +593,62 @@ class Lookup:
         """  """
         if zone:
             project = project or self.project
-            machine_details = ensure_execute(self.compute.machineTypes().get(
+            machine_info = ensure_execute(self.compute.machineTypes().get(
                 project=project, zone=zone, machineType=machine_type
             ))
         else:
             machines = self.machine_types(project=project)
-            machine_details = next(iter(machines[machine_type].values()))
-        return NSDict(machine_details)
+            machine_info = next(iter(machines[machine_type].values()))
+        return NSDict(machine_info)
 
-    def template_details(self, template):
-        template_props = self.template_props(template)
-        if template_props.machine:
-            return template_props
+    @lru_cache(maxsize=None)
+    def template_info(self, template_link, project=None):
+        project = project or self.project
+        template_name = template_link.split('/')[-1]
 
-        template_props.machine_details = self.machine_type(
-            template_props.machineType)
-        md = template_props.machine_details
-        machine = NSDict()
+        template = ensure_execute(
+            self.compute.instanceTemplates().get(
+                project=project, instanceTemplate=template_name)
+        ).get('properties')
+        template = NSDict(template)
+        # name is above properties, so stick it into properties in order to just
+        # return properties
+        template.name = template_name
+        template.link = template_link
+        # TODO delete metadata to reduce memory footprint?
+        #del template.metadata
 
+        template.machine_info = self.machine_type(template.machineType)
+        machine = template.machine_info
+        machine_conf = NSDict()
         # TODO how is smt passed?
         #machine['cpus'] = machine['guestCpus'] // (1 if part.image_hyperthreads else 2) or 1
-        machine.cpus = md.guestCpus
+        machine_conf.cpus = machine.guestCpus
         # Because the actual memory on the host will be different than
         # what is configured (e.g. kernel will take it). From
         # experiments, about 16 MB per GB are used (plus about 400 MB
         # buffer for the first couple of GB's. Using 30 MB to be safe.
-        gb = md.memoryMb // 1024
-        machine.memory = md.memoryMb - (400 + (30 * gb))
+        gb = machine.memoryMb // 1024
+        machine_conf.memory = machine.memoryMb - (400 + (30 * gb))
 
-        if md.accelerators:
-            machine.gpu_type = md.accelerators[0].guestAcceleratorType
-            machine.gpu_count = md.accelerators[0].guestAcceleratorCount
+        if machine.accelerators:
+            machine_conf.gpu_type = machine.accelerators[0].guestAcceleratorType
+            machine_conf.gpu_count = machine.accelerators[0].guestAcceleratorCount
         else:
-            machine.gpu_type = None
-            machine.gpu_count = 0
+            machine_conf.gpu_type = None
+            machine_conf.gpu_count = 0
 
-        template_props.machine = machine
-        return template_props
-
-    @lru_cache(maxsize=None)
-    def template_props(self, template, project=None):
-        project = project or self.project
-
-        template_name = self._cfg.template_map[template].split('/')[-1]
-        tpl_filter = f"(name={template_name})"
-
-        template_list = ensure_execute(
-            self.compute.instanceTemplates().list(
-                project=project,
-                filter=tpl_filter)
-        ).get('items', [])
-        template_list.sort(key=itemgetter('creationTimestamp'))
-        try:
-            template_details = next(iter(template_list))
-        except StopIteration:
-            raise Exception(f"template {template} not found")
-        template_details = NSDict(template_details)
-        # name is above properties, so stick it into properties in order to just
-        # return properties
-        template_details.properties.name = template_details.name
-        template_details.properties.url = template_details.selfLink
-        return template_details.properties
+        template.machine_conf = machine_conf
+        return template
 
 
 # Define late globals
+if CONFIG_FILE.exists():
+    cfg = load_config_file(CONFIG_FILE)
+elif __name__ == '__main__':
+    cfg = config_from_metadata()
+    save_config(cfg, CONFIG_FILE)
+else:
+    log.fatal(f"{CONFIG_FILE} not found")
+
 lkp = Lookup(cfg)

@@ -318,7 +318,7 @@ def install_slurm_conf(lkp):
         'state_save': slurmdirs.state,
         'mpi_default': mpi_default,
     }
-    conf_resp = instance_metadata('attributes/slurm_conf_tpl')
+    conf_resp = cfg.slurm_conf_tpl
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'slurm.conf'
@@ -356,7 +356,7 @@ def install_slurmdbd_conf(lkp):
             db_host_str[1] if len(db_host_str) >= 2 else '3306'
         )
 
-    conf_resp = instance_metadata('attributes/slurmdbd_conf_tpl')
+    conf_resp = cfg.slurmdbd_conf_tpl
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'slurmdbd.conf'
@@ -374,7 +374,7 @@ def install_slurmdbd_conf(lkp):
 
 def install_cgroup_conf():
     """ install cgroup.conf """
-    conf = instance_metadata('attributes/cgroup_conf_tpl')
+    conf = cfg.cgroup_conf_tpl
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'cgroup.conf'
     conf_file_bak = conf_file.with_suffix('.conf.bak')
@@ -424,7 +424,7 @@ def install_gres_conf(lkp):
 def fetch_devel_scripts():
     """download scripts from project metadata if they are present"""
 
-    metadata = lkp.project_metadata
+    metadata_devel = json.loads(project_metadata(f'{cfg.cluster_name}-slurm-devel'))
 
     meta_entries = [
         ('clustereventd.py', 'clustereventd'),
@@ -438,11 +438,11 @@ def fetch_devel_scripts():
     ]
 
     for script, name in meta_entries:
-        if name not in metadata:
+        if name not in metadata_devel:
             log.debug(f"{name} not found in project metadata, not updating")
             continue
         log.info(f"updating {script} from metadata")
-        content = metadata[name]
+        content = metadata_devel[name]
         path = (dirs.scripts/script).resolve()
         # make sure parent dir exists
         path.write_text(content)
@@ -450,22 +450,44 @@ def fetch_devel_scripts():
         shutil.chown(path, user='slurm', group='slurm')
 
 
-def install_custom_compute_scripts():
-    """"""
-    custom_pattern = re.compile(r'custom-compute-(S+)')
-    metadata = lkp.project_metadata
+def install_custom_scripts():
+    """download custom scripts from project metadata"""
+    script_pattern = re.compile(
+        r'{cfg.cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)')
+    metadata_keys = project_metadata('/')
 
-    def match_name(metadata):
-        name, content = metadata
-        return custom_pattern.match(name), content
+    def match_name(meta_key):
+        m = script_pattern.match(meta_key)
+        if not m:
+            # key does not match, skip
+            return None
+        # returned path is `partition.d/<part_name>/<name>`
+        # or `<controller/compute>.d/<name>`
+        parts = m['path'].split('-')
+        parts[0] += '.d'
+        return meta_key, Path(*parts, m['name'])
 
-    custom_scripts = [
-        (f'custom-compute.d/{m[1]}', content)
-        for m, content in map(match_name, metadata.items())
-        if m
-    ]
-    for name, content in custom_scripts:
-        path = (dirs.scripts/name).resolve()
+    def filter_role(meta_entry):
+        if not meta_entry:
+            return False
+        key, path = meta_entry
+        role, part = list(path.parents)[0:2]
+
+        # login only needs compute scripts
+        if cfg.instance_role == 'login':
+            return role == 'compute'
+        # compute needs compute and the matching partition
+        if cfg.instance_role == 'compute':
+            return role == 'compute' or part == lkp.node_partition_name()
+        # controller downloads them all for good measure
+        return True
+
+    custom_scripts = list(filter(filter_role, map(match_name, metadata_keys)))
+
+    for key, path in custom_scripts:
+        path = (dirs.scripts/path).resolve()
+        content = project_metadata(key)
+        path.parent.mkdirp()
         path.write_text(content)
         path.chmod(0o755)
         shutil.chown(path, user='slurm', group='slurm')
@@ -751,7 +773,7 @@ def configure_dirs():
 
 
 def run_custom_scripts():
-    """ run custom scripts based on node role """
+    """ run custom scripts based on instance_role """
     custom_dir = dirs.scripts/'custom'
     if lkp.instance_role == 'controller':
         custom_dir = custom_dir/'controller.d'
@@ -775,8 +797,8 @@ stdout={result.stderr}
 def setup_controller():
     """ Run controller setup """
     log.info("Setting up controller")
-    util.save_config(cfg, dirs.scripts/'config.yaml')
     shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
+    install_custom_scripts()
 
     install_slurm_conf(lkp)
     install_slurmdbd_conf(lkp)
@@ -833,6 +855,7 @@ def setup_controller():
 def setup_login():
     """ run login node setup """
     log.info("Setting up login")
+    install_custom_scripts()
 
     setup_network_storage()
     run("systemctl restart munge")
@@ -847,6 +870,7 @@ def setup_compute():
     """ run compute node setup """
     log.info("Setting up compute")
     shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
+    install_custom_scripts()
 
     setup_nss_slurm()
     setup_network_storage()

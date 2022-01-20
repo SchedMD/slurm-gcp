@@ -38,63 +38,63 @@ function fetch_scripts {
 		echo cluster name not found in instance metadata, quitting
 		return 1
 	fi
-	if ! METADATA=$($CURL $URL/project/attributes/$CLUSTER-slurm-metadata); then
-		echo cluster data not found in project metadata, quitting
-		return 1
+	if ! META_DEVEL=$($CURL $URL/project/attributes/$CLUSTER-slurm-devel); then
+		return
 	fi
-	if STARTUP_SCRIPT=$(jq -re '."startup-script"' <<< "$METADATA"); then
+	echo devel data found in project metadata, looking to update scripts
+	if STARTUP_SCRIPT=$(jq -re '."startup-script"' <<< "$META_DEVEL"); then
 		echo updating startup.sh from project metadata
 		printf '%s' "$STARTUP_SCRIPT" > $STARTUP_SCRIPT_FILE
 	else
 		echo startup-script not found in project metadata, skipping update
 	fi
-	if SETUP_SCRIPT=$(jq -re '."setup-script"' <<< "$METADATA"); then
+	if SETUP_SCRIPT=$(jq -re '."setup-script"' <<< "$META_DEVEL"); then
 		echo updating setup.py from project metadata
 		printf '%s' "$SETUP_SCRIPT" > $SETUP_SCRIPT_FILE
 	else
 		echo setup-script not found in project metadata, skipping update
 	fi
-	if UTIL_SCRIPT=$(jq -re '."util-script"' <<< "$METADATA"); then
+	if UTIL_SCRIPT=$(jq -re '."util-script"' <<< "$META_DEVEL"); then
 		echo updating util.py from project metadata
 		printf '%s' "$UTIL_SCRIPT" > $UTIL_SCRIPT_FILE
 	else
 		echo util-script not found in project metadata, skipping update
 	fi
-	if RESUME_SCRIPT=$(jq -re '."slurm-resume"' <<< "$METADATA"); then
+	if RESUME_SCRIPT=$(jq -re '."slurm-resume"' <<< "$META_DEVEL"); then
 		echo updating resume.py from project metadata
 		printf '%s' "$RESUME_SCRIPT" > $RESUME_SCRIPT_FILE
 	else
 		echo slurm-resume not found in project metadata, skipping update
 	fi
-	if SUSPEND_SCRIPT=$(jq -re '."slurm-suspend"' <<< "$METADATA"); then
+	if SUSPEND_SCRIPT=$(jq -re '."slurm-suspend"' <<< "$META_DEVEL"); then
 		echo updating suspend.py from project metadata
 		printf '%s' "$SUSPEND_SCRIPT" > $SUSPEND_SCRIPT_FILE
 	else
 		echo slurm-suspend not found in project metadata, skipping update
 	fi
-	if SLURMSYNC_SCRIPT=$(jq -re '."slurmsync"' <<< "$METADATA"); then
+	if SLURMSYNC_SCRIPT=$(jq -re '."slurmsync"' <<< "$META_DEVEL"); then
 		echo updating slurmsync.py from project metadata
 		printf '%s' "$SLURMSYNC_SCRIPT" > $SLURMSYNC_SCRIPT_FILE
 	else
 		echo slurmsync not found in project metadata, skipping update
 	fi
-	if CLUSTERSYNC_SCRIPT=$(jq -re '."clustersync"' <<< "$METADATA"); then
+	if CLUSTERSYNC_SCRIPT=$(jq -re '."clustersync"' <<< "$META_DEVEL"); then
 		echo "updating clustersync.py from project metadata"
 		printf '%s' "$CLUSTERSYNC_SCRIPT" > $CLUSTERSYNC_SCRIPT_FILE
 	else
 		echo "clustersync not found in project metadata, skipping update"
 	fi
-	if CLUSTEREVENTD_SCRIPT=$(jq -re '."clustereventd"' <<< "$METADATA"); then
+	if CLUSTEREVENTD_SCRIPT=$(jq -re '."clustereventd"' <<< "$META_DEVEL"); then
 		echo "updating clustereventd.py from project metadata"
 		printf '%s' "$CLUSTEREVENTD_SCRIPT" > $CLUSTEREVENTD_SCRIPT_FILE
 	else
 		echo "clustereventd not found in project metadata, skipping update"
 	fi
-	if SERF_EVENTS_SCRIPT=$(jq -re '."slurm-serf-events"' <<< "$METADATA"); then
+	if SERF_EVENTS_SCRIPT=$(jq -re '."slurm-serf-events"' <<< "$META_DEVEL"); then
 		echo "updating serf_events.py from project metadata"
 		printf '%s' "$SERF_EVENTS_SCRIPT" > $SERF_EVENTS_SCRIPT_FILE
 	else
-		echo "slurmsync not found in project metadata, skipping update"
+		echo "slurm-serf-events not found in project metadata, skipping update"
 	fi
 }
 
