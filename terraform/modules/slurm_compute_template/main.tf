@@ -111,7 +111,7 @@ module "instance_template" {
     },
     {
       cluster_name  = var.cluster_name
-      instance_type = "login"
+      instance_type = "compute"
     },
     var.metadata
   )
