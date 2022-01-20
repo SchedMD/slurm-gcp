@@ -82,12 +82,6 @@ locals {
     })
     partitions = jsonencode(local.partitions)
   }
-
-  metadata_tpl = {
-    cgroup_conf_tpl   = data.local_file.cgroup_conf_tpl.content
-    slurm_conf_tpl    = data.local_file.slurm_conf_tpl.content
-    slurmdbd_conf_tpl = data.local_file.slurmdbd_conf_tpl.content
-  }
 }
 
 ################
@@ -179,11 +173,29 @@ module "slurm_controller_instance" {
 resource "google_compute_project_metadata_item" "config" {
   project = local.project_id
 
-  key = "${var.cluster_name}-slurm-config"
-  value = jsonencode(merge(
-    local.metadata_config,
-    local.metadata_tpl,
-  ))
+  key   = "${var.cluster_name}-slurm-config"
+  value = jsonencode(local.metadata_config)
+}
+
+resource "google_compute_project_metadata_item" "slurm_conf" {
+  project = local.project_id
+
+  key   = "${var.cluster_name}-slurm-tpl-slurm-conf"
+  value = data.local_file.slurm_conf_tpl.content
+}
+
+resource "google_compute_project_metadata_item" "cgroup_conf" {
+  project = local.project_id
+
+  key   = "${var.cluster_name}-slurm-tpl-cgroup-conf"
+  value = data.local_file.cgroup_conf_tpl.content
+}
+
+resource "google_compute_project_metadata_item" "slurmdbd_conf" {
+  project = local.project_id
+
+  key   = "${var.cluster_name}-slurm-tpl-slurmdbd-conf"
+  value = data.local_file.slurmdbd_conf_tpl.content
 }
 
 ###################
