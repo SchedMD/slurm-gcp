@@ -447,8 +447,8 @@ class Dumper(yaml.SafeDumper):
 class Lookup:
     """ Wrapper class for cached data access
     """
-    regex = r'(?P<name>[^\s\-]+)-(?P<template>\S+)-(?P<partition>[^\s\-]+)-(?P<index>\d+)'
-    node_parts_regex = re.compile(regex)
+    regex = r'(?P<name>[^\s\-]+)-(?P<partition>[^\s\-]+)-(?P<group>\S+)-(?P<index>\d+)'
+    node_desc_regex = re.compile(regex)
 
     def __init__(self, cfg=None):
         self._cfg = cfg or NSDict()
@@ -496,61 +496,37 @@ class Lookup:
     def exclusive(self):
         return bool(self._cfg.exclusive or self._cfg.enable_placement)
 
-    @cached_property
-    def template_nodes(self):
-        """dict<template: list<node>> containing all nodes in all partitions
-        grouped by template. Save partition ref onto each node.
-        """
-        template_nodes = defaultdict(list)
-        with ThreadPoolExecutor() as exe:
-            futures = {}
-            for part, conf in self._cfg.partitions.items():
-                for node in conf.nodes:
-                    # shim in partition so template knows it for nodeline
-                    node.partition = part
-                    template_nodes[node.template].append(node)
-                    f = exe.submit(self.template_details, node.template)
-                    futures[f] = node
-            # not strictly necessary, but store a reference to the template
-            # details on each node just for fun
-            for f, node in futures.items():
-                node.template_details = f.result()
-        return template_nodes
-
     @lru_cache(maxsize=None)
-    def _node_parts(self, node_name):
+    def _node_desc(self, node_name):
         """Get parts from node name"""
-        m = self.node_parts_regex.match(node_name)
+        if not node_name:
+            node_name = self.hostname
+        m = self.node_desc_regex.match(node_name)
         if not m:
             raise Exception(f"node name {node_name} is not valid")
         return NSDict(m.groupdict())
 
-    def node_template(self, node_name):
-        return self._node_parts(node_name).template
+    def node_partition_name(self, node_name=None):
+        return self._node_desc(node_name).partition
 
-    def node_template_props(self, node_name):
-        return self.template_props(self.node_template(node_name))
+    def node_group_name(self, node_name=None):
+        return self._node_desc(node_name).group
 
-    def node_template_details(self, node_name):
-        return self.template_details(self.node_template(node_name))
+    def node_index(self, node_name=None):
+        return self._node_desc(node_name).index
 
-    def node_partition(self, node_name):
-        return self._node_parts(node_name).partition
+    def node_partition(self, node_name=None):
+        return self._cfg.partitions[self.node_partition_name(node_name)]
 
-    def node_index(self, node_name):
-        return self._node_parts(node_name).index
+    def node_group(self, node_name=None):
+        group_name = self.node_group_name(node_name)
+        return self.node_partition(node_name).partition_nodes[group_name]
 
-    def get_node_conf(self, node_name):
-        parts = self._node_parts(node_name)
-        try:
-            node_conf = next(
-                n for n in self._cfg.partitions[parts.partition].nodes
-                if n.template == parts.template
-            )
-        except StopIteration:
-            raise Exception(
-                f"node name {node_name} not found among partitions nodes")
-        return node_conf
+    def node_template(self, node_name=None):
+        return self.node_group(node_name).instance_template
+
+    def node_template_info(self, node_name=None):
+        return self.template_info(self.node_template(node_name))
 
     @lru_cache(maxsize=1)
     def instances(self, project=None, cluster_name=None):

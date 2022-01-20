@@ -117,7 +117,7 @@ def diff_plan(lkp0, lkp1):
             dynamic_nodelist = resume.expand_nodelist(dynamic)
 
             template0_name = lkp0.template_map.get(template, "").split('/')[-1]
-            template1_name = node['template_details']['url'].split('/')[-1]
+            template1_name = node['template_info']['url'].split('/')[-1]
             if template1_name != template0_name:
                 nodelist2.extend(static_nodelist)
                 nodelist2.extend(dynamic_nodelist)
@@ -199,7 +199,7 @@ def update_conf():
     log.info("Generating new cgroup.conf")
     setup.install_cgroup_conf()
 
-    # NOTE: lkp.cfg contains extraneous data: template_details
+    # NOTE: lkp.cfg contains extraneous data: template_info
     config_yaml = yaml.safe_load(util.instance_metadata('attributes/config'))
     cfg = util.new_config(config_yaml)
     save_config(cfg, dirs.scripts/'config.yaml')

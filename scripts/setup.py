@@ -34,7 +34,7 @@ import yaml
 from addict import Dict as NSDict
 
 import util
-from util import run, instance_metadata, partition
+from util import run, instance_metadata, project_metadata, partition
 from util import lkp, cfg, dirs, slurmdirs
 
 SETUP_SCRIPT = Path(__file__)
@@ -90,6 +90,7 @@ FILE_PREAMBLE = """
 # This file is managed by a script. Manual modifications will be overwritten.
 """
 
+
 def start_motd():
     """ advise in motd that slurm is currently configuring """
     wall_msg = "*** Slurm is currently being configured in the background. ***"
@@ -124,65 +125,73 @@ def failed_motd():
     util.run(f"wall -n '{wall_msg}'", timeout=30)
 
 
-def nodeset(node):
-    return f'{cfg.cluster_name}-{node.template}-{node.partition}'
+def nodeset_prefix(node_group, part_name):
+    return f'{cfg.cluster_name}-{part_name}-{node_group.group_name}'
 
 
-def nodenames(node, lkp):
+def nodeset_names(node_group, part_name):
     """ Return static and dynamic nodenames given a partition node type
     definition
     """
-    # ... hack... ensure template_nodes was generated so partition is in node
-    # dict
-    lkp.template_nodes
 
     def node_range(count, start=0):
         end = start + count - 1
         return f'{start}' if count == 1 else f'[{start}-{end}]', end + 1
 
-    prefix = nodeset(node)
+    prefix = nodeset_prefix(node_group, part_name)
+    static_count = node_group.count_static
+    dynamic_count = node_group.count_dynamic
     static_range, end = (
-        node_range(node.count_static) if node.count_static else (None, 0)
-    )
+        node_range(static_count) if static_count else (None, 0))
     dynamic_range, _ = (
-        node_range(node.count_dynamic, end) if node.count_dynamic else (None, 0)
-    )
+        node_range(dynamic_count, end) if dynamic_count else (None, 0))
 
-    static_name = f'{prefix}-{static_range}' if node.count_static else None
-    dynamic_name = f'{prefix}-{dynamic_range}' if node.count_dynamic else None
-    return static_name, dynamic_name
+    static_nodelist = f'{prefix}-{static_range}' if static_count else None
+    dynamic_nodelist = f'{prefix}-{dynamic_range}' if dynamic_count else None
+    return static_nodelist, dynamic_nodelist
 
 
-def dict_to_conf(conf):
+def dict_to_conf(conf, delim=' '):
     """ convert dict to space-delimited slurm-style key-value pairs """
-    return ' '.join(f"{k}={','.join(v) if isinstance(v, list) else v}" for k, v in conf.items() if v is not None)
+    return delim.join(
+        f"{k}={','.join(v) if isinstance(v, list) else v}"
+        for k, v in conf.items()
+        if v is not None
+    )
 
 
 def gen_cloud_conf(lkp, cloud_parameters=None):
-    def confline(lkp, cloud_parameters={}):
+    """generate cloud.conf snippet"""
+    if cloud_parameters is None:
+        cloud_parameters = lkp.cfg.cloud_parameters
+
+    def conflines(cloud_parameters):
         scripts_dir = lkp.cfg.scripts or dirs.scripts
         no_comma_params = cloud_parameters.get('no_comma_params', False)
-        lines = {
+        comma_params = {k: ','.join(v) for k, v in dict.items({
             'PrivateData': [
                 'cloud',
-            ] if not no_comma_params else None,
+            ],
             'LaunchParameters': [
                 'enable_nss_slurm',
                 'use_interactive_step',
-            ] if not no_comma_params else None,
+            ],
             'SlurmctldParameters': [
                 'cloud_dns',
                 'idle_on_node_suspend',
-            ] if not no_comma_params else None,
+            ],
             'SchedulerParameters': [
                 'salloc_wait_nodes',
-            ] if not no_comma_params else None,
+            ],
             'CommunicationParameters': [
                 'NoAddrCache',
-            ] if not no_comma_params else None,
+            ],
             'GresTypes': [
                 'gpu',
-            ] if not no_comma_params else None,
+            ],
+        })}
+        conf_options = {
+            **(comma_params if not no_comma_params else {}),
             'PrologSlurmctld': f'{scripts_dir}/resume.py',
             'EpilogSlurmctld': f'{scripts_dir}/suspend.py',
             'SuspendProgram': f'{scripts_dir}/suspend.py',
@@ -193,88 +202,95 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
             'SuspendRate': cloud_parameters.get('SuspendRate', 0),
             'SuspendTimeout': cloud_parameters.get('SuspendTimeout', 300),
         }
-        return '\n'.join(dict_to_conf(lines).split(' '))
+        return dict_to_conf(conf_options, delim='\n')
 
-    def nodeline(template, lkp):
-        props = lkp.template_details(template)
-        machine = props.machine
+    def node_group_lines(node_group, part_name):
+        template_info = lkp.template_info(node_group.instance_template)
+        machine_conf = template_info.machine_conf
 
         node_def = dict_to_conf({
             'NodeName': 'DEFAULT',
             'State': 'UNKNOWN',
-            'RealMemory': machine.memory,
+            'RealMemory': machine_conf.memory,
             'Sockets': 1,
-            'CoresPerSocket': machine.cpus,
+            'CoresPerSocket': machine_conf.cpus,
             'ThreadsPerCore': 1,
         })
 
-        gres = f'gpu:{machine.gpu_count}' if machine.gpu_count else None
+        gres = None
+        if machine_conf:
+            gres = f'gpu:{machine_conf.gpu_count}'
 
-        nodelines = []
-        for node in lkp.template_nodes[template]:
-            static, dynamic = nodenames(node, lkp)
-            nodelines.append(dict_to_conf({
+        lines = [node_def]
+        static, dynamic = nodeset_names(node_group, part_name)
+        nodeset = nodeset_prefix(node_group, part_name)
+        if static:
+            lines.append(dict_to_conf({
                 'NodeName': static,
                 'State': 'CLOUD',
                 'Gres': gres,
-            }) if static else None
-            )
-            nodelines.append(dict_to_conf({
+            }))
+        if dynamic:
+            lines.append(dict_to_conf({
                 'NodeName': dynamic,
                 'State': 'CLOUD',
                 'Gres': gres,
-            }) if dynamic else None
-            )
-            nodelines.append(dict_to_conf({
-                'NodeSet': nodeset(node),
-                'Nodes': ','.join(filter(None, (static, dynamic))),
             }))
+        lines.append(dict_to_conf({
+            'NodeSet': nodeset,
+            'Nodes': ','.join(filter(None, (static, dynamic)))
+        }))
 
-        return '\n'.join(filter(None, chain([node_def], nodelines)))
+        return (
+            nodeset,
+            '\n'.join(filter(None, lines))
+        )
 
-    def partitionline(part_name, lkp):
+    def partitionlines(partition):
         """ Make a partition line for the slurm.conf """
-        partition = lkp.cfg.partitions[part_name]
-        nodesets = ','.join(nodeset(node)for node in partition.nodes)
+        part_name = partition.partition_name
+        nodesets, nodelines = zip(*(
+            node_group_lines(group, part_name)
+            for group in partition.partition_nodes.values()
+        ))
 
-        def defmempercpu(machine):
-            return max(100, machine.memory // machine.cpus)
+        def defmempercpu(template_link):
+            machine_conf = lkp.template_info(template_link).machine_conf
+            return max(100, machine_conf.memory // machine_conf.cpus)
 
         defmem = min(
-            defmempercpu(lkp.template_details(node.template).machine)
-            for node in partition.nodes
+            defmempercpu(node.instance_template)
+            for node in partition.partition_nodes.values()
         )
         line_elements = {
             'PartitionName': part_name,
-            'Nodes': nodesets,
+            'Nodes': ','.join(nodesets),
             'State': 'UP',
             'DefMemPerCPU': defmem,
             'SuspendTime': 300,
             'LLN': 'YES',
             'Oversubscribe': 'Exclusive' if partition.exclusive else None,
-            **partition.conf,
+            **partition.partition_conf,
         }
-
-        return dict_to_conf(line_elements)
-
-    if cloud_parameters == None:
-        cloud_parameters = lkp.cfg.cloud_parameters
+        lines = [
+            *nodelines,
+            dict_to_conf(line_elements),
+        ]
+        return '\n'.join(lines)
 
     static_nodes = ','.join(filter(None, (
-        nodenames(node, lkp)[0]
+        nodeset_names(node, part.partition_name)[0]
         for part in lkp.cfg.partitions.values()
-        for node in part.nodes
+        for node in part.partition_nodes.values()
     )))
     suspend_exc = dict_to_conf({
         'SuspendExcNodes': static_nodes,
     }) if static_nodes else None
 
-    # lkp.template_nodes triggers the long api lookup calls
     lines = [
         FILE_PREAMBLE,
-        confline(lkp, cloud_parameters),
-        *(nodeline(t, lkp) for t in lkp.template_nodes),
-        *(partitionline(p, lkp) for p in lkp.cfg.partitions),
+        conflines(cloud_parameters),
+        *(partitionlines(p) for p in lkp.cfg.partitions.values()),
         suspend_exc,
         '\n',
     ]
@@ -376,12 +392,13 @@ def install_gres_conf(lkp):
 
     gpu_nodes = defaultdict(list)
     for part in lkp.cfg.partitions.values():
-        for node in part.nodes:
-            gpu_count = lkp.template_details(node.template).machine.gpu_count
+        for node in part.partition_nodes.values():
+            template_info = lkp.template_info(node.instance_template)
+            gpu_count = template_info.machine_conf.gpu_count
             if gpu_count == 0:
                 continue
             gpu_nodes[gpu_count].extend(
-                filter(None, nodenames(node, lkp))
+                filter(None, nodeset_names(node, lkp))
             )
 
     lines = [
@@ -391,7 +408,7 @@ def install_gres_conf(lkp):
             'File': '/dev/nvidia{}'.format(f'[0-{i-1}]' if i > 1 else '0'),
         }) for i, names in gpu_nodes.items()
     ]
-    content = FILE_PREAMBLE +'\n'.join(lines)
+    content = FILE_PREAMBLE + '\n'.join(lines)
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'gres.conf'
     conf_file_bak = conf_file.with_suffix('.conf.bak')
@@ -829,18 +846,17 @@ def setup_login():
 def setup_compute():
     """ run compute node setup """
     log.info("Setting up compute")
-    util.save_config(cfg, dirs.scripts/'config.yaml')
     shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
 
     setup_nss_slurm()
     setup_network_storage()
 
-    template = lkp.node_template_details(lkp.hostname)
+    template = lkp.node_template_info()
     # if (not cfg.instance_defs[pid].image_hyperthreads and
     #         shutil.which('google_mpi_tuning')):
     #     run("google_mpi_tuning --nosmt")
 
-    if template.machine.gpu_count:
+    if template.machine_conf.gpu_count:
         retries = n = 50
         while n:
             if run("nvidia-smi").returncode == 0:
@@ -890,9 +906,6 @@ if __name__ == '__main__':
     util.config_root_logger(filename, logfile=LOGFILE, util_level='DEBUG')
     sys.excepthook = util.handle_exception
 
-    # get setup config from metadata
-    config_yaml = yaml.safe_load(instance_metadata('attributes/config'))
-    cfg = util.new_config(config_yaml)  # noqa F811
     lkp = util.Lookup(cfg)  # noqa F811
 
     try:

@@ -44,37 +44,8 @@ LOGFILE = (Path(cfg.slurm_log_dir or '.')/filename).with_suffix('.log')
 log = logging.getLogger(filename)
 
 
-def instance_properties(partition_name):
-    partition = cfg.partitions[partition_name]
-    project = cfg.project or re.search('projects/([^/]*)', partition.subnetwork).group(1)
-    region = partition.region or re.search('regions/([^/]*)', partition.subnetwork).group(1)
-    subnetwork = re.search('subnetworks/([^/]*)', partition.subnetwork).group(1)
-
-    props = NSDict()
-    props.networkInterfaces = [{
-        'subnetwork': f'projects/{project}/regions/{region}/subnetworks/{subnetwork}'
-    }]
-
-    compute_config = NSDict()
-    compute_config.cluster_name = cfg.cluster_name
-    compute_config.munge_key = cfg.munge_key
-    compute_config.template_map = cfg.template_map
-    compute_config.network_storage = resolve_network_storage(partition_name)
-    compute_config.pubsub = cfg.pubsub
-
-    metadata = {
-        'cluster_name': cfg.cluster_name,
-        'config': json.dumps(compute_config.to_dict()),
-        'startup-script': (Path(cfg.slurm_scripts_dir or util.dirs.scripts)/'startup.sh').read_text(),
-        'instance_type': 'compute',
-        'enable-oslogin': 'TRUE',
-        'VmDnsSetting': 'GlobalOnly',
-    }
-
-    props.metadata['items'] = [
-        NSDict({'key': k, 'value': v}) for k, v in metadata.items()
-    ]
-    return props
+def instance_properties(partition):
+    pass
 
 
 def create_instances_request(nodes):
@@ -83,15 +54,15 @@ def create_instances_request(nodes):
         return
     # model here indicates any node that can be used to describe the rest
     model = next(iter(nodes))
-    template = lkp.node_template_props(model).url
-    partition_name = lkp.node_partition(model)
-    partition = cfg.partitions[partition_name]
+    template = lkp.node_template(model)
+    partition = lkp.node_partition(model)
+
 
     body = NSDict()
     body.count = len(nodes)
     body.sourceInstanceTemplate = template
     body.perInstanceProperties = {k: {} for k in nodes}
-    body.instanceProperties = instance_properties(partition_name)
+    #body.instanceProperties = instance_properties(partition)
 
     result = compute.regionInstances().bulkInsert(
         project=cfg.project, region=partition.region, body=body
@@ -114,8 +85,8 @@ def resume_nodes(nodelist):
     nodes = expand_nodelist(nodelist)
 
     def ident_key(n):
-        # ident here will refer to the combination of template and partition
-        return lkp.node_template(n), lkp.node_partition(n)
+        # ident here will refer to the combination of partition and group
+        return lkp.node_partition_name(n), lkp.node_group_name(n),
     nodes.sort(key=ident_key)
     grouped_nodes = [
         (ident, chunk)
