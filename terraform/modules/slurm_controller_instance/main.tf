@@ -25,6 +25,12 @@ locals {
     : null
   )
 
+  region = (
+    length(regexall("/regions/([^/]*)", var.subnetwork)) > 0
+    ? flatten(regexall("/regions/([^/]*)", var.subnetwork))[0]
+    : var.region
+  )
+
   etc_dir = abspath("${path.module}/../../../etc")
 }
 
@@ -151,7 +157,7 @@ module "slurm_controller_instance" {
   subnetwork_project = var.subnetwork_project
   network            = var.network
   subnetwork         = var.subnetwork
-  region             = var.region
+  region             = local.region
   zone               = var.zone
   static_ips         = var.static_ips
   access_config      = var.access_config
