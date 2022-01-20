@@ -69,24 +69,24 @@ locals {
     cluster_name = var.cluster_name
     project      = local.project_id
 
-    cloudsql  = jsonencode(var.cloudsql)
+    cloudsql  = var.cloudsql
     munge_key = local.munge_key
     jwt_key   = local.jwt_key
-    pubsub = jsonencode({
+    pubsub = {
       topic_id        = module.slurm_pubsub.topic
       subscription_id = module.slurm_pubsub.pubsub.subscription_names[0]
-    })
+    }
 
-    network_storage       = jsonencode(var.network_storage)
-    login_network_storage = jsonencode(var.login_network_storage)
+    network_storage       = var.network_storage
+    login_network_storage = var.login_network_storage
 
-    cloud_parameters = jsonencode({
+    cloud_parameters = {
       ResumeRate     = lookup(var.cloud_parameters, "ResumeRate", 0)
       SuspendRate    = lookup(var.cloud_parameters, "SuspendRate", 0)
       ResumeTimeout  = lookup(var.cloud_parameters, "ResumeTimeout", 300)
       SuspendTimeout = lookup(var.cloud_parameters, "SuspendTimeout", 300)
-    })
-    partitions = jsonencode(local.partitions)
+    }
+    partitions = local.partitions
   }
 }
 
