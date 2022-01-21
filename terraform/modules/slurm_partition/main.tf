@@ -35,6 +35,7 @@ locals {
     gpu                    = null
     labels                 = {}
     machine_type           = "n1-standard-1"
+    metadata               = {}
     min_cpu_platform       = null
     network_ip             = ""
     on_host_maintenance    = null
@@ -117,6 +118,7 @@ module "slurm_compute_template" {
   enable_shielded_vm       = lookup(each.value, "enable_shielded_vm", local.compute_node_groups_defaults["enable_shielded_vm"])
   gpu                      = lookup(each.value, "gpu", local.compute_node_groups_defaults["gpu"])
   machine_type             = lookup(each.value, "machine_type", local.compute_node_groups_defaults["machine_type"])
+  metadata                 = lookup(each.value, "metadata", local.compute_node_groups_defaults["metadata"])
   min_cpu_platform         = lookup(each.value, "min_cpu_platform", local.compute_node_groups_defaults["min_cpu_platform"])
   name_prefix              = "${var.partition_name}-${each.value.group_name}"
   network_ip               = lookup(each.value, "network_ip", local.compute_node_groups_defaults["network_ip"])

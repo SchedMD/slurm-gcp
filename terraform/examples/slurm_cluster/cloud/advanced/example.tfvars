@@ -124,6 +124,7 @@ slurm_cluster_defaults = {
     # label1 = "value1"
   }
   machine_type        = "n1-standard-1"
+  metadata            = {}
   min_cpu_platform    = null
   network_ip          = ""
   network             = null

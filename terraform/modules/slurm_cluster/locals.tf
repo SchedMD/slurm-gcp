@@ -39,6 +39,7 @@ locals {
     gpu                    = null
     labels                 = {}
     machine_type           = "n1-standard-1"
+    metadata               = {}
     min_cpu_platform       = null
     network_ip             = ""
     network                = null
