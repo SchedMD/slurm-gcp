@@ -24,21 +24,31 @@ locals {
     subnetwork = module.slurm_network.network.subnets_self_links[0]
   }
 
+  # Override with example_default
   slurm_cluster_defaults = merge(
     var.slurm_cluster_defaults,
     local.example_defaults,
   )
 
+  # Override with example_default
   controller_instance_config = merge(
     var.controller_instance_config,
     local.example_defaults,
   )
 
+  # Override with example_default
   compute_node_groups_defaults = merge(
     var.compute_node_groups_defaults,
     local.example_defaults,
   )
 
+  # Override with example_default
+  partitions_defaults = merge(
+    var.partitions_defaults,
+    local.example_defaults,
+  )
+
+  # Override with example_default
   login_node_groups_defaults = merge(
     var.login_node_groups_defaults,
     local.example_defaults,
@@ -111,6 +121,7 @@ module "slurm_cluster" {
   login_node_groups_defaults   = local.login_node_groups_defaults
   munge_key                    = var.munge_key
   network_storage              = var.network_storage
+  partitions_defaults          = local.partitions_defaults
   partitions                   = var.partitions
   project_id                   = var.project_id
   slurmdbd_conf_tpl            = var.slurmdbd_conf_tpl

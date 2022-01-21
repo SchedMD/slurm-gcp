@@ -176,6 +176,16 @@ EOD
   default     = {}
 }
 
+########################
+# PARTITIONS: DEFAULTS #
+########################
+
+variable "partitions_defaults" {
+  description = "Defaults for partitions."
+  type        = any
+  default     = {}
+}
+
 ##############
 # PARTITIONS #
 ##############

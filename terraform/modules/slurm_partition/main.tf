@@ -21,6 +21,35 @@
 locals {
   compute_node_groups = { for x in var.compute_node_groups : x.group_name => x }
 
+  partition_defaults_defaults = {
+    enable_job_exclusive    = false
+    enable_placement_groups = false
+    network_storage         = []
+    partition_conf          = {}
+    region                  = ""
+    subnetwork_project      = ""
+    subnetwork              = "default"
+    zone_policy_allow       = []
+    zone_policy_deny        = []
+  }
+
+  partition_defaults = merge(
+    local.partition_defaults_defaults,
+    var.partition_defaults,
+  )
+
+  subnetwork = (
+    var.subnetwork != "" && var.subnetwork != null
+    ? var.subnetwork
+    : local.partition_defaults["subnetwork"]
+  )
+
+  region = (
+    var.region != "" && var.region != null
+    ? var.region
+    : local.partition_defaults["region"]
+  )
+
   compute_node_groups_defaults_defaults = {
     additional_disks       = []
     can_ip_forward         = null
@@ -86,12 +115,12 @@ locals {
 
 data "google_compute_subnetwork" "partition_subnetwork" {
   project = var.subnetwork_project
-  region  = var.region
-  name    = var.subnetwork
+  region  = local.region
+  name    = local.subnetwork
   self_link = (
-    length(regexall("/projects/([^/]*)", var.subnetwork)) > 0
-    && length(regexall("/regions/([^/]*)", var.subnetwork)) > 0
-    ? var.subnetwork
+    length(regexall("/projects/([^/]*)", local.subnetwork)) > 0
+    && length(regexall("/regions/([^/]*)", local.subnetwork)) > 0
+    ? local.subnetwork
     : null
   )
 }

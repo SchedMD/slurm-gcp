@@ -212,6 +212,21 @@ compute_node_groups_defaults = {
   }
 }
 
+########################
+# PARTITIONS: DEFAULTS #
+########################
+
+partition_defaults = {
+  enable_job_exclusive    = false
+  enable_placement_groups = false
+  network_storage         = []
+  partition_conf = {
+    SuspendTime = 300
+  }
+  zone_policy_allow = []
+  zone_policy_deny  = []
+}
+
 ##############
 # PARTITIONS #
 ##############
@@ -261,11 +276,8 @@ partitions = [
         enable_shielded_vm = false
       },
     ]
-    subnetwork_project = null
-    subnetwork         = "default"
-    region             = null
-    zone_policy_allow  = []
-    zone_policy_deny   = []
+    zone_policy_allow = []
+    zone_policy_deny  = []
     network_storage = [
       # {
       #   server_ip     = "<storage host>"

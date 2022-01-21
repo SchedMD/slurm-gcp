@@ -224,7 +224,6 @@ variable "login_node_groups" {
   type        = list(any)
   default     = []
 }
-
 #####################
 # COMPUTE: DEFAULTS #
 #####################
@@ -238,6 +237,16 @@ Default value priority order:
 - compute_node_groups_defaults
 - slurm_cluster_defaults
 EOD
+  type        = any
+  default     = {}
+}
+
+########################
+# PARTITIONS: DEFAULTS #
+########################
+
+variable "partitions_defaults" {
+  description = "Defaults for partitions."
   type        = any
   default     = {}
 }

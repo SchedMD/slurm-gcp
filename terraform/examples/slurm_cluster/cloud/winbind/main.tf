@@ -31,6 +31,10 @@ locals {
     }
   ]
 
+  partitions_defaults = {
+    subnetwork = local.slurm_cluster_defaults.subnetwork
+  }
+
   partitions = [
     {
       partition_name = "default"
@@ -84,6 +88,7 @@ module "slurm_cluster" {
   compute_d              = [data.local_file.winbind_sh]
   controller_d           = [data.local_file.winbind_sh]
   login_node_groups      = local.login_node_groups
+  partitions_defaults    = local.partitions_defaults
   partitions             = local.partitions
   project_id             = var.project_id
   slurm_cluster_defaults = local.slurm_cluster_defaults

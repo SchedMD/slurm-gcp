@@ -101,7 +101,7 @@ variable "subnetwork_project" {
 variable "subnetwork" {
   description = "The subnetwork to attach instances to. A self_link is prefered."
   type        = string
-  default     = "default"
+  default     = ""
 }
 
 variable "region" {
@@ -165,6 +165,12 @@ EOD
     mount_options = string
   }))
   default = []
+}
+
+variable "partition_defaults" {
+  description = "Defaults for the partition."
+  type        = any
+  default     = {}
 }
 
 variable "compute_node_groups_defaults" {

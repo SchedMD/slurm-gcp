@@ -41,6 +41,7 @@ module "slurm_cluster" {
   login_network_storage        = var.login_network_storage
   munge_key                    = var.munge_key
   network_storage              = var.network_storage
+  partitions_defaults          = var.partitions_defaults
   partitions                   = var.partitions
   project_id                   = var.project_id
   slurm_cluster_defaults       = var.slurm_cluster_defaults

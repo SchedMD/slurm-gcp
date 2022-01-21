@@ -45,6 +45,7 @@ module "slurm_cluster" {
   login_node_groups_defaults   = var.login_node_groups_defaults
   munge_key                    = var.munge_key
   network_storage              = var.network_storage
+  partitions_defaults          = var.partitions_defaults
   partitions                   = var.partitions
   project_id                   = var.project_id
   slurmdbd_conf_tpl            = var.slurmdbd_conf_tpl

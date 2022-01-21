@@ -38,12 +38,13 @@ module "slurm_partition" {
   network_storage              = lookup(each.value, "network_storage", [])
   partition_name               = each.value.partition_name
   partition_conf               = lookup(each.value, "partition_conf", {})
+  partition_defaults           = var.partitions_defaults
   partition_d                  = lookup(each.value, "partition_d", [])
   project_id                   = var.project_id
   region                       = lookup(each.value, "region", null)
   slurm_cluster_id             = local.slurm_cluster_id
   subnetwork_project           = lookup(each.value, "subnetwork_project", null)
-  subnetwork                   = each.value.subnetwork
+  subnetwork                   = lookup(each.value, "subnetwork", null)
   zone_policy_allow            = lookup(each.value, "zone_policy_allow", [])
   zone_policy_deny             = lookup(each.value, "zone_policy_deny", [])
 }

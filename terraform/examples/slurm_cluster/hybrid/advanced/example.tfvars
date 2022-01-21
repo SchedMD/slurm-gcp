@@ -169,6 +169,24 @@ compute_node_groups_defaults = {
   }
 }
 
+########################
+# PARTITIONS: DEFAULTS #
+########################
+
+partitions_defaults = {
+  enable_job_exclusive    = false
+  enable_placement_groups = false
+  network_storage         = []
+  partition_conf = {
+    SuspendTime = 300
+  }
+  region             = ""
+  subnetwork_project = ""
+  subnetwork         = "default"
+  zone_policy_allow  = []
+  zone_policy_deny   = []
+}
+
 ##############
 # PARTITIONS #
 ##############
