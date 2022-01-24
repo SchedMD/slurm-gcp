@@ -94,11 +94,16 @@ locals {
     partition_conf = var.partition_conf
     partition_nodes = {
       for x in local.compute_node_groups : x.group_name => {
-        group_name        = x.group_name
-        partition_name    = var.partition_name
-        instance_template = module.slurm_compute_template[x.group_name].self_link
-        count_dynamic     = lookup(x, "count_dynamic", 1)
-        count_static      = lookup(x, "count_static", 0)
+        group_name     = x.group_name
+        partition_name = var.partition_name
+        instance_template = (
+          lookup(x, "instance_template", null) != null
+          && lookup(x, "instance_template", null) != ""
+          ? data.google_compute_instance_template.group_template[x.group_name].self_link
+          : module.slurm_compute_template[x.group_name].self_link
+        )
+        count_dynamic = lookup(x, "count_dynamic", 1)
+        count_static  = lookup(x, "count_static", 0)
       }
     }
     subnetwork        = data.google_compute_subnetwork.partition_subnetwork.self_link
@@ -136,6 +141,21 @@ data "google_compute_subnetwork" "partition_subnetwork" {
   )
 }
 
+##################
+# DATA: TEMPLATE #
+##################
+
+data "google_compute_instance_template" "group_template" {
+  for_each = {
+    for x in var.compute_node_groups : x.group_name => x
+    if(lookup(x, "instance_template", null) != null
+    && lookup(x, "instance_template", null) != "")
+  }
+
+  name    = each.value.instance_template
+  project = var.project_id
+}
+
 #####################
 # COMPUTE: TEMPLATE #
 #####################
@@ -143,7 +163,11 @@ data "google_compute_subnetwork" "partition_subnetwork" {
 module "slurm_compute_template" {
   source = "../slurm_instance_template"
 
-  for_each = local.compute_node_groups
+  for_each = {
+    for x in var.compute_node_groups : x.group_name => x
+    if(lookup(x, "instance_template", null) == null
+    || lookup(x, "instance_template", null) == "")
+  }
 
   additional_disks         = lookup(each.value, "additional_disks", local.compute_node_groups_defaults["additional_disks"])
   can_ip_forward           = lookup(each.value, "can_ip_forward", local.compute_node_groups_defaults["can_ip_forward"])

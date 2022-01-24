@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+variable "project_id" {
+  type        = string
+  description = "Project ID to create resources in."
+}
+
 ###########
 # NETWORK #
 ###########
@@ -172,6 +177,7 @@ variable "compute_d" {
   }))
   default = []
 }
+
 variable "network_storage" {
   description = <<EOD
 Storage to mounted on all instances.

@@ -41,20 +41,21 @@ resource "random_string" "suffix" {
 ############
 
 module "slurm_login_instance" {
-  source  = "terraform-google-modules/vm/google//modules/compute_instance"
-  version = "~> 7.1"
+  source = "../_slurm_instance"
 
-  ### network ###
-  subnetwork_project = var.subnetwork_project
-  network            = var.network
-  subnetwork         = var.subnetwork
-  region             = local.region
-  zone               = var.zone
-  static_ips         = var.static_ips
-  access_config      = var.access_config
-
-  ### instance ###
-  instance_template = var.instance_template
-  hostname          = "${var.cluster_name}-login-${random_string.suffix.result}"
-  num_instances     = var.num_instances
+  access_config       = var.access_config
+  add_hostname_suffix = true
+  cluster_name        = var.cluster_name
+  hostname            = "${var.cluster_name}-login-${random_string.suffix.result}"
+  instance_template   = var.instance_template
+  network             = var.network
+  num_instances       = var.num_instances
+  project_id          = var.project_id
+  region              = local.region
+  slurm_cluster_id    = var.slurm_cluster_id
+  slurm_instance_type = "login"
+  static_ips          = var.static_ips
+  subnetwork_project  = var.subnetwork_project
+  subnetwork          = var.subnetwork
+  zone                = var.zone
 }

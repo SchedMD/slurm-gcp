@@ -48,6 +48,25 @@ def instance_properties(partition):
     props.networkInterfaces = [{
         'subnetwork': partition.subnetwork,
     }]
+
+    metadata = {
+        'cluster_name': cfg.cluster_name,
+        'instance_type': 'compute',
+        'startup-script': (Path(cfg.slurm_scripts_dir or util.dirs.scripts)/'startup.sh').read_text(),
+        'VmDnsSetting': 'GlobalOnly',
+    }
+    props.metadata['items'] = [
+        NSDict({'key': k, 'value': v}) for k, v in metadata.items()
+    ]
+
+    labels = {
+        'slurm_cluster_id': cfg.slurm_cluster_id,
+        'slurm_instance_type': 'compute',
+    }
+    props.labels['items'] = [
+        NSDict({'key': k, 'value': v}) for k, v in labels.items()
+    ]
+
     return props
 
 

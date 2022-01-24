@@ -19,12 +19,6 @@
 ##########
 
 locals {
-  project_id = (
-    length(regexall("/projects/([^/]*)", var.instance_template)) > 0
-    ? flatten(regexall("/projects/([^/]*)", var.instance_template))[0]
-    : null
-  )
-
   region = (
     length(regexall("/regions/([^/]*)", var.subnetwork)) > 0
     ? flatten(regexall("/regions/([^/]*)", var.subnetwork))[0]
@@ -67,7 +61,7 @@ locals {
 locals {
   metadata_config = {
     cluster_name = var.cluster_name
-    project      = local.project_id
+    project      = var.project_id
 
     cloudsql  = var.cloudsql
     munge_key = local.munge_key
@@ -148,22 +142,22 @@ resource "random_id" "jwt_key" {
 ############
 
 module "slurm_controller_instance" {
-  source  = "terraform-google-modules/vm/google//modules/compute_instance"
-  version = "~> 7.1"
+  source = "../_slurm_instance"
 
-  ### network ###
-  subnetwork_project = var.subnetwork_project
-  network            = var.network
-  subnetwork         = var.subnetwork
-  region             = local.region
-  zone               = var.zone
-  static_ips         = var.static_ips
-  access_config      = var.access_config
-
-  ### instance ###
-  instance_template   = var.instance_template
-  hostname            = "${var.cluster_name}-controller"
+  access_config       = var.access_config
   add_hostname_suffix = false
+  cluster_name        = var.cluster_name
+  hostname            = "${var.cluster_name}-controller"
+  instance_template   = var.instance_template
+  network             = var.network
+  project_id          = var.project_id
+  region              = local.region
+  slurm_cluster_id    = local.slurm_cluster_id
+  slurm_instance_type = "controller"
+  static_ips          = var.static_ips
+  subnetwork_project  = var.subnetwork_project
+  subnetwork          = var.subnetwork
+  zone                = var.zone
 
   depends_on = [
     module.slurm_metadata_devel,
@@ -178,28 +172,28 @@ module "slurm_controller_instance" {
 ####################
 
 resource "google_compute_project_metadata_item" "config" {
-  project = local.project_id
+  project = var.project_id
 
   key   = "${var.cluster_name}-slurm-config"
   value = jsonencode(local.metadata_config)
 }
 
 resource "google_compute_project_metadata_item" "slurm_conf" {
-  project = local.project_id
+  project = var.project_id
 
   key   = "${var.cluster_name}-slurm-tpl-slurm-conf"
   value = data.local_file.slurm_conf_tpl.content
 }
 
 resource "google_compute_project_metadata_item" "cgroup_conf" {
-  project = local.project_id
+  project = var.project_id
 
   key   = "${var.cluster_name}-slurm-tpl-cgroup-conf"
   value = data.local_file.cgroup_conf_tpl.content
 }
 
 resource "google_compute_project_metadata_item" "slurmdbd_conf" {
-  project = local.project_id
+  project = var.project_id
 
   key   = "${var.cluster_name}-slurm-tpl-slurmdbd-conf"
   value = data.local_file.slurmdbd_conf_tpl.content
@@ -215,7 +209,7 @@ module "slurm_metadata_devel" {
   count = var.enable_devel ? 1 : 0
 
   cluster_name = var.cluster_name
-  project_id   = local.project_id
+  project_id   = var.project_id
 }
 
 #####################
@@ -223,7 +217,7 @@ module "slurm_metadata_devel" {
 #####################
 
 resource "google_compute_project_metadata_item" "controller_d" {
-  project = local.project_id
+  project = var.project_id
 
   for_each = {
     for x in var.controller_d
@@ -235,7 +229,7 @@ resource "google_compute_project_metadata_item" "controller_d" {
 }
 
 resource "google_compute_project_metadata_item" "compute_d" {
-  project = local.project_id
+  project = var.project_id
 
   for_each = {
     for x in var.compute_d
@@ -295,7 +289,7 @@ module "slurm_pubsub" {
   source  = "terraform-google-modules/pubsub/google"
   version = "~> 3.0"
 
-  project_id = local.project_id
+  project_id = var.project_id
   topic      = google_pubsub_topic.this.id
 
   create_topic = false
@@ -336,6 +330,7 @@ module "notify_reconfigure" {
 
   topic = google_pubsub_topic.this.name
   type  = "reconfig"
+
   triggers = {
     compute_list  = join(",", var.compute_list)
     config        = sha256(google_compute_project_metadata_item.config.value)

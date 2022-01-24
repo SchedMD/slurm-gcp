@@ -36,5 +36,6 @@ module "slurm_login_instance" {
 
   instance_template = module.slurm_login_template.instance_template.self_link
   subnetwork        = data.google_compute_subnetwork.default.self_link
+  project_id        = var.project_id
   cluster_name      = var.cluster_name
 }

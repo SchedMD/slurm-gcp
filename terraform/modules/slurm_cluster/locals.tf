@@ -23,8 +23,6 @@ locals {
 
   partition_map = { for x in var.partitions : x.partition_name => x }
 
-  login_map = { for x in var.login_node_groups : x.group_name => x }
-
   slurm_cluster_defaults_defaults = {
     additional_disks       = []
     can_ip_forward         = null
@@ -37,6 +35,7 @@ locals {
     enable_oslogin         = true
     enable_shielded_vm     = false
     gpu                    = null
+    instance_template      = ""
     labels                 = {}
     machine_type           = "n1-standard-1"
     metadata               = {}
@@ -82,5 +81,12 @@ locals {
   compute_node_groups_defaults = merge(
     local.slurm_cluster_defaults,
     var.compute_node_groups_defaults,
+  )
+
+  have_template = (
+    lookup(var.controller_instance_config, "instance_template", "") != null
+    && lookup(var.controller_instance_config, "instance_template", "") != ""
+    ? true
+    : false
   )
 }

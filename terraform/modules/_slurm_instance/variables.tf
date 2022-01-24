@@ -1,11 +1,14 @@
 /**
- * Copyright 2021 SchedMD LLC
+ * Copyright 2022 SchedMD LLC
+ * Modified for use with the Slurm Resource Manager.
+ *
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,46 +23,39 @@ variable "project_id" {
   default     = null
 }
 
-###########
-# NETWORK #
-###########
-
 variable "network" {
-  type        = string
   description = "Network to deploy to. Only one of network or subnetwork should be specified."
+  type        = string
   default     = ""
 }
 
 variable "subnetwork" {
-  type        = string
   description = "Subnet to deploy to. Only one of network or subnetwork should be specified."
+  type        = string
   default     = ""
 }
 
 variable "subnetwork_project" {
+  description = "The project that subnetwork belongs to"
   type        = string
-  description = "The project that subnetwork belongs to."
   default     = ""
 }
 
-variable "region" {
+variable "hostname" {
+  description = "Hostname of instances"
   type        = string
-  description = "Region where the instances should be created."
-  default     = null
+  default     = ""
 }
 
-############
-# INSTANCE #
-############
-
-variable "instance_template" {
-  type        = string
-  description = "Instance template self_link used to create compute instances."
+variable "add_hostname_suffix" {
+  description = "Adds a suffix to the hostname"
+  type        = bool
+  default     = true
 }
 
 variable "static_ips" {
+  description = "List of static IPs for VM instances"
   type        = list(string)
-  description = "List of static IPs for VM instances."
   default     = []
 }
 
@@ -73,27 +69,52 @@ variable "access_config" {
 }
 
 variable "num_instances" {
-  type        = number
   description = "Number of instances to create. This value is ignored if static_ips is provided."
+  type        = number
   default     = 1
 }
 
-variable "zone" {
+variable "instance_template" {
+  description = "Instance template self_link used to create compute instances"
   type        = string
-  description = <<EOD
-Zone where the instances should be created. If not specified, instances will be
-spread across available zones in the region.
-EOD
+}
+
+variable "region" {
+  description = "Region where the instances should be created."
+  type        = string
   default     = null
+}
+
+variable "zone" {
+  description = "Zone where the instances should be created. If not specified, instances will be spread across available zones in the region."
+  type        = string
+  default     = null
+}
+
+variable "hostname_suffix_separator" {
+  description = "Separator character to compose hostname when add_hostname_suffix is set to true."
+  type        = string
+  default     = "-"
 }
 
 #########
 # SLURM #
 #########
 
-variable "cluster_name" {
+variable "slurm_instance_type" {
+  description = "Slurm instance type. Must be one of: controller; login; compute."
   type        = string
+  default     = null
+
+  validation {
+    condition     = contains(["controller", "login", "compute"], lower(var.slurm_instance_type))
+    error_message = "Must be one of: controller; login; compute."
+  }
+}
+
+variable "cluster_name" {
   description = "Cluster name, used for resource naming."
+  type        = string
 }
 
 variable "slurm_cluster_id" {

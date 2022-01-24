@@ -56,7 +56,7 @@ module "slurm_partition" {
 module "slurm_controller_template" {
   source = "../slurm_instance_template"
 
-  count = var.enable_hybrid ? 0 : 1
+  count = var.enable_hybrid || local.have_template ? 0 : 1
 
   additional_disks         = lookup(var.controller_instance_config, "additional_disks", local.controller_instance_config["additional_disks"])
   can_ip_forward           = lookup(var.controller_instance_config, "can_ip_forward", local.controller_instance_config["can_ip_forward"])
@@ -103,7 +103,8 @@ module "slurm_controller_instance" {
 
   access_config     = lookup(local.controller_instance_config, "access_config", [])
   cluster_name      = var.cluster_name
-  instance_template = module.slurm_controller_template[0].self_link
+  instance_template = local.have_template ? lookup(var.controller_instance_config, "instance_template", "") : module.slurm_controller_template[0].self_link
+  project_id        = var.project_id
   region            = lookup(local.controller_instance_config, "region", local.controller_instance_config["region"])
   slurm_cluster_id  = local.slurm_cluster_id
   static_ips        = lookup(local.controller_instance_config, "static_ips", [])
@@ -158,7 +159,10 @@ module "slurm_controller_hybrid" {
 module "slurm_login_template" {
   source = "../slurm_instance_template"
 
-  for_each = local.login_map
+  for_each = {
+    for x in var.login_node_groups : x.group_name => x
+    if(lookup(x, "instance_template", "") == "" || lookup(x, "instance_template", "") == null)
+  }
 
   additional_disks         = lookup(each.value, "additional_disks", local.login_node_groups_defaults["additional_disks"])
   can_ip_forward           = lookup(each.value, "can_ip_forward", local.login_node_groups_defaults["can_ip_forward"])
@@ -201,16 +205,23 @@ module "slurm_login_template" {
 module "slurm_login_instance" {
   source = "../slurm_login_instance"
 
-  for_each = local.login_map
+  for_each = { for x in var.login_node_groups : x.group_name => x }
 
-  access_config     = lookup(each.value, "access_config", [])
-  cluster_name      = var.cluster_name
-  instance_template = module.slurm_login_template[each.value.group_name].self_link
-  num_instances     = lookup(each.value, "num_instances", 1)
-  region            = lookup(each.value, "region", local.login_node_groups_defaults["region"])
-  static_ips        = lookup(each.value, "static_ips", [])
-  subnetwork        = lookup(each.value, "subnetwork", local.login_node_groups_defaults["subnetwork"])
-  zone              = lookup(each.value, "zone", local.login_node_groups_defaults["zone"])
+  access_config = lookup(each.value, "access_config", [])
+  cluster_name  = var.cluster_name
+  instance_template = (
+    lookup(each.value, "instance_template", "") != null
+    && lookup(each.value, "instance_template", "") != ""
+    ? lookup(each.value, "instance_template", "")
+    : module.slurm_login_template[each.key].self_link
+  )
+  num_instances    = lookup(each.value, "num_instances", 1)
+  project_id       = var.project_id
+  region           = lookup(each.value, "region", local.login_node_groups_defaults["region"])
+  slurm_cluster_id = local.slurm_cluster_id
+  static_ips       = lookup(each.value, "static_ips", [])
+  subnetwork       = lookup(each.value, "subnetwork", local.login_node_groups_defaults["subnetwork"])
+  zone             = lookup(each.value, "zone", local.login_node_groups_defaults["zone"])
 
   depends_on = [
     # Ensure Controller is up before attempting to mount file systems from it
