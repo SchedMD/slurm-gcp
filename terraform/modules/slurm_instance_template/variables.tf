@@ -271,6 +271,17 @@ variable "additional_disks" {
 # SLURM #
 #########
 
+variable "slurm_instance_type" {
+  type        = string
+  description = "Slurm instance type. Must be one of: controller; login; compute."
+  default     = "compute"
+
+  validation {
+    condition     = contains(["controller", "login", "compute"], lower(var.slurm_instance_type))
+    error_message = "Must be one of: controller; login; compute."
+  }
+}
+
 variable "cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."

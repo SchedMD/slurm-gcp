@@ -14,18 +14,4 @@
  * limitations under the License.
  */
 
-provider "google" {
-  project = var.project_id
-}
-
-data "google_compute_network" "default" {
-  name = "default"
-}
-
-module "slurm_controller_template" {
-  source = "../../../modules/slurm_controller_template"
-
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
-  network      = data.google_compute_network.default.self_link
-}
+project_id = "<PROJECT_ID>"

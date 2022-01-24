@@ -54,7 +54,7 @@ module "slurm_partition" {
 ########################
 
 module "slurm_controller_template" {
-  source = "../slurm_controller_template"
+  source = "../slurm_instance_template"
 
   count = var.enable_hybrid ? 0 : 1
 
@@ -83,6 +83,7 @@ module "slurm_controller_template" {
   service_account          = lookup(var.controller_instance_config, "service_account", local.controller_instance_config["service_account"])
   shielded_instance_config = lookup(var.controller_instance_config, "shielded_instance_config", local.controller_instance_config["shielded_instance_config"])
   slurm_cluster_id         = local.slurm_cluster_id
+  slurm_instance_type      = "controller"
   source_image_family      = lookup(var.controller_instance_config, "source_image_family", local.controller_instance_config["source_image_family"])
   source_image_project     = lookup(var.controller_instance_config, "source_image_project", local.controller_instance_config["source_image_project"])
   source_image             = lookup(var.controller_instance_config, "source_image", local.controller_instance_config["source_image"])
@@ -155,7 +156,7 @@ module "slurm_controller_hybrid" {
 ###################
 
 module "slurm_login_template" {
-  source = "../slurm_login_template"
+  source = "../slurm_instance_template"
 
   for_each = local.login_map
 
@@ -184,6 +185,7 @@ module "slurm_login_template" {
   service_account          = lookup(each.value, "service_account", local.login_node_groups_defaults["service_account"])
   shielded_instance_config = lookup(each.value, "shielded_instance_config", local.login_node_groups_defaults["shielded_instance_config"])
   slurm_cluster_id         = local.slurm_cluster_id
+  slurm_instance_type      = "login"
   source_image_family      = lookup(each.value, "source_image_family", local.login_node_groups_defaults["source_image_family"])
   source_image_project     = lookup(each.value, "source_image_project", local.login_node_groups_defaults["source_image_project"])
   source_image             = lookup(each.value, "source_image", local.login_node_groups_defaults["source_image"])

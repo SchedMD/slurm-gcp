@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-provider "google" {
-  project = var.project_id
-}
+terraform {
+  required_version = "~> 1.0"
 
-data "google_compute_network" "default" {
-  name = "default"
-}
-
-module "slurm_compute_template" {
-  source = "../../../modules/slurm_compute_template"
-
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
-  network      = data.google_compute_network.default.self_link
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 4.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+  }
 }

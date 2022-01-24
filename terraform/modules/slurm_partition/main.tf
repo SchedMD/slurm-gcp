@@ -141,7 +141,7 @@ data "google_compute_subnetwork" "partition_subnetwork" {
 #####################
 
 module "slurm_compute_template" {
-  source = "../slurm_compute_template"
+  source = "../slurm_instance_template"
 
   for_each = local.compute_node_groups
 
@@ -168,6 +168,7 @@ module "slurm_compute_template" {
   service_account          = lookup(each.value, "service_account", local.compute_node_groups_defaults["service_account"])
   shielded_instance_config = lookup(each.value, "shielded_instance_config", local.compute_node_groups_defaults["shielded_instance_config"])
   slurm_cluster_id         = var.slurm_cluster_id
+  slurm_instance_type      = "compute"
   source_image_family      = lookup(each.value, "source_image_family", local.compute_node_groups_defaults["source_image_family"])
   source_image_project     = lookup(each.value, "source_image_project", local.compute_node_groups_defaults["source_image_project"])
   source_image             = lookup(each.value, "source_image", local.compute_node_groups_defaults["source_image"])

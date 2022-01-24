@@ -22,10 +22,18 @@ data "google_compute_network" "default" {
   name = "default"
 }
 
-module "slurm_login_template" {
-  source = "../../../modules/slurm_login_template"
+resource "random_string" "cluster_name" {
+  length  = 8
+  upper   = false
+  special = false
+}
 
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
+module "slurm_compute_template" {
+  source = "../../../modules/slurm_instance_template"
+
+  cluster_name = random_string.cluster_name.result
   network      = data.google_compute_network.default.self_link
+  project_id   = var.project_id
+
+  slurm_instance_type = "compute"
 }

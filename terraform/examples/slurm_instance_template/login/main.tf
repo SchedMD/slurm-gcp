@@ -14,13 +14,26 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = "~> 1.0"
+provider "google" {
+  project = var.project_id
+}
 
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 4.0"
-    }
-  }
+data "google_compute_network" "default" {
+  name = "default"
+}
+
+resource "random_string" "cluster_name" {
+  length  = 8
+  upper   = false
+  special = false
+}
+
+module "slurm_login_template" {
+  source = "../../../modules/slurm_instance_template"
+
+  cluster_name = random_string.cluster_name.result
+  network      = data.google_compute_network.default.self_link
+  project_id   = var.project_id
+
+  slurm_instance_type = "login"
 }

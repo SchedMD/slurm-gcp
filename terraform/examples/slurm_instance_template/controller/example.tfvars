@@ -14,13 +14,4 @@
  * limitations under the License.
  */
 
-variable "project_id" {
-  type        = string
-  description = "Project ID to create resources in."
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "Cluster name, used for resource naming."
-  default     = "simple"
-}
+project_id = "<PROJECT_ID>"

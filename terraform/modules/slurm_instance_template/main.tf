@@ -30,8 +30,8 @@ locals {
       disk_size_gb = disk.disk_size_gb
       disk_type    = disk.disk_type
       disk_labels = merge(
+        disk.disk_labels,
         { slurm_cluster_id = var.slurm_cluster_id },
-        disk.disk_labels
       )
     }
   ]
@@ -56,7 +56,7 @@ locals {
     : "schedmd-slurm-public"
   )
 
-  slurm_instance_type = "controller"
+  slurm_instance_type = lower(var.slurm_instance_type)
 }
 
 ########
@@ -75,22 +75,21 @@ module "instance_template" {
   source  = "terraform-google-modules/vm/google//modules/instance_template"
   version = "~> 7.1"
 
-  ### general ###
-  project_id  = var.project_id
-  name_prefix = "${var.cluster_name}-controller-${var.name_prefix}"
+  project_id = var.project_id
 
-  ### network ###
-  subnetwork_project = var.subnetwork_project
-  network            = var.network
-  subnetwork         = var.subnetwork
-  region             = var.region
-  tags               = var.tags
+  # Network
   can_ip_forward     = var.can_ip_forward
   network_ip         = var.network_ip
+  network            = var.network
+  region             = var.region
+  subnetwork_project = var.subnetwork_project
+  subnetwork         = var.subnetwork
+  tags               = var.tags
 
-  ### instance ###
+  # Instance
   machine_type             = var.machine_type
   min_cpu_platform         = var.min_cpu_platform
+  name_prefix              = "${var.cluster_name}-controller-${var.name_prefix}"
   gpu                      = var.gpu
   service_account          = local.service_account
   shielded_instance_config = var.shielded_instance_config
@@ -99,40 +98,38 @@ module "instance_template" {
   preemptible              = var.preemptible
   on_host_maintenance      = var.on_host_maintenance
   labels = merge(
+    var.labels,
     {
       slurm_cluster_id    = var.slurm_cluster_id
       slurm_instance_type = local.slurm_instance_type
     },
-    var.labels
   )
 
-  ### metadata ###
+  # Metadata
   startup_script = data.local_file.startup.content
   metadata = merge(
+    var.metadata,
     {
+      cluster_name      = var.cluster_name
       enable-oslogin    = upper(var.enable_oslogin)
       google_mpi_tuning = var.disable_smt == true ? "--nosmt" : null
+      instance_type     = local.slurm_instance_type
       VmDnsSetting      = "GlobalOnly"
     },
-    {
-      cluster_name  = var.cluster_name
-      instance_type = local.slurm_instance_type
-    },
-    var.metadata
   )
 
-  ### source image ###
+  # Image
   source_image_project = local.source_image_project
   source_image_family  = local.source_image_family
   source_image         = var.source_image
 
-  ### disk ###
+  # Disk
   disk_type    = var.disk_type
   disk_size_gb = var.disk_size_gb
   auto_delete  = var.disk_auto_delete
   disk_labels = merge(
     { slurm_cluster_id = var.slurm_cluster_id },
-    var.disk_labels
+    var.disk_labels,
   )
   additional_disks = local.additional_disks
 }

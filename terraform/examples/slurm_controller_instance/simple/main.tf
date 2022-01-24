@@ -24,7 +24,7 @@ data "google_compute_subnetwork" "default" {
 }
 
 module "slurm_controller_template" {
-  source = "../../../modules/slurm_controller_template"
+  source = "../../../modules/slurm_instance_template"
 
   project_id = var.project_id
   subnetwork = data.google_compute_subnetwork.default.self_link

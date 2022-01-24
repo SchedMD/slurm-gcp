@@ -52,9 +52,9 @@ limitations under the License.
 |------|--------|---------|
 | <a name="module_slurm_controller_hybrid"></a> [slurm\_controller\_hybrid](#module\_slurm\_controller\_hybrid) | ../slurm_controller_hybrid | n/a |
 | <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | ../slurm_controller_instance | n/a |
-| <a name="module_slurm_controller_template"></a> [slurm\_controller\_template](#module\_slurm\_controller\_template) | ../slurm_controller_template | n/a |
+| <a name="module_slurm_controller_template"></a> [slurm\_controller\_template](#module\_slurm\_controller\_template) | ../slurm_instance_template | n/a |
 | <a name="module_slurm_login_instance"></a> [slurm\_login\_instance](#module\_slurm\_login\_instance) | ../slurm_login_instance | n/a |
-| <a name="module_slurm_login_template"></a> [slurm\_login\_template](#module\_slurm\_login\_template) | ../slurm_login_template | n/a |
+| <a name="module_slurm_login_template"></a> [slurm\_login\_template](#module\_slurm\_login\_template) | ../slurm_instance_template | n/a |
 | <a name="module_slurm_partition"></a> [slurm\_partition](#module\_slurm\_partition) | ../slurm_partition | n/a |
 
 ## Resources
