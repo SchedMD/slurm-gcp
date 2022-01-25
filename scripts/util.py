@@ -118,19 +118,19 @@ compute = compute_service()
 
 def load_config_data(config):
     """load dict-like data into a config object"""
-    return NSDict(config)
+    cfg = NSDict(config)
+    if not cfg.slurm_log_dir:
+        cfg.slurm_log_dir = dirs.log
+    if not cfg.slurm_bin_dir:
+        cfg.slurm_bin_dir = slurmdirs.prefix/'bin'
+    return cfg
 
 
 def new_config(config):
     """initialize a new config object
     necessary defaults are handled here
     """
-    cfg = NSDict(config)
-
-    if not cfg.slurm_log_dir:
-        cfg.slurm_log_dir = dirs.log
-    if not cfg.slurm_bin_dir:
-        cfg.slurm_bin_dir = slurmdirs.prefix/'bin'
+    cfg = load_config_data(config)
 
     network_storage_iter = filter(None, (
         *cfg.network_storage,
