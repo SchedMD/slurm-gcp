@@ -317,7 +317,7 @@ def install_slurm_conf(lkp):
         'state_save': slurmdirs.state,
         'mpi_default': mpi_default,
     }
-    conf_resp = cfg.slurm_conf_tpl
+    conf_resp = project_metadata(f'{cfg.cluster_name}-slurm-tpl-slurm-conf')
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'slurm.conf'
@@ -355,7 +355,7 @@ def install_slurmdbd_conf(lkp):
             db_host_str[1] if len(db_host_str) >= 2 else '3306'
         )
 
-    conf_resp = cfg.slurmdbd_conf_tpl
+    conf_resp = project_metadata(f'{cfg.cluster_name}-slurm-tpl-slurmdbd-conf')
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'slurmdbd.conf'
@@ -373,7 +373,7 @@ def install_slurmdbd_conf(lkp):
 
 def install_cgroup_conf():
     """ install cgroup.conf """
-    conf = cfg.cgroup_conf_tpl
+    conf = project_metadata(f'{cfg.cluster_name}-slurm-tpl-cgroup-conf')
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'cgroup.conf'
     conf_file_bak = conf_file.with_suffix('.conf.bak')
