@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+google-api-python-client = "*"
+requests = "*"
+pyyaml = "*"
+addict = "*"
+google-cloud = "*"
+google-cloud-bigquery = "*"
+ipython = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
