@@ -41,19 +41,25 @@ locals {
     ? var.service_account
     : {
       email  = "default"
-      scopes = []
+      scopes = ["https://www.googleapis.com/auth/cloud-platform"]
     }
   )
 
   source_image_family = (
-    var.source_image_family != ""
+    var.source_image_family != "" && var.source_image_family != null
     ? var.source_image_family
     : "schedmd-slurm-21-08-2-hpc-centos-7"
   )
   source_image_project = (
-    var.source_image_project != ""
+    var.source_image_project != "" && var.source_image_project != null
     ? var.source_image_project
     : "schedmd-slurm-public"
+  )
+
+  source_image = (
+    var.source_image != null
+    ? var.source_image
+    : ""
   )
 
   slurm_instance_type = lower(var.slurm_instance_type)
@@ -121,7 +127,7 @@ module "instance_template" {
   # Image
   source_image_project = local.source_image_project
   source_image_family  = local.source_image_family
-  source_image         = var.source_image
+  source_image         = local.source_image
 
   # Disk
   disk_type    = var.disk_type

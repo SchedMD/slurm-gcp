@@ -41,6 +41,11 @@ output "partitions" {
   value       = local.partitions
 }
 
+output "compute_list" {
+  description = "Cluster compute node list."
+  value       = local.compute_list
+}
+
 output "output_dir" {
   description = "Directory where configuration files are written to."
   value       = local.output_dir

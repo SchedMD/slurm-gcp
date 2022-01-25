@@ -33,15 +33,43 @@ module "slurm_partition" {
   }
   compute_node_groups = [
     {
-      count_dynamic = 1
+      group_name    = "test"
+      count_dynamic = 10
       count_static  = 0
-      group_name    = "default"
+
+      additional_disks       = []
+      can_ip_forward         = false
+      disable_smt            = false
+      disk_auto_delete       = true
+      disk_labels            = {}
+      disk_size_gb           = 32
+      disk_type              = "pd-standard"
+      enable_confidential_vm = false
+      enable_oslogin         = true
+      enable_shielded_vm     = false
+      gpu                    = null
+      instance_template      = null
+      labels                 = {}
+      machine_type           = "n1-standard-1"
+      metadata               = {}
+      min_cpu_platform       = null
+      on_host_maintenance    = null
+      preemptible            = false
+      service_account = {
+        email = "default"
+        scopes = [
+          "https://www.googleapis.com/auth/cloud-platform",
+        ]
+      }
+      shielded_instance_config = null
+      source_image_family      = null
+      source_image_project     = null
+      source_image             = null
+      tags                     = []
     },
   ]
-  compute_node_groups_defaults = {
-    subnetwork = data.google_compute_subnetwork.default.self_link
-  }
   cluster_name     = var.cluster_name
   project_id       = var.project_id
   slurm_cluster_id = "x"
+  subnetwork       = data.google_compute_subnetwork.default.self_link
 }

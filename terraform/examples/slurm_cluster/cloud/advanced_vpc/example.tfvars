@@ -88,16 +88,17 @@ compute_d = [
   #   },
 ]
 
-############
-# DEFAULTS #
-############
+##############
+# CONTROLLER #
+##############
 
-slurm_cluster_defaults = {
+controller_instance_config = {
+  access_config = []
   additional_disks = [
     # {
     #   disk_name    = null
     #   device_name  = null
-    #   disk_size_gb = 1024
+    #   disk_size_gb = 128
     #   disk_type    = "pd-standard"
     #   disk_labels  = {}
     #   auto_delete  = true
@@ -111,21 +112,24 @@ slurm_cluster_defaults = {
     # label0 = "value0"
     # label1 = "value1"
   }
-  disk_size_gb           = "32"
-  disk_type              = "pd-standard"
+  disk_size_gb           = 32
+  disk_type              = "pd-ssd"
   enable_confidential_vm = false
   enable_oslogin         = true
   enable_shielded_vm     = false
   gpu                    = null
+  instance_template      = null
   labels = {
     # label0 = "value0"
     # label1 = "value1"
   }
-  machine_type        = "n1-standard-1"
-  metadata            = {}
+  machine_type = "n1-standard-1"
+  metadata = {
+    # metadata0 = "value0"
+    # metadata1 = "value1"
+  }
   min_cpu_platform    = null
-  network_ip          = ""
-  network             = null
+  network_ip          = null
   on_host_maintenance = null
   preemptible         = false
   service_account = {
@@ -139,9 +143,12 @@ slurm_cluster_defaults = {
     enable_secure_boot          = true
     enable_vtpm                 = true
   }
-  source_image_family  = ""
-  source_image_project = ""
-  source_image         = ""
+  source_image_family  = null
+  source_image_project = null
+  source_image         = null
+  static_ip            = null
+  subnetwork_project   = null
+  subnetwork           = "default"
   tags = [
     # "tag0",
     # "tag1",
@@ -149,83 +156,50 @@ slurm_cluster_defaults = {
   zone = null
 }
 
-##############
-# CONTROLLER #
-##############
+#################
+# LOGIN: GROUPS #
+#################
 
-# See 'slurm_cluster_defaults' for valid key/value
-controller_instance_config = {
-  disk_size_gb       = "32"
-  disk_type          = "pd-ssd"
-  enable_shielded_vm = true
-  machine_type       = "n2d-standard-4"
-  service_account = {
-    email = "default"
-    scopes = [
-      "https://www.googleapis.com/auth/cloud-platform",
-    ]
-  }
-}
-
-#########
-# LOGIN #
-#########
-
-# See 'slurm_cluster_defaults' for valid key/value
-login_node_groups_defaults = {
-  enable_shielded_vm = true
-  service_account = {
-    email = "default"
-    scopes = [
-      "https://www.googleapis.com/auth/cloud-platform",
-    ]
-  }
-}
-
-# See 'slurm_cluster_defaults' for valid key/value
 login_node_groups = [
   {
-    group_name    = "l0"
-    num_instances = 1
+    group_name = "l0"
 
-    disk_size_gb = 32
-    disk_type    = "pd-standard"
-    machine_type = "n1-standard-2"
+    access_config          = []
+    additional_disks       = []
+    can_ip_forward         = false
+    disable_smt            = false
+    disk_auto_delete       = true
+    disk_labels            = {}
+    disk_size_gb           = 32
+    disk_type              = "pd-standard"
+    enable_confidential_vm = false
+    enable_oslogin         = true
+    enable_shielded_vm     = false
+    gpu                    = null
+    instance_template      = null
+    labels                 = {}
+    machine_type           = "n1-standard-1"
+    metadata               = {}
+    min_cpu_platform       = null
+    network_ips            = []
+    num_instances          = 1
+    on_host_maintenance    = null
+    preemptible            = false
+    service_account = {
+      email = "default"
+      scopes = [
+        "https://www.googleapis.com/auth/cloud-platform",
+      ]
+    }
+    shielded_instance_config = null
+    source_image_family      = null
+    source_image_project     = null
+    source_image             = null
+    static_ips               = []
+    tags                     = []
+    zone                     = null
   },
 ]
-
-###########
-# COMPUTE #
-###########
-
-# See 'slurm_cluster_defaults' for valid key/value
-compute_node_groups_defaults = {
-  disk_size_gb       = 32
-  disk_type          = "pd-standard"
-  enable_shielded_vm = true
-  machine_type       = "n1-standard-4"
-  service_account = {
-    email = "default"
-    scopes = [
-      "https://www.googleapis.com/auth/cloud-platform",
-    ]
-  }
-}
-
-########################
-# PARTITIONS: DEFAULTS #
-########################
-
-partition_defaults = {
-  enable_job_exclusive    = false
-  enable_placement_groups = false
-  network_storage         = []
-  partition_conf = {
-    SuspendTime = 300
-  }
-  zone_policy_allow = []
-  zone_policy_deny  = []
-}
 
 ##############
 # PARTITIONS #
@@ -233,61 +207,53 @@ partition_defaults = {
 
 partitions = [
   {
-    partition_name = "debug"
+    enable_job_exclusive    = false
+    enable_placement_groups = false
+    compute_node_groups = [
+      {
+        group_name    = "n0"
+        count_dynamic = 20
+        count_static  = 0
+
+        additional_disks       = []
+        can_ip_forward         = false
+        disable_smt            = false
+        disk_auto_delete       = true
+        disk_labels            = {}
+        disk_size_gb           = 32
+        disk_type              = "pd-standard"
+        enable_confidential_vm = false
+        enable_oslogin         = true
+        enable_shielded_vm     = false
+        gpu                    = null
+        instance_template      = null
+        labels                 = {}
+        machine_type           = "n1-standard-1"
+        metadata               = {}
+        min_cpu_platform       = null
+        on_host_maintenance    = null
+        preemptible            = false
+        service_account = {
+          email = "default"
+          scopes = [
+            "https://www.googleapis.com/auth/cloud-platform",
+          ]
+        }
+        shielded_instance_config = null
+        source_image_family      = null
+        source_image_project     = null
+        source_image             = null
+        tags                     = []
+      },
+    ]
+    network_storage = []
     partition_conf = {
       Default     = "YES"
       SuspendTime = 300
     }
-    partition_d = [
-      #     {
-      #       filename = "hello_partition.sh"
-      #       content  = <<EOF
-      # #!/bin/bash
-      # set -ex
-      # echo "Hello, $(hostname) !"
-      #     EOF
-      #     },
-    ]
-    # See 'slurm_cluster_defaults' for valid key/value
-    compute_node_groups = [
-      {
-        group_name    = "c0"
-        count_static  = 0
-        count_dynamic = 20
-
-        disk_size_gb = 32
-        disk_type    = "pd-standard"
-        machine_type = "n1-standard-1"
-        disable_smt  = false
-        preemptible  = false
-      },
-      {
-        group_name    = "g0"
-        count_static  = 0
-        count_dynamic = 10
-
-        disk_size_gb = 32
-        disk_type    = "pd-standard"
-        machine_type = "n1-standard-1"
-        gpu = {
-          type  = "nvidia-tesla-t4"
-          count = 1
-        }
-        enable_shielded_vm = false
-      },
-    ]
+    partition_name    = "debug"
+    partition_d       = []
     zone_policy_allow = []
     zone_policy_deny  = []
-    network_storage = [
-      # {
-      #   server_ip     = "<storage host>"
-      #   remote_mount  = "/net_storage"
-      #   local_mount   = "/shared"
-      #   fs_type       = "nfs"
-      #   mount_options = null
-      # },
-    ]
-    enable_job_exclusive    = false
-    enable_placement_groups = false
   },
 ]

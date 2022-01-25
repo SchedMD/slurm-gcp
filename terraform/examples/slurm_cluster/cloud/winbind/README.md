@@ -59,7 +59,7 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.4.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | 4.8.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | 2.1.0 |
 
 ## Modules
@@ -83,8 +83,8 @@ limitations under the License.
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"winbind-cloud"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The default region to place resources in. | `string` | n/a | yes |
-| <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Subnet to deploy to. Only one of network or subnetwork should be specified. | `string` | `""` | no |
-| <a name="input_subnetwork_project"></a> [subnetwork\_project](#input\_subnetwork\_project) | The project that subnetwork belongs to. | `string` | `""` | no |
+| <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Subnet to deploy to. Only one of network or subnetwork should be specified. | `string` | `"default"` | no |
+| <a name="input_subnetwork_project"></a> [subnetwork\_project](#input\_subnetwork\_project) | The project that subnetwork belongs to. | `string` | `null` | no |
 
 ## Outputs
 

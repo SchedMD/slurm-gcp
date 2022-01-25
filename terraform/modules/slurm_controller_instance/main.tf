@@ -51,7 +51,8 @@ locals {
     : var.jwt_key
   )
 
-  partitions = { for p in var.partitions : p.partition_name => p }
+  partitions   = { for p in var.partitions[*].partition : p.partition_name => p }
+  compute_list = flatten(var.partitions[*].compute_list)
 }
 
 ####################
@@ -306,7 +307,7 @@ module "slurm_pubsub" {
       },
     ],
     [
-      for nodename in var.compute_list
+      for nodename in local.compute_list
       : {
         name                    = nodename
         ack_deadline_seconds    = 60
@@ -333,7 +334,7 @@ module "notify_reconfigure" {
   type  = "reconfig"
 
   triggers = {
-    compute_list  = join(",", var.compute_list)
+    compute_list  = join(",", local.compute_list)
     config        = sha256(google_compute_project_metadata_item.config.value)
     cgroup_conf   = sha256(google_compute_project_metadata_item.cgroup_conf.value)
     slurm_conf    = sha256(google_compute_project_metadata_item.slurm_conf.value)
@@ -388,10 +389,10 @@ module "delta_compute_list" {
   source = "../slurm_destroy_nodes"
 
   slurm_cluster_id = local.slurm_cluster_id
-  exclude_list     = var.compute_list
+  exclude_list     = local.compute_list
 
   triggers = {
-    compute_list = join(",", var.compute_list)
+    compute_list = join(",", local.compute_list)
   }
 
   depends_on = [

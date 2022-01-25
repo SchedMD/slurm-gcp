@@ -21,74 +21,6 @@
 locals {
   compute_node_groups = { for x in var.compute_node_groups : x.group_name => x }
 
-  partition_defaults_defaults = {
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    network_storage         = []
-    partition_conf          = {}
-    region                  = ""
-    subnetwork_project      = ""
-    subnetwork              = "default"
-    zone_policy_allow       = []
-    zone_policy_deny        = []
-  }
-
-  partition_defaults = merge(
-    local.partition_defaults_defaults,
-    var.partition_defaults,
-  )
-
-  subnetwork = (
-    var.subnetwork != "" && var.subnetwork != null
-    ? var.subnetwork
-    : local.partition_defaults["subnetwork"]
-  )
-
-  region = (
-    var.region != "" && var.region != null
-    ? var.region
-    : local.partition_defaults["region"]
-  )
-
-  compute_node_groups_defaults_defaults = {
-    additional_disks       = []
-    can_ip_forward         = null
-    disable_smt            = false
-    disk_auto_delete       = true
-    disk_labels            = {}
-    disk_size_gb           = null
-    disk_type              = null
-    enable_confidential_vm = false
-    enable_oslogin         = true
-    enable_shielded_vm     = false
-    gpu                    = null
-    labels                 = {}
-    machine_type           = "n1-standard-1"
-    metadata               = {}
-    min_cpu_platform       = null
-    network_ip             = ""
-    on_host_maintenance    = null
-    preemptible            = false
-    service_account = {
-      email  = "default"
-      scopes = []
-    }
-    shielded_instance_config = {
-      enable_integrity_monitoring = true
-      enable_secure_boot          = true
-      enable_vtpm                 = true
-    }
-    source_image_family  = ""
-    source_image_project = ""
-    source_image         = ""
-    tags                 = []
-  }
-
-  compute_node_groups_defaults = merge(
-    local.compute_node_groups_defaults_defaults,
-    var.compute_node_groups_defaults,
-  )
-
   partition = {
     partition_name = var.partition_name
     partition_conf = var.partition_conf
@@ -97,13 +29,12 @@ locals {
         group_name     = x.group_name
         partition_name = var.partition_name
         instance_template = (
-          lookup(x, "instance_template", null) != null
-          && lookup(x, "instance_template", null) != ""
+          x.instance_template != null && x.instance_template != ""
           ? data.google_compute_instance_template.group_template[x.group_name].self_link
           : module.slurm_compute_template[x.group_name].self_link
         )
-        count_dynamic = lookup(x, "count_dynamic", 1)
-        count_static  = lookup(x, "count_static", 0)
+        count_dynamic = x.count_dynamic
+        count_static  = x.count_static
       }
     }
     subnetwork        = data.google_compute_subnetwork.partition_subnetwork.self_link
@@ -131,12 +62,12 @@ locals {
 
 data "google_compute_subnetwork" "partition_subnetwork" {
   project = var.subnetwork_project
-  region  = local.region
-  name    = local.subnetwork
+  region  = var.region
+  name    = var.subnetwork
   self_link = (
-    length(regexall("/projects/([^/]*)", local.subnetwork)) > 0
-    && length(regexall("/regions/([^/]*)", local.subnetwork)) > 0
-    ? local.subnetwork
+    length(regexall("/projects/([^/]*)", var.subnetwork)) > 0
+    && length(regexall("/regions/([^/]*)", var.subnetwork)) > 0
+    ? var.subnetwork
     : null
   )
 }
@@ -148,8 +79,7 @@ data "google_compute_subnetwork" "partition_subnetwork" {
 data "google_compute_instance_template" "group_template" {
   for_each = {
     for x in var.compute_node_groups : x.group_name => x
-    if(lookup(x, "instance_template", null) != null
-    && lookup(x, "instance_template", null) != "")
+    if(x.instance_template != null && x.instance_template != "")
   }
 
   name    = each.value.instance_template
@@ -165,39 +95,37 @@ module "slurm_compute_template" {
 
   for_each = {
     for x in var.compute_node_groups : x.group_name => x
-    if(lookup(x, "instance_template", null) == null
-    || lookup(x, "instance_template", null) == "")
+    if(x.instance_template == null || x.instance_template == "")
   }
 
-  additional_disks         = lookup(each.value, "additional_disks", local.compute_node_groups_defaults["additional_disks"])
-  can_ip_forward           = lookup(each.value, "can_ip_forward", local.compute_node_groups_defaults["can_ip_forward"])
+  additional_disks         = each.value.additional_disks
+  can_ip_forward           = each.value.can_ip_forward
   cluster_name             = var.cluster_name
-  disable_smt              = lookup(each.value, "disable_smt", local.compute_node_groups_defaults["disable_smt"])
-  disk_auto_delete         = lookup(each.value, "disk_auto_delete", local.compute_node_groups_defaults["disk_auto_delete"])
-  disk_labels              = lookup(each.value, "disk_labels", local.compute_node_groups_defaults["disk_labels"])
-  disk_size_gb             = lookup(each.value, "disk_size_gb", local.compute_node_groups_defaults["disk_size_gb"])
-  disk_type                = lookup(each.value, "disk_type", local.compute_node_groups_defaults["disk_type"])
-  enable_confidential_vm   = lookup(each.value, "enable_confidential_vm", local.compute_node_groups_defaults["enable_confidential_vm"])
-  enable_oslogin           = lookup(each.value, "enable_oslogin", local.compute_node_groups_defaults["enable_oslogin"])
-  enable_shielded_vm       = lookup(each.value, "enable_shielded_vm", local.compute_node_groups_defaults["enable_shielded_vm"])
-  gpu                      = lookup(each.value, "gpu", local.compute_node_groups_defaults["gpu"])
-  machine_type             = lookup(each.value, "machine_type", local.compute_node_groups_defaults["machine_type"])
-  metadata                 = lookup(each.value, "metadata", local.compute_node_groups_defaults["metadata"])
-  min_cpu_platform         = lookup(each.value, "min_cpu_platform", local.compute_node_groups_defaults["min_cpu_platform"])
+  disable_smt              = each.value.disable_smt
+  disk_auto_delete         = each.value.disk_auto_delete
+  disk_labels              = each.value.disk_labels
+  disk_size_gb             = each.value.disk_size_gb
+  disk_type                = each.value.disk_type
+  enable_confidential_vm   = each.value.enable_confidential_vm
+  enable_oslogin           = each.value.enable_oslogin
+  enable_shielded_vm       = each.value.enable_shielded_vm
+  gpu                      = each.value.gpu
+  machine_type             = each.value.machine_type
+  metadata                 = each.value.metadata
+  min_cpu_platform         = each.value.min_cpu_platform
   name_prefix              = "${var.partition_name}-${each.value.group_name}"
-  network_ip               = lookup(each.value, "network_ip", local.compute_node_groups_defaults["network_ip"])
-  on_host_maintenance      = lookup(each.value, "on_host_maintenance", local.compute_node_groups_defaults["on_host_maintenance"])
-  preemptible              = lookup(each.value, "preemptible", local.compute_node_groups_defaults["preemptible"])
+  on_host_maintenance      = each.value.on_host_maintenance
+  preemptible              = each.value.preemptible
   project_id               = var.project_id
-  service_account          = lookup(each.value, "service_account", local.compute_node_groups_defaults["service_account"])
-  shielded_instance_config = lookup(each.value, "shielded_instance_config", local.compute_node_groups_defaults["shielded_instance_config"])
+  service_account          = each.value.service_account
+  shielded_instance_config = each.value.shielded_instance_config
   slurm_cluster_id         = var.slurm_cluster_id
   slurm_instance_type      = "compute"
-  source_image_family      = lookup(each.value, "source_image_family", local.compute_node_groups_defaults["source_image_family"])
-  source_image_project     = lookup(each.value, "source_image_project", local.compute_node_groups_defaults["source_image_project"])
-  source_image             = lookup(each.value, "source_image", local.compute_node_groups_defaults["source_image"])
+  source_image_family      = each.value.source_image_family
+  source_image_project     = each.value.source_image_project
+  source_image             = each.value.source_image
   subnetwork               = data.google_compute_subnetwork.partition_subnetwork.self_link
-  tags                     = concat([var.cluster_name], lookup(each.value, "tags", local.compute_node_groups_defaults["tags"]))
+  tags                     = concat([var.cluster_name], each.value.tags)
 }
 
 ############

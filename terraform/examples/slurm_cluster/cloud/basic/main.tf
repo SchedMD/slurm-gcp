@@ -19,26 +19,142 @@
 ##########
 
 locals {
+  controller_instance_config = {
+    access_config          = []
+    additional_disks       = []
+    can_ip_forward         = false
+    disable_smt            = false
+    disk_auto_delete       = true
+    disk_labels            = {}
+    disk_size_gb           = 32
+    disk_type              = "pd-standard"
+    enable_confidential_vm = false
+    enable_oslogin         = true
+    enable_shielded_vm     = false
+    gpu                    = null
+    instance_template      = null
+    labels                 = {}
+    machine_type           = "n1-standard-1"
+    metadata               = {}
+    min_cpu_platform       = null
+    network_ip             = null
+    num_instances          = 1
+    on_host_maintenance    = null
+    preemptible            = false
+    region                 = null
+    service_account = {
+      email = "default"
+      scopes = [
+        "https://www.googleapis.com/auth/cloud-platform",
+      ]
+    }
+    shielded_instance_config = null
+    source_image_family      = null
+    source_image_project     = null
+    source_image             = null
+    static_ip                = null
+    subnetwork_project       = null
+    subnetwork               = data.google_compute_subnetwork.default.self_link
+    tags                     = []
+    zone                     = null
+  }
+
   login_node_groups = [
     {
       group_name = "l0"
-      subnetwork = data.google_compute_subnetwork.default.self_link
+
+      access_config          = []
+      additional_disks       = []
+      can_ip_forward         = false
+      disable_smt            = false
+      disk_auto_delete       = true
+      disk_labels            = {}
+      disk_size_gb           = 32
+      disk_type              = "pd-standard"
+      enable_confidential_vm = false
+      enable_oslogin         = true
+      enable_shielded_vm     = false
+      gpu                    = null
+      instance_template      = null
+      labels                 = {}
+      machine_type           = "n1-standard-1"
+      metadata               = {}
+      min_cpu_platform       = null
+      network_ips            = []
+      num_instances          = 1
+      on_host_maintenance    = null
+      preemptible            = false
+      region                 = null
+      service_account = {
+        email = "default"
+        scopes = [
+          "https://www.googleapis.com/auth/cloud-platform",
+        ]
+      }
+      shielded_instance_config = null
+      source_image_family      = null
+      source_image_project     = null
+      source_image             = null
+      static_ips               = []
+      subnetwork_project       = null
+      subnetwork               = data.google_compute_subnetwork.default.self_link
+      tags                     = []
+      zone                     = null
     }
   ]
 
   partitions = [
     {
-      partition_name = "default"
+      enable_job_exclusive    = false
+      enable_placement_groups = false
+      network_storage         = []
+      partition_conf = {
+        Default = "YES"
+      }
+      partition_d    = []
+      partition_name = "debug"
       compute_node_groups = [
         {
-          count_dynamic = 1
+          count_dynamic = 10
           count_static  = 0
-          group_name    = "default"
+          group_name    = "test"
+
+          additional_disks       = []
+          can_ip_forward         = false
+          disable_smt            = false
+          disk_auto_delete       = true
+          disk_labels            = {}
+          disk_size_gb           = 32
+          disk_type              = "pd-standard"
+          enable_confidential_vm = false
+          enable_oslogin         = true
+          enable_shielded_vm     = false
+          gpu                    = null
+          instance_template      = null
+          labels                 = {}
+          machine_type           = "n1-standard-1"
+          metadata               = {}
+          min_cpu_platform       = null
+          on_host_maintenance    = null
+          preemptible            = false
+          service_account = {
+            email = "default"
+            scopes = [
+              "https://www.googleapis.com/auth/cloud-platform",
+            ]
+          }
+          shielded_instance_config = null
+          source_image_family      = null
+          source_image_project     = null
+          source_image             = null
+          tags                     = []
         },
       ]
-      cluster_name = var.cluster_name
-      project_id   = var.project_id
-      subnetwork   = data.google_compute_subnetwork.default.self_link
+      region             = null
+      subnetwork_project = null
+      subnetwork         = data.google_compute_subnetwork.default.self_link
+      zone_policy_allow  = []
+      zone_policy_deny   = []
     },
   ]
 }
@@ -67,10 +183,11 @@ data "google_compute_subnetwork" "default" {
 module "slurm_cluster" {
   source = "../../../../modules/slurm_cluster"
 
-  cluster_name      = var.cluster_name
-  login_node_groups = local.login_node_groups
-  partitions        = local.partitions
-  project_id        = var.project_id
+  cluster_name               = var.cluster_name
+  controller_instance_config = local.controller_instance_config
+  login_node_groups          = local.login_node_groups
+  partitions                 = local.partitions
+  project_id                 = var.project_id
 }
 
 ##################

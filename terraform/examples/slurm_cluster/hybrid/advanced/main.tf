@@ -30,21 +30,18 @@ provider "google" {
 module "slurm_cluster" {
   source = "../../../../modules/slurm_cluster"
 
-  cloud_parameters             = var.cloud_parameters
-  cluster_name                 = var.cluster_name
-  compute_node_groups_defaults = var.compute_node_groups_defaults
-  compute_d                    = var.compute_d
-  controller_hybrid_config     = var.controller_hybrid_config
-  enable_devel                 = var.enable_devel
-  enable_hybrid                = true
-  jwt_key                      = var.jwt_key
-  login_network_storage        = var.login_network_storage
-  munge_key                    = var.munge_key
-  network_storage              = var.network_storage
-  partitions_defaults          = var.partitions_defaults
-  partitions                   = var.partitions
-  project_id                   = var.project_id
-  slurm_cluster_defaults       = var.slurm_cluster_defaults
+  cloud_parameters         = var.cloud_parameters
+  cluster_name             = var.cluster_name
+  compute_d                = var.compute_d
+  controller_hybrid_config = var.controller_hybrid_config
+  enable_devel             = var.enable_devel
+  enable_hybrid            = true
+  jwt_key                  = var.jwt_key
+  login_network_storage    = var.login_network_storage
+  munge_key                = var.munge_key
+  network_storage          = var.network_storage
+  partitions               = var.partitions
+  project_id               = var.project_id
 }
 
 ##################

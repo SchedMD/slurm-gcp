@@ -120,70 +120,26 @@ variable "compute_d" {
   default = []
 }
 
-############
-# DEFAULTS #
-############
-
-variable "slurm_cluster_defaults" {
-  description = <<EOD
-Defaults for cluster controller, login, and compute nodes.
-
-Controller node default value priority order:
-- controller_instance_config
-- slurm_cluster_defaults
-
-Login node default value priority order:
-- login_node_groups
-- login_node_groups_defaults
-- slurm_cluster_defaults
-
-Compute node default value priority order:
-- compute_node_groups
-- compute_node_groups_defaults
-- slurm_cluster_defaults
-EOD
-  type        = any
-  default     = {}
-}
-
 ##############
 # CONTROLLER #
 ##############
 
 variable "controller_hybrid_config" {
-  description = <<EOD
-Creates a hybrid controller with given configuration.
-See 'main.tf' for valid keys.
-EOD
-  type        = map(any)
-  default     = {}
-}
-
-#####################
-# COMPUTE: DEFAULTS #
-#####################
-
-variable "compute_node_groups_defaults" {
-  description = <<EOD
-Defaults for compute_node_groups in partitions.
-
-Default value priority order:
-- compute_node_groups
-- compute_node_groups_defaults
-- slurm_cluster_defaults
-EOD
-  type        = any
-  default     = {}
-}
-
-########################
-# PARTITIONS: DEFAULTS #
-########################
-
-variable "partitions_defaults" {
-  description = "Defaults for partitions."
-  type        = any
-  default     = {}
+  description = "Creates a hybrid controller with given configuration."
+  type = object({
+    google_app_cred_path = string
+    slurm_bin_dir        = string
+    slurm_scripts_dir    = string
+    slurm_log_dir        = string
+    output_dir           = string
+  })
+  default = {
+    google_app_cred_path = null
+    slurm_scripts_dir    = null
+    slurm_bin_dir        = "/usr/local/bin"
+    slurm_log_dir        = "/var/log/slurm"
+    output_dir           = "."
+  }
 }
 
 ##############
@@ -192,6 +148,74 @@ variable "partitions_defaults" {
 
 variable "partitions" {
   description = "Cluster partition configuration as a list."
-  type        = list(any)
-  default     = []
+  type = list(object({
+    enable_job_exclusive    = bool
+    enable_placement_groups = bool
+    compute_node_groups = list(object({
+      count_static  = number
+      count_dynamic = number
+      group_name    = string
+      additional_disks = list(object({
+        disk_name    = string
+        device_name  = string
+        disk_size_gb = number
+        disk_type    = string
+        disk_labels  = map(string)
+        auto_delete  = bool
+        boot         = bool
+      }))
+      can_ip_forward         = bool
+      disable_smt            = bool
+      disk_auto_delete       = bool
+      disk_labels            = map(string)
+      disk_size_gb           = number
+      disk_type              = string
+      enable_confidential_vm = bool
+      enable_oslogin         = bool
+      enable_shielded_vm     = bool
+      gpu = object({
+        count = number
+        type  = string
+      })
+      instance_template   = string
+      labels              = map(string)
+      machine_type        = string
+      metadata            = map(string)
+      min_cpu_platform    = string
+      on_host_maintenance = string
+      preemptible         = bool
+      service_account = object({
+        email  = string
+        scopes = list(string)
+      })
+      shielded_instance_config = object({
+        enable_integrity_monitoring = bool
+        enable_secure_boot          = bool
+        enable_vtpm                 = bool
+      })
+      source_image_family  = string
+      source_image_project = string
+      source_image         = string
+      tags                 = list(string)
+    }))
+    network_storage = list(object({
+      local_mount   = string
+      fs_type       = string
+      server_ip     = string
+      remote_mount  = string
+      mount_options = string
+    }))
+    partition_name = string
+    partition_conf = map(string)
+    partition_d = list(object({
+      filename = string
+      content  = string
+    }))
+    region             = string
+    subnetwork_project = string
+    subnetwork         = string
+    zone_policy_allow  = list(string)
+    zone_policy_deny   = list(string)
+  }))
+  default = []
 }

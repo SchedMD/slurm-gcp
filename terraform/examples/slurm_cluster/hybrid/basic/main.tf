@@ -21,23 +21,65 @@
 locals {
   partitions = [
     {
-      partition_name = "default"
+      enable_job_exclusive    = false
+      enable_placement_groups = false
+      network_storage         = []
+      partition_conf = {
+        Default = "YES"
+      }
+      partition_d    = []
+      partition_name = "debug"
       compute_node_groups = [
         {
-          count_dynamic = 1
+          count_dynamic = 10
           count_static  = 0
-          group_name    = "default"
+          group_name    = "n0"
+
+          additional_disks       = []
+          can_ip_forward         = false
+          disable_smt            = false
+          disk_auto_delete       = true
+          disk_labels            = {}
+          disk_size_gb           = 32
+          disk_type              = "pd-standard"
+          enable_confidential_vm = false
+          enable_oslogin         = true
+          enable_shielded_vm     = false
+          gpu                    = null
+          instance_template      = null
+          labels                 = {}
+          machine_type           = "n1-standard-1"
+          metadata               = {}
+          min_cpu_platform       = null
+          on_host_maintenance    = null
+          preemptible            = false
+          service_account = {
+            email = "default"
+            scopes = [
+              "https://www.googleapis.com/auth/cloud-platform",
+            ]
+          }
+          shielded_instance_config = null
+          source_image_family      = null
+          source_image_project     = null
+          source_image             = null
+          tags                     = []
         },
       ]
-      cluster_name = var.cluster_name
-      project_id   = var.project_id
-      subnetwork   = data.google_compute_subnetwork.default.self_link
+      region             = null
+      subnetwork_project = null
+      subnetwork         = data.google_compute_subnetwork.default.self_link
+      zone_policy_allow  = []
+      zone_policy_deny   = []
     },
   ]
 
   controller_hybrid_config = {
-    slurm_log_dir = "."
-    output_dir    = "./config"
+    google_app_cred_path = null
+    slurm_scripts_dir    = "../../../../../scripts"
+    slurm_log_dir        = "."
+    slurm_bin_dir        = "/usr/local/bin"
+    output_dir           = "./config"
   }
 }
 

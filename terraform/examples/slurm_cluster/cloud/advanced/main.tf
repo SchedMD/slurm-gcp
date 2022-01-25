@@ -30,27 +30,23 @@ provider "google" {
 module "slurm_cluster" {
   source = "../../../../modules/slurm_cluster"
 
-  cgroup_conf_tpl              = var.cgroup_conf_tpl
-  cloud_parameters             = var.cloud_parameters
-  cloudsql                     = var.cloudsql
-  cluster_name                 = var.cluster_name
-  compute_node_groups_defaults = var.compute_node_groups_defaults
-  compute_d                    = var.compute_d
-  controller_instance_config   = var.controller_instance_config
-  controller_d                 = var.controller_d
-  enable_devel                 = var.enable_devel
-  jwt_key                      = var.jwt_key
-  login_network_storage        = var.login_network_storage
-  login_node_groups            = var.login_node_groups
-  login_node_groups_defaults   = var.login_node_groups_defaults
-  munge_key                    = var.munge_key
-  network_storage              = var.network_storage
-  partitions_defaults          = var.partitions_defaults
-  partitions                   = var.partitions
-  project_id                   = var.project_id
-  slurmdbd_conf_tpl            = var.slurmdbd_conf_tpl
-  slurm_cluster_defaults       = var.slurm_cluster_defaults
-  slurm_conf_tpl               = var.slurm_conf_tpl
+  cgroup_conf_tpl            = var.cgroup_conf_tpl
+  cloud_parameters           = var.cloud_parameters
+  cloudsql                   = var.cloudsql
+  cluster_name               = var.cluster_name
+  compute_d                  = var.compute_d
+  controller_instance_config = var.controller_instance_config
+  controller_d               = var.controller_d
+  enable_devel               = var.enable_devel
+  jwt_key                    = var.jwt_key
+  login_network_storage      = var.login_network_storage
+  login_node_groups          = var.login_node_groups
+  munge_key                  = var.munge_key
+  network_storage            = var.network_storage
+  partitions                 = var.partitions
+  project_id                 = var.project_id
+  slurmdbd_conf_tpl          = var.slurmdbd_conf_tpl
+  slurm_conf_tpl             = var.slurm_conf_tpl
 }
 
 ##################

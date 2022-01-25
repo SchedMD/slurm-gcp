@@ -53,3 +53,8 @@ output "partitions" {
   description = "Cluster partitions."
   value       = local.partitions
 }
+
+output "compute_list" {
+  description = "Cluster compute list."
+  value       = local.compute_list
+}

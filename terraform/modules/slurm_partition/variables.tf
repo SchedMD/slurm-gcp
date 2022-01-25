@@ -54,7 +54,53 @@ variable "partition_d" {
 
 variable "compute_node_groups" {
   description = "Grouped nodes in the partition."
-  type        = any
+  type = list(object({
+    count_static  = number
+    count_dynamic = number
+    group_name    = string
+    additional_disks = list(object({
+      disk_name    = string
+      device_name  = string
+      disk_size_gb = number
+      disk_type    = string
+      disk_labels  = map(string)
+      auto_delete  = bool
+      boot         = bool
+    }))
+    can_ip_forward         = bool
+    disable_smt            = bool
+    disk_auto_delete       = bool
+    disk_labels            = map(string)
+    disk_size_gb           = number
+    disk_type              = string
+    enable_confidential_vm = bool
+    enable_oslogin         = bool
+    enable_shielded_vm     = bool
+    gpu = object({
+      count = number
+      type  = string
+    })
+    instance_template   = string
+    labels              = map(string)
+    machine_type        = string
+    metadata            = map(string)
+    min_cpu_platform    = string
+    on_host_maintenance = string
+    preemptible         = bool
+    service_account = object({
+      email  = string
+      scopes = list(string)
+    })
+    shielded_instance_config = object({
+      enable_integrity_monitoring = bool
+      enable_secure_boot          = bool
+      enable_vtpm                 = bool
+    })
+    source_image_family  = string
+    source_image_project = string
+    source_image         = string
+    tags                 = list(string)
+  }))
 
   validation {
     condition     = length(var.compute_node_groups) > 0
@@ -163,16 +209,4 @@ EOD
     mount_options = string
   }))
   default = []
-}
-
-variable "partition_defaults" {
-  description = "Defaults for the partition."
-  type        = any
-  default     = {}
-}
-
-variable "compute_node_groups_defaults" {
-  description = "Defaults for compute_node_groups in partitions."
-  type        = any
-  default     = {}
 }

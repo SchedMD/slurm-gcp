@@ -19,40 +19,96 @@
 ##########
 
 locals {
-  example_defaults = {
-    region     = module.slurm_network.network.subnets_regions[0]
-    subnetwork = module.slurm_network.network.subnets_self_links[0]
-  }
+  controller_instance_config = [
+    for x in [var.controller_instance_config] : {
+      access_config            = x.access_config
+      additional_disks         = x.additional_disks
+      can_ip_forward           = x.can_ip_forward
+      disable_smt              = x.disable_smt
+      disk_auto_delete         = x.disk_auto_delete
+      disk_labels              = x.disk_labels
+      disk_size_gb             = x.disk_size_gb
+      disk_type                = x.disk_type
+      enable_confidential_vm   = x.enable_confidential_vm
+      enable_oslogin           = x.enable_oslogin
+      enable_shielded_vm       = x.enable_shielded_vm
+      gpu                      = x.gpu
+      instance_template        = x.instance_template
+      labels                   = x.labels
+      machine_type             = x.machine_type
+      metadata                 = x.metadata
+      min_cpu_platform         = x.min_cpu_platform
+      network_ip               = x.network_ip
+      on_host_maintenance      = x.on_host_maintenance
+      preemptible              = x.preemptible
+      service_account          = x.service_account
+      shielded_instance_config = x.shielded_instance_config
+      region                   = module.slurm_network.network.subnets_regions[0]
+      source_image_family      = x.source_image_family
+      source_image_project     = x.source_image_project
+      source_image             = x.source_image
+      static_ip                = x.static_ip
+      subnetwork_project       = null
+      subnetwork               = module.slurm_network.network.subnets_self_links[0]
+      tags                     = x.tags
+      zone                     = x.zone
+    }
+  ]
 
-  # Override with example_default
-  slurm_cluster_defaults = merge(
-    var.slurm_cluster_defaults,
-    local.example_defaults,
-  )
+  login_node_groups = [
+    for x in var.login_node_groups : {
+      access_config            = x.access_config
+      additional_disks         = x.additional_disks
+      can_ip_forward           = x.can_ip_forward
+      disable_smt              = x.disable_smt
+      disk_auto_delete         = x.disk_auto_delete
+      disk_labels              = x.disk_labels
+      disk_size_gb             = x.disk_size_gb
+      disk_type                = x.disk_type
+      enable_confidential_vm   = x.enable_confidential_vm
+      enable_oslogin           = x.enable_oslogin
+      enable_shielded_vm       = x.enable_shielded_vm
+      gpu                      = x.gpu
+      group_name               = x.group_name
+      instance_template        = x.instance_template
+      labels                   = x.labels
+      machine_type             = x.machine_type
+      metadata                 = x.metadata
+      min_cpu_platform         = x.min_cpu_platform
+      network_ips              = x.network_ips
+      num_instances            = x.num_instances
+      on_host_maintenance      = x.on_host_maintenance
+      preemptible              = x.preemptible
+      service_account          = x.service_account
+      shielded_instance_config = x.shielded_instance_config
+      region                   = module.slurm_network.network.subnets_regions[0]
+      source_image_family      = x.source_image_family
+      source_image_project     = x.source_image_project
+      source_image             = x.source_image
+      static_ips               = x.static_ips
+      subnetwork_project       = null
+      subnetwork               = module.slurm_network.network.subnets_self_links[0]
+      tags                     = x.tags
+      zone                     = x.zone
+    }
+  ]
 
-  # Override with example_default
-  controller_instance_config = merge(
-    var.controller_instance_config,
-    local.example_defaults,
-  )
-
-  # Override with example_default
-  compute_node_groups_defaults = merge(
-    var.compute_node_groups_defaults,
-    local.example_defaults,
-  )
-
-  # Override with example_default
-  partitions_defaults = merge(
-    var.partitions_defaults,
-    local.example_defaults,
-  )
-
-  # Override with example_default
-  login_node_groups_defaults = merge(
-    var.login_node_groups_defaults,
-    local.example_defaults,
-  )
+  partitions = [
+    for x in var.partitions : {
+      enable_job_exclusive    = x.enable_job_exclusive
+      enable_placement_groups = x.enable_placement_groups
+      compute_node_groups     = x.compute_node_groups
+      network_storage         = x.network_storage
+      partition_name          = x.partition_name
+      partition_conf          = x.partition_conf
+      partition_d             = x.partition_d
+      region                  = module.slurm_network.network.subnets_regions[0]
+      subnetwork_project      = null
+      subnetwork              = module.slurm_network.network.subnets_self_links[0]
+      zone_policy_allow       = x.zone_policy_allow
+      zone_policy_deny        = x.zone_policy_deny
+    }
+  ]
 }
 
 ############
@@ -106,25 +162,21 @@ module "slurm_firewall_rules" {
 module "slurm_cluster" {
   source = "../../../../modules/slurm_cluster"
 
-  cgroup_conf_tpl              = var.cgroup_conf_tpl
-  cloud_parameters             = var.cloud_parameters
-  cloudsql                     = var.cloudsql
-  cluster_name                 = var.cluster_name
-  compute_node_groups_defaults = local.compute_node_groups_defaults
-  compute_d                    = var.compute_d
-  controller_instance_config   = local.controller_instance_config
-  controller_d                 = var.controller_d
-  enable_devel                 = var.enable_devel
-  jwt_key                      = var.jwt_key
-  login_network_storage        = var.login_network_storage
-  login_node_groups            = var.login_node_groups
-  login_node_groups_defaults   = local.login_node_groups_defaults
-  munge_key                    = var.munge_key
-  network_storage              = var.network_storage
-  partitions_defaults          = local.partitions_defaults
-  partitions                   = var.partitions
-  project_id                   = var.project_id
-  slurmdbd_conf_tpl            = var.slurmdbd_conf_tpl
-  slurm_cluster_defaults       = local.slurm_cluster_defaults
-  slurm_conf_tpl               = var.slurm_conf_tpl
+  cgroup_conf_tpl            = var.cgroup_conf_tpl
+  cloud_parameters           = var.cloud_parameters
+  cloudsql                   = var.cloudsql
+  cluster_name               = var.cluster_name
+  compute_d                  = var.compute_d
+  controller_instance_config = local.controller_instance_config[0]
+  controller_d               = var.controller_d
+  enable_devel               = var.enable_devel
+  jwt_key                    = var.jwt_key
+  login_network_storage      = var.login_network_storage
+  login_node_groups          = local.login_node_groups
+  munge_key                  = var.munge_key
+  network_storage            = var.network_storage
+  partitions                 = local.partitions
+  project_id                 = var.project_id
+  slurmdbd_conf_tpl          = var.slurmdbd_conf_tpl
+  slurm_conf_tpl             = var.slurm_conf_tpl
 }

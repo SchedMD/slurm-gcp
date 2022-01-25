@@ -125,22 +125,40 @@ EOD
 }
 
 variable "partitions" {
-  description = "Cluster partitions as a list. See module slurm_partition."
-  type        = list(any)
-  default     = []
+  description = "Cluster partitions as a list."
+  type = list(object({
+    compute_list = list(string)
+    partition = object({
+      exclusive = bool
+      network_storage = list(object({
+        server_ip     = string
+        remote_mount  = string
+        local_mount   = string
+        fs_type       = string
+        mount_options = string
+      }))
+      partition_conf = map(string)
+      partition_name = string
+      partition_nodes = map(object({
+        count_dynamic     = number
+        count_static      = number
+        group_name        = string
+        instance_template = string
+      }))
+      placement_groups  = bool
+      subnetwork        = string
+      zone_policy_allow = list(string)
+      zone_policy_deny  = list(string)
+    })
+  }))
+  default = []
 
   validation {
     condition = alltrue([
-      for x in var.partitions : can(regex("(^[a-z][a-z0-9]*$)", x.partition_name))
+      for x in var.partitions[*].partition : can(regex("(^[a-z][a-z0-9]*$)", x.partition_name))
     ])
     error_message = "Items 'partition_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
   }
-}
-
-variable "compute_list" {
-  description = "List of compute node hostnames. See module slurm_partition."
-  type        = list(string)
-  default     = []
 }
 
 variable "google_app_cred_path" {
