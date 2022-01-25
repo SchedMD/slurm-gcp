@@ -45,6 +45,9 @@ log = logging.getLogger(filename)
 
 def instance_properties(partition):
     props = NSDict()
+    props.networkInterfaces = [{
+        'subnetwork': partition.subnetwork,
+    }]
     return props
 
 
