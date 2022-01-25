@@ -17,7 +17,6 @@ import argparse
 import logging
 from pathlib import Path
 from time import sleep
-
 from suspend import (
     batch_execute, delete_instance_request, truncate_iter, wait_for_operations
 )

@@ -38,7 +38,7 @@ from util import lkp, cfg, dirs, slurmdirs
 
 SETUP_SCRIPT = Path(__file__)
 filename = SETUP_SCRIPT.name
-LOGFILE = ((cfg.slurm_log_dir or '.')/SETUP_SCRIPT).with_suffix('.log')
+LOGFILE = ((cfg.slurm_log_dir if cfg else '.')/SETUP_SCRIPT).with_suffix('.log')
 log = logging.getLogger(filename)
 
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)

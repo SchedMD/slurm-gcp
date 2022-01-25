@@ -32,7 +32,7 @@ from util import dirs, run, save_config
 
 
 filename = Path(__file__).name
-logfile = (Path(util.cfg.slurm_log_dir or '.')/filename).with_suffix('.log')
+logfile = (Path(util.cfg.slurm_log_dir if util.cfg else '.')/filename).with_suffix('.log')
 log = logging.getLogger(filename)
 setup.log.disabled = False
 slurmsync.log.disabled = False

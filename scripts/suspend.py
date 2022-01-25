@@ -34,10 +34,10 @@ from util import seperate
 from util import lkp, cfg, compute
 
 
-SCONTROL = Path(cfg.slurm_bin_dir or '')/'scontrol'
+SCONTROL = Path(cfg.slurm_bin_dir if cfg else '')/'scontrol'
 
 filename = Path(__file__).name
-LOGFILE = (Path(cfg.slurm_log_dir or '.')/filename).with_suffix('.log')
+LOGFILE = (Path(cfg.slurm_log_dir if cfg else '.')/filename).with_suffix('.log')
 log = logging.getLogger(filename)
 
 TOT_REQ_CNT = 1000

@@ -35,10 +35,10 @@ from util import cfg, lkp, compute
 from util import batch_execute
 
 
-SCONTROL = Path(cfg.slurm_bin_dir or '')/'scontrol'
+SCONTROL = Path(cfg.slurm_bin_dir if cfg else '')/'scontrol'
 
 filename = Path(__file__).name
-LOGFILE = (Path(cfg.slurm_log_dir or '.')/filename).with_suffix('.log')
+LOGFILE = (Path(cfg.slurm_log_dir if cfg else '.')/filename).with_suffix('.log')
 
 log = logging.getLogger(filename)
 
