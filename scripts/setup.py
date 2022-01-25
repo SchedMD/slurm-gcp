@@ -874,22 +874,12 @@ def setup_compute():
     setup_nss_slurm()
     setup_network_storage()
 
-    template = lkp.node_template_info()
+    #template = lkp.node_template_info(zone=lkp.zone)
+
     # if (not cfg.instance_defs[pid].image_hyperthreads and
     #         shutil.which('google_mpi_tuning')):
     #     run("google_mpi_tuning --nosmt")
-
-    if template.machine_conf.gpu_count:
-        retries = n = 50
-        while n:
-            if run("nvidia-smi").returncode == 0:
-                break
-            n -= 1
-            log.info(f"Nvidia driver not yet loaded, try {retries-n}")
-            time.sleep(5)
-        else:
-            # nvidia driver failed to load
-            return
+    run("nvidia-smi")
 
     run_custom_scripts()
 
