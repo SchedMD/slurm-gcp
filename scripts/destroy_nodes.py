@@ -33,9 +33,11 @@ def delete_instances(compute_list):
 
     ops = {}
     for self_link in compute_list:
-        (project, zone, name) = parse_self_link(self_link)
+        link_info = parse_self_link(self_link)
         ops[self_link] = delete_instance_request(
-            instance=name, project=project, zone=zone)
+            instance=link_info.instance,
+            project=link_info.project,
+            zone=link_info.zone)
     done, failed = batch_execute(ops)
     if failed:
         failed_nodes = [f"{n}: {e}" for n, (_, e) in failed.items()]

@@ -30,7 +30,7 @@ from addict import Dict as NSDict
 
 import util
 from util import run, batch_execute, ensure_execute, wait_for_operations
-from util import partition
+from util import seperate
 from util import lkp, cfg, compute
 
 
@@ -66,7 +66,7 @@ def delete_instances(instances):
     """ Call regionInstances.bulkInsert to create instances """
     if len(instances) == 0:
         return
-    invalid, valid = partition(
+    invalid, valid = seperate(
         lambda inst: bool(lkp.instance(inst)),
         instances
     )
@@ -97,8 +97,7 @@ def suspend_nodes(nodelist):
 def epilog_suspend_nodes(nodelist, job_id):
     nodes = expand_nodelist(nodelist)
     model = next(iter(nodes))
-    partition_name = lkp.node_partition(model)
-    partition = cfg.partitions[partition_name]
+    partition = lkp.node_partition(model)
     if not partition.exclusive:
         return
     # Mark nodes as off limits to new jobs while powering down.

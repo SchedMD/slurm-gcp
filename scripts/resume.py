@@ -20,7 +20,6 @@
 import argparse
 import logging
 import os
-import re
 import sys
 import json
 from pathlib import Path
@@ -31,9 +30,9 @@ from itertools import groupby, islice
 from addict import Dict as NSDict
 
 import util
-from util import run, chunked
+from util import run, chunked, parse_self_link
 from util import cfg, lkp, compute
-from setup import resolve_network_storage, batch_execute
+from util import batch_execute
 
 
 SCONTROL = Path(cfg.slurm_bin_dir or '')/'scontrol'
@@ -45,7 +44,8 @@ log = logging.getLogger(filename)
 
 
 def instance_properties(partition):
-    pass
+    props = NSDict()
+    return props
 
 
 def create_instances_request(nodes):
@@ -56,18 +56,19 @@ def create_instances_request(nodes):
     model = next(iter(nodes))
     template = lkp.node_template(model)
     partition = lkp.node_partition(model)
-
+    region = parse_self_link(partition.subnetwork).region
 
     body = NSDict()
     body.count = len(nodes)
     body.sourceInstanceTemplate = template
+    # this chooses the names for each instance
     body.perInstanceProperties = {k: {} for k in nodes}
-    #body.instanceProperties = instance_properties(partition)
+    body.instanceProperties = instance_properties(partition)
 
-    result = compute.regionInstances().bulkInsert(
-        project=cfg.project, region=partition.region, body=body
+    request = compute.regionInstances().bulkInsert(
+        project=cfg.project, region=region, body=body.to_dict()
     )
-    return result
+    return request
 
 
 def expand_nodelist(nodelist):

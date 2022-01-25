@@ -30,11 +30,10 @@ from itertools import chain
 from pathlib import Path
 from subprocess import DEVNULL
 
-import yaml
 from addict import Dict as NSDict
 
 import util
-from util import run, instance_metadata, project_metadata, partition
+from util import run, instance_metadata, project_metadata, seperate
 from util import lkp, cfg, dirs, slurmdirs
 
 SETUP_SCRIPT = Path(__file__)
@@ -152,11 +151,11 @@ def nodeset_names(node_group, part_name):
 
 
 def dict_to_conf(conf, delim=' '):
-    """ convert dict to space-delimited slurm-style key-value pairs """
+    """ convert dict to delimited slurm-style key-value pairs """
     return delim.join(
         f"{k}={','.join(v) if isinstance(v, list) else v}"
         for k, v in conf.items()
-        if v is not None
+        if v
     )
 
 
@@ -168,7 +167,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
     def conflines(cloud_parameters):
         scripts_dir = lkp.cfg.scripts or dirs.scripts
         no_comma_params = cloud_parameters.get('no_comma_params', False)
-        comma_params = {k: ','.join(v) for k, v in dict.items({
+        comma_params = {
             'PrivateData': [
                 'cloud',
             ],
@@ -189,7 +188,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
             'GresTypes': [
                 'gpu',
             ],
-        })}
+        }
         conf_options = {
             **(comma_params if not no_comma_params else {}),
             'PrologSlurmctld': f'{scripts_dir}/resume.py',
@@ -206,7 +205,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
 
     def node_group_lines(node_group, part_name):
         template_info = lkp.template_info(node_group.instance_template)
-        machine_conf = template_info.machine_conf
+        machine_conf = lkp.template_machine_conf(node_group.instance_template)
 
         node_def = dict_to_conf({
             'NodeName': 'DEFAULT',
@@ -218,8 +217,8 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
         })
 
         gres = None
-        if machine_conf:
-            gres = f'gpu:{machine_conf.gpu_count}'
+        if template_info.gpu_count:
+            gres = f'gpu:{template_info.gpu_count}'
 
         lines = [node_def]
         static, dynamic = nodeset_names(node_group, part_name)
@@ -255,7 +254,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
         ))
 
         def defmempercpu(template_link):
-            machine_conf = lkp.template_info(template_link).machine_conf
+            machine_conf = lkp.template_machine_conf(template_link)
             return max(100, machine_conf.memory // machine_conf.cpus)
 
         defmem = min(
@@ -391,14 +390,14 @@ def install_gres_conf(lkp):
     """ install gres.conf """
 
     gpu_nodes = defaultdict(list)
-    for part in lkp.cfg.partitions.values():
-        for node in part.partition_nodes.values():
+    for part_name, partition in cfg.partitions.items():
+        for node in partition.partition_nodes.values():
             template_info = lkp.template_info(node.instance_template)
-            gpu_count = template_info.machine_conf.gpu_count
+            gpu_count = template_info.gpu_count
             if gpu_count == 0:
                 continue
             gpu_nodes[gpu_count].extend(
-                filter(None, nodeset_names(node, lkp))
+                filter(None, nodeset_names(node, part_name))
             )
 
     lines = [
@@ -545,7 +544,7 @@ def partition_mounts(mounts):
     """
     def internal_mount(mount):
         return mount.server_ip == lkp.control_host
-    return partition(internal_mount, mounts)
+    return seperate(internal_mount, mounts)
 
 
 def setup_network_storage():

@@ -54,8 +54,12 @@ else:
     CONFIG_FILE = Path(__file__).with_name('config.yaml')
 log = logging.getLogger(__name__)
 def_creds,  project = google.auth.default()
+
+# readily available compute api handle
 compute = None
+# slurm-gcp config object, could be None if not available
 cfg = None
+# caching Lookup object
 lkp = None
 
 # load all directories as Paths into a dict-like namespace
@@ -77,13 +81,13 @@ slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
 
 
 def parse_self_link(self_link: str):
-    """ Parse an instance self link and return its project, zone, and name. """
-    psl = parse.urlparse(self_link)
-    split_path = psl.path.split('/')
-    project = split_path[split_path.index('projects') + 1]
-    zone = split_path[split_path.index('zones') + 1]
-    name = split_path[split_path.index('instances') + 1]
-    return (project, zone, name)
+    """Parse a selfLink url, extracting all useful values
+    https://.../v1/projects/<project>/regions/<region>/...
+    {'project': <project>, 'region': <region>, ...}
+    can also extract zone, instance (name), image, etc
+    """
+    link_patt = re.compile(r'(?P<key>[^\/\s]+)s\/(?P<value>[^\s\/]+)')
+    return NSDict(link_patt.findall(self_link))
 
 
 def compute_service(credentials=None, user_agent=USER_AGENT):
@@ -123,6 +127,11 @@ def new_config(config):
     """
     cfg = NSDict(config)
 
+    if not cfg.slurm_log_dir:
+        cfg.slurm_log_dir = dirs.log
+    if not cfg.slurm_bin_dir:
+        cfg.slurm_bin_dir = slurmdirs.prefix/'bin'
+
     network_storage_iter = filter(None, (
         *cfg.network_storage,
         *cfg.login_network_storage,
@@ -139,6 +148,8 @@ def new_config(config):
 def config_from_metadata():
     # get setup config from metadata
     cluster_name = instance_metadata('attributes/cluster_name')
+    if not cluster_name:
+        return None
     config_yaml = yaml.safe_load(project_metadata(f'{cluster_name}-slurm-config'))
     cfg = new_config(config_yaml)  # noqa F811
     return cfg
@@ -151,6 +162,7 @@ def load_config_file(path):
         content = yaml.safe_load(Path(path).read_text())
     except FileNotFoundError:
         log.error(f"config file not found: {path}")
+        return None
     return load_config_data(content)
 
 
@@ -217,9 +229,6 @@ def handle_exception(exc_type, exc_value, exc_trace):
     sys.__excepthook__(exc_type, exc_value, exc_trace)
 
 
-ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
-
-
 def run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False,
         timeout=None, check=True, universal_newlines=True, **kwargs):
     """Wrapper for subprocess.run() with convenient defaults"""
@@ -254,15 +263,12 @@ def cached_property(f):
     return property(lru_cache()(f))
 
 
-def partition(pred, coll):
+def seperate(pred, coll):
     """filter into 2 lists based on pred returning True or False
        returns ([False], [True])
     """
     return reduce(lambda acc, el: acc[pred(el)].append(el) or acc,
                   coll, ([], []))
-
-
-ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
 
 
 def chunked(iterable, n=API_REQ_LIMIT):
@@ -273,6 +279,9 @@ def chunked(iterable, n=API_REQ_LIMIT):
         if not chunk:
             return
         yield chunk
+
+
+ROOT_URL = 'http://metadata.google.internal/computeMetadata/v1'
 
 
 def get_metadata(path, root=ROOT_URL):
@@ -495,6 +504,10 @@ class Lookup:
     def hostname(self):
         return socket.gethostname()
 
+    @cached_property
+    def zone(self):
+        return instance_metadata('zone')
+
     @property
     def exclusive(self):
         return bool(self._cfg.exclusive or self._cfg.enable_placement)
@@ -601,24 +614,11 @@ class Lookup:
             machine_info = next(iter(machines[machine_type].values()))
         return NSDict(machine_info)
 
-    @lru_cache(maxsize=None)
-    def template_info(self, template_link, project=None):
-        project = project or self.project
-        template_name = template_link.split('/')[-1]
+    def template_machine_conf(self, template_link, project=None, zone=None):
 
-        template = ensure_execute(
-            self.compute.instanceTemplates().get(
-                project=project, instanceTemplate=template_name)
-        ).get('properties')
-        template = NSDict(template)
-        # name is above properties, so stick it into properties in order to just
-        # return properties
-        template.name = template_name
-        template.link = template_link
-        # TODO delete metadata to reduce memory footprint?
-        #del template.metadata
-
-        template.machine_info = self.machine_type(template.machineType)
+        template = self.template_info(template_link)
+        template.machine_info = self.machine_type(template.machineType,
+                                                  zone=zone)
         machine = template.machine_info
         machine_conf = NSDict()
         # TODO how is smt passed?
@@ -630,25 +630,43 @@ class Lookup:
         # buffer for the first couple of GB's. Using 30 MB to be safe.
         gb = machine.memoryMb // 1024
         machine_conf.memory = machine.memoryMb - (400 + (30 * gb))
+        return machine_conf
 
-        if machine.accelerators:
-            machine_conf.gpu_type = machine.accelerators[0].guestAcceleratorType
-            machine_conf.gpu_count = machine.accelerators[0].guestAcceleratorCount
+    @lru_cache(maxsize=None)
+    def template_info(self, template_link, project=None):
+        project = project or self.project
+        template_name = template_link.split('/')[-1]
+
+        template = ensure_execute(
+            self.compute.instanceTemplates().get(
+                project=project, instanceTemplate=template_name)
+        ).get('properties')
+        template = NSDict(template)
+        # name and link are not in properties, so stick them in
+        template.name = template_name
+        template.link = template_link
+        # TODO delete metadata to reduce memory footprint?
+        #del template.metadata
+
+        # translate gpus into an easier-to-read format
+        if template.guestAccelerators:
+            template.gpu_type = template.guestAccelerators[0].acceleratorType
+            template.gpu_count = template.guestAccelerators[0].acceleratorCount
         else:
-            machine_conf.gpu_type = None
-            machine_conf.gpu_count = 0
+            template.gpu_type = None
+            template.gpu_count = 0
 
-        template.machine_conf = machine_conf
         return template
 
 
 # Define late globals
-if CONFIG_FILE.exists():
-    cfg = load_config_file(CONFIG_FILE)
-elif __name__ == '__main__':
+cfg = load_config_file(CONFIG_FILE)
+if not cfg:
+    log.warning(f"{CONFIG_FILE} not found")
     cfg = config_from_metadata()
-    save_config(cfg, CONFIG_FILE)
-else:
-    log.fatal(f"{CONFIG_FILE} not found")
+    if cfg:
+        save_config(cfg, CONFIG_FILE)
+    else:
+        log.error("config metadata unavailable")
 
 lkp = Lookup(cfg)

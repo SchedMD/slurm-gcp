@@ -25,7 +25,7 @@ from time import sleep
 from collections import namedtuple
 
 import util
-from util import run, partition, batch_execute
+from util import run, seperate, batch_execute
 from util import lkp, cfg, compute, dirs
 from suspend import delete_instances
 
@@ -52,7 +52,7 @@ def start_instances(node_list):
     log.info("{} instances to start ({})".format(
         len(node_list), ",".join(node_list)))
 
-    invalid, valid = partition(lambda inst: bool(lkp.instance), node_list)
+    invalid, valid = seperate(lambda inst: bool(lkp.instance), node_list)
     ops = {inst: start_instance_op(inst) for inst in valid}
 
     done, failed = batch_execute(ops)
@@ -106,7 +106,7 @@ def sync_slurm():
     to_start = []
     for node, state in slurm_nodes.items():
         inst = lkp.instance(node)
-        props = lkp.node_template_props(node)
+        info = lkp.node_template_info(node)
 
         if (('POWERED_DOWN' not in state.flags) and
                 ('POWERING_DOWN' not in state.flags)):
@@ -116,7 +116,7 @@ def sync_slurm():
             if inst and (inst.status == "TERMINATED"):
                 if not state.base.startswith('DOWN'):
                     to_down.append(node)
-                if (props.scheduling.preemptible):
+                if (info.scheduling.preemptible):
                     to_start.append(node)
 
             # can't check if the node doesn't exist in GCP while the node
