@@ -879,7 +879,7 @@ def setup_compute():
     # if (not cfg.instance_defs[pid].image_hyperthreads and
     #         shutil.which('google_mpi_tuning')):
     #     run("google_mpi_tuning --nosmt")
-    run("nvidia-smi")
+    run("nvidia-smi", check=False)
 
     run_custom_scripts()
 
