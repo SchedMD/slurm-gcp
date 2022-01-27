@@ -423,7 +423,10 @@ def install_gres_conf(lkp):
 def fetch_devel_scripts():
     """download scripts from project metadata if they are present"""
 
-    metadata_devel = json.loads(project_metadata(f'{cfg.cluster_name}-slurm-devel'))
+    meta_json = project_metadata(f'{cfg.cluster_name}-slurm-devel')
+    if not meta_json:
+        return
+    metadata_devel = json.loads(meta_json)
 
     meta_entries = [
         ('slurmeventd.py', 'slurmeventd'),
