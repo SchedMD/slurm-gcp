@@ -162,7 +162,6 @@ module "slurm_controller_instance" {
   zone                = var.zone
 
   depends_on = [
-    module.slurm_metadata_devel,
     google_compute_project_metadata_item.controller_d,
     # Ensure nodes are destroyed before controller is
     module.cleanup,
