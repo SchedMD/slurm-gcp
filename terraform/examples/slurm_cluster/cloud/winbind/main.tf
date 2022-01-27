@@ -29,7 +29,7 @@ locals {
     disk_size_gb           = 32
     disk_type              = "pd-standard"
     enable_confidential_vm = false
-    enable_oslogin         = true
+    enable_oslogin         = false
     enable_shielded_vm     = false
     gpu                    = null
     instance_template      = null
@@ -72,7 +72,7 @@ locals {
       disk_size_gb           = 32
       disk_type              = "pd-standard"
       enable_confidential_vm = false
-      enable_oslogin         = true
+      enable_oslogin         = false
       enable_shielded_vm     = false
       gpu                    = null
       instance_template      = null
@@ -127,7 +127,7 @@ locals {
           disk_size_gb           = 32
           disk_type              = "pd-standard"
           enable_confidential_vm = false
-          enable_oslogin         = true
+          enable_oslogin         = false
           enable_shielded_vm     = false
           gpu                    = null
           instance_template      = null
@@ -177,12 +177,27 @@ data "google_compute_subnetwork" "this" {
   project = var.subnetwork_project
 }
 
-################
-# DATA: SCRIPT #
-################
+##########
+# SCRIPT #
+##########
+
+resource "template_dir" "tpl_dir" {
+  source_dir      = "./templates"
+  destination_dir = "./scripts"
+  vars = {
+    smb_workgroup = var.smb_workgroup
+    smb_realm     = var.smb_realm
+    smb_server    = var.smb_server
+    winbind_join  = var.winbind_join
+  }
+}
 
 data "local_file" "winbind_sh" {
   filename = "./scripts/winbind.sh"
+
+  depends_on = [
+    template_dir.tpl_dir,
+  ]
 }
 
 #################

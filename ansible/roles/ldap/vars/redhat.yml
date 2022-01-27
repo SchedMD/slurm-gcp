@@ -30,3 +30,4 @@ ldap_packages:
   - sssd-winbind-idmap
   - samba
   - samba-common-tools
+  - samba-winbind

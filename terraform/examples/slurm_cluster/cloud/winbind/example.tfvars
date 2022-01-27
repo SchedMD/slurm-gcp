@@ -24,6 +24,10 @@ cluster_name = "winbind-cloud"
 
 region = "<REGION>"
 
-subnetwork = "<SUBNETWORK>"
-
 subnetwork_project = "<SUBNETWORK_PROJECT>"
+subnetwork         = "<SUBNETWORK>"
+
+smb_workgroup = "<SMB_WORKGROUP>"
+smb_realm     = "<SMB_REALM>"
+smb_server    = "<SMB_SERVER>"
+winbind_join  = "<Administrator[%Password]>"

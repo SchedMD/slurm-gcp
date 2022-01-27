@@ -41,3 +41,24 @@ variable "subnetwork_project" {
   description = "The project that subnetwork belongs to."
   default     = null
 }
+
+variable "smb_workgroup" {
+  description = "SMB Workgroup"
+  type        = string
+}
+
+variable "smb_realm" {
+  description = "SMB Realm"
+  type        = string
+}
+
+variable "smb_server" {
+  description = "SMB Server"
+  type        = string
+}
+
+variable "winbind_join" {
+  description = "Username and password to authenticate the join with. (e.g. 'Administrator[%Password]')"
+  type        = string
+  sensitive   = true
+}

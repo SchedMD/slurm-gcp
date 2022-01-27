@@ -16,13 +16,13 @@
 
 set -ex
 
-SMB_WORKGROUP = "example"
-SMB_REALM = "example.com"
-SMB_SERVER = "ad-server"
+SMB_WORKGROUP="${smb_workgroup}"
+SMB_REALM="${smb_realm}"
+SMB_SERVER="${smb_server}"
 
-WINBIND_JOIN = 'Administrator[%Password]'
-WINBIND_TEMPLATE_HOMEDIR = '/home/%D/%U'
-WINBIND_TEMPLATE_SHELL = "/bin/bash"
+WINBIND_JOIN='${winbind_join}'
+WINBIND_TEMPLATE_HOMEDIR='/home/%D/%U'
+WINBIND_TEMPLATE_SHELL="/bin/bash"
 
 if ! [ -x $(command -v authconfig) ]
 then
@@ -32,27 +32,32 @@ fi
 
 NETBIOS_NAME="$(expr substr "$(hostname)" 1 15)"
 SMB_CONF="/etc/samba/smb.conf"
-if grep "netbios name = " ${SMB_CONF}
+if grep "netbios name = " $SMB_CONF
 then
 	# replace line
-	sed -i.tmp "s/netbios name = .*/netbios name = ${NETBIOS_NAME}/g" ${SMB_CONF}
+	sed -i.tmp "s/netbios name = .*/netbios name = $NETBIOS_NAME/g" $SMB_CONF
 else
 	# append line
-	sed -i.tmp "/^\[global\]/a netbios name = ${NETBIOS_NAME}" ${SMB_CONF}
+	sed -i.tmp "/^\[global\]/a netbios name = $NETBIOS_NAME" $SMB_CONF
 fi
 
+# Set up winbind via authconfig
 authconfig \
 	--enablewinbind \
 	--enablewinbindauth \
 	--smbsecurity=ads \
-	--smbworkgroup=${SMB_WORKGROUP} \
-	--smbrealm=${SMB_REALM} \
-	--smbservers=${SMB_SERVER} \
-	--winbindjoin=${WINBIND_JOIN} \
-	--winbindtemplatehomedir=${WINBIND_TEMPLATE_HOMEDIR} \
-	--winbindtemplateshell=${WINBIND_TEMPLATE_SHELL} \
+	--smbworkgroup=$SMB_WORKGROUP \
+	--smbrealm=$SMB_REALM \
+	--smbservers=$SMB_SERVER \
+	--winbindjoin=$WINBIND_JOIN \
+	--winbindtemplatehomedir=$WINBIND_TEMPLATE_HOMEDIR \
+	--winbindtemplateshell=$WINBIND_TEMPLATE_SHELL \
 	--enablewinbindusedefaultdomain \
 	--enablelocauthorize \
 	--enablewinbindoffline \
 	--enablemkhomedir \
 	--updateall
+
+# Enable PasswordAuthentication for SSH
+sed -i.tmp 's/^PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+systemctl restart sshd.service
