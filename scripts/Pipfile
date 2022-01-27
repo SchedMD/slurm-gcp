@@ -11,6 +11,7 @@ addict = "*"
 google-cloud = "*"
 google-cloud-bigquery = "*"
 ipython = "*"
+google-cloud-pubsub = "*"
 
 [dev-packages]
 
