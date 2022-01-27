@@ -193,7 +193,7 @@ def prolog_resume_nodes(nodelist, job_id):
     nodes = expand_nodelist(nodelist)
     if len(nodes) == 0:
         return
-    log.info(f"exclusive resume {nodelist=} {job_id=}")
+    log.info(f"exclusive resume {nodelist} {job_id}")
     machine_types = {
         lkp.node_prefix(node): lkp.node_template_info(node).machineType
         for node in split_nodelist(nodelist)
