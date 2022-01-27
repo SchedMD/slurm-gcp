@@ -63,9 +63,8 @@ def instance_properties(partition):
         'slurm_cluster_id': cfg.slurm_cluster_id,
         'slurm_instance_type': 'compute',
     }
-    props.labels['items'] = [
-        NSDict({'key': k, 'value': v}) for k, v in labels.items()
-    ]
+    for k, v in labels.items():
+        props.labels[k] = v
 
     return props
 
