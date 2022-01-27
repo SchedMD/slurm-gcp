@@ -450,7 +450,7 @@ def fetch_devel_scripts():
 def install_custom_scripts():
     """download custom scripts from project metadata"""
     script_pattern = re.compile(
-        r'{cfg.cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)')
+        rf'{cfg.cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)')
     metadata_keys = project_metadata('/')
 
     def match_name(meta_key):
