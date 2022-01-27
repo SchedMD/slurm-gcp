@@ -387,7 +387,7 @@ module "delta_critical" {
 module "delta_compute_list" {
   source = "../slurm_destroy_nodes"
 
-  slurm_cluster_id = var.slurm_cluster_id
+  slurm_cluster_id = local.slurm_cluster_id
   exclude_list     = var.compute_list
 
   triggers = {
