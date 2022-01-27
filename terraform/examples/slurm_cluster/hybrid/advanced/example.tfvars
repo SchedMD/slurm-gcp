@@ -118,8 +118,10 @@ slurm_cluster_defaults = {
   preemptible         = false
   region              = null
   service_account = {
-    email  = "default"
-    scopes = []
+    email = "default"
+    scopes = [
+      "https://www.googleapis.com/auth/cloud-platform",
+    ]
   }
   shielded_instance_config = {
     enable_integrity_monitoring = true
@@ -163,8 +165,7 @@ compute_node_groups_defaults = {
   service_account = {
     email = "default"
     scopes = [
-      "https://www.googleapis.com/auth/monitoring.write",
-      "https://www.googleapis.com/auth/logging.write",
+      "https://www.googleapis.com/auth/cloud-platform",
     ]
   }
 }
