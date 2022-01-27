@@ -120,7 +120,7 @@ locals {
       var.cluster_name,
       x.partition_name,
       x.group_name,
-      range(0, max(x.count_static, x.count_dynamic))
+      range(0, sum([x.count_static, x.count_dynamic]))
     )
   ])
 }
@@ -259,7 +259,7 @@ module "delta_instance_template" {
     var.cluster_name,
     each.value.partition_name,
     each.value.group_name,
-    range(0, max(each.value.count_static, each.value.count_dynamic))
+    range(0, sum([each.value.count_static, each.value.count_dynamic]))
   )])
 
   triggers = {
