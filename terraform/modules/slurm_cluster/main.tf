@@ -225,6 +225,6 @@ module "slurm_login_instance" {
 
   depends_on = [
     # Ensure Controller is up before attempting to mount file systems from it
-    module.slurm_controller_instance,
+    module.slurm_controller_instance[0].slurm_controller_instance,
   ]
 }
