@@ -1,5 +1,6 @@
 Changes in Slurm-GCP 4.1.5
 ==========================
+ -- Fix partition-specific network storage from controller to compute nodes.
 
 Changes in Slurm-GCP 4.1.4
 ==========================
