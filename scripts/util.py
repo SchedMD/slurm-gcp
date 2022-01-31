@@ -198,10 +198,12 @@ def config_from_metadata(use_cache=True):
     
     metadata_key = f'{cluster_name}-slurm-config'
     if use_cache:
-        config_yaml = yaml.safe_load(project_metadata(metadata_key))
+        config_yaml = project_metadata(metadata_key)
     else:
-        config_yaml = yaml.safe_load(project_metadata.__wrapped__(metadata_key))
-    cfg = new_config(config_yaml)  # noqa F811
+        config_yaml = project_metadata.__wrapped__(metadata_key)
+    if not config_yaml:
+        return None
+    cfg = new_config(yaml.safe_load(config_yaml))
     return cfg
 
 
