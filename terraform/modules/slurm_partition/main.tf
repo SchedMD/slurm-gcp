@@ -19,13 +19,11 @@
 ##########
 
 locals {
-  compute_node_groups = { for x in var.compute_node_groups : x.group_name => x }
-
   partition = {
     partition_name = var.partition_name
     partition_conf = var.partition_conf
     partition_nodes = {
-      for x in local.compute_node_groups : x.group_name => {
+      for x in var.compute_node_groups : x.group_name => {
         group_name     = x.group_name
         partition_name = var.partition_name
         instance_template = (
@@ -40,10 +38,15 @@ locals {
     subnetwork        = data.google_compute_subnetwork.partition_subnetwork.self_link
     zone_policy_allow = setsubtract(var.zone_policy_allow, var.zone_policy_deny)
     zone_policy_deny  = var.zone_policy_deny
-    exclusive         = var.enable_placement_groups == true ? true : var.enable_job_exclusive
-    placement_groups  = var.enable_placement_groups
+    exclusive         = local.enable_placement_groups || var.enable_job_exclusive
+    placement_groups  = local.enable_placement_groups
     network_storage   = var.network_storage
   }
+
+  enable_placement_groups = var.enable_placement_groups && alltrue([
+    for x in data.google_compute_instance_template.partition_template
+    : length(regexall("^c2[0-9a-z]*-[0-9a-z]+-[0-9]+$", x.machine_type)) > 0
+  ])
 
   compute_list = flatten([
     for x in local.partition.partition_nodes
@@ -80,6 +83,21 @@ data "google_compute_instance_template" "group_template" {
   for_each = {
     for x in var.compute_node_groups : x.group_name => x
     if(x.instance_template != null && x.instance_template != "")
+  }
+
+  name    = each.value.instance_template
+  project = var.project_id
+}
+
+data "google_compute_instance_template" "partition_template" {
+  for_each = {
+    for x in var.compute_node_groups : x.group_name => {
+      instance_template = (
+        x.instance_template != null && x.instance_template != ""
+        ? data.google_compute_instance_template.group_template[x.group_name].self_link
+        : module.slurm_compute_template[x.group_name].self_link
+      )
+    }
   }
 
   name    = each.value.instance_template

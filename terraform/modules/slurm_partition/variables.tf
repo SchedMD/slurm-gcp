@@ -177,7 +177,11 @@ EOD
 variable "enable_job_exclusive" {
   description = <<EOD
 Enables job exclusivity. A job will run exclusively on the scheduled nodes.
-NOTE: enable_placement_groups=true will force enable_job_exclusive=true.
+
+NOTE: enable_placement_groups=true will set enable_job_exclusive=true when the
+partition only contains compute optimized machine_types (e.g. c2-standard-60,
+c2d-standard-112); otherwise enable_placement_groups=false will be set instead
+and enable_job_exclusive will be respected.
 EOD
   type        = bool
   default     = false
@@ -186,7 +190,11 @@ EOD
 variable "enable_placement_groups" {
   description = <<EOD
 Enables job placement groups. Instances will be colocated for a job.
-NOTE: enable_placement_groups=true will force enable_job_exclusive=true.
+
+NOTE: enable_placement_groups=true will set enable_job_exclusive=true when the
+partition only contains compute optimized machine_types (e.g. c2-standard-60,
+c2d-standard-112); otherwise enable_placement_groups=false will be set instead
+and enable_job_exclusive will be respected.
 EOD
   type        = bool
   default     = false
