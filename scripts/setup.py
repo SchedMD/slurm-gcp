@@ -454,7 +454,7 @@ def install_custom_scripts():
     """download custom scripts from project metadata"""
     script_pattern = re.compile(
         rf'{cfg.cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)')
-    metadata_keys = project_metadata('/')
+    metadata_keys = project_metadata('/').splitlines()
 
     def match_name(meta_key):
         m = script_pattern.match(meta_key)
@@ -465,7 +465,9 @@ def install_custom_scripts():
         # or `<controller/compute>.d/<name>`
         parts = m['path'].split('-')
         parts[0] += '.d'
-        return meta_key, Path(*parts, m['name'])
+        name, _, ext = m['name'].rpartition('_')
+        name = '.'.join((name, ext))
+        return meta_key, Path(*parts, name)
 
     def filter_role(meta_entry):
         if not meta_entry:
@@ -474,23 +476,50 @@ def install_custom_scripts():
         role, part = list(path.parents)[0:2]
 
         # login only needs compute scripts
-        if cfg.instance_role == 'login':
+        if lkp.instance_role == 'login':
             return role == 'compute'
         # compute needs compute and the matching partition
-        if cfg.instance_role == 'compute':
+        if lkp.instance_role == 'compute':
             return role == 'compute' or part == lkp.node_partition_name()
         # controller downloads them all for good measure
         return True
 
     custom_scripts = list(filter(filter_role, map(match_name, metadata_keys)))
+    log.info("installing custom scripts: {}".format(
+        ','.join(str(path) for key, path in custom_scripts)
+    ))
 
     for key, path in custom_scripts:
-        path = (dirs.scripts/path).resolve()
+        path = (dirs.scripts/'custom_scripts'/path).resolve()
+        log.debug(path)
         content = project_metadata(key)
         path.parent.mkdirp()
         path.write_text(content)
         path.chmod(0o755)
         shutil.chown(path, user='slurm', group='slurm')
+
+
+def run_custom_scripts():
+    """ run custom scripts based on instance_role """
+    custom_dir = dirs.scripts/'custom_scripts'
+    if lkp.instance_role == 'controller':
+        # controller has all scripts, but only runs controller.d
+        custom_dir = custom_dir/'controller.d'
+    custom_scripts = [
+        p for p in custom_dir.rglob('*') if not p.name.endswith('.disabled')
+    ]
+    log.debug(custom_scripts)
+
+    try:
+        for script in custom_scripts:
+            log.info(f"running script {script.name}")
+            result = run(str(script), timeout=300, check=False)
+            runlog = (f"{script.name} returncode={result.returncode}\n"
+                      f"stdout={result.stdout}stderr={result.stderr}")
+            log.info(runlog)
+    except Exception:
+        # Ignore blank files with no shell magic.
+        pass
 
 
 def local_mounts(mountlist):
@@ -770,28 +799,6 @@ def configure_dirs():
         scripts_log.unlink()
     scripts_log.symlink_to(dirs.log)
     shutil.chown(scripts_log, user='slurm', group='slurm')
-
-
-def run_custom_scripts():
-    """ run custom scripts based on instance_role """
-    custom_dir = dirs.scripts/'custom'
-    if lkp.instance_role == 'controller':
-        custom_dir = custom_dir/'controller.d'
-    custom_scripts = (
-        p for p in custom_dir.rglob('*') if not p.name.endswith('.disabled')
-    )
-
-    try:
-        for script in custom_scripts:
-            result = run(str(script), timeout=300)
-        log.info(f"""
-returncode={result.returncode}
-stdout={result.stdout}
-stdout={result.stderr}
-"""[1:])
-    except Exception:
-        # Ignore blank files with no shell magic.
-        pass
 
 
 def setup_controller():
