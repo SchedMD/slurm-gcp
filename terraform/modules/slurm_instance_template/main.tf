@@ -89,7 +89,7 @@ module "instance_template" {
   # Instance
   machine_type             = var.machine_type
   min_cpu_platform         = var.min_cpu_platform
-  name_prefix              = "${var.cluster_name}-controller-${var.name_prefix}"
+  name_prefix              = "${var.cluster_name}-${local.slurm_instance_type}-${var.name_prefix}"
   gpu                      = var.gpu
   service_account          = local.service_account
   shielded_instance_config = var.shielded_instance_config
