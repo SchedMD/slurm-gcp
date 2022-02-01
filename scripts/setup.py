@@ -483,7 +483,8 @@ def install_custom_scripts():
         if not meta_entry:
             return False
         key, path = meta_entry
-        role, part = list(path.parents)[0:2]
+        role, part = list(map(str, path.parents))[0:2]
+        role = role[:-2]
 
         # login only needs compute scripts
         if lkp.instance_role == 'login':
@@ -516,9 +517,11 @@ def run_custom_scripts():
         # controller has all scripts, but only runs controller.d
         custom_dir = custom_dir/'controller.d'
     custom_scripts = [
-        p for p in custom_dir.rglob('*') if not p.name.endswith('.disabled')
+        p for p in custom_dir.rglob('*')
+        if p.is_file() and not p.name.endswith('.disabled')
     ]
-    log.debug(custom_scripts)
+    print_scripts = ','.join(str(s.relative_to(custom_dir)) for s in custom_scripts)
+    log.debug(f"custom scripts to run: {custom_dir}/({print_scripts})")
 
     try:
         for script in custom_scripts:
@@ -527,9 +530,10 @@ def run_custom_scripts():
             runlog = (f"{script.name} returncode={result.returncode}\n"
                       f"stdout={result.stdout}stderr={result.stderr}")
             log.info(runlog)
-    except Exception:
-        # Ignore blank files with no shell magic.
-        pass
+            result.check_returncode()
+    except OSError as e:
+        log.error(f"script {script} is not executable")
+        raise e
 
 
 def local_mounts(mountlist):
