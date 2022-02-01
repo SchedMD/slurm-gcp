@@ -22,9 +22,6 @@ import logging
 import os
 import sys
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
-from itertools import groupby, chain, islice
 
 from addict import Dict as NSDict
 

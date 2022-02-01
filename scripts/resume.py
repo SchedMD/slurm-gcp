@@ -18,20 +18,16 @@
 # limitations under the License.
 
 import argparse
-import json
 import logging
 import os
-import re
 import sys
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
-from itertools import groupby, islice, filterfalse
+from itertools import groupby
 
 from addict import Dict as NSDict
 
 import util
-from util import run, chunked, parse_self_link
+from util import run, chunked
 from util import cfg, lkp, compute
 from util import batch_execute, seperate, split_nodelist, is_exclusive_node
 

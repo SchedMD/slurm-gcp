@@ -23,15 +23,13 @@ import shlex
 import socket
 import subprocess
 import sys
-from collections import defaultdict, deque
-from concurrent.futures import ThreadPoolExecutor, Future
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from functools import lru_cache, reduce
 from itertools import chain, compress, islice
-from operator import itemgetter
 from pathlib import Path
 from time import sleep, time
-from urllib import parse
 
 import google.auth
 import googleapiclient.discovery

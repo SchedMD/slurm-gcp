@@ -24,9 +24,8 @@ import sys
 import stat
 import time
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, Future
-from functools import reduce, partialmethod, lru_cache
-from itertools import chain
+from concurrent.futures import ThreadPoolExecutor
+from functools import partialmethod, lru_cache
 from pathlib import Path
 from subprocess import DEVNULL
 

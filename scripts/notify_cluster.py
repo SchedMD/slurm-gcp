@@ -13,10 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO: this script will notify a pubsub topic that the cluster needs to restart
-# after a `terraform apply` and after `destroy_nodes.py` has run.
-
-"""Publishes multiple messages to a Pub/Sub topic with an error handler."""
 from datetime import datetime
 import argparse
 import json

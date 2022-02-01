@@ -21,7 +21,6 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from time import sleep
 from collections import namedtuple
 
 import util

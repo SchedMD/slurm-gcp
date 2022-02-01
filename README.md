@@ -336,7 +336,6 @@ able to communicate with the controller.
     
     e.g.
     ```sh
-    # TODO: update this
     ./resume.py g1-cpu-debug-0
     ./suspend.py g1-cpu-debug-0
     ```
