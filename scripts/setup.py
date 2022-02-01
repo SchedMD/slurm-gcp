@@ -152,9 +152,14 @@ def nodeset_names(node_group, part_name):
 
 def dict_to_conf(conf, delim=' '):
     """ convert dict to delimited slurm-style key-value pairs """
+    def filter_conf(pair):
+        k, v = pair
+        if isinstance(v, list):
+            v = ','.join(el for el in v if el)
+        return k, (v or None)
     return delim.join(
-        f"{k}={','.join(v) if isinstance(v, list) else v}"
-        for k, v in conf.items()
+        f"{k}={v}"
+        for k, v in map(filter_conf, conf.items())
         if v
     )
 
@@ -163,6 +168,12 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
     """generate cloud.conf snippet"""
     if cloud_parameters is None:
         cloud_parameters = lkp.cfg.cloud_parameters
+
+    any_gpus = any(
+        lkp.template_info(node.instance_template).gpu_count > 0
+        for part in cfg.partitions.values()
+        for node in part.partition_nodes.values()
+    )
 
     def conflines(cloud_parameters):
         scripts_dir = lkp.cfg.scripts or dirs.scripts
@@ -186,7 +197,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
                 'NoAddrCache',
             ],
             'GresTypes': [
-                'gpu',
+                'gpu' if any_gpus else None,
             ],
         }
         conf_options = {
