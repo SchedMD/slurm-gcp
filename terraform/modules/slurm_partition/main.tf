@@ -24,15 +24,11 @@ locals {
     partition_conf = var.partition_conf
     partition_nodes = {
       for x in var.compute_node_groups : x.group_name => {
-        group_name     = x.group_name
-        partition_name = var.partition_name
-        instance_template = (
-          x.instance_template != null && x.instance_template != ""
-          ? data.google_compute_instance_template.group_template[x.group_name].self_link
-          : module.slurm_compute_template[x.group_name].self_link
-        )
-        count_dynamic = x.count_dynamic
-        count_static  = x.count_static
+        group_name        = x.group_name
+        partition_name    = var.partition_name
+        instance_template = data.google_compute_instance_template.group_template[x.group_name].self_link
+        count_dynamic     = x.count_dynamic
+        count_static      = x.count_static
       }
     }
     subnetwork        = data.google_compute_subnetwork.partition_subnetwork.self_link
@@ -44,7 +40,7 @@ locals {
   }
 
   enable_placement_groups = var.enable_placement_groups && alltrue([
-    for x in data.google_compute_instance_template.partition_template
+    for x in data.google_compute_instance_template.group_template
     : length(regexall("^c2[0-9a-z]*-[0-9a-z]+-[0-9]+$", x.machine_type)) > 0
   ])
 
@@ -80,27 +76,13 @@ data "google_compute_subnetwork" "partition_subnetwork" {
 ##################
 
 data "google_compute_instance_template" "group_template" {
-  for_each = {
-    for x in var.compute_node_groups : x.group_name => x
-    if(x.instance_template != null && x.instance_template != "")
-  }
+  for_each = { for x in var.compute_node_groups : x.group_name => x }
 
-  name    = each.value.instance_template
-  project = var.project_id
-}
-
-data "google_compute_instance_template" "partition_template" {
-  for_each = {
-    for x in var.compute_node_groups : x.group_name => {
-      instance_template = (
-        x.instance_template != null && x.instance_template != ""
-        ? data.google_compute_instance_template.group_template[x.group_name].self_link
-        : module.slurm_compute_template[x.group_name].self_link
-      )
-    }
-  }
-
-  name    = each.value.instance_template
+  name = (
+    each.value.instance_template != null && each.value.instance_template != ""
+    ? each.value.instance_template
+    : module.slurm_compute_template[each.value.group_name].self_link
+  )
   project = var.project_id
 }
 
