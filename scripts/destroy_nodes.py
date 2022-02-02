@@ -93,7 +93,7 @@ if __name__ == '__main__':
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('slurm_cluster_id',
                         help="Slurm cluster ID label filter")
-    parser.add_argument('--target', help="NodeNames targeted for destroyed",
+    parser.add_argument('--target', help="NodeNames targeted for destruction",
                         type=str, default=None)
     parser.add_argument('--exclude', help="NodeNames excluded from destruction",
                         type=str, default=None)
