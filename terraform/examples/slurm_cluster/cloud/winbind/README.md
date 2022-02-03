@@ -54,13 +54,15 @@ limitations under the License.
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 3.53, < 5.0 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.0 |
+| <a name="requirement_template"></a> [template](#requirement\_template) | ~> 2.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.8.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | 4.9.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | 2.1.0 |
+| <a name="provider_template"></a> [template](#provider\_template) | 2.2.0 |
 
 ## Modules
 
@@ -73,6 +75,7 @@ limitations under the License.
 
 | Name | Type |
 |------|------|
+| [template_dir.tpl_dir](https://registry.terraform.io/providers/hashicorp/template/latest/docs/resources/dir) | resource |
 | [google_compute_subnetwork.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
 | [local_file.winbind_sh](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 
@@ -83,8 +86,12 @@ limitations under the License.
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"winbind-cloud"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The default region to place resources in. | `string` | n/a | yes |
+| <a name="input_smb_realm"></a> [smb\_realm](#input\_smb\_realm) | SMB Realm | `string` | n/a | yes |
+| <a name="input_smb_server"></a> [smb\_server](#input\_smb\_server) | SMB Server | `string` | n/a | yes |
+| <a name="input_smb_workgroup"></a> [smb\_workgroup](#input\_smb\_workgroup) | SMB Workgroup | `string` | n/a | yes |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Subnet to deploy to. Only one of network or subnetwork should be specified. | `string` | `"default"` | no |
 | <a name="input_subnetwork_project"></a> [subnetwork\_project](#input\_subnetwork\_project) | The project that subnetwork belongs to. | `string` | `null` | no |
+| <a name="input_winbind_join"></a> [winbind\_join](#input\_winbind\_join) | Username and password to authenticate the join with. (e.g. 'Administrator[%Password]') | `string` | n/a | yes |
 
 ## Outputs
 
