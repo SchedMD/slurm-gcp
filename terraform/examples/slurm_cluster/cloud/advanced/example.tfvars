@@ -75,7 +75,7 @@ controller_d = [
   #     content  = <<EOF
   # #!/bin/bash
   # set -ex
-  # echo "Hello, $(hostname) !"
+  # echo "Hello, $(hostname) from $(dirname $0) !"
   #     EOF
   #   },
 ]
@@ -85,7 +85,27 @@ compute_d = [
   #     content  = <<EOF
   # #!/bin/bash
   # set -ex
-  # echo "Hello, $(hostname) !"
+  # echo "Hello, $(hostname) from $(dirname $0) !"
+  #       EOF
+  #   },
+]
+prolog_d = [
+  #   {
+  #     filename = "hello_prolog.sh"
+  #     content  = <<EOF
+  # #!/bin/bash
+  # set -ex
+  # echo "Hello, $(hostname) from $(dirname $0) !"
+  #     EOF
+  #   },
+]
+epilog_d = [
+  #   {
+  #     filename = "hello_epilog.sh"
+  #     content  = <<EOF
+  # #!/bin/bash
+  # set -ex
+  # echo "Hello, $(hostname) from $(dirname $0) !"
   #       EOF
   #   },
 ]

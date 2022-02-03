@@ -67,6 +67,7 @@ dirs = NSDict({n: Path(p) for n, p in dict.items({
     'apps': '/opt/apps',
     'slurm': '/slurm',
     'scripts': '/slurm/scripts',
+    'custom_scripts': '/slurm/custom_scripts',
     'munge': '/etc/munge',
     'secdisk': '/mnt/disks/sec',
     'log': '/var/log/slurm'

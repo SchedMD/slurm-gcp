@@ -117,6 +117,10 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
             util.lkp = util.Lookup(cfg)
 
             # Regenerate *.conf files
+            log.info("Re-install custom scripts")
+            setup.install_custom_scripts(clean=True)
+            log.info("Run custom scripts")
+            setup.run_custom_scripts()
             log.info("Generating new cloud.conf for slurm.conf")
             setup.gen_cloud_conf(util.lkp)
             log.info("Generating new slurm.conf")

@@ -38,6 +38,7 @@ module "slurm_cluster" {
   controller_instance_config = var.controller_instance_config
   controller_d               = var.controller_d
   enable_devel               = var.enable_devel
+  epilog_d                   = var.epilog_d
   jwt_key                    = var.jwt_key
   login_network_storage      = var.login_network_storage
   login_node_groups          = var.login_node_groups
@@ -45,6 +46,7 @@ module "slurm_cluster" {
   network_storage            = var.network_storage
   partitions                 = var.partitions
   project_id                 = var.project_id
+  prolog_d                   = var.prolog_d
   slurmdbd_conf_tpl          = var.slurmdbd_conf_tpl
   slurm_conf_tpl             = var.slurm_conf_tpl
 }

@@ -199,10 +199,14 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
                 'gpu' if any_gpus else None,
             ],
         }
+        prolog_path = Path(dirs.custom_scripts/'prolog.d')
+        epilog_path = Path(dirs.custom_scripts/'epilog.d')
         conf_options = {
             **(comma_params if not no_comma_params else {}),
-            'PrologSlurmctld': f'{scripts_dir}/resume.py',
-            'EpilogSlurmctld': f'{scripts_dir}/suspend.py',
+            'Prolog': f"{prolog_path}/*" if prolog_path.is_dir() else None,
+            'Epilog': f"{epilog_path}/*" if epilog_path.is_dir() else None,
+            'PrologSlurmctld': f"{scripts_dir}/resume.py",
+            'EpilogSlurmctld': f"{scripts_dir}/suspend.py",
             'SuspendProgram': f'{scripts_dir}/suspend.py',
             'ResumeProgram': f'{scripts_dir}/resume.py',
             'ResumeFailProgram': f'{scripts_dir}/suspend.py',
@@ -460,7 +464,7 @@ def fetch_devel_scripts():
         shutil.chown(path, user='slurm', group='slurm')
 
 
-def install_custom_scripts():
+def install_custom_scripts(clean=False):
     """download custom scripts from project metadata"""
     script_pattern = re.compile(
         rf'{cfg.cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)')
@@ -488,10 +492,12 @@ def install_custom_scripts():
 
         # login only needs compute scripts
         if lkp.instance_role == 'login':
-            return role == 'compute'
-        # compute needs compute and the matching partition
+            script_types = ['compute']
+            return role in script_types
+        # compute needs compute, prolog, epilog, and the matching partition
         if lkp.instance_role == 'compute':
-            return role == 'compute' or part == lkp.node_partition_name()
+            script_types = ['compute', 'prolog', 'epilog']
+            return role in script_types or part == lkp.node_partition_name()
         # controller downloads them all for good measure
         return True
 
@@ -500,8 +506,14 @@ def install_custom_scripts():
         ','.join(str(path) for key, path in custom_scripts)
     ))
 
+    if clean:
+        path = Path(dirs.custom_scripts)
+        if path.exists() and path.is_dir():
+            # rm -rf custom_scripts
+            shutil.rmtree(path)
+
     for key, path in custom_scripts:
-        path = (dirs.scripts/'custom_scripts'/path).resolve()
+        path = (dirs.custom_scripts/path).resolve()
         log.debug(path)
         content = project_metadata(key)
         path.parent.mkdirp()
@@ -512,12 +524,21 @@ def install_custom_scripts():
 
 def run_custom_scripts():
     """ run custom scripts based on instance_role """
-    custom_dir = dirs.scripts/'custom_scripts'
+    custom_dir = dirs.custom_scripts
     if lkp.instance_role == 'controller':
         # controller has all scripts, but only runs controller.d
-        custom_dir = custom_dir/'controller.d'
+        custom_dirs = [custom_dir/'controller.d']
+    elif lkp.instance_role == 'compute':
+        # compute setup with compute.d and partition.d
+        custom_dirs = [custom_dir/'compute.d', custom_dir/'partition.d']
+    elif lkp.instance_role == 'login':
+        # login  setup with only compute.d
+        custom_dirs = [custom_dir/'compute.d']
+    else:
+        # Unknown role: run nothing
+        custom_dirs = []
     custom_scripts = [
-        p for p in custom_dir.rglob('*')
+        p for d in custom_dirs for p in d.rglob('*')
         if p.is_file() and not p.name.endswith('.disabled')
     ]
     print_scripts = ','.join(str(s.relative_to(custom_dir)) for s in custom_scripts)

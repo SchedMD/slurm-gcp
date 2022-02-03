@@ -242,6 +242,30 @@ resource "google_compute_project_metadata_item" "compute_d" {
   value = each.value.content
 }
 
+resource "google_compute_project_metadata_item" "prolog_d" {
+  project = var.project_id
+
+  for_each = {
+    for x in var.prolog_d
+    : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
+  }
+
+  key   = "${var.cluster_name}-slurm-prolog-script-${each.key}"
+  value = each.value.content
+}
+
+resource "google_compute_project_metadata_item" "epilog_d" {
+  project = var.project_id
+
+  for_each = {
+    for x in var.epilog_d
+    : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
+  }
+
+  key   = "${var.cluster_name}-slurm-epilog-script-${each.key}"
+  value = each.value.content
+}
+
 ##################
 # PUBSUB: SCHEMA #
 ##################
@@ -374,14 +398,19 @@ module "delta_critical" {
       => sha256(x.content)
     },
     {
+      for x in var.prolog_d
+      : "prolog_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
+      => sha256(x.content)
+    },
+    {
+      for x in var.epilog_d
+      : "epilog_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
+      => sha256(x.content)
+    },
+    {
       controller_id = module.slurm_controller_instance.instances_details[0].instance_id
     },
   )
-
-  depends_on = [
-    # Ensure compute_d metadata is updated before destroying nodes
-    google_compute_project_metadata_item.compute_d,
-  ]
 }
 
 # Destroy all removed compute nodes when partitions change

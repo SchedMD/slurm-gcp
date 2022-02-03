@@ -166,6 +166,32 @@ variable "compute_d" {
   default = []
 }
 
+variable "prolog_d" {
+  description = <<EOD
+List of scripts to be used for Prolog. Programs for the slurmd to execute
+whenever it is asked to run a job step from a new job allocation.
+See https://slurm.schedmd.com/slurm.conf.html#OPT_Prolog.
+EOD
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
+variable "epilog_d" {
+  description = <<EOD
+List of scripts to be used for Epilog. Programs for the slurmd to execute
+on every node when a user's job completes.
+See https://slurm.schedmd.com/slurm.conf.html#OPT_Epilog.
+EOD
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
 ##############
 # CONTROLLER #
 ##############

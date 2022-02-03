@@ -35,6 +35,7 @@ module "slurm_cluster" {
   compute_d                = var.compute_d
   controller_hybrid_config = var.controller_hybrid_config
   enable_devel             = var.enable_devel
+  epilog_d                 = var.epilog_d
   enable_hybrid            = true
   jwt_key                  = var.jwt_key
   login_network_storage    = var.login_network_storage
@@ -42,6 +43,7 @@ module "slurm_cluster" {
   network_storage          = var.network_storage
   partitions               = var.partitions
   project_id               = var.project_id
+  prolog_d                 = var.prolog_d
 }
 
 ##################

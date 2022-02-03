@@ -131,11 +131,13 @@ module "slurm_controller_instance" {
   controller_d          = var.controller_d
   compute_d             = var.compute_d
   enable_devel          = var.enable_devel
+  epilog_d              = var.epilog_d
   jwt_key               = var.jwt_key
   login_network_storage = var.login_network_storage
   munge_key             = var.munge_key
   network_storage       = var.network_storage
   partitions            = values(module.slurm_partition)[*]
+  prolog_d              = var.prolog_d
   slurmdbd_conf_tpl     = var.slurmdbd_conf_tpl
   slurm_conf_tpl        = var.slurm_conf_tpl
 }
@@ -161,9 +163,11 @@ module "slurm_controller_hybrid" {
   cloud_parameters     = var.cloud_parameters
   compute_d            = var.compute_d
   enable_devel         = var.enable_devel
+  epilog_d             = var.epilog_d
   jwt_key              = var.jwt_key
   munge_key            = var.munge_key
   partitions           = values(module.slurm_partition)[*]
+  prolog_d             = var.prolog_d
 }
 
 ###################
