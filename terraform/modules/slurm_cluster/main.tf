@@ -160,6 +160,7 @@ module "slurm_controller_hybrid" {
   output_dir           = var.controller_hybrid_config.output_dir
   cloud_parameters     = var.cloud_parameters
   compute_d            = var.compute_d
+  enable_devel         = var.enable_devel
   jwt_key              = var.jwt_key
   munge_key            = var.munge_key
   partitions           = values(module.slurm_partition)[*]
