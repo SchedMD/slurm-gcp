@@ -208,14 +208,7 @@ def create_placement_groups(job_id, node_list, partition_name):
     return reverse_groups
 
 
-def prolog_resume_nodes(nodelist, job_id):
-    """resume exclusive nodes in the node list"""
-    # called from PrologSlurmctld, these nodes are expected to be in the same
-    # partition and part of the same job
-    nodes = expand_nodelist(nodelist)
-    if len(nodes) == 0:
-        return
-    log.info(f"exclusive resume {nodelist} {job_id}")
+def valid_placement_nodes(nodelist):
     machine_types = {
         lkp.node_prefix(node): lkp.node_template_info(node).machineType
         for node in split_nodelist(nodelist)
@@ -229,15 +222,28 @@ def prolog_resume_nodes(nodelist, job_id):
             )
             fail = True
     if fail:
-        log.fatal("Please use c2 or c2d machine types with placement policy")
+        log.error("Please use c2 or c2d machine types with placement policy")
+        return False
+    return True
+
+
+def prolog_resume_nodes(nodelist, job_id):
+    """resume exclusive nodes in the node list"""
+    # called from PrologSlurmctld, these nodes are expected to be in the same
+    # partition and part of the same job
+    nodes = expand_nodelist(nodelist)
+    if len(nodes) == 0:
         return
+    log.info(f"exclusive resume {nodelist} {job_id}")
 
     model = next(iter(nodes))
     partition = lkp.node_partition(model)
     placement_groups = None
     if partition.enable_placement_groups:
-        placement_groups = create_placement_groups(job_id, nodes,
-                                                   partition.partition_name)
+        placement_groups = create_placement_groups(
+            job_id, nodes, partition.partition_name)
+        if not valid_placement_nodes(nodelist):
+            return
     resume_nodes(nodes, placement_groups)
 
 
