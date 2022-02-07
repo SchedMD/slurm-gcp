@@ -48,6 +48,12 @@ def instance_properties(partition):
         'subnetwork': partition.subnetwork,
     }]
 
+    return props
+
+
+def per_instance_properties(node, placement_groups=None):
+    props = NSDict()
+
     metadata = {
         'cluster_name': cfg.cluster_name,
         'instance_type': 'compute',
@@ -58,12 +64,20 @@ def instance_properties(partition):
         NSDict({'key': k, 'value': v}) for k, v in metadata.items()
     ]
 
-    labels = {
+    props.labels = {
         'slurm_cluster_id': cfg.slurm_cluster_id,
         'slurm_instance_type': 'compute',
     }
-    for k, v in labels.items():
-        props.labels[k] = v
+
+    if placement_groups:
+        # certain properties are constrained
+        props.scheduling = {
+            'onHostMaintenance': 'TERMINATE',
+            'automaticRestart': False,
+        }
+        props.resourcePolicies = [
+            placement_groups[node],
+        ]
 
     return props
 
@@ -80,20 +94,16 @@ def create_instances_request(nodes, placement_groups=None):
 
     body = NSDict()
     body.count = len(nodes)
+
+    # source of instance properties
     body.sourceInstanceTemplate = template
-    # this chooses the names for each instance
-    if placement_groups is None:
-        body.perInstanceProperties = {k: {} for k in nodes}
-    else:
-        # if there are placement groups, all nodes should have one
-        body.perInstanceProperties = {k: {
-            'scheduling': {
-                'onHostMaintenance': 'TERMINATE',
-                'automaticRestart': False,
-            },
-            'resourcePolicies': [placement_groups[k]],
-        } for k in nodes}
+
+    # overwrites properties accross all instances
     body.instanceProperties = instance_properties(partition)
+
+    # key is instance name, value overwrites properties
+    body.perInstanceProperties = {
+        k: per_instance_properties(k, placement_groups) for k in nodes}
 
     request = compute.regionInstances().bulkInsert(
         project=cfg.project, region=region, body=body.to_dict()
