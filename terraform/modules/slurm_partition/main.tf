@@ -110,6 +110,7 @@ module "slurm_compute_template" {
   enable_oslogin           = each.value.enable_oslogin
   enable_shielded_vm       = each.value.enable_shielded_vm
   gpu                      = each.value.gpu
+  labels                   = each.value.labels
   machine_type             = each.value.machine_type
   metadata                 = each.value.metadata
   min_cpu_platform         = each.value.min_cpu_platform
