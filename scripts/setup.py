@@ -34,6 +34,7 @@ from addict import Dict as NSDict
 import util
 from util import run, instance_metadata, project_metadata, seperate
 from util import lkp, cfg, dirs, slurmdirs
+import slurmsync
 
 SETUP_SCRIPT = Path(__file__)
 filename = SETUP_SCRIPT.name
@@ -147,6 +148,14 @@ def nodeset_names(node_group, part_name):
     static_nodelist = f'{prefix}-{static_range}' if static_count else None
     dynamic_nodelist = f'{prefix}-{dynamic_range}' if dynamic_count else None
     return static_nodelist, dynamic_nodelist
+
+
+def static_nodeset():
+    return filter(None, (
+        nodeset_names(node, part.partition_name)[0]
+        for part in lkp.cfg.partitions.values()
+        for node in part.partition_nodes.values()
+    ))
 
 
 def dict_to_conf(conf, delim=' '):
@@ -292,11 +301,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
         ]
         return '\n'.join(lines)
 
-    static_nodes = ','.join(filter(None, (
-        nodeset_names(node, part.partition_name)[0]
-        for part in lkp.cfg.partitions.values()
-        for node in part.partition_nodes.values()
-    )))
+    static_nodes = ','.join(static_nodeset())
     suspend_exc = dict_to_conf({
         'SuspendExcNodes': static_nodes,
     }) if static_nodes else None
@@ -890,6 +895,7 @@ def setup_controller():
 
     setup_nfs_exports()
     setup_sync_cronjob()
+    slurmsync.sync_slurm()
 
     log.info("Done setting up controller")
     pass

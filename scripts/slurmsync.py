@@ -27,6 +27,8 @@ import util
 from util import run, seperate, batch_execute
 from util import lkp, cfg, compute, dirs
 from suspend import delete_instances
+from resume import resume_nodes
+from setup import static_nodeset
 
 
 filename = Path(__file__).name
@@ -99,10 +101,12 @@ def sync_slurm():
     }
 
     gcp_instances = lkp.instances()
+    static_set = set(static_nodeset())
 
     to_down = []
     to_idle = []
     to_start = []
+    to_resume = []
     for node, state in slurm_nodes.items():
         inst = lkp.instance(node)
         info = lkp.node_template_info(node)
@@ -135,6 +139,8 @@ def sync_slurm():
                 to_idle.append(node)
             elif state.base.startswith('COMPLETING'):
                 to_down.append(node)
+            elif node in static_set:
+                to_resume.append(node)
 
     if len(to_down):
         log.info("{} stopped/deleted instances ({})".format(
@@ -151,6 +157,12 @@ def sync_slurm():
             len(to_idle), ','.join(to_idle)))
         hostlist = to_hostlist(to_idle)
         run(f"{SCONTROL} update nodename={hostlist} state=resume")
+
+    if len(to_resume):
+        log.info("{} instances to resume ({})".format(
+            len(to_resume), ','.join(to_resume)))
+        hostlist = to_hostlist(to_resume)
+        resume_nodes(hostlist)
 
     # orphans are powered down in slurm but still running in GCP. They must be
     # purged
