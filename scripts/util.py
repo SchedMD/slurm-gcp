@@ -191,18 +191,22 @@ def new_config(config):
     return cfg
 
 
-def config_from_metadata(use_cache=True):
+def config_from_metadata():
     # get setup config from metadata
     slurm_cluster_name = instance_metadata('attributes/slurm_cluster_name')
     if not slurm_cluster_name:
         return None
     
     metadata_key = f'{slurm_cluster_name}-slurm-config'
-    if use_cache:
-        config_yaml = project_metadata(metadata_key)
-    else:
+    RETRY_WAIT = 2
+    for i in range(8):
+        if i:
+            log.error(f"config not found in project metadata, retry {i}")
+            sleep(RETRY_WAIT)
         config_yaml = project_metadata.__wrapped__(metadata_key)
-    if not config_yaml:
+        if config_yaml is not None:
+            break
+    else:
         return None
     cfg = new_config(yaml.safe_load(config_yaml))
     return cfg

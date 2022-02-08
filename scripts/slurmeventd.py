@@ -112,7 +112,7 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
             update_partitions(partitions, 'INACTIVE')
 
             # Fetch and write new config.yaml
-            cfg = util.config_from_metadata(use_cache=False)
+            cfg = util.config_from_metadata()
             util.save_config(cfg, util.CONFIG_FILE)
             util.cfg = cfg
             util.lkp = util.Lookup(cfg)
