@@ -129,7 +129,7 @@ def create_instances_request(nodes, placement_groups=None):
 
 def expand_nodelist(nodelist):
     """ expand nodes in hostlist to hostnames """
-    if nodelist is None:
+    if not nodelist:
         return []
 
     # TODO use a python library instead?
@@ -247,9 +247,11 @@ def prolog_resume_nodes(nodelist, job_id):
     resume_nodes(nodes, placement_groups)
 
 
-def main(nodelist, job_id):
+def main(nodelist, job_id, force=False):
     """ main called when run as script """
     log.debug(f"main {nodelist} {job_id}")
+    if force:
+        resume_nodes(nodelist)
     # nodes are split between normal and exclusive
     # exclusive nodes are handled by PrologSlurmctld
     node_groups = split_nodelist(nodelist)
@@ -271,6 +273,10 @@ parser.add_argument(
 parser.add_argument(
     'job_id', nargs='?', default=None,
     help="Optional job id for node list. Implies that PrologSlurmctld called program"
+)
+parser.add_argument(
+    '--force', '-f', '--static', action='store_true',
+    help="Force attempted creation of the nodelist, whether nodes are exclusive or not."
 )
 parser.add_argument('--debug', '-d', dest='debug', action='store_true',
                     help='Enable debugging output')
@@ -295,4 +301,4 @@ if __name__ == '__main__':
                                 logfile=LOGFILE)
     sys.excepthook = util.handle_exception
 
-    main(args.nodelist, args.job_id)
+    main(args.nodelist, args.job_id, args.force)
