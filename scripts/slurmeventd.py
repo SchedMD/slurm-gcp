@@ -27,6 +27,7 @@ from util import config_root_logger, handle_exception, run, publish_message
 
 filename = Path(__file__).name
 logfile = (Path(cfg.slurm_log_dir if cfg else '.')/filename).with_suffix('.log')
+util.chown_slurm(logfile, mode=0o600)
 config_root_logger(filename, level='DEBUG', util_level='DEBUG',
                    logfile=logfile)
 log = logging.getLogger(filename)

@@ -320,6 +320,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
         shutil.copy2(conf_file, conf_file_bak)
     content = '\n\n'.join(filter(None, lines))
     conf_file.write_text(content)
+    util.chown_slurm(conf_file, mode=0o644)
 
 
 def install_slurm_conf(lkp):
@@ -345,10 +346,7 @@ def install_slurm_conf(lkp):
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
-    try:
-        shutil.chown(conf_file, user='slurm', group='slurm')
-    except:
-        log.error(f"Not authorized to 'chown slurm:slurm {conf_file}'.")
+    util.chown_slurm(conf_file, mode=0o644)
 # END install_slurm_conf()
 
 
@@ -383,11 +381,7 @@ def install_slurmdbd_conf(lkp):
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
-    try:
-        shutil.chown(conf_file, user='slurm', group='slurm')
-    except:
-        log.error(f"Not authorized to 'chown slurm:slurm {conf_file}'.")
-    conf_file.chmod(0o600)
+    util.chown_slurm(conf_file, 0o600)
 # END install_slurmdbd_conf()
 
 
@@ -400,10 +394,7 @@ def install_cgroup_conf():
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
-    try:
-        shutil.chown(conf_file, user='slurm', group='slurm')
-    except:
-        log.error(f"Not authorized to 'chown slurm:slurm {conf_file}'.")
+    util.chown_slurm(conf_file, mode=0o600)
 
 
 def install_gres_conf(lkp):
@@ -434,10 +425,7 @@ def install_gres_conf(lkp):
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(content)
-    try:
-        shutil.chown(conf_file, user='slurm', group='slurm')
-    except:
-        log.error(f"Not authorized to 'chown slurm:slurm {conf_file}'.")
+    util.chown_slurm(conf_file, mode=0o600)
 
 
 def fetch_devel_scripts():
@@ -466,8 +454,7 @@ def fetch_devel_scripts():
         path = (dirs.scripts/script).resolve()
         # make sure parent dir exists
         path.write_text(content)
-        path.chmod(0o755)
-        shutil.chown(path, user='slurm', group='slurm')
+        util.chown_slurm(path, mode=0o755)
 
 
 def install_custom_scripts(clean=False):
@@ -520,12 +507,13 @@ def install_custom_scripts(clean=False):
 
     for key, path in custom_scripts:
         path = (dirs.custom_scripts/path).resolve()
+        path.parent.mkdirp()
+        for par in path.parents:
+            util.chown_slurm(par)
         log.debug(path)
         content = project_metadata(key)
-        path.parent.mkdirp()
         path.write_text(content)
-        path.chmod(0o755)
-        shutil.chown(path, user='slurm', group='slurm')
+        util.chown_slurm(path, mode=0o755)
 
 
 def run_custom_scripts():
@@ -754,8 +742,7 @@ def setup_jwt_key():
     else:
         run("dd if=/dev/urandom bs=32 count=1 >"+str(jwt_key), shell=True)
 
-    run(f"chown -R slurm:slurm {jwt_key}")
-    jwt_key.chmod(0o400)
+    util.chown_slurm(jwt_key, mode=0o400)
 
 
 def setup_slurmd_cronjob():
@@ -821,31 +808,29 @@ innodb_lock_wait_timeout=900
 def configure_dirs():
 
     for p in dirs.values():
-        p.mkdir(parents=True, exist_ok=True)
-    shutil.chown(dirs.slurm, user='slurm', group='slurm')
-    shutil.chown(dirs.scripts, user='slurm', group='slurm')
+        p.mkdirp()
+    util.chown_slurm(dirs.slurm)
+    util.chown_slurm(dirs.scripts)
 
     for p in slurmdirs.values():
-        p.mkdir(parents=True, exist_ok=True)
-        shutil.chown(p, user='slurm', group='slurm')
+        p.mkdirp()
+        util.chown_slurm(p)
 
     scripts_etc = dirs.scripts/'etc'
     if scripts_etc.exists() and scripts_etc.is_symlink():
         scripts_etc.unlink()
     scripts_etc.symlink_to(slurmdirs.etc)
-    shutil.chown(scripts_etc, user='slurm', group='slurm')
 
     scripts_log = dirs.scripts/'log'
     if scripts_log.exists() and scripts_log.is_symlink():
         scripts_log.unlink()
     scripts_log.symlink_to(dirs.log)
-    shutil.chown(scripts_log, user='slurm', group='slurm')
 
 
 def setup_controller():
     """ Run controller setup """
     log.info("Setting up controller")
-    shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
+    util.chown_slurm(dirs.scripts/'config.yaml', mode=0o600)
     install_custom_scripts()
 
     install_slurm_conf(lkp)
@@ -918,7 +903,7 @@ def setup_login():
 def setup_compute():
     """ run compute node setup """
     log.info("Setting up compute")
-    shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
+    util.chown_slurm(dirs.scripts/'config.yaml', mode=0o600)
     install_custom_scripts()
 
     setup_nss_slurm()
@@ -966,6 +951,7 @@ def main():
 
 
 if __name__ == '__main__':
+    util.chown_slurm(LOGFILE, mode=0o600)
     util.config_root_logger(filename, logfile=LOGFILE, util_level='DEBUG')
     sys.excepthook = util.handle_exception
 

@@ -26,7 +26,7 @@
         rotate 5
         sharedscripts
         size=5M
-        create 640 slurm root
+        create 600 slurm root
         postrotate
                 pkill -x --signal SIGUSR2 slurmctld
                 pkill -x --signal SIGUSR2 slurmd

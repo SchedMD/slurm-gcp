@@ -20,13 +20,14 @@ import logging.config
 import os
 import re
 import shlex
+import shutil
 import socket
 import subprocess
 import sys
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from functools import lru_cache, reduce
+from functools import lru_cache, reduce, partialmethod
 from itertools import chain, compress, islice
 from pathlib import Path
 from time import sleep, time
@@ -53,6 +54,7 @@ API_REQ_LIMIT = 2000
 
 log = logging.getLogger(__name__)
 def_creds,  project = google.auth.default()
+Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
 # readily available compute api handle
 compute = None
@@ -297,6 +299,22 @@ def spawn(cmd, quiet=False, shell=False, **kwargs):
         log.debug(f"spawn: {cmd}")
     args = cmd if shell else shlex.split(cmd)
     return subprocess.Popen(args, shell=shell, **kwargs)
+
+
+def chown_slurm(path, mode=None):
+    if path.exists():
+        if mode:
+            path.chmod(mode)
+    else:
+        path.parent.mkdirp()
+        if mode:
+            path.touch(mode=mode)
+        else:
+            path.touch()
+    try:
+        shutil.chown(path, user='slurm', group='slurm')
+    except PermissionError:
+        log.error(f"Not authorized to 'chown slurm:slurm {path}'.")
 
 
 @contextmanager

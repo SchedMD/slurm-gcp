@@ -293,6 +293,7 @@ if __name__ == '__main__':
     else:
         args = parser.parse_args()
 
+    util.chown_slurm(LOGFILE, mode=0o600)
     if args.debug:
         util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
                                 logfile=LOGFILE)
