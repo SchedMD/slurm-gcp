@@ -166,10 +166,10 @@ def create_placement_request(pg_name, region, count):
     )
 
 
-def create_placement_groups(job_id, node_list):
+def create_placement_groups(job_id, node_list, partition_name):
     PLACEMENT_MAX_CNT = 22
     groups = {
-        f'{cfg.cluster_name}-{job_id}-{i}': nodes
+        f'{cfg.cluster_name}-{partition_name}-{job_id}-{i}': nodes
         for i, nodes in enumerate(chunked(node_list, n=PLACEMENT_MAX_CNT))
     }
     reverse_groups = {
@@ -220,9 +220,10 @@ def prolog_resume_nodes(nodelist, job_id):
     partition = lkp.node_partition(model)
     placement_groups = None
     if partition.placement_groups:
-        placement_groups = create_placement_groups(job_id, nodes)
+        placement_groups = create_placement_groups(job_id, nodes,
+                                                   partition.partition_name)
     resume_nodes(nodes, placement_groups)
-    
+
 
 def main(nodelist, job_id):
     """ main called when run as script """

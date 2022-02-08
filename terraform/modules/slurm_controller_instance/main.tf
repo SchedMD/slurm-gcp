@@ -400,3 +400,15 @@ module "delta_compute_list" {
     module.delta_critical,
   ]
 }
+
+#############################
+# DESTROY RESOURCE POLICIES #
+#############################
+
+# Destroy all resource policies on `terraform destroy`
+module "cleanup_resource_policies" {
+  source = "../slurm_destroy_resource_policies"
+
+  cluster_name = var.cluster_name
+  when_destroy = true
+}

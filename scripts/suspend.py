@@ -90,13 +90,13 @@ def suspend_nodes(nodelist):
     delete_instances(nodes)
 
 
-def delete_placement_groups(job_id, region):
+def delete_placement_groups(job_id, region, partition_name):
     def delete_placement_request(pg_name):
         return compute.resourcePolicies().delete(
             project=cfg.project, region=region, resourcePolicy=pg_name
         )
 
-    flt = f"name={cfg.cluster_name}-{job_id}-*"
+    flt = f"name={cfg.cluster_name}-{partition_name}-{job_id}-*"
     req = compute.resourcePolicies().list(
         project=cfg.project, region=region, filter=flt
     )
@@ -128,9 +128,10 @@ def epilog_suspend_nodes(nodelist, job_id):
 
     model = next(iter(node_groups))
     region = lkp.node_region(model)
+    partition = lkp.node_partition(model)
     suspend_nodes(nodelist)
-    if lkp.node_partition(model).placement_groups:
-        delete_placement_groups(job_id, region)
+    if partition.placement_groups:
+        delete_placement_groups(job_id, region, partition.partition_name)
 
 
 def main(nodelist, job_id):

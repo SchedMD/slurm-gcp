@@ -163,7 +163,8 @@ module "delta_critical" {
       => sha256(x.content)
     },
     {
-      subnetwork = local.partition.subnetwork
+      subnetwork              = local.partition.subnetwork
+      enable_placement_groups = local.partition.placement_groups
     }
   )
 
@@ -199,4 +200,20 @@ module "delta_instance_template" {
     # Prevent race condition
     module.delta_critical,
   ]
+}
+
+#############################
+# DESTROY RESOURCE POLICIES #
+#############################
+
+# Destroy partition resource policies when they change
+module "delta_placement_groups" {
+  source = "../slurm_destroy_resource_policies"
+
+  cluster_name   = var.cluster_name
+  partition_name = local.partition.partition_name
+
+  triggers = {
+    enable_placement_groups = local.partition.placement_groups
+  }
 }
