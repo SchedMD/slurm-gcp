@@ -47,7 +47,7 @@ locals {
   compute_list = flatten([
     for x in local.partition.partition_nodes
     : formatlist("%s-%s-%s-%g",
-      var.cluster_name,
+      var.slurm_cluster_name,
       x.partition_name,
       x.group_name,
       range(0, sum([x.count_static, x.count_dynamic]))
@@ -100,7 +100,7 @@ module "slurm_compute_template" {
 
   additional_disks         = each.value.additional_disks
   can_ip_forward           = each.value.can_ip_forward
-  cluster_name             = var.cluster_name
+  slurm_cluster_name       = var.slurm_cluster_name
   disable_smt              = each.value.disable_smt
   disk_auto_delete         = each.value.disk_auto_delete
   disk_labels              = each.value.disk_labels
@@ -121,12 +121,12 @@ module "slurm_compute_template" {
   service_account          = each.value.service_account
   shielded_instance_config = each.value.shielded_instance_config
   slurm_cluster_id         = var.slurm_cluster_id
-  slurm_instance_type      = "compute"
+  slurm_instance_role      = "compute"
   source_image_family      = each.value.source_image_family
   source_image_project     = each.value.source_image_project
   source_image             = each.value.source_image
   subnetwork               = data.google_compute_subnetwork.partition_subnetwork.self_link
-  tags                     = concat([var.cluster_name], each.value.tags)
+  tags                     = concat([var.slurm_cluster_name], each.value.tags)
 }
 
 ############
@@ -141,7 +141,7 @@ resource "google_compute_project_metadata_item" "partition_d" {
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
-  key   = "${var.cluster_name}-slurm-partition-${var.partition_name}-script-${each.key}"
+  key   = "${var.slurm_cluster_name}-slurm-partition-${var.partition_name}-script-${each.key}"
   value = each.value.content
 }
 
@@ -186,7 +186,7 @@ module "delta_instance_template" {
 
   slurm_cluster_id = var.slurm_cluster_id
   target_list = flatten([formatlist("%s-%s-%s-%g",
-    var.cluster_name,
+    var.slurm_cluster_name,
     each.value.partition_name,
     each.value.group_name,
     range(0, sum([each.value.count_static, each.value.count_dynamic]))
@@ -210,8 +210,8 @@ module "delta_instance_template" {
 module "delta_placement_groups" {
   source = "../slurm_destroy_resource_policies"
 
-  cluster_name   = var.cluster_name
-  partition_name = local.partition.partition_name
+  slurm_cluster_name = var.slurm_cluster_name
+  partition_name     = local.partition.partition_name
 
   triggers = {
     enable_placement_groups = local.partition.placement_groups

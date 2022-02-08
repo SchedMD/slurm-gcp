@@ -97,10 +97,10 @@ locals {
   )
 
   config = yamlencode({
-    cluster_name = var.cluster_name
-    project      = var.project_id
-    etc          = local.output_dir
-    scripts      = local.scripts_dir
+    slurm_cluster_name = var.slurm_cluster_name
+    project            = var.project_id
+    etc                = local.output_dir
+    scripts            = local.scripts_dir
 
     munge_key = local.munge_key
     jwt_key   = local.jwt_key
@@ -203,7 +203,7 @@ EOC
 resource "google_compute_project_metadata_item" "config" {
   project = var.project_id
 
-  key   = "${var.cluster_name}-slurm-config"
+  key   = "${var.slurm_cluster_name}-slurm-config"
   value = jsonencode(var.metadata)
 }
 
@@ -216,8 +216,8 @@ module "slurm_metadata_devel" {
 
   count = var.enable_devel ? 1 : 0
 
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
+  slurm_cluster_name = var.slurm_cluster_name
+  project_id         = var.project_id
 }
 
 #####################
@@ -232,7 +232,7 @@ resource "google_compute_project_metadata_item" "compute_d" {
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
-  key   = "${var.cluster_name}-slurm-compute-script-${each.key}"
+  key   = "${var.slurm_cluster_name}-slurm-compute-script-${each.key}"
   value = each.value.content
 }
 
@@ -244,7 +244,7 @@ resource "google_compute_project_metadata_item" "prolog_d" {
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
-  key   = "${var.cluster_name}-slurm-prolog-script-${each.key}"
+  key   = "${var.slurm_cluster_name}-slurm-prolog-script-${each.key}"
   value = each.value.content
 }
 
@@ -256,7 +256,7 @@ resource "google_compute_project_metadata_item" "epilog_d" {
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
-  key   = "${var.cluster_name}-slurm-epilog-script-${each.key}"
+  key   = "${var.slurm_cluster_name}-slurm-epilog-script-${each.key}"
   value = each.value.content
 }
 
@@ -265,7 +265,7 @@ resource "google_compute_project_metadata_item" "epilog_d" {
 ##################
 
 resource "google_pubsub_schema" "this" {
-  name       = "${var.cluster_name}-slurm-events"
+  name       = "${var.slurm_cluster_name}-slurm-events"
   type       = "PROTOCOL_BUFFER"
   definition = <<EOD
 syntax = "proto3";
@@ -285,7 +285,7 @@ EOD
 #################
 
 resource "google_pubsub_topic" "this" {
-  name = "${var.cluster_name}-slurm-events"
+  name = "${var.slurm_cluster_name}-slurm-events"
 
   schema_settings {
     schema   = google_pubsub_schema.this.id
@@ -394,6 +394,6 @@ module "delta_compute_list" {
 module "cleanup_resource_policies" {
   source = "../slurm_destroy_resource_policies"
 
-  cluster_name = var.cluster_name
-  when_destroy = true
+  slurm_cluster_name = var.slurm_cluster_name
+  when_destroy       = true
 }

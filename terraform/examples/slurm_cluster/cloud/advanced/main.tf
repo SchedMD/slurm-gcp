@@ -33,7 +33,7 @@ module "slurm_cluster" {
   cgroup_conf_tpl            = var.cgroup_conf_tpl
   cloud_parameters           = var.cloud_parameters
   cloudsql                   = var.cloudsql
-  cluster_name               = var.cluster_name
+  slurm_cluster_name         = var.slurm_cluster_name
   compute_d                  = var.compute_d
   controller_instance_config = var.controller_instance_config
   controller_d               = var.controller_d
@@ -58,7 +58,7 @@ module "slurm_cluster" {
 module "slurm_firewall_rules" {
   source = "../../../../modules/slurm_firewall_rules"
 
-  cluster_name = var.cluster_name
-  network_name = var.firewall_network_name
-  project_id   = var.project_id
+  slurm_cluster_name = var.slurm_cluster_name
+  network_name       = var.firewall_network_name
+  project_id         = var.project_id
 }

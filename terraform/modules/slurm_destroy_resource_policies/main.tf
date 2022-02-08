@@ -42,10 +42,10 @@ resource "null_resource" "destroy_resource_policies_on_create" {
   triggers = merge(
     var.triggers,
     {
-      scripts_dir    = local.scripts_dir
-      script_path    = data.local_file.destroy_resource_policies.filename
-      cluster_name   = var.cluster_name
-      partition_name = var.partition_name
+      scripts_dir        = local.scripts_dir
+      script_path        = data.local_file.destroy_resource_policies.filename
+      slurm_cluster_name = var.slurm_cluster_name
+      partition_name     = var.partition_name
     }
   )
 
@@ -54,7 +54,7 @@ resource "null_resource" "destroy_resource_policies_on_create" {
     command     = <<EOF
 ${self.triggers.script_path} \
 ${self.triggers.partition_name != null ? "--partition=${self.triggers.partition_name}" : ""} \
-${self.triggers.cluster_name}
+${self.triggers.slurm_cluster_name}
 EOF
     when        = create
   }
@@ -70,10 +70,10 @@ resource "null_resource" "destroy_resource_policies_on_destroy" {
   triggers = merge(
     var.triggers,
     {
-      scripts_dir    = local.scripts_dir
-      script_path    = data.local_file.destroy_resource_policies.filename
-      cluster_name   = var.cluster_name
-      partition_name = var.partition_name
+      scripts_dir        = local.scripts_dir
+      script_path        = data.local_file.destroy_resource_policies.filename
+      slurm_cluster_name = var.slurm_cluster_name
+      partition_name     = var.partition_name
     }
   )
 
@@ -82,7 +82,7 @@ resource "null_resource" "destroy_resource_policies_on_destroy" {
     command     = <<EOF
 ${self.triggers.script_path} \
 ${self.triggers.partition_name != null ? "--partition=${self.triggers.partition_name}" : ""} \
-${self.triggers.cluster_name}
+${self.triggers.slurm_cluster_name}
 EOF
     when        = destroy
   }

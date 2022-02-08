@@ -1,7 +1,7 @@
 # Module: Slurm Destroy Nodes
 
 This module creates `null_resource` to manage the task of destroying cluster
-compute nodes with the corresponding `cluster_id` labels.
+compute nodes with the corresponding `slurm_cluster_id` labels.
 
 ## Usage
 

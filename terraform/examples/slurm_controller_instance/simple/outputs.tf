@@ -24,7 +24,7 @@ output "slurm_cluster_id" {
   value       = module.slurm_controller_instance.slurm_cluster_id
 }
 
-output "cluster_name" {
+output "slurm_cluster_name" {
   description = "Slurm cluster name"
-  value       = module.slurm_controller_instance.cluster_name
+  value       = module.slurm_controller_instance.slurm_cluster_name
 }

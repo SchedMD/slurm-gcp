@@ -45,15 +45,15 @@ module "slurm_login_instance" {
 
   access_config       = var.access_config
   add_hostname_suffix = true
-  cluster_name        = var.cluster_name
-  hostname            = "${var.cluster_name}-login-${random_string.suffix.result}"
+  slurm_cluster_name  = var.slurm_cluster_name
+  hostname            = "${var.slurm_cluster_name}-login-${random_string.suffix.result}"
   instance_template   = var.instance_template
   network             = var.network
   num_instances       = var.num_instances
   project_id          = var.project_id
   region              = local.region
   slurm_cluster_id    = var.slurm_cluster_id
-  slurm_instance_type = "login"
+  slurm_instance_role = "login"
   static_ips          = var.static_ips
   subnetwork_project  = var.subnetwork_project
   subnetwork          = var.subnetwork

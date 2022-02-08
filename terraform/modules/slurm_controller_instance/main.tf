@@ -61,8 +61,8 @@ locals {
 
 locals {
   metadata_config = {
-    cluster_name = var.cluster_name
-    project      = var.project_id
+    slurm_cluster_name = var.slurm_cluster_name
+    project            = var.project_id
 
     cloudsql  = var.cloudsql
     munge_key = local.munge_key
@@ -149,14 +149,14 @@ module "slurm_controller_instance" {
 
   access_config       = var.access_config
   add_hostname_suffix = false
-  cluster_name        = var.cluster_name
-  hostname            = "${var.cluster_name}-controller"
+  slurm_cluster_name  = var.slurm_cluster_name
+  hostname            = "${var.slurm_cluster_name}-controller"
   instance_template   = var.instance_template
   network             = var.network
   project_id          = var.project_id
   region              = local.region
   slurm_cluster_id    = local.slurm_cluster_id
-  slurm_instance_type = "controller"
+  slurm_instance_role = "controller"
   static_ips          = var.static_ips
   subnetwork_project  = var.subnetwork_project
   subnetwork          = var.subnetwork
@@ -176,28 +176,28 @@ module "slurm_controller_instance" {
 resource "google_compute_project_metadata_item" "config" {
   project = var.project_id
 
-  key   = "${var.cluster_name}-slurm-config"
+  key   = "${var.slurm_cluster_name}-slurm-config"
   value = jsonencode(local.metadata_config)
 }
 
 resource "google_compute_project_metadata_item" "slurm_conf" {
   project = var.project_id
 
-  key   = "${var.cluster_name}-slurm-tpl-slurm-conf"
+  key   = "${var.slurm_cluster_name}-slurm-tpl-slurm-conf"
   value = data.local_file.slurm_conf_tpl.content
 }
 
 resource "google_compute_project_metadata_item" "cgroup_conf" {
   project = var.project_id
 
-  key   = "${var.cluster_name}-slurm-tpl-cgroup-conf"
+  key   = "${var.slurm_cluster_name}-slurm-tpl-cgroup-conf"
   value = data.local_file.cgroup_conf_tpl.content
 }
 
 resource "google_compute_project_metadata_item" "slurmdbd_conf" {
   project = var.project_id
 
-  key   = "${var.cluster_name}-slurm-tpl-slurmdbd-conf"
+  key   = "${var.slurm_cluster_name}-slurm-tpl-slurmdbd-conf"
   value = data.local_file.slurmdbd_conf_tpl.content
 }
 
@@ -210,8 +210,8 @@ module "slurm_metadata_devel" {
 
   count = var.enable_devel ? 1 : 0
 
-  cluster_name = var.cluster_name
-  project_id   = var.project_id
+  slurm_cluster_name = var.slurm_cluster_name
+  project_id         = var.project_id
 }
 
 #####################
@@ -226,7 +226,7 @@ resource "google_compute_project_metadata_item" "controller_d" {
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
-  key   = "${var.cluster_name}-slurm-controller-script-${each.key}"
+  key   = "${var.slurm_cluster_name}-slurm-controller-script-${each.key}"
   value = each.value.content
 }
 
@@ -238,7 +238,7 @@ resource "google_compute_project_metadata_item" "compute_d" {
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
-  key   = "${var.cluster_name}-slurm-compute-script-${each.key}"
+  key   = "${var.slurm_cluster_name}-slurm-compute-script-${each.key}"
   value = each.value.content
 }
 
@@ -250,7 +250,7 @@ resource "google_compute_project_metadata_item" "prolog_d" {
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
-  key   = "${var.cluster_name}-slurm-prolog-script-${each.key}"
+  key   = "${var.slurm_cluster_name}-slurm-prolog-script-${each.key}"
   value = each.value.content
 }
 
@@ -262,7 +262,7 @@ resource "google_compute_project_metadata_item" "epilog_d" {
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
-  key   = "${var.cluster_name}-slurm-epilog-script-${each.key}"
+  key   = "${var.slurm_cluster_name}-slurm-epilog-script-${each.key}"
   value = each.value.content
 }
 
@@ -271,7 +271,7 @@ resource "google_compute_project_metadata_item" "epilog_d" {
 ##################
 
 resource "google_pubsub_schema" "this" {
-  name       = "${var.cluster_name}-slurm-events"
+  name       = "${var.slurm_cluster_name}-slurm-events"
   type       = "PROTOCOL_BUFFER"
   definition = <<EOD
 syntax = "proto3";
@@ -291,7 +291,7 @@ EOD
 #################
 
 resource "google_pubsub_topic" "this" {
-  name = "${var.cluster_name}-slurm-events"
+  name = "${var.slurm_cluster_name}-slurm-events"
 
   schema_settings {
     schema   = google_pubsub_schema.this.id
@@ -438,6 +438,6 @@ module "delta_compute_list" {
 module "cleanup_resource_policies" {
   source = "../slurm_destroy_resource_policies"
 
-  cluster_name = var.cluster_name
-  when_destroy = true
+  slurm_cluster_name = var.slurm_cluster_name
+  when_destroy       = true
 }

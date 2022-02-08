@@ -25,7 +25,7 @@ data "google_compute_network" "default" {
 module "slurm_firewall_rules" {
   source = "../../../modules/slurm_firewall_rules"
 
-  project_id   = var.project_id
-  network_name = data.google_compute_network.default.self_link
-  cluster_name = var.cluster_name
+  project_id         = var.project_id
+  network_name       = data.google_compute_network.default.self_link
+  slurm_cluster_name = var.slurm_cluster_name
 }

@@ -183,7 +183,7 @@ data "google_compute_subnetwork" "default" {
 module "slurm_cluster" {
   source = "../../../../modules/slurm_cluster"
 
-  cluster_name               = var.cluster_name
+  slurm_cluster_name         = var.slurm_cluster_name
   controller_instance_config = local.controller_instance_config
   login_node_groups          = local.login_node_groups
   partitions                 = local.partitions
@@ -197,7 +197,7 @@ module "slurm_cluster" {
 module "slurm_firewall_rules" {
   source = "../../../../modules/slurm_firewall_rules"
 
-  cluster_name = var.cluster_name
-  network_name = data.google_compute_subnetwork.default.network
-  project_id   = var.project_id
+  slurm_cluster_name = var.slurm_cluster_name
+  network_name       = data.google_compute_subnetwork.default.network
+  project_id         = var.project_id
 }

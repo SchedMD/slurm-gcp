@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-variable "cluster_name" {
+variable "slurm_cluster_name" {
   description = "Cluster name, for resource filtering."
   type        = string
 
   validation {
-    condition     = length(var.cluster_name) > 0
-    error_message = "The cluster_name must not be empty."
+    condition     = length(var.slurm_cluster_name) > 0
+    error_message = "The slurm_cluster_name must not be empty."
   }
 }
 

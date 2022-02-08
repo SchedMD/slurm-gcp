@@ -68,8 +68,8 @@ module "slurm_partition" {
       tags                     = []
     },
   ]
-  cluster_name     = var.cluster_name
-  project_id       = var.project_id
-  slurm_cluster_id = "x"
-  subnetwork       = data.google_compute_subnetwork.default.self_link
+  slurm_cluster_name = var.slurm_cluster_name
+  project_id         = var.project_id
+  slurm_cluster_id   = "x"
+  subnetwork         = data.google_compute_subnetwork.default.self_link
 }

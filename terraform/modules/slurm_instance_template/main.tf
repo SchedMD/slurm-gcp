@@ -31,7 +31,11 @@ locals {
       disk_type    = disk.disk_type
       disk_labels = merge(
         disk.disk_labels,
-        { slurm_cluster_id = var.slurm_cluster_id },
+        {
+          slurm_cluster_id    = var.slurm_cluster_id
+          slurm_cluster_name  = var.slurm_cluster_name
+          slurm_instance_role = local.slurm_instance_role
+        },
       )
     }
   ]
@@ -62,7 +66,7 @@ locals {
     : ""
   )
 
-  slurm_instance_type = lower(var.slurm_instance_type)
+  slurm_instance_role = lower(var.slurm_instance_role)
 }
 
 ########
@@ -95,7 +99,7 @@ module "instance_template" {
   # Instance
   machine_type             = var.machine_type
   min_cpu_platform         = var.min_cpu_platform
-  name_prefix              = "${var.cluster_name}-${local.slurm_instance_type}-${var.name_prefix}"
+  name_prefix              = "${var.slurm_cluster_name}-${local.slurm_instance_role}-${var.name_prefix}"
   gpu                      = var.gpu
   service_account          = local.service_account
   shielded_instance_config = var.shielded_instance_config
@@ -107,7 +111,8 @@ module "instance_template" {
     var.labels,
     {
       slurm_cluster_id    = var.slurm_cluster_id
-      slurm_instance_type = local.slurm_instance_type
+      slurm_cluster_name  = var.slurm_cluster_name
+      slurm_instance_role = local.slurm_instance_role
     },
   )
 
@@ -116,11 +121,12 @@ module "instance_template" {
   metadata = merge(
     var.metadata,
     {
-      cluster_name      = var.cluster_name
-      enable-oslogin    = upper(var.enable_oslogin)
-      google_mpi_tuning = var.disable_smt == true ? "--nosmt" : null
-      instance_type     = local.slurm_instance_type
-      VmDnsSetting      = "GlobalOnly"
+      enable-oslogin      = upper(var.enable_oslogin)
+      google_mpi_tuning   = var.disable_smt == true ? "--nosmt" : null
+      slurm_cluster_id    = var.slurm_cluster_id
+      slurm_cluster_name  = var.slurm_cluster_name
+      slurm_instance_role = local.slurm_instance_role
+      VmDnsSetting        = "GlobalOnly"
     },
   )
 
@@ -134,7 +140,11 @@ module "instance_template" {
   disk_size_gb = var.disk_size_gb
   auto_delete  = var.disk_auto_delete
   disk_labels = merge(
-    { slurm_cluster_id = var.slurm_cluster_id },
+    {
+      slurm_cluster_id    = var.slurm_cluster_id
+      slurm_cluster_name  = var.slurm_cluster_name
+      slurm_instance_role = local.slurm_instance_role
+    },
     var.disk_labels,
   )
   additional_disks = local.additional_disks

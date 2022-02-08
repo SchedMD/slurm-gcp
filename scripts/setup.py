@@ -124,7 +124,7 @@ def failed_motd():
 
 
 def nodeset_prefix(node_group, part_name):
-    return f'{cfg.cluster_name}-{part_name}-{node_group.group_name}'
+    return f'{cfg.slurm_cluster_name}-{part_name}-{node_group.group_name}'
 
 
 def nodeset_names(node_group, part_name):
@@ -324,14 +324,14 @@ def install_slurm_conf(lkp):
         mpi_default = "none"
 
     conf_options = {
-        'name': lkp.cfg.cluster_name,
+        'name': lkp.cfg.slurm_cluster_name,
         'control_host': lkp.control_host,
         'scripts': dirs.scripts,
         'slurmlog': dirs.log,
         'state_save': slurmdirs.state,
         'mpi_default': mpi_default,
     }
-    conf_resp = project_metadata(f'{cfg.cluster_name}-slurm-tpl-slurm-conf')
+    conf_resp = project_metadata(f'{cfg.slurm_cluster_name}-slurm-tpl-slurm-conf')
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'slurm.conf'
@@ -369,7 +369,7 @@ def install_slurmdbd_conf(lkp):
             db_host_str[1] if len(db_host_str) >= 2 else '3306'
         )
 
-    conf_resp = project_metadata(f'{cfg.cluster_name}-slurm-tpl-slurmdbd-conf')
+    conf_resp = project_metadata(f'{cfg.slurm_cluster_name}-slurm-tpl-slurmdbd-conf')
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'slurmdbd.conf'
@@ -387,7 +387,7 @@ def install_slurmdbd_conf(lkp):
 
 def install_cgroup_conf():
     """ install cgroup.conf """
-    conf = project_metadata(f'{cfg.cluster_name}-slurm-tpl-cgroup-conf')
+    conf = project_metadata(f'{cfg.slurm_cluster_name}-slurm-tpl-cgroup-conf')
 
     conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'cgroup.conf'
     conf_file_bak = conf_file.with_suffix('.conf.bak')
@@ -437,7 +437,7 @@ def install_gres_conf(lkp):
 def fetch_devel_scripts():
     """download scripts from project metadata if they are present"""
 
-    meta_json = project_metadata(f'{cfg.cluster_name}-slurm-devel')
+    meta_json = project_metadata(f'{cfg.slurm_cluster_name}-slurm-devel')
     if not meta_json:
         return
     metadata_devel = json.loads(meta_json)
@@ -467,7 +467,7 @@ def fetch_devel_scripts():
 def install_custom_scripts(clean=False):
     """download custom scripts from project metadata"""
     script_pattern = re.compile(
-        rf'{cfg.cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)')
+        rf'{cfg.slurm_cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)')
     metadata_keys = project_metadata('/').splitlines()
 
     def match_name(meta_key):
@@ -868,7 +868,7 @@ def setup_controller():
     time.sleep(5)
 
     sacctmgr = f"{slurmdirs.prefix}/bin/sacctmgr -i"
-    result = run(f"{sacctmgr} add cluster {cfg.cluster_name}",
+    result = run(f"{sacctmgr} add cluster {cfg.slurm_cluster_name}",
                  timeout=30, check=False)
     if "already exists" in result.stdout:
         log.info(result.stdout)

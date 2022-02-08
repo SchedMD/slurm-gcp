@@ -29,15 +29,15 @@ module "slurm_controller_template" {
   project_id = var.project_id
   subnetwork = data.google_compute_subnetwork.default.self_link
 
-  cluster_name     = var.cluster_name
-  slurm_cluster_id = module.slurm_controller_instance.slurm_cluster_id
+  slurm_cluster_name = var.slurm_cluster_name
+  slurm_cluster_id   = module.slurm_controller_instance.slurm_cluster_id
 }
 
 module "slurm_controller_instance" {
   source = "../../../modules/slurm_controller_instance"
 
-  instance_template = module.slurm_controller_template.self_link
-  subnetwork        = data.google_compute_subnetwork.default.self_link
-  project_id        = var.project_id
-  cluster_name      = var.cluster_name
+  instance_template  = module.slurm_controller_template.self_link
+  subnetwork         = data.google_compute_subnetwork.default.self_link
+  project_id         = var.project_id
+  slurm_cluster_name = var.slurm_cluster_name
 }

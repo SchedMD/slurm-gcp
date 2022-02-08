@@ -96,7 +96,7 @@ def delete_placement_groups(job_id, region, partition_name):
             project=cfg.project, region=region, resourcePolicy=pg_name
         )
 
-    flt = f"name={cfg.cluster_name}-{partition_name}-{job_id}-*"
+    flt = f"name={cfg.slurm_cluster_name}-{partition_name}-{job_id}-*"
     req = compute.resourcePolicies().list(
         project=cfg.project, region=region, filter=flt
     )

@@ -27,9 +27,9 @@ output "slurm_controller_instance" {
 # SLURM #
 #########
 
-output "cluster_name" {
+output "slurm_cluster_name" {
   description = "Cluster name for resource naming and slurm accounting."
-  value       = var.cluster_name
+  value       = var.slurm_cluster_name
 }
 
 output "slurm_cluster_id" {

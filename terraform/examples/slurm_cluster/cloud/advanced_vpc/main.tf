@@ -128,12 +128,12 @@ module "slurm_network" {
   source = "../../../../modules/_network"
 
   auto_create_subnetworks = false
-  network_name            = "${var.cluster_name}-default"
+  network_name            = "${var.slurm_cluster_name}-default"
   project_id              = var.project_id
 
   subnets = [
     {
-      subnet_name   = "${var.cluster_name}-default"
+      subnet_name   = "${var.slurm_cluster_name}-default"
       subnet_ip     = "10.0.0.0/24"
       subnet_region = var.region
 
@@ -150,9 +150,9 @@ module "slurm_network" {
 module "slurm_firewall_rules" {
   source = "../../../../modules/slurm_firewall_rules"
 
-  cluster_name = var.cluster_name
-  network_name = module.slurm_network.network.network_self_link
-  project_id   = var.project_id
+  slurm_cluster_name = var.slurm_cluster_name
+  network_name       = module.slurm_network.network.network_self_link
+  project_id         = var.project_id
 }
 
 #################
@@ -165,7 +165,7 @@ module "slurm_cluster" {
   cgroup_conf_tpl            = var.cgroup_conf_tpl
   cloud_parameters           = var.cloud_parameters
   cloudsql                   = var.cloudsql
-  cluster_name               = var.cluster_name
+  slurm_cluster_name         = var.slurm_cluster_name
   compute_d                  = var.compute_d
   controller_instance_config = local.controller_instance_config[0]
   controller_d               = var.controller_d

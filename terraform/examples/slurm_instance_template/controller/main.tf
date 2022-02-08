@@ -22,7 +22,7 @@ data "google_compute_network" "default" {
   name = "default"
 }
 
-resource "random_string" "cluster_name" {
+resource "random_string" "slurm_cluster_name" {
   length  = 8
   upper   = false
   special = false
@@ -31,9 +31,9 @@ resource "random_string" "cluster_name" {
 module "slurm_controller_template" {
   source = "../../../modules/slurm_instance_template"
 
-  cluster_name = random_string.cluster_name.result
-  network      = data.google_compute_network.default.self_link
-  project_id   = var.project_id
+  slurm_cluster_name = random_string.slurm_cluster_name.result
+  network            = data.google_compute_network.default.self_link
+  project_id         = var.project_id
 
-  slurm_instance_type = "controller"
+  slurm_instance_role = "controller"
 }

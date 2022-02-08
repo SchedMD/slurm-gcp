@@ -185,17 +185,17 @@ def new_config(config):
     ))
     for netstore in network_storage_iter:
         if netstore.server_ip == '$controller':
-            netstore.server_ip = cfg.cluster_name + '-controller'
+            netstore.server_ip = cfg.slurm_cluster_name + '-controller'
     return cfg
 
 
 def config_from_metadata(use_cache=True):
     # get setup config from metadata
-    cluster_name = instance_metadata('attributes/cluster_name')
-    if not cluster_name:
+    slurm_cluster_name = instance_metadata('attributes/slurm_cluster_name')
+    if not slurm_cluster_name:
         return None
     
-    metadata_key = f'{cluster_name}-slurm-config'
+    metadata_key = f'{slurm_cluster_name}-slurm-config'
     if use_cache:
         config_yaml = project_metadata(metadata_key)
     else:
@@ -356,7 +356,7 @@ def instance_metadata(path):
 
 @lru_cache(maxsize=None)
 def project_metadata(key):
-    """Get project metadata project/attributes/<cluster_name>-<path>"""
+    """Get project metadata project/attributes/<slurm_cluster_name>-<path>"""
     return get_metadata(key, root=f"{ROOT_URL}/project/attributes")
 
 
@@ -573,8 +573,8 @@ class Lookup:
 
     @property
     def control_host(self):
-        if self._cfg.cluster_name:
-            return f'{self._cfg.cluster_name}-controller'
+        if self._cfg.slurm_cluster_name:
+            return f'{self._cfg.slurm_cluster_name}-controller'
         return None
 
     @property
@@ -583,7 +583,7 @@ class Lookup:
 
     @cached_property
     def instance_role(self):
-        return instance_metadata('attributes/instance_type')
+        return instance_metadata('attributes/slurm_instance_role')
 
     @cached_property
     def compute(self):
@@ -644,11 +644,11 @@ class Lookup:
         return parse_self_link(partition.subnetwork).region
 
     @lru_cache(maxsize=1)
-    def instances(self, project=None, cluster_name=None):
-        cluster_name = cluster_name or self._cfg.cluster_name
+    def instances(self, project=None, slurm_cluster_name=None):
+        slurm_cluster_name = slurm_cluster_name or self._cfg.slurm_cluster_name
         project = project or self.project
         fields = 'items.zones.instances(name,zone,status,machineType,metadata),nextPageToken'
-        flt = f'name={cluster_name}-*'
+        flt = f'name={slurm_cluster_name}-*'
         act = self.compute.instances()
         op = act.aggregatedList(project=project, fields=fields, filter=flt)
 
@@ -660,7 +660,7 @@ class Lookup:
             # {'key': key, 'value': value}, kinda silly
             metadata = {i['key']: i['value']
                         for i in inst['metadata']['items']}
-            inst['role'] = metadata['instance_type']
+            inst['role'] = metadata['slurm_instance_role']
             del inst['metadata']  # no need to store all the metadata
             return inst
         while op is not None:
@@ -673,9 +673,9 @@ class Lookup:
             op = act.aggregatedList_next(op, result)
         return NSDict(instances)
 
-    def instance(self, instance_name, project=None, cluster_name=None):
+    def instance(self, instance_name, project=None, slurm_cluster_name=None):
         instances = self.instances(project=project,
-                                   cluster_name=cluster_name)
+                                   slurm_cluster_name=slurm_cluster_name)
         return instances.get(instance_name)
 
     @lru_cache(maxsize=1)

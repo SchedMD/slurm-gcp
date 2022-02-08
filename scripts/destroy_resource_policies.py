@@ -56,9 +56,9 @@ def delete_policies(policy_list):
 def main(args):
     # NOTE: Resource policies cannot be labeled
     if args.partition_name:
-        filter = f"name={args.cluster_name}-{args.partition_name}-*"
+        filter = f"name={args.slurm_cluster_name}-{args.partition_name}-*"
     else:
-        filter = f"name={args.cluster_name}-*"
+        filter = f"name={args.slurm_cluster_name}-*"
     log.debug(f"filter = \"{filter}\"")
 
     result = compute.resourcePolicies().aggregatedList(
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('cluster_name',
+    parser.add_argument('slurm_cluster_name',
                         help="Slurm cluster name filter")
     parser.add_argument('--partition', '-p', dest='partition_name',
                         help="Slurm partition name filter")

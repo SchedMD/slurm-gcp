@@ -34,7 +34,7 @@ function fetch_scripts {
 	URL="http://metadata.google.internal/computeMetadata/v1"
 	HEADER="Metadata-Flavor:Google"
 	CURL="curl -sS --fail --header $HEADER"
-	if ! CLUSTER=$($CURL $URL/instance/attributes/cluster_name); then
+	if ! CLUSTER=$($CURL $URL/instance/attributes/slurm_cluster_name); then
 		echo cluster name not found in instance metadata, quitting
 		return 1
 	fi

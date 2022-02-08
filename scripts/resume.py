@@ -55,8 +55,8 @@ def per_instance_properties(node, placement_groups=None):
     props = NSDict()
 
     metadata = {
-        'cluster_name': cfg.cluster_name,
-        'instance_type': 'compute',
+        'slurm_cluster_name': cfg.slurm_cluster_name,
+        'slurm_instance_role': 'compute',
         'startup-script': (Path(cfg.slurm_scripts_dir or util.dirs.scripts)/'startup.sh').read_text(),
         'VmDnsSetting': 'GlobalOnly',
     }
@@ -169,7 +169,7 @@ def create_placement_request(pg_name, region, count):
 def create_placement_groups(job_id, node_list, partition_name):
     PLACEMENT_MAX_CNT = 22
     groups = {
-        f'{cfg.cluster_name}-{partition_name}-{job_id}-{i}': nodes
+        f'{cfg.slurm_cluster_name}-{partition_name}-{job_id}-{i}': nodes
         for i, nodes in enumerate(chunked(node_list, n=PLACEMENT_MAX_CNT))
     }
     reverse_groups = {

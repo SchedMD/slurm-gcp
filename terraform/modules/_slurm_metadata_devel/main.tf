@@ -77,6 +77,6 @@ data "local_file" "util" {
 resource "google_compute_project_metadata_item" "devel" {
   project = var.project_id
 
-  key   = "${var.cluster_name}-slurm-devel"
+  key   = "${var.slurm_cluster_name}-slurm-devel"
   value = jsonencode(local.metadata_devel)
 }

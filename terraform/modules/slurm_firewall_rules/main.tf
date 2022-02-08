@@ -19,11 +19,11 @@
 ##########
 
 locals {
-  target_tags = concat([var.cluster_name], var.target_tags)
+  target_tags = concat([var.slurm_cluster_name], var.target_tags)
 
   firewall_rules = [
     {
-      name                    = "${var.cluster_name}-allow-ssh-ingress"
+      name                    = "${var.slurm_cluster_name}-allow-ssh-ingress"
       direction               = "INGRESS"
       ranges                  = ["0.0.0.0/0"]
       source_tags             = var.source_tags
@@ -41,7 +41,7 @@ locals {
       }
     },
     {
-      name                    = "${var.cluster_name}-allow-iap-ingress"
+      name                    = "${var.slurm_cluster_name}-allow-iap-ingress"
       direction               = "INGRESS"
       ranges                  = ["35.235.240.0/20"]
       source_tags             = var.source_tags
@@ -59,7 +59,7 @@ locals {
       }
     },
     {
-      name                    = "${var.cluster_name}-allow-internal-ingress"
+      name                    = "${var.slurm_cluster_name}-allow-internal-ingress"
       direction               = "INGRESS"
       ranges                  = ["0.0.0.0/0"]
       source_tags             = var.source_tags

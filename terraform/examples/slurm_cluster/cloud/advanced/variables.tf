@@ -23,7 +23,7 @@ variable "project_id" {
   description = "Project ID to create resources in."
 }
 
-variable "cluster_name" {
+variable "slurm_cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."
   default     = "advanced"

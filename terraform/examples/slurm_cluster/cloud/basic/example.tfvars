@@ -20,6 +20,6 @@
 
 project_id = "<PROJECT_ID>"
 
-cluster_name = "basic-cloud"
+slurm_cluster_name = "basic-cloud"
 
 region = "<REGION>"

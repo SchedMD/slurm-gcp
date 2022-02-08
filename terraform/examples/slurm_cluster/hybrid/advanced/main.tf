@@ -31,7 +31,7 @@ module "slurm_cluster" {
   source = "../../../../modules/slurm_cluster"
 
   cloud_parameters         = var.cloud_parameters
-  cluster_name             = var.cluster_name
+  slurm_cluster_name       = var.slurm_cluster_name
   compute_d                = var.compute_d
   controller_hybrid_config = var.controller_hybrid_config
   enable_devel             = var.enable_devel
@@ -53,7 +53,7 @@ module "slurm_cluster" {
 module "slurm_firewall_rules" {
   source = "../../../../modules/slurm_firewall_rules"
 
-  cluster_name = var.cluster_name
-  network_name = var.firewall_network_name
-  project_id   = var.project_id
+  slurm_cluster_name = var.slurm_cluster_name
+  network_name       = var.firewall_network_name
+  project_id         = var.project_id
 }

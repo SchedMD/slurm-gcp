@@ -36,7 +36,7 @@ locals {
 #################
 
 locals {
-  slurm_instance_type = lower(var.slurm_instance_type)
+  slurm_instance_role = lower(var.slurm_instance_role)
 
   scripts_dir = abspath("${path.module}/../../../scripts")
 }
@@ -91,16 +91,18 @@ resource "google_compute_instance_from_template" "slurm_instance" {
     data.google_compute_instance_template.base.labels,
     {
       slurm_cluster_id    = var.slurm_cluster_id
-      slurm_instance_type = local.slurm_instance_type
+      slurm_cluster_name  = var.slurm_cluster_name
+      slurm_instance_role = local.slurm_instance_role
     },
   )
   metadata = merge(
     data.google_compute_instance_template.base.metadata,
     {
-      cluster_name   = var.cluster_name
-      instance_type  = local.slurm_instance_type
-      startup-script = data.local_file.startup.content
-      VmDnsSetting   = "GlobalOnly"
+      slurm_cluster_id    = var.slurm_cluster_id
+      slurm_cluster_name  = var.slurm_cluster_name
+      slurm_instance_role = local.slurm_instance_role
+      startup-script      = data.local_file.startup.content
+      VmDnsSetting        = "GlobalOnly"
     },
   )
 }

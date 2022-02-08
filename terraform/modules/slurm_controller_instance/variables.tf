@@ -84,7 +84,7 @@ EOD
 # SLURM #
 #########
 
-variable "cluster_name" {
+variable "slurm_cluster_name" {
   type        = string
   description = "The cluster name, used for resource naming and slurm accounting."
 }

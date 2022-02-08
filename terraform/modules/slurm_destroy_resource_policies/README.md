@@ -1,7 +1,7 @@
 # Module: Slurm Destroy Resource Policies
 
 This module creates `null_resource` to manage the task of destroying cluster
-compute nodes with the corresponding `cluster_id` labels.
+compute nodes with the corresponding `slurm_cluster_id` labels.
 
 ## Usage
 
@@ -64,8 +64,8 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Cluster name, for resource filtering. | `string` | n/a | yes |
 | <a name="input_partition_name"></a> [partition\_name](#input\_partition\_name) | Partition name. | `string` | `null` | no |
+| <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, for resource filtering. | `string` | n/a | yes |
 | <a name="input_triggers"></a> [triggers](#input\_triggers) | Additional Terraform triggers. | `map(string)` | `{}` | no |
 | <a name="input_when_destroy"></a> [when\_destroy](#input\_when\_destroy) | Run only on `terraform destroy`? | `bool` | `false` | no |
 

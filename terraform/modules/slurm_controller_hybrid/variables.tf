@@ -37,7 +37,7 @@ variable "metadata" {
 # SLURM #
 #########
 
-variable "cluster_name" {
+variable "slurm_cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming and slurm accounting."
 }
