@@ -53,7 +53,7 @@ resource "null_resource" "destroy_resource_policies_on_create" {
     working_dir = self.triggers.scripts_dir
     command     = <<EOF
 ${self.triggers.script_path} \
-${self.triggers.partition_name != null ? "--partition=${self.triggers.partition_name}" : ""} \
+${self.triggers.partition_name != "" ? "--partition=${self.triggers.partition_name}" : ""} \
 ${self.triggers.slurm_cluster_name}
 EOF
     when        = create
@@ -81,7 +81,7 @@ resource "null_resource" "destroy_resource_policies_on_destroy" {
     working_dir = self.triggers.scripts_dir
     command     = <<EOF
 ${self.triggers.script_path} \
-${self.triggers.partition_name != null ? "--partition=${self.triggers.partition_name}" : ""} \
+${self.triggers.partition_name != "" ? "--partition=${self.triggers.partition_name}" : ""} \
 ${self.triggers.slurm_cluster_name}
 EOF
     when        = destroy

@@ -27,7 +27,7 @@ variable "slurm_cluster_name" {
 variable "partition_name" {
   description = "Partition name."
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "triggers" {
