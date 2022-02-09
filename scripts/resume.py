@@ -42,32 +42,49 @@ log = logging.getLogger(filename)
 BULK_INSERT_LIMIT = 1000
 
 
-def instance_properties(partition):
+def instance_properties(model):
+    partition = lkp.node_partition(model)
+    template = lkp.node_template(model)
+    template_info = lkp.template_info(template)
+
     props = NSDict()
+
     props.networkInterfaces = [{
         'subnetwork': partition.subnetwork,
     }]
+
+    slurm_metadata = {
+        'slurm_cluster_id': cfg.slurm_cluster_id,
+        'slurm_cluster_name': cfg.slurm_cluster_name,
+        'slurm_instance_role': 'compute',
+        'startup-script': (Path(cfg.slurm_scripts_dir or util.dirs.scripts)/'startup.sh').read_text(),
+        'VmDnsSetting': 'GlobalOnly',
+    }
+    info_metadata = {}
+    for i in template_info.metadata['items']:
+        key = i.get('key')
+        value = i.get('value')
+        info_metadata[key] = value
+
+    props_metadata = {**info_metadata, **slurm_metadata}
+    props.metadata = {
+        'items': [
+            NSDict({'key': k, 'value': v}) for k, v in props_metadata.items()
+        ]
+    }
+
+    labels = {
+        'slurm_cluster_id': cfg.slurm_cluster_id,
+        'slurm_cluster_name': cfg.slurm_cluster_name,
+        'slurm_instance_type': 'compute',
+    }
+    props.labels = {**template_info.labels, **labels}
 
     return props
 
 
 def per_instance_properties(node, placement_groups=None):
     props = NSDict()
-
-    metadata = {
-        'slurm_cluster_name': cfg.slurm_cluster_name,
-        'slurm_instance_role': 'compute',
-        'startup-script': (Path(cfg.slurm_scripts_dir or util.dirs.scripts)/'startup.sh').read_text(),
-        'VmDnsSetting': 'GlobalOnly',
-    }
-    props.metadata['items'] = [
-        NSDict({'key': k, 'value': v}) for k, v in metadata.items()
-    ]
-
-    props.labels = {
-        'slurm_cluster_id': cfg.slurm_cluster_id,
-        'slurm_instance_type': 'compute',
-    }
 
     if placement_groups:
         # certain properties are constrained
@@ -89,7 +106,6 @@ def create_instances_request(nodes, placement_groups=None):
     # model here indicates any node that can be used to describe the rest
     model = next(iter(nodes))
     template = lkp.node_template(model)
-    partition = lkp.node_partition(model)
     region = lkp.node_region(model)
 
     body = NSDict()
@@ -99,7 +115,7 @@ def create_instances_request(nodes, placement_groups=None):
     body.sourceInstanceTemplate = template
 
     # overwrites properties accross all instances
-    body.instanceProperties = instance_properties(partition)
+    body.instanceProperties = instance_properties(model)
 
     # key is instance name, value overwrites properties
     body.perInstanceProperties = {
