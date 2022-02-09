@@ -1,6 +1,7 @@
 # Example: Slurm Controller Template
 
-This exmaple creates a slurm controller instance template.
+This exmaple creates a slurm controller instance template intended to be used by
+the [slurm_controller_instance](../../../modules/slurm_controller_instance).
 
 ## Usage
 

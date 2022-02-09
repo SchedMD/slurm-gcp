@@ -1,6 +1,7 @@
 # Example: Slurm Login Template
 
-This exmaple creates a slurm login instance template.
+This exmaple creates a slurm login instance template intended to be used by
+the [slurm_login_instance](../../../modules/slurm_login_instance).
 
 ## Usage
 

@@ -66,7 +66,13 @@ locals {
     : ""
   )
 
-  slurm_instance_role = lower(var.slurm_instance_role)
+  slurm_instance_role = var.slurm_instance_role != null ? lower(var.slurm_instance_role) : null
+
+  name_prefix = (
+    local.slurm_instance_role != null
+    ? "${var.slurm_cluster_name}-${local.slurm_instance_role}-${var.name_prefix}"
+    : "${var.slurm_cluster_name}-${var.name_prefix}"
+  )
 }
 
 ########
@@ -99,7 +105,7 @@ module "instance_template" {
   # Instance
   machine_type             = var.machine_type
   min_cpu_platform         = var.min_cpu_platform
-  name_prefix              = "${var.slurm_cluster_name}-${local.slurm_instance_role}-${var.name_prefix}"
+  name_prefix              = local.name_prefix
   gpu                      = var.gpu
   service_account          = local.service_account
   shielded_instance_config = var.shielded_instance_config

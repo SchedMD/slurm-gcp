@@ -1,7 +1,9 @@
-# Example: Slurm Compute Template
+# Example: Slurm Blank Template
 
-This exmaple creates a slurm compute instance template intended to be used by
-the [slurm_partition](../../../modules/slurm_partition).
+This exmaple creates a blank slurm instance template. It can be used by:
+- [slurm_controller_instance](../../../modules/slurm_controller_instance)
+- [slurm_login_instance](../../../modules/slurm_login_instance)
+- [slurm_partition](../../../modules/slurm_partition)
 
 ## Usage
 
@@ -50,7 +52,7 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_slurm_compute_template"></a> [slurm\_compute\_template](#module\_slurm\_compute\_template) | ../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_controller_template"></a> [slurm\_controller\_template](#module\_slurm\_controller\_template) | ../../../modules/slurm_instance_template | n/a |
 
 ## Resources
 
@@ -69,5 +71,5 @@ limitations under the License.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_slurm_compute_template"></a> [slurm\_compute\_template](#output\_slurm\_compute\_template) | Slurm compute instance template details. |
+| <a name="output_slurm_controller_template"></a> [slurm\_controller\_template](#output\_slurm\_controller\_template) | Slurm controller instance template details. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

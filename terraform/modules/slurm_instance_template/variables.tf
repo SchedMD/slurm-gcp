@@ -273,12 +273,15 @@ variable "additional_disks" {
 
 variable "slurm_instance_role" {
   type        = string
-  description = "Slurm instance type. Must be one of: controller; login; compute."
-  default     = "compute"
+  description = "Slurm instance type. Must be one of: controller; login; compute; or null."
+  default     = null
 
   validation {
-    condition     = contains(["controller", "login", "compute"], lower(var.slurm_instance_role))
-    error_message = "Must be one of: controller; login; compute."
+    condition     = (
+      var.slurm_instance_role == null
+      ? true
+      : contains(["controller", "login", "compute"], lower(var.slurm_instance_role)))
+    error_message = "Must be one of: controller; login; compute; or null."
   }
 }
 
