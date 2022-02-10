@@ -15,11 +15,12 @@
 # limitations under the License.
 
 
-from collections import namedtuple
 import logging
-import sys
+import re
 import setup
+import sys
 import util
+from collections import namedtuple
 from pathlib import Path
 from google.cloud import pubsub_v1
 from util import project, lkp, cfg
