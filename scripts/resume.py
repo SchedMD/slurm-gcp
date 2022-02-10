@@ -168,13 +168,12 @@ def resume_nodes(nodelist, placement_groups=None):
         log.error("bulkInsert failures: {}".format('\n'.join(failed_reqs)))
 
 
-def create_placement_request(pg_name, region, count):
+def create_placement_request(pg_name, region):
     config = {
         'name': pg_name,
         'region': region,
         'groupPlacementPolicy': {
             'collocation': 'COLLOCATED',
-            'vmCount': count,
         }
     }
     return compute.resourcePolicies().insert(
@@ -196,7 +195,7 @@ def create_placement_groups(job_id, node_list, partition_name):
     region = lkp.node_region(model)
 
     requests = [
-        create_placement_request(group, region, len(incl_nodes))
+        create_placement_request(group, region)
         for group, incl_nodes in groups.items()
     ]
     done, failed = batch_execute(requests)
