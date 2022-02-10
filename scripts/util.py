@@ -274,7 +274,15 @@ def config_root_logger(caller_logger, level='DEBUG', util_level=None,
             'filename': logfile,
         }
     logging.config.dictConfig(config)
-    logging.getLogger(caller_logger).disabled = False
+    loggers = (
+        'resume',
+        'suspend',
+        'slurmsync',
+        'setup',
+        caller_logger,
+    )
+    for logger in map(logging.getLogger, loggers):
+        logger.disabled = False
 
 
 def handle_exception(exc_type, exc_value, exc_trace):
