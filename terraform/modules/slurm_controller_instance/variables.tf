@@ -262,6 +262,7 @@ variable "partitions" {
         count_static      = number
         group_name        = string
         instance_template = string
+        node_conf         = map(string)
       }))
       placement_groups  = bool
       subnetwork        = string

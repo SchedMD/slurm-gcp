@@ -34,6 +34,7 @@ locals {
           count_dynamic = 10
           count_static  = 0
           group_name    = "n0"
+          node_conf     = {}
 
           additional_disks       = []
           can_ip_forward         = false

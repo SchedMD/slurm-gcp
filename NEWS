@@ -14,6 +14,7 @@ Changes in Slurm-GCP 5.0.0
  -- Cluster synchronizes to configuration
  -- Fix placement groups leak on `terraform destroy`
  -- Allow custom Prolog and Epilog scripts
+ -- Expose slurm.conf node configuration options
 
 Changes in Slurm-GCP 4.1.0
 ==========================

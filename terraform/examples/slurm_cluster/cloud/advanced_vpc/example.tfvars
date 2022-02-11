@@ -234,6 +234,9 @@ partitions = [
         group_name    = "n0"
         count_dynamic = 20
         count_static  = 0
+        node_conf = {
+          Features = ""
+        }
 
         additional_disks       = []
         can_ip_forward         = false

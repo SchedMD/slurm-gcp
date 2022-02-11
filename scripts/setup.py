@@ -228,6 +228,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
             'Sockets': 1,
             'CoresPerSocket': machine_conf.cpus,
             'ThreadsPerCore': 1,
+            **node_group.node_conf,
         })
 
         gres = None

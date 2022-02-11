@@ -25,6 +25,7 @@ locals {
     partition_nodes = {
       for x in var.compute_node_groups : x.group_name => {
         group_name        = x.group_name
+        node_conf         = x.node_conf
         partition_name    = var.partition_name
         instance_template = data.google_compute_instance_template.group_template[x.group_name].self_link
         count_dynamic     = x.count_dynamic

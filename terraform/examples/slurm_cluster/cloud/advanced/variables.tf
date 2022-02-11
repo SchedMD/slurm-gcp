@@ -368,6 +368,7 @@ variable "partitions" {
       count_static  = number
       count_dynamic = number
       group_name    = string
+      node_conf     = map(string)
       additional_disks = list(object({
         disk_name    = string
         device_name  = string
