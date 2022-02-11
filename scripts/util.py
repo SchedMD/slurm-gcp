@@ -131,7 +131,7 @@ def split_nodelist(nodelist):
 
 def is_exclusive_node(node):
     partition = lkp.node_partition(node)
-    return partition.exclusive or partition.placement_groups
+    return partition.enable_job_exclusive or partition.enable_placement_groups
 
 
 def compute_service(credentials=None, user_agent=USER_AGENT):
@@ -601,8 +601,8 @@ class Lookup:
         return instance_metadata('zone')
 
     @property
-    def exclusive(self):
-        return bool(self._cfg.exclusive or self._cfg.enable_placement)
+    def enable_job_exclusive(self):
+        return bool(self._cfg.enable_job_exclusive or self._cfg.enable_placement)
 
     @lru_cache(maxsize=None)
     def _node_desc(self, node_name):

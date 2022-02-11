@@ -31,7 +31,7 @@ module "slurm_partition" {
   partition_conf = {
     Default = "YES"
   }
-  compute_node_groups = [
+  partition_node_groups = [
     {
       group_name    = "test"
       count_dynamic = 10

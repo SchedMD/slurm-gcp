@@ -130,7 +130,7 @@ def epilog_suspend_nodes(nodelist, job_id):
     region = lkp.node_region(model)
     partition = lkp.node_partition(model)
     suspend_nodes(nodelist)
-    if partition.placement_groups:
+    if partition.enable_placement_groups:
         delete_placement_groups(job_id, region, partition.partition_name)
 
 

@@ -155,7 +155,8 @@ variable "partitions" {
   type = list(object({
     compute_list = list(string)
     partition = object({
-      exclusive = bool
+      enable_job_exclusive    = bool
+      enable_placement_groups = bool
       network_storage = list(object({
         server_ip     = string
         remote_mount  = string
@@ -172,7 +173,6 @@ variable "partitions" {
         instance_template = string
         node_conf         = map(string)
       }))
-      placement_groups  = bool
       subnetwork        = string
       zone_policy_allow = list(string)
       zone_policy_deny  = list(string)

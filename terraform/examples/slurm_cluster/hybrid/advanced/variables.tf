@@ -177,7 +177,13 @@ variable "partitions" {
   type = list(object({
     enable_job_exclusive    = bool
     enable_placement_groups = bool
-    compute_node_groups = list(object({
+    partition_conf          = map(string)
+    partition_d = list(object({
+      filename = string
+      content  = string
+    }))
+    partition_name = string
+    partition_node_groups = list(object({
       count_static  = number
       count_dynamic = number
       group_name    = string
@@ -231,12 +237,6 @@ variable "partitions" {
       server_ip     = string
       remote_mount  = string
       mount_options = string
-    }))
-    partition_name = string
-    partition_conf = map(string)
-    partition_d = list(object({
-      filename = string
-      content  = string
     }))
     region             = string
     subnetwork_project = string

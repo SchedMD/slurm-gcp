@@ -235,7 +235,7 @@ def prolog_resume_nodes(nodelist, job_id):
     model = next(iter(nodes))
     partition = lkp.node_partition(model)
     placement_groups = None
-    if partition.placement_groups:
+    if partition.enable_placement_groups:
         placement_groups = create_placement_groups(job_id, nodes,
                                                    partition.partition_name)
     resume_nodes(nodes, placement_groups)

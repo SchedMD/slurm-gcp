@@ -29,7 +29,7 @@ locals {
       }
       partition_d    = []
       partition_name = "debug"
-      compute_node_groups = [
+      partition_node_groups = [
         {
           count_dynamic = 10
           count_static  = 0

@@ -116,7 +116,7 @@ partitions = [
   {
     enable_job_exclusive    = false
     enable_placement_groups = false
-    compute_node_groups = [
+    partition_node_groups = [
       {
         group_name    = "n0"
         count_dynamic = 20

@@ -23,7 +23,7 @@ locals {
     partition_name = var.partition_name
     partition_conf = var.partition_conf
     partition_nodes = {
-      for x in var.compute_node_groups : x.group_name => {
+      for x in var.partition_node_groups : x.group_name => {
         group_name        = x.group_name
         node_conf         = x.node_conf
         partition_name    = var.partition_name
@@ -32,12 +32,12 @@ locals {
         count_static      = x.count_static
       }
     }
-    subnetwork        = data.google_compute_subnetwork.partition_subnetwork.self_link
-    zone_policy_allow = setsubtract(var.zone_policy_allow, var.zone_policy_deny)
-    zone_policy_deny  = var.zone_policy_deny
-    exclusive         = local.enable_placement_groups || var.enable_job_exclusive
-    placement_groups  = local.enable_placement_groups
-    network_storage   = var.network_storage
+    subnetwork              = data.google_compute_subnetwork.partition_subnetwork.self_link
+    zone_policy_allow       = setsubtract(var.zone_policy_allow, var.zone_policy_deny)
+    zone_policy_deny        = var.zone_policy_deny
+    enable_job_exclusive    = local.enable_placement_groups || var.enable_job_exclusive
+    enable_placement_groups = local.enable_placement_groups
+    network_storage         = var.network_storage
   }
 
   enable_placement_groups = var.enable_placement_groups && alltrue([
@@ -77,7 +77,7 @@ data "google_compute_subnetwork" "partition_subnetwork" {
 ##################
 
 data "google_compute_instance_template" "group_template" {
-  for_each = { for x in var.compute_node_groups : x.group_name => x }
+  for_each = { for x in var.partition_node_groups : x.group_name => x }
 
   name = (
     each.value.instance_template != null && each.value.instance_template != ""
@@ -95,7 +95,7 @@ module "slurm_compute_template" {
   source = "../slurm_instance_template"
 
   for_each = {
-    for x in var.compute_node_groups : x.group_name => x
+    for x in var.partition_node_groups : x.group_name => x
     if(x.instance_template == null || x.instance_template == "")
   }
 
@@ -165,7 +165,7 @@ module "delta_critical" {
     },
     {
       subnetwork              = local.partition.subnetwork
-      enable_placement_groups = local.partition.placement_groups
+      enable_placement_groups = local.partition.enable_placement_groups
     }
   )
 
@@ -215,6 +215,6 @@ module "delta_placement_groups" {
   partition_name     = local.partition.partition_name
 
   triggers = {
-    enable_placement_groups = local.partition.placement_groups
+    enable_placement_groups = local.partition.enable_placement_groups
   }
 }

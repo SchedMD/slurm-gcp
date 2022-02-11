@@ -48,7 +48,7 @@ module "slurm_partition" {
   for_each = local.partition_map
 
   slurm_cluster_name      = var.slurm_cluster_name
-  compute_node_groups     = each.value.compute_node_groups
+  partition_node_groups   = each.value.partition_node_groups
   enable_job_exclusive    = each.value.enable_job_exclusive
   enable_placement_groups = each.value.enable_placement_groups
   network_storage         = each.value.network_storage
