@@ -49,7 +49,7 @@ def delete_instances(compute_list):
 def main(args):
     required_map = {
         'labels.slurm_cluster_id': args.slurm_cluster_id,
-        'labels.slurm_instance_type': 'compute',
+        'labels.slurm_instance_role': 'compute',
     }
     required_list = [f"{k}={v}" for k, v in required_map.items()]
     required_logic = ' AND '.join(required_list)

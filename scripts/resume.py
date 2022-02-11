@@ -76,7 +76,7 @@ def instance_properties(model):
     labels = {
         'slurm_cluster_id': cfg.slurm_cluster_id,
         'slurm_cluster_name': cfg.slurm_cluster_name,
-        'slurm_instance_type': 'compute',
+        'slurm_instance_role': 'compute',
     }
     props.labels = {**template_info.labels, **labels}
 
