@@ -21,5 +21,9 @@ output "slurm_cluster_id" {
 
 output "slurm_partition" {
   description = "Slurm partition details."
-  value       = module.slurm_partition
+  value = (
+    var.enable_hybrid
+    ? module.slurm_controller_hybrid[0].partitions
+    : module.slurm_controller_instance[0].partitions
+  )
 }
