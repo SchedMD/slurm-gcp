@@ -370,7 +370,7 @@ variable "partitions" {
       content  = string
     }))
     partition_name = string
-    partition_node_groups = list(object({
+    partition_nodes = list(object({
       count_static  = number
       count_dynamic = number
       group_name    = string

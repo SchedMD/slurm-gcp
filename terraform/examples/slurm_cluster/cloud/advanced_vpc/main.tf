@@ -97,7 +97,7 @@ locals {
     for x in var.partitions : {
       enable_job_exclusive    = x.enable_job_exclusive
       enable_placement_groups = x.enable_placement_groups
-      partition_node_groups   = x.partition_node_groups
+      partition_nodes         = x.partition_nodes
       network_storage         = x.network_storage
       partition_name          = x.partition_name
       partition_conf          = x.partition_conf

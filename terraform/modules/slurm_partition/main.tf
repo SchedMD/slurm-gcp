@@ -23,7 +23,7 @@ locals {
     partition_name = var.partition_name
     partition_conf = var.partition_conf
     partition_nodes = {
-      for x in var.partition_node_groups : x.group_name => {
+      for x in var.partition_nodes : x.group_name => {
         group_name        = x.group_name
         node_conf         = x.node_conf
         partition_name    = var.partition_name
@@ -77,7 +77,7 @@ data "google_compute_subnetwork" "partition_subnetwork" {
 ##################
 
 data "google_compute_instance_template" "group_template" {
-  for_each = { for x in var.partition_node_groups : x.group_name => x }
+  for_each = { for x in var.partition_nodes : x.group_name => x }
 
   name = (
     each.value.instance_template != null && each.value.instance_template != ""
@@ -95,7 +95,7 @@ module "slurm_compute_template" {
   source = "../slurm_instance_template"
 
   for_each = {
-    for x in var.partition_node_groups : x.group_name => x
+    for x in var.partition_nodes : x.group_name => x
     if(x.instance_template == null || x.instance_template == "")
   }
 
