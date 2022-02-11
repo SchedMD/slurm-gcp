@@ -277,10 +277,10 @@ variable "slurm_instance_role" {
   default     = null
 
   validation {
-    condition     = (
+    condition = (
       var.slurm_instance_role == null
       ? true
-      : contains(["controller", "login", "compute"], lower(var.slurm_instance_role)))
+    : contains(["controller", "login", "compute"], lower(var.slurm_instance_role)))
     error_message = "Must be one of: controller; login; compute; or null."
   }
 }
