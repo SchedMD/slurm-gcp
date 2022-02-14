@@ -1,0 +1,10 @@
+ompi_install="{{ompi_paths.apps}}"
+prepend_path("PATH", ompi_install.."/bin")
+prepend_path("LD_LIBRARY_PATH", ompi_install.."/lib")
+prepend_path("MANPATH", ompi_install.."/share/man")
+setenv("MPI_HOME", ompi_install)
+setenv("MPI_BIN", ompi_install.."/bin")
+setenv("MPI_SYSCONFIG", ompi_install.."/etc")
+setenv("MPI_INCLUDE", ompi_install.."/include")
+setenv("MPI_LIB", ompi_install.."/lib")
+setenv("MPI_MAN", ompi_install.."/share/man")

@@ -1,3 +1,21 @@
+Changes in Slurm-GCP 5.0.0
+==========================
+ -- Added shielded VM support
+ -- suspend.py - now handles "Quota exceeded" error
+ -- Changed Terraform minimum version to 1.0
+ -- Replaced `foundry/` with `packer/`
+ -- Terraform modules now use Google Cloudfoundry Toolkit
+ -- Added auto_create_subnetworks option
+ -- ansible - scripts role for custom provisioning scripts
+ -- Replaced `tf/` with `terraform/`
+ -- Added destroy_nodes - script to destroy cluster compute nodes
+ -- Added data migration workflow example jobs and configuration
+ -- oslogin can be disabled to allow other user and authentication methods
+ -- Cluster synchronizes to configuration
+ -- Fix placement groups leak on `terraform destroy`
+ -- Allow custom Prolog and Epilog scripts
+ -- Expose slurm.conf node configuration options
+
 Changes in Slurm-GCP 4.1.4
 ==========================
  -- Updated Singularity download URL in custom-controller-install script.
@@ -48,7 +66,7 @@ Changes in Slurm-GCP 4.0.3
 ==========================
  -- Introduce NEWS file
  -- Recommended image is now
-	schedmd-slurm-public/hpc-centos-7-schedmd-slurm-20-11-7
+    schedmd-slurm-public/hpc-centos-7-schedmd-slurm-20-11-7
  -- Changed slurmrestd port to 6842 (from 80)
  -- partitions[].image_hyperthreads=false now actively disables hyperthreads
     on hpc-centos-7 images, starting with the now recommended image

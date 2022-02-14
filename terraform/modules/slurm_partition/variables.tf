@@ -1,0 +1,221 @@
+/**
+ * Copyright 2021 SchedMD LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+variable "project_id" {
+  type        = string
+  description = "Project ID to create resources in."
+}
+
+variable "slurm_cluster_name" {
+  type        = string
+  description = "Cluster name, used for resource naming and slurm accounting."
+}
+
+variable "slurm_cluster_id" {
+  type        = string
+  description = "The Cluster ID, used to label resource."
+}
+
+variable "partition_name" {
+  description = "Name of Slurm partition."
+  type        = string
+}
+
+variable "partition_conf" {
+  description = <<EOD
+Slurm partition configuration as a map.
+See https://slurm.schedmd.com/slurm.conf.html#SECTION_PARTITION-CONFIGURATION
+EOD
+  type        = map(string)
+  default     = {}
+}
+
+variable "partition_d" {
+  description = "List of scripts to be ran on compute VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
+variable "partition_nodes" {
+  description = "Grouped nodes in the partition."
+  type = list(object({
+    count_static  = number
+    count_dynamic = number
+    group_name    = string
+    node_conf     = map(string)
+    additional_disks = list(object({
+      disk_name    = string
+      device_name  = string
+      disk_size_gb = number
+      disk_type    = string
+      disk_labels  = map(string)
+      auto_delete  = bool
+      boot         = bool
+    }))
+    can_ip_forward         = bool
+    disable_smt            = bool
+    disk_auto_delete       = bool
+    disk_labels            = map(string)
+    disk_size_gb           = number
+    disk_type              = string
+    enable_confidential_vm = bool
+    enable_oslogin         = bool
+    enable_shielded_vm     = bool
+    gpu = object({
+      count = number
+      type  = string
+    })
+    instance_template   = string
+    labels              = map(string)
+    machine_type        = string
+    metadata            = map(string)
+    min_cpu_platform    = string
+    on_host_maintenance = string
+    preemptible         = bool
+    service_account = object({
+      email  = string
+      scopes = list(string)
+    })
+    shielded_instance_config = object({
+      enable_integrity_monitoring = bool
+      enable_secure_boot          = bool
+      enable_vtpm                 = bool
+    })
+    source_image_family  = string
+    source_image_project = string
+    source_image         = string
+    tags                 = list(string)
+  }))
+
+  validation {
+    condition     = length(var.partition_nodes) > 0
+    error_message = "Partition must contain nodes."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.partition_nodes : can(regex("(^[a-z][a-z0-9]*$)", x.group_name))
+    ])
+    error_message = "Items 'group_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.partition_nodes : x.count_static >= 0
+    ])
+    error_message = "Items 'count_static' must be >= 0."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.partition_nodes : x.count_dynamic >= 0
+    ])
+    error_message = "Items 'count_dynamic' must be >= 0."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.partition_nodes : sum([x.count_static, x.count_dynamic]) > 0
+    ])
+    error_message = "Sum of 'count_static' and 'count_dynamic' must be > 0."
+  }
+}
+
+variable "subnetwork_project" {
+  description = "The project the subnetwork belongs to."
+  type        = string
+  default     = ""
+}
+
+variable "subnetwork" {
+  description = "The subnetwork to attach instances to. A self_link is prefered."
+  type        = string
+  default     = ""
+}
+
+variable "region" {
+  description = "The region of the subnetwork."
+  type        = string
+  default     = ""
+}
+
+variable "zone_policy_allow" {
+  description = <<EOD
+Partition nodes will prefer to be created in the listed zones. If a zone appears
+in both zone_policy_allow and zone_policy_deny, then zone_policy_deny will take
+priority for that zone.
+EOD
+  type        = set(string)
+  default     = []
+}
+
+variable "zone_policy_deny" {
+  description = <<EOD
+Partition nodes will not be created in the listed zones. If a zone appears in
+both zone_policy_allow and zone_policy_deny, then zone_policy_deny will take
+priority for that zone.
+EOD
+  type        = set(string)
+  default     = []
+}
+
+variable "enable_job_exclusive" {
+  description = <<EOD
+Enables job exclusivity. A job will run exclusively on the scheduled nodes.
+
+NOTE: enable_placement_groups=true will set enable_job_exclusive=true when the
+partition only contains compute optimized machine_types (e.g. c2-standard-60,
+c2d-standard-112); otherwise enable_placement_groups=false will be set instead
+and enable_job_exclusive will be respected.
+EOD
+  type        = bool
+  default     = false
+}
+
+variable "enable_placement_groups" {
+  description = <<EOD
+Enables job placement groups. Instances will be colocated for a job.
+
+NOTE: enable_placement_groups=true will set enable_job_exclusive=true when the
+partition only contains compute optimized machine_types (e.g. c2-standard-60,
+c2d-standard-112); otherwise enable_placement_groups=false will be set instead
+and enable_job_exclusive will be respected.
+EOD
+  type        = bool
+  default     = false
+}
+
+variable "network_storage" {
+  description = <<EOD
+Storage to mounted on all instances in this partition.
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Raw options to pass to 'mount'.
+EOD
+  type = list(object({
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
+  default = []
+}
