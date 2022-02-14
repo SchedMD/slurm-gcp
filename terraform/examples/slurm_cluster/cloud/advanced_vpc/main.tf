@@ -55,8 +55,8 @@ locals {
     }
   ]
 
-  login_node_groups = [
-    for x in var.login_node_groups : {
+  login_nodes = [
+    for x in var.login_nodes : {
       access_config            = x.access_config
       additional_disks         = x.additional_disks
       can_ip_forward           = x.can_ip_forward
@@ -173,7 +173,7 @@ module "slurm_cluster" {
   epilog_d                   = var.epilog_d
   jwt_key                    = var.jwt_key
   login_network_storage      = var.login_network_storage
-  login_node_groups          = local.login_node_groups
+  login_nodes                = local.login_nodes
   munge_key                  = var.munge_key
   network_storage            = var.network_storage
   partitions                 = local.partitions

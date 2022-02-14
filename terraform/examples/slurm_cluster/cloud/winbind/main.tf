@@ -59,7 +59,7 @@ locals {
     zone                     = null
   }
 
-  login_node_groups = [
+  login_nodes = [
     {
       group_name = "l0"
 
@@ -212,7 +212,7 @@ module "slurm_cluster" {
   controller_instance_config = local.controller_instance_config
   compute_d                  = [data.local_file.winbind_sh]
   controller_d               = [data.local_file.winbind_sh]
-  login_node_groups          = local.login_node_groups
+  login_nodes                = local.login_nodes
   partitions                 = local.partitions
   project_id                 = var.project_id
 }

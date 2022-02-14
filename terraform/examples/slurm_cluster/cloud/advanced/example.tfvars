@@ -179,11 +179,11 @@ controller_instance_config = {
   zone = null
 }
 
-#################
-# LOGIN: GROUPS #
-#################
+#########
+# LOGIN #
+#########
 
-login_node_groups = [
+login_nodes = [
   {
     group_name = "l0"
 

@@ -294,7 +294,7 @@ EOD
 # LOGIN #
 #########
 
-variable "login_node_groups" {
+variable "login_nodes" {
   description = "List of slurm login instance definitions."
   type = list(object({
     access_config = list(object({

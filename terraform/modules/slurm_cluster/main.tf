@@ -178,7 +178,7 @@ module "slurm_login_template" {
   source = "../slurm_instance_template"
 
   for_each = {
-    for x in var.login_node_groups : x.group_name => x
+    for x in var.login_nodes : x.group_name => x
     if(x.instance_template == null || x.instance_template == "")
   }
 
@@ -221,7 +221,7 @@ module "slurm_login_template" {
 module "slurm_login_instance" {
   source = "../slurm_login_instance"
 
-  for_each = { for x in var.login_node_groups : x.group_name => x }
+  for_each = { for x in var.login_nodes : x.group_name => x }
 
   access_config      = lookup(each.value, "access_config", [])
   slurm_cluster_name = var.slurm_cluster_name

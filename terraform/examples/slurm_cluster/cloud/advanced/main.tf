@@ -41,7 +41,7 @@ module "slurm_cluster" {
   epilog_d                   = var.epilog_d
   jwt_key                    = var.jwt_key
   login_network_storage      = var.login_network_storage
-  login_node_groups          = var.login_node_groups
+  login_nodes                = var.login_nodes
   munge_key                  = var.munge_key
   network_storage            = var.network_storage
   partitions                 = var.partitions
