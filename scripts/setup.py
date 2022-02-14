@@ -505,15 +505,16 @@ def install_custom_scripts(clean=False):
             # rm -rf custom_scripts
             shutil.rmtree(path)
 
+    dirs.custom_scripts.mkdirp()
     for key, path in custom_scripts:
-        path = (dirs.custom_scripts/path).resolve()
-        path.parent.mkdirp()
+        fullpath = (dirs.custom_scripts/path).resolve()
+        fullpath.parent.mkdirp()
         for par in path.parents:
-            util.chown_slurm(par)
+            util.chown_slurm(dirs.custom_scripts/par)
         log.debug(path)
         content = project_metadata(key)
-        path.write_text(content)
-        util.chown_slurm(path, mode=0o755)
+        fullpath.write_text(content)
+        util.chown_slurm(fullpath, mode=0o755)
 
 
 def run_custom_scripts():
