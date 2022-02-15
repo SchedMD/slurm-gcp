@@ -164,7 +164,6 @@ module "slurm_controller_hybrid" {
   compute_d            = var.compute_d
   enable_devel         = var.enable_devel
   epilog_d             = var.epilog_d
-  jwt_key              = var.jwt_key
   munge_key            = var.munge_key
   partitions           = values(module.slurm_partition)[*]
   prolog_d             = var.prolog_d

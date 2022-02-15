@@ -9,6 +9,21 @@ See the [simple controller](../../examples/slurm_controller_hybrid/simple)
 example or the [simple cluster](../../examples/slurm_cluster/simple_hybrid)
 example for usage examples.
 
+## Service Accounts
+
+[Documentation](https://cloud.google.com/iam/docs/service-accounts)
+
+### Roles
+
+- roles/compute.admin
+- roles/secretmanager.secretAccessor
+- roles/pubsub.publisher
+- roles/pubsub.subscriber
+
+### Scopes
+
+- https://www.googleapis.com/auth/cloud-platform
+
 ## Additional Dependencies
 
 * [**python**](https://www.python.org/) must be installed and in `$PATH` of the
@@ -72,10 +87,11 @@ limitations under the License.
 | [google_compute_project_metadata_item.prolog_d](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
 | [google_pubsub_schema.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_schema) | resource |
 | [google_pubsub_topic.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
+| [google_secret_manager_secret.munge_key](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret) | resource |
+| [google_secret_manager_secret_version.munge_key_version](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
 | [local_file.config_yaml](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [null_resource.setup_hybrid](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [random_id.jwt_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
-| [random_id.munge_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
+| [random_password.munge_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_uuid.slurm_cluster_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
 | [local_file.setup_hybrid](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 
@@ -88,7 +104,6 @@ limitations under the License.
 | <a name="input_enable_devel"></a> [enable\_devel](#input\_enable\_devel) | Enables development mode. Not for production use. | `bool` | `false` | no |
 | <a name="input_epilog_d"></a> [epilog\_d](#input\_epilog\_d) | List of scripts to be used for Epilog. Programs for the slurmd to execute<br>on every node when a user's job completes.<br>See https://slurm.schedmd.com/slurm.conf.html#OPT_Epilog. | <pre>list(object({<br>    filename = string<br>    content  = string<br>  }))</pre> | `[]` | no |
 | <a name="input_google_app_cred_path"></a> [google\_app\_cred\_path](#input\_google\_app\_cred\_path) | Path to Google Applicaiton Credentials. | `string` | `null` | no |
-| <a name="input_jwt_key"></a> [jwt\_key](#input\_jwt\_key) | Cluster jwt authentication key. If 'null', then a key will be generated instead. | `string` | `null` | no |
 | <a name="input_login_network_storage"></a> [login\_network\_storage](#input\_login\_network\_storage) | Storage to mounted on login and controller instances<br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Options to mount with. | <pre>list(object({<br>    server_ip     = string<br>    remote_mount  = string<br>    local_mount   = string<br>    fs_type       = string<br>    mount_options = string<br>  }))</pre> | `[]` | no |
 | <a name="input_metadata"></a> [metadata](#input\_metadata) | Metadata key/value pairs. | `map(string)` | `null` | no |
 | <a name="input_munge_key"></a> [munge\_key](#input\_munge\_key) | Cluster munge authentication key. If 'null', then a key will be generated instead. | `string` | `null` | no |
@@ -108,7 +123,6 @@ limitations under the License.
 | Name | Description |
 |------|-------------|
 | <a name="output_compute_list"></a> [compute\_list](#output\_compute\_list) | Cluster compute node list. |
-| <a name="output_jwt_key"></a> [jwt\_key](#output\_jwt\_key) | Cluster jwt authentication key. |
 | <a name="output_munge_key"></a> [munge\_key](#output\_munge\_key) | Cluster munge authentication key. |
 | <a name="output_output_dir"></a> [output\_dir](#output\_output\_dir) | Directory where configuration files are written to. |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Cluster partitions. |

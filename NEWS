@@ -15,6 +15,7 @@ Changes in Slurm-GCP 5.0.0
  -- Fix placement groups leak on `terraform destroy`
  -- Allow custom Prolog and Epilog scripts
  -- Expose slurm.conf node configuration options
+ -- Munge and JWT key are managed by secrets manager
 
 Changes in Slurm-GCP 4.1.5
 ==========================

@@ -70,13 +70,6 @@ variable "munge_key" {
   }
 }
 
-variable "jwt_key" {
-  type        = string
-  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
-  default     = null
-  sensitive   = true
-}
-
 variable "compute_d" {
   description = "List of scripts to be ran on compute VM startup."
   type = list(object({

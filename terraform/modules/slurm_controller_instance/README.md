@@ -13,6 +13,21 @@ See the [simple controller](../../examples/slurm_controller_instance/simple)
 example or the [simple cluster](../../examples/slurm_cluster/simple) example
 for usage examples.
 
+## Service Accounts
+
+[Documentation](https://cloud.google.com/iam/docs/service-accounts)
+
+### Roles
+
+- roles/compute.admin
+- roles/secretmanager.secretAccessor
+- roles/pubsub.publisher
+- roles/pubsub.subscriber
+
+### Scopes
+
+- https://www.googleapis.com/auth/cloud-platform
+
 ## Warning
 
 This module creates compute instances that are not managed by terraform. However,
@@ -83,8 +98,12 @@ limitations under the License.
 | [google_compute_project_metadata_item.slurmdbd_conf](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
 | [google_pubsub_schema.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_schema) | resource |
 | [google_pubsub_topic.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic) | resource |
-| [random_id.jwt_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
-| [random_id.munge_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
+| [google_secret_manager_secret.jwt_key](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret) | resource |
+| [google_secret_manager_secret.munge_key](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret) | resource |
+| [google_secret_manager_secret_version.jwt_key_version](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
+| [google_secret_manager_secret_version.munge_key_version](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version) | resource |
+| [random_password.jwt_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
+| [random_password.munge_key](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_uuid.slurm_cluster_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
 | [local_file.cgroup_conf_tpl](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.slurm_conf_tpl](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |

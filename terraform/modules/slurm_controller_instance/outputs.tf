@@ -39,13 +39,13 @@ output "slurm_cluster_id" {
 
 output "munge_key" {
   description = "Cluster munge authentication key."
-  value       = local.munge_key
+  value       = var.munge_key
   sensitive   = true
 }
 
 output "jwt_key" {
   description = "Cluster jwt authentication key."
-  value       = local.jwt_key
+  value       = var.jwt_key
   sensitive   = true
 }
 

@@ -2,6 +2,19 @@
 
 This module creates a Slurm partition for slurm_controller_*.
 
+## Service Accounts
+
+[Documentation](https://cloud.google.com/iam/docs/service-accounts)
+
+### Roles
+
+- roles/secretmanager.secretAccessor
+- roles/pubsub.subscriber
+
+### Scopes
+
+- https://www.googleapis.com/auth/cloud-platform
+
 ## License
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

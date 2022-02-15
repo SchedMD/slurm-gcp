@@ -49,14 +49,8 @@ locals {
 
   munge_key = (
     var.munge_key == null
-    ? random_id.munge_key.b64_std
+    ? random_password.munge_key.result
     : var.munge_key
-  )
-
-  jwt_key = (
-    var.jwt_key == null
-    ? random_id.jwt_key.b64_std
-    : var.jwt_key
   )
 
   partitions   = { for p in var.partitions[*].partition : p.partition_name => p }
@@ -92,9 +86,6 @@ locals {
     etc                = local.output_dir
     scripts            = local.scripts_dir
 
-    munge_key = local.munge_key
-    jwt_key   = local.jwt_key
-
     pubsub_topic_id = google_pubsub_topic.this.name
 
     slurm_cluster_id = local.slurm_cluster_id
@@ -127,12 +118,8 @@ data "local_file" "setup_hybrid" {
 resource "random_uuid" "slurm_cluster_id" {
 }
 
-resource "random_id" "munge_key" {
-  byte_length = 256
-}
-
-resource "random_id" "jwt_key" {
-  byte_length = 256
+resource "random_password" "munge_key" {
+  length = 256
 }
 
 ##########
@@ -313,6 +300,27 @@ module "slurm_pubsub" {
   subscription_labels = {
     slurm_cluster_id = local.slurm_cluster_id
   }
+}
+
+###########
+# SECRETS #
+###########
+
+resource "google_secret_manager_secret" "munge_key" {
+  secret_id = "${var.slurm_cluster_name}-slurm-secret-munge_key"
+
+  replication {
+    automatic = true
+  }
+
+  labels = {
+    slurm_cluster_id = local.slurm_cluster_id
+  }
+}
+
+resource "google_secret_manager_secret_version" "munge_key_version" {
+  secret      = google_secret_manager_secret.munge_key.id
+  secret_data = local.munge_key
 }
 
 #################

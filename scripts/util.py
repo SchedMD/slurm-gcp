@@ -111,6 +111,27 @@ def publish_message(project_id, topic_id, message) -> None:
     print(f"Published message to '{topic_path}'.")
 
 
+def access_secret_version(project_id, secret_id, version_id='latest'):
+    """
+    Access the payload for the given secret version if one exists. The version
+    can be a version number as a string (e.g. "5") or an alias (e.g. "latest").
+    """
+    from google.cloud import secretmanager
+    from google.api_core import exceptions
+
+    client = secretmanager.SecretManagerServiceClient()
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
+    try:
+        response = client.access_secret_version(request={"name": name})
+        log.debug(f"Secret '{name}' was found.")
+        payload = response.payload.data.decode("UTF-8")
+    except exceptions.NotFound as e:
+        log.debug(f"Secret '{name}' was not found!")
+        payload = None
+
+    return payload
+
+
 def parse_self_link(self_link: str):
     """Parse a selfLink url, extracting all useful values
     https://.../v1/projects/<project>/regions/<region>/...
