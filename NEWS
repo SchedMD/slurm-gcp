@@ -16,6 +16,12 @@ Changes in Slurm-GCP 5.0.0
  -- Allow custom Prolog and Epilog scripts
  -- Expose slurm.conf node configuration options
 
+Changes in Slurm-GCP 4.1.5
+==========================
+ -- Fix partition-specific network storage from controller to compute nodes.
+ -- Bump urllib3 from 1.26.4 to 1.26.5 in /foundry.
+ -- Bump ipython from 7.21.0 to 7.31.1 in /foundry.
+
 Changes in Slurm-GCP 4.1.4
 ==========================
  -- Updated Singularity download URL in custom-controller-install script.
