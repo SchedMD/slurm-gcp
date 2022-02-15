@@ -1,6 +1,7 @@
 Changes in Slurm-GCP 4.1.5
 ==========================
  -- Fix partition-specific network storage from controller to compute nodes.
+ -- Bump urllib3 from 1.26.4 to 1.26.5 in /foundry.
 
 Changes in Slurm-GCP 4.1.4
 ==========================
