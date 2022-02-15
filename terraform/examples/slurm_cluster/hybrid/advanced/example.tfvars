@@ -117,13 +117,22 @@ partitions = [
   {
     enable_job_exclusive    = false
     enable_placement_groups = false
+    network_storage         = []
+    partition_conf = {
+      Default     = "YES"
+      SuspendTime = 300
+    }
+    partition_d    = []
+    partition_name = "debug"
     partition_nodes = [
       {
-        group_name    = "n0"
+        # Group Definition
+        group_name    = "test"
         count_dynamic = 20
         count_static  = 0
         node_conf     = {}
 
+        # Template By Definition
         additional_disks       = []
         can_ip_forward         = false
         disable_smt            = false
@@ -153,15 +162,14 @@ partitions = [
         source_image_project     = null
         source_image             = null
         tags                     = []
+
+        # Template By Source
+        instance_template = null
+
+        # Template Overrides
+        preemptible = false
       },
     ]
-    network_storage = []
-    partition_conf = {
-      Default     = "YES"
-      SuspendTime = 300
-    }
-    partition_name     = "debug"
-    partition_d        = []
     region             = null
     subnetwork_project = null
     subnetwork         = "default"

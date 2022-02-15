@@ -115,7 +115,13 @@ epilog_d = [
 ##############
 
 controller_instance_config = {
-  access_config = []
+  # Template By Definition
+  access_config = [
+    # {
+    #   nat_ip       = "<NAT_IP>"
+    #   network_tier = "<NETWORK_TIER>"
+    # },
+  ]
   additional_disks = [
     # {
     #   disk_name    = null
@@ -140,7 +146,6 @@ controller_instance_config = {
   enable_oslogin         = true
   enable_shielded_vm     = false
   gpu                    = null
-  instance_template      = null
   labels = {
     # label0 = "value0"
     # label1 = "value1"
@@ -153,7 +158,6 @@ controller_instance_config = {
   min_cpu_platform    = null
   network_ip          = null
   on_host_maintenance = null
-  preemptible         = false
   region              = null
   service_account = {
     email = "default"
@@ -177,6 +181,12 @@ controller_instance_config = {
     # "tag1",
   ]
   zone = null
+
+  # Template By Source
+  instance_template = null
+
+  # Template Overrides
+  preemptible = false
 }
 
 #########
@@ -185,8 +195,11 @@ controller_instance_config = {
 
 login_nodes = [
   {
-    group_name = "l0"
+    # Group Definition
+    group_name    = "l0"
+    num_instances = 1
 
+    # Template By Definition
     access_config          = []
     additional_disks       = []
     can_ip_forward         = false
@@ -199,15 +212,12 @@ login_nodes = [
     enable_oslogin         = true
     enable_shielded_vm     = false
     gpu                    = null
-    instance_template      = null
     labels                 = {}
     machine_type           = "n1-standard-1"
     metadata               = {}
     min_cpu_platform       = null
     network_ips            = []
-    num_instances          = 1
     on_host_maintenance    = null
-    preemptible            = false
     region                 = null
     service_account = {
       email = "default"
@@ -224,6 +234,12 @@ login_nodes = [
     subnetwork               = "default"
     tags                     = []
     zone                     = null
+
+    # Template By Source
+    instance_template = null
+
+    # Template Overrides
+    preemptible = false
   },
 ]
 
@@ -235,13 +251,22 @@ partitions = [
   {
     enable_job_exclusive    = false
     enable_placement_groups = false
+    network_storage         = []
+    partition_conf = {
+      Default     = "YES"
+      SuspendTime = 300
+    }
+    partition_d    = []
+    partition_name = "debug"
     partition_nodes = [
       {
-        group_name    = "n0"
+        # Group Definition
+        group_name    = "test"
         count_dynamic = 20
         count_static  = 0
         node_conf     = {}
 
+        # Template By Definition
         additional_disks       = []
         can_ip_forward         = false
         disable_smt            = false
@@ -271,15 +296,14 @@ partitions = [
         source_image_project     = null
         source_image             = null
         tags                     = []
+
+        # Template By Source
+        instance_template = null
+
+        # Template Overrides
+        preemptible = false
       },
     ]
-    network_storage = []
-    partition_conf = {
-      Default     = "YES"
-      SuspendTime = 300
-    }
-    partition_name     = "debug"
-    partition_d        = []
     region             = null
     subnetwork_project = null
     subnetwork         = "default"
