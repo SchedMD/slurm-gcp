@@ -202,7 +202,7 @@ def config_from_metadata():
         return None
     
     metadata_key = f'{slurm_cluster_name}-slurm-config'
-    RETRY_WAIT = 2
+    RETRY_WAIT = 5
     for i in range(8):
         if i:
             log.error(f"config not found in project metadata, retry {i}")
