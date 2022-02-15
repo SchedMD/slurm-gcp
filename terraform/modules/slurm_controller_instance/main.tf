@@ -75,13 +75,8 @@ locals {
     network_storage       = var.network_storage
     login_network_storage = var.login_network_storage
 
-    cloud_parameters = {
-      ResumeRate     = lookup(var.cloud_parameters, "ResumeRate", 0)
-      SuspendRate    = lookup(var.cloud_parameters, "SuspendRate", 0)
-      ResumeTimeout  = lookup(var.cloud_parameters, "ResumeTimeout", 300)
-      SuspendTimeout = lookup(var.cloud_parameters, "SuspendTimeout", 300)
-    }
-    partitions = local.partitions
+    cloud_parameters = var.cloud_parameters
+    partitions       = local.partitions
   }
 }
 

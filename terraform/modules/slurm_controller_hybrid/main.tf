@@ -34,16 +34,6 @@ locals {
 
 locals {
   setup_hybrid = abspath("${local.scripts_dir}/setup_hybrid.py")
-
-  no_comma_params = lookup(var.cloud_parameters, "NoCommaParams", false)
-
-  resume_rate = lookup(var.cloud_parameters, "ResumeRate", 0)
-
-  resume_timeout = lookup(var.cloud_parameters, "ResumeTimeout", 300)
-
-  suspend_rate = lookup(var.cloud_parameters, "SuspendRate", 0)
-
-  suspend_timeout = lookup(var.cloud_parameters, "SuspendTimeout", 300)
 }
 
 ##################
@@ -112,13 +102,8 @@ locals {
     network_storage       = var.network_storage
     login_network_storage = var.login_network_storage
 
-    cloud_parameters = {
-      ResumeRate      = local.resume_rate
-      ResumeTimeout   = local.resume_timeout
-      SuspendRate     = local.suspend_rate
-      suspend_timeout = local.suspend_timeout
-    }
-    partitions = local.partitions
+    cloud_parameters = var.cloud_parameters
+    partitions       = local.partitions
 
     google_app_cred_path = local.google_app_cred_path
     slurm_scripts_dir    = local.slurm_scripts_dir
@@ -173,11 +158,11 @@ resource "null_resource" "setup_hybrid" {
     config_path = local_file.config_yaml.filename
     script_path = data.local_file.setup_hybrid.filename
 
-    no_comma_params = local.no_comma_params
-    resume_rate     = local.resume_rate
-    resume_timeout  = local.resume_timeout
-    suspend_rate    = local.suspend_rate
-    suspend_timeout = local.suspend_timeout
+    no_comma_params = var.cloud_parameters.no_comma_params
+    resume_rate     = var.cloud_parameters.resume_rate
+    resume_timeout  = var.cloud_parameters.resume_timeout
+    suspend_rate    = var.cloud_parameters.suspend_rate
+    suspend_timeout = var.cloud_parameters.suspend_timeout
   }
 
   provisioner "local-exec" {
@@ -187,10 +172,10 @@ resource "null_resource" "setup_hybrid" {
     }
     command = <<EOC
 ${self.triggers.script_path} \
---ResumeRate=${self.triggers.resume_rate} \
---SuspendRate=${self.triggers.suspend_rate} \
---ResumeTimeout=${self.triggers.resume_timeout} \
---SuspendTimeout=${self.triggers.suspend_timeout} \
+--resume-rate=${self.triggers.resume_rate} \
+--suspend-rate=${self.triggers.suspend_rate} \
+--resume-timeout=${self.triggers.resume_timeout} \
+--suspend-timeout=${self.triggers.suspend_timeout} \
 ${tobool(self.triggers.no_comma_params) == true ? "--no-comma-params" : ""}
 EOC
   }

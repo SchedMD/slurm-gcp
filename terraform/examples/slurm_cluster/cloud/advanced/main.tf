@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+##########
+# LOCALS #
+##########
+
+locals {
+  cloud_parameters = merge(var.cloud_parameters, {
+    no_comma_params = false
+  })
+}
+
 ############
 # PROVIDER #
 ############
@@ -31,7 +41,7 @@ module "slurm_cluster" {
   source = "../../../../modules/slurm_cluster"
 
   cgroup_conf_tpl            = var.cgroup_conf_tpl
-  cloud_parameters           = var.cloud_parameters
+  cloud_parameters           = local.cloud_parameters
   cloudsql                   = var.cloudsql
   slurm_cluster_name         = var.slurm_cluster_name
   compute_d                  = var.compute_d

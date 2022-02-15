@@ -58,10 +58,11 @@ login_network_storage = [
 
 # Slurm config
 cloud_parameters = {
-  ResumeRate     = 0
-  ResumeTimeout  = 300
-  SuspendRate    = 0
-  SuspendTimeout = 300
+  no_comma_params = false
+  resume_rate     = 0
+  resume_timeout  = 300
+  suspend_rate    = 0
+  suspend_timeout = 300
 }
 
 # scripts.d

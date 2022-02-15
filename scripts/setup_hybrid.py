@@ -37,10 +37,10 @@ util.log.disabled = False
 def main(args):
     params = {
         'no_comma_params': args.no_comma_params,
-        'ResumeRate': args.ResumeRate,
-        'ResumeTimeout': args.ResumeTimeout,
-        'SuspendRate': args.SuspendRate,
-        'SuspendTimeout': args.SuspendTimeout,
+        'ResumeRate': args.resume_rate,
+        'ResumeTimeout': args.resume_timeout,
+        'SuspendRate': args.suspend_rate,
+        'SuspendTimeout': args.suspend_timeout,
     }
     log.info("Generating new cloud.conf for slurm.conf")
     setup.gen_cloud_conf(lkp, params)
@@ -62,15 +62,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--ResumeRate', default=0,
+    parser.add_argument('--resume-rate', dest='resume_rate', default=0,
                         help='The rate at which nodes in power save mode are returned to normal operation.')
-    parser.add_argument('--ResumeTimeout', default=300,
+    parser.add_argument('--resume-timeout', dest='resume_timeout', default=300,
                         help='Maximum time permitted (in seconds) between when a node resume request is issued and when the node is actually available for use.')
-    parser.add_argument('--SuspendRate', default=0,
+    parser.add_argument('--suspend-rate', dest='suspend_rate', default=0,
                         help='The rate at which nodes are placed into power save mode by SuspendProgram.')
-    parser.add_argument('--SuspendTimeout', default=300,
+    parser.add_argument('--suspend-timeout', dest='suspend_timeout', default=300,
                         help='Maximum time permitted (in seconds) between when a node suspend request is issued and when the node is shutdown.')
-    parser.add_argument('--no-comma-params', action='store_true',
+    parser.add_argument('--no-comma-params', dest='no_comma_params', action='store_true',
                         help='Do not generate slurm parameters that are comma seperated.')
     parser.add_argument('--debug', '-d', dest='debug', action='store_true',
                         help='Enable debugging output')

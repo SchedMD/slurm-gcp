@@ -62,10 +62,10 @@ cgroup_conf_tpl   = null
 slurm_conf_tpl    = null
 slurmdbd_conf_tpl = null
 cloud_parameters = {
-  ResumeRate     = 0
-  ResumeTimeout  = 300
-  SuspendRate    = 0
-  SuspendTimeout = 300
+  resume_rate     = 0
+  resume_timeout  = 300
+  suspend_rate    = 0
+  suspend_timeout = 300
 }
 
 # scripts.d
