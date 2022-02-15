@@ -291,7 +291,6 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
             'State': 'UP',
             'DefMemPerCPU': defmem,
             'SuspendTime': 300,
-            'LLN': 'YES',
             'Oversubscribe': 'Exclusive' if partition.enable_job_exclusive else None,
             **partition.partition_conf,
         }
