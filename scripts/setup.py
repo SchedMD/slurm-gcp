@@ -33,6 +33,7 @@ from addict import Dict as NSDict
 
 import util
 from util import run, instance_metadata, project_metadata, seperate
+from util import nodeset_prefix, nodeset_names, static_nodeset
 from util import lkp, cfg, dirs, slurmdirs
 import slurmsync
 
@@ -122,40 +123,6 @@ def failed_motd():
     motd_msg = MOTD_HEADER + wall_msg + '\n\n'
     Path('/etc/motd').write_text(motd_msg)
     util.run(f"wall -n '{wall_msg}'", timeout=30)
-
-
-def nodeset_prefix(node_group, part_name):
-    return f'{cfg.slurm_cluster_name}-{part_name}-{node_group.group_name}'
-
-
-def nodeset_names(node_group, part_name):
-    """ Return static and dynamic nodenames given a partition node type
-    definition
-    """
-
-    def node_range(count, start=0):
-        end = start + count - 1
-        return f'{start}' if count == 1 else f'[{start}-{end}]', end + 1
-
-    prefix = nodeset_prefix(node_group, part_name)
-    static_count = node_group.count_static
-    dynamic_count = node_group.count_dynamic
-    static_range, end = (
-        node_range(static_count) if static_count else (None, 0))
-    dynamic_range, _ = (
-        node_range(dynamic_count, end) if dynamic_count else (None, 0))
-
-    static_nodelist = f'{prefix}-{static_range}' if static_count else None
-    dynamic_nodelist = f'{prefix}-{dynamic_range}' if dynamic_count else None
-    return static_nodelist, dynamic_nodelist
-
-
-def static_nodeset():
-    return filter(None, (
-        nodeset_names(node, part.partition_name)[0]
-        for part in lkp.cfg.partitions.values()
-        for node in part.partition_nodes.values()
-    ))
 
 
 def dict_to_conf(conf, delim=' '):
