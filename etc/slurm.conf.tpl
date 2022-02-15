@@ -17,7 +17,6 @@ SelectTypeParameters=CR_Core_Memory
 #
 #
 # LOGGING AND ACCOUNTING
-DebugFlags=powersave
 JobAcctGatherFrequency=30
 JobAcctGatherType=jobacct_gather/cgroup
 SlurmctldDebug=info
@@ -57,7 +56,7 @@ SlurmdLogFile={slurmlog}/slurmd-%n.log
 
 #
 #
-# GENERTED CLOUD CONFIGURATIONS
+# GENERATED CLOUD CONFIGURATIONS
 include cloud.conf
 
 ################################################################################
