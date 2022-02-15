@@ -133,7 +133,11 @@ def split_nodelist(nodelist):
 
 def is_exclusive_node(node):
     partition = lkp.node_partition(node)
-    return partition.enable_job_exclusive or partition.enable_placement_groups
+    return any((
+        partition.enable_job_exclusive,
+        partition.enable_placement_groups,
+        not lkp.node_is_static(node),
+    ))
 
 
 def compute_service(credentials=None, user_agent=USER_AGENT):
@@ -388,6 +392,40 @@ def instance_metadata(path):
 def project_metadata(key):
     """Get project metadata project/attributes/<slurm_cluster_name>-<path>"""
     return get_metadata(key, root=f"{ROOT_URL}/project/attributes")
+
+
+def nodeset_prefix(node_group, part_name):
+    return f'{cfg.slurm_cluster_name}-{part_name}-{node_group.group_name}'
+
+
+def nodeset_names(node_group, part_name):
+    """ Return static and dynamic nodenames given a partition node type
+    definition
+    """
+
+    def node_range(count, start=0):
+        end = start + count - 1
+        return f'{start}' if count == 1 else f'[{start}-{end}]', end + 1
+
+    prefix = nodeset_prefix(node_group, part_name)
+    static_count = node_group.count_static
+    dynamic_count = node_group.count_dynamic
+    static_range, end = (
+        node_range(static_count) if static_count else (None, 0))
+    dynamic_range, _ = (
+        node_range(dynamic_count, end) if dynamic_count else (None, 0))
+
+    static_nodelist = f'{prefix}-{static_range}' if static_count else None
+    dynamic_nodelist = f'{prefix}-{dynamic_range}' if dynamic_count else None
+    return static_nodelist, dynamic_nodelist
+
+
+def static_nodeset():
+    return filter(None, (
+        nodeset_names(node, part.partition_name)[0]
+        for part in cfg.partitions.values()
+        for node in part.partition_nodes.values()
+    ))
 
 
 def retry_exception(exc):
@@ -654,7 +692,7 @@ class Lookup:
         return self._node_desc(node_name).group
 
     def node_index(self, node_name=None):
-        return self._node_desc(node_name).index
+        return int(self._node_desc(node_name).index)
 
     def node_partition(self, node_name=None):
         return self._cfg.partitions[self.node_partition_name(node_name)]
@@ -672,6 +710,10 @@ class Lookup:
     def node_region(self, node_name=None):
         partition = self.node_partition(node_name)
         return parse_self_link(partition.subnetwork).region
+
+    def node_is_static(self, node_name=None):
+        node_group = self.node_group(node_name)
+        return self.node_index(node_name) < node_group.count_static
 
     @lru_cache(maxsize=1)
     def instances(self, project=None, slurm_cluster_name=None):

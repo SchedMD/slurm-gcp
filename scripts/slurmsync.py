@@ -24,11 +24,9 @@ from pathlib import Path
 from collections import namedtuple
 
 import util
-from util import run, seperate, batch_execute
+from util import run, seperate, batch_execute, static_nodeset
 from util import lkp, cfg, compute, dirs
 from suspend import delete_instances
-from resume import resume_nodes
-from setup import static_nodeset
 
 
 filename = Path(__file__).name
@@ -162,7 +160,8 @@ def sync_slurm():
         log.info("{} instances to resume ({})".format(
             len(to_resume), ','.join(to_resume)))
         hostlist = to_hostlist(to_resume)
-        resume_nodes(hostlist)
+        #run(f"{SCONTROL} update nodename={hostlist} state=power_down_force")
+        run(f"{SCONTROL} update nodename={hostlist} state=power_up")
 
     # orphans are powered down in slurm but still running in GCP. They must be
     # purged

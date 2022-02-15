@@ -144,8 +144,8 @@ def resume_nodes(nodelist, placement_groups=None):
         return lkp.node_partition_name(n), lkp.node_group_name(n),
 
     # support already expanded list
-    if isinstance(nodelist, str):
-        log.info(f"resume {nodelist}")
+    nodes = nodelist
+    if isinstance(nodes, str):
         nodelist = expand_nodelist(nodelist)
 
     nodes = sorted(nodelist, key=ident_key)
@@ -230,10 +230,11 @@ def prolog_resume_nodes(nodelist, job_id):
     """resume exclusive nodes in the node list"""
     # called from PrologSlurmctld, these nodes are expected to be in the same
     # partition and part of the same job
-    nodes = expand_nodelist(nodelist)
+    nodes = nodelist
+    if not isinstance(nodes, list):
+        nodes = expand_nodelist(nodes)
     if len(nodes) == 0:
         return
-    log.info(f"exclusive resume {nodelist} {job_id}")
 
     model = next(iter(nodes))
     partition = lkp.node_partition(model)
@@ -253,14 +254,16 @@ def main(nodelist, job_id, force=False):
         resume_nodes(nodelist)
     # nodes are split between normal and exclusive
     # exclusive nodes are handled by PrologSlurmctld
-    node_groups = split_nodelist(nodelist)
-    normal, exclusive = seperate(is_exclusive_node, node_groups)
+    nodes = expand_nodelist(nodelist)
+    normal, exclusive = seperate(is_exclusive_node, nodes)
     if job_id is not None:
         if exclusive:
-            prolog_resume_nodes(','.join(exclusive), job_id)
+            log.info(f"exclusive resume {nodelist} {job_id}")
+            prolog_resume_nodes(exclusive, job_id)
     else:
         if normal:
-            resume_nodes(','.join(normal))
+            log.info(f"resume {normal}")
+            resume_nodes(normal)
 
 
 parser = argparse.ArgumentParser(

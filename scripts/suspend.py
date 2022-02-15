@@ -86,7 +86,9 @@ def expand_nodelist(nodelist):
 
 def suspend_nodes(nodelist):
     """suspend nodes in nodelist """
-    nodes = expand_nodelist(nodelist)
+    nodes = nodelist
+    if not isinstance(nodes, list):
+        nodes = expand_nodelist(nodes)
     delete_instances(nodes)
 
 
@@ -115,8 +117,10 @@ def delete_placement_groups(job_id, region, partition_name):
 
 def epilog_suspend_nodes(nodelist, job_id):
     """epilog suspend"""
-    node_groups = split_nodelist(nodelist)
-    if any(not is_exclusive_node(node) for node in node_groups):
+    nodes = nodelist
+    if not isinstance(nodes, list):
+        nodes = expand_nodelist(nodes)
+    if any(not is_exclusive_node(node) for node in nodes):
         log.fatal(f"nodelist includes non-exclusive nodes: {nodelist}")
     # Mark nodes as off limits to new jobs while powering down.
     # Have to use "down" because it's the only, current, way to remove the
@@ -126,7 +130,7 @@ def epilog_suspend_nodes(nodelist, job_id):
     # Power down nodes in slurm, so that they will become available again.
     run(f"{SCONTROL} update node={nodelist} state=power_down")
 
-    model = next(iter(node_groups))
+    model = next(iter(nodes))
     region = lkp.node_region(model)
     partition = lkp.node_partition(model)
     suspend_nodes(nodelist)
@@ -137,16 +141,16 @@ def epilog_suspend_nodes(nodelist, job_id):
 def main(nodelist, job_id):
     """ main called when run as script """
     log.debug(f"main {nodelist} {job_id}")
-    node_groups = split_nodelist(nodelist)
-    normal, exclusive = seperate(is_exclusive_node, node_groups)
+    nodes = expand_nodelist(nodelist)
+    normal, exclusive = seperate(is_exclusive_node, nodes)
     if job_id is not None:
         if exclusive:
             log.info(f"epilog suspend {exclusive} job_id={job_id}")
-            epilog_suspend_nodes(','.join(exclusive), job_id)
+            epilog_suspend_nodes(exclusive, job_id)
     else:
         if normal:
             log.info(f"suspend {normal}")
-            suspend_nodes(','.join(normal))
+            suspend_nodes(normal)
 
 
 parser = argparse.ArgumentParser(
