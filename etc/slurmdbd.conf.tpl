@@ -1,7 +1,7 @@
 # slurmdbd.conf
 # https://slurm.schedmd.com/slurmdbd.conf.html
 
-DebugLevel=debug
+DebugLevel=info
 PidFile=/var/run/slurm/slurmdbd.pid
 
 ################################################################################
