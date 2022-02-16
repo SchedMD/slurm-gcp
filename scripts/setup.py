@@ -531,6 +531,8 @@ def resolve_network_storage(partition_name=None):
     """Combine appropriate network_storage fields to a single list
     """
 
+    if cfg.instance_role == 'compute':
+        partition_name = lkp.node_partition_name()
     partition = cfg.partitions[partition_name] if partition_name else None
 
     default_mounts = (
@@ -558,8 +560,6 @@ def resolve_network_storage(partition_name=None):
     mounts.update(local_mounts(cfg.network_storage))
     mounts.update(local_mounts(cfg.login_network_storage))
 
-    # this part is not actually run from compute nodes. A pre-resolved
-    # network_storage will be passed to them.
     if partition is not None:
         mounts.update(local_mounts(partition.network_storage))
     return list(mounts.values())
