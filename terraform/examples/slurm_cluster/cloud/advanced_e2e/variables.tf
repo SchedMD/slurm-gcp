@@ -235,10 +235,6 @@ EOD
     network_ip          = string
     on_host_maintenance = string
     preemptible         = bool
-    service_account = object({
-      email  = string
-      scopes = list(string)
-    })
     shielded_instance_config = object({
       enable_integrity_monitoring = bool
       enable_secure_boot          = bool
@@ -273,7 +269,6 @@ EOD
     network                  = null
     on_host_maintenance      = null
     preemptible              = null
-    service_account          = null
     shielded_instance_config = null
     source_image_family      = null
     source_image_project     = null
@@ -327,10 +322,6 @@ variable "login_nodes" {
     num_instances       = number
     on_host_maintenance = string
     preemptible         = bool
-    service_account = object({
-      email  = string
-      scopes = list(string)
-    })
     shielded_instance_config = object({
       enable_integrity_monitoring = bool
       enable_secure_boot          = bool
@@ -395,10 +386,6 @@ variable "partitions" {
       min_cpu_platform    = string
       on_host_maintenance = string
       preemptible         = bool
-      service_account = object({
-        email  = string
-        scopes = list(string)
-      })
       shielded_instance_config = object({
         enable_integrity_monitoring = bool
         enable_secure_boot          = bool

@@ -8,8 +8,10 @@ This module creates a Slurm partition for slurm_controller_*.
 
 ### Roles
 
-- roles/secretmanager.secretAccessor
+- roles/logging.logWriter
+- roles/monitoring.metricWriter
 - roles/pubsub.subscriber
+- roles/secretmanager.secretAccessor
 
 ### Scopes
 

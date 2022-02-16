@@ -156,12 +156,6 @@ controller_instance_config = {
   min_cpu_platform    = null
   network_ip          = null
   on_host_maintenance = null
-  service_account = {
-    email = "default"
-    scopes = [
-      "https://www.googleapis.com/auth/cloud-platform",
-    ]
-  }
   shielded_instance_config = {
     enable_integrity_monitoring = true
     enable_secure_boot          = true
@@ -171,8 +165,6 @@ controller_instance_config = {
   source_image_project = null
   source_image         = null
   static_ip            = null
-  subnetwork_project   = null
-  subnetwork           = "default"
   tags = [
     # "tag0",
     # "tag1",
@@ -197,30 +189,24 @@ login_nodes = [
     num_instances = 1
 
     # Template By Definition
-    access_config          = []
-    additional_disks       = []
-    can_ip_forward         = false
-    disable_smt            = false
-    disk_auto_delete       = true
-    disk_labels            = {}
-    disk_size_gb           = 32
-    disk_type              = "pd-standard"
-    enable_confidential_vm = false
-    enable_oslogin         = true
-    enable_shielded_vm     = false
-    gpu                    = null
-    labels                 = {}
-    machine_type           = "n1-standard-1"
-    metadata               = {}
-    min_cpu_platform       = null
-    network_ips            = []
-    on_host_maintenance    = null
-    service_account = {
-      email = "default"
-      scopes = [
-        "https://www.googleapis.com/auth/cloud-platform",
-      ]
-    }
+    access_config            = []
+    additional_disks         = []
+    can_ip_forward           = false
+    disable_smt              = false
+    disk_auto_delete         = true
+    disk_labels              = {}
+    disk_size_gb             = 32
+    disk_type                = "pd-standard"
+    enable_confidential_vm   = false
+    enable_oslogin           = true
+    enable_shielded_vm       = false
+    gpu                      = null
+    labels                   = {}
+    machine_type             = "n1-standard-1"
+    metadata                 = {}
+    min_cpu_platform         = null
+    network_ips              = []
+    on_host_maintenance      = null
     shielded_instance_config = null
     source_image_family      = null
     source_image_project     = null
@@ -261,28 +247,22 @@ partitions = [
         node_conf     = {}
 
         # Template By Definition
-        additional_disks       = []
-        can_ip_forward         = false
-        disable_smt            = false
-        disk_auto_delete       = true
-        disk_labels            = {}
-        disk_size_gb           = 32
-        disk_type              = "pd-standard"
-        enable_confidential_vm = false
-        enable_oslogin         = true
-        enable_shielded_vm     = false
-        gpu                    = null
-        labels                 = {}
-        machine_type           = "n1-standard-1"
-        metadata               = {}
-        min_cpu_platform       = null
-        on_host_maintenance    = null
-        service_account = {
-          email = "default"
-          scopes = [
-            "https://www.googleapis.com/auth/cloud-platform",
-          ]
-        }
+        additional_disks         = []
+        can_ip_forward           = false
+        disable_smt              = false
+        disk_auto_delete         = true
+        disk_labels              = {}
+        disk_size_gb             = 32
+        disk_type                = "pd-standard"
+        enable_confidential_vm   = false
+        enable_oslogin           = true
+        enable_shielded_vm       = false
+        gpu                      = null
+        labels                   = {}
+        machine_type             = "n1-standard-1"
+        metadata                 = {}
+        min_cpu_platform         = null
+        on_host_maintenance      = null
         shielded_instance_config = null
         source_image_family      = null
         source_image_project     = null

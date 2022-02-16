@@ -63,6 +63,7 @@ limitations under the License.
 |------|--------|---------|
 | <a name="module_slurm_cluster"></a> [slurm\_cluster](#module\_slurm\_cluster) | ../../../../modules/slurm_cluster | n/a |
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../../modules/slurm_firewall_rules | n/a |
+| <a name="module_slurm_sa_iam"></a> [slurm\_sa\_iam](#module\_slurm\_sa\_iam) | ../../../../modules/slurm_sa_iam | n/a |
 
 ## Resources
 

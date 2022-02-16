@@ -41,7 +41,7 @@ locals {
       network_ip               = x.network_ip
       on_host_maintenance      = x.on_host_maintenance
       preemptible              = x.preemptible
-      service_account          = x.service_account
+      service_account          = module.slurm_sa_iam["controller"].service_account
       shielded_instance_config = x.shielded_instance_config
       region                   = module.slurm_network.network.subnets_regions[0]
       source_image_family      = x.source_image_family
@@ -79,7 +79,7 @@ locals {
       num_instances            = x.num_instances
       on_host_maintenance      = x.on_host_maintenance
       preemptible              = x.preemptible
-      service_account          = x.service_account
+      service_account          = module.slurm_sa_iam["login"].service_account
       shielded_instance_config = x.shielded_instance_config
       region                   = module.slurm_network.network.subnets_regions[0]
       source_image_family      = x.source_image_family
@@ -97,16 +97,45 @@ locals {
     for x in var.partitions : {
       enable_job_exclusive    = x.enable_job_exclusive
       enable_placement_groups = x.enable_placement_groups
-      partition_nodes         = x.partition_nodes
       network_storage         = x.network_storage
-      partition_name          = x.partition_name
       partition_conf          = x.partition_conf
       partition_d             = x.partition_d
-      region                  = module.slurm_network.network.subnets_regions[0]
-      subnetwork_project      = null
-      subnetwork              = module.slurm_network.network.subnets_self_links[0]
-      zone_policy_allow       = x.zone_policy_allow
-      zone_policy_deny        = x.zone_policy_deny
+      partition_name          = x.partition_name
+      partition_nodes = [for n in x.partition_nodes : {
+        additional_disks         = n.additional_disks
+        can_ip_forward           = n.can_ip_forward
+        count_dynamic            = n.count_dynamic
+        count_static             = n.count_static
+        disable_smt              = n.disable_smt
+        disk_auto_delete         = n.disk_auto_delete
+        disk_labels              = n.disk_labels
+        disk_size_gb             = n.disk_size_gb
+        disk_type                = n.disk_type
+        enable_confidential_vm   = n.enable_confidential_vm
+        enable_oslogin           = n.enable_oslogin
+        enable_shielded_vm       = n.enable_shielded_vm
+        gpu                      = n.gpu
+        group_name               = n.group_name
+        instance_template        = n.instance_template
+        labels                   = n.labels
+        machine_type             = n.machine_type
+        metadata                 = n.metadata
+        min_cpu_platform         = n.min_cpu_platform
+        node_conf                = n.node_conf
+        on_host_maintenance      = n.on_host_maintenance
+        preemptible              = n.preemptible
+        service_account          = module.slurm_sa_iam["compute"].service_account
+        shielded_instance_config = n.shielded_instance_config
+        source_image_family      = n.source_image_family
+        source_image_project     = n.source_image_project
+        source_image             = n.source_image
+        tags                     = n.tags
+      }]
+      region             = module.slurm_network.network.subnets_regions[0]
+      subnetwork_project = null
+      subnetwork         = module.slurm_network.network.subnets_self_links[0]
+      zone_policy_allow  = x.zone_policy_allow
+      zone_policy_deny   = x.zone_policy_deny
     }
   ]
 
@@ -156,6 +185,20 @@ module "slurm_firewall_rules" {
 
   slurm_cluster_name = var.slurm_cluster_name
   network_name       = module.slurm_network.network.network_self_link
+  project_id         = var.project_id
+}
+
+##########################
+# SERVICE ACCOUNTS & IAM #
+##########################
+
+module "slurm_sa_iam" {
+  source = "../../../../modules/slurm_sa_iam"
+
+  for_each = toset(["controller", "login", "compute"])
+
+  account_type       = each.value
+  slurm_cluster_name = var.slurm_cluster_name
   project_id         = var.project_id
 }
 

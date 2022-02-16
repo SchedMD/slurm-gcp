@@ -15,6 +15,9 @@ user running `terraform apply`.
 on the input `subnetwork`.
 * [*Shared VPC*](https://cloud.google.com/vpc/docs/shared-vpc) must be enabled
 when `subnetwork_project` != `project_id`.
+  * Required Version: `~3.6, >= 3.6.0, < 4.0.0`
+* [**Secret Manager**](https://console.cloud.google.com/security/secret-manager)
+  is enabled.
 
 ## License
 

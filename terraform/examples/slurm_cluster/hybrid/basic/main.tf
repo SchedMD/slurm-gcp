@@ -36,30 +36,25 @@ locals {
           group_name    = "n0"
           node_conf     = {}
 
-          additional_disks       = []
-          can_ip_forward         = false
-          disable_smt            = false
-          disk_auto_delete       = true
-          disk_labels            = {}
-          disk_size_gb           = 32
-          disk_type              = "pd-standard"
-          enable_confidential_vm = false
-          enable_oslogin         = true
-          enable_shielded_vm     = false
-          gpu                    = null
-          instance_template      = null
-          labels                 = {}
-          machine_type           = "n1-standard-1"
-          metadata               = {}
-          min_cpu_platform       = null
-          on_host_maintenance    = null
-          preemptible            = false
-          service_account = {
-            email = "default"
-            scopes = [
-              "https://www.googleapis.com/auth/cloud-platform",
-            ]
-          }
+          additional_disks         = []
+          can_ip_forward           = false
+          disable_smt              = false
+          disk_auto_delete         = true
+          disk_labels              = {}
+          disk_size_gb             = 32
+          disk_type                = "pd-standard"
+          enable_confidential_vm   = false
+          enable_oslogin           = true
+          enable_shielded_vm       = false
+          gpu                      = null
+          instance_template        = null
+          labels                   = {}
+          machine_type             = "n1-standard-1"
+          metadata                 = {}
+          min_cpu_platform         = null
+          on_host_maintenance      = null
+          preemptible              = false
+          service_account          = module.slurm_sa_iam["compute"].service_account
           shielded_instance_config = null
           source_image_family      = null
           source_image_project     = null
@@ -126,5 +121,19 @@ module "slurm_firewall_rules" {
 
   slurm_cluster_name = var.slurm_cluster_name
   network_name       = data.google_compute_subnetwork.default.network
+  project_id         = var.project_id
+}
+
+##########################
+# SERVICE ACCOUNTS & IAM #
+##########################
+
+module "slurm_sa_iam" {
+  source = "../../../../modules/slurm_sa_iam"
+
+  for_each = toset(["controller", "login", "compute"])
+
+  account_type       = each.value
+  slurm_cluster_name = var.slurm_cluster_name
   project_id         = var.project_id
 }

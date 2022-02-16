@@ -13,16 +13,27 @@ See the [simple controller](../../examples/slurm_controller_instance/simple)
 example or the [simple cluster](../../examples/slurm_cluster/simple) example
 for usage examples.
 
+## Additional Dependencies
+
+* [**python**](https://www.python.org/) must be installed and in `$PATH` of the
+user running `terraform apply`.
+  * Required Version: `~3.6, >= 3.6.0, < 4.0.0`
+* [**Secret Manager**](https://console.cloud.google.com/security/secret-manager)
+  is enabled.
+
 ## Service Accounts
 
 [Documentation](https://cloud.google.com/iam/docs/service-accounts)
 
 ### Roles
 
-- roles/compute.admin
-- roles/secretmanager.secretAccessor
+- roles/compute.instanceAdmin
+- roles/iam.serviceAccountUser
+- roles/logging.logWriter
+- roles/monitoring.metricWriter
 - roles/pubsub.publisher
 - roles/pubsub.subscriber
+- roles/secretmanager.secretAccessor
 
 ### Scopes
 
