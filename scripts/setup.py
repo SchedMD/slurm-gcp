@@ -849,6 +849,7 @@ def setup_controller():
     run("systemctl enable nfs-server", timeout=30)
     run("systemctl start nfs-server", timeout=30)
 
+    run("systemctl enable slurmeventd", timeout=30)
     run("systemctl restart slurmeventd", timeout=30)
 
     setup_nfs_exports()
@@ -867,7 +868,6 @@ def setup_login():
     setup_munge_key()
     setup_network_storage()
     run("systemctl restart munge")
-    run("systemctl restart slurmeventd", timeout=30)
 
     run_custom_scripts()
 
@@ -898,6 +898,7 @@ def setup_compute():
     run("systemctl enable slurmd", timeout=30)
     run("systemctl restart slurmd", timeout=30)
 
+    run("systemctl enable slurmeventd", timeout=30)
     run("systemctl restart slurmeventd", timeout=30)
 
     log.info("Done setting up compute")
