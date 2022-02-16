@@ -44,8 +44,8 @@ locals {
     region                   = null
     service_account          = module.slurm_sa_iam["controller"].service_account
     shielded_instance_config = null
-    source_image_family      = "schedmd-slurm-21-08-4-centos-7"
-    source_image_project     = "slurm-skyler"
+    source_image_family      = null
+    source_image_project     = null
     source_image             = null
     static_ip                = null
     subnetwork_project       = null
@@ -82,8 +82,8 @@ locals {
       region                   = null
       service_account          = module.slurm_sa_iam["login"].service_account
       shielded_instance_config = null
-      source_image_family      = "schedmd-slurm-21-08-4-centos-7"
-      source_image_project     = "slurm-skyler"
+      source_image_family      = null
+      source_image_project     = null
       source_image             = null
       static_ips               = []
       subnetwork_project       = null
