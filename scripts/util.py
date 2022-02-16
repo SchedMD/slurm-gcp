@@ -133,11 +133,9 @@ def split_nodelist(nodelist):
 
 def is_exclusive_node(node):
     partition = lkp.node_partition(node)
-    return any((
-        partition.enable_job_exclusive,
-        partition.enable_placement_groups,
-        not lkp.node_is_static(node),
-    ))
+    return not lkp.node_is_static(node) and (
+        partition.enable_job_exclusive or partition.enable_placement_groups
+    )
 
 
 def compute_service(credentials=None, user_agent=USER_AGENT):
