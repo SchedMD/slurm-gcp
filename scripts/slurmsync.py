@@ -30,8 +30,8 @@ from suspend import delete_instances
 
 
 filename = Path(__file__).name
-SCONTROL = Path(cfg.slurm_bin_dir if cfg else '')/'scontrol'
-LOGFILE = (Path(cfg.slurm_log_dir if cfg else '.')/filename).with_suffix('.log')
+SCONTROL = Path(cfg.slurm_bin_dir if cfg else "") / "scontrol"
+LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 
 log = logging.getLogger(filename)
 
@@ -48,54 +48,55 @@ def start_instance_op(inst, project=None):
 
 
 def start_instances(node_list):
-    log.info("{} instances to start ({})".format(
-        len(node_list), ",".join(node_list)))
+    log.info("{} instances to start ({})".format(len(node_list), ",".join(node_list)))
 
     invalid, valid = seperate(lambda inst: bool(lkp.instance), node_list)
     ops = {inst: start_instance_op(inst) for inst in valid}
 
     done, failed = batch_execute(ops)
+
+
 # [END start_instances]
 
 
 def to_hostlist(nodelist):
-    """make hostlist from list of node names
-    """
+    """make hostlist from list of node names"""
     # use tmp file because list could be large
-    tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+    tmp_file = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
     tmp_file.writelines("\n".join(nodelist))
     tmp_file.close()
     log.debug("tmp_file = {}".format(tmp_file.name))
 
-    hostlist = run(
-        f"{SCONTROL} show hostlist {tmp_file.name}").stdout.rstrip()
+    hostlist = run(f"{SCONTROL} show hostlist {tmp_file.name}").stdout.rstrip()
     log.debug("hostlist = {}".format(hostlist))
     os.remove(tmp_file.name)
     return hostlist
 
 
-StateTuple = namedtuple('StateTuple', 'base,flags')
+StateTuple = namedtuple("StateTuple", "base,flags")
 
 
 def make_node_tuple(node_line):
-    """turn node,state line to (node, StateTuple(state))
-    """
+    """turn node,state line to (node, StateTuple(state))"""
     # state flags include: CLOUD, COMPLETING, DRAIN, FAIL, POWERED_DOWN,
     #   POWERING_DOWN
-    node, fullstate = node_line.split(',')
-    state = fullstate.split('+')
+    node, fullstate = node_line.split(",")
+    state = fullstate.split("+")
     state_tuple = StateTuple(state[0], set(state[1:]))
     return (node, state_tuple)
 
 
 def sync_slurm():
-    cmd = (f"{SCONTROL} show nodes | "
-           r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
-           r"paste -sd',\n'")
+    cmd = (
+        f"{SCONTROL} show nodes | "
+        r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
+        r"paste -sd',\n'"
+    )
     node_lines = run(cmd, shell=True).stdout.rstrip().splitlines()
     slurm_nodes = {
-        node: state for node, state in map(make_node_tuple, node_lines)
-        if 'CLOUD' in state.flags
+        node: state
+        for node, state in map(make_node_tuple, node_lines)
+        if "CLOUD" in state.flags
     }
 
     gcp_instances = lkp.instances()
@@ -109,68 +110,73 @@ def sync_slurm():
         inst = lkp.instance(node)
         info = lkp.node_template_info(node)
 
-        if (('POWERED_DOWN' not in state.flags) and
-                ('POWERING_DOWN' not in state.flags)):
+        if ("POWERED_DOWN" not in state.flags) and ("POWERING_DOWN" not in state.flags):
             # slurm nodes that aren't in power_save and are stopped in GCP:
             #   mark down in slurm
             #   start them in gcp
             if inst and (inst.status == "TERMINATED"):
-                if not state.base.startswith('DOWN'):
+                if not state.base.startswith("DOWN"):
                     to_down.append(node)
-                if (info.scheduling.preemptible):
+                if info.scheduling.preemptible:
                     to_start.append(node)
 
             # can't check if the node doesn't exist in GCP while the node
             # is booting because it might not have been created yet by the
             # resume script.
             # This should catch the completing states as well.
-            if (inst is None and "#" not in state.base and
-                    not state.base.startswith('DOWN')):
+            if (
+                inst is None
+                and "#" not in state.base
+                and not state.base.startswith("DOWN")
+            ):
                 to_down.append(node)
 
         elif inst is None:
             # find nodes that are down~ in slurm and don't exist in gcp:
             #   mark idle~
-            if state.base.startswith('DOWN') and 'POWERED_DOWN' in state.flags:
+            if state.base.startswith("DOWN") and "POWERED_DOWN" in state.flags:
                 to_idle.append(node)
-            elif 'POWERING_DOWN' in state.flags:
+            elif "POWERING_DOWN" in state.flags:
                 to_idle.append(node)
-            elif state.base.startswith('COMPLETING'):
+            elif state.base.startswith("COMPLETING"):
                 to_down.append(node)
             elif node in static_set:
                 to_resume.append(node)
 
     if len(to_down):
-        log.info("{} stopped/deleted instances ({})".format(
-            len(to_down), ",".join(to_down)))
+        log.info(
+            "{} stopped/deleted instances ({})".format(len(to_down), ",".join(to_down))
+        )
         hostlist = to_hostlist(to_down)
-        run(f"{SCONTROL} update nodename={hostlist} state=down "
-            "reason='Instance stopped/deleted'")
+        run(
+            f"{SCONTROL} update nodename={hostlist} state=down "
+            "reason='Instance stopped/deleted'"
+        )
 
     if len(to_start):
         start_instances(to_start)
 
     if len(to_idle):
-        log.info("{} instances to idle ({})".format(
-            len(to_idle), ','.join(to_idle)))
+        log.info("{} instances to idle ({})".format(len(to_idle), ",".join(to_idle)))
         hostlist = to_hostlist(to_idle)
         run(f"{SCONTROL} update nodename={hostlist} state=resume")
 
     if len(to_resume):
-        log.info("{} instances to resume ({})".format(
-            len(to_resume), ','.join(to_resume)))
+        log.info(
+            "{} instances to resume ({})".format(len(to_resume), ",".join(to_resume))
+        )
         hostlist = to_hostlist(to_resume)
-        #run(f"{SCONTROL} update nodename={hostlist} state=power_down_force")
+        # run(f"{SCONTROL} update nodename={hostlist} state=power_down_force")
         run(f"{SCONTROL} update nodename={hostlist} state=power_up")
 
     # orphans are powered down in slurm but still running in GCP. They must be
     # purged
     orphans = [
-        name for name, inst in gcp_instances.items()
-        if inst.role == 'compute'
-        and inst.status == 'RUNNING'
-        and (name not in slurm_nodes
-             or 'POWERED_DOWN' in slurm_nodes[name].flags)
+        name
+        for name, inst in gcp_instances.items()
+        if inst.role == "compute"
+        and inst.status == "RUNNING"
+        and (name not in slurm_nodes or "POWERED_DOWN" in slurm_nodes[name].flags)
     ]
     if len(orphans):
         hostlist = to_hostlist(orphans)
@@ -183,30 +189,39 @@ def main():
         sync_slurm()
     except Exception:
         log.exception("failed to sync instances")
+
+
 # [END main]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
-                        help='Enable debugging output')
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--debug",
+        "-d",
+        dest="debug",
+        action="store_true",
+        help="Enable debugging output",
+    )
 
     args = parser.parse_args()
     util.chown_slurm(LOGFILE, mode=0o600)
     if args.debug:
-        util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
-                                logfile=LOGFILE)
+        util.config_root_logger(
+            filename, level="DEBUG", util_level="DEBUG", logfile=LOGFILE
+        )
     else:
-        util.config_root_logger(filename, level='INFO', util_level='ERROR',
-                                logfile=LOGFILE)
+        util.config_root_logger(
+            filename, level="INFO", util_level="ERROR", logfile=LOGFILE
+        )
     sys.excepthook = util.handle_exception
 
     # only run one instance at a time
-    pid_file = (Path('/tmp')/Path(__file__).name).with_suffix('.pid')
-    with pid_file.open('w') as fp:
+    pid_file = (Path("/tmp") / Path(__file__).name).with_suffix(".pid")
+    with pid_file.open("w") as fp:
         try:
             fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except IOError:

@@ -28,7 +28,7 @@ from slurmeventd import publish_message
 
 
 filename = Path(__file__).name
-logfile = Path(filename).with_suffix('.log')
+logfile = Path(filename).with_suffix(".log")
 log = logging.getLogger(filename)
 setup.log.disabled = False
 util.log.disabled = False
@@ -36,11 +36,11 @@ util.log.disabled = False
 
 def main(args):
     params = {
-        'no_comma_params': args.no_comma_params,
-        'ResumeRate': args.resume_rate,
-        'ResumeTimeout': args.resume_timeout,
-        'SuspendRate': args.suspend_rate,
-        'SuspendTimeout': args.suspend_timeout,
+        "no_comma_params": args.no_comma_params,
+        "ResumeRate": args.resume_rate,
+        "ResumeTimeout": args.resume_timeout,
+        "SuspendRate": args.suspend_rate,
+        "SuspendTimeout": args.suspend_timeout,
     }
     log.info("Generating new cloud.conf for slurm.conf")
     setup.gen_cloud_conf(lkp, params)
@@ -49,40 +49,65 @@ def main(args):
     setup.install_gres_conf(lkp)
 
     # Send restart message to cluster topic
-    message_json = json.dumps({
-        'request': 'restart',
-        'timestamp': datetime.utcnow().isoformat(),
-    })
+    message_json = json.dumps(
+        {
+            "request": "restart",
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    )
     publish_message(project, lkp.cfg.pubsub_topic_id, message_json)
 
     log.info("Done.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--resume-rate', dest='resume_rate', default=0,
-                        help='The rate at which nodes in power save mode are returned to normal operation.')
-    parser.add_argument('--resume-timeout', dest='resume_timeout', default=300,
-                        help='Maximum time permitted (in seconds) between when a node resume request is issued and when the node is actually available for use.')
-    parser.add_argument('--suspend-rate', dest='suspend_rate', default=0,
-                        help='The rate at which nodes are placed into power save mode by SuspendProgram.')
-    parser.add_argument('--suspend-timeout', dest='suspend_timeout', default=300,
-                        help='Maximum time permitted (in seconds) between when a node suspend request is issued and when the node is shutdown.')
-    parser.add_argument('--no-comma-params', dest='no_comma_params', action='store_true',
-                        help='Do not generate slurm parameters that are comma seperated.')
-    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
-                        help='Enable debugging output')
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--resume-rate",
+        dest="resume_rate",
+        default=0,
+        help="The rate at which nodes in power save mode are returned to normal operation.",
+    )
+    parser.add_argument(
+        "--resume-timeout",
+        dest="resume_timeout",
+        default=300,
+        help="Maximum time permitted (in seconds) between when a node resume request is issued and when the node is actually available for use.",
+    )
+    parser.add_argument(
+        "--suspend-rate",
+        dest="suspend_rate",
+        default=0,
+        help="The rate at which nodes are placed into power save mode by SuspendProgram.",
+    )
+    parser.add_argument(
+        "--suspend-timeout",
+        dest="suspend_timeout",
+        default=300,
+        help="Maximum time permitted (in seconds) between when a node suspend request is issued and when the node is shutdown.",
+    )
+    parser.add_argument(
+        "--no-comma-params",
+        dest="no_comma_params",
+        action="store_true",
+        help="Do not generate slurm parameters that are comma seperated.",
+    )
+    parser.add_argument(
+        "--debug",
+        "-d",
+        dest="debug",
+        action="store_true",
+        help="Enable debugging output",
+    )
 
     args = parser.parse_args()
 
     if args.debug:
-        config_root_logger(filename, level='DEBUG', util_level='DEBUG',
-                           logfile=logfile)
+        config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
     else:
-        config_root_logger(filename, level='INFO', util_level='ERROR',
-                           logfile=logfile)
+        config_root_logger(filename, level="INFO", util_level="ERROR", logfile=logfile)
     sys.excepthook = handle_exception
 
     main(args)

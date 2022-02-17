@@ -32,10 +32,10 @@ from util import cfg, lkp, compute
 from util import batch_execute, seperate, split_nodelist, is_exclusive_node
 
 
-SCONTROL = Path(cfg.slurm_bin_dir if cfg else '')/'scontrol'
+SCONTROL = Path(cfg.slurm_bin_dir if cfg else "") / "scontrol"
 
 filename = Path(__file__).name
-LOGFILE = (Path(cfg.slurm_log_dir if cfg else '.')/filename).with_suffix('.log')
+LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 
 log = logging.getLogger(filename)
 
@@ -49,41 +49,43 @@ def instance_properties(model):
 
     props = NSDict()
 
-    props.networkInterfaces = [{
-        'subnetwork': partition.subnetwork,
-    }]
+    props.networkInterfaces = [
+        {
+            "subnetwork": partition.subnetwork,
+        }
+    ]
 
     zones = {
-        **{zone: {'preference': 'ALLOW'} for zone in partition.zone_policy_allow},
-        **{zone: {'preference': 'DENY'} for zone in partition.zone_policy_deny},
+        **{zone: {"preference": "ALLOW"} for zone in partition.zone_policy_allow},
+        **{zone: {"preference": "DENY"} for zone in partition.zone_policy_deny},
     }
     if zones:
-        props.locationPolicy = {'locations': zones}
+        props.locationPolicy = {"locations": zones}
 
     slurm_metadata = {
-        'slurm_cluster_id': cfg.slurm_cluster_id,
-        'slurm_cluster_name': cfg.slurm_cluster_name,
-        'slurm_instance_role': 'compute',
-        'startup-script': (Path(cfg.slurm_scripts_dir or util.dirs.scripts)/'startup.sh').read_text(),
-        'VmDnsSetting': 'GlobalOnly',
+        "slurm_cluster_id": cfg.slurm_cluster_id,
+        "slurm_cluster_name": cfg.slurm_cluster_name,
+        "slurm_instance_role": "compute",
+        "startup-script": (
+            Path(cfg.slurm_scripts_dir or util.dirs.scripts) / "startup.sh"
+        ).read_text(),
+        "VmDnsSetting": "GlobalOnly",
     }
     info_metadata = {}
-    for i in template_info.metadata['items']:
-        key = i.get('key')
-        value = i.get('value')
+    for i in template_info.metadata["items"]:
+        key = i.get("key")
+        value = i.get("value")
         info_metadata[key] = value
 
     props_metadata = {**info_metadata, **slurm_metadata}
     props.metadata = {
-        'items': [
-            NSDict({'key': k, 'value': v}) for k, v in props_metadata.items()
-        ]
+        "items": [NSDict({"key": k, "value": v}) for k, v in props_metadata.items()]
     }
 
     labels = {
-        'slurm_cluster_id': cfg.slurm_cluster_id,
-        'slurm_cluster_name': cfg.slurm_cluster_name,
-        'slurm_instance_role': 'compute',
+        "slurm_cluster_id": cfg.slurm_cluster_id,
+        "slurm_cluster_name": cfg.slurm_cluster_name,
+        "slurm_instance_role": "compute",
     }
     props.labels = {**template_info.labels, **labels}
 
@@ -96,8 +98,8 @@ def per_instance_properties(node, placement_groups=None):
     if placement_groups:
         # certain properties are constrained
         props.scheduling = {
-            'onHostMaintenance': 'TERMINATE',
-            'automaticRestart': False,
+            "onHostMaintenance": "TERMINATE",
+            "automaticRestart": False,
         }
         props.resourcePolicies = [
             placement_groups[node],
@@ -107,7 +109,7 @@ def per_instance_properties(node, placement_groups=None):
 
 
 def create_instances_request(nodes, placement_groups=None):
-    """ Call regionInstances.bulkInsert to create instances """
+    """Call regionInstances.bulkInsert to create instances"""
     assert len(nodes) > 0
     assert len(nodes) <= BULK_INSERT_LIMIT
     # model here indicates any node that can be used to describe the rest
@@ -126,7 +128,8 @@ def create_instances_request(nodes, placement_groups=None):
 
     # key is instance name, value overwrites properties
     body.perInstanceProperties = {
-        k: per_instance_properties(k, placement_groups) for k in nodes}
+        k: per_instance_properties(k, placement_groups) for k in nodes
+    }
 
     request = compute.regionInstances().bulkInsert(
         project=cfg.project, region=region, body=body.to_dict()
@@ -135,7 +138,7 @@ def create_instances_request(nodes, placement_groups=None):
 
 
 def expand_nodelist(nodelist):
-    """ expand nodes in hostlist to hostnames """
+    """expand nodes in hostlist to hostnames"""
     if not nodelist:
         return []
 
@@ -145,10 +148,14 @@ def expand_nodelist(nodelist):
 
 
 def resume_nodes(nodelist, placement_groups=None):
-    """ resume nodes in nodelist """
+    """resume nodes in nodelist"""
+
     def ident_key(n):
         # ident here will refer to the combination of partition and group
-        return lkp.node_partition_name(n), lkp.node_group_name(n),
+        return (
+            lkp.node_partition_name(n),
+            lkp.node_group_name(n),
+        )
 
     # support already expanded list
     nodes = nodelist
@@ -166,22 +173,21 @@ def resume_nodes(nodelist, placement_groups=None):
     log.debug(f"grouped_nodes: {grouped_nodes}")
 
     inserts = [
-        create_instances_request(nodes, placement_groups)
-        for _, nodes in grouped_nodes
+        create_instances_request(nodes, placement_groups) for _, nodes in grouped_nodes
     ]
     done, failed = batch_execute(inserts)
     if failed:
         failed_reqs = [f"{e}" for _, (_, e) in failed.items()]
-        log.error("bulkInsert failures: {}".format('\n'.join(failed_reqs)))
+        log.error("bulkInsert failures: {}".format("\n".join(failed_reqs)))
 
 
 def create_placement_request(pg_name, region):
     config = {
-        'name': pg_name,
-        'region': region,
-        'groupPlacementPolicy': {
-            'collocation': 'COLLOCATED',
-        }
+        "name": pg_name,
+        "region": region,
+        "groupPlacementPolicy": {
+            "collocation": "COLLOCATED",
+        },
     }
     return compute.resourcePolicies().insert(
         project=cfg.project, region=region, body=config
@@ -191,26 +197,21 @@ def create_placement_request(pg_name, region):
 def create_placement_groups(job_id, node_list, partition_name):
     PLACEMENT_MAX_CNT = 22
     groups = {
-        f'{cfg.slurm_cluster_name}-{partition_name}-{job_id}-{i}': nodes
+        f"{cfg.slurm_cluster_name}-{partition_name}-{job_id}-{i}": nodes
         for i, nodes in enumerate(chunked(node_list, n=PLACEMENT_MAX_CNT))
     }
-    reverse_groups = {
-        node: group for group, nodes in groups.items() for node in nodes
-    }
+    reverse_groups = {node: group for group, nodes in groups.items() for node in nodes}
 
     model = next(iter(node_list))
     region = lkp.node_region(model)
 
     requests = [
-        create_placement_request(group, region)
-        for group, incl_nodes in groups.items()
+        create_placement_request(group, region) for group, incl_nodes in groups.items()
     ]
     done, failed = batch_execute(requests)
     if failed:
         reqs = [f"{e}" for _, e in failed.values()]
-        log.fatal("failed to create placement policies: {}".format(
-            '\n'.join(reqs)
-        ))
+        log.fatal("failed to create placement policies: {}".format("\n".join(reqs)))
     return reverse_groups
 
 
@@ -221,10 +222,9 @@ def valid_placement_nodes(nodelist):
     }
     fail = False
     for prefix, machine_type in machine_types.items():
-        if machine_type.split('-')[0] not in ('c2', 'c2d'):
+        if machine_type.split("-")[0] not in ("c2", "c2d"):
             log.error(
-                "Unsupported machine type for placement policy: "
-                f"{machine_type}."
+                "Unsupported machine type for placement policy: " f"{machine_type}."
             )
             fail = True
     if fail:
@@ -248,14 +248,15 @@ def prolog_resume_nodes(nodelist, job_id):
     placement_groups = None
     if partition.enable_placement_groups:
         placement_groups = create_placement_groups(
-            job_id, nodes, partition.partition_name)
+            job_id, nodes, partition.partition_name
+        )
         if not valid_placement_nodes(nodelist):
             return
     resume_nodes(nodes, placement_groups)
 
 
 def main(nodelist, job_id, force=False):
-    """ main called when run as script """
+    """main called when run as script"""
     log.debug(f"main {nodelist} {job_id}")
     if force:
         resume_nodes(nodelist)
@@ -274,29 +275,33 @@ def main(nodelist, job_id, force=False):
 
 
 parser = argparse.ArgumentParser(
-    description=__doc__,
-    formatter_class=argparse.RawDescriptionHelpFormatter)
+    description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+)
+parser.add_argument("nodelist", help="list of nodes to resume")
 parser.add_argument(
-    'nodelist', help="list of nodes to resume"
+    "job_id",
+    nargs="?",
+    default=None,
+    help="Optional job id for node list. Implies that PrologSlurmctld called program",
 )
 parser.add_argument(
-    'job_id', nargs='?', default=None,
-    help="Optional job id for node list. Implies that PrologSlurmctld called program"
+    "--force",
+    "-f",
+    "--static",
+    action="store_true",
+    help="Force attempted creation of the nodelist, whether nodes are exclusive or not.",
 )
 parser.add_argument(
-    '--force', '-f', '--static', action='store_true',
-    help="Force attempted creation of the nodelist, whether nodes are exclusive or not."
+    "--debug", "-d", dest="debug", action="store_true", help="Enable debugging output"
 )
-parser.add_argument('--debug', '-d', dest='debug', action='store_true',
-                    help='Enable debugging output')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if "SLURM_JOB_NODELIST" in os.environ:
         argv = [
             *sys.argv[1:],
-            os.environ['SLURM_JOB_NODELIST'],
-            os.environ['SLURM_JOB_ID'],
+            os.environ["SLURM_JOB_NODELIST"],
+            os.environ["SLURM_JOB_ID"],
         ]
         args = parser.parse_args(argv)
     else:
@@ -304,11 +309,13 @@ if __name__ == '__main__':
 
     util.chown_slurm(LOGFILE, mode=0o600)
     if args.debug:
-        util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
-                                logfile=LOGFILE)
+        util.config_root_logger(
+            filename, level="DEBUG", util_level="DEBUG", logfile=LOGFILE
+        )
     else:
-        util.config_root_logger(filename, level='INFO', util_level='ERROR',
-                                logfile=LOGFILE)
+        util.config_root_logger(
+            filename, level="INFO", util_level="ERROR", logfile=LOGFILE
+        )
     sys.excepthook = util.handle_exception
 
     main(args.nodelist, args.job_id, args.force)

@@ -21,20 +21,23 @@ from util import project, publish_message
 
 def main():
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('topic_id', help="Pubsub topic ID to publish to")
-    parser.add_argument('--type', '-t', choices=['reconfig', 'restart'],
-                        help="Notify message type")
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("topic_id", help="Pubsub topic ID to publish to")
+    parser.add_argument(
+        "--type", "-t", choices=["reconfig", "restart"], help="Notify message type"
+    )
 
     args = parser.parse_args()
 
-    message_json = json.dumps({
-        'request': args.type,
-        'timestamp': datetime.utcnow().isoformat(),
-    })
+    message_json = json.dumps(
+        {
+            "request": args.type,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    )
     publish_message(project, args.topic_id, message_json)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
