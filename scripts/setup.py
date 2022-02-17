@@ -888,7 +888,10 @@ def setup_compute():
     # if (not cfg.instance_defs[pid].image_hyperthreads and
     #         shutil.which('google_mpi_tuning')):
     #     run("google_mpi_tuning --nosmt")
-    run("nvidia-smi", check=False)
+    has_gpu = run("lspci | grep --ignore-case 'NVIDIA' | wc -l",
+                  shell=True).returncode
+    if has_gpu:
+        run("nvidia-smi")
 
     run_custom_scripts()
 
