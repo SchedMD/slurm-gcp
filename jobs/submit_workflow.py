@@ -57,7 +57,7 @@ def run(
 def main(config):
     try:
         env = dict_to_kv(config["stage_in"]["environment"])
-    except:
+    except Exception:
         env = ""
     script = config["stage_in"]["script"]
     cmd = f"sbatch --parsable --export=ALL,{env} {script}"
@@ -66,7 +66,7 @@ def main(config):
 
     try:
         env = dict_to_kv(config["main"]["environment"])
-    except:
+    except Exception:
         env = ""
     script = config["main"]["script"]
     cmd = f"sbatch --parsable --export=ALL,{env} --dependency=afterok:{job_id_stage_in} {script}"
@@ -75,7 +75,7 @@ def main(config):
 
     try:
         env = dict_to_kv(config["stage_out"]["environment"])
-    except:
+    except Exception:
         env = ""
     script = config["stage_out"]["script"]
     cmd = f"sbatch --parsable --export=ALL,{env} --dependency=afterok:{job_id_main} {script}"

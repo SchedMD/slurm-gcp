@@ -76,7 +76,7 @@ def get_partitions():
 def get_nodes():
     """Get compute nodes, their states and flags"""
     cmd = (
-        f"{SCONTROL} show nodes | grep -oP '^NodeName=\K(\S+)|State=\K(\S+)'"
+        rf"{SCONTROL} show nodes | grep -oP '^NodeName=\K(\S+)|State=\K(\S+)'"
         r" | paste -sd',\n'"
     )
     node_lines = run(cmd, shell=True).stdout.rstrip().splitlines()

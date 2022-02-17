@@ -139,7 +139,7 @@ def access_secret_version(project_id, secret_id, version_id="latest"):
         response = client.access_secret_version(request={"name": name})
         log.debug(f"Secret '{name}' was found.")
         payload = response.payload.data.decode("UTF-8")
-    except exceptions.NotFound as e:
+    except exceptions.NotFound:
         log.debug(f"Secret '{name}' was not found!")
         payload = None
 
