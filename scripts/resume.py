@@ -53,6 +53,13 @@ def instance_properties(model):
         'subnetwork': partition.subnetwork,
     }]
 
+    zones = {
+        **{zone: {'preference': 'ALLOW'} for zone in partition.zone_policy_allow},
+        **{zone: {'preference': 'DENY'} for zone in partition.zone_policy_deny},
+    }
+    if zones:
+        props.locationPolicy = {'locations': zones}
+
     slurm_metadata = {
         'slurm_cluster_id': cfg.slurm_cluster_id,
         'slurm_cluster_name': cfg.slurm_cluster_name,
