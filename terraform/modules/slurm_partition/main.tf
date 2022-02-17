@@ -179,8 +179,8 @@ module "delta_critical" {
 # DESTROY NODES: NODE GROUPS #
 ##############################
 
-# Destroy compute group when instance_template changes
-module "delta_instance_template" {
+# Destroy compute group when node groups change
+module "delta_node_groups" {
   source = "../slurm_destroy_nodes"
 
   for_each = local.partition.partition_nodes
