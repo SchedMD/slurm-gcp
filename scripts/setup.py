@@ -152,7 +152,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
     )
 
     def conflines(cloud_parameters):
-        scripts_dir = lkp.cfg.scripts or dirs.scripts
+        scripts_dir = lkp.cfg.output_dir or dirs.scripts
         no_comma_params = cloud_parameters.get('no_comma_params', False)
         comma_params = {
             'PrivateData': [
@@ -281,7 +281,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
         '\n',
     ]
 
-    conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'cloud.conf'
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc)/'cloud.conf'
     conf_file_bak = conf_file.with_suffix('.conf.bak')
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
@@ -308,7 +308,7 @@ def install_slurm_conf(lkp):
     conf_resp = project_metadata(f'{cfg.slurm_cluster_name}-slurm-tpl-slurm-conf')
     conf = conf_resp.format(**conf_options)
 
-    conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'slurm.conf'
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc)/'slurm.conf'
     conf_file_bak = conf_file.with_suffix('.conf.bak')
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
@@ -343,7 +343,7 @@ def install_slurmdbd_conf(lkp):
     conf_resp = project_metadata(f'{cfg.slurm_cluster_name}-slurm-tpl-slurmdbd-conf')
     conf = conf_resp.format(**conf_options)
 
-    conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'slurmdbd.conf'
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc)/'slurmdbd.conf'
     conf_file_bak = conf_file.with_suffix('.conf.bak')
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
@@ -356,7 +356,7 @@ def install_cgroup_conf():
     """ install cgroup.conf """
     conf = project_metadata(f'{cfg.slurm_cluster_name}-slurm-tpl-cgroup-conf')
 
-    conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'cgroup.conf'
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc)/'cgroup.conf'
     conf_file_bak = conf_file.with_suffix('.conf.bak')
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
@@ -387,7 +387,7 @@ def install_gres_conf(lkp):
     ]
     content = FILE_PREAMBLE + '\n'.join(lines)
 
-    conf_file = Path(lkp.cfg.etc or slurmdirs.etc)/'gres.conf'
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc)/'gres.conf'
     conf_file_bak = conf_file.with_suffix('.conf.bak')
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)

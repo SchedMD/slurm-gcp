@@ -69,8 +69,6 @@ locals {
   config = yamlencode({
     slurm_cluster_name = var.slurm_cluster_name
     project            = var.project_id
-    etc                = local.output_dir
-    scripts            = local.scripts_dir
 
     pubsub_topic_id = google_pubsub_topic.this.name
 
@@ -83,7 +81,7 @@ locals {
     partitions       = local.partitions
 
     google_app_cred_path = local.google_app_cred_path
-    slurm_scripts_dir    = local.output_dir
+    output_dir           = local.output_dir
     slurm_bin_dir        = local.slurm_bin_dir
     slurm_log_dir        = local.slurm_log_dir
   })
