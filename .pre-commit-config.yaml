@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.56.0
+    rev: v1.64.0
     hooks:
       - id: terraform_fmt
       - id: terraform_tflint
@@ -9,3 +9,14 @@ repos:
           - --args=--config=__GIT_WORKING_DIR__/terraform/.tflint.hcl
       - id: terraform_validate
       - id: terraform_docs
+  - repo: https://github.com/psf/black
+    rev: 22.1.0
+    hooks:
+      - id: black
+        exclude: ^dm/
+        language_version: python3
+  - repo: https://github.com/pycqa/flake8
+    rev: 4.0.1
+    hooks:
+      - id: flake8
+        exclude: ^dm/

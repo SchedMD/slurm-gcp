@@ -18,7 +18,10 @@ import logging
 from pathlib import Path
 from time import sleep
 from suspend import (
-    batch_execute, delete_instance_request, truncate_iter, wait_for_operations
+    batch_execute,
+    delete_instance_request,
+    truncate_iter,
+    wait_for_operations,
 )
 from util import compute, config_root_logger, project, parse_self_link
 
@@ -27,57 +30,63 @@ log = logging.getLogger(logger_name)
 
 
 def delete_instances(compute_list):
-    log.info("Deleting {0} compute instances:\n{1}".format(
-        len(compute_list), '\n'.join(compute_list)))
+    log.info(
+        "Deleting {0} compute instances:\n{1}".format(
+            len(compute_list), "\n".join(compute_list)
+        )
+    )
 
     ops = {}
     for self_link in compute_list:
         link_info = parse_self_link(self_link)
         ops[self_link] = delete_instance_request(
-            instance=link_info.instance,
-            project=link_info.project,
-            zone=link_info.zone)
+            instance=link_info.instance, project=link_info.project, zone=link_info.zone
+        )
     done, failed = batch_execute(ops)
     if failed:
         failed_nodes = [f"{n}: {e}" for n, (_, e) in failed.items()]
-        node_str = '\n'.join(str(el)
-                             for el in truncate_iter(failed_nodes, 5))
+        node_str = "\n".join(str(el) for el in truncate_iter(failed_nodes, 5))
         log.error(f"some nodes failed to delete: {node_str}")
     wait_for_operations(done.values())
 
 
 def main(args):
     required_map = {
-        'labels.slurm_cluster_id': args.slurm_cluster_id,
-        'labels.slurm_instance_role': 'compute',
+        "labels.slurm_cluster_id": args.slurm_cluster_id,
+        "labels.slurm_instance_role": "compute",
     }
     required_list = [f"{k}={v}" for k, v in required_map.items()]
-    required_logic = ' AND '.join(required_list)
+    required_logic = " AND ".join(required_list)
 
-    target_list = ' OR '.join(
-        [f"name={x}" for x in args.target.split(',')]) if args.target else ''
-    target_logic = f"AND ({target_list})" if args.target else ''
+    target_list = (
+        " OR ".join([f"name={x}" for x in args.target.split(",")])
+        if args.target
+        else ""
+    )
+    target_logic = f"AND ({target_list})" if args.target else ""
 
-    exclude_list = ' AND '.join(
-        [f"name!={x}" for x in args.exclude.split(',')]) if args.exclude else ''
-    exclude_logic = f"AND ({exclude_list})" if args.exclude else ''
+    exclude_list = (
+        " AND ".join([f"name!={x}" for x in args.exclude.split(",")])
+        if args.exclude
+        else ""
+    )
+    exclude_logic = f"AND ({exclude_list})" if args.exclude else ""
 
     filter = f"{required_logic} {target_logic} {exclude_logic}"
-    log.debug(f"filter = \"{filter}\"")
+    log.debug(f'filter = "{filter}"')
 
     # NOTE: It is not technically possible to filter by metadata or other
     #       complex nested items
-    result = compute.instances().aggregatedList(
-        project=project,
-        filter=filter
-    ).execute()
+    result = (
+        compute.instances().aggregatedList(project=project, filter=filter).execute()
+    )
 
     compute_list = []
-    for item in result['items'].values():
-        instances = item.get('instances')
+    for item in result["items"].values():
+        instances = item.get("instances")
         if instances is not None:
             for instance in instances:
-                compute_list.append(instance['selfLink'])
+                compute_list.append(instance["selfLink"])
 
     delete_instances(compute_list)
 
@@ -87,27 +96,35 @@ def main(args):
         sleep(sleep_dur)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('slurm_cluster_id',
-                        help="Slurm cluster ID label filter")
-    parser.add_argument('--target', help="NodeNames targeted for destruction",
-                        type=str, default=None)
-    parser.add_argument('--exclude', help="NodeNames excluded from destruction",
-                        type=str, default=None)
-    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
-                        help='Enable debugging output')
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("slurm_cluster_id", help="Slurm cluster ID label filter")
+    parser.add_argument(
+        "--target", help="NodeNames targeted for destruction", type=str, default=None
+    )
+    parser.add_argument(
+        "--exclude", help="NodeNames excluded from destruction", type=str, default=None
+    )
+    parser.add_argument(
+        "--debug",
+        "-d",
+        dest="debug",
+        action="store_true",
+        help="Enable debugging output",
+    )
 
     args = parser.parse_args()
 
-    logfile = (Path(__file__).parent / logger_name).with_suffix('.log')
+    logfile = (Path(__file__).parent / logger_name).with_suffix(".log")
     if args.debug:
-        config_root_logger(logger_name, level='DEBUG', util_level='DEBUG',
-                           logfile=logfile)
+        config_root_logger(
+            logger_name, level="DEBUG", util_level="DEBUG", logfile=logfile
+        )
     else:
-        config_root_logger(logger_name, level='INFO', util_level='ERROR',
-                           logfile=logfile)
+        config_root_logger(
+            logger_name, level="INFO", util_level="ERROR", logfile=logfile
+        )
 
     main(args)

@@ -31,17 +31,17 @@ from util import seperate, split_nodelist, is_exclusive_node
 from util import lkp, cfg, compute
 
 
-SCONTROL = Path(cfg.slurm_bin_dir if cfg else '')/'scontrol'
+SCONTROL = Path(cfg.slurm_bin_dir if cfg else "") / "scontrol"
 
 filename = Path(__file__).name
-LOGFILE = (Path(cfg.slurm_log_dir if cfg else '.')/filename).with_suffix('.log')
+LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 log = logging.getLogger(filename)
 
 TOT_REQ_CNT = 1000
 
 
 def truncate_iter(iterable, max_count):
-    end = '...'
+    end = "..."
     _iter = iter(iterable)
     for i, el in enumerate(_iter, start=1):
         if i >= max_count:
@@ -60,32 +60,29 @@ def delete_instance_request(instance, project=None, zone=None):
 
 
 def delete_instances(instances):
-    """ Call regionInstances.bulkInsert to create instances """
+    """Call regionInstances.bulkInsert to create instances"""
     if len(instances) == 0:
         return
-    invalid, valid = seperate(
-        lambda inst: bool(lkp.instance(inst)),
-        instances
-    )
-    log.debug("instances do not exist: {}".format(','.join(invalid)))
+    invalid, valid = seperate(lambda inst: bool(lkp.instance(inst)), instances)
+    log.debug("instances do not exist: {}".format(",".join(invalid)))
 
     requests = {inst: delete_instance_request(inst) for inst in valid}
     done, failed = batch_execute(requests)
     if failed:
         failed_nodes = [f"{n}: {e}" for n, (_, e) in failed.items()]
-        node_str = '\n'.join(str(el) for el in truncate_iter(failed_nodes, 5))
+        node_str = "\n".join(str(el) for el in truncate_iter(failed_nodes, 5))
         log.error(f"some nodes failed to delete: {node_str}")
     wait_for_operations(done.values())
 
 
 def expand_nodelist(nodelist):
-    """ expand nodes in hostlist to hostnames """
+    """expand nodes in hostlist to hostnames"""
     nodes = run(f"{SCONTROL} show hostnames {nodelist}").stdout.splitlines()
     return nodes
 
 
 def suspend_nodes(nodelist):
-    """suspend nodes in nodelist """
+    """suspend nodes in nodelist"""
     nodes = nodelist
     if not isinstance(nodes, list):
         nodes = expand_nodelist(nodes)
@@ -102,13 +99,11 @@ def delete_placement_groups(job_id, region, partition_name):
     req = compute.resourcePolicies().list(
         project=cfg.project, region=region, filter=flt
     )
-    result = ensure_execute(req).get('items')
+    result = ensure_execute(req).get("items")
     if not result:
         log.debug(f"No placement groups found to delete for job id {job_id}")
         return
-    requests = {
-        pg['name']: delete_placement_request(pg['name']) for pg in result
-    }
+    requests = {pg["name"]: delete_placement_request(pg["name"]) for pg in result}
     done, failed = batch_execute(requests)
     if failed:
         failed_pg = [f"{n}: {e}" for n, (_, e) in failed.items()]
@@ -139,7 +134,7 @@ def epilog_suspend_nodes(nodelist, job_id):
 
 
 def main(nodelist, job_id):
-    """ main called when run as script """
+    """main called when run as script"""
     log.debug(f"main {nodelist} {job_id}")
     nodes = expand_nodelist(nodelist)
     normal, exclusive = seperate(is_exclusive_node, nodes)
@@ -154,25 +149,26 @@ def main(nodelist, job_id):
 
 
 parser = argparse.ArgumentParser(
-    description=__doc__,
-    formatter_class=argparse.RawDescriptionHelpFormatter)
+    description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+)
+parser.add_argument("nodelist", help="list of nodes to suspend")
 parser.add_argument(
-    'nodelist', help="list of nodes to suspend"
+    "job_id",
+    nargs="?",
+    default=None,
+    help="Optional job id for node list. Implies that PrologSlurmctld called program",
 )
 parser.add_argument(
-    'job_id', nargs='?', default=None,
-    help="Optional job id for node list. Implies that PrologSlurmctld called program"
+    "--debug", "-d", dest="debug", action="store_true", help="Enable debugging output"
 )
-parser.add_argument('--debug', '-d', dest='debug', action='store_true',
-                    help='Enable debugging output')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if "SLURM_JOB_NODELIST" in os.environ:
         argv = [
             *sys.argv[1:],
-            os.environ['SLURM_JOB_NODELIST'],
-            os.environ['SLURM_JOB_ID'],
+            os.environ["SLURM_JOB_NODELIST"],
+            os.environ["SLURM_JOB_ID"],
         ]
         args = parser.parse_args(argv)
     else:
@@ -180,11 +176,13 @@ if __name__ == '__main__':
 
     util.chown_slurm(LOGFILE, mode=0o600)
     if args.debug:
-        util.config_root_logger(filename, level='DEBUG', util_level='DEBUG',
-                                logfile=LOGFILE)
+        util.config_root_logger(
+            filename, level="DEBUG", util_level="DEBUG", logfile=LOGFILE
+        )
     else:
-        util.config_root_logger(filename, level='INFO', util_level='ERROR',
-                                logfile=LOGFILE)
+        util.config_root_logger(
+            filename, level="INFO", util_level="ERROR", logfile=LOGFILE
+        )
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 

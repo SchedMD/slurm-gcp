@@ -27,10 +27,9 @@ from util import project, lkp, cfg
 from util import config_root_logger, handle_exception, run, publish_message
 
 filename = Path(__file__).name
-logfile = (Path(cfg.slurm_log_dir if cfg else '.')/filename).with_suffix('.log')
+logfile = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 util.chown_slurm(logfile, mode=0o600)
-config_root_logger(filename, level='DEBUG', util_level='DEBUG',
-                   logfile=logfile)
+config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
 log = logging.getLogger(filename)
 
 project_id = project
@@ -39,46 +38,52 @@ subscription_id = lkp.hostname
 subscriber = pubsub_v1.SubscriberClient()
 subscription_path = subscriber.subscription_path(project_id, subscription_id)
 
-SCONTROL = Path(util.cfg.slurm_bin_dir or '')/'scontrol'
-StateTuple = namedtuple('StateTuple', 'base,flags')
+SCONTROL = Path(util.cfg.slurm_bin_dir or "") / "scontrol"
+StateTuple = namedtuple("StateTuple", "base,flags")
 
 
 def natural_keys(text):
-    """ String sorting heuristic function for numbers """
+    """String sorting heuristic function for numbers"""
+
     def atoi(text):
         return int(text) if text.isdigit() else text
 
-    return [atoi(c) for c in re.split(r'(\d+)', text)]
+    return [atoi(c) for c in re.split(r"(\d+)", text)]
 
 
 def make_tuple(line):
-    """ Turn 'part,states' to (part, StateTuple(state)) """
+    """Turn 'part,states' to (part, StateTuple(state))"""
     # Node State: CLOUD, DOWN, DRAIN, FAIL, FAILING, FUTURE, UNKNOWN
     # Partition States: UP, DOWN, DRAIN, INACTIVE
-    item, states = line.split(',')
-    state = states.split('+')
+    item, states = line.split(",")
+    state = states.split("+")
     state_tuple = StateTuple(state[0], set(state[1:]))
     return (item, state_tuple)
 
 
 def get_partitions():
-    """ Get partitions and their states """
-    cmd = (f"{SCONTROL} show partitions | "
-           r"grep -oP '^PartitionName=\K(\S+)|State=\K(\S+)' | "
-           r"paste -sd',\n'")
+    """Get partitions and their states"""
+    cmd = (
+        f"{SCONTROL} show partitions | "
+        r"grep -oP '^PartitionName=\K(\S+)|State=\K(\S+)' | "
+        r"paste -sd',\n'"
+    )
     part_lines = run(cmd, shell=True).stdout.rstrip().splitlines()
     slurm_parts = dict(make_tuple(line) for line in part_lines)
     return slurm_parts
 
 
 def get_nodes():
-    """ Get compute nodes, their states and flags """
-    cmd = (f"{SCONTROL} show nodes | grep -oP '^NodeName=\K(\S+)|State=\K(\S+)'"
-           r" | paste -sd',\n'")
+    """Get compute nodes, their states and flags"""
+    cmd = (
+        rf"{SCONTROL} show nodes | grep -oP '^NodeName=\K(\S+)|State=\K(\S+)'"
+        r" | paste -sd',\n'"
+    )
     node_lines = run(cmd, shell=True).stdout.rstrip().splitlines()
     slurm_nodes = {
-        part: state for part, state in map(make_tuple, node_lines)
-        if 'CLOUD' in state.flags
+        part: state
+        for part, state in map(make_tuple, node_lines)
+        if "CLOUD" in state.flags
     }
     return slurm_nodes
 
@@ -102,15 +107,15 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
     from datetime import datetime
     import json
 
-    data = json.loads(message.data.decode('utf-8'))
+    data = json.loads(message.data.decode("utf-8"))
 
     def event_reconfig():
         log.debug(f"Handling 'request={data['request']}'.")
 
-        if lkp.instance_role == 'controller':
+        if lkp.instance_role == "controller":
             # Inactive all partitions to prevent further scheduling
             partitions = get_partitions()
-            update_partitions(partitions, 'INACTIVE')
+            update_partitions(partitions, "INACTIVE")
 
             # Fetch and write new config.yaml
             cfg = util.config_from_metadata()
@@ -133,14 +138,16 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
             setup.install_cgroup_conf()
 
             # Send restart message to cluster topic
-            message_json = json.dumps({
-                'request': 'restart',
-                'timestamp': datetime.utcnow().isoformat(),
-            })
+            message_json = json.dumps(
+                {
+                    "request": "restart",
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
             publish_message(project, util.cfg.pubsub_topic_id, message_json)
-        elif lkp.instance_role == 'compute':
+        elif lkp.instance_role == "compute":
             log.info(f"NO-OP for 'Request={data['request']}'.")
-        elif lkp.instance_role == 'login':
+        elif lkp.instance_role == "login":
             log.info(f"NO-OP for 'Request={data['request']}'.")
         else:
             log.error(f"Unknown node role: {lkp.instance_role}")
@@ -148,34 +155,32 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
     def event_restart():
         log.debug(f"Handling 'request={data['request']}'.")
 
-        if lkp.instance_role == 'controller':
+        if lkp.instance_role == "controller":
             run("systemctl restart slurmctld")
-        elif lkp.instance_role == 'compute':
+        elif lkp.instance_role == "compute":
             run("systemctl restart slurmd")
-        elif lkp.instance_role == 'login':
+        elif lkp.instance_role == "login":
             log.info(f"NO-OP for 'Request={data['request']}'.")
         else:
             log.error(f"Unknown node role: {lkp.instance_role}")
 
     event_handler = dict.get(
         {
-            'reconfig': event_reconfig,
-            'restart': event_restart,
+            "reconfig": event_reconfig,
+            "restart": event_restart,
         },
-        data['request'].lower(),
-        lambda: log.error(f"Unknown 'Request={data['request']}' received.")
+        data["request"].lower(),
+        lambda: log.error(f"Unknown 'Request={data['request']}' received."),
     )
     event_handler()
     message.ack()
 
 
 def main():
-    config_root_logger(filename, level='DEBUG', util_level='DEBUG',
-                       logfile=logfile)
+    config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
     sys.excepthook = handle_exception
 
-    streaming_pull_future = subscriber.subscribe(
-        subscription_path, callback=callback)
+    streaming_pull_future = subscriber.subscribe(subscription_path, callback=callback)
     log.info(f"Listening for messages on '{subscription_path}'...")
 
     with subscriber:
@@ -187,5 +192,5 @@ def main():
             streaming_pull_future.result()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
