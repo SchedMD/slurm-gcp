@@ -72,10 +72,9 @@ locals {
 
   controller_hybrid_config = {
     google_app_cred_path = null
-    slurm_scripts_dir    = "../../../../../scripts"
-    slurm_log_dir        = "."
+    slurm_log_dir        = "/var/log/slurm"
     slurm_bin_dir        = "/usr/local/bin"
-    output_dir           = "./config"
+    output_dir           = "./etc"
   }
 }
 

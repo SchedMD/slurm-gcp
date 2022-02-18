@@ -146,13 +146,11 @@ EOD
   type = object({
     google_app_cred_path = string
     slurm_bin_dir        = string
-    slurm_scripts_dir    = string
     slurm_log_dir        = string
     output_dir           = string
   })
   default = {
     google_app_cred_path = null
-    slurm_scripts_dir    = null
     slurm_bin_dir        = "/usr/local/bin"
     slurm_log_dir        = "/var/log/slurm"
     output_dir           = "."

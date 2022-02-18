@@ -187,12 +187,6 @@ variable "google_app_cred_path" {
   default     = null
 }
 
-variable "slurm_scripts_dir" {
-  type        = string
-  description = "Path to slurm-gcp scripts."
-  default     = null
-}
-
 variable "slurm_bin_dir" {
   type        = string
   description = <<EOD
@@ -229,8 +223,8 @@ variable "cloud_parameters" {
 variable "output_dir" {
   type        = string
   description = <<EOD
-Directory where this module will write files to. If '' or 'null', then the path
-to main.tf will be assumed."
+Directory where this module will write its files to. These files include:
+cloud.conf; gres.conf; config.yaml; resume.py; suspend.py; and util.py.
 EOD
-  default     = "."
+  default     = null
 }

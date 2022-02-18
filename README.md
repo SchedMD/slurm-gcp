@@ -299,55 +299,47 @@ able to communicate with the controller.
 
 ### Configuration Steps
 
-1. Create a base instance
-
-    Create a bare image and install and configure the packages (including Slurm)
-    that you are used to for a Slurm compute node. Then [create an image](https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images)
-    of the base image. It's recommended to create the image in a family.
-
-2. Create a [service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
+1. Create a [service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
   and [service account key](https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account)
   that will have access to create and delete instances in the remote project.
 
-3. Clone `slurm-gcp` to a directory accessible for `slurmctld` by `SlurmUser`.
+3. Use terraform to create a hybrid slurm cluster. See
+[advanced hybrid example](./terraform/examples/slurm_cluster/hybrid/advanced/).
 
 4. Configure Slurm:
 
-    * Use terraform and [slurm_controller_hybrid](./terraform/modules/slurm_controller_hybrid)
-      module to create the cloud infrastructure and configuration files required
-      to support a hybrid Slurm cluster.
-
-      See the [hybrid cluster](./terraform/examples/slurm_cluster/hybrid)
-      examples.
-
-      **NODE:** `terraform apply` will generate slurm configuration files to
-      support a hybrid configuration.
+    * **NOTE:** Terraform module will generate slurm configuration files and
+      scripts to support a hybrid configuration at the desired `output_dir`.
 
     * Include generated Slurm hybrid configuration files:
-      Append each file the given lines. Resolve include conflicts if duplicate
-      items are included.
 
       ```ini
       # slurm.conf
-      include /abs/path/to/cloud.conf
+      include $output_dir/cloud.conf
       ```
 
       ```ini
       # gres.conf
-      include /abs/path/to/gres.conf
+      include $output_dir/gres.conf
       ```
 
-    * Add a cronjob/crontab to call slurmsync.py to be called by SlurmUser.
+    * Add a cronjob/crontab to call slurmsync.py as SlurmUser.
 
       e.g.
       ```ini
-      */1 * * * * $SLURM_GCP/scripts/slurmsync.py
+      */1 * * * * $output_dir/slurmsync.py
       ```
+
+      **NOTE**: When *cloud.conf* is included, conflicts may exist and should be
+      resolved. To disable Slurm 'Parameter' type lines in *cloud.conf* set
+      `var.cloud_parameters.no_comma_params = false`. Then manually configure those
+      lines in your *slurm.conf*.
 
 5. Test
 
-    Try creating and deleting instances in GCP by calling the commands directly as SlurmUser.
-    
+    Try creating and deleting instances in GCP by calling the commands directly
+    as SlurmUser.
+
     e.g.
     ```sh
     ./resume.py g1-cpu-debug-0

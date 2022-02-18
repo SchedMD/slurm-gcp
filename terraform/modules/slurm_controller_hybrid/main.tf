@@ -29,14 +29,6 @@ locals {
 }
 
 ##################
-# LOCALS: SCRIPT #
-##################
-
-locals {
-  setup_hybrid = abspath("${local.scripts_dir}/setup_hybrid.py")
-}
-
-##################
 # LOCALS: CONFIG #
 ##################
 
@@ -60,12 +52,6 @@ locals {
     var.google_app_cred_path != null
     ? abspath(var.google_app_cred_path)
     : null
-  )
-
-  slurm_scripts_dir = (
-    var.slurm_scripts_dir != null
-    ? abspath(var.slurm_scripts_dir)
-    : local.scripts_dir
   )
 
   slurm_bin_dir = (
@@ -97,7 +83,7 @@ locals {
     partitions       = local.partitions
 
     google_app_cred_path = local.google_app_cred_path
-    slurm_scripts_dir    = local.slurm_scripts_dir
+    slurm_scripts_dir    = local.output_dir
     slurm_bin_dir        = local.slurm_bin_dir
     slurm_log_dir        = local.slurm_log_dir
   })
@@ -107,8 +93,24 @@ locals {
 # DATA: SCRIPT #
 ################
 
-data "local_file" "setup_hybrid" {
-  filename = local.setup_hybrid
+data "local_file" "setup_hybrid_py" {
+  filename = abspath("${local.scripts_dir}/setup_hybrid.py")
+}
+
+data "local_file" "resume_py" {
+  filename = abspath("${local.scripts_dir}/resume.py")
+}
+
+data "local_file" "suspend_py" {
+  filename = abspath("${local.scripts_dir}/suspend.py")
+}
+
+data "local_file" "util_py" {
+  filename = abspath("${local.scripts_dir}/util.py")
+}
+
+data "local_file" "slurmsync_py" {
+  filename = abspath("${local.scripts_dir}/slurmsync.py")
 }
 
 ##########
@@ -120,6 +122,30 @@ resource "random_uuid" "slurm_cluster_id" {
 
 resource "random_password" "munge_key" {
   length = 256
+}
+
+###########
+# SCRIPTS #
+###########
+
+resource "local_file" "resume_py" {
+  content  = data.local_file.resume_py.content
+  filename = abspath("${var.output_dir}/resume.py")
+}
+
+resource "local_file" "suspend_py" {
+  content  = data.local_file.suspend_py.content
+  filename = abspath("${var.output_dir}/suspend.py")
+}
+
+resource "local_file" "util_py" {
+  content  = data.local_file.util_py.content
+  filename = abspath("${var.output_dir}/util.py")
+}
+
+resource "local_file" "slurmsync_py" {
+  content  = data.local_file.slurmsync_py.content
+  filename = abspath("${var.output_dir}/slurmsync.py")
 }
 
 ##########
@@ -143,7 +169,7 @@ resource "null_resource" "setup_hybrid" {
     config_dir  = local.output_dir
     config      = local_file.config_yaml.content
     config_path = local_file.config_yaml.filename
-    script_path = data.local_file.setup_hybrid.filename
+    script_path = data.local_file.setup_hybrid_py.filename
 
     no_comma_params = var.cloud_parameters.no_comma_params
     resume_rate     = var.cloud_parameters.resume_rate

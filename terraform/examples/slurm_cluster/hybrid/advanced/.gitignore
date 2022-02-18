@@ -1,1 +1,4 @@
-config/*
+*.bak
+*.conf
+*.py
+*.yaml

@@ -23,5 +23,5 @@ module "slurm_controller_hybrid" {
 
   project_id         = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
-  output_dir         = "./config"
+  output_dir         = "./etc"
 }
