@@ -77,6 +77,8 @@ locals {
     network_storage       = var.network_storage
     login_network_storage = var.login_network_storage
 
+    prolog_d         = [for x in google_compute_project_metadata_item.prolog_d : x.key]
+    epilog_d         = [for x in google_compute_project_metadata_item.epilog_d : x.key]
     cloud_parameters = var.cloud_parameters
     partitions       = local.partitions
 
