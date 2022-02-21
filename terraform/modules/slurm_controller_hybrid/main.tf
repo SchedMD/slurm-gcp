@@ -162,7 +162,7 @@ resource "local_file" "config_yaml" {
 #########
 
 resource "null_resource" "setup_hybrid" {
-  triggers = {
+  triggers = merge({
     scripts_dir = local.scripts_dir
     config_dir  = local.output_dir
     config      = local_file.config_yaml.content
@@ -174,7 +174,18 @@ resource "null_resource" "setup_hybrid" {
     resume_timeout  = var.cloud_parameters.resume_timeout
     suspend_rate    = var.cloud_parameters.suspend_rate
     suspend_timeout = var.cloud_parameters.suspend_timeout
-  }
+    },
+    {
+      for x in var.prolog_d
+      : "prolog_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
+      => sha256(x.content)
+    },
+    {
+      for x in var.epilog_d
+      : "epilog_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
+      => sha256(x.content)
+    },
+  )
 
   provisioner "local-exec" {
     working_dir = self.triggers.scripts_dir
