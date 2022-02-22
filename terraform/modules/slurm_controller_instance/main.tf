@@ -389,6 +389,8 @@ resource "google_secret_manager_secret_version" "jwt_key_version" {
 #####################
 
 resource "google_secret_manager_secret" "cloudsql" {
+  count = var.cloudsql != null ? 1 : 0
+
   secret_id = "${var.slurm_cluster_name}-slurm-secret-cloudsql"
 
   replication {
@@ -401,7 +403,9 @@ resource "google_secret_manager_secret" "cloudsql" {
 }
 
 resource "google_secret_manager_secret_version" "cloudsql_version" {
-  secret      = google_secret_manager_secret.cloudsql.id
+  count = var.cloudsql != null ? 1 : 0
+
+  secret      = google_secret_manager_secret.cloudsql[0].id
   secret_data = jsonencode(var.cloudsql)
 }
 
