@@ -21,6 +21,7 @@ provider "google" {
 module "slurm_controller_hybrid" {
   source = "../../../modules/slurm_controller_hybrid"
 
+  munge_key          = var.munge_key
   project_id         = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
   output_dir         = "./etc"

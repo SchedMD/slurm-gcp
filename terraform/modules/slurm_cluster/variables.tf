@@ -322,18 +322,14 @@ variable "enable_devel" {
 
 variable "munge_key" {
   type        = string
-  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
+  description = <<EOD
+Cluster munge authentication key.
+
+If 'enable_hybrid=true', this is required. Otherwise if 'null', a key will be
+generated.
+EOD
   default     = null
   sensitive   = true
-
-  validation {
-    condition = (
-      var.munge_key == null
-      ? true
-      : length(var.munge_key) >= 32 && length(var.munge_key) <= 1024
-    )
-    error_message = "Munge key must be between 32 and 1024 bytes."
-  }
 }
 
 variable "jwt_key" {

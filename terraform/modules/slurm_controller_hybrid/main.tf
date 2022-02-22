@@ -39,12 +39,6 @@ locals {
     : var.slurm_cluster_id
   )
 
-  munge_key = (
-    var.munge_key == null
-    ? random_password.munge_key.result
-    : var.munge_key
-  )
-
   partitions   = { for p in var.partitions[*].partition : p.partition_name => p }
   compute_list = flatten(var.partitions[*].compute_list)
 
@@ -118,10 +112,6 @@ data "local_file" "slurmsync_py" {
 ##########
 
 resource "random_uuid" "slurm_cluster_id" {
-}
-
-resource "random_password" "munge_key" {
-  length = 256
 }
 
 ###########
@@ -357,7 +347,7 @@ resource "google_secret_manager_secret" "munge_key" {
 
 resource "google_secret_manager_secret_version" "munge_key_version" {
   secret      = google_secret_manager_secret.munge_key.id
-  secret_data = local.munge_key
+  secret_data = var.munge_key
 }
 
 #################

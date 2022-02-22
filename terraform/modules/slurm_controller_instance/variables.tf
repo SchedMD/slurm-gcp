@@ -106,15 +106,6 @@ variable "munge_key" {
   description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
   default     = null
   sensitive   = true
-
-  validation {
-    condition = (
-      var.munge_key == null
-      ? true
-      : length(var.munge_key) >= 32 && length(var.munge_key) <= 1024
-    )
-    error_message = "Munge key must be between 32 and 1024 bytes."
-  }
 }
 
 variable "jwt_key" {

@@ -72,9 +72,8 @@ variable "cloud_parameters" {
 }
 
 variable "munge_key" {
-  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
+  description = "Cluster munge authentication key."
   type        = string
-  default     = ""
   sensitive   = true
 }
 

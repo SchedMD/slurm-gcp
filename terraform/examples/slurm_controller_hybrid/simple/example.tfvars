@@ -17,3 +17,5 @@
 project_id = "<PROJECT_ID>"
 
 slurm_cluster_name = "simple"
+
+munge_key = "<MUNGE_KEY>"

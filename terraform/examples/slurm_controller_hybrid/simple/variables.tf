@@ -24,3 +24,9 @@ variable "slurm_cluster_name" {
   description = "Cluster name, used for resource naming."
   default     = "simple"
 }
+
+variable "munge_key" {
+  description = "Cluster munge authentication key."
+  type        = string
+  sensitive   = true
+}
