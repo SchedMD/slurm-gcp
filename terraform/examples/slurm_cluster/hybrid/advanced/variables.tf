@@ -78,13 +78,6 @@ variable "munge_key" {
   sensitive   = true
 }
 
-variable "jwt_key" {
-  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
 variable "network_storage" {
   description = <<EOD
 Storage to mounted on all instances.

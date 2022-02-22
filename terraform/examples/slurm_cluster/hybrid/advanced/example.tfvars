@@ -34,7 +34,6 @@ region = "<REGION>"
 firewall_network_name = "default"
 
 munge_key = "<MUNGE_KEY>"
-jwt_key   = "<JWT_KEY>"
 
 # Network storage
 network_storage = [

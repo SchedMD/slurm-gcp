@@ -25,4 +25,3 @@ slurm_cluster_name = "basic-hybrid"
 region = "<REGION>"
 
 munge_key = "<MUNGE_KEY>"
-jwt_key   = "<JWT_KEY>"

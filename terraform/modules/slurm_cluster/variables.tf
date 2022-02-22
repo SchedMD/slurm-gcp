@@ -338,7 +338,12 @@ variable "munge_key" {
 
 variable "jwt_key" {
   type        = string
-  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
+  description = <<EOD
+Cluster jwt authentication key.
+
+If 'enable_hybrid=true', this is ignored. Otherwise if 'null', a key will be
+generated.
+EOD
   default     = null
   sensitive   = true
 }

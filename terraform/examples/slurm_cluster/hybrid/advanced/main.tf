@@ -37,7 +37,6 @@ module "slurm_cluster" {
   enable_devel             = var.enable_devel
   epilog_d                 = var.epilog_d
   enable_hybrid            = true
-  jwt_key                  = var.jwt_key
   login_network_storage    = var.login_network_storage
   munge_key                = var.munge_key
   network_storage          = var.network_storage
