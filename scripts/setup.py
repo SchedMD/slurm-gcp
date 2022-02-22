@@ -357,11 +357,14 @@ def install_slurmdbd_conf(lkp):
         }
     )
     if lkp.cfg.cloudsql:
-        conf_options.db_name = lkp.cfg.cloudsql.db_name
-        conf_options.db_user = lkp.cfg.cloudsql.user
-        conf_options.db_pass = lkp.cfg.cloudsql.password
+        secret_name = f"{cfg.slurm_cluster_name}-slurm-secret-cloudsql"
+        payload = json.loads(access_secret_version(util.project, secret_name))
 
-        db_host_str = lkp.cfg.cloudsql.server_ip.split(":")
+        conf_options.db_name = payload["db_name"]
+        conf_options.db_user = payload["user"]
+        conf_options.db_pass = payload["password"]
+
+        db_host_str = payload["server_ip"].split(":")
         conf_options.db_host = db_host_str[0]
         conf_options.db_port = db_host_str[1] if len(db_host_str) >= 2 else "3306"
 

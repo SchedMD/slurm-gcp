@@ -64,7 +64,7 @@ locals {
     slurm_cluster_name = var.slurm_cluster_name
     project            = var.project_id
 
-    cloudsql = var.cloudsql
+    cloudsql = var.cloudsql != null ? true : false
 
     pubsub_topic_id = google_pubsub_topic.this.name
 
@@ -342,9 +342,9 @@ module "slurm_pubsub" {
   }
 }
 
-###########
-# SECRETS #
-###########
+##################
+# SECRETS: MUNGE #
+##################
 
 resource "google_secret_manager_secret" "munge_key" {
   secret_id = "${var.slurm_cluster_name}-slurm-secret-munge_key"
@@ -363,6 +363,10 @@ resource "google_secret_manager_secret_version" "munge_key_version" {
   secret_data = local.munge_key
 }
 
+################
+# SECRETS: JWT #
+################
+
 resource "google_secret_manager_secret" "jwt_key" {
   secret_id = "${var.slurm_cluster_name}-slurm-secret-jwt_key"
 
@@ -378,6 +382,27 @@ resource "google_secret_manager_secret" "jwt_key" {
 resource "google_secret_manager_secret_version" "jwt_key_version" {
   secret      = google_secret_manager_secret.jwt_key.id
   secret_data = local.jwt_key
+}
+
+#####################
+# SECRETS: CLOUDSQL #
+#####################
+
+resource "google_secret_manager_secret" "cloudsql" {
+  secret_id = "${var.slurm_cluster_name}-slurm-secret-cloudsql"
+
+  replication {
+    automatic = true
+  }
+
+  labels = {
+    slurm_cluster_id = local.slurm_cluster_id
+  }
+}
+
+resource "google_secret_manager_secret_version" "cloudsql_version" {
+  secret      = google_secret_manager_secret.cloudsql.id
+  secret_data = jsonencode(var.cloudsql)
 }
 
 ####################

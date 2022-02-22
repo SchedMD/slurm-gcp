@@ -33,7 +33,12 @@ region = "<REGION>"
 
 firewall_network_name = "default"
 
-cloudsql  = null
+# cloudsql = {
+#   server_ip = "<SERVER_IP>:<PORT>"
+#   user      = "<USERNAME>"
+#   password  = "<PASSWORD>"
+#   db_name   = "<DB_NAME>"
+# }
 jwt_key   = null
 munge_key = null
 

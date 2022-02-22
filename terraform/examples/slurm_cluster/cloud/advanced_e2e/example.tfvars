@@ -31,7 +31,12 @@ region = "<REGION>"
 # CONFIGURATION #
 #################
 
-cloudsql  = null
+# cloudsql = {
+#   server_ip = "<SERVER_IP>:<PORT>"
+#   user      = "<USERNAME>"
+#   password  = "<PASSWORD>"
+#   db_name   = "<DB_NAME>"
+# }
 jwt_key   = null
 munge_key = null
 
