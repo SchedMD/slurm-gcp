@@ -931,6 +931,14 @@ def setup_controller():
 
     setup_nfs_exports()
     setup_sync_cronjob()
+
+    log.info("Check status of cluster services")
+    run("systemctl status munge", timeout=30)
+    run("systemctl status slurmdbd", timeout=30)
+    run("systemctl status slurmctld", timeout=30)
+    run("systemctl status slurmrestd", timeout=30)
+    run("systemctl status slurmeventd", timeout=30)
+
     slurmsync.sync_slurm()
 
     log.info("Done setting up controller")
@@ -947,6 +955,9 @@ def setup_login():
     run("systemctl restart munge")
 
     run_custom_scripts()
+
+    log.info("Check status of cluster services")
+    run("systemctl status munge", timeout=30)
 
     log.info("Done setting up login")
 
@@ -979,6 +990,11 @@ def setup_compute():
 
     run("systemctl enable slurmeventd", timeout=30)
     run("systemctl restart slurmeventd", timeout=30)
+
+    log.info("Check status of cluster services")
+    run("systemctl status munge", timeout=30)
+    run("systemctl status slurmd", timeout=30)
+    run("systemctl status slurmeventd", timeout=30)
 
     log.info("Done setting up compute")
 
