@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import os
@@ -87,9 +87,11 @@ job_schema = (
 )
 
 client = bq.Client(project=cfg.project, credentials=def_creds)
-dataset_id = f"{cfg.cluster_name}_job_data"
+dataset_id = f"{cfg.slurm_cluster_name}_job_data"
 dataset = bq.DatasetReference(project=cfg.project, dataset_id=dataset_id)
-table = bq.Table(bq.TableReference(dataset, f"{cfg.cluster_name}_jobs"), job_schema)
+table = bq.Table(
+    bq.TableReference(dataset, f"{cfg.slurm_cluster_name}_jobs"), job_schema
+)
 
 
 class JobInsertionFailed(Exception):
@@ -117,8 +119,6 @@ def make_job_row(job):
         "user": job["association"]["user"],
         "group": job["group"],
         "wckey": job["wckey"]["wckey"],
-        "assoc_user": job["association"]["user"],
-        "account": job["association"]["account"],
         "qos": job["qos"],
         "comment": job["comment"]["job"],
         "exit_code": job["exit_code"]["return_code"],
@@ -138,7 +138,7 @@ def load_slurm_jobs(start, end):
     job_rows = [
         make_job_row(job)
         for job in accounting["jobs"]
-        if job["statel"]["current"] not in ("PENDING", "RUNNING")
+        if job["state"]["current"] not in ("PENDING", "RUNNING")
     ]
     return job_rows
 

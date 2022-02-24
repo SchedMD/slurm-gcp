@@ -4,5 +4,6 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+User=slurm
 ExecStart=/slurm/scripts/load_bq.py
 WorkingDirectory=/slurm/scripts
