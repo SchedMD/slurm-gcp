@@ -1,8 +1,20 @@
 # Example: Simple Slurm Destroy Nodes
 
-This example creates a simple slurm destroy nodes resource runner. It will run a
-script on `terraform destroy` that destroys instances with the matching label of
-`slurm_cluster_id` with the input value. `slurm_cluster_id` is usually a UUIDv4.
+[FAQ](../../../../docs/faq.md) | [Glossary](../../../../docs/glossary.md)
+
+<!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=1 -->
+
+- [Example: Simple Slurm Destroy Nodes](#example-simple-slurm-destroy-nodes)
+  - [Overview](#overview)
+  - [Usage](#usage)
+  - [Dependencies](#dependencies)
+  - [Example API](#example-api)
+
+<!-- mdformat-toc end -->
+
+## Overview
+
+This example creates a [slurm_destroy_nodes](../../../modules/slurm_destroy_nodes/).
 
 ## Usage
 
@@ -14,3 +26,14 @@ Then perform the following commands on the root directory:
 - `terraform plan -var-file=example.tfvars` to see the infrastructure plan
 - `terraform apply -var-file=example.tfvars` to apply the infrastructure build
 - `terraform destroy -var-file=example.tfvars` to destroy the built infrastructure
+
+## Dependencies
+
+- [Python](../../../../docs/glossary.md#python) is installed.
+  - Required Version: `>= 3.6.0, < 4.0.0`
+- [Pip](../../../../docs/glossary.md#pip) packages are installed:
+  - [addict](https://pypi.org/project/addict/)
+
+## Example API
+
+For the terraform example API reference, please see [README_TF.md](./README_TF.md).

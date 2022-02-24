@@ -1,18 +1,24 @@
 # Example: Full Cloud Slurm Cluster
 
-This example minamally creates all required components to support a Slurm cluster
-while being highly configurable through tfvars. This includes: a VPC/Network;
-an attached subnetwork; a slurm controller instance; defined login instances;
-defined compute instances from partitions; and instance service accounts for each
-slurm instance, with minimal roles and scopes.
+[FAQ](../../../../../docs/faq.md) | [Glossary](../../../../../docs/glossary.md)
 
-## Additional Dependencies
+<!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=1 -->
 
-- [**python**](https://www.python.org/) must be installed and in `$PATH` of the
-  user running `terraform apply`.
-  - Required Version: `~3.6, >= 3.6.0, < 4.0.0`
-- [**Secret Manager**](https://console.cloud.google.com/security/secret-manager)
-  is enabled.
+- [Example: Full Cloud Slurm Cluster](#example-full-cloud-slurm-cluster)
+  - [Overview](#overview)
+  - [Usage](#usage)
+  - [Dependencies](#dependencies)
+  - [Example API](#example-api)
+
+<!-- mdformat-toc end -->
+
+## Overview
+
+This example creates a [slurm_cluster](../../../../modules/slurm_cluster/) in cloud mode.
+All other components required to support a slurm cluster are minimally created as well: VPC; subnetwork; firewall rules; service accounts.
+It is highly configurable through tfvars.
+
+This is a complete end-to-end example, yet is highly configurable.
 
 ## Usage
 
@@ -24,3 +30,16 @@ Then perform the following commands on the root directory:
 - `terraform plan -var-file=example.tfvars` to see the infrastructure plan
 - `terraform apply -var-file=example.tfvars` to apply the infrastructure build
 - `terraform destroy -var-file=example.tfvars` to destroy the built infrastructure
+
+## Dependencies
+
+- [Compute Engine](../../../../../docs/glossary.md#compute-engine) is enabled.
+- [Secret Manager](../../../../../docs/glossary.md#secret-manager) is enabled.
+- [Python](../../../../../docs/glossary.md#python) is installed.
+  - Required Version: `>= 3.6.0, < 4.0.0`
+- [Pip](../../../../../docs/glossary.md#pip) packages are installed:
+  - [addict](https://pypi.org/project/addict/)
+
+## Example API
+
+For the terraform example API reference, please see [README_TF.md](./README_TF.md).

@@ -1,7 +1,20 @@
 # Example: Slurm Compute Template
 
-This exmaple creates a slurm compute instance template intended to be used by
-the [slurm_partition](../../../modules/slurm_partition).
+[FAQ](../../../../docs/faq.md) | [Glossary](../../../../docs/glossary.md)
+
+<!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=1 -->
+
+- [Example: Slurm Compute Template](#example-slurm-compute-template)
+  - [Overview](#overview)
+  - [Usage](#usage)
+  - [Dependencies](#dependencies)
+  - [Example API](#example-api)
+
+<!-- mdformat-toc end -->
+
+## Overview
+
+This exmaple creates a [slurm_instance_template](../../../modules/slurm_instance_template/README.md) intended to be used by the [slurm_partition](../../../modules/slurm_partition/README.md).
 
 ## Usage
 
@@ -13,3 +26,11 @@ Then perform the following commands on the root directory:
 - `terraform plan -var-file=example.tfvars` to see the infrastructure plan
 - `terraform apply -var-file=example.tfvars` to apply the infrastructure build
 - `terraform destroy -var-file=example.tfvars` to destroy the built infrastructure
+
+## Dependencies
+
+- [Compute Engine](../../../../docs/glossary.md#compute-engine) is enabled.
+
+## Example API
+
+For the terraform example API reference, please see [README_TF.md](./README_TF.md).

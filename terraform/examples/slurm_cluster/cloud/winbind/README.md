@@ -1,23 +1,22 @@
 # Example: Winbind Slurm Cluster
 
-This example creates a slurm cluster that uses winbind to authenticate users
-from an Active Directory server instead of using
-[**oslogin**](https://cloud.google.com/compute/docs/oslogin).
+[FAQ](../../../../../docs/faq.md) | [Glossary](../../../../../docs/glossary.md)
 
-Fill in [winbind.sh](./scripts/winbind.sh) with your details and preferences.
+<!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=1 -->
 
-## Additional Dependencies
+- [Example: Winbind Slurm Cluster](#example-winbind-slurm-cluster)
+  - [Overview](#overview)
+  - [Usage](#usage)
+  - [Dependencies](#dependencies)
+  - [Module API](#module-api)
 
-- [**python**](https://www.python.org/) must be installed and in `$PATH` of the
-  user running `terraform apply`.
-  - Required Version: `~3.6, >= 3.6.0, < 4.0.0`
-- **Private Google Access** must be
-  [enabled](https://cloud.google.com/vpc/docs/configure-private-google-access)
-  on the input `subnetwork`.
-- [*Shared VPC*](https://cloud.google.com/vpc/docs/shared-vpc) must be enabled
-  when `subnetwork_project` != `project_id`.
-- Active Directory server is configured and accessible to the input network.
-- Active Directory and winbind related network traffic is allowed.
+<!-- mdformat-toc end -->
+
+## Overview
+
+This example creates a [slurm_cluster](../../../../modules/slurm_cluster/README.md) in cloud mode.
+It uses a custom script, via `controller_d`, to provision authentication with winbind and an Active Directory server.
+[os-login](../../../../../docs/glossary.md#os-login) is disabled.
 
 ## Usage
 
@@ -29,3 +28,17 @@ Then perform the following commands on the root directory:
 - `terraform plan -var-file=example.tfvars` to see the infrastructure plan
 - `terraform apply -var-file=example.tfvars` to apply the infrastructure build
 - `terraform destroy -var-file=example.tfvars` to destroy the built infrastructure
+
+## Dependencies
+
+- [Compute Engine](../../../../../docs/glossary.md#compute-engine) is enabled.
+- [Secret Manager](../../../../../docs/glossary.md#secret-manager) is enabled.
+- [Private Google Access](../../../../../docs/glossary.md#private-google-access) is enabled.
+- [Python](../../../../../docs/glossary.md#python) is installed.
+  - Required Version: `>= 3.6.0, < 4.0.0`
+- [Pip](../../../../../docs/glossary.md#pip) packages are installed:
+  - [addict](https://pypi.org/project/addict/)
+
+## Module API
+
+For the terraform module API reference, please see [README_TF.md](./README_TF.md).
