@@ -111,6 +111,7 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
     def event_reconfig():
         log.debug(f"Handling 'request={data['request']}'.")
+        lkp.clear_template_info_cache()
 
         if lkp.instance_role == "controller":
             # Inactive all partitions to prevent further scheduling

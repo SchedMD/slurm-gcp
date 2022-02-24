@@ -19,6 +19,7 @@ import logging
 import logging.config
 import os
 import re
+import shelve
 import shlex
 import shutil
 import socket
@@ -679,6 +680,7 @@ class Lookup:
 
     def __init__(self, cfg=None):
         self._cfg = cfg or NSDict()
+        self.template_cache_path = Path(__file__).parent / "template_info.cache"
 
     @property
     def cfg(self):
@@ -860,10 +862,15 @@ class Lookup:
         machine_conf.memory = machine.memoryMb - (400 + (30 * gb))
         return machine_conf
 
-    @lru_cache(maxsize=None)
-    def template_info(self, template_link, project=None):
-        project = project or self.project
+    def _get_template_info(self, template_link, project):
         template_name = template_link.split("/")[-1]
+
+        # split read and write access to minimize write-lock. This might be a
+        # bit slower? TODO measure
+        if self.template_cache_path.exists():
+            with shelve.open(str(self.template_cache_path), flag="r") as cache:
+                if template_name in cache:
+                    return NSDict(cache[template_name])
 
         template = ensure_execute(
             self.compute.instanceTemplates().get(
@@ -885,7 +892,28 @@ class Lookup:
             template.gpu_type = None
             template.gpu_count = 0
 
+        # keep write access open for minimum time
+        with shelve.open(str(self.template_cache_path), writeback=True) as cache:
+            cache[template_name] = template.to_dict()
+
         return template
+
+    @lru_cache(maxsize=None)
+    def template_info(self, template_link, project=None):
+        project = project or self.project
+
+        # In the event of concurrent write access to the cache, _get_template_info could fail
+        while True:
+            try:
+                return self._get_template_info(template_link, project)
+            except OSError:
+                sleep(0.1)
+                continue
+
+    def clear_template_info_cache(self):
+        with shelve.open(str(self.template_cache_path), writeback=True) as cache:
+            cache.clear()
+        self.template_info.cache_clear()
 
 
 # Define late globals
