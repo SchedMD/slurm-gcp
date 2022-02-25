@@ -27,12 +27,10 @@ from itertools import groupby
 from addict import Dict as NSDict
 
 import util
-from util import run, chunked
+from util import run, chunked, seperate
 from util import cfg, lkp, compute
-from util import batch_execute, seperate, split_nodelist, is_exclusive_node
+from util import batch_execute, split_nodelist, is_exclusive_node, to_hostlist
 
-
-SCONTROL = Path(cfg.slurm_bin_dir if cfg else "") / "scontrol"
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
@@ -143,7 +141,7 @@ def expand_nodelist(nodelist):
         return []
 
     # TODO use a python library instead?
-    nodes = run(f"{SCONTROL} show hostnames {nodelist}").stdout.splitlines()
+    nodes = run(f"{lkp.scontrol} show hostnames {nodelist}").stdout.splitlines()
     return nodes
 
 
@@ -152,9 +150,11 @@ def resume_nodes(nodelist, placement_groups=None):
 
     def ident_key(n):
         # ident here will refer to the combination of partition and group
-        return (
-            lkp.node_partition_name(n),
-            lkp.node_group_name(n),
+        return "-".join(
+            (
+                lkp.node_partition_name(n),
+                lkp.node_group_name(n),
+            )
         )
 
     # support already expanded list
@@ -165,20 +165,35 @@ def resume_nodes(nodelist, placement_groups=None):
     nodes = sorted(nodelist, key=ident_key)
     if len(nodes) == 0:
         return
-    grouped_nodes = [
-        (ident, chunk)
+    grouped_nodes = {
+        ident: chunk
         for ident, nodes in groupby(nodes, ident_key)
         for chunk in chunked(nodes, n=BULK_INSERT_LIMIT)
-    ]
+    }
     log.debug(f"grouped_nodes: {grouped_nodes}")
 
-    inserts = [
-        create_instances_request(nodes, placement_groups) for _, nodes in grouped_nodes
-    ]
+    inserts = {
+        ident: create_instances_request(nodes, placement_groups)
+        for ident, nodes in grouped_nodes.items()
+    }
     done, failed = batch_execute(inserts)
     if failed:
         failed_reqs = [f"{e}" for _, (_, e) in failed.items()]
         log.error("bulkInsert failures: {}".format("\n".join(failed_reqs)))
+        for ident, (_, exc) in failed.items():
+            down_nodes(grouped_nodes[ident], exc._get_reason())
+
+
+def down_nodes(nodes, reason):
+    """set nodes down with reason"""
+    nodelist = to_hostlist(nodes)
+    run(f"{lkp.scontrol} update nodename={nodelist} state=down reason='{reason}'")
+
+
+def hold_job(job_id, reason):
+    """hold job, set comment to reason"""
+    run(f"{lkp.scontrol} hold jobid={job_id}")
+    run(f"{lkp.scontrol} update jobid={job_id} comment='{reason}'")
 
 
 def create_placement_request(pg_name, region):
@@ -215,7 +230,7 @@ def create_placement_groups(job_id, node_list, partition_name):
     return reverse_groups
 
 
-def valid_placement_nodes(nodelist):
+def valid_placement_nodes(job_id, nodelist):
     machine_types = {
         lkp.node_prefix(node): lkp.node_template_info(node).machineType
         for node in split_nodelist(nodelist)
@@ -223,17 +238,18 @@ def valid_placement_nodes(nodelist):
     fail = False
     for prefix, machine_type in machine_types.items():
         if machine_type.split("-")[0] not in ("c2", "c2d"):
-            log.error(
-                "Unsupported machine type for placement policy: " f"{machine_type}."
-            )
+            log.error(f"Unsupported machine type for placement policy: {machine_type}.")
             fail = True
     if fail:
         log.error("Please use c2 or c2d machine types with placement policy")
+        hold_job(
+            job_id, "Node machine type in partition does not support placement policy."
+        )
         return False
     return True
 
 
-def prolog_resume_nodes(nodelist, job_id):
+def prolog_resume_nodes(job_id, nodelist):
     """resume exclusive nodes in the node list"""
     # called from PrologSlurmctld, these nodes are expected to be in the same
     # partition and part of the same job
@@ -250,7 +266,7 @@ def prolog_resume_nodes(nodelist, job_id):
         placement_groups = create_placement_groups(
             job_id, nodes, partition.partition_name
         )
-        if not valid_placement_nodes(nodelist):
+        if not valid_placement_nodes(job_id, nodelist):
             return
     resume_nodes(nodes, placement_groups)
 
@@ -267,7 +283,7 @@ def main(nodelist, job_id, force=False):
     if job_id is not None:
         if exclusive:
             log.info(f"exclusive resume {nodelist} {job_id}")
-            prolog_resume_nodes(exclusive, job_id)
+            prolog_resume_nodes(job_id, exclusive)
     else:
         if normal:
             log.info(f"resume {normal}")

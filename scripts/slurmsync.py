@@ -19,18 +19,16 @@ import fcntl
 import logging
 import os
 import sys
-import tempfile
 from pathlib import Path
 from collections import namedtuple
 
 import util
-from util import run, seperate, batch_execute, static_nodeset
+from util import run, seperate, batch_execute, static_nodeset, to_hostlist
 from util import lkp, cfg, compute, dirs
 from suspend import delete_instances
 
 
 filename = Path(__file__).name
-SCONTROL = Path(cfg.slurm_bin_dir if cfg else "") / "scontrol"
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 
 log = logging.getLogger(filename)
@@ -59,20 +57,6 @@ def start_instances(node_list):
 # [END start_instances]
 
 
-def to_hostlist(nodelist):
-    """make hostlist from list of node names"""
-    # use tmp file because list could be large
-    tmp_file = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
-    tmp_file.writelines("\n".join(nodelist))
-    tmp_file.close()
-    log.debug("tmp_file = {}".format(tmp_file.name))
-
-    hostlist = run(f"{SCONTROL} show hostlist {tmp_file.name}").stdout.rstrip()
-    log.debug("hostlist = {}".format(hostlist))
-    os.remove(tmp_file.name)
-    return hostlist
-
-
 StateTuple = namedtuple("StateTuple", "base,flags")
 
 
@@ -88,7 +72,7 @@ def make_node_tuple(node_line):
 
 def sync_slurm():
     cmd = (
-        f"{SCONTROL} show nodes | "
+        f"{lkp.scontrol} show nodes | "
         r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
         r"paste -sd',\n'"
     )
@@ -149,7 +133,7 @@ def sync_slurm():
         )
         hostlist = to_hostlist(to_down)
         run(
-            f"{SCONTROL} update nodename={hostlist} state=down "
+            f"{lkp.scontrol} update nodename={hostlist} state=down "
             "reason='Instance stopped/deleted'"
         )
 
@@ -159,15 +143,15 @@ def sync_slurm():
     if len(to_idle):
         log.info("{} instances to idle ({})".format(len(to_idle), ",".join(to_idle)))
         hostlist = to_hostlist(to_idle)
-        run(f"{SCONTROL} update nodename={hostlist} state=resume")
+        run(f"{lkp.scontrol} update nodename={hostlist} state=resume")
 
     if len(to_resume):
         log.info(
             "{} instances to resume ({})".format(len(to_resume), ",".join(to_resume))
         )
         hostlist = to_hostlist(to_resume)
-        # run(f"{SCONTROL} update nodename={hostlist} state=power_down_force")
-        run(f"{SCONTROL} update nodename={hostlist} state=power_up")
+        # run(f"{lkp.scontrol} update nodename={hostlist} state=power_down_force")
+        run(f"{lkp.scontrol} update nodename={hostlist} state=power_up")
 
     # orphans are powered down in slurm but still running in GCP. They must be
     # purged

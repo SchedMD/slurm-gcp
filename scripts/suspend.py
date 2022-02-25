@@ -31,8 +31,6 @@ from util import seperate, split_nodelist, is_exclusive_node
 from util import lkp, cfg, compute
 
 
-SCONTROL = Path(cfg.slurm_bin_dir if cfg else "") / "scontrol"
-
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 log = logging.getLogger(filename)
@@ -77,7 +75,7 @@ def delete_instances(instances):
 
 def expand_nodelist(nodelist):
     """expand nodes in hostlist to hostnames"""
-    nodes = run(f"{SCONTROL} show hostnames {nodelist}").stdout.splitlines()
+    nodes = run(f"{lkp.scontrol} show hostnames {nodelist}").stdout.splitlines()
     return nodes
 
 
@@ -121,9 +119,9 @@ def epilog_suspend_nodes(nodelist, job_id):
     # Have to use "down" because it's the only, current, way to remove the
     # power_up flag from the node -- followed by a power_down -- if the
     # PrologSlurmctld fails with a non-zero exit code.
-    run(f"{SCONTROL} update node={nodelist} state=down reason='{job_id} finishing'")
+    run(f"{lkp.scontrol} update node={nodelist} state=down reason='{job_id} finishing'")
     # Power down nodes in slurm, so that they will become available again.
-    run(f"{SCONTROL} update node={nodelist} state=power_down")
+    run(f"{lkp.scontrol} update node={nodelist} state=power_down")
 
     model = next(iter(nodes))
     region = lkp.node_region(model)

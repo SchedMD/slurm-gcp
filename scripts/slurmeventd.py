@@ -38,7 +38,6 @@ subscription_id = lkp.hostname
 subscriber = pubsub_v1.SubscriberClient()
 subscription_path = subscriber.subscription_path(project_id, subscription_id)
 
-SCONTROL = Path(util.cfg.slurm_bin_dir or "") / "scontrol"
 StateTuple = namedtuple("StateTuple", "base,flags")
 
 
@@ -64,7 +63,7 @@ def make_tuple(line):
 def get_partitions():
     """Get partitions and their states"""
     cmd = (
-        f"{SCONTROL} show partitions | "
+        f"{lkp.scontrol} show partitions | "
         r"grep -oP '^PartitionName=\K(\S+)|State=\K(\S+)' | "
         r"paste -sd',\n'"
     )
@@ -76,7 +75,7 @@ def get_partitions():
 def get_nodes():
     """Get compute nodes, their states and flags"""
     cmd = (
-        rf"{SCONTROL} show nodes | grep -oP '^NodeName=\K(\S+)|State=\K(\S+)'"
+        rf"{lkp.scontrol} show nodes | grep -oP '^NodeName=\K(\S+)|State=\K(\S+)'"
         r" | paste -sd',\n'"
     )
     node_lines = run(cmd, shell=True).stdout.rstrip().splitlines()
@@ -92,12 +91,12 @@ def update_partitions(partitions, state):
     log.info(f"Updating partitions states to 'State={state}'.")
     for part, part_state in partitions.items():
         log.debug(f"Current: PartitionName={part} State={part_state}")
-        run(f"{SCONTROL} update PartitionName={part} State={state}")
+        run(f"{lkp.scontrol} update PartitionName={part} State={state}")
 
 
 def update_nodes(hostlist, state, reason=None):
     log.debug(f"Updating 'NodeName={hostlist}' to 'State={state}'.")
-    cmd = f"{SCONTROL} update NodeName={hostlist} State={state}"
+    cmd = f"{lkp.scontrol} update NodeName={hostlist} State={state}"
     if reason is not None:
         cmd += f" Reason='{reason}'"
     run(cmd)

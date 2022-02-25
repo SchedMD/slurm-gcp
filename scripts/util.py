@@ -25,6 +25,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -467,6 +468,20 @@ def nodeset_names(node_group, part_name):
     return static_nodelist, dynamic_nodelist
 
 
+def to_hostlist(nodelist):
+    """make hostlist from list of node names"""
+    # use tmp file because list could be large
+    tmp_file = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
+    tmp_file.writelines("\n".join(nodelist))
+    tmp_file.close()
+    log.debug("tmp_file = {}".format(tmp_file.name))
+
+    hostlist = run(f"{lkp.scontrol} show hostlist {tmp_file.name}").stdout.rstrip()
+    log.debug("hostlist = {}".format(hostlist))
+    os.remove(tmp_file.name)
+    return hostlist
+
+
 def static_nodeset():
     return filter(
         None,
@@ -688,17 +703,21 @@ class Lookup:
 
     @property
     def project(self):
-        return self._cfg.project or project
+        return self.cfg.project or project
 
     @property
     def control_host(self):
-        if self._cfg.slurm_cluster_name:
-            return f"{self._cfg.slurm_cluster_name}-controller"
+        if self.cfg.slurm_cluster_name:
+            return f"{self.cfg.slurm_cluster_name}-controller"
         return None
 
     @property
+    def scontrol(self):
+        return Path(self.cfg.slurm_bin_dir if cfg else "") / "scontrol"
+
+    @property
     def template_map(self):
-        return self._cfg.template_map
+        return self.cfg.template_map
 
     @cached_property
     def instance_role(self):
@@ -707,10 +726,8 @@ class Lookup:
     @cached_property
     def compute(self):
         # TODO evaluate when we need to use google_app_cred_path
-        if self._cfg.google_app_cred_path:
-            os.environ[
-                "GOOGLE_APPLICATION_CREDENTIALS"
-            ] = self._cfg.google_app_cred_path
+        if self.cfg.google_app_cred_path:
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.cfg.google_app_cred_path
         return compute_service()
 
     @cached_property
@@ -723,7 +740,7 @@ class Lookup:
 
     @property
     def enable_job_exclusive(self):
-        return bool(self._cfg.enable_job_exclusive or self._cfg.enable_placement)
+        return bool(self.cfg.enable_job_exclusive or self.cfg.enable_placement)
 
     @lru_cache(maxsize=None)
     def _node_desc(self, node_name):
@@ -748,7 +765,7 @@ class Lookup:
         return int(self._node_desc(node_name).index)
 
     def node_partition(self, node_name=None):
-        return self._cfg.partitions[self.node_partition_name(node_name)]
+        return self.cfg.partitions[self.node_partition_name(node_name)]
 
     def node_group(self, node_name=None):
         group_name = self.node_group_name(node_name)
@@ -770,7 +787,7 @@ class Lookup:
 
     @lru_cache(maxsize=1)
     def instances(self, project=None, slurm_cluster_name=None):
-        slurm_cluster_name = slurm_cluster_name or self._cfg.slurm_cluster_name
+        slurm_cluster_name = slurm_cluster_name or self.cfg.slurm_cluster_name
         project = project or self.project
         fields = (
             "items.zones.instances(name,zone,status,machineType,metadata),nextPageToken"
