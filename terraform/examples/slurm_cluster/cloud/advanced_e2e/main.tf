@@ -43,13 +43,13 @@ locals {
       preemptible              = x.preemptible
       service_account          = module.slurm_sa_iam["controller"].service_account
       shielded_instance_config = x.shielded_instance_config
-      region                   = module.slurm_network.network.subnets_regions[0]
+      region                   = x.region
       source_image_family      = x.source_image_family
       source_image_project     = x.source_image_project
       source_image             = x.source_image
       static_ip                = x.static_ip
       subnetwork_project       = null
-      subnetwork               = module.slurm_network.network.subnets_self_links[0]
+      subnetwork               = module.slurm_network.network.network_name
       tags                     = x.tags
       zone                     = x.zone
     }
@@ -81,13 +81,13 @@ locals {
       preemptible              = x.preemptible
       service_account          = module.slurm_sa_iam["login"].service_account
       shielded_instance_config = x.shielded_instance_config
-      region                   = module.slurm_network.network.subnets_regions[0]
+      region                   = x.region
       source_image_family      = x.source_image_family
       source_image_project     = x.source_image_project
       source_image             = x.source_image
       static_ips               = x.static_ips
       subnetwork_project       = null
-      subnetwork               = module.slurm_network.network.subnets_self_links[0]
+      subnetwork               = module.slurm_network.network.network_name
       tags                     = x.tags
       zone                     = x.zone
     }
@@ -131,9 +131,9 @@ locals {
         source_image             = n.source_image
         tags                     = n.tags
       }]
-      region             = module.slurm_network.network.subnets_regions[0]
+      region             = x.region
       subnetwork_project = null
-      subnetwork         = module.slurm_network.network.subnets_self_links[0]
+      subnetwork         = module.slurm_network.network.network_name
       zone_policy_allow  = x.zone_policy_allow
       zone_policy_deny   = x.zone_policy_deny
     }
@@ -142,6 +142,14 @@ locals {
   cloud_parameters = merge(var.cloud_parameters, {
     no_comma_params = false
   })
+
+  network_name = "${var.slurm_cluster_name}-default"
+
+  subnets = [for s in var.subnets : merge(s, {
+    subnet_name           = local.network_name
+    subnet_region         = lookup(s, "subnet_region", var.region)
+    subnet_private_access = true
+  })]
 }
 
 ############
@@ -161,19 +169,11 @@ module "slurm_network" {
   source = "../../../../modules/_network"
 
   auto_create_subnetworks = false
-  network_name            = "${var.slurm_cluster_name}-default"
+  mtu                     = var.mtu
+  network_name            = local.network_name
   project_id              = var.project_id
 
-  subnets = [
-    {
-      subnet_name   = "${var.slurm_cluster_name}-default"
-      subnet_ip     = "10.0.0.0/24"
-      subnet_region = var.region
-
-      subnet_private_access = true
-      subnet_flow_logs      = true
-    },
-  ]
+  subnets = local.subnets
 }
 
 ##################
@@ -229,4 +229,9 @@ module "slurm_cluster" {
   prolog_d                   = var.prolog_d
   slurmdbd_conf_tpl          = var.slurmdbd_conf_tpl
   slurm_conf_tpl             = var.slurm_conf_tpl
+
+  depends_on = [
+    # Guarantee the network is created before slurm cluster
+    module.slurm_network,
+  ]
 }

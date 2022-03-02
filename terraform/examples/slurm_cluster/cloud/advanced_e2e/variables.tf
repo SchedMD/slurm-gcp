@@ -46,6 +46,30 @@ variable "region" {
   description = "The default region to place resources in."
 }
 
+###########
+# NETWORK #
+###########
+
+variable "subnets" {
+  type        = list(map(string))
+  description = "The list of subnets being created."
+  default     = []
+
+  validation {
+    condition     = length(var.subnets) > 0
+    error_message = "Subnets cannot be an empty list."
+  }
+}
+
+variable "mtu" {
+  type        = number
+  description = <<EOD
+The network MTU. Must be a value between 1460 and 1500 inclusive. If set to 0
+(meaning MTU is unset), the network will default to 1460 automatically.
+EOD
+  default     = 0
+}
+
 #################
 # CONFIGURATION #
 #################
@@ -241,6 +265,7 @@ EOD
     network_ip          = string
     on_host_maintenance = string
     preemptible         = bool
+    region              = string
     shielded_instance_config = object({
       enable_integrity_monitoring = bool
       enable_secure_boot          = bool
@@ -275,6 +300,7 @@ EOD
     network                  = null
     on_host_maintenance      = null
     preemptible              = null
+    region                   = null
     shielded_instance_config = null
     source_image_family      = null
     source_image_project     = null
@@ -328,6 +354,7 @@ variable "login_nodes" {
     num_instances       = number
     on_host_maintenance = string
     preemptible         = bool
+    region              = string
     shielded_instance_config = object({
       enable_integrity_monitoring = bool
       enable_secure_boot          = bool
@@ -409,6 +436,7 @@ variable "partitions" {
       remote_mount  = string
       mount_options = string
     }))
+    region            = string
     zone_policy_allow = list(string)
     zone_policy_deny  = list(string)
   }))

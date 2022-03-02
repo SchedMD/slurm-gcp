@@ -27,6 +27,20 @@ region = "<REGION>"
 # *NOT* intended for production use
 # enable_devel = true
 
+###########
+# NETWORK #
+###########
+
+subnets = [
+  {
+    subnet_ip        = "10.0.0.0/24"
+    subnet_region    = "<REGION>"
+    subnet_flow_logs = true
+  },
+]
+
+mtu = 0
+
 #################
 # CONFIGURATION #
 #################
@@ -161,6 +175,7 @@ controller_instance_config = {
   min_cpu_platform    = null
   network_ip          = null
   on_host_maintenance = null
+  region              = null
   shielded_instance_config = {
     enable_integrity_monitoring = true
     enable_secure_boot          = true
@@ -212,6 +227,7 @@ login_nodes = [
     min_cpu_platform         = null
     network_ips              = []
     on_host_maintenance      = null
+    region                   = null
     shielded_instance_config = null
     source_image_family      = null
     source_image_project     = null
@@ -281,6 +297,7 @@ partitions = [
         preemptible = false
       },
     ]
+    region            = null
     zone_policy_allow = []
     zone_policy_deny  = []
   },
