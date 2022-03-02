@@ -24,6 +24,7 @@ consume. `main` is the main script that may consume and generate data.
 `stage_out` should move data generated from `main` to an external location.
 
 Example usage:
+
 ```sh
 $ /slurm/jobs/submit_workflow.py /slurm/jobs/shuffle.yaml
 ```

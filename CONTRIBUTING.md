@@ -1,10 +1,10 @@
-ISSUES
----------------------------
+## ISSUES
+
 The official issue tracker for the slurm-gcp repo is at
 https://bugs.schedmd.com/
 
-PATCH SUBMISSION
-----------------
+## PATCH SUBMISSION
+
 We welcome code contributions and patches, but **we do not accept Pull Requests
 through Github at this time.** Please submit patches as attachments to new bugs
 under the "C - Contributions" severity level.
@@ -28,8 +28,7 @@ Plain `diff`'d output is also okay. In either case, please attach them to the
 bug for us to review. Spelling corrections or documentation improvements can be
 suggested without attaching the patch as long as you describe their location.
 
-CODING GUIDELINES
------------------
+## CODING GUIDELINES
+
 This repo attempts to follow the PEP 8 style guide for Python
 (https://www.python.org/dev/peps/pep-0008/).
-

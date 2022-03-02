@@ -1,5 +1,12 @@
 ---
 repos:
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.13
+    hooks:
+      - id: mdformat
+        exclude: README_TF\.md
+        additional_dependencies:
+        - mdformat-toc
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.64.0
     hooks:
@@ -7,6 +14,9 @@ repos:
       - id: terraform_tflint
       - id: terraform_validate
       - id: terraform_docs
+        args:
+        - --hook-config=--create-file-if-not-exist=true
+        - --hook-config=--path-to-file=README_TF.md
   - repo: https://github.com/psf/black
     rev: 22.1.0
     hooks:
