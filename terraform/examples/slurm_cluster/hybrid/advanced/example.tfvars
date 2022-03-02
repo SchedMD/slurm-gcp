@@ -126,7 +126,9 @@ partitions = [
         group_name    = "test"
         count_dynamic = 20
         count_static  = 0
-        node_conf     = {}
+        node_conf = {
+          # Features = "test"
+        }
 
         # Template By Definition
         additional_disks       = []
@@ -140,7 +142,6 @@ partitions = [
         enable_oslogin         = true
         enable_shielded_vm     = false
         gpu                    = null
-        instance_template      = null
         labels                 = {}
         machine_type           = "n1-standard-1"
         metadata               = {}
@@ -161,9 +162,6 @@ partitions = [
 
         # Template By Source
         instance_template = null
-
-        # Template Overrides
-        preemptible = false
       },
     ]
     region             = null

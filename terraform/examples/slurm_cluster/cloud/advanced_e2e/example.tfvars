@@ -133,12 +133,6 @@ epilog_d = [
 
 controller_instance_config = {
   # Template By Definition
-  access_config = [
-    # {
-    #   nat_ip       = "<NAT_IP>"
-    #   network_tier = "<NETWORK_TIER>"
-    # },
-  ]
   additional_disks = [
     # {
     #   disk_name    = null
@@ -173,8 +167,8 @@ controller_instance_config = {
     # metadata1 = "value1"
   }
   min_cpu_platform    = null
-  network_ip          = null
   on_host_maintenance = null
+  preemptible         = false
   region              = null
   shielded_instance_config = {
     enable_integrity_monitoring = true
@@ -184,18 +178,24 @@ controller_instance_config = {
   source_image_family  = null
   source_image_project = null
   source_image         = null
-  static_ip            = null
   tags = [
     # "tag0",
     # "tag1",
   ]
-  zone = null
 
   # Template By Source
   instance_template = null
 
-  # Template Overrides
-  preemptible = false
+  # Instance Definition
+  access_config = [
+    # {
+    #   nat_ip       = "<NAT_IP>"
+    #   network_tier = "STANDARD"
+    # },
+  ]
+  network_ip = null
+  static_ip  = null
+  zone       = "us-east1-b"
 }
 
 #########
@@ -205,11 +205,9 @@ controller_instance_config = {
 login_nodes = [
   {
     # Group Definition
-    group_name    = "l0"
-    num_instances = 1
+    group_name = "l0"
 
     # Template By Definition
-    access_config            = []
     additional_disks         = []
     can_ip_forward           = false
     disable_smt              = false
@@ -225,22 +223,24 @@ login_nodes = [
     machine_type             = "n1-standard-1"
     metadata                 = {}
     min_cpu_platform         = null
-    network_ips              = []
     on_host_maintenance      = null
-    region                   = null
+    preemptible              = false
     shielded_instance_config = null
     source_image_family      = null
     source_image_project     = null
     source_image             = null
-    static_ips               = []
     tags                     = []
-    zone                     = null
 
     # Template By Source
     instance_template = null
 
-    # Template Overrides
-    preemptible = false
+    # Instance Definition
+    access_config = []
+    network_ips   = []
+    num_instances = 1
+    static_ips    = []
+    region        = null
+    zone          = null
   },
 ]
 
@@ -257,7 +257,16 @@ partitions = [
       Default     = "YES"
       SuspendTime = 300
     }
-    partition_d    = []
+    partition_d = [
+      # {
+      #   filename = "hello_part_debug.sh"
+      #   content  = <<EOF
+      # #!/bin/bash
+      # set -ex
+      # echo "Hello, $(hostname) from $(dirname $0) !"
+      #     EOF
+      # },
+    ]
     partition_name = "debug"
     partition_nodes = [
       {
@@ -265,7 +274,9 @@ partitions = [
         group_name    = "test"
         count_dynamic = 20
         count_static  = 0
-        node_conf     = {}
+        node_conf = {
+          # Features = "test"
+        }
 
         # Template By Definition
         additional_disks         = []
@@ -284,6 +295,7 @@ partitions = [
         metadata                 = {}
         min_cpu_platform         = null
         on_host_maintenance      = null
+        preemptible              = false
         shielded_instance_config = null
         source_image_family      = null
         source_image_project     = null
@@ -292,9 +304,6 @@ partitions = [
 
         # Template By Source
         instance_template = null
-
-        # Template Overrides
-        preemptible = false
       },
     ]
     region            = null

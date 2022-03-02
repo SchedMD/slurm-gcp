@@ -119,12 +119,6 @@ epilog_d = [
 
 controller_instance_config = {
   # Template By Definition
-  access_config = [
-    # {
-    #   nat_ip       = "<NAT_IP>"
-    #   network_tier = "<NETWORK_TIER>"
-    # },
-  ]
   additional_disks = [
     # {
     #   disk_name    = null
@@ -159,9 +153,8 @@ controller_instance_config = {
     # metadata1 = "value1"
   }
   min_cpu_platform    = null
-  network_ip          = null
   on_host_maintenance = null
-  region              = null
+  preemptible         = false
   service_account = {
     email = "default"
     scopes = [
@@ -176,20 +169,27 @@ controller_instance_config = {
   source_image_family  = null
   source_image_project = null
   source_image         = null
-  static_ip            = null
-  subnetwork_project   = null
-  subnetwork           = "default"
   tags = [
     # "tag0",
     # "tag1",
   ]
-  zone = null
 
   # Template By Source
   instance_template = null
 
-  # Template Overrides
-  preemptible = false
+  # Instance Definition
+  access_config = [
+    # {
+    #   nat_ip       = "<NAT_IP>"
+    #   network_tier = "STANDARD"
+    # },
+  ]
+  network_ip         = null
+  region             = null
+  static_ip          = null
+  subnetwork_project = null
+  subnetwork         = "default"
+  zone               = null
 }
 
 #########
@@ -199,11 +199,9 @@ controller_instance_config = {
 login_nodes = [
   {
     # Group Definition
-    group_name    = "l0"
-    num_instances = 1
+    group_name = "l0"
 
     # Template By Definition
-    access_config          = []
     additional_disks       = []
     can_ip_forward         = false
     disable_smt            = false
@@ -219,9 +217,8 @@ login_nodes = [
     machine_type           = "n1-standard-1"
     metadata               = {}
     min_cpu_platform       = null
-    network_ips            = []
     on_host_maintenance    = null
-    region                 = null
+    preemptible            = false
     service_account = {
       email = "default"
       scopes = [
@@ -232,17 +229,20 @@ login_nodes = [
     source_image_family      = null
     source_image_project     = null
     source_image             = null
-    static_ips               = []
-    subnetwork_project       = null
-    subnetwork               = "default"
     tags                     = []
-    zone                     = null
 
     # Template By Source
     instance_template = null
 
-    # Template Overrides
-    preemptible = false
+    # Instance Definition
+    access_config      = []
+    network_ips        = []
+    num_instances      = 1
+    region             = null
+    static_ips         = []
+    subnetwork_project = null
+    subnetwork         = "default"
+    zone               = null
   },
 ]
 
@@ -267,7 +267,9 @@ partitions = [
         group_name    = "test"
         count_dynamic = 20
         count_static  = 0
-        node_conf     = {}
+        node_conf = {
+          # Features = "test"
+        }
 
         # Template By Definition
         additional_disks       = []
@@ -281,7 +283,6 @@ partitions = [
         enable_oslogin         = true
         enable_shielded_vm     = false
         gpu                    = null
-        instance_template      = null
         labels                 = {}
         machine_type           = "n1-standard-1"
         metadata               = {}
@@ -302,9 +303,6 @@ partitions = [
 
         # Template By Source
         instance_template = null
-
-        # Template Overrides
-        preemptible = false
       },
     ]
     region             = null

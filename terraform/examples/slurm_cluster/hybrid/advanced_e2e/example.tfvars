@@ -148,12 +148,6 @@ partitions = [
 
         # Template By Source
         instance_template = null
-
-        # Instance Definition
-        enable_spot_vm = false
-        spot_instance_config = {
-          termination_action = "STOP"
-        }
       },
     ]
     region            = null
