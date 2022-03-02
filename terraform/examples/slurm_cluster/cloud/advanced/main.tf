@@ -61,15 +61,3 @@ module "slurm_cluster" {
   slurmdbd_conf_tpl          = var.slurmdbd_conf_tpl
   slurm_conf_tpl             = var.slurm_conf_tpl
 }
-
-##################
-# FIREWALL RULES #
-##################
-
-module "slurm_firewall_rules" {
-  source = "../../../../modules/slurm_firewall_rules"
-
-  slurm_cluster_name = var.slurm_cluster_name
-  network_name       = var.firewall_network_name
-  project_id         = var.project_id
-}

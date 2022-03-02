@@ -31,8 +31,6 @@ region = "<REGION>"
 # CONFIGURATION #
 #################
 
-firewall_network_name = "default"
-
 munge_key = "<MUNGE_KEY>"
 
 # Network storage

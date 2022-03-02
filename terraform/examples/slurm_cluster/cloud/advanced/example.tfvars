@@ -31,8 +31,6 @@ region = "<REGION>"
 # CONFIGURATION #
 #################
 
-firewall_network_name = "default"
-
 # cloudsql = {
 #   server_ip = "<SERVER_IP>:<PORT>"
 #   user      = "<USERNAME>"

@@ -45,15 +45,3 @@ module "slurm_cluster" {
   project_id               = var.project_id
   prolog_d                 = var.prolog_d
 }
-
-##################
-# FIREWALL RULES #
-##################
-
-module "slurm_firewall_rules" {
-  source = "../../../../modules/slurm_firewall_rules"
-
-  slurm_cluster_name = var.slurm_cluster_name
-  network_name       = var.firewall_network_name
-  project_id         = var.project_id
-}

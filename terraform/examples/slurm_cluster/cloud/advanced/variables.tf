@@ -46,16 +46,6 @@ variable "region" {
   description = "The default region to place resources in."
 }
 
-############
-# FIREWALL #
-############
-
-variable "firewall_network_name" {
-  type        = string
-  description = "Name of the network this set of firewall rules applies to."
-  default     = "default"
-}
-
 #################
 # CONFIGURATION #
 #################
