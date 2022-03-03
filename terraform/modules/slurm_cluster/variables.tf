@@ -331,30 +331,6 @@ variable "enable_bigquery_load" {
   default     = false
 }
 
-variable "munge_key" {
-  type        = string
-  description = <<EOD
-Cluster munge authentication key.
-
-If 'enable_hybrid=true', this is required. Otherwise if 'null', a key will be
-generated.
-EOD
-  default     = null
-  sensitive   = true
-}
-
-variable "jwt_key" {
-  type        = string
-  description = <<EOD
-Cluster jwt authentication key.
-
-If 'enable_hybrid=true', this is ignored. Otherwise if 'null', a key will be
-generated.
-EOD
-  default     = null
-  sensitive   = true
-}
-
 variable "cloud_parameters" {
   description = "cloud.conf options."
   type = object({

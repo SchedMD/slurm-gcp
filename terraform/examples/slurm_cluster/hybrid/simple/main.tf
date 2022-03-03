@@ -105,7 +105,6 @@ module "slurm_cluster" {
   slurm_cluster_name       = var.slurm_cluster_name
   controller_hybrid_config = local.controller_hybrid_config
   enable_hybrid            = true
-  munge_key                = var.munge_key
   partitions               = local.partitions
   project_id               = var.project_id
 }

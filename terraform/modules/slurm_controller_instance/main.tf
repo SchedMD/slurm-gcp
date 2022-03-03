@@ -39,18 +39,6 @@ locals {
     : var.slurm_cluster_id
   )
 
-  munge_key = (
-    var.munge_key == null
-    ? random_password.munge_key.result
-    : var.munge_key
-  )
-
-  jwt_key = (
-    var.jwt_key == null
-    ? random_password.jwt_key.result
-    : var.jwt_key
-  )
-
   partitions   = { for p in var.partitions[*].partition : p.partition_name => p }
   compute_list = flatten(var.partitions[*].compute_list)
 }
@@ -122,19 +110,21 @@ data "local_file" "cgroup_conf_tpl" {
   filename = local.cgroup_conf_tpl
 }
 
+##################
+# DATA: TEMPLATE #
+##################
+
+data "google_compute_instance_template" "controller_template" {
+  count = var.cloudsql != null ? 1 : 0
+
+  name = var.instance_template
+}
+
 ##########
 # RANDOM #
 ##########
 
 resource "random_uuid" "slurm_cluster_id" {
-}
-
-resource "random_password" "munge_key" {
-  length = 256
-}
-
-resource "random_password" "jwt_key" {
-  length = 256
 }
 
 ############
@@ -355,48 +345,6 @@ module "slurm_pubsub" {
   }
 }
 
-##################
-# SECRETS: MUNGE #
-##################
-
-resource "google_secret_manager_secret" "munge_key" {
-  secret_id = "${var.slurm_cluster_name}-slurm-secret-munge_key"
-
-  replication {
-    automatic = true
-  }
-
-  labels = {
-    slurm_cluster_id = local.slurm_cluster_id
-  }
-}
-
-resource "google_secret_manager_secret_version" "munge_key_version" {
-  secret      = google_secret_manager_secret.munge_key.id
-  secret_data = local.munge_key
-}
-
-################
-# SECRETS: JWT #
-################
-
-resource "google_secret_manager_secret" "jwt_key" {
-  secret_id = "${var.slurm_cluster_name}-slurm-secret-jwt_key"
-
-  replication {
-    automatic = true
-  }
-
-  labels = {
-    slurm_cluster_id = local.slurm_cluster_id
-  }
-}
-
-resource "google_secret_manager_secret_version" "jwt_key_version" {
-  secret      = google_secret_manager_secret.jwt_key.id
-  secret_data = local.jwt_key
-}
-
 #####################
 # SECRETS: CLOUDSQL #
 #####################
@@ -420,6 +368,14 @@ resource "google_secret_manager_secret_version" "cloudsql_version" {
 
   secret      = google_secret_manager_secret.cloudsql[0].id
   secret_data = jsonencode(var.cloudsql)
+}
+
+resource "google_secret_manager_secret_iam_member" "cloudsql_secret_accessor" {
+  count = var.cloudsql != null ? 1 : 0
+
+  secret_id = google_secret_manager_secret.cloudsql[0].id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${data.google_compute_instance_template.controller_template[0].service_account[0].email}"
 }
 
 ####################

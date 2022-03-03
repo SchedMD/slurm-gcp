@@ -45,8 +45,6 @@ mtu = 0
 # CONFIGURATION #
 #################
 
-munge_key = "<MUNGE_KEY>"
-
 # Slurm config
 cloud_parameters = {
   no_comma_params = false

@@ -29,9 +29,3 @@ variable "region" {
   type        = string
   description = "The default region to place resources in."
 }
-
-variable "munge_key" {
-  description = "Cluster munge authentication key."
-  type        = string
-  sensitive   = true
-}

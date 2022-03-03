@@ -118,20 +118,6 @@ variable "enable_bigquery_load" {
   default     = false
 }
 
-variable "munge_key" {
-  type        = string
-  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
-  default     = null
-  sensitive   = true
-}
-
-variable "jwt_key" {
-  type        = string
-  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
-  default     = null
-  sensitive   = true
-}
-
 variable "slurmdbd_conf_tpl" {
   type        = string
   description = "Slurm slurmdbd.conf template file path."

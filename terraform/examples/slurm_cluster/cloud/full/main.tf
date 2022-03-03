@@ -219,10 +219,8 @@ module "slurm_cluster" {
   enable_devel               = var.enable_devel
   enable_bigquery_load       = var.enable_bigquery_load
   epilog_d                   = var.epilog_d
-  jwt_key                    = var.jwt_key
   login_network_storage      = var.login_network_storage
   login_nodes                = local.login_nodes
-  munge_key                  = var.munge_key
   network_storage            = var.network_storage
   partitions                 = local.partitions
   project_id                 = var.project_id

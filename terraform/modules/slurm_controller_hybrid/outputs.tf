@@ -24,12 +24,6 @@ output "slurm_cluster_id" {
   value       = local.slurm_cluster_id
 }
 
-output "munge_key" {
-  description = "Cluster munge authentication key."
-  value       = var.munge_key
-  sensitive   = true
-}
-
 output "partitions" {
   description = "Cluster partitions."
   value       = local.partitions

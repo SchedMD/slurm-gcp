@@ -38,7 +38,6 @@ module "slurm_cluster" {
   enable_bigquery_load     = var.enable_bigquery_load
   epilog_d                 = var.epilog_d
   enable_hybrid            = true
-  munge_key                = var.munge_key
   partitions               = var.partitions
   project_id               = var.project_id
   prolog_d                 = var.prolog_d

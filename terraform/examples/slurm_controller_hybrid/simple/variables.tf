@@ -18,9 +18,3 @@ variable "project_id" {
   type        = string
   description = "Project ID to create resources in."
 }
-
-variable "munge_key" {
-  description = "Cluster munge authentication key."
-  type        = string
-  sensitive   = true
-}

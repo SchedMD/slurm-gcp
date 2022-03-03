@@ -65,12 +65,6 @@ variable "enable_bigquery_load" {
   default     = false
 }
 
-variable "munge_key" {
-  type        = string
-  description = "Cluster munge authentication key."
-  sensitive   = true
-}
-
 variable "compute_d" {
   description = "List of scripts to be ran on compute VM startup."
   type = list(object({

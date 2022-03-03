@@ -15,5 +15,3 @@
  */
 
 project_id = "<PROJECT_ID>"
-
-munge_key = "<MUNGE_KEY>"

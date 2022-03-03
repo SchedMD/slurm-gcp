@@ -330,27 +330,6 @@ module "slurm_pubsub" {
   }
 }
 
-###########
-# SECRETS #
-###########
-
-resource "google_secret_manager_secret" "munge_key" {
-  secret_id = "${var.slurm_cluster_name}-slurm-secret-munge_key"
-
-  replication {
-    automatic = true
-  }
-
-  labels = {
-    slurm_cluster_id = local.slurm_cluster_id
-  }
-}
-
-resource "google_secret_manager_secret_version" "munge_key_version" {
-  secret      = google_secret_manager_secret.munge_key.id
-  secret_data = var.munge_key
-}
-
 #################
 # DESTROY NODES #
 #################

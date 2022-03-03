@@ -44,7 +44,6 @@ limitations under the License.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_munge_key"></a> [munge\_key](#input\_munge\_key) | Cluster munge authentication key. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 
 ## Outputs

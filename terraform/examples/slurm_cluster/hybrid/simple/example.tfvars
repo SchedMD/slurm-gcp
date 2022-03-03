@@ -24,4 +24,3 @@ slurm_cluster_name = "simple"
 
 region = "<REGION>"
 
-munge_key = "<MUNGE_KEY>"

@@ -45,7 +45,6 @@ Intended to be attached to a controller [instance template](../../../docs/glossa
 - `roles/monitoring.metricWriter`
 - `roles/pubsub.publisher`
 - `roles/pubsub.subscriber`
-- `roles/secretmanager.secretAccessor`
 
 ##### Scopes
 
@@ -60,7 +59,6 @@ Intended to be attached to compute [instance templates](../../../docs/glossary.m
 - `roles/logging.logWriter`
 - `roles/monitoring.metricWriter`
 - `roles/pubsub.subscriber`
-- `roles/secretmanager.secretAccessor`
 
 ##### Scopes
 
@@ -74,7 +72,6 @@ Intended to be attached to login [instance templates](../../../docs/glossary.md#
 
 - `roles/logging.logWriter`
 - `roles/monitoring.metricWriter`
-- `roles/secretmanager.secretAccessor`
 
 ##### Scopes
 

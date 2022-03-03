@@ -27,19 +27,16 @@ locals {
       "roles/monitoring.metricWriter",
       "roles/pubsub.publisher",
       "roles/pubsub.subscriber",
-      "roles/secretmanager.secretAccessor",
       "roles/bigquery.dataEditor"
     ]
     compute = [
       "roles/logging.logWriter",
       "roles/monitoring.metricWriter",
       "roles/pubsub.subscriber",
-      "roles/secretmanager.secretAccessor",
     ]
     login = [
       "roles/logging.logWriter",
       "roles/monitoring.metricWriter",
-      "roles/secretmanager.secretAccessor",
     ]
   }
 

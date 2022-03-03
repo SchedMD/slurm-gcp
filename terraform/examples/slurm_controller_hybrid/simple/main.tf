@@ -31,7 +31,6 @@ resource "random_string" "slurm_cluster_name" {
 module "slurm_controller_hybrid" {
   source = "../../../modules/slurm_controller_hybrid"
 
-  munge_key          = var.munge_key
   project_id         = var.project_id
   slurm_cluster_name = local.slurm_cluster_name
   output_dir         = "./etc"

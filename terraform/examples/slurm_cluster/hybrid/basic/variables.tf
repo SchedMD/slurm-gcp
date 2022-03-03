@@ -68,12 +68,6 @@ variable "cloud_parameters" {
   }
 }
 
-variable "munge_key" {
-  description = "Cluster munge authentication key."
-  type        = string
-  sensitive   = true
-}
-
 variable "compute_d" {
   description = "List of scripts to be ran on compute VM startup."
   type = list(object({

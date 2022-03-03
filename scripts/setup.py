@@ -572,6 +572,7 @@ def resolve_network_storage(partition_name=None):
 
     default_mounts = (
         slurmdirs.etc,
+        dirs.munge,
         dirs.home,
         dirs.apps,
     )
@@ -746,16 +747,12 @@ def setup_sync_cronjob():
 
 
 def setup_jwt_key():
-    jwt_key = slurmdirs.state / "jwt_hs256.key"
+    jwt_key = Path(slurmdirs.state / "jwt_hs256.key")
 
-    secret_name = f"{cfg.slurm_cluster_name}-slurm-secret-jwt_key"
-    key = access_secret_version(util.project, secret_name)
-
-    if key:
-        with (jwt_key).open("w") as f:
-            f.write(key)
+    if jwt_key.exists():
+        log.info("JWT key already exists. Skipping key generation.")
     else:
-        run("dd if=/dev/urandom bs=32 count=1 >" + str(jwt_key), shell=True)
+        run("dd if=/dev/urandom bs=32 count=1 > " + str(jwt_key), shell=True)
 
     util.chown_slurm(jwt_key, mode=0o400)
 
@@ -777,14 +774,10 @@ def setup_slurmd_cronjob():
 
 
 def setup_munge_key():
-    munge_key = dirs.munge / "munge.key"
+    munge_key = Path(dirs.munge / "munge.key")
 
-    secret_name = f"{cfg.slurm_cluster_name}-slurm-secret-munge_key"
-    key = access_secret_version(util.project, secret_name)
-
-    if key:
-        with (munge_key).open("w") as f:
-            f.write(key)
+    if munge_key.exists():
+        log.info("Munge key already exists. Skipping key generation.")
     else:
         run("create-munge-key -f", timeout=30)
 
@@ -940,7 +933,6 @@ def setup_login():
     log.info("Setting up login")
     install_custom_scripts()
 
-    setup_munge_key()
     setup_network_storage()
     run("systemctl restart munge")
 
@@ -972,7 +964,6 @@ def setup_compute():
 
     run_custom_scripts()
 
-    setup_munge_key()
     setup_slurmd_cronjob()
     run("systemctl restart munge", timeout=30)
     run("systemctl enable slurmd", timeout=30)

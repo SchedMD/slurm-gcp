@@ -51,8 +51,6 @@ mtu = 0
 #   password  = "<PASSWORD>"
 #   db_name   = "<DB_NAME>"
 # }
-jwt_key   = null
-munge_key = null
 
 # Network storage
 network_storage = [

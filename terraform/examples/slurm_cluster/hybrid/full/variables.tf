@@ -92,13 +92,6 @@ variable "cloud_parameters" {
   }
 }
 
-variable "munge_key" {
-  description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
 variable "slurmdbd_conf_tpl" {
   description = "Slurm slurmdbd.conf template file path."
   type        = string
