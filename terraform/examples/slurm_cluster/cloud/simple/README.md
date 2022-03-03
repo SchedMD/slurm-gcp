@@ -80,5 +80,7 @@ limitations under the License.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_slurm_login_instance_self_links"></a> [slurm\_login\_instance\_self\_links](#output\_slurm\_login\_instance\_self\_links) | Slurm login instance self\_link. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

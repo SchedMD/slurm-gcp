@@ -27,3 +27,10 @@ output "slurm_partition" {
     : module.slurm_controller_instance[0].partitions
   )
 }
+
+output "slurm_login_instance_self_links" {
+  description = "Slurm login instance self_link."
+  value = flatten(values({
+    for k, v in module.slurm_login_instance : k => v.slurm_login_instance.instances_self_links
+  }))
+}

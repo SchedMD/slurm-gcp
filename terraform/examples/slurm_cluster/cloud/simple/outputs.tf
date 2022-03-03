@@ -13,3 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+output "slurm_login_instance_self_links" {
+  description = "Slurm login instance self_link."
+  value       = module.slurm_cluster.slurm_login_instance_self_links
+}

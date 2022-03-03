@@ -23,3 +23,8 @@ output "slurm_partitions" {
   description = "Slurm partition details."
   value       = module.slurm_cluster.slurm_partition
 }
+
+output "slurm_login_instance_self_links" {
+  description = "Slurm login instance self_link."
+  value       = module.slurm_cluster.slurm_login_instance_self_links
+}
