@@ -20,7 +20,7 @@
 
 project_id = "<PROJECT_ID>"
 
-slurm_cluster_name = "hybrid-advanced"
+slurm_cluster_name = "basic-cloud"
 
 region = "<REGION>"
 
@@ -31,7 +31,14 @@ region = "<REGION>"
 # CONFIGURATION #
 #################
 
-munge_key = "<MUNGE_KEY>"
+# cloudsql = {
+#   server_ip = "<SERVER_IP>:<PORT>"
+#   user      = "<USERNAME>"
+#   password  = "<PASSWORD>"
+#   db_name   = "<DB_NAME>"
+# }
+jwt_key   = null
+munge_key = null
 
 # Network storage
 network_storage = [
@@ -54,8 +61,10 @@ login_network_storage = [
 ]
 
 # Slurm config
+cgroup_conf_tpl   = null
+slurm_conf_tpl    = null
+slurmdbd_conf_tpl = null
 cloud_parameters = {
-  no_comma_params = false
   resume_rate     = 0
   resume_timeout  = 300
   suspend_rate    = 0
@@ -63,6 +72,16 @@ cloud_parameters = {
 }
 
 # scripts.d
+controller_d = [
+  #   {
+  #     filename = "hello_controller.sh"
+  #     content  = <<EOF
+  # #!/bin/bash
+  # set -ex
+  # echo "Hello, $(hostname) from $(dirname $0) !"
+  #     EOF
+  #   },
+]
 compute_d = [
   #   {
   #     filename = "hello_compute.sh"
@@ -70,7 +89,7 @@ compute_d = [
   # #!/bin/bash
   # set -ex
   # echo "Hello, $(hostname) from $(dirname $0) !"
-  #     EOF
+  #       EOF
   #   },
 ]
 prolog_d = [
@@ -90,7 +109,7 @@ epilog_d = [
   # #!/bin/bash
   # set -ex
   # echo "Hello, $(hostname) from $(dirname $0) !"
-  #     EOF
+  #       EOF
   #   },
 ]
 
@@ -98,12 +117,134 @@ epilog_d = [
 # CONTROLLER #
 ##############
 
-controller_hybrid_config = {
-  google_app_cred_path = null
-  slurm_bin_dir        = "/usr/local/bin"
-  slurm_log_dir        = "/var/log/slurm"
-  output_dir           = "/etc/slurm"
+controller_instance_config = {
+  # Template By Definition
+  additional_disks = [
+    # {
+    #   disk_name    = null
+    #   device_name  = null
+    #   disk_size_gb = 128
+    #   disk_type    = "pd-standard"
+    #   disk_labels  = {}
+    #   auto_delete  = true
+    #   boot         = false
+    # },
+  ]
+  can_ip_forward   = null
+  disable_smt      = false
+  disk_auto_delete = true
+  disk_labels = {
+    # label0 = "value0"
+    # label1 = "value1"
+  }
+  disk_size_gb           = 32
+  disk_type              = "pd-ssd"
+  enable_confidential_vm = false
+  enable_oslogin         = true
+  enable_shielded_vm     = false
+  gpu                    = null
+  labels = {
+    # label0 = "value0"
+    # label1 = "value1"
+  }
+  machine_type = "n1-standard-1"
+  metadata = {
+    # metadata0 = "value0"
+    # metadata1 = "value1"
+  }
+  min_cpu_platform    = null
+  on_host_maintenance = null
+  preemptible         = false
+  service_account = {
+    email = "default"
+    scopes = [
+      "https://www.googleapis.com/auth/cloud-platform",
+    ]
+  }
+  shielded_instance_config = {
+    enable_integrity_monitoring = true
+    enable_secure_boot          = true
+    enable_vtpm                 = true
+  }
+  source_image_family  = null
+  source_image_project = null
+  source_image         = null
+  tags = [
+    # "tag0",
+    # "tag1",
+  ]
+
+  # Template By Source
+  instance_template = null
+
+  # Instance Definition
+  access_config = [
+    # {
+    #   nat_ip       = "<NAT_IP>"
+    #   network_tier = "STANDARD"
+    # },
+  ]
+  network_ip         = null
+  region             = null
+  static_ip          = null
+  subnetwork_project = null
+  subnetwork         = "default"
+  zone               = null
 }
+
+#########
+# LOGIN #
+#########
+
+login_nodes = [
+  {
+    # Group Definition
+    group_name = "l0"
+
+    # Template By Definition
+    additional_disks       = []
+    can_ip_forward         = false
+    disable_smt            = false
+    disk_auto_delete       = true
+    disk_labels            = {}
+    disk_size_gb           = 32
+    disk_type              = "pd-standard"
+    enable_confidential_vm = false
+    enable_oslogin         = true
+    enable_shielded_vm     = false
+    gpu                    = null
+    labels                 = {}
+    machine_type           = "n1-standard-1"
+    metadata               = {}
+    min_cpu_platform       = null
+    on_host_maintenance    = null
+    preemptible            = false
+    service_account = {
+      email = "default"
+      scopes = [
+        "https://www.googleapis.com/auth/cloud-platform",
+      ]
+    }
+    shielded_instance_config = null
+    source_image_family      = null
+    source_image_project     = null
+    source_image             = null
+    tags                     = []
+
+    # Template By Source
+    instance_template = null
+
+    # Instance Definition
+    access_config      = []
+    network_ips        = []
+    num_instances      = 1
+    region             = null
+    static_ips         = []
+    subnetwork_project = null
+    subnetwork         = "default"
+    zone               = null
+  },
+]
 
 ##############
 # PARTITIONS #
