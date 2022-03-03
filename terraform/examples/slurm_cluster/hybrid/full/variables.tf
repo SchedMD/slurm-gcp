@@ -99,44 +99,6 @@ variable "munge_key" {
   sensitive   = true
 }
 
-variable "network_storage" {
-  description = <<EOD
-Storage to mounted on all instances.
-* server_ip     : Address of the storage server.
-* remote_mount  : The location in the remote instance filesystem to mount from.
-* local_mount   : The location on the instance filesystem to mount to.
-* fs_type       : Filesystem type (e.g. "nfs").
-* mount_options : Options to mount with.
-EOD
-  type = list(object({
-    server_ip     = string
-    remote_mount  = string
-    local_mount   = string
-    fs_type       = string
-    mount_options = string
-  }))
-  default = []
-}
-
-variable "login_network_storage" {
-  description = <<EOD
-Storage to mounted on login and controller instances
-* server_ip     : Address of the storage server.
-* remote_mount  : The location in the remote instance filesystem to mount from.
-* local_mount   : The location on the instance filesystem to mount to.
-* fs_type       : Filesystem type (e.g. "nfs").
-* mount_options : Options to mount with.
-EOD
-  type = list(object({
-    server_ip     = string
-    remote_mount  = string
-    local_mount   = string
-    fs_type       = string
-    mount_options = string
-  }))
-  default = []
-}
-
 variable "slurmdbd_conf_tpl" {
   description = "Slurm slurmdbd.conf template file path."
   type        = string

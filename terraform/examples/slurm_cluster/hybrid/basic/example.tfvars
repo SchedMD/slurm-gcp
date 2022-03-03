@@ -33,26 +33,6 @@ region = "<REGION>"
 
 munge_key = "<MUNGE_KEY>"
 
-# Network storage
-network_storage = [
-  # {
-  #   server_ip     = "<storage host>"
-  #   remote_mount  = "/home"
-  #   local_mount   = "/home"
-  #   fs_type       = "nfs"
-  #   mount_options = null
-  # },
-]
-login_network_storage = [
-  # {
-  #   server_ip     = "<storage host>"
-  #   remote_mount  = "/net_storage"
-  #   local_mount   = "/shared"
-  #   fs_type       = "nfs"
-  #   mount_options = null
-  # },
-]
-
 # Slurm config
 cloud_parameters = {
   no_comma_params = false
