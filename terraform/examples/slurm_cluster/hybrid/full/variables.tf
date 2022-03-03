@@ -26,7 +26,7 @@ variable "project_id" {
 variable "slurm_cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."
-  default     = "advanced"
+  default     = "full-hybrid"
 }
 
 variable "enable_devel" {
@@ -77,12 +77,14 @@ EOD
 variable "cloud_parameters" {
   description = "cloud.conf options."
   type = object({
+    no_comma_params = bool
     resume_rate     = number
     resume_timeout  = number
     suspend_rate    = number
     suspend_timeout = number
   })
   default = {
+    no_comma_params = false
     resume_rate     = 0
     resume_timeout  = 300
     suspend_rate    = 0
@@ -90,33 +92,8 @@ variable "cloud_parameters" {
   }
 }
 
-variable "cloudsql" {
-  description = <<EOD
-Use this database instead of the one on the controller.
-* server_ip : Address of the database server.
-* user      : The user to access the database as.
-* password  : The password, given the user, to access the given database. (sensitive)
-* db_name   : The database to access.
-EOD
-  type = object({
-    server_ip = string
-    user      = string
-    password  = string # sensitive
-    db_name   = string
-  })
-  default   = null
-  sensitive = true
-}
-
 variable "munge_key" {
   description = "Cluster munge authentication key. If 'null', then a key will be generated instead."
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "jwt_key" {
-  description = "Cluster jwt authentication key. If 'null', then a key will be generated instead."
   type        = string
   default     = ""
   sensitive   = true
@@ -226,150 +203,20 @@ EOD
 # CONTROLLER #
 ##############
 
-variable "controller_instance_config" {
-  description = <<EOD
-Creates a controller instance with given configuration.
-EOD
+variable "controller_hybrid_config" {
+  description = "Creates a hybrid controller with given configuration."
   type = object({
-    access_config = list(object({
-      nat_ip       = string
-      network_tier = string
-    }))
-    additional_disks = list(object({
-      disk_name    = string
-      device_name  = string
-      disk_size_gb = number
-      disk_type    = string
-      disk_labels  = map(string)
-      auto_delete  = bool
-      boot         = bool
-    }))
-    can_ip_forward         = bool
-    disable_smt            = bool
-    disk_auto_delete       = bool
-    disk_labels            = map(string)
-    disk_size_gb           = number
-    disk_type              = string
-    enable_confidential_vm = bool
-    enable_oslogin         = bool
-    enable_shielded_vm     = bool
-    gpu = object({
-      count = number
-      type  = string
-    })
-    instance_template   = string
-    labels              = map(string)
-    machine_type        = string
-    metadata            = map(string)
-    min_cpu_platform    = string
-    network_ip          = string
-    on_host_maintenance = string
-    preemptible         = bool
-    region              = string
-    shielded_instance_config = object({
-      enable_integrity_monitoring = bool
-      enable_secure_boot          = bool
-      enable_vtpm                 = bool
-    })
-    source_image_family  = string
-    source_image_project = string
-    source_image         = string
-    static_ip            = string
-    tags                 = list(string)
-    zone                 = string
+    google_app_cred_path = string
+    slurm_bin_dir        = string
+    slurm_log_dir        = string
+    output_dir           = string
   })
   default = {
-    access_config            = []
-    additional_disks         = []
-    can_ip_forward           = false
-    disable_smt              = false
-    disk_auto_delete         = true
-    disk_labels              = null
-    disk_size_gb             = null
-    disk_type                = null
-    enable_confidential_vm   = false
-    enable_oslogin           = true
-    enable_shielded_vm       = false
-    gpu                      = null
-    instance_template        = null
-    labels                   = null
-    machine_type             = "n1-standard-1"
-    metadata                 = null
-    min_cpu_platform         = null
-    network_ip               = null
-    on_host_maintenance      = null
-    preemptible              = false
-    service_account          = null
-    shielded_instance_config = null
-    region                   = null
-    source_image_family      = null
-    source_image_project     = null
-    source_image             = null
-    static_ip                = null
-    subnetwork_project       = null
-    subnetwork               = null
-    tags                     = []
-    zone                     = null
+    google_app_cred_path = null
+    slurm_bin_dir        = "/usr/local/bin"
+    slurm_log_dir        = "/var/log/slurm"
+    output_dir           = "."
   }
-}
-
-#########
-# LOGIN #
-#########
-
-variable "login_nodes" {
-  description = "List of slurm login instance definitions."
-  type = list(object({
-    access_config = list(object({
-      nat_ip       = string
-      network_tier = string
-    }))
-    additional_disks = list(object({
-      disk_name    = string
-      device_name  = string
-      disk_size_gb = number
-      disk_type    = string
-      disk_labels  = map(string)
-      auto_delete  = bool
-      boot         = bool
-    }))
-    can_ip_forward         = bool
-    disable_smt            = bool
-    disk_auto_delete       = bool
-    disk_labels            = map(string)
-    disk_size_gb           = number
-    disk_type              = string
-    enable_confidential_vm = bool
-    enable_oslogin         = bool
-    enable_shielded_vm     = bool
-    gpu = object({
-      count = number
-      type  = string
-    })
-    group_name          = string
-    instance_template   = string
-    labels              = map(string)
-    machine_type        = string
-    metadata            = map(string)
-    min_cpu_platform    = string
-    network_ips         = list(string)
-    num_instances       = number
-    on_host_maintenance = string
-    preemptible         = bool
-    region              = string
-    shielded_instance_config = object({
-      enable_integrity_monitoring = bool
-      enable_secure_boot          = bool
-      enable_vtpm                 = bool
-    })
-    source_image_family  = string
-    source_image_project = string
-    source_image         = string
-    static_ips           = list(string)
-    tags                 = list(string)
-    zone                 = string
-  }))
-  default = []
 }
 
 ##############

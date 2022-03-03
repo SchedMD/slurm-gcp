@@ -20,7 +20,7 @@
 
 project_id = "<PROJECT_ID>"
 
-slurm_cluster_name = "advanced-hybrid"
+slurm_cluster_name = "full-hybrid"
 
 region = "<REGION>"
 
