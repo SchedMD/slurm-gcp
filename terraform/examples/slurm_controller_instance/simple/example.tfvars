@@ -16,4 +16,6 @@
 
 project_id = "<PROJECT_ID>"
 
+slurm_cluster_name = "simple"
+
 region = "<REGION>"
