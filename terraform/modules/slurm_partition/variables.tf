@@ -22,6 +22,11 @@ variable "project_id" {
 variable "slurm_cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming and slurm accounting."
+
+  validation {
+    condition     = can(regex("(^[a-z][a-z0-9]*$)", var.slurm_cluster_name))
+    error_message = "Variable 'slurm_cluster_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
+  }
 }
 
 variable "slurm_cluster_id" {
@@ -32,6 +37,11 @@ variable "slurm_cluster_id" {
 variable "partition_name" {
   description = "Name of Slurm partition."
   type        = string
+
+  validation {
+    condition     = can(regex("(^[a-z][a-z0-9]*$)", var.partition_name))
+    error_message = "Variable 'partition_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
+  }
 }
 
 variable "partition_conf" {

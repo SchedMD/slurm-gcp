@@ -94,6 +94,11 @@ EOD
 variable "slurm_cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."
+
+  validation {
+    condition     = can(regex("(^[a-z][a-z0-9]*$)", var.slurm_cluster_name))
+    error_message = "Variable 'slurm_cluster_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
+  }
 }
 
 variable "slurm_cluster_id" {
