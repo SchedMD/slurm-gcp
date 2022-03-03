@@ -86,7 +86,7 @@ limitations under the License.
 |------|-------------|------|---------|:--------:|
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The default region to place resources in. | `string` | n/a | yes |
-| <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"winbind-cloud"` | no |
+| <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"winbind"` | no |
 | <a name="input_smb_realm"></a> [smb\_realm](#input\_smb\_realm) | SMB Realm | `string` | n/a | yes |
 | <a name="input_smb_server"></a> [smb\_server](#input\_smb\_server) | SMB Server | `string` | n/a | yes |
 | <a name="input_smb_workgroup"></a> [smb\_workgroup](#input\_smb\_workgroup) | SMB Workgroup | `string` | n/a | yes |

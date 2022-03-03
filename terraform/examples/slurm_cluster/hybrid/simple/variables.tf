@@ -22,7 +22,7 @@ variable "project_id" {
 variable "slurm_cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."
-  default     = "simple-hybrid"
+  default     = "simple"
 }
 
 variable "region" {

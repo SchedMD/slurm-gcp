@@ -20,7 +20,7 @@
 
 project_id = "<PROJECT_ID>"
 
-slurm_cluster_name = "full-cloud"
+slurm_cluster_name = "full"
 
 region = "<REGION>"
 

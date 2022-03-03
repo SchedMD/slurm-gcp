@@ -26,7 +26,7 @@ variable "project_id" {
 variable "slurm_cluster_name" {
   type        = string
   description = "Cluster name, used for resource naming."
-  default     = "basic-hybrid"
+  default     = "basic"
 }
 
 variable "enable_devel" {
