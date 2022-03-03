@@ -19,12 +19,6 @@ variable "project_id" {
   description = "Project ID to create resources in."
 }
 
-variable "slurm_cluster_name" {
-  type        = string
-  description = "Cluster name, used for resource naming."
-  default     = "simple"
-}
-
 variable "munge_key" {
   description = "Cluster munge authentication key."
   type        = string

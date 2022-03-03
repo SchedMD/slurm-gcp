@@ -23,11 +23,26 @@ data "google_compute_subnetwork" "default" {
   region = var.region
 }
 
+resource "random_string" "slurm_cluster_name" {
+  length  = 8
+  upper   = false
+  special = false
+}
+
+module "slurm_login_sa" {
+  source = "../../../modules/slurm_sa_iam"
+
+  account_type       = "compute"
+  project_id         = var.project_id
+  slurm_cluster_name = random_string.slurm_cluster_name.result
+}
+
 module "slurm_login_template" {
   source = "../../../modules/slurm_instance_template"
 
-  slurm_cluster_name = var.slurm_cluster_name
   project_id         = var.project_id
+  service_account    = module.slurm_login_sa.service_account
+  slurm_cluster_name = random_string.slurm_cluster_name.result
   subnetwork         = data.google_compute_subnetwork.default.self_link
 }
 
@@ -37,5 +52,5 @@ module "slurm_login_instance" {
   instance_template  = module.slurm_login_template.instance_template.self_link
   subnetwork         = data.google_compute_subnetwork.default.self_link
   project_id         = var.project_id
-  slurm_cluster_name = var.slurm_cluster_name
+  slurm_cluster_name = random_string.slurm_cluster_name.result
 }

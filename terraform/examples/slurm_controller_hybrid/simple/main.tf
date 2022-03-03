@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
+locals {
+  slurm_cluster_name = "e${random_string.slurm_cluster_name.result}"
+}
+
 provider "google" {
   project = var.project_id
+}
+
+resource "random_string" "slurm_cluster_name" {
+  length  = 8
+  upper   = false
+  special = false
 }
 
 module "slurm_controller_hybrid" {
@@ -23,6 +33,6 @@ module "slurm_controller_hybrid" {
 
   munge_key          = var.munge_key
   project_id         = var.project_id
-  slurm_cluster_name = var.slurm_cluster_name
+  slurm_cluster_name = local.slurm_cluster_name
   output_dir         = "./etc"
 }

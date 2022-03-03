@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+locals {
+  slurm_cluster_name = "e${random_string.slurm_cluster_name.result}"
+}
+
 provider "google" {
   project = var.project_id
 }
@@ -22,10 +26,16 @@ data "google_compute_network" "default" {
   name = "default"
 }
 
+resource "random_string" "slurm_cluster_name" {
+  length  = 8
+  upper   = false
+  special = false
+}
+
 module "slurm_firewall_rules" {
   source = "../../../modules/slurm_firewall_rules"
 
   project_id         = var.project_id
   network_name       = data.google_compute_network.default.self_link
-  slurm_cluster_name = var.slurm_cluster_name
+  slurm_cluster_name = local.slurm_cluster_name
 }

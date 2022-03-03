@@ -20,8 +20,6 @@
 
 project_id = "<PROJECT_ID>"
 
-slurm_cluster_name = "winbind-cloud"
-
 region = "<REGION>"
 
 subnetwork_project = "<SUBNETWORK_PROJECT>"

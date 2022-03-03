@@ -50,6 +50,7 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_slurm_login_sa"></a> [slurm\_login\_sa](#module\_slurm\_login\_sa) | ../../../modules/slurm_sa_iam | n/a |
 | <a name="module_slurm_login_template"></a> [slurm\_login\_template](#module\_slurm\_login\_template) | ../../../modules/slurm_instance_template | n/a |
 
 ## Resources

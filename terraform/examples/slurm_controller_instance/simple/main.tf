@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+locals {
+  slurm_cluster_name = "e${random_string.slurm_cluster_name.result}"
+}
+
 provider "google" {
   project = var.project_id
 }
@@ -23,13 +27,19 @@ data "google_compute_subnetwork" "default" {
   region = var.region
 }
 
+resource "random_string" "slurm_cluster_name" {
+  length  = 8
+  upper   = false
+  special = false
+}
+
 module "slurm_controller_template" {
   source = "../../../modules/slurm_instance_template"
 
   project_id = var.project_id
   subnetwork = data.google_compute_subnetwork.default.self_link
 
-  slurm_cluster_name = var.slurm_cluster_name
+  slurm_cluster_name = local.slurm_cluster_name
   slurm_cluster_id   = module.slurm_controller_instance.slurm_cluster_id
 }
 
@@ -39,5 +49,5 @@ module "slurm_controller_instance" {
   instance_template  = module.slurm_controller_template.self_link
   subnetwork         = data.google_compute_subnetwork.default.self_link
   project_id         = var.project_id
-  slurm_cluster_name = var.slurm_cluster_name
+  slurm_cluster_name = local.slurm_cluster_name
 }

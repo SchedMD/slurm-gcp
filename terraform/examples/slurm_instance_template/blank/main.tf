@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+locals {
+  slurm_cluster_name = "e${random_string.slurm_cluster_name.result}"
+}
+
 provider "google" {
   project = var.project_id
 }
@@ -32,7 +36,7 @@ resource "random_string" "slurm_cluster_name" {
 module "slurm_controller_template" {
   source = "../../../modules/slurm_instance_template"
 
-  slurm_cluster_name = random_string.slurm_cluster_name.result
   network            = data.google_compute_network.default.self_link
   project_id         = var.project_id
+  slurm_cluster_name = local.slurm_cluster_name
 }

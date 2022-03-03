@@ -19,9 +19,20 @@ provider "google" {
   region  = var.region
 }
 
+resource "random_uuid" "slurm_cluster_id" {
+}
+
 data "google_compute_subnetwork" "default" {
   name   = "default"
   region = var.region
+}
+
+module "slurm_compute_sa" {
+  source = "../../../modules/slurm_sa_iam"
+
+  account_type       = "compute"
+  project_id         = var.project_id
+  slurm_cluster_name = var.slurm_cluster_name
 }
 
 module "slurm_partition" {
@@ -38,30 +49,25 @@ module "slurm_partition" {
       count_static  = 0
       node_conf     = {}
 
-      additional_disks       = []
-      can_ip_forward         = false
-      disable_smt            = false
-      disk_auto_delete       = true
-      disk_labels            = {}
-      disk_size_gb           = 32
-      disk_type              = "pd-standard"
-      enable_confidential_vm = false
-      enable_oslogin         = true
-      enable_shielded_vm     = false
-      gpu                    = null
-      instance_template      = null
-      labels                 = {}
-      machine_type           = "n1-standard-1"
-      metadata               = {}
-      min_cpu_platform       = null
-      on_host_maintenance    = null
-      preemptible            = false
-      service_account = {
-        email = "default"
-        scopes = [
-          "https://www.googleapis.com/auth/cloud-platform",
-        ]
-      }
+      additional_disks         = []
+      can_ip_forward           = false
+      disable_smt              = false
+      disk_auto_delete         = true
+      disk_labels              = {}
+      disk_size_gb             = 32
+      disk_type                = "pd-standard"
+      enable_confidential_vm   = false
+      enable_oslogin           = true
+      enable_shielded_vm       = false
+      gpu                      = null
+      instance_template        = null
+      labels                   = {}
+      machine_type             = "n1-standard-1"
+      metadata                 = {}
+      min_cpu_platform         = null
+      on_host_maintenance      = null
+      preemptible              = false
+      service_account          = module.slurm_compute_sa.service_account
       shielded_instance_config = null
       source_image_family      = null
       source_image_project     = null
@@ -69,8 +75,8 @@ module "slurm_partition" {
       tags                     = []
     },
   ]
-  slurm_cluster_name = var.slurm_cluster_name
   project_id         = var.project_id
-  slurm_cluster_id   = "x"
+  slurm_cluster_id   = random_uuid.slurm_cluster_id.result
+  slurm_cluster_name = var.slurm_cluster_name
   subnetwork         = data.google_compute_subnetwork.default.self_link
 }

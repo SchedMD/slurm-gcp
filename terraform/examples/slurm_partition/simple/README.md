@@ -37,23 +37,27 @@ limitations under the License.
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 3.53, < 5.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | 4.11.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.1.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_slurm_compute_sa"></a> [slurm\_compute\_sa](#module\_slurm\_compute\_sa) | ../../../modules/slurm_sa_iam | n/a |
 | <a name="module_slurm_partition"></a> [slurm\_partition](#module\_slurm\_partition) | ../../../modules/slurm_partition | n/a |
 
 ## Resources
 
 | Name | Type |
 |------|------|
+| [random_uuid.slurm_cluster_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
 | [google_compute_subnetwork.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
 
 ## Inputs

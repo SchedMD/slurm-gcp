@@ -39,7 +39,9 @@ limitations under the License.
 
 ## Providers
 
-No providers.
+| Name | Version |
+|------|---------|
+| <a name="provider_random"></a> [random](#provider\_random) | 3.1.0 |
 
 ## Modules
 
@@ -49,7 +51,9 @@ No providers.
 
 ## Resources
 
-No resources.
+| Name | Type |
+|------|------|
+| [random_string.slurm_cluster_name](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 
 ## Inputs
 
@@ -57,7 +61,6 @@ No resources.
 |------|-------------|------|---------|:--------:|
 | <a name="input_munge_key"></a> [munge\_key](#input\_munge\_key) | Cluster munge authentication key. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
-| <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"simple"` | no |
 
 ## Outputs
 
