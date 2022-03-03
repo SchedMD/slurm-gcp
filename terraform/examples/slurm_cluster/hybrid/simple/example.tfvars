@@ -20,6 +20,8 @@
 
 project_id = "<PROJECT_ID>"
 
-slurm_cluster_name = "basic-cloud"
+slurm_cluster_name = "simple-hybrid"
 
 region = "<REGION>"
+
+munge_key = "<MUNGE_KEY>"

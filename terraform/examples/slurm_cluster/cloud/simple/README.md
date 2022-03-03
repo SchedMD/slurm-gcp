@@ -1,4 +1,4 @@
-# Example: Basic Cloud Slurm Cluster
+# Example: Simple Cloud Slurm Cluster
 
 This example creates a slurm cluster capable of bursting out multiple compute
 nodes from a pre-configured partition. A set of firewall rules will be created

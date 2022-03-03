@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-variable "project_id" {
-  type        = string
-  description = "Project ID to create resources in."
-}
+###########
+# GENERAL #
+###########
 
-variable "slurm_cluster_name" {
-  type        = string
-  description = "Cluster name, used for resource naming."
-  default     = "basic-hybrid"
-}
+project_id = "<PROJECT_ID>"
 
-variable "region" {
-  type        = string
-  description = "The default region to place resources in."
-}
+slurm_cluster_name = "simple-cloud"
 
-variable "munge_key" {
-  description = "Cluster munge authentication key."
-  type        = string
-  sensitive   = true
-}
+region = "<REGION>"
