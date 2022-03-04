@@ -40,11 +40,11 @@ While this method can be more complex, it is a robust option.
 
 See the [slurm_cluster module](../terraform/modules/slurm_cluster/README.md) for details.
 
-See the [advanced end-2-end example](../terraform/examples/slurm_cluster/cloud/advanced_e2e/README.md) for an all inclusive example.
+See the [full example](../terraform/examples/slurm_cluster/cloud/full/README.md) for an all inclusive example.
 This example requires the most [roles](./glossary.md#iam-roles) but creates everything you need for a running slurm cluster.
 Depending on organizational constraints, this may be a great example as a starting point and for testing.
 
-See the [advanced example](../terraform/examples/slurm_cluster/cloud/advanced/README.md) for a minimal but configurable cluster example.
+See the [basic example](../terraform/examples/slurm_cluster/cloud/basic/README.md) for a minimal but configurable cluster example.
 This example requires the least [roles](./glossary.md#iam-roles) but does not create everything required for running a slurm cluster.
 Depending on organizational constraints, this may be a great example for production.
 
@@ -63,9 +63,9 @@ Please review the dependencies and requirements of the following items:
 #### Maximal Configuration
 
 1. Install software requirements.
-1. Deploy [advanced end-2-end example](../terraform/examples/slurm_cluster/cloud/advanced_e2e/).
+1. Deploy [full example](../terraform/examples/slurm_cluster/cloud/full/README.md).
 
 #### Minimal Configuration
 
 1. Install software requirements.
-1. Deploy [advanced example](../terraform/examples/slurm_cluster/cloud/advanced/).
+1. Deploy [basic example](../terraform/examples/slurm_cluster/cloud/basic/README.md).
