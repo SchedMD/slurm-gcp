@@ -4,7 +4,8 @@ import argparse
 import os
 import sys
 import json
-from datetime import datetime, timedelta
+from collections import namedtuple
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from addict import Dict as NSDict
@@ -23,74 +24,102 @@ script = Path(__file__).resolve()
 DEFAULT_TIMESTAMP_FILE = script.parent / "bq_timestamp"
 timestamp_file = os.environ.get("TIMESTAMP_FILE") or DEFAULT_TIMESTAMP_FILE
 
-# still left out
-# AveCPU
-# SystemCPU
-# CPUTime
 
-job_schema = (
-    SchemaField(
-        "job_id", "INT64", mode="REQUIRED", description="job id from slurm accounting"
+def make_datetime(timestamp):
+    return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+
+
+def make_time_interval(seconds):
+    sign = 1
+    if seconds < 0:
+        sign = -1
+        seconds = abs(seconds)
+    d, r = divmod(seconds, 60 * 60 * 24)
+    h, r = divmod(r, 60 * 60)
+    m, s = divmod(r, 60)
+    d *= sign
+    h *= sign
+    return f"{d}D {h:02}:{m:02}:{s}"
+
+
+converters = {
+    "DATETIME": make_datetime,
+    "INTERVAL": make_time_interval,
+    "STRING": str,
+    "INT64": int,
+}
+
+
+def schema_field(slurm_name, schema_name, data_type, description, required=False):
+    return (
+        slurm_name,
+        SchemaField(
+            schema_name,
+            data_type,
+            description=description,
+            mode="REQUIRED" if required else "NULLABLE",
+        ),
+    )
+
+
+schema_fields_def = [
+    (
+        "JobIDRaw",
+        "job_id_raw",
+        "INT64",
+        "raw job id",
+        True,
     ),
-    SchemaField("state", "STRING", mode="REQUIRED", description="Final job state"),
-    SchemaField("job_name", "STRING", mode="NULLABLE", description="Job name"),
-    SchemaField("partition", "STRING", mode="NULLABLE", description="job partition"),
-    SchemaField(
-        "submit_time", "DATETIME", mode="NULLABLE", description="job submit time"
-    ),
-    SchemaField(
-        "start_time", "DATETIME", mode="NULLABLE", description="job start time"
-    ),
-    SchemaField("end_time", "DATETIME", mode="NULLABLE", description="job end time"),
-    SchemaField("elapsed_time", "TIME", mode="NULLABLE", description="job submit time"),
-    SchemaField("timelimit", "TIME", mode="NULLABLE", description="job time limit"),
-    SchemaField(
-        "num_nodes", "INT64", mode="NULLABLE", description="Number of nodes in job"
-    ),
-    SchemaField(
-        "num_tasks", "INT64", mode="NULLABLE", description="Number of tasks in job"
-    ),
-    SchemaField(
-        "nodelist", "STRING", mode="NULLABLE", description="nodes allocated in job"
-    ),
-    SchemaField(
-        "cpus", "INT64", mode="NULLABLE", description="total cpus allocated to job"
-    ),
-    SchemaField(
-        "user", "STRING", mode="NULLABLE", description="user responsible for the job"
-    ),
-    SchemaField(
-        "group",
-        "STRING",
-        mode="NULLABLE",
-        description="user group responsible for the job",
-    ),
-    SchemaField("wckey", "STRING", mode="NULLABLE", description="job wckey"),
-    SchemaField(
-        "assoc_user",
-        "STRING",
-        mode="NULLABLE",
-        description="slurm association user for job",
-    ),
-    SchemaField(
-        "account", "STRING", mode="NULLABLE", description="parent account for job"
-    ),
-    SchemaField("qos", "STRING", mode="NULLABLE", description="job qos"),
-    SchemaField("comment", "STRING", mode="NULLABLE", description="Job comment"),
-    SchemaField("exit_code", "INT64", mode="NULLABLE", description="job exit code"),
-    SchemaField(
+    ("JobID", "job_id", "STRING", "job id", True),
+    ("State", "state", "STRING", "final job state", True),
+    ("JobName", "job_name", "STRING", "job name"),
+    ("Partition", "partition", "STRING", "job partition"),
+    ("Submit", "submit_time", "DATETIME", "job submit time"),
+    ("Start", "start_time", "DATETIME", "job start time"),
+    ("End", "end_time", "DATETIME", "job end time"),
+    ("ElapsedRaw", "elapsed_raw", "INT64", "STRING", "job run time in seconds"),
+    # ("Elapsed", "elapsed_time", "INTERVAL", "STRING", "job run time interval"),
+    ("TimelimitRaw", "timelimit_raw", "STRING", "job timelimit in minutes"),
+    ("Timelimit", "timelimit", "STRING", "job timelimit"),
+    ("NNodes", "num_nodes", "INT64", "number of nodes in job"),
+    ("NTasks", "num_tasks", "INT64", "number of tasks in job"),
+    ("Nodelist", "nodelist", "STRING", "nodes allocated to job"),
+    ("User", "user", "STRING", "user responsible for job"),
+    ("Uid", "uid", "INT64", "uid of job user"),
+    ("Group", "group", "STRING", "group of job user"),
+    ("Gid", "gid", "INT64", "gid of job user"),
+    ("Wckey", "wckey", "STRING", "job wckey"),
+    ("Qos", "qos", "STRING", "job qos"),
+    ("Comment", "comment", "STRING", "job comment"),
+    ("ExitCode", "exitcode", "STRING", "job exit code"),
+    ("AllocCPUs", "alloc_cpus", "INT64", "count of allocated CPUs"),
+    ("AllocNodes", "alloc_nodes", "INT64", "number of nodes allocated to job"),
+    ("AllocTres", "alloc_tres", "STRING", "allocated trackable resources (TRES)"),
+    # ("SystemCPU", "system_cpu", "INTERVAL", "cpu time used by parent processes"),
+    # ("CPUTime", "cpu_time", "INTERVAL", "CPU time used (elapsed * cpu count)"),
+    ("CPUTimeRaw", "cpu_time_raw", "INT64", "CPU time used (elapsed * cpu count)"),
+    ("AveCPU", "avecpu", "INT64", "Average CPU time of all tasks in job"),
+    (
+        "TresUsageInTot",
         "tres_usage_tot",
         "STRING",
-        mode="NULLABLE",
-        description="Tres total usage by all tasks",
+        "Tres total usage by all tasks in job",
     ),
-)
+]
+
+# slurm field name is the key for schema_fields
+schema_fields = dict(schema_field(field) for field in schema_fields_def)
+# new field name is the key for job_schema. Used to lookup the datatype when
+# creating the job rows
+job_schema = {field.name: field for field in schema_fields.values()}
+# Order is important here, as that is how they are parsed from sacct output
+Job = namedtuple("Job", job_schema.keys())
 
 client = bq.Client(project=cfg.project, credentials=def_creds)
 dataset_id = f"{cfg.slurm_cluster_name}_job_data"
 dataset = bq.DatasetReference(project=cfg.project, dataset_id=dataset_id)
 table = bq.Table(
-    bq.TableReference(dataset, f"{cfg.slurm_cluster_name}_jobs"), job_schema
+    bq.TableReference(dataset, f"{cfg.slurm_cluster_name}_jobs"), job_schema.values()
 )
 
 
@@ -99,32 +128,9 @@ class JobInsertionFailed(Exception):
 
 
 def make_job_row(job):
-    def make_datetime(timestamp):
-        return datetime.fromtimestamp(timestamp).isoformat(timespec="seconds")
-
     job_row = {
-        "job_id": job["job_id"],
-        "state": job["state"]["current"],
-        "job_name": job["name"],
-        "partition": job["partition"],
-        "submit_time": make_datetime(job["time"]["submission"]),
-        "start_time": make_datetime(job["time"]["start"]),
-        "end_time": make_datetime(job["time"]["end"]),
-        "elapsed_time": job["time"]["elapsed"],
-        "timelimit": job["time"]["limit"],
-        "num_nodes": job["allocation_nodes"],
-        "num_tasks": None,
-        "nodelist": job["nodes"] if job["nodes"] != "None assigned" else None,
-        "cpus": job["required"]["CPUs"],
-        "user": job["association"]["user"],
-        "group": job["group"],
-        "wckey": job["wckey"]["wckey"],
-        "qos": job["qos"],
-        "comment": job["comment"]["job"],
-        "exit_code": job["exit_code"]["return_code"],
-        "tres_usage_tot": None,
-        "alloc_cpus": job["tres"]["allocated"][0]["count"],
-        "alloc_nodes": job["tres"]["allocated"][2]["count"],
+        field: dict.get(converters, job_schema[field])(value)
+        for field, value in job._asdict().items()
     }
     return job_row
 
@@ -132,13 +138,13 @@ def make_job_row(job):
 def load_slurm_jobs(start, end):
     start_iso = start.isoformat(timespec="seconds")
     end_iso = end.isoformat(timespec="seconds")
-    cmd = f"{SACCT} --start {start_iso} --end {end_iso} -X -D --json"
-    text = run(cmd).stdout
-    accounting = json.loads(text)
+    fields = ",".join(schema_fields.keys())
+    cmd = f"{SACCT} --start {start_iso} --end {end_iso} -X -D --format={fields} --parsable2 --noheader"
+    text = run(cmd).stdout.splitlines
+    jobs = [Job(*line.split("|")) for line in text[1:]]
+
     job_rows = [
-        make_job_row(job)
-        for job in accounting["jobs"]
-        if job["state"]["current"] not in ("PENDING", "RUNNING")
+        make_job_row(job) for job in jobs if job.state not in ("PENDING", "RUNNING")
     ]
     return job_rows
 
