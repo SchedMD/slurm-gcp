@@ -19,26 +19,19 @@ SLURM_DIR=/slurm
 FLAGFILE=$SLURM_DIR/slurm_configured_do_not_remove
 SCRIPTS_DIR=$SLURM_DIR/scripts
 
-function show_help {
-cat << EOF
-usage:  ${0##*/} -f
-Check project metadata for startup-script, setup-script, and util-script.
-Download and copy to $SCRIPTS_DIR.
-	-f	Force run setup.py. Otherwise, $FLAGFILE will signal not to run
-		setup.py
-EOF
-}
+METADATA_SERVER="metadata.google.internal"
+URL="http://$METADATA_SERVER/computeMetadata/v1"
+HEADER="Metadata-Flavor:Google"
+CURL="curl -sS --fail --header $HEADER"
 
 function fetch_scripts {
 	# fetch project metadata
-	URL="http://metadata.google.internal/computeMetadata/v1"
-	HEADER="Metadata-Flavor:Google"
-	CURL="curl -sS --fail --header $HEADER"
 	if ! CLUSTER=$($CURL $URL/instance/attributes/slurm_cluster_name); then
 		echo cluster name not found in instance metadata, quitting
 		return 1
 	fi
 	if ! META_DEVEL=$($CURL $URL/project/attributes/$CLUSTER-slurm-devel); then
+        echo $CLUSTER-slurm-devel not found in project metadata, skipping script update
 		return
 	fi
 	echo devel data found in project metadata, looking to update scripts
@@ -86,25 +79,33 @@ function fetch_scripts {
 	fi
 }
 
-OPTIND=1
-force=false
-while getopts hf opt; do
-	case $opt in
-		f)	force=true
-			echo force run setup.py enabled
-		;;
-		h)	show_help >&2
-			exit 0
-		;;
-		*)	show_help >&2
-			exit 1
-		;;
-	esac
+PING_METADATA="ping -q -w1 -c1 $METADATA_SERVER"
+echo $PING_METADATA
+for i in $(seq 10); do
+    [ $i -gt 1 ] && sleep 5;
+    $PING_METADATA > /dev/null && s=0 && break || s=$?;
+    echo failed to contact metadata server, will retry
 done
+if [ $s -ne 0 ]; then
+    echo Unable to contact metadata server, aborting
+    wall -n '*** Slurm setup failed in the startup script! see `journalctl -u google-startup-scripts` ***'
+    exit 1
+else
+    echo Successfully contacted metadata server
+fi
 
-PING_HOST=8.8.8.8
-if ( ! ping -q -w1 -c1 $PING_HOST > /dev/null ) ; then
-	echo No internet access detected
+GOOGLE_DNS=8.8.8.8
+PING_GOOGLE="ping -q -w1 -c1 $GOOGLE_DNS"
+echo $PING_GOOGLE
+for i in $(seq 5); do
+    [ $i -gt 1 ] && sleep 2;
+    $PING_GOOGLE > /dev/null && s=0 && break || s=$?;
+    echo failed to ping Google DNS, will retry
+done
+if [ $s -ne 0 ]; then
+    echo No internet access detected
+else
+    echo Internet access detected
 fi
 
 mkdir -p $SCRIPTS_DIR
@@ -118,7 +119,7 @@ SLURMSYNC_SCRIPT_FILE=$SCRIPTS_DIR/slurmsync.py
 SLURMEVENTD_SCRIPT_FILE=$SCRIPTS_DIR/slurmeventd.py
 fetch_scripts
 
-if ! "$force" && [ -f $FLAGFILE ]; then
+if [ -f $FLAGFILE ]; then
 	echo "Slurm was previously configured, quitting"
 	exit 0
 fi
