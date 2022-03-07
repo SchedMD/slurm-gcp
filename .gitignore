@@ -1,4 +1,5 @@
 ### General ###
+*.cache
 *.log
 
 ### Ansible ###
