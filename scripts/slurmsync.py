@@ -54,9 +54,6 @@ def start_instances(node_list):
     done, failed = batch_execute(ops)
 
 
-# [END start_instances]
-
-
 StateTuple = namedtuple("StateTuple", "base,flags")
 
 
@@ -173,9 +170,6 @@ def main():
         sync_slurm()
     except Exception:
         log.exception("failed to sync instances")
-
-
-# [END main]
 
 
 if __name__ == "__main__":

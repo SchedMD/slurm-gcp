@@ -100,9 +100,6 @@ def start_motd():
     util.run(f"wall -n '{wall_msg}'", timeout=30)
 
 
-# END start_motd()
-
-
 def end_motd(broadcast=True):
     """modify motd to signal that setup is complete"""
     Path("/etc/motd").write_text(MOTD_HEADER)
@@ -122,9 +119,6 @@ Log back in to ensure your home directory is correct.
 '""",
             timeout=30,
         )
-
-
-# END start_motd()
 
 
 def failed_motd():
@@ -339,9 +333,6 @@ def install_slurm_conf(lkp):
     util.chown_slurm(conf_file, mode=0o644)
 
 
-# END install_slurm_conf()
-
-
 def install_slurmdbd_conf(lkp):
     """install slurmdbd.conf"""
     conf_options = NSDict(
@@ -377,9 +368,6 @@ def install_slurmdbd_conf(lkp):
         shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
     util.chown_slurm(conf_file, 0o600)
-
-
-# END install_slurmdbd_conf()
 
 
 def install_cgroup_conf():
@@ -679,9 +667,6 @@ def setup_network_storage():
     mount_fstab(local_mounts(mounts))
 
 
-# END setup_network_storage()
-
-
 def mount_fstab(mounts):
     """Wait on each mount, then make sure all fstab is mounted"""
 
@@ -701,9 +686,6 @@ def mount_fstab(mounts):
             result = future.exception(timeout=120)
             if result is not None:
                 raise result
-
-
-# END mount_external
 
 
 def setup_nfs_exports():
@@ -736,9 +718,6 @@ def setup_nfs_exports():
     run("exportfs -a", timeout=30)
 
 
-# END setup_nfs_exports()
-
-
 def setup_secondary_disks():
     """Format and mount secondary disk"""
     run(
@@ -752,15 +731,9 @@ def setup_secondary_disks():
         )
 
 
-# END setup_secondary_disks()
-
-
 def setup_sync_cronjob():
     """Create cronjob for running slurmsync.py"""
     run("crontab -u slurm -", input=(f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
-
-
-# END setup_sync_cronjob()
 
 
 def setup_jwt_key():
@@ -794,9 +767,6 @@ def setup_slurmd_cronjob():
     )
 
 
-# END setup_slurmd_cronjob()
-
-
 def setup_munge_key():
     munge_key = dirs.munge / "munge.key"
 
@@ -825,9 +795,6 @@ def setup_nss_slurm():
         check=False,
     )
     run(r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
-
-
-# END setup_nss_slurm()
 
 
 def configure_mysql():
@@ -1026,9 +993,6 @@ def main():
     setup()
 
     end_motd()
-
-
-# END main()
 
 
 if __name__ == "__main__":
