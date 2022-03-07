@@ -104,19 +104,20 @@ In the end, the slurmctld and any login nodes should be able to communicate with
 - Use IP addresses with NodeAddr
 
   1. Disable [cloud_dns](https://slurm.schedmd.com/slurm.conf.html#OPT_cloud_dns) in *slurm.conf*
+
   1. Add [cloud_reg_addrs](https://slurm.schedmd.com/slurm.conf.html#OPT_cloud_reg_addrs) to *slurm.conf*:
 
-  ```conf
-  # slurm.conf
-  SlurmctldParameters=cloud_reg_addrs
-  ```
+     ```conf
+     # slurm.conf
+     SlurmctldParameters=cloud_reg_addrs
+     ```
 
   1. Disable hierarchical communication in *slurm.conf*:
 
-  ```conf
-  # slurm.conf
-  TreeWidth=65533
-  ```
+     ```conf
+     # slurm.conf
+     TreeWidth=65533
+     ```
 
   1. Add controller's IP address to /etc/hosts on the [custom image](./images.md#custom-images).
 
