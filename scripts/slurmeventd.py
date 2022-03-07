@@ -132,8 +132,8 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
             setup.install_slurm_conf(util.lkp)
             log.info("Generating new slurmdbd.conf")
             setup.install_slurmdbd_conf(util.lkp)
-            log.info("Generating new gres.conf")
-            setup.install_gres_conf(util.lkp)
+            log.info("Generating new cloud_gres.conf")
+            setup.gen_cloud_gres_conf(util.lkp)
             log.info("Generating new cgroup.conf")
             setup.install_cgroup_conf()
 

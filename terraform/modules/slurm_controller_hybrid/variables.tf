@@ -225,7 +225,7 @@ variable "output_dir" {
   type        = string
   description = <<EOD
 Directory where this module will write its files to. These files include:
-cloud.conf; gres.conf; config.yaml; resume.py; suspend.py; and util.py.
+cloud.conf; cloud_gres.conf; config.yaml; resume.py; suspend.py; and util.py.
 EOD
   default     = null
 }

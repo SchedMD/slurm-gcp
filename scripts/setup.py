@@ -382,8 +382,8 @@ def install_cgroup_conf():
     util.chown_slurm(conf_file, mode=0o600)
 
 
-def install_gres_conf(lkp):
-    """install gres.conf"""
+def gen_cloud_gres_conf(lkp):
+    """generate cloud_gres.conf"""
 
     gpu_nodes = defaultdict(list)
     for part_name, partition in cfg.partitions.items():
@@ -404,14 +404,23 @@ def install_gres_conf(lkp):
         )
         for i, names in gpu_nodes.items()
     ]
+    lines.append("\n")
     content = FILE_PREAMBLE + "\n".join(lines)
 
-    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "gres.conf"
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud_gres.conf"
     conf_file_bak = conf_file.with_suffix(".conf.bak")
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(content)
     util.chown_slurm(conf_file, mode=0o600)
+
+
+def install_gres_conf():
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud_gres.conf"
+    gres_conf = Path(lkp.cfg.output_dir or slurmdirs.etc) / "gres.conf"
+    if not gres_conf.exists():
+        gres_conf.symlink_to(conf_file)
+    util.chown_slurm(gres_conf, mode=0o600)
 
 
 def fetch_devel_scripts():
@@ -857,8 +866,9 @@ def setup_controller():
     install_slurmdbd_conf(lkp)
 
     gen_cloud_conf(lkp)
+    gen_cloud_gres_conf(lkp)
+    install_gres_conf()
     install_cgroup_conf()
-    install_gres_conf(lkp)
 
     setup_jwt_key()
     setup_munge_key()

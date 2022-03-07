@@ -132,6 +132,7 @@ User information is sent from the controller for each job and served by the `slu
 ### Additional Configurations
 
 Once you have successfully configured a hybrid [slurm_cluster](../terraform/modules/slurm_cluster/README.md) and applied the [terraform](./glossary.md#terraform) infrastructure, the necessary files will be generated at `$output_dir`.
+It is recommended that `$output_dir` is equal to the path where Slurm searches for config files (e.g. `/etc/slurm`).
 
 Follow the below steps to complete the process of configuring your on-prem controller to be able to burst into the cloud.
 
@@ -140,10 +141,10 @@ Follow the below steps to complete the process of configuring your on-prem contr
    # slurm.conf
    include $output_dir/cloud.conf
    ```
-1. In your *gres.conf*, include the generated *gres.conf*:
+1. In your *gres.conf*, include the generated *cloud_gres.conf*:
    ```conf
    # gres.conf
-   include $output_dir/cloud.conf
+   include $output_dir/cloud_gres.conf
    ```
 1. Add a cronjob/crontab to call slurmsync.py as SlurmUser.
    ```conf

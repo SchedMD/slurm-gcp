@@ -45,8 +45,8 @@ def main(args):
     log.info("Generating new cloud.conf for slurm.conf")
     setup.gen_cloud_conf(lkp, params)
 
-    log.info("Generating new cloud gres.conf for gres.conf")
-    setup.install_gres_conf(lkp)
+    log.info("Generating new cloud_gres.conf for gres.conf")
+    setup.gen_cloud_gres_conf(lkp)
 
     # Send restart message to cluster topic
     message_json = json.dumps(
