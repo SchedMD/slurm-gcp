@@ -13,7 +13,18 @@
 # limitations under the License.
 ---
 
+- name: Create Motd Backup
+  template:
+    src: motd.j2
+    dest: /etc/motd.bak
+
 - name: Create Motd
   template:
     src: motd.j2
     dest: /etc/motd
+
+- name: Add Warning
+  ansible.builtin.lineinfile:
+    path: /etc/motd
+    line: "*** Slurm instance has not been set up yet. Did the startup-script run? ***\n"
+    insertafter: EOF
