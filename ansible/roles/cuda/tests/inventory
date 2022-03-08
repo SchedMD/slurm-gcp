@@ -1,0 +1,7 @@
+[cuda]
+centos-7-01
+ubuntu-xenial-01
+ubuntu-bionic-01
+
+[cuda:vars]
+ansible_ssh_user=root
