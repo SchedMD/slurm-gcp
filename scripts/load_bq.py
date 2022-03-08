@@ -23,10 +23,13 @@ SACCT = "sacct"
 script = Path(__file__).resolve()
 DEFAULT_TIMESTAMP_FILE = script.parent / "bq_timestamp"
 timestamp_file = os.environ.get("TIMESTAMP_FILE") or DEFAULT_TIMESTAMP_FILE
+SLURM_TIME_FORMAT = r"%Y-%m-%dT%H:%M:%S"
 
 
-def make_datetime(timestamp):
-    return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+def make_datetime(time_string):
+    return datetime.strptime(time_string, SLURM_TIME_FORMAT).replace(
+        tzinfo=timezone.utc
+    )
 
 
 def make_time_interval(seconds):
@@ -46,7 +49,7 @@ converters = {
     "DATETIME": make_datetime,
     "INTERVAL": make_time_interval,
     "STRING": str,
-    "INT64": int,
+    "INT64": lambda n: int(n or 0),
 }
 
 
@@ -108,7 +111,7 @@ schema_fields_def = [
 ]
 
 # slurm field name is the key for schema_fields
-schema_fields = dict(schema_field(field) for field in schema_fields_def)
+schema_fields = dict(schema_field(*field) for field in schema_fields_def)
 # new field name is the key for job_schema. Used to lookup the datatype when
 # creating the job rows
 job_schema = {field.name: field for field in schema_fields.values()}
@@ -119,7 +122,7 @@ client = bq.Client(project=cfg.project, credentials=def_creds)
 dataset_id = f"{cfg.slurm_cluster_name}_job_data"
 dataset = bq.DatasetReference(project=cfg.project, dataset_id=dataset_id)
 table = bq.Table(
-    bq.TableReference(dataset, f"{cfg.slurm_cluster_name}_jobs"), job_schema.values()
+    bq.TableReference(dataset, f"jobs_{cfg.slurm_cluster_id}"), job_schema.values()
 )
 
 
@@ -129,7 +132,7 @@ class JobInsertionFailed(Exception):
 
 def make_job_row(job):
     job_row = {
-        field: dict.get(converters, job_schema[field])(value)
+        field: dict.get(converters, job_schema[field].field_type)(value)
         for field, value in job._asdict().items()
     }
     return job_row
@@ -140,7 +143,7 @@ def load_slurm_jobs(start, end):
     end_iso = end.isoformat(timespec="seconds")
     fields = ",".join(schema_fields.keys())
     cmd = f"{SACCT} --start {start_iso} --end {end_iso} -X -D --format={fields} --parsable2 --noheader"
-    text = run(cmd).stdout.splitlines
+    text = run(cmd).stdout.splitlines()
     jobs = [Job(*line.split("|")) for line in text[1:]]
 
     job_rows = [
@@ -170,11 +173,10 @@ def bq_submit(jobs):
 
 
 def get_time_window():
-    fmt = r"%Y-%m-%dT%H:%M:%S"
     if not timestamp_file.is_file():
         timestamp_file.touch()
     try:
-        start = datetime.strptime(timestamp_file.read_text(), fmt)
+        start = datetime.strptime(timestamp_file.read_text(), SLURM_TIME_FORMAT)
     except ValueError:
         start = datetime.fromtimestamp(0)
     # end is now truncated to the last second
@@ -192,7 +194,8 @@ def main():
     # on failure, an exception will cause the timestamp not to be rewritten. So
     # it will try again next time. If some writes succeed, we don't currently
     # have a way to not submit duplicates next time.
-    bq_submit(jobs)
+    if jobs:
+        bq_submit(jobs)
     write_timestamp(end)
 
 

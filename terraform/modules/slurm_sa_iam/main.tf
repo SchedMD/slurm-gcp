@@ -28,6 +28,7 @@ locals {
       "roles/pubsub.publisher",
       "roles/pubsub.subscriber",
       "roles/secretmanager.secretAccessor",
+      "roles/bigquery.dataEditor"
     ]
     compute = [
       "roles/logging.logWriter",
