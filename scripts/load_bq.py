@@ -85,7 +85,7 @@ schema_fields_def = [
     ("TimelimitRaw", "timelimit_raw", "STRING", "job timelimit in minutes"),
     ("Timelimit", "timelimit", "STRING", "job timelimit"),
     ("NNodes", "num_nodes", "INT64", "number of nodes in job"),
-    ("NTasks", "num_tasks", "INT64", "number of tasks in job"),
+    # ("NTasks", "num_tasks", "INT64", "number of tasks in job"),
     ("Nodelist", "nodelist", "STRING", "nodes allocated to job"),
     ("User", "user", "STRING", "user responsible for job"),
     ("Uid", "uid", "INT64", "uid of job user"),
@@ -101,13 +101,13 @@ schema_fields_def = [
     # ("SystemCPU", "system_cpu", "INTERVAL", "cpu time used by parent processes"),
     # ("CPUTime", "cpu_time", "INTERVAL", "CPU time used (elapsed * cpu count)"),
     ("CPUTimeRaw", "cpu_time_raw", "INT64", "CPU time used (elapsed * cpu count)"),
-    ("AveCPU", "avecpu", "INT64", "Average CPU time of all tasks in job"),
-    (
-        "TresUsageInTot",
-        "tres_usage_tot",
-        "STRING",
-        "Tres total usage by all tasks in job",
-    ),
+    # ("AveCPU", "avecpu", "INT64", "Average CPU time of all tasks in job"),
+    # (
+    #    "TresUsageInTot",
+    #    "tres_usage_tot",
+    #    "STRING",
+    #    "Tres total usage by all tasks in job",
+    # ),
 ]
 
 # slurm field name is the key for schema_fields
