@@ -23,7 +23,7 @@
 - name: Ensure kernel headers are installed (apt)
   apt:
     name:
-    - linux-headers-generic
+    - linux-headers-{{ ansible_kernel }}
     - build-essential
     state: present
   when: ansible_pkg_mgr == "apt"
