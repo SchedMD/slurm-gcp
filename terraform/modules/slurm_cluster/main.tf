@@ -238,6 +238,10 @@ module "slurm_login_instance" {
   subnetwork       = each.value.subnetwork
   zone             = each.value.zone
 
+  metadata = {
+    slurm_depends_on_controller = var.enable_hybrid ? null : sha256(module.slurm_controller_instance[0].slurm_controller_instance.instances_details[0].id)
+  }
+
   depends_on = [
     # Ensure Controller is up before attempting to mount file systems from it
     module.slurm_controller_instance[0].slurm_controller_instance,

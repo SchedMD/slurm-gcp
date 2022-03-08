@@ -159,7 +159,16 @@ module "slurm_controller_instance" {
   subnetwork          = var.subnetwork
   zone                = var.zone
 
-  metadata = var.metadata
+  metadata = merge(
+    var.metadata,
+    {
+      slurm_depends_on_config        = sha256(google_compute_project_metadata_item.config.value)
+      slurm_depends_on_cgroup_conf   = sha256(google_compute_project_metadata_item.cgroup_conf.value)
+      slurm_depends_on_slurm_conf    = sha256(google_compute_project_metadata_item.slurm_conf.value)
+      slurm_depends_on_slurmdbd_conf = sha256(google_compute_project_metadata_item.slurmdbd_conf.value)
+      slurm_depends_on_devel         = var.enable_devel ? sha256(module.slurm_metadata_devel[0].metadata.value) : null
+    },
+  )
 
   depends_on = [
     google_compute_project_metadata_item.controller_d,
