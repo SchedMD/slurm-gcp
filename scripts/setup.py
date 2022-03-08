@@ -845,6 +845,11 @@ def configure_dirs():
         p.mkdirp()
         util.chown_slurm(p)
 
+    etc_slurm = Path("/etc/slurm")
+    if etc_slurm.exists() and etc_slurm.is_symlink():
+        etc_slurm.unlink()
+    etc_slurm.symlink_to(slurmdirs.etc)
+
     scripts_etc = dirs.scripts / "etc"
     if scripts_etc.exists() and scripts_etc.is_symlink():
         scripts_etc.unlink()
