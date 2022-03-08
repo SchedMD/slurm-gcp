@@ -95,6 +95,10 @@ build {
       ### disk ###
       disk_size = source.value.disk_size
       disk_type = source.value.disk_type
+
+      accelerator_type = "projects/${var.project_id}/zones/${var.zone}/acceleratorTypes/nvidia-tesla-v100"
+      accelerator_count = 1
+      on_host_maintenance = "TERMINATE"
     }
   }
 

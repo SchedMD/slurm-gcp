@@ -18,6 +18,5 @@ dependencies:
 - role: selinux
 - role: mariadb
 - role: munge
-- role: cuda
 - role: cgroups
 - role: libjwt

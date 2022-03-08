@@ -4,6 +4,7 @@
 
 ### Ansible ###
 *.retry
+ansible/roles.galaxy/
 
 ### Packer ###
 packer_cache/

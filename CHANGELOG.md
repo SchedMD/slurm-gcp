@@ -68,6 +68,7 @@ All notable changes to this project will be documented in this file.
 - Force `enable_placement_groups=false` when `count_static > 0`.
 - Add module variable `zone_policy_*` validation.
 - Filter module variable `zone_policy_*` input with region.
+- Change ansible to install cuda and nvidia from runfile
 
 ## \[4.1.5\]
 
