@@ -28,6 +28,15 @@ output "slurm_partition" {
   )
 }
 
+output "slurm_controller_instance_self_links" {
+  description = "Slurm controller instance self_link."
+  value = (
+    var.enable_hybrid
+    ? []
+    : module.slurm_controller_instance[0].slurm_controller_instance.instances_details[*].self_link
+  )
+}
+
 output "slurm_login_instance_self_links" {
   description = "Slurm login instance self_link."
   value = flatten(values({

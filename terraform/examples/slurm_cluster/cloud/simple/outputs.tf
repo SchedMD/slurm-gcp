@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+output "slurm_controller_instance_self_links" {
+  description = "Slurm controller instance self_link."
+  value       = module.slurm_cluster.slurm_controller_instance_self_links
+}
+
 output "slurm_login_instance_self_links" {
   description = "Slurm login instance self_link."
   value       = module.slurm_cluster.slurm_login_instance_self_links
