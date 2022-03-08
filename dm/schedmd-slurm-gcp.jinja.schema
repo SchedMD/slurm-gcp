@@ -366,7 +366,7 @@ properties:
   compute2_enabled:
     type        : boolean
     default     : false
-    description : Third partition enabled
+    description : Enable 2nd partition
 
   compute2_partition_name:
     type        : string
@@ -448,7 +448,7 @@ properties:
   compute3_enabled:
     type        : boolean
     default     : false
-    description : Third partition enabled
+    description : Enable 3rd partition
 
   compute3_partition_name:
     type        : string
