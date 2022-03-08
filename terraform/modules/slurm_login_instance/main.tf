@@ -48,6 +48,7 @@ module "slurm_login_instance" {
   slurm_cluster_name  = var.slurm_cluster_name
   hostname            = "${var.slurm_cluster_name}-login-${random_string.suffix.result}"
   instance_template   = var.instance_template
+  metadata            = var.metadata
   network             = var.network
   num_instances       = var.num_instances
   project_id          = var.project_id

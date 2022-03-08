@@ -159,6 +159,8 @@ module "slurm_controller_instance" {
   subnetwork          = var.subnetwork
   zone                = var.zone
 
+  metadata = var.metadata
+
   depends_on = [
     google_compute_project_metadata_item.controller_d,
     # Ensure nodes are destroyed before controller is

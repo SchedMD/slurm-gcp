@@ -97,6 +97,7 @@ resource "google_compute_instance_from_template" "slurm_instance" {
   )
   metadata = merge(
     data.google_compute_instance_template.base.metadata,
+    var.metadata,
     {
       slurm_cluster_id    = var.slurm_cluster_id
       slurm_cluster_name  = var.slurm_cluster_name

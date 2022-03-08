@@ -87,6 +87,12 @@ EOD
   default     = null
 }
 
+variable "metadata" {
+  type        = map(string)
+  description = "Metadata, provided as a map"
+  default     = {}
+}
+
 #########
 # SLURM #
 #########
