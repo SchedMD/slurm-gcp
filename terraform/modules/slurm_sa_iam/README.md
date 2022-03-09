@@ -39,7 +39,9 @@ Intended to be attached to a controller [instance template](../../../docs/glossa
 
 ##### Roles
 
-- `roles/compute.instanceAdmin`
+- `roles/bigquery.dataEditor`
+- `roles/compute.instanceAdmin.v1`
+- `roles/compute.instanceAdmin` (Beta)
 - `roles/iam.serviceAccountUser`
 - `roles/logging.logWriter`
 - `roles/monitoring.metricWriter`
