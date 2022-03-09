@@ -107,8 +107,8 @@ def sync_slurm():
             # This should catch the completing states as well.
             if (
                 inst is None
-                and "#" not in state.base
-                and not state.base.startswith("DOWN")
+                and "POWERING_UP" not in state.flags
+                and state.base != "DOWN"
             ):
                 to_down.append(node)
 
