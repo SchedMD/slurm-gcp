@@ -99,7 +99,7 @@ build {
   ### provision ###
   provisioner "ansible" {
     playbook_file = "${local.ansible_dir}/playbook.yml"
-    roles_path    = "${local.ansible_dir}/roles"
+    galaxy_file   = "${local.ansible_dir}/requirements.yml"
     ansible_env_vars = [
       "ANSIBLE_CONFIG=${local.ansible_dir}/ansible.cfg",
     ]

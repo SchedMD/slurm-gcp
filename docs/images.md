@@ -73,13 +73,13 @@ cd ${slurm-gcp}/packer
 cp example.pkrvars.hcl vars.pkrvars.hcl
 vim vars.pkrvars.hcl
 
-# install required ansible-galaxy roles
-ansible-galaxy install --role-file ${slurm-gcp}/ansible/requirements.yml
-
 # build with packer
 packer init .
 packer build -var-file=vars.pkrvars.hcl .
 ```
+
+*Note*: the process above will install a Google Cloud Ansible role on your local
+workstation, most likely under `~/.ansible`.
 
 ### Customize
 
