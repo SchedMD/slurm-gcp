@@ -177,3 +177,18 @@ EOD
     disk_type = string
   }))
 }
+
+###############################
+# CUSTOM ANSIBLE PROVISIONERS #
+###############################
+
+variable "extra_ansible_provisioners" {
+  description = "Extra ansible playbooks"
+  type = list(object({
+    playbook_file   = string
+    galaxy_file     = string
+    extra_arguments = list(string)
+    user            = string
+  }))
+  default = []
+}

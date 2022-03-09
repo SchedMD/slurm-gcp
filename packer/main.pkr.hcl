@@ -98,7 +98,7 @@ build {
     }
   }
 
-  ### provision ###
+  ### provision Slurm ###
   provisioner "ansible" {
     playbook_file = "${local.ansible_dir}/playbook.yml"
     galaxy_file   = "${local.ansible_dir}/requirements.yml"
@@ -110,6 +110,20 @@ build {
       "slurm_version=${var.slurm_version}",
     ]
   }
+
+  dynamic "provisioner" {
+    # using labels this way effectively creates 'provisioner "ansible"' blocks
+    labels   = ["ansible"]
+    for_each = var.extra_ansible_provisioners
+
+    content {
+      playbook_file   = provisioner.value.playbook_file
+      roles_path      = provisioner.value.galaxy_file
+      extra_arguments = provisioner.value.extra_arguments
+      user            = provisioner.value.user
+    }
+  }
+
 
   ### post processor ###
   post-processor "manifest" {
