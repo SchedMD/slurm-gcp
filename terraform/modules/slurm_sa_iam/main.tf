@@ -46,6 +46,16 @@ locals {
   }
 }
 
+##########
+# RANDOM #
+##########
+
+resource "random_string" "suffix" {
+  length  = 8
+  upper   = false
+  special = false
+}
+
 ###################
 # SERVICE ACCOUNT #
 ###################
@@ -53,7 +63,7 @@ locals {
 resource "google_service_account" "slurm_service_account" {
   for_each = var.account_type != null ? local.account : local.roles
 
-  account_id   = "${var.slurm_cluster_name}-${each.key}"
+  account_id   = "${var.slurm_cluster_name}-${each.key}-${random_string.suffix.result}"
   display_name = "${var.slurm_cluster_name}-${each.key} Slurm SA IAM"
   project      = var.project_id
 }

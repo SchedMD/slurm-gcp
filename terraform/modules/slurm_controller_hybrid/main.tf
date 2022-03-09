@@ -115,6 +115,11 @@ data "local_file" "slurmsync_py" {
 resource "random_uuid" "slurm_cluster_id" {
 }
 
+resource "random_string" "topic_suffix" {
+  length  = 8
+  special = false
+}
+
 ###########
 # SCRIPTS #
 ###########
@@ -285,7 +290,7 @@ EOD
 #################
 
 resource "google_pubsub_topic" "this" {
-  name = "${var.slurm_cluster_name}-slurm-events"
+  name = "${var.slurm_cluster_name}-slurm-events-${random_string.topic_suffix.result}"
 
   schema_settings {
     schema   = google_pubsub_schema.this.id
