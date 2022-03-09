@@ -42,6 +42,8 @@ source "googlecompute" "image" {
 
   ### ssh ###
   ssh_clear_authorized_keys = true
+  use_iap                   = var.use_iap
+  use_os_login              = var.use_os_login
 
   ### network ###
   network_project_id = var.network_project_id

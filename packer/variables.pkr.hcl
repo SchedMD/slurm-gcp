@@ -33,6 +33,22 @@ variable "zone" {
   type = string
 }
 
+##################
+# SSH CONNECTION #
+##################
+
+variable "use_iap" {
+  description = "Use IAP proxy when connecting by SSH"
+  type        = bool
+  default     = false
+}
+
+variable "use_os_login" {
+  description = "Use OS Login when connecting by SSH"
+  type        = bool
+  default     = false
+}
+
 #########
 # IMAGE #
 #########
