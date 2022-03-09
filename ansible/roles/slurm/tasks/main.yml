@@ -67,7 +67,7 @@
 
 - name: Copy Jobs
   copy:
-    src: jobs
+    src: jobs/
     dest: "{{slurm_paths.jobs}}"
     owner: "{{slurm_user.user}}"
     group: "{{slurm_user.group}}"
