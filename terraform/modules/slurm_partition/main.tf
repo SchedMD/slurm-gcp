@@ -20,18 +20,9 @@
 
 locals {
   partition = {
-    partition_name = var.partition_name
-    partition_conf = var.partition_conf
-    partition_nodes = {
-      for x in var.partition_nodes : x.group_name => {
-        group_name        = x.group_name
-        node_conf         = x.node_conf
-        partition_name    = var.partition_name
-        instance_template = data.google_compute_instance_template.group_template[x.group_name].self_link
-        count_dynamic     = x.count_dynamic
-        count_static      = x.count_static
-      }
-    }
+    partition_name          = var.partition_name
+    partition_conf          = var.partition_conf
+    partition_nodes         = local.partition_nodes
     subnetwork              = data.google_compute_subnetwork.partition_subnetwork.self_link
     zone_policy_allow       = setsubtract(var.zone_policy_allow, var.zone_policy_deny)
     zone_policy_deny        = var.zone_policy_deny
@@ -40,20 +31,29 @@ locals {
     network_storage         = var.network_storage
   }
 
+  partition_nodes = {
+    for x in var.partition_nodes : x.group_name => {
+      group_name        = x.group_name
+      node_conf         = x.node_conf
+      partition_name    = var.partition_name
+      instance_template = data.google_compute_instance_template.group_template[x.group_name].self_link
+      count_dynamic     = x.count_dynamic
+      count_static      = x.count_static
+      node_list = formatlist("%s-%s-%s-%g",
+        var.slurm_cluster_name,
+        var.partition_name,
+        x.group_name,
+        range(0, sum([x.count_static, x.count_dynamic]))
+      )
+    }
+  }
+
   enable_placement_groups = var.enable_placement_groups && alltrue([
     for x in data.google_compute_instance_template.group_template
     : length(regexall("^c2[0-9a-z]*-[0-9a-z]+-[0-9]+$", x.machine_type)) > 0
   ])
 
-  compute_list = flatten([
-    for x in local.partition.partition_nodes
-    : formatlist("%s-%s-%s-%g",
-      var.slurm_cluster_name,
-      x.partition_name,
-      x.group_name,
-      range(0, sum([x.count_static, x.count_dynamic]))
-    )
-  ])
+  compute_list = flatten([for x in local.partition.partition_nodes : x.node_list])
 }
 
 ####################

@@ -71,4 +71,5 @@ limitations under the License.
 |------|-------------|
 | <a name="output_compute_list"></a> [compute\_list](#output\_compute\_list) | List of compute node hostnames. |
 | <a name="output_partition"></a> [partition](#output\_partition) | Partition for slurm controller. |
+| <a name="output_partition_nodes"></a> [partition\_nodes](#output\_partition\_nodes) | Partition for slurm controller. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
