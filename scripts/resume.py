@@ -54,8 +54,14 @@ def instance_properties(model):
     ]
 
     zones = {
-        **{zone: {"preference": "ALLOW"} for zone in partition.zone_policy_allow},
-        **{zone: {"preference": "DENY"} for zone in partition.zone_policy_deny},
+        **{
+            f"zones/{zone}": {"preference": "ALLOW"}
+            for zone in partition.zone_policy_allow
+        },
+        **{
+            f"zones/{zone}": {"preference": "DENY"}
+            for zone in partition.zone_policy_deny
+        },
     }
     if zones:
         props.locationPolicy = {"locations": zones}
