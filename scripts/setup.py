@@ -817,6 +817,7 @@ innodb_lock_wait_timeout=900
     run("systemctl restart mariadb", timeout=30)
 
     mysql = "mysql -u root -e"
+    run(f"""{mysql} "create user 'slurm'@'localhost'";""", timeout=30)
     run(
         f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""",
         timeout=30,
