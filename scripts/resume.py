@@ -40,9 +40,7 @@ log = logging.getLogger(filename)
 BULK_INSERT_LIMIT = 1000
 
 
-def instance_properties(model):
-    partition = lkp.node_partition(model)
-    template = lkp.node_template(model)
+def instance_properties(partition, template):
     template_info = lkp.template_info(template)
 
     props = NSDict()
@@ -52,19 +50,6 @@ def instance_properties(model):
             "subnetwork": partition.subnetwork,
         }
     ]
-
-    zones = {
-        **{
-            f"zones/{zone}": {"preference": "ALLOW"}
-            for zone in partition.zone_policy_allow
-        },
-        **{
-            f"zones/{zone}": {"preference": "DENY"}
-            for zone in partition.zone_policy_deny
-        },
-    }
-    if zones:
-        props.locationPolicy = {"locations": zones}
 
     slurm_metadata = {
         "slurm_cluster_id": cfg.slurm_cluster_id,
@@ -118,6 +103,7 @@ def create_instances_request(nodes, placement_groups=None):
     assert len(nodes) <= BULK_INSERT_LIMIT
     # model here indicates any node that can be used to describe the rest
     model = next(iter(nodes))
+    partition = lkp.node_partition(model)
     template = lkp.node_template(model)
     region = lkp.node_region(model)
 
@@ -128,12 +114,25 @@ def create_instances_request(nodes, placement_groups=None):
     body.sourceInstanceTemplate = template
 
     # overwrites properties accross all instances
-    body.instanceProperties = instance_properties(model)
+    body.instanceProperties = instance_properties(partition, template)
 
     # key is instance name, value overwrites properties
     body.perInstanceProperties = {
         k: per_instance_properties(k, placement_groups) for k in nodes
     }
+
+    zones = {
+        **{
+            f"zones/{zone}": {"preference": "ALLOW"}
+            for zone in partition.zone_policy_allow or []
+        },
+        **{
+            f"zones/{zone}": {"preference": "DENY"}
+            for zone in partition.zone_policy_deny or []
+        },
+    }
+    if zones:
+        body.locationPolicy = {"locations": zones}
 
     request = compute.regionInstances().bulkInsert(
         project=cfg.project, region=region, body=body.to_dict()
