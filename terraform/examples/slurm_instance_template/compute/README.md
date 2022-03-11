@@ -14,7 +14,10 @@
 
 ## Overview
 
-This exmaple creates a [slurm_instance_template](../../../modules/slurm_instance_template/README.md) intended to be used by the [slurm_partition](../../../modules/slurm_partition/README.md).
+This exmaple creates a
+[slurm_instance_template](../../../modules/slurm_instance_template/README.md)
+intended to be used by the
+[slurm_partition](../../../modules/slurm_partition/README.md).
 
 ## Usage
 
@@ -25,7 +28,8 @@ Then perform the following commands on the root directory:
 - `terraform init` to get the plugins
 - `terraform plan -var-file=example.tfvars` to see the infrastructure plan
 - `terraform apply -var-file=example.tfvars` to apply the infrastructure build
-- `terraform destroy -var-file=example.tfvars` to destroy the built infrastructure
+- `terraform destroy -var-file=example.tfvars` to destroy the built
+  infrastructure
 
 ## Dependencies
 
@@ -33,4 +37,5 @@ Then perform the following commands on the root directory:
 
 ## Example API
 
-For the terraform example API reference, please see [README_TF.md](./README_TF.md).
+For the terraform example API reference, please see
+[README_TF.md](./README_TF.md).

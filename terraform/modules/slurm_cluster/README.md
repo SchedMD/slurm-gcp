@@ -14,10 +14,11 @@
 
 ## Overview
 
-This module creates a [Slurm](../../../docs/glossary.md#slurm) cluster on [GCP](../../../docs/glossary.md#gcp).
-There are two modes of operation: cloud; and hybrid.
-Cloud mode will create a VM controller.
-Hybrid mode will generate `cloud.conf` and `gres.conf` files to be included in the on-prem configuration files, while managing a `config.yaml` file for internal module use.
+This module creates a [Slurm](../../../docs/glossary.md#slurm) cluster on
+[GCP](../../../docs/glossary.md#gcp). There are two modes of operation: cloud;
+and hybrid. Cloud mode will create a VM controller. Hybrid mode will generate
+`cloud.conf` and `gres.conf` files to be included in the on-prem configuration
+files, while managing a `config.yaml` file for internal module use.
 
 ## Usage
 
@@ -38,7 +39,11 @@ module "slurm_cluster" {
 }
 ```
 
-> **NOTE:** Because this module is not hosted on [Terraform Registry](../../../docs/glossary.md#terraform-registry), the version must be strictly controlled via [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision) syntax on the source line.
+> **NOTE:** Because this module is not hosted on
+> [Terraform Registry](../../../docs/glossary.md#terraform-registry), the
+> version must be strictly controlled via
+> [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
+> syntax on the source line.
 
 ## Dependencies
 
@@ -46,7 +51,8 @@ module "slurm_cluster" {
 - [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
 - [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
 - [Secret Manager](../../../docs/glossary.md#secret-manager) is enabled.
-- [Private Google Access](../../../../../docs/glossary.md#private-google-access) is enabled.
+- [Private Google Access](../../../../../docs/glossary.md#private-google-access)
+  is enabled.
 - [Python](../../../../docs/glossary.md#python) is installed.
   - Required Version: `>= 3.6.0, < 4.0.0`
 - [Pip](../../../../docs/glossary.md#pip) packages are installed:
@@ -54,4 +60,5 @@ module "slurm_cluster" {
 
 ## Module API
 
-For the terraform module API reference, please see [README_TF.md](./README_TF.md).
+For the terraform module API reference, please see
+[README_TF.md](./README_TF.md).

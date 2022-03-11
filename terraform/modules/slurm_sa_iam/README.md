@@ -24,18 +24,30 @@
 
 ## Overview
 
-This module can create three different minimal sets of [service accounts](../../../docs/glossary.md#service-account), [IAM Roles](../../../docs/glossary.md#iam-roles), and [access scopes](../../../docs/glossary.md#access-scopes): controller; login; compute.
-These [service account](../../../docs/glossary.md#service-account) sets are intended to be passed to other sections of the slurm cluster configuration to define [instances templates](../../../docs/glossary.md#instance-template).
+This module can create three different minimal sets of
+[service accounts](../../../docs/glossary.md#service-account),
+[IAM Roles](../../../docs/glossary.md#iam-roles), and
+[access scopes](../../../docs/glossary.md#access-scopes): controller; login;
+compute. These [service account](../../../docs/glossary.md#service-account) sets
+are intended to be passed to other sections of the slurm cluster configuration
+to define [instances templates](../../../docs/glossary.md#instance-template).
 
 ### Service Accounts
 
-These are the [IAM Roles](../../../docs/glossary.md#iam-roles) and [access scopes](../../../docs/glossary.md#access-scopes) for each [service account](../../../docs/glossary.md#service-account) type produced by this module.
+These are the [IAM Roles](../../../docs/glossary.md#iam-roles) and
+[access scopes](../../../docs/glossary.md#access-scopes) for each
+[service account](../../../docs/glossary.md#service-account) type produced by
+this module.
 
-Please refer to [Understanding IAM Roles](https://cloud.google.com/iam/docs/understanding-roles) for more information.
+Please refer to
+[Understanding IAM Roles](https://cloud.google.com/iam/docs/understanding-roles)
+for more information.
 
 #### Controller
 
-Intended to be attached to a controller [instance template](../../../docs/glossary.md#instance-template) for [slurm_controller_instance](../slurm_controller_instance/).
+Intended to be attached to a controller
+[instance template](../../../docs/glossary.md#instance-template) for
+[slurm_controller_instance](../slurm_controller_instance/).
 
 ##### Roles
 
@@ -54,7 +66,9 @@ Intended to be attached to a controller [instance template](../../../docs/glossa
 
 #### Compute
 
-Intended to be attached to compute [instance templates](../../../docs/glossary.md#instance-template) created by [slurm_partition](../slurm_partition/).
+Intended to be attached to compute
+[instance templates](../../../docs/glossary.md#instance-template) created by
+[slurm_partition](../slurm_partition/).
 
 ##### Roles
 
@@ -68,7 +82,9 @@ Intended to be attached to compute [instance templates](../../../docs/glossary.m
 
 #### Login
 
-Intended to be attached to login [instance templates](../../../docs/glossary.md#instance-template) for [slurm_login_instance](../slurm_login_instance/).
+Intended to be attached to login
+[instance templates](../../../docs/glossary.md#instance-template) for
+[slurm_login_instance](../slurm_login_instance/).
 
 ##### Roles
 
@@ -97,7 +113,11 @@ module "slurm_sa_iam" {
 }
 ```
 
-> **NOTE:** Because this module is not hosted on [Terraform Registry](../../../docs/glossary.md#terraform-registry), the version must be strictly controlled via [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision) syntax on the source line.
+> **NOTE:** Because this module is not hosted on
+> [Terraform Registry](../../../docs/glossary.md#terraform-registry), the
+> version must be strictly controlled via
+> [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
+> syntax on the source line.
 
 ## Dependencies
 
@@ -106,4 +126,5 @@ module "slurm_sa_iam" {
 
 ## Module API
 
-For the terraform module API reference, please see [README_TF.md](./README_TF.md).
+For the terraform module API reference, please see
+[README_TF.md](./README_TF.md).

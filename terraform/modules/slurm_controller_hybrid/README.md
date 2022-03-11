@@ -14,12 +14,15 @@
 
 ## Overview
 
-This is a submodule of [slurm_cluster](../slurm_cluster/).
-This module creates a [null_resource](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) to manage the task generating all files and cloud resources required to support a hybrid environment in [GCP](../../../docs/glossary.md#gcp).
+This is a submodule of [slurm_cluster](../slurm_cluster/). This module creates a
+[null_resource](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource)
+to manage the task generating all files and cloud resources required to support
+a hybrid environment in [GCP](../../../docs/glossary.md#gcp).
 
 ## Usage
 
-See [examples](../../examples/slurm_controller_hybrid/) directory for sample usages.
+See [examples](../../examples/slurm_controller_hybrid/) directory for sample
+usages.
 
 See below for a simple inclusion within your own terraform project.
 
@@ -37,7 +40,11 @@ module "slurm_controller_hybrid" {
 }
 ```
 
-> **NOTE:** Because this module is not hosted on [Terraform Registry](../../../docs/glossary.md#terraform-registry), the version must be strictly controlled via [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision) syntax on the source line.
+> **NOTE:** Because this module is not hosted on
+> [Terraform Registry](../../../docs/glossary.md#terraform-registry), the
+> version must be strictly controlled via
+> [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
+> syntax on the source line.
 
 ## Dependencies
 
@@ -54,4 +61,5 @@ Please review the dependencies and requirements of the following items:
 
 ## Module API
 
-For the terraform module API reference, please see [README_TF.md](./README_TF.md).
+For the terraform module API reference, please see
+[README_TF.md](./README_TF.md).

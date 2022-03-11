@@ -14,8 +14,12 @@
 
 ## Overview
 
-This module creates a [null_resource](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) to manage the task of destroying [VM](../../../docs/glossary.md#vm) instances that are labeled with the input [slurm_cluster_id](./README_TF.md#inputs).
-It can be configured with triggers that will cause it to re-run the task when infrastructure changes.
+This module creates a
+[null_resource](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource)
+to manage the task of destroying [VM](../../../docs/glossary.md#vm) instances
+that are labeled with the input [slurm_cluster_id](./README_TF.md#inputs). It
+can be configured with triggers that will cause it to re-run the task when
+infrastructure changes.
 
 ## Usage
 
@@ -31,7 +35,11 @@ module "slurm_destroy_nodes" {
 }
 ```
 
-> **NOTE:** Because this module is not hosted on [Terraform Registry](../../../docs/glossary.md#terraform-registry), the version must be strictly controlled via [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision) syntax on the source line.
+> **NOTE:** Because this module is not hosted on
+> [Terraform Registry](../../../docs/glossary.md#terraform-registry), the
+> version must be strictly controlled via
+> [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
+> syntax on the source line.
 
 ## Dependencies
 
@@ -44,4 +52,5 @@ module "slurm_destroy_nodes" {
 
 ## Module API
 
-For the terraform module API reference, please see [README_TF.md](./README_TF.md).
+For the terraform module API reference, please see
+[README_TF.md](./README_TF.md).

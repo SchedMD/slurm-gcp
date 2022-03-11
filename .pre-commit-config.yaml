@@ -4,6 +4,8 @@ repos:
     rev: 0.7.13
     hooks:
       - id: mdformat
+        args:
+        - --wrap=80
         exclude: README_TF\.md
         additional_dependencies:
         - mdformat-toc

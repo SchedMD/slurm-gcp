@@ -13,9 +13,11 @@
 
 ## Overview
 
-This example creates a [slurm_cluster](../../../../modules/slurm_cluster/README.md) in hybrid mode.
-All other components required to support a slurm cluster are minimally created as well: VPC; subnetwork; firewall rules; service accounts.
-It highly configurable through tfvars.
+This example creates a
+[slurm_cluster](../../../../modules/slurm_cluster/README.md) in hybrid mode. All
+other components required to support a slurm cluster are minimally created as
+well: VPC; subnetwork; firewall rules; service accounts. It highly configurable
+through tfvars.
 
 ## Dependencies
 
@@ -35,4 +37,5 @@ Then perform the following commands on the root directory:
 - `terraform init` to get the plugins
 - `terraform plan -var-file=example.tfvars` to see the infrastructure plan
 - `terraform apply -var-file=example.tfvars` to apply the infrastructure build
-- `terraform destroy -var-file=example.tfvars` to destroy the built infrastructure
+- `terraform destroy -var-file=example.tfvars` to destroy the built
+  infrastructure

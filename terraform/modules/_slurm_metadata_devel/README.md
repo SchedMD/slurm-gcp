@@ -11,7 +11,8 @@
 
 ## Overview
 
-This module creates development project metadata for a [Slurm](../../../docs/glossary.md#slurm) cluster.
+This module creates development project metadata for a
+[Slurm](../../../docs/glossary.md#slurm) cluster.
 
 > **NOTE:** This module is only intended to be used by Slurm modules.
 
@@ -21,4 +22,5 @@ This module creates development project metadata for a [Slurm](../../../docs/glo
 
 ## Module API
 
-For the terraform module API reference, please see [README_TF.md](./README_TF.md).
+For the terraform module API reference, please see
+[README_TF.md](./README_TF.md).

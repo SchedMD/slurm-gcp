@@ -15,14 +15,19 @@
 
 ## Overview
 
-This is a submodule of [slurm_cluster](../slurm_cluster/).
-This module creates an [instance template](../../../docs/glossary.md#instance-template) intended to be used by [slurm_controller_instance](../slurm_controller_instance/), and [slurm_login_instance](../slurm_login_instance/), and [slurm_partition](../slurm_partition/).
+This is a submodule of [slurm_cluster](../slurm_cluster/). This module creates
+an [instance template](../../../docs/glossary.md#instance-template) intended to
+be used by [slurm_controller_instance](../slurm_controller_instance/), and
+[slurm_login_instance](../slurm_login_instance/), and
+[slurm_partition](../slurm_partition/).
 
-> **NOTE:** [slurm_cluster_name](./README_TF.md#inputs) is appended to network [tags](./README_TF.md#inputs).
+> **NOTE:** [slurm_cluster_name](./README_TF.md#inputs) is appended to network
+> [tags](./README_TF.md#inputs).
 
 ## Usage
 
-See [examples](../../examples/slurm_instance_template/) directory for sample usages.
+See [examples](../../examples/slurm_instance_template/) directory for sample
+usages.
 
 See below for a simple inclusion within your own terraform project.
 
@@ -43,7 +48,11 @@ module "slurm_instance_template" {
 }
 ```
 
-> **NOTE:** Because this module is not hosted on [Terraform Registry](../../../docs/glossary.md#terraform-registry), the version must be strictly controlled via [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision) syntax on the source line.
+> **NOTE:** Because this module is not hosted on
+> [Terraform Registry](../../../docs/glossary.md#terraform-registry), the
+> version must be strictly controlled via
+> [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
+> syntax on the source line.
 
 ## Dependencies
 
@@ -52,10 +61,16 @@ module "slurm_instance_template" {
 
 ### Service Account
 
-It is recommended to generate a [service account](../../../docs/glossary.md#service-account) via [slurm_sa_iam](../slurm_sa_iam/).
+It is recommended to generate a
+[service account](../../../docs/glossary.md#service-account) via
+[slurm_sa_iam](../slurm_sa_iam/).
 
-Otherwise reference [slurm_sa_iam](../slurm_sa_iam/README.md#service-accounts) to create a self managed compute [service account](../../../docs/glossary.md#service-account) and [IAM](../../../docs/glossary.md#iam).
+Otherwise reference [slurm_sa_iam](../slurm_sa_iam/README.md#service-accounts)
+to create a self managed compute
+[service account](../../../docs/glossary.md#service-account) and
+[IAM](../../../docs/glossary.md#iam).
 
 ## Module API
 
-For the terraform module API reference, please see [README_TF.md](./README_TF.md).
+For the terraform module API reference, please see
+[README_TF.md](./README_TF.md).

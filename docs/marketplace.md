@@ -11,16 +11,16 @@
 
 ## Deploy
 
-1. Go to the [SchedMD-Slurm-GCP](https://console.cloud.google.com/marketplace/product/schedmd-slurm-public/schedmd-slurm-gcp) listing in the GCP Marketplace.
-   ![](../img/market-screen1.png)
+1. Go to the
+   [SchedMD-Slurm-GCP](https://console.cloud.google.com/marketplace/product/schedmd-slurm-public/schedmd-slurm-gcp)
+   listing in the GCP Marketplace. ![](../img/market-screen1.png)
 
-1. Click “Launch”.
-   ![](../img/market-screen2.png)
+1. Click “Launch”. ![](../img/market-screen2.png)
 
 1. Some of the options provide defaults, others require input.
 
-1. By default, one partition is enabled.
-   Check the box “Enable partition” under the other “Slurm Compute Partition” sections to configure more partitions.
+1. By default, one partition is enabled. Check the box “Enable partition” under
+   the other “Slurm Compute Partition” sections to configure more partitions.
 
    ![](../img/market-screen3-2.png)
 
@@ -40,7 +40,8 @@
 
    ![](../img/market-screen5-2.png)
 
-1. Provided are some recommended steps to verify the Slurm cluster is working as expected.
+1. Provided are some recommended steps to verify the Slurm cluster is working as
+   expected.
 
    - Summarize node status.
 
@@ -66,4 +67,5 @@
 
 1. Click "DELETE" and confirm action.
 
-   > **WARNING:** Compute nodes are not cleaned up in "DELETE" action; compute nodes must be manually destroyed.
+   > **WARNING:** Compute nodes are not cleaned up in "DELETE" action; compute
+   > nodes must be manually destroyed.

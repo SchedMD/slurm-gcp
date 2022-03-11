@@ -14,12 +14,16 @@
 
 ## Overview
 
-This module creates a [null_resource](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) to manage the task of publishing a pubsub message to a cluster topic.
-It can be configured with triggers that will cause it to re-run the task when infrastructure changes.
+This module creates a
+[null_resource](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource)
+to manage the task of publishing a pubsub message to a cluster topic. It can be
+configured with triggers that will cause it to re-run the task when
+infrastructure changes.
 
 ## Usage
 
-See [examples](../../examples/slurm_notify_cluster/) directory for sample usages.
+See [examples](../../examples/slurm_notify_cluster/) directory for sample
+usages.
 
 See below for a simple inclusion within your own terraform project.
 
@@ -33,7 +37,11 @@ module "slurm_notify_cluster" {
 }
 ```
 
-> **NOTE:** Because this module is not hosted on [Terraform Registry](../../../docs/glossary.md#terraform-registry), the version must be strictly controlled via [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision) syntax on the source line.
+> **NOTE:** Because this module is not hosted on
+> [Terraform Registry](../../../docs/glossary.md#terraform-registry), the
+> version must be strictly controlled via
+> [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
+> syntax on the source line.
 
 ## Dependencies
 
@@ -44,4 +52,5 @@ module "slurm_notify_cluster" {
 
 ## Module API
 
-For the terraform module API reference, please see [README_TF.md](./README_TF.md).
+For the terraform module API reference, please see
+[README_TF.md](./README_TF.md).

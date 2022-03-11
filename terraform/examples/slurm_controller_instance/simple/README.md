@@ -14,7 +14,9 @@
 
 ## Overview
 
-This example creates a [slurm_controller_instance](../../../modules/slurm_controller_instance/) from [slurm_instance_template](../../../modules/slurm_instance_template/).
+This example creates a
+[slurm_controller_instance](../../../modules/slurm_controller_instance/) from
+[slurm_instance_template](../../../modules/slurm_instance_template/).
 
 ## Usage
 
@@ -25,13 +27,15 @@ Then perform the following commands on the root directory:
 - `terraform init` to get the plugins
 - `terraform plan -var-file=example.tfvars` to see the infrastructure plan
 - `terraform apply -var-file=example.tfvars` to apply the infrastructure build
-- `terraform destroy -var-file=example.tfvars` to destroy the built infrastructure
+- `terraform destroy -var-file=example.tfvars` to destroy the built
+  infrastructure
 
 ## Dependencies
 
 - [Compute Engine](../../../../docs/glossary.md#compute-engine) is enabled.
 - [Secret Manager](../../../../docs/glossary.md#secret-manager) is enabled.
-- [Private Google Access](../../../../docs/glossary.md#private-google-access) is enabled.
+- [Private Google Access](../../../../docs/glossary.md#private-google-access) is
+  enabled.
 - [Python](../../../../docs/glossary.md#python) is installed.
   - Required Version: `>= 3.6.0, < 4.0.0`
 - [Pip](../../../../docs/glossary.md#pip) packages are installed:
@@ -39,4 +43,5 @@ Then perform the following commands on the root directory:
 
 ## Example API
 
-For the terraform example API reference, please see [README_TF.md](./README_TF.md).
+For the terraform example API reference, please see
+[README_TF.md](./README_TF.md).

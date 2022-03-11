@@ -15,19 +15,33 @@
 
 ## Overview
 
-This is a submodule of [slurm_cluster](../slurm_cluster/).
-It creates a Slurm partition for [slurm_controller_instance](../slurm_controller_instance/) or [slurm_controller_hybrid](../slurm_controller_hybrid/).
+This is a submodule of [slurm_cluster](../slurm_cluster/). It creates a Slurm
+partition for [slurm_controller_instance](../slurm_controller_instance/) or
+[slurm_controller_hybrid](../slurm_controller_hybrid/).
 
-Conceptutally, a Slurm partition is a queue that is associated with compute resources, limits, and access controls.
-Users submit jobs to one or more partitions to have their jobs be completed against requested resources within their alloted limits and access.
+Conceptutally, a Slurm partition is a queue that is associated with compute
+resources, limits, and access controls. Users submit jobs to one or more
+partitions to have their jobs be completed against requested resources within
+their alloted limits and access.
 
-This module defines a partition and its resources -- most notably, compute nodes.
-Sets of compute nodes reside within a partition.
-Each set of compute nodes must resolve to an [instance template](../../../docs/glossary.md#instance-template).
-Either the [instance template](../../../docs/glossary.md#instance-template) is: created by definition -- module creates an [instance template](../../../docs/glossary.md#instance-template) using subset of input paramters; or by the [self link](../../../docs/glossary.md#self-link) of an [instance template](../../../docs/glossary.md#instance-template) that is managed outside of this module.
-Additionally, there are compute node parameters that will override certain properties of the [instance template](../../../docs/glossary.md#instance-template) when instanceated as a [VM](../../../docs/glossary.md#vm).
+This module defines a partition and its resources -- most notably, compute
+nodes. Sets of compute nodes reside within a partition. Each set of compute
+nodes must resolve to an
+[instance template](../../../docs/glossary.md#instance-template). Either the
+[instance template](../../../docs/glossary.md#instance-template) is: created by
+definition -- module creates an
+[instance template](../../../docs/glossary.md#instance-template) using subset of
+input paramters; or by the [self link](../../../docs/glossary.md#self-link) of
+an [instance template](../../../docs/glossary.md#instance-template) that is
+managed outside of this module. Additionally, there are compute node parameters
+that will override certain properties of the
+[instance template](../../../docs/glossary.md#instance-template) when
+instanceated as a [VM](../../../docs/glossary.md#vm).
 
-Compute instances created by [slurm_controller_instance](../slurm_controller_instance/README.md), using this partition, run [slurmd](../../../docs/glossary.md#slurmd) and [slurmstepd](../../../docs/glossary.md#slurmstepd).
+Compute instances created by
+[slurm_controller_instance](../slurm_controller_instance/README.md), using this
+partition, run [slurmd](../../../docs/glossary.md#slurmd) and
+[slurmstepd](../../../docs/glossary.md#slurmstepd).
 
 ## Usage
 
@@ -87,13 +101,23 @@ module "slurm_partition" {
 }
 ```
 
-> **NOTE:** Because this module is not hosted on [Terraform Registry](../../../docs/glossary.md#terraform-registry), the version must be strictly controlled via [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision) syntax on the source line.
+> **NOTE:** Because this module is not hosted on
+> [Terraform Registry](../../../docs/glossary.md#terraform-registry), the
+> version must be strictly controlled via
+> [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
+> syntax on the source line.
 
 ### Service Account
 
-It is recommended to generate a `compute` type [service account](../../../docs/glossary.md#service-account) via [slurm_sa_iam](../slurm_sa_iam/).
+It is recommended to generate a `compute` type
+[service account](../../../docs/glossary.md#service-account) via
+[slurm_sa_iam](../slurm_sa_iam/).
 
-Otherwise reference [compute service account and IAM](../slurm_sa_iam/README.md#compute) to create a self managed compute [service account](../../../docs/glossary.md#service-account) and [IAM](../../../docs/glossary.md#iam).
+Otherwise reference
+[compute service account and IAM](../slurm_sa_iam/README.md#compute) to create a
+self managed compute
+[service account](../../../docs/glossary.md#service-account) and
+[IAM](../../../docs/glossary.md#iam).
 
 ## Dependencies
 
@@ -106,4 +130,5 @@ Otherwise reference [compute service account and IAM](../slurm_sa_iam/README.md#
 
 ## Module API
 
-For the terraform module API reference, please see [README_TF.md](./README_TF.md).
+For the terraform module API reference, please see
+[README_TF.md](./README_TF.md).

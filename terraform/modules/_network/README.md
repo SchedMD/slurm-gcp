@@ -11,11 +11,11 @@
 
 ## Overview
 
-This module creates a network and a nat and router for each specified subnetwork.
+This module creates a network and a nat and router for each specified
+subnetwork.
 
-> **NOTE:**
-> This module is intended for example purposes.
-> For general usage, please consider using:
+> **NOTE:** This module is intended for example purposes. For general usage,
+> please consider using:
 >
 > - [terraform-google-modules/network/google](https://registry.terraform.io/modules/terraform-google-modules/network/google/latest)
 > - [terraform-google-modules/cloud-router/google](https://registry.terraform.io/modules/terraform-google-modules/cloud-router/google/latest)
@@ -27,4 +27,5 @@ This module creates a network and a nat and router for each specified subnetwork
 
 ## Module API
 
-For the terraform module API reference, please see [README_TF.md](./README_TF.md).
+For the terraform module API reference, please see
+[README_TF.md](./README_TF.md).
