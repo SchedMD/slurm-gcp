@@ -14,13 +14,14 @@
 ---
 
 dependencies:
+  - role: common
   - role: googlecloudplatform.google_cloud_ops_agents
     vars:
       agent_type: monitoring
       package_state: present
-      version: latest
+      version: 6.*.*
   - role: googlecloudplatform.google_cloud_ops_agents
     vars:
       agent_type: logging
       package_state: present
-      version: latest
+      version: 1.*.*
