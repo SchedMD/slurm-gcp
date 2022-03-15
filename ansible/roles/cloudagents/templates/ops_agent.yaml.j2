@@ -1,0 +1,113 @@
+# Copyright 2022 SchedMD LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+logging:
+  receivers:
+    mysql_error:
+      type: mysql_error
+    mysql_general:
+      type: mysql_general
+    mysql_slow:
+      type: mysql_slow
+    slurmdbd:
+      type: files
+      include_paths:
+      - /var/log/slurm/slurmdbd.log
+    slurmrestd:
+      type: files
+      include_paths:
+      - /var/log/slurm/slurmrestd.log
+    slurmctld:
+      type: files
+      include_paths:
+      - /var/log/slurm/slurmctld.log
+    slurmd:
+      type: files
+      include_paths:
+      - /var/log/slurm/slurmd.*.log
+    slurmeventd:
+      type: files
+      include_paths:
+      - /var/log/slurm/slurmeventd.log
+    slurm_resume:
+      type: files
+      include_paths:
+      - /var/log/slurm/resume.log
+    slurm_suspend:
+      type: files
+      include_paths:
+      - /var/log/slurm/suspend.log
+    slurm_sync:
+      type: files
+      include_paths:
+      - /var/log/slurm/slurmsync.log
+    syslog:
+      type: files
+      include_paths:
+      - /var/log/messages
+      - /var/log/syslog
+  processors:
+    parse_slurmlog:
+      type: parse_regex
+      field: message
+      regex: "^\[(?<time>[^ ]*)\] (?<message>(?<severity>(fatal|error|verbose|debug[0-9]?):)?.*)$"
+      time_key: time
+      time_format: "%Y-%m-%dT%H:%M:%S.%N"
+    parse_slurmlog2:
+      type: parse_regex
+      field: message
+      regex: "^(?<time>\S+ \S+) (?<process_id>\d+) (?<thread_id>\d+) (?<filename>[^ ]*) (?<severity>(CRITICAL|ERROR|WARNING|INFO|DEBUG)): (?<message>.*)$"
+      time_key: time
+      time_format: "%Y-%m-%d %H:%M:%S,%N"
+  service:
+    pipelines:
+      default_pipeline:
+        receivers:
+        - syslog
+      mysql:
+        receivers:
+        - mysql_error
+        - mysql_general
+        - mysql_slow
+      slurmlog_pipeline:
+        receivers:
+        - slurmdbd
+        - slurmrestd
+        - slurmctld
+        - slurmd
+        processors:
+        - parse_slurmlog
+      slurmlog2_pipeline:
+        receivers:
+        - slurmeventd
+        - slurm_resume
+        - slurm_suspend
+        - slurm_sync
+        processors:
+        - parse_slurmlog2
+metrics:
+  receivers:
+    hostmetrics:
+      type: hostmetrics
+      collection_interval: 60s
+    mysql:
+      type: mysql
+  service:
+    pipelines:
+      default_pipeline:
+        receivers:
+        - hostmetrics
+      mysql:
+        receivers:
+        - mysql

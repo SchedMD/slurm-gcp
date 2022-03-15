@@ -13,7 +13,7 @@
 # limitations under the License.
 ---
 
-- name: Install Fluentd Config
+- name: Install 'ops-agent' Config
   template:
-    src: fluentd.conf.j2
-    dest: /etc/google-fluentd/config.d/slurmlogs.conf
+    src: ops_agent.yaml.j2
+    dest: /etc/google-cloud-ops-agent/config.yaml
