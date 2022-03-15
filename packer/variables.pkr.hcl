@@ -33,6 +33,22 @@ variable "zone" {
   type = string
 }
 
+##################
+# SSH CONNECTION #
+##################
+
+variable "use_iap" {
+  description = "Use IAP proxy when connecting by SSH"
+  type        = bool
+  default     = false
+}
+
+variable "use_os_login" {
+  description = "Use OS Login when connecting by SSH"
+  type        = bool
+  default     = false
+}
+
 #########
 # IMAGE #
 #########
@@ -160,4 +176,19 @@ EOD
     disk_size = number
     disk_type = string
   }))
+}
+
+###############################
+# CUSTOM ANSIBLE PROVISIONERS #
+###############################
+
+variable "extra_ansible_provisioners" {
+  description = "Extra ansible playbooks"
+  type = list(object({
+    playbook_file   = string
+    galaxy_file     = string
+    extra_arguments = list(string)
+    user            = string
+  }))
+  default = []
 }

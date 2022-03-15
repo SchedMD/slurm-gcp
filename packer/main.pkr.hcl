@@ -42,6 +42,8 @@ source "googlecompute" "image" {
 
   ### ssh ###
   ssh_clear_authorized_keys = true
+  use_iap                   = var.use_iap
+  use_os_login              = var.use_os_login
 
   ### network ###
   network_project_id = var.network_project_id
@@ -96,10 +98,10 @@ build {
     }
   }
 
-  ### provision ###
+  ### provision Slurm ###
   provisioner "ansible" {
     playbook_file = "${local.ansible_dir}/playbook.yml"
-    roles_path    = "${local.ansible_dir}/roles"
+    galaxy_file   = "${local.ansible_dir}/requirements.yml"
     ansible_env_vars = [
       "ANSIBLE_CONFIG=${local.ansible_dir}/ansible.cfg",
     ]
@@ -108,6 +110,20 @@ build {
       "slurm_version=${var.slurm_version}",
     ]
   }
+
+  dynamic "provisioner" {
+    # using labels this way effectively creates 'provisioner "ansible"' blocks
+    labels   = ["ansible"]
+    for_each = var.extra_ansible_provisioners
+
+    content {
+      playbook_file   = provisioner.value.playbook_file
+      roles_path      = provisioner.value.galaxy_file
+      extra_arguments = provisioner.value.extra_arguments
+      user            = provisioner.value.user
+    }
+  }
+
 
   ### post processor ###
   post-processor "manifest" {

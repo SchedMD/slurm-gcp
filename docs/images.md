@@ -73,13 +73,13 @@ cd ${slurm-gcp}/packer
 cp example.pkrvars.hcl vars.pkrvars.hcl
 vim vars.pkrvars.hcl
 
-# install required ansible-galaxy roles
-ansible-galaxy install --role-file ${slurm-gcp}/ansible/requirements.yml
-
 # build with packer
 packer init .
 packer build -var-file=vars.pkrvars.hcl .
 ```
+
+*Note*: the process above will install a Google Cloud Ansible role on your local
+workstation, most likely under `~/.ansible`.
 
 ### Customize
 
@@ -91,10 +91,21 @@ combination, if desired.
 - Role [scripts](./ansible/roles/scripts) runs all scripts globbed from
   [scripts.d](../ansible/scripts.d). This method is intended for simple
   configuration scripts.
-- Image configuration can be extended via ansible roles. Create more ansible
-  roles, as desired, and add them to the
-  [playbook.yml](../ansible/playbook.yml). This is intended for more complex or
-  ansible-based configurations.
+- Image configuration can be extended by specifying extra custom playbooks using
+  the input variable `extra_ansible_provisioners`. These playbooks will be
+  applied after Slurm installation is complete. For example, the following
+  configuration will run a playbook without any dependencies on extra Ansible
+  Galaxy roles:
+  ```hcl
+  extra_ansible_provisioners = [
+    {
+      playbook_file   = "/home/username/playbooks/custom.yaml"
+      galaxy_file     = null
+      extra_arguments = ["-vv"]
+      user            = null
+    },
+  ]
+  ```
 - The Slurm image can be built on top of an existing image. Configure the
   pkrvars file with `source_image` or `source_image_family` pointing to your
   image. This is intended for more complex configurations because of workflow or
