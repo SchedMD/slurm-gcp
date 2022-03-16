@@ -26,6 +26,7 @@ import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from functools import partialmethod, lru_cache
+from itertools import chain
 from pathlib import Path
 from subprocess import DEVNULL
 
@@ -477,8 +478,10 @@ def install_custom_scripts(clean=False):
         if not meta_entry:
             return False
         key, path = meta_entry
-        role, part = list(map(str, path.parents))[0:2]
-        role = role[:-2]
+        # path is <role>.d/script.sh or partition.d/<part>/script.sh
+        # role is <role> or 'partition', part is None or <part>
+        role, part, *_ = chain(path.parent.parts, (None,))
+        role = role[:-2]  # strip off added '.d'
 
         # login only needs compute scripts
         if lkp.instance_role == "login":
@@ -487,7 +490,7 @@ def install_custom_scripts(clean=False):
         # compute needs compute, prolog, epilog, and the matching partition
         if lkp.instance_role == "compute":
             script_types = ["compute", "prolog", "epilog"]
-            return role in script_types or part == lkp.node_partition_name()
+            return role in script_types or (part and part == lkp.node_partition_name())
         # controller downloads them all for good measure
         return True
 
