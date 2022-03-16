@@ -54,6 +54,8 @@ tags = [
 
 slurm_version = "21.08.4"
 
+prefix = "schedmd"
+
 ##########
 # BUILDS #
 ##########

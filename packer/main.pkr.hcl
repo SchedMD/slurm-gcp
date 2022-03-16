@@ -1,4 +1,4 @@
-# Copyright 2021 SchedMD LLC
+# Copyright 2021 ${var.prefix} LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -76,8 +76,8 @@ build {
       source_image        = source.value.source_image
       source_image_family = source.value.source_image_family
 
-      image_name        = "schedmd-v5-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}-{{timestamp}}"
-      image_family      = "schedmd-v5-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}"
+      image_name        = "${var.prefix}-v5-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}-{{timestamp}}"
+      image_family      = "${var.prefix}-v5-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}"
       image_description = "slurm-gcp-v5"
       image_licenses    = source.value.image_licenses
       image_labels      = source.value.labels
@@ -87,7 +87,7 @@ build {
       ssh_password = source.value.ssh_password
 
       ### instance ###
-      instance_name = "schedmd-v5-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}-{{timestamp}}"
+      instance_name = "${var.prefix}-v5-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}-{{timestamp}}"
       machine_type  = source.value.machine_type
       preemptible   = source.value.preemptible
       labels        = source.value.labels

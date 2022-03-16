@@ -105,6 +105,17 @@ variable "slurm_version" {
   }
 }
 
+variable "prefix" {
+  description = "Prefix for image and instance."
+  type        = string
+  default     = "schedmd"
+
+  validation {
+    condition     = can(regex("(^[a-z][a-z0-9]*$)", var.prefix))
+    error_message = "Variable 'prefix' must pass '(^[a-z][a-z0-9]*$)'."
+  }
+}
+
 ##########
 # BUILDS #
 ##########
