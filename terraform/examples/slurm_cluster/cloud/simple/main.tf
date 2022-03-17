@@ -34,7 +34,7 @@ locals {
     gpu                      = null
     instance_template        = null
     labels                   = {}
-    machine_type             = "n1-standard-1"
+    machine_type             = "n1-standard-4"
     metadata                 = {}
     min_cpu_platform         = null
     network_ip               = null
@@ -72,7 +72,7 @@ locals {
       gpu                      = null
       instance_template        = null
       labels                   = {}
-      machine_type             = "n1-standard-1"
+      machine_type             = "n1-standard-2"
       metadata                 = {}
       min_cpu_platform         = null
       network_ips              = []
@@ -105,7 +105,7 @@ locals {
       partition_name = "debug"
       partition_nodes = [
         {
-          count_dynamic = 10
+          count_dynamic = 20
           count_static  = 0
           group_name    = "test"
           node_conf     = {}
@@ -123,7 +123,56 @@ locals {
           gpu                      = null
           instance_template        = null
           labels                   = {}
-          machine_type             = "n1-standard-1"
+          machine_type             = "c2-standard-4"
+          metadata                 = {}
+          min_cpu_platform         = null
+          on_host_maintenance      = null
+          preemptible              = false
+          service_account          = module.slurm_sa_iam["compute"].service_account
+          shielded_instance_config = null
+          source_image_family      = null
+          source_image_project     = null
+          source_image             = null
+          tags                     = []
+        },
+      ]
+      region             = null
+      subnetwork_project = null
+      subnetwork         = data.google_compute_subnetwork.default.self_link
+      zone_policy_allow  = []
+      zone_policy_deny   = []
+    },
+    {
+      enable_job_exclusive    = false
+      enable_placement_groups = false
+      network_storage         = []
+      partition_conf          = {}
+      partition_d             = []
+      partition_name          = "debug2"
+      partition_nodes = [
+        {
+          count_dynamic = 10
+          count_static  = 0
+          group_name    = "test"
+          node_conf     = {}
+
+          additional_disks       = []
+          can_ip_forward         = false
+          disable_smt            = false
+          disk_auto_delete       = true
+          disk_labels            = {}
+          disk_size_gb           = 32
+          disk_type              = "pd-standard"
+          enable_confidential_vm = false
+          enable_oslogin         = true
+          enable_shielded_vm     = false
+          gpu = {
+            count = 1
+            type  = "nvidia-tesla-v100"
+          }
+          instance_template        = null
+          labels                   = {}
+          machine_type             = "c2-standard-4"
           metadata                 = {}
           min_cpu_platform         = null
           on_host_maintenance      = null

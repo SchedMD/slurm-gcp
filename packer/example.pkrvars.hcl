@@ -83,7 +83,7 @@ builds = [
     ssh_password = null
 
     ### instance ###
-    machine_type = "n2d-standard-4"
+    machine_type = "n1-standard-4"
     preemptible  = false
 
     ### root of trust ###
@@ -107,7 +107,7 @@ builds = [
     ssh_password = null
 
     ### instance ###
-    machine_type = "n2d-standard-4"
+    machine_type = "n1-standard-4"
     preemptible  = false
 
     ### root of trust ###
@@ -131,7 +131,7 @@ builds = [
     ssh_password = null
 
     ### instance ###
-    machine_type = "n2d-standard-4"
+    machine_type = "n1-standard-4"
     preemptible  = false
 
     ### root of trust ###
@@ -155,7 +155,7 @@ builds = [
     ssh_password = null
 
     ### instance ###
-    machine_type = "n2d-standard-4"
+    machine_type = "n1-standard-4"
     preemptible  = false
 
     ### root of trust ###
@@ -179,7 +179,7 @@ builds = [
     ssh_password = null
 
     ### instance ###
-    machine_type = "n2d-standard-4"
+    machine_type = "n1-standard-4"
     preemptible  = false
 
     ### root of trust ###

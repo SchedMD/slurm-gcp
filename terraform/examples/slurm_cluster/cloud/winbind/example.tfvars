@@ -22,7 +22,7 @@ project_id = "<PROJECT_ID>"
 
 slurm_cluster_name = "winbind"
 
-region = "<REGION>"
+region = "us-central1"
 
 subnetwork_project = "<SUBNETWORK_PROJECT>"
 subnetwork         = "<SUBNETWORK>"
