@@ -194,7 +194,6 @@ def main(arg_nodes, arg_job_id):
 
     if (arg_job_id and
             cfg.instance_defs[pid].enable_placement and
-            cfg.instance_defs[pid].machine_type.split('-')[0] == "c2" and
             len(node_list) > 1):
         delete_placement_groups(compute, node_list, arg_job_id)
 
