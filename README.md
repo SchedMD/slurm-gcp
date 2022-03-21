@@ -46,13 +46,19 @@ meet your computing needs.
 
 ### Cloud
 
+All Slurm cluster resources will exist in the cloud. 
+
 See the [Cloud Cluster Guide](./docs/cloud.md) for details.
 
 ### Hybrid
 
+Only Slurm compute nodes will exist in the cloud. The Slurm controller and other Slurm components will remain in the onprem environment.
+
 See the [Hybrid Cluster Guide](./docs/hybrid.md) for details.
 
-### Federation
+### Multi-Cluster/Federation
+
+Two or more clusters are connected, allowing for jobs to be submitted from and ran on different clusters. This can be a mix between onprem and cloud clusters.
 
 See the [Federated Cluster Guide](./docs/federation.md) for details.
 
