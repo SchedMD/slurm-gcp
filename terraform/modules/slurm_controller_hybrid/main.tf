@@ -62,22 +62,23 @@ locals {
   )
 
   config = yamlencode({
-    slurm_cluster_name = var.slurm_cluster_name
-    project            = var.project_id
-
-    pubsub_topic_id = google_pubsub_topic.this.name
-
-    slurm_cluster_id     = local.slurm_cluster_id
     enable_bigquery_load = var.enable_bigquery_load
+    project              = var.project_id
+    pubsub_topic_id      = google_pubsub_topic.this.name
+    slurm_cluster_id     = local.slurm_cluster_id
+    slurm_cluster_name   = var.slurm_cluster_name
 
+    # storage
     network_storage       = var.network_storage
     login_network_storage = var.login_network_storage
 
+    # slurm conf
     prolog_d         = [for x in google_compute_project_metadata_item.prolog_d : x.key]
     epilog_d         = [for x in google_compute_project_metadata_item.epilog_d : x.key]
     cloud_parameters = var.cloud_parameters
     partitions       = local.partitions
 
+    # hybrid
     google_app_cred_path = local.google_app_cred_path
     output_dir           = local.output_dir
     slurm_bin_dir        = local.slurm_bin_dir
