@@ -34,6 +34,8 @@
     - [Slurmstepd](#slurmstepd)
   - [SPOT VM](#spot-vm)
   - [Terraform](#terraform)
+  - [TerraformUser](#terraformuser)
+  - [Terraform Project](#terraform-project)
   - [Terraform Registry](#terraform-registry)
   - [VM](#vm)
 
@@ -324,6 +326,17 @@ https://www.terraform.io/
 > Terraform is an open-source infrastructure as code software tool that provides
 > a consistent CLI workflow to manage hundreds of cloud services. Terraform
 > codifies cloud APIs into declarative configuration files.
+
+## TerraformUser
+
+The `TerraformUser` is the user who invokes the `terraform` command. This user
+must have correct permissions and [GCP IAM roles](#iam-roles) to create, delete,
+and modify resources as defined in the [terraform project](#terraform-project).
+
+## Terraform Project
+
+A terraform project is any directory that contains a set of terraform files
+(`*.tf`) which define providers, resources, and data.
 
 ## Terraform Registry
 

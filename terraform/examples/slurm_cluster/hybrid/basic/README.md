@@ -25,9 +25,12 @@ subnetwork; firewall rules; service accounts.
 
 Modify [example.tfvars](./example.tfvars) with required and desired values.
 
-Then perform the following commands on the root directory:
+Then perform the following commands on this
+[terraform project](../../../../../docs/glossary.md#terraform-project) root
+directory:
 
 - `terraform init` to get the plugins
+- `terraform validate -var-file=example.tfvars` to validate the configuration
 - `terraform plan -var-file=example.tfvars` to see the infrastructure plan
 - `terraform apply -var-file=example.tfvars` to apply the infrastructure build
 - `terraform destroy -var-file=example.tfvars` to destroy the built
