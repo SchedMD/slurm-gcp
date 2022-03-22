@@ -9,7 +9,6 @@
   - [GCP Marketplace](#gcp-marketplace)
   - [Terraform](#terraform)
     - [Quickstart Examples](#quickstart-examples)
-    - [Requirements](#requirements)
 
 <!-- mdformat-toc end -->
 
@@ -72,13 +71,3 @@ elements of the example cluster, which is useful for testing.
 > [slurm_cluster module](../terraform/modules/slurm_cluster/README.md) in your
 > own [terraform project](./glossary.md#terraform-project). It may be useful to
 > copy and modify one of the provided examples.
-
-### Requirements
-
-Please review the dependencies and requirements of the following items:
-
-- [slurm cluster](../terraform/modules/slurm_cluster/README.md)
-- [slurm_sa_iam](../terraform/modules/slurm_sa_iam/README.md)
-- [slurm_firewall_rules](../terraform/modules/slurm_firewall_rules/README.md)
-- VPC Network
-  - Subnetwork
