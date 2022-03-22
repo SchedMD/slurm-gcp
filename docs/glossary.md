@@ -6,7 +6,7 @@
   - [Access Scopes](#access-scopes)
   - [Ansible](#ansible)
   - [Compute Engine](#compute-engine)
-- [Federated Cluster](#federated-cluster)
+  - [Federated Cluster](#federated-cluster)
   - [Firewall Rules](#firewall-rules)
   - [GCP](#gcp)
   - [GCP Marketplace](#gcp-marketplace)
@@ -70,7 +70,7 @@ https://cloud.google.com/compute
 > Secure and customizable compute service that lets you create and run virtual
 > machines on Google’s infrastructure.
 
-# Federated Cluster
+## Federated Cluster
 
 https://slurm.schedmd.com/federation.html
 
