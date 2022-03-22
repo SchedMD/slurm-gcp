@@ -26,6 +26,8 @@ locals {
   )
 
   etc_dir = abspath("${path.module}/../../../etc")
+
+  service_account_email = data.google_compute_instance_template.controller_template.service_account[0].email
 }
 
 ##################
@@ -115,8 +117,6 @@ data "local_file" "cgroup_conf_tpl" {
 ##################
 
 data "google_compute_instance_template" "controller_template" {
-  count = var.cloudsql != null ? 1 : 0
-
   name = var.instance_template
 }
 
@@ -310,6 +310,13 @@ resource "google_pubsub_topic" "this" {
   }
 }
 
+resource "google_pubsub_topic_iam_member" "topic_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.this.id
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${local.service_account_email}"
+}
+
 ##########
 # PUBSUB #
 ##########
@@ -380,7 +387,7 @@ resource "google_secret_manager_secret_iam_member" "cloudsql_secret_accessor" {
 
   secret_id = google_secret_manager_secret.cloudsql[0].id
   role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${data.google_compute_instance_template.controller_template[0].service_account[0].email}"
+  member    = "serviceAccount:${local.service_account_email}"
 }
 
 ####################
