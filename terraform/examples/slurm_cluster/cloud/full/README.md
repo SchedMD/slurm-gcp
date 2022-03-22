@@ -15,11 +15,10 @@
 ## Overview
 
 This example creates a [slurm_cluster](../../../../modules/slurm_cluster/) in
-cloud mode. All other components required to support a slurm cluster are
-minimally created as well: VPC; subnetwork; firewall rules; service accounts. It
-is highly configurable through tfvars.
+cloud mode. It is highly configurable through tfvars.
 
-This is a complete end-to-end example, yet is highly configurable.
+All other components required to support the slurm cluster are minimally created
+as well: VPC; subnetwork; firewall rules; service accounts.
 
 ## Usage
 
