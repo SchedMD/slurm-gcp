@@ -57,7 +57,6 @@ Intended to be attached to a controller
 - `roles/iam.serviceAccountUser`
 - `roles/logging.logWriter`
 - `roles/monitoring.metricWriter`
-- `roles/pubsub.subscriber`
 
 ##### Scopes
 
@@ -73,7 +72,6 @@ Intended to be attached to compute
 
 - `roles/logging.logWriter`
 - `roles/monitoring.metricWriter`
-- `roles/pubsub.subscriber`
 
 ##### Scopes
 
