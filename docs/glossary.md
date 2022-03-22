@@ -17,6 +17,8 @@
   - [MUNGE](#munge)
   - [OS Login](#os-login)
   - [Packer](#packer)
+  - [PackerUser](#packeruser)
+  - [Packer Project](#packer-project)
   - [Preemptible VM](#preemptible-vm)
   - [Private Google Access](#private-google-access)
   - [Python](#python)
@@ -167,6 +169,17 @@ https://www.packer.io/
 > configuration.
 
 https://www.packer.io/downloads.html
+
+## PackerUser
+
+The `PackerUser` is the user who invokes the `packer` command. This user must
+have correct permissions and [GCP IAM roles](#iam-roles) to create, delete, and
+modify resources as defined in the [packer project](#packer-project).
+
+## Packer Project
+
+A packer project is any directory that contains a set of packer files
+(`*.pkr.hcl`) which define providers, resources, and data.
 
 ## Preemptible VM
 
