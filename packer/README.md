@@ -32,4 +32,6 @@ Then perform the following commands on the
 ## Dependencies
 
 - [ansible](../docs/glossary.md#ansible)
+  - `pip3 install -r requirements.txt --user`
 - [packer](../docs/glossary.md#packer)
+  - [download](https://www.packer.io/downloads.html)
