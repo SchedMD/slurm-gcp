@@ -65,21 +65,9 @@ public image.
 
 ### Creation
 
-```sh
-# move to packer dir
-cd ${slurm-gcp}/packer
+Install software dependencies and build images from configation.
 
-# copy and edit packer configuration
-cp example.pkrvars.hcl vars.pkrvars.hcl
-vim vars.pkrvars.hcl
-
-# build with packer
-packer init .
-packer build -var-file=vars.pkrvars.hcl .
-```
-
-*Note*: the process above will install a Google Cloud Ansible role on your local
-workstation, most likely under `~/.ansible`.
+See [slurm-gcp packer project](../packer/README.md) for details.
 
 ### Customize
 
