@@ -158,7 +158,7 @@ controller_instance_config = {
     # label0 = "value0"
     # label1 = "value1"
   }
-  machine_type = "n2d-standard-4"
+  machine_type = "n1-standard-4"
   metadata = {
     # metadata0 = "value0"
     # metadata1 = "value1"
