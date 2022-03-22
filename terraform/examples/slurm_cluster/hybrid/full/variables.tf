@@ -159,7 +159,12 @@ EOD
 ##############
 
 variable "controller_hybrid_config" {
-  description = "Creates a hybrid controller with given configuration."
+  description = <<EOD
+Creates a hybrid controller with given configuration.
+
+Variables map to:
+- [slurm_controller_hybrid](../../../../modules/slurm_controller_hybrid/README_TF.md#inputs)
+EOD
   type = object({
     google_app_cred_path = string
     slurm_bin_dir        = string
@@ -179,7 +184,13 @@ variable "controller_hybrid_config" {
 ##############
 
 variable "partitions" {
-  description = "Cluster partition configuration as a list."
+  description = <<EOD
+Cluster partition configuration as a list.
+
+Variables map to:
+- [slurm_partition](../../../../modules/slurm_partition/README_TF.md#inputs)
+- [slurm_instance_template](../../../../modules/slurm_instance_template/README_TF.md#inputs)
+EOD
   type = list(object({
     enable_job_exclusive    = bool
     enable_placement_groups = bool

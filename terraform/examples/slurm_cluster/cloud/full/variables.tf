@@ -215,6 +215,10 @@ EOD
 variable "controller_instance_config" {
   description = <<EOD
 Creates a controller instance with given configuration.
+
+Variables map to:
+- [slurm_instance_template](../../../../modules/slurm_instance_template/README_TF.md#inputs)
+- [slurm_controller_instance](../../../../modules/slurm_controller_instance/README_TF.md#inputs)
 EOD
   type = object({
     access_config = list(object({
@@ -304,7 +308,13 @@ EOD
 #########
 
 variable "login_nodes" {
-  description = "List of slurm login instance definitions."
+  description = <<EOD
+List of slurm login instances.
+
+Variables map to:
+- [slurm_instance_template](../../../../modules/slurm_instance_template/README_TF.md#inputs)
+- [slurm_login_instance](../../../../modules/slurm_login_instance/README_TF.md#inputs)
+EOD
   type = list(object({
     access_config = list(object({
       nat_ip       = string
@@ -363,7 +373,13 @@ variable "login_nodes" {
 ##############
 
 variable "partitions" {
-  description = "Cluster partition configuration as a list."
+  description = <<EOD
+Cluster partition configuration as a list.
+
+Variables map to:
+- [slurm_partition](../../../../modules/slurm_partition/README_TF.md#inputs)
+- [slurm_instance_template](../../../../modules/slurm_instance_template/README_TF.md#inputs)
+EOD
   type = list(object({
     enable_job_exclusive    = bool
     enable_placement_groups = bool
