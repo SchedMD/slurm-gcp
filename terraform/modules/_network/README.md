@@ -4,7 +4,6 @@
 
 - [Module: Network](#module-network)
   - [Overview](#overview)
-  - [Dependencies](#dependencies)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -20,10 +19,6 @@ subnetwork.
 > - [terraform-google-modules/network/google](https://registry.terraform.io/modules/terraform-google-modules/network/google/latest)
 > - [terraform-google-modules/cloud-router/google](https://registry.terraform.io/modules/terraform-google-modules/cloud-router/google/latest)
 > - [terraform-google-modules/cloud-nat/google](https://registry.terraform.io/modules/terraform-google-modules/cloud-nat/google/latest)
-
-## Dependencies
-
-- [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
 
 ## Module API
 

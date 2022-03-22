@@ -4,7 +4,6 @@
 
 - [Module: Slurm Instance](#module-slurm-instance)
   - [Overview](#overview)
-  - [Dependencies](#dependencies)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -22,10 +21,6 @@ This module creates a [compute instance](../../../docs/glossary.md#vm) from
 
 > **WARNING:** The source image is not modified. Make sure to use a compatible
 > source image.
-
-## Dependencies
-
-- [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
 
 ## Module API
 

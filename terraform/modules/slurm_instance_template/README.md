@@ -7,7 +7,6 @@
 - [Module: Slurm Instance Template](#module-slurm-instance-template)
   - [Overview](#overview)
   - [Usage](#usage)
-  - [Dependencies](#dependencies)
     - [Service Account](#service-account)
   - [Module API](#module-api)
 
@@ -53,11 +52,6 @@ module "slurm_instance_template" {
 > version must be strictly controlled via
 > [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
 > syntax on the source line.
-
-## Dependencies
-
-- [Terraform](https://www.terraform.io/downloads.html) is installed.
-- [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
 
 ### Service Account
 

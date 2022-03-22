@@ -7,7 +7,6 @@
 - [Module: Slurm Controller Instance](#module-slurm-controller-instance)
   - [Overview](#overview)
   - [Usage](#usage)
-  - [Dependencies](#dependencies)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -60,19 +59,6 @@ module "slurm_controller_instance" {
 > version must be strictly controlled via
 > [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
 > syntax on the source line.
-
-## Dependencies
-
-Please review the dependencies and requirements of the following items:
-
-- [Terraform](https://www.terraform.io/downloads.html) is installed.
-- [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
-- [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
-- [Secret Manager](../../../docs/glossary.md#secret-manager) is enabled.
-- [Python](../../../docs/glossary.md#python) is installed.
-  - Required Version: `>= 3.6.0, < 4.0.0`
-- [Pip](../../../../../docs/glossary.md#pip) packages are installed.
-  - `pip3 install -r ../../../scripts/requirements.txt --user`
 
 ## Module API
 

@@ -7,7 +7,6 @@
 - [Module: Slurm Login Instance](#module-slurm-login-instance)
   - [Overview](#overview)
   - [Usage](#usage)
-  - [Dependencies](#dependencies)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -53,11 +52,6 @@ module "slurm_login_instance" {
 > version must be strictly controlled via
 > [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
 > syntax on the source line.
-
-## Dependencies
-
-- [Terraform](https://www.terraform.io/downloads.html) is installed.
-- [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
 
 ## Module API
 

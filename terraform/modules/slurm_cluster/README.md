@@ -47,6 +47,8 @@ module "slurm_cluster" {
 
 ## Dependencies
 
+Summary based on dependencies from child modules:
+
 - [Terraform](https://www.terraform.io/downloads.html) is installed.
 - [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
 - [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.

@@ -4,7 +4,6 @@
 
 - [Module: Slurm Metadata Devel](#module-slurm-metadata-devel)
   - [Overview](#overview)
-  - [Dependencies](#dependencies)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -15,10 +14,6 @@ This module creates development project metadata for a
 [Slurm](../../../docs/glossary.md#slurm) cluster.
 
 > **NOTE:** This module is only intended to be used by Slurm modules.
-
-## Dependencies
-
-- [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
 
 ## Module API
 

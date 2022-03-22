@@ -43,7 +43,6 @@ module "slurm_destroy_resource_policies" {
 
 ## Dependencies
 
-- [Terraform](https://www.terraform.io/downloads.html) is installed.
 - [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
 - [Python](../../../docs/glossary.md#python) is installed.
   - Required Version: `>= 3.6.0, < 4.0.0`
