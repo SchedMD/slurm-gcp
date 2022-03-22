@@ -47,8 +47,8 @@ module "slurm_destroy_resource_policies" {
 - [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
 - [Python](../../../docs/glossary.md#python) is installed.
   - Required Version: `>= 3.6.0, < 4.0.0`
-- [Pip](../../../docs/glossary.md#pip) packages are installed:
-  - [addict](https://pypi.org/project/addict/)
+- [Pip](../../../docs/glossary.md#pip) packages are installed.
+  - `pip3 install -r ../../../scripts/requirements.txt --user`
 
 ## Module API
 
