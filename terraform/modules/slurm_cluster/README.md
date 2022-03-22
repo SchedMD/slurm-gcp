@@ -51,11 +51,11 @@ module "slurm_cluster" {
 - [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
 - [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
 - [Secret Manager](../../../docs/glossary.md#secret-manager) is enabled.
-- [Private Google Access](../../../../../docs/glossary.md#private-google-access)
-  is enabled.
-- [Python](../../../../docs/glossary.md#python) is installed.
+- [Private Google Access](../../../docs/glossary.md#private-google-access) is
+  enabled.
+- [Python](../../../docs/glossary.md#python) is installed.
   - Required Version: `>= 3.6.0, < 4.0.0`
-- [Pip](../../../../../docs/glossary.md#pip) packages are installed.
+- [Pip](../../../../docs/glossary.md#pip) packages are installed.
   - `pip3 install -r ../../../scripts/requirements.txt --user`
 
 ## Module API
