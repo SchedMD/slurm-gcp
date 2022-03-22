@@ -51,6 +51,8 @@ module "slurm_cluster" {
 - [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
 - [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
 - [Secret Manager](../../../docs/glossary.md#secret-manager) is enabled.
+- [Bigquery](../../../docs/glossary.md#private-google-access) is enabled.
+  - Required when `enable_bigquery_load=true`.
 - [Private Google Access](../../../docs/glossary.md#private-google-access) is
   enabled.
 - [Python](../../../docs/glossary.md#python) is installed.

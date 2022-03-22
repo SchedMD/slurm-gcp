@@ -5,6 +5,7 @@
 - [Glossary](#glossary)
   - [Access Scopes](#access-scopes)
   - [Ansible](#ansible)
+  - [Bigquery](#bigquery)
   - [Compute Engine](#compute-engine)
   - [Federated Cluster](#federated-cluster)
   - [Firewall Rules](#firewall-rules)
@@ -62,6 +63,13 @@ https://www.ansible.com/
 > tools needed to implement enterprise-wide automation.
 
 https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html
+
+## Bigquery
+
+https://cloud.google.com/bigquery
+
+> Serverless, highly scalable, and cost-effective multicloud data warehouse
+> designed for business agility.
 
 ## Compute Engine
 
