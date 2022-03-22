@@ -8,10 +8,8 @@
   - [Overview](#overview)
   - [GCP Marketplace](#gcp-marketplace)
   - [Terraform](#terraform)
+    - [Quickstart Examples](#quickstart-examples)
     - [Requirements](#requirements)
-    - [Setup](#setup)
-      - [Maximal Configuration](#maximal-configuration)
-      - [Minimal Configuration](#minimal-configuration)
 
 <!-- mdformat-toc end -->
 
@@ -38,25 +36,42 @@ information.
 
 ## Terraform
 
-This deployment method leverages [Terraform](./glossary.md#terraform) to make
-cluster management composable, accountable, and consistant. While this method
-can be more complex, it is a robust option.
+This deployment method leverages [Terraform](./glossary.md#terraform) to deploy
+and manage cluster infrastructure. While this method can be more complex, it is
+a robust option. `slurm-gcp` provides terraform modules that enables you to
+create a Slurm cluster with ease.
 
 See the [slurm_cluster module](../terraform/modules/slurm_cluster/README.md) for
 details.
 
-See the [full example](../terraform/examples/slurm_cluster/cloud/full/README.md)
-for an all inclusive example. This example requires the most
-[roles](./glossary.md#iam-roles) but creates everything you need for a running
-slurm cluster. Depending on organizational constraints, this may be a great
-example as a starting point and for testing.
+If you are unfamiliar with [terraform](./glossary.md#terraform), then please
+checkout out the [documentation](https://www.terraform.io/docs) and
+[starter guide](https://learn.hashicorp.com/collections/terraform/gcp-get-started)
+to get you familiar.
+
+### Quickstart Examples
 
 See the
-[basic example](../terraform/examples/slurm_cluster/cloud/basic/README.md) for a
-minimal but configurable cluster example. This example requires the least
-[roles](./glossary.md#iam-roles) but does not create everything required for
-running a slurm cluster. Depending on organizational constraints, this may be a
-great example for production.
+[full cluster example](../terraform/examples/slurm_cluster/cloud/full/README.md)
+for a great example to get started with. It will create all the infrastructure,
+service accounts and IAM to minimally support a slurm cluster. The
+[TerraformUser](./glossary.md#terraformuser) will require more
+[roles](./glossary.md#iam-roles) to create the other supporting resources. You
+can configure certain elements of the example cluster, which is useful for
+testing.
+
+See the
+[basic cluster example](../terraform/examples/slurm_cluster/cloud/basic/README.md)
+for a great example to base a production configuration off of. It provides the
+bare minimum and leaves the rest to you. This allows for fine grain control over
+the cluster environment and removes [role](./glossary.md#iam-roles) requirements
+from the [TerraformUser](./glossary.md#terraformuser). You can configure certain
+elements of the example cluster, which is useful for testing.
+
+> **NOTE:** It is recommended to use the
+> [slurm_cluster module](../terraform/modules/slurm_cluster/README.md) in your
+> own [terraform project](./glossary.md#terraform-project). It may be useful to
+> copy and modify one of the provided examples.
 
 ### Requirements
 
@@ -67,17 +82,3 @@ Please review the dependencies and requirements of the following items:
 - [slurm_firewall_rules](../terraform/modules/slurm_firewall_rules/README.md)
 - VPC Network
   - Subnetwork
-
-### Setup
-
-#### Maximal Configuration
-
-1. Install software requirements.
-1. Deploy
-   [full example](../terraform/examples/slurm_cluster/cloud/full/README.md).
-
-#### Minimal Configuration
-
-1. Install software requirements.
-1. Deploy
-   [basic example](../terraform/examples/slurm_cluster/cloud/basic/README.md).
