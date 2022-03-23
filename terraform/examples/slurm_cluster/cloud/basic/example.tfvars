@@ -27,6 +27,8 @@ region = "us-central1"
 # *NOT* intended for production use
 # enable_devel = true
 
+enable_bigquery_load = false
+
 #################
 # CONFIGURATION #
 #################
