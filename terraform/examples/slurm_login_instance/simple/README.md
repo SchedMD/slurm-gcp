@@ -32,7 +32,7 @@ Then perform the following commands on the root directory:
 
 ## Dependencies
 
-- [Compute Engine](../../../../docs/glossary.md#compute-engine) is enabled.
+- [Compute Engine API](../../../../docs/glossary.md#compute-engine) is enabled.
 
 ## Example API
 

@@ -37,8 +37,10 @@ directory:
 
 ## Dependencies
 
-- [Compute Engine](../../../../../docs/glossary.md#compute-engine) is enabled.
-- [Secret Manager](../../../../../docs/glossary.md#secret-manager) is enabled.
+- [Compute Engine API](../../../../../docs/glossary.md#compute-engine) is
+  enabled.
+- [Secret Manager API](../../../../../docs/glossary.md#secret-manager) is
+  enabled.
 - [Python](../../../../../docs/glossary.md#python) is installed.
   - Required Version: `>= 3.6.0, < 4.0.0`
 - [Pip](../../../../../docs/glossary.md#pip) packages are installed.

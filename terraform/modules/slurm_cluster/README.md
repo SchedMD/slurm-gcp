@@ -51,12 +51,12 @@ Summary based on dependencies from child modules:
 
 - [Terraform](https://www.terraform.io/downloads.html) is installed.
 - [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
-- [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
-- [Secret Manager](../../../docs/glossary.md#secret-manager) is enabled.
+- [Compute Engine API](../../../docs/glossary.md#compute-engine) is enabled.
+- [Secret Manager API](../../../docs/glossary.md#secret-manager) is enabled.
   - Required when `cloudsql != null`.
-- [Pub/Sub](../../../docs/glossary.md#pubsub) is enabled.
+- [Pub/Sub API](../../../docs/glossary.md#pubsub) is enabled.
   - Required when `enable_reconfigure=true`
-- [Bigquery](../../../docs/glossary.md#private-google-access) is enabled.
+- [Bigquery API](../../../docs/glossary.md#private-google-access) is enabled.
   - Required when `enable_bigquery_load=true`.
 - [Private Google Access](../../../docs/glossary.md#private-google-access) is
   enabled.

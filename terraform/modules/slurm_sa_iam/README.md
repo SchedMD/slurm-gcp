@@ -119,7 +119,7 @@ module "slurm_sa_iam" {
 ## Dependencies
 
 - [Terraform](https://www.terraform.io/downloads.html) is installed.
-- [Compute Engine](../../../docs/glossary.md#compute-engine) is enabled.
+- [Compute Engine API](../../../docs/glossary.md#compute-engine) is enabled.
 
 ## Module API
 

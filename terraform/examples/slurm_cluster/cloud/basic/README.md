@@ -37,8 +37,10 @@ directory:
 
 ## Dependencies
 
-- [Compute Engine](../../../../../docs/glossary.md#compute-engine) is enabled.
-- [Secret Manager](../../../../../docs/glossary.md#secret-manager) is enabled.
+- [Compute Engine API](../../../../../docs/glossary.md#compute-engine) is
+  enabled.
+- [Secret Manager API](../../../../../docs/glossary.md#secret-manager) is
+  enabled.
 - [Private Google Access](../../../../../docs/glossary.md#private-google-access)
   is enabled.
 - [Python](../../../../../docs/glossary.md#python) is installed.
