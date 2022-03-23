@@ -267,7 +267,7 @@ partitions = [
       # #!/bin/bash
       # set -ex
       # echo "Hello, $(hostname) from $(dirname $0) !"
-      #     EOF
+      #   EOF
       # },
     ]
     partition_name = "debug"

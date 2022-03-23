@@ -112,7 +112,16 @@ partitions = [
       Default     = "YES"
       SuspendTime = 300
     }
-    partition_d    = []
+    partition_d = [
+      # {
+      #   filename = "hello_part_debug.sh"
+      #   content  = <<EOF
+      # #!/bin/bash
+      # set -ex
+      # echo "Hello, $(hostname) from $(dirname $0) !"
+      #   EOF
+      # },
+    ]
     partition_name = "debug"
     partition_nodes = [
       {
