@@ -27,7 +27,7 @@ locals {
 
   etc_dir = abspath("${path.module}/../../../etc")
 
-  service_account_email = data.google_compute_instance_template.controller_template.service_account[0].email
+  service_account_email = data.google_compute_instance_template.controller_template[0].service_account[0].email
 }
 
 ##################
@@ -55,7 +55,7 @@ locals {
     enable_bigquery_load = var.enable_bigquery_load
     cloudsql             = var.cloudsql != null ? true : false
     project              = var.project_id
-    pubsub_topic_id      = google_pubsub_topic.this.name
+    pubsub_topic_id      = var.enable_reconfigure ? google_pubsub_topic.this[0].name : null
     slurm_cluster_id     = local.slurm_cluster_id
     slurm_cluster_name   = var.slurm_cluster_name
 
@@ -116,6 +116,8 @@ data "local_file" "cgroup_conf_tpl" {
 ##################
 
 data "google_compute_instance_template" "controller_template" {
+  count = var.enable_reconfigure || var.cloudsql != null ? 1 : 0
+
   name = var.instance_template
 }
 
@@ -273,6 +275,8 @@ resource "google_compute_project_metadata_item" "epilog_d" {
 ##################
 
 resource "google_pubsub_schema" "this" {
+  count = var.enable_reconfigure ? 1 : 0
+
   name       = "${var.slurm_cluster_name}-slurm-events"
   type       = "PROTOCOL_BUFFER"
   definition = <<EOD
@@ -293,10 +297,12 @@ EOD
 #################
 
 resource "google_pubsub_topic" "this" {
+  count = var.enable_reconfigure ? 1 : 0
+
   name = "${var.slurm_cluster_name}-slurm-events-${random_string.topic_suffix.result}"
 
   schema_settings {
-    schema   = google_pubsub_schema.this.id
+    schema   = google_pubsub_schema.this[0].id
     encoding = "JSON"
   }
 
@@ -310,8 +316,10 @@ resource "google_pubsub_topic" "this" {
 }
 
 resource "google_pubsub_topic_iam_member" "topic_publisher" {
+  count = var.enable_reconfigure ? 1 : 0
+
   project = var.project_id
-  topic   = google_pubsub_topic.this.id
+  topic   = google_pubsub_topic.this[0].id
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${local.service_account_email}"
 }
@@ -324,8 +332,10 @@ module "slurm_pubsub" {
   source  = "terraform-google-modules/pubsub/google"
   version = "~> 3.0"
 
+  count = var.enable_reconfigure ? 1 : 0
+
   project_id = var.project_id
-  topic      = google_pubsub_topic.this.id
+  topic      = google_pubsub_topic.this[0].id
 
   create_topic = false
 
@@ -357,6 +367,8 @@ module "slurm_pubsub" {
 }
 
 resource "google_pubsub_subscription_iam_member" "controller_pull_subscription_sa_binding_subscriber" {
+  count = var.enable_reconfigure ? 1 : 0
+
   project      = var.project_id
   subscription = module.slurm_controller_instance.instances_details[0].name
   role         = "roles/pubsub.subscriber"
@@ -368,7 +380,7 @@ resource "google_pubsub_subscription_iam_member" "controller_pull_subscription_s
 }
 
 resource "google_pubsub_subscription_iam_member" "compute_pull_subscription_sa_binding_subscriber" {
-  for_each = local.sa_node_map
+  for_each = var.enable_reconfigure ? local.sa_node_map : {}
 
   project      = var.project_id
   subscription = each.key
@@ -420,7 +432,9 @@ resource "google_secret_manager_secret_iam_member" "cloudsql_secret_accessor" {
 module "notify_reconfigure" {
   source = "../slurm_notify_cluster"
 
-  topic = google_pubsub_topic.this.name
+  count = var.enable_reconfigure ? 1 : 0
+
+  topic = google_pubsub_topic.this[0].name
   type  = "reconfig"
 
   triggers = {

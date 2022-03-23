@@ -64,7 +64,7 @@ locals {
   config = yamlencode({
     enable_bigquery_load = var.enable_bigquery_load
     project              = var.project_id
-    pubsub_topic_id      = google_pubsub_topic.this.name
+    pubsub_topic_id      = var.enable_reconfigure ? google_pubsub_topic.this[0].name : null
     slurm_cluster_id     = local.slurm_cluster_id
     slurm_cluster_name   = var.slurm_cluster_name
 
@@ -272,6 +272,8 @@ resource "google_compute_project_metadata_item" "epilog_d" {
 ##################
 
 resource "google_pubsub_schema" "this" {
+  count = var.enable_reconfigure ? 1 : 0
+
   name       = "${var.slurm_cluster_name}-slurm-events"
   type       = "PROTOCOL_BUFFER"
   definition = <<EOD
@@ -292,10 +294,12 @@ EOD
 #################
 
 resource "google_pubsub_topic" "this" {
+  count = var.enable_reconfigure ? 1 : 0
+
   name = "${var.slurm_cluster_name}-slurm-events-${random_string.topic_suffix.result}"
 
   schema_settings {
-    schema   = google_pubsub_schema.this.id
+    schema   = google_pubsub_schema.this[0].id
     encoding = "JSON"
   }
 
@@ -316,8 +320,10 @@ module "slurm_pubsub" {
   source  = "terraform-google-modules/pubsub/google"
   version = "~> 3.0"
 
+  count = var.enable_reconfigure ? 1 : 0
+
   project_id = var.project_id
-  topic      = google_pubsub_topic.this.id
+  topic      = google_pubsub_topic.this[0].id
 
   create_topic = false
 
@@ -338,7 +344,7 @@ module "slurm_pubsub" {
 }
 
 resource "google_pubsub_subscription_iam_member" "compute_pull_subscription_sa_binding_subscriber" {
-  for_each = local.sa_node_map
+  for_each = var.enable_reconfigure ? local.sa_node_map : {}
 
   project      = var.project_id
   subscription = each.key

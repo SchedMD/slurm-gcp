@@ -22,6 +22,7 @@
   - [Packer Project](#packer-project)
   - [Preemptible VM](#preemptible-vm)
   - [Private Google Access](#private-google-access)
+  - [Pub/Sub](#pubsub)
   - [Python](#python)
   - [Pip](#pip)
   - [Service Account](#service-account)
@@ -207,6 +208,13 @@ https://cloud.google.com/vpc/docs/configure-private-google-access
 
 > Private Google Access also allows access to the external IP addresses used by
 > App Engine, including third-party App Engine-based services.
+
+## Pub/Sub
+
+https://cloud.google.com/pubsub/docs/overview
+
+> Pub/Sub allows services to communicate asynchronously, with latencies on the
+> order of 100 milliseconds.
 
 ## Python
 

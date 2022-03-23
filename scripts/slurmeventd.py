@@ -17,6 +17,7 @@
 
 import logging
 import re
+from time import sleep
 import setup
 import sys
 import util
@@ -119,6 +120,9 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
             # Fetch and write new config.yaml
             cfg = util.config_from_metadata()
+            if not cfg.pubsub_topic_id:
+                log.info("Auto reconfigure is disabled. Aborting...")
+                exit(0)
             util.save_config(cfg, util.CONFIG_FILE)
             util.cfg = cfg
             util.lkp = util.Lookup(cfg)
@@ -179,6 +183,11 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
 def main():
     config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
     sys.excepthook = handle_exception
+
+    cfg = util.config_from_metadata()
+    while not cfg.pubsub_topic_id:
+        sleep(300)
+        cfg = util.config_from_metadata()
 
     streaming_pull_future = subscriber.subscribe(subscription_path, callback=callback)
     log.info(f"Listening for messages on '{subscription_path}'...")

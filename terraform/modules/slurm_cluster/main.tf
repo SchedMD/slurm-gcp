@@ -132,6 +132,7 @@ module "slurm_controller_instance" {
   compute_d             = var.compute_d
   enable_devel          = var.enable_devel
   enable_bigquery_load  = var.enable_bigquery_load
+  enable_reconfigure    = var.enable_reconfigure
   epilog_d              = var.epilog_d
   login_network_storage = var.login_network_storage
   network_storage       = var.network_storage
@@ -162,6 +163,7 @@ module "slurm_controller_hybrid" {
   compute_d            = var.compute_d
   enable_devel         = var.enable_devel
   enable_bigquery_load = var.enable_bigquery_load
+  enable_reconfigure   = var.enable_reconfigure
   epilog_d             = var.epilog_d
   partitions           = values(module.slurm_partition)[*]
   prolog_d             = var.prolog_d

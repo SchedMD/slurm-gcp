@@ -325,6 +325,17 @@ variable "enable_devel" {
   default     = false
 }
 
+variable "enable_reconfigure" {
+  description = <<EOD
+Enables automatic Slurm reconfigure on cluster delta (e.g. partition).
+Configuration files will be regenerated and propagated.
+
+NOTE: Requires Google PubSub API.
+EOD
+  type        = bool
+  default     = true
+}
+
 variable "enable_bigquery_load" {
   description = "Enable loading of cluster job usage into big query"
   type        = bool

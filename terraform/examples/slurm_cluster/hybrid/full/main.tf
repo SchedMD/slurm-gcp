@@ -137,6 +137,7 @@ module "slurm_cluster" {
   controller_hybrid_config = var.controller_hybrid_config
   enable_devel             = var.enable_devel
   enable_bigquery_load     = var.enable_bigquery_load
+  enable_reconfigure       = var.enable_reconfigure
   epilog_d                 = var.epilog_d
   enable_hybrid            = true
   partitions               = local.partitions

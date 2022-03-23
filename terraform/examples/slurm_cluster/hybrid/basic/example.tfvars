@@ -28,6 +28,7 @@ region = "us-central1"
 # enable_devel = true
 
 enable_bigquery_load = false
+enable_reconfigure   = true
 
 #################
 # CONFIGURATION #
