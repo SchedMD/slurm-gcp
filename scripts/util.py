@@ -448,7 +448,7 @@ def nodeset_prefix(node_group, part_name):
     return f"{cfg.slurm_cluster_name}-{part_name}-{node_group.group_name}"
 
 
-def nodeset_names(node_group, part_name):
+def nodeset_lists(node_group, part_name):
     """Return static and dynamic nodenames given a partition node type
     definition
     """
@@ -468,11 +468,11 @@ def nodeset_names(node_group, part_name):
     return static_nodelist, dynamic_nodelist
 
 
-def to_hostlist(nodelist):
+def to_hostlist(nodenames):
     """make hostlist from list of node names"""
     # use tmp file because list could be large
     tmp_file = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
-    tmp_file.writelines("\n".join(nodelist))
+    tmp_file.writelines("\n".join(nodenames))
     tmp_file.close()
     log.debug("tmp_file = {}".format(tmp_file.name))
 
@@ -482,14 +482,23 @@ def to_hostlist(nodelist):
     return hostlist
 
 
-def static_nodeset():
-    return filter(
-        None,
-        (
-            nodeset_names(node, part.partition_name)[0]
-            for part in cfg.partitions.values()
-            for node in part.partition_nodes.values()
-        ),
+def to_hostnames(nodelist):
+    """make list of hostnames from hostlist expression"""
+    hostlist = ",".join(nodelist)
+    hostnames = run(f"{lkp.scontrol} show hostnames {hostlist}").stdout.splitlines()
+    return hostnames
+
+
+def static_nodelist():
+    return list(
+        filter(
+            None,
+            (
+                nodeset_lists(node, part.partition_name)[0]
+                for part in cfg.partitions.values()
+                for node in part.partition_nodes.values()
+            ),
+        )
     )
 
 

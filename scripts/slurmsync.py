@@ -23,7 +23,7 @@ from pathlib import Path
 from collections import namedtuple
 
 import util
-from util import run, seperate, batch_execute, static_nodeset, to_hostlist
+from util import run, seperate, batch_execute, static_nodelist
 from util import lkp, cfg, compute, dirs
 from suspend import delete_instances
 
@@ -81,7 +81,7 @@ def sync_slurm():
     }
 
     gcp_instances = lkp.instances()
-    static_set = set(static_nodeset())
+    static_set = set(util.to_hostnames(static_nodelist()))
 
     to_down = []
     to_idle = []
@@ -128,7 +128,7 @@ def sync_slurm():
         log.info(
             "{} stopped/deleted instances ({})".format(len(to_down), ",".join(to_down))
         )
-        hostlist = to_hostlist(to_down)
+        hostlist = util.to_hostlist(to_down)
         run(
             f"{lkp.scontrol} update nodename={hostlist} state=down "
             "reason='Instance stopped/deleted'"
@@ -139,14 +139,14 @@ def sync_slurm():
 
     if len(to_idle):
         log.info("{} instances to idle ({})".format(len(to_idle), ",".join(to_idle)))
-        hostlist = to_hostlist(to_idle)
+        hostlist = util.to_hostlist(to_idle)
         run(f"{lkp.scontrol} update nodename={hostlist} state=resume")
 
     if len(to_resume):
         log.info(
             "{} instances to resume ({})".format(len(to_resume), ",".join(to_resume))
         )
-        hostlist = to_hostlist(to_resume)
+        hostlist = util.to_hostlist(to_resume)
         # run(f"{lkp.scontrol} update nodename={hostlist} state=power_down_force")
         run(f"{lkp.scontrol} update nodename={hostlist} state=power_up")
 
@@ -160,7 +160,7 @@ def sync_slurm():
         and (name not in slurm_nodes or "POWERED_DOWN" in slurm_nodes[name].flags)
     ]
     if len(orphans):
-        hostlist = to_hostlist(orphans)
+        hostlist = util.to_hostlist(orphans)
         log.info(f"found orphaned instances, deleting {hostlist}")
         delete_instances(orphans)
 

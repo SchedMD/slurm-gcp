@@ -34,7 +34,7 @@ from addict import Dict as NSDict
 
 import util
 from util import run, instance_metadata, project_metadata, seperate
-from util import nodeset_prefix, nodeset_names, static_nodeset
+from util import nodeset_prefix, nodeset_lists, static_nodelist
 from util import access_secret_version
 from util import lkp, cfg, dirs, slurmdirs
 import slurmsync
@@ -217,7 +217,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
             gres = f"gpu:{template_info.gpu_count}"
 
         lines = [node_def]
-        static, dynamic = nodeset_names(node_group, part_name)
+        static, dynamic = nodeset_lists(node_group, part_name)
         nodeset = nodeset_prefix(node_group, part_name)
         if static:
             lines.append(
@@ -280,7 +280,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
         ]
         return "\n".join(lines)
 
-    static_nodes = ",".join(static_nodeset())
+    static_nodes = ",".join(static_nodelist())
     suspend_exc = (
         dict_to_conf(
             {
@@ -393,7 +393,7 @@ def gen_cloud_gres_conf(lkp):
             gpu_count = template_info.gpu_count
             if gpu_count == 0:
                 continue
-            gpu_nodes[gpu_count].extend(filter(None, nodeset_names(node, part_name)))
+            gpu_nodes[gpu_count].extend(filter(None, nodeset_lists(node, part_name)))
 
     lines = [
         dict_to_conf(
