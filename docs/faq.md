@@ -20,6 +20,7 @@
     - [Why did setup.py fail?](#why-did-setuppy-fail)
     - [How do I reduce compute costs?](#how-do-i-reduce-compute-costs)
     - [How do I limit user access to only using login nodes?](#how-do-i-limit-user-access-to-only-using-login-nodes)
+    - [What Slurm image do I use for production?](#what-slurm-image-do-i-use-for-production)
 
 <!-- mdformat-toc end -->
 
@@ -195,3 +196,18 @@ accross all instances and allows easy user control with
 1. Add group as a member with the **IAP-secured Tunnel User** role. Please see
    [Enabling IAP for Compute Engine](https://cloud.google.com/iap/docs/enabling-compute-howto)
    for mor information.
+
+### What Slurm image do I use for production?
+
+By default, the [slurm_cluster](../terraform/modules/slurm_cluster/README.md)
+terraform module uses the latest Slurm image family (e.g.
+`schedmd-v5-slurm-21-08-6-hpc-centos-7`). As new slurm image families are
+released, coenciding with periodic Slurm releases, the terraform module will be
+updated to track the newest image family by setting it as the new default. This
+update can be considered a breaking change.
+
+In a production setting, it is recommended to explicitly set an image family.
+Doing so will prevent `slurm-gcp` changes to the default image family from
+negatively impacting your cluster. Moreover, the controller and all other
+instances may be force replaced (destroyed, then deployed) when
+`terraform apply` detects that the image family of Slurm instances has changed.
