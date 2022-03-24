@@ -27,7 +27,11 @@ locals {
 
   etc_dir = abspath("${path.module}/../../../etc")
 
-  service_account_email = data.google_compute_instance_template.controller_template[0].service_account[0].email
+  service_account_email = (
+    var.enable_reconfigure || var.cloudsql != null
+    ? data.google_compute_instance_template.controller_template[0].service_account[0].email
+    : null
+  )
 }
 
 ##################
