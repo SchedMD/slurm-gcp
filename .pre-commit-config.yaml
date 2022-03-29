@@ -24,6 +24,15 @@ repos:
         exclude: README_TF\.md
         additional_dependencies:
         - mdformat-toc
+  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+    rev: 0.0.11
+    hooks:
+    - id: yamlfmt
+      args:
+      - --mapping=2
+      - --sequence=2
+      - --offset=0
+      - --width=80
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.64.0
     hooks:
