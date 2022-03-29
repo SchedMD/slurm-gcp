@@ -195,10 +195,10 @@ builds = [
 
 # add extra verbosity arguments to ensure stdout/stderr appear in output
 extra_ansible_provisioners = [
-#  {
-#    playbook_file = "/home/user/playbooks/custom.yaml"
-#    galaxy_file = null
-#    extra_arguments = ["-vv"]
-#    user = null
-#  },
+  #  {
+  #    playbook_file = "/home/user/playbooks/custom.yaml"
+  #    galaxy_file = null
+  #    extra_arguments = ["-vv"]
+  #    user = null
+  #  },
 ]
