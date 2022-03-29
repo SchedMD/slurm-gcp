@@ -38,14 +38,8 @@ directory:
 
 ## Dependencies
 
-- [Compute Engine API](../../../../../docs/glossary.md#compute-engine) is
-  enabled.
-- [Secret Manager API](../../../../../docs/glossary.md#secret-manager) is
-  enabled.
-- [Python](../../../../../docs/glossary.md#python) is installed.
-  - Required Version: `>= 3.6.0, < 4.0.0`
-- [Pip](../../../../../docs/glossary.md#pip) packages are installed.
-  - `pip3 install -r ../../../../../scripts/requirements.txt --user`
+See
+[slurm_cluster dependencies](../../../../modules/slurm_cluster/README.md#dependencies).
 
 ## Example API
 
