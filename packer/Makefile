@@ -1,19 +1,44 @@
-.PHONY: init validate inspect build debug format
+# Two options:
+# (1) Use `make [COMMAND] PKRHCL=example.pkr.hclvars`
+# (2) Use `make [COMMAND]` and example.auto.pkr.hclvars
+PKRHCL=
 
+.PHONY: init
 init:
 	packer init .
 
+.PHONY: validate
 validate:
-	packer validate -var-file=vars.pkrvars.hcl .
+        ifeq ($(strip $(PKRHCL)),)
+	packer validate .
+        else
+	packer validate -var-file=$(PKRHCL) .
+        endif
 
-inspect:
-	packer inspect -var-file=vars.pkrvars.hcl .
+.PHONY: inspect
+inspect: validate
+        ifeq ($(strip $(PKRHCL)),)
+	packer inspect .
+        else
+	packer inspect -var-file=$(PKRHCL) .
+        endif
 
+.PHONY: build
 build: init validate
-	packer build -var-file=vars.pkrvars.hcl .
+        ifeq ($(strip $(PKRHCL)),)
+	packer build .
+        else
+	packer build -var-file=$(PKRHCL) .
+        endif
 
-debug: init validate
-	packer build -var-file=vars.pkrvars.hcl -debug .
+.PHONY: build-debug
+build-debug: init validate
+        ifeq ($(strip $(PKRHCL)),)
+	packer build -debug .
+        else
+	packer build -debug -var-file=$(PKRHCL) .
+        endif
 
-format:
+.PHONY: fmt
+fmt:
 	packer fmt -recursive .
