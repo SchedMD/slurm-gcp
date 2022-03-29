@@ -14,4 +14,4 @@
 # limitations under the License.
 
 - name: Include OS Family Dependent Tasks
-  include_tasks: "os/{{ansible_os_family}}.yml"
+  include_tasks: os/{{ansible_os_family}}.yml

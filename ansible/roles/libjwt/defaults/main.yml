@@ -17,7 +17,7 @@ libjwt_git_url: https://github.com/benmcollins/libjwt.git
 libjwt_version: v1.13.1
 
 libjwt_paths:
-  install: "{{paths.install}}"
-  src: "{{paths.src}}/libjwt"
-  etc: "{{paths.etc}}/libjwt"
-  build: "{{paths.build}}/libjwt/build"
+  install: '{{paths.install}}'
+  src: '{{paths.src}}/libjwt'
+  etc: '{{paths.etc}}/libjwt'
+  build: '{{paths.build}}/libjwt/build'

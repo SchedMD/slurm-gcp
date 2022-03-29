@@ -14,28 +14,28 @@
 # limitations under the License.
 
 common_packages:
-  - autoconf
-  - automake
-  - build-essential
-  - clang
-  - curl
-  - doxygen
-  - emacs
-  - g++
-  - gcc
-  - git
-  - graphviz
-  - htop
-  - iputils-ping
-  - jq
-  - libssl-dev
-  - libtool
-  - lynx
-  - make
-  - pdsh
-  - pkg-config
-  - python3
-  - tmux
-  - unzip
-  - valgrind
-  - vim
+- autoconf
+- automake
+- build-essential
+- clang
+- curl
+- doxygen
+- emacs
+- g++
+- gcc
+- git
+- graphviz
+- htop
+- iputils-ping
+- jq
+- libssl-dev
+- libtool
+- lynx
+- make
+- pdsh
+- pkg-config
+- python3
+- tmux
+- unzip
+- valgrind
+- vim

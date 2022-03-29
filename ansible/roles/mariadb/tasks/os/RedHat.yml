@@ -16,9 +16,9 @@
 - name: Install {{ansible_os_family}} Family Dependencies
   yum:
     name:
-      - mariadb
-      - mariadb-devel
-      - mariadb-server
+    - mariadb
+    - mariadb-devel
+    - mariadb-server
     state: present
 
 - name: Update Conf

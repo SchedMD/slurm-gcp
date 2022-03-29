@@ -16,12 +16,12 @@
 - name: Install {{ansible_os_family}} Family Kernel Packages
   yum:
     name:
-      - kernel
-      - kernel-devel
-      - kernel-headers
-      - kernel-modules
-      - kernel-tools
-      - kernel-tools-libs
-      - kernel-tools-libs-devel
+    - kernel
+    - kernel-devel
+    - kernel-headers
+    - kernel-modules
+    - kernel-tools
+    - kernel-tools-libs
+    - kernel-tools-libs-devel
     state: latest
     update_cache: yes

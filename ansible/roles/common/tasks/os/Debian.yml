@@ -18,6 +18,6 @@
 
 - name: Upgrade {{ansible_os_family}} Family System Software
   apt:
-    name: "*"
+    name: '*'
     state: latest
     update_cache: yes

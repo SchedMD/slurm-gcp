@@ -16,5 +16,5 @@
 lmod_git_url: https://github.com/TACC/Lmod.git
 lmod_version: 8.5.9
 lmod_paths:
-  build: "{{paths.apps}}/lmod/{{lmod_version}}"
-  src: "{{paths.apps}}/lmod/src"
+  build: '{{paths.apps}}/lmod/{{lmod_version}}'
+  src: '{{paths.apps}}/lmod/src'

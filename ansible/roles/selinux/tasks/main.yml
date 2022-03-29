@@ -15,7 +15,7 @@
 
 - name: Disable SELinux
   selinux:
-    configfile: "{{selinux_conf}}"
+    configfile: '{{selinux_conf}}'
     state: disabled
     policy: targeted
   when: ansible_os_family == "RedHat"

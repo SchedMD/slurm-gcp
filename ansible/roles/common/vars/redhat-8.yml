@@ -14,30 +14,30 @@
 # limitations under the License.
 
 common_packages:
-  - "@Development tools"
-  - autoconf
-  - automake
-  - clang
-  - curl
-  - dnf-utils
-  - doxygen
-  - drpm
-  - emacs
-  - epel-release
-  - gcc
-  - gcc-c++
-  - git
-  - graphviz
-  - htop
-  - jq
-  - libtool
-  - lynx
-  - make
-  - openssl-devel
-  - pdsh
-  - pkgconfig
-  - python3
-  - tmux
-  - unzip
-  - valgrind
-  - vim
+- '@Development tools'
+- autoconf
+- automake
+- clang
+- curl
+- dnf-utils
+- doxygen
+- drpm
+- emacs
+- epel-release
+- gcc
+- gcc-c++
+- git
+- graphviz
+- htop
+- jq
+- libtool
+- lynx
+- make
+- openssl-devel
+- pdsh
+- pkgconfig
+- python3
+- tmux
+- unzip
+- valgrind
+- vim

@@ -16,8 +16,8 @@
 - name: Install {{ansible_os_family}} Family Dependencies
   apt:
     name:
-      - libmariadb-dev
-      - mariadb-server
+    - libmariadb-dev
+    - mariadb-server
     state: present
 
 - name: Update Conf

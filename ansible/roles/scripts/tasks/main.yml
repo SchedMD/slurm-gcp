@@ -17,7 +17,7 @@
   become: no
   find:
     paths:
-      - "{{role_path}}/files/scripts.d"
+    - '{{role_path}}/files/scripts.d'
     file_type: file
     hidden: no
     follow: yes
@@ -26,5 +26,5 @@
   register: scripts
 
 - name: Run Scripts
-  script: "{{item.path}}"
-  with_items: "{{scripts.files}}"
+  script: '{{item.path}}'
+  with_items: '{{scripts.files}}'

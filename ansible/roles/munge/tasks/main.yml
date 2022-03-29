@@ -15,16 +15,16 @@
 
 - name: Create Munge Group
   group:
-    name: "{{munge_user.group}}"
-    gid: "{{munge_user.gid}}"
+    name: '{{munge_user.group}}'
+    gid: '{{munge_user.gid}}'
     state: present
     system: yes
 
 - name: Create Munge User
   user:
-    name: "{{munge_user.user}}"
-    group: "{{munge_user.group}}"
-    uid: "{{munge_user.uid}}"
+    name: '{{munge_user.user}}'
+    group: '{{munge_user.group}}'
+    uid: '{{munge_user.uid}}'
     shell: /usr/bin/bash
     home: /var/run/munge
     create_home: yes
@@ -33,7 +33,7 @@
     system: yes
 
 - name: Include OS Family Dependent Tasks
-  include_tasks: "os/{{ansible_os_family}}.yml"
+  include_tasks: os/{{ansible_os_family}}.yml
 
 - name: Install Systemd Service
   template:

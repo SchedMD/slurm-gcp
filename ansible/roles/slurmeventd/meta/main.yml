@@ -14,4 +14,4 @@
 # limitations under the License.
 
 dependencies:
-  - role: slurm
+- role: slurm

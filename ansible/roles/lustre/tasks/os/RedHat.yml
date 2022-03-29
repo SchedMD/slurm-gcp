@@ -37,24 +37,24 @@
 
 - name: Gather RPMs
   find:
-    path: "{{lustre_artifacts_dir}}"
-    patterns: "*.rpm"
-    excludes: "*.src.rpm"
+    path: '{{lustre_artifacts_dir}}'
+    patterns: '*.rpm'
+    excludes: '*.src.rpm'
     use_regex: no
     recurse: no
   register: lustre_rpms
 
 - name: Install RPMs
   yum:
-    name: "{{item.path}}"
+    name: '{{item.path}}'
     state: present
     disable_gpg_check: yes
-  with_items: "{{lustre_rpms.files}}"
+  with_items: '{{lustre_rpms.files}}'
 
 - name: Gather SRPMs
   find:
-    path: "{{lustre_artifacts_dir}}"
-    patterns: "*.src.rpm"
+    path: '{{lustre_artifacts_dir}}'
+    patterns: '*.src.rpm'
     use_regex: no
     recurse: no
   register: lustre_srpms
@@ -62,23 +62,23 @@
 - name: Convert SRPM to Archive
   shell:
     cmd: rpm2cpio {{item.path}}|cpio -idmv
-    chdir: "{{lustre_artifacts_dir}}"
-  with_items: "{{lustre_srpms.files}}"
+    chdir: '{{lustre_artifacts_dir}}'
+  with_items: '{{lustre_srpms.files}}'
 
 - name: Gather SRPM Archives
   find:
-    path: "{{lustre_artifacts_dir}}"
-    patterns: "lustre*.tar.gz"
+    path: '{{lustre_artifacts_dir}}'
+    patterns: lustre*.tar.gz
     use_regex: no
     recurse: no
   register: lustre_srpms_archive
 
 - name: Install SRPM Archives
   unarchive:
-    src: "{{item.path}}"
+    src: '{{item.path}}'
     dest: /usr/src
     remote_src: yes
-  with_items: "{{lustre_srpms_archive.files}}"
+  with_items: '{{lustre_srpms_archive.files}}'
 
 - name: Modprobe
   modprobe:

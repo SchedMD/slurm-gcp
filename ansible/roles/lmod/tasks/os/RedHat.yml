@@ -16,12 +16,12 @@
 - name: Install {{ansible_os_family}} Family Dependencies
   yum:
     name:
-      - lua
-      - lua-devel
-      - lua-json
-      - lua-lpeg
-      - lua-posix
-      - lua-term
-      - tcl
-      - tcl-devel
+    - lua
+    - lua-devel
+    - lua-json
+    - lua-lpeg
+    - lua-posix
+    - lua-term
+    - tcl
+    - tcl-devel
     state: present

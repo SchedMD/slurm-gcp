@@ -14,6 +14,6 @@
 # limitations under the License.
 
 cgroup_packages:
-  - libcgroup1
-  - libcgroup-dev
-  - libpam-cgroup
+- libcgroup1
+- libcgroup-dev
+- libpam-cgroup

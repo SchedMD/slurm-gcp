@@ -21,7 +21,8 @@
 
 - name: Add Ubuntu Cuda Repository
   apt_repository:
-    repo: deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu{{ansible_distribution_major_version}}04/x86_64/ /
+    repo: deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu{{ansible_distribution_major_version}}04/x86_64/
+      /
     filename: cuda
     state: present
   when: ansible_distribution == "Ubuntu"
@@ -30,7 +31,8 @@
   get_url:
     url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
     dest: /etc/apt/preferences.d/cuda-repository-pin-600
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_version is version('18.04', '>')
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_version is version('18.04',
+    '>')
 
 - name: Add Debian Cuda Repository Key
   apt_key:
@@ -40,7 +42,8 @@
 
 - name: Add Debian Cuda Repository
   apt_repository:
-    repo: deb https://developer.download.nvidia.com/compute/cuda/repos/debian{{ansible_distribution_major_version}}/x86_64/ /
+    repo: deb https://developer.download.nvidia.com/compute/cuda/repos/debian{{ansible_distribution_major_version}}/x86_64/
+      /
     filename: cuda
     state: present
   when: ansible_distribution == "Debian"
@@ -52,7 +55,7 @@
 - name: Install Cuda
   apt:
     name:
-      - cuda
-      - cuda-drivers
+    - cuda
+    - cuda-drivers
     state: present
     update_cache: yes

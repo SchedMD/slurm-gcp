@@ -14,29 +14,29 @@
 # limitations under the License.
 
 - name: Include OS Vars
-  include_vars: "{{ansible_os_family|lower}}-{{ansible_distribution_major_version}}.yml"
+  include_vars: '{{ansible_os_family|lower}}-{{ansible_distribution_major_version}}.yml'
 
 - name: Include User Tasks
   include_tasks: user.yml
 
 - name: Install Packages
   package:
-    name: "{{slurm_packages}}"
+    name: '{{slurm_packages}}'
     state: present
 
 - name: Mkdir
   file:
-    path: "{{item}}"
+    path: '{{item}}'
     state: directory
-    owner: "{{slurm_user.user}}"
-    group: "{{slurm_user.group}}"
+    owner: '{{slurm_user.user}}'
+    group: '{{slurm_user.group}}'
   loop:
-    - "{{slurm_paths.build}}"
-    - "{{slurm_paths.etc}}"
-    - "{{slurm_paths.scripts}}"
-    - "{{slurm_paths.log}}"
-    - "{{slurm_paths.state}}"
-    - "{{slurm_paths.run}}"
+  - '{{slurm_paths.build}}'
+  - '{{slurm_paths.etc}}'
+  - '{{slurm_paths.scripts}}'
+  - '{{slurm_paths.log}}'
+  - '{{slurm_paths.state}}'
+  - '{{slurm_paths.run}}'
 
 - name: Include Install Tasks
   include_tasks: install.yml
@@ -52,23 +52,23 @@
 - name: Copy Scripts
   copy:
     src: scripts/{{item}}
-    dest: "{{slurm_paths.scripts}}/{{item}}"
-    owner: "{{slurm_user.user}}"
-    group: "{{slurm_user.group}}"
+    dest: '{{slurm_paths.scripts}}/{{item}}'
+    owner: '{{slurm_user.user}}'
+    group: '{{slurm_user.group}}'
     mode: 0o755
   with_items:
-    - resume.py
-    - setup.py
-    - startup.sh
-    - slurmsync.py
-    - suspend.py
-    - util.py
-    - load_bq.py
+  - resume.py
+  - setup.py
+  - startup.sh
+  - slurmsync.py
+  - suspend.py
+  - util.py
+  - load_bq.py
 
 - name: Copy Jobs
   copy:
     src: jobs/
-    dest: "{{slurm_paths.jobs}}"
-    owner: "{{slurm_user.user}}"
-    group: "{{slurm_user.group}}"
+    dest: '{{slurm_paths.jobs}}'
+    owner: '{{slurm_user.user}}'
+    group: '{{slurm_user.group}}'
     mode: 0o755

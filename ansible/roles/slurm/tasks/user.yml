@@ -15,16 +15,16 @@
 
 - name: Create Slurm Group
   group:
-    name: "{{slurm_user.group}}"
-    gid: "{{slurm_user.gid}}"
+    name: '{{slurm_user.group}}'
+    gid: '{{slurm_user.gid}}'
     state: present
     system: yes
 
 - name: Create Slurm User
   user:
-    name: "{{slurm_user.user}}"
-    group: "{{slurm_user.group}}"
-    uid: "{{slurm_user.uid}}"
+    name: '{{slurm_user.user}}'
+    group: '{{slurm_user.group}}'
+    uid: '{{slurm_user.uid}}'
     shell: /usr/bin/bash
     home: /var/lib/slurm
     create_home: yes
@@ -34,16 +34,16 @@
 
 - name: Create Slurmrestd Group
   group:
-    name: "{{slurmrestd_user.group}}"
-    gid: "{{slurmrestd_user.gid}}"
+    name: '{{slurmrestd_user.group}}'
+    gid: '{{slurmrestd_user.gid}}'
     state: present
     system: yes
 
 - name: Create Slurmrestd User
   user:
-    name: "{{slurmrestd_user.user}}"
-    group: "{{slurmrestd_user.group}}"
-    uid: "{{slurmrestd_user.uid}}"
+    name: '{{slurmrestd_user.user}}'
+    group: '{{slurmrestd_user.group}}'
+    uid: '{{slurmrestd_user.uid}}'
     shell: /usr/bin/bash
     home: /var/lib/slurmrestd
     create_home: yes

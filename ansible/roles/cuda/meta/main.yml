@@ -14,5 +14,5 @@
 # limitations under the License.
 
 dependencies:
-  - role: common
-  - role: kernel
+- role: common
+- role: kernel

@@ -16,7 +16,7 @@
 - name: Install {{ansible_os_family}} Family Dependencies
   yum:
     name:
-      - flex
-      - libevent-devel
-      - perl
+    - flex
+    - libevent-devel
+    - perl
     state: present

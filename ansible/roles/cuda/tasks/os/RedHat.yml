@@ -25,6 +25,6 @@
 - name: Install Cuda
   yum:
     name:
-      - cuda
-      - cuda-drivers
+    - cuda
+    - cuda-drivers
     state: latest

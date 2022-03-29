@@ -14,10 +14,10 @@
 # limitations under the License.
 
 dependencies:
-  - role: common
-  - role: selinux
-  - role: mariadb
-  - role: munge
-  - role: cuda
-  - role: cgroups
-  - role: libjwt
+- role: common
+- role: selinux
+- role: mariadb
+- role: munge
+- role: cuda
+- role: cgroups
+- role: libjwt

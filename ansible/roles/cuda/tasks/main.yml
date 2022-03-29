@@ -14,7 +14,7 @@
 # limitations under the License.
 
 - name: Include OS Tasks
-  include_tasks: "os/{{ansible_os_family}}.yml"
+  include_tasks: os/{{ansible_os_family}}.yml
 
 - name: Add Nvidia to 'ld.so.conf.d/'
   template:

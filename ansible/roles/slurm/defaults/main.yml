@@ -18,15 +18,15 @@ slurm_tar_baseurl: https://download.schedmd.com/slurm
 slurm_version: 21.08.4
 
 slurm_paths:
-  install: "{{paths.install}}"
-  src: "{{paths.src}}/slurm"
-  etc: "{{paths.install}}/etc/slurm"
-  scripts: "/slurm/scripts"
-  jobs: "/slurm/jobs"
-  build: "{{paths.build}}/slurm"
-  log: "/var/log/slurm"
-  state: "/var/spool/slurmctld"
-  run: "/var/run/slurm"
+  install: '{{paths.install}}'
+  src: '{{paths.src}}/slurm'
+  etc: '{{paths.install}}/etc/slurm'
+  scripts: /slurm/scripts
+  jobs: /slurm/jobs
+  build: '{{paths.build}}/slurm'
+  log: /var/log/slurm
+  state: /var/spool/slurmctld
+  run: /var/run/slurm
 
 slurm_user:
   user: slurm

@@ -14,17 +14,17 @@
 # limitations under the License.
 
 ldap_packages:
-  - ldap-utils
-  - libnss-ldap
-  - libnss-sss
-  - libpam-ldap
-  - libpam-sss
-  - libsmbclient
-  - oddjob
-  - oddjob-mkhomedir
-  - realmd
-  - samba
-  - sssd
-  - sssd-ad
-  - sssd-ldap
-  - winbind
+- ldap-utils
+- libnss-ldap
+- libnss-sss
+- libpam-ldap
+- libpam-sss
+- libsmbclient
+- oddjob
+- oddjob-mkhomedir
+- realmd
+- samba
+- sssd
+- sssd-ad
+- sssd-ldap
+- winbind

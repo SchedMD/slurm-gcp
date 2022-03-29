@@ -14,29 +14,29 @@
 # limitations under the License.
 
 - name: Include OS Family Dependent Tasks
-  include_tasks: "os/{{ansible_os_family}}.yml"
+  include_tasks: os/{{ansible_os_family}}.yml
 
 - name: Mkdir
   file:
-    path: "{{item}}"
+    path: '{{item}}'
     state: directory
   loop:
-    - "{{libjwt_paths.build}}"
-    - "{{libjwt_paths.etc}}"
+  - '{{libjwt_paths.build}}'
+  - '{{libjwt_paths.etc}}'
 
 - name: Git Clone
   git:
-    repo: "{{libjwt_git_url}}"
-    dest: "{{libjwt_paths.src}}"
-    version: "{{libjwt_version}}"
+    repo: '{{libjwt_git_url}}'
+    dest: '{{libjwt_paths.src}}'
+    version: '{{libjwt_version}}'
     clone: yes
     # single_branch: yes # ansible 2.11
-    depth: "1"
+    depth: '1'
 
 - name: Autoreconf
   shell:
     cmd: autoreconf --install --force > /dev/null
-    chdir: "{{libjwt_paths.src}}"
+    chdir: '{{libjwt_paths.src}}'
 
 - name: Configure
   shell:
@@ -45,12 +45,12 @@
       --prefix={{libjwt_paths.install}}
       --sysconfdir={{libjwt_paths.etc}}
       > /dev/null
-    chdir: "{{libjwt_paths.build}}"
+    chdir: '{{libjwt_paths.build}}'
 
 - name: Make Install
   shell:
     cmd: make --jobs install > /dev/null
-    chdir: "{{libjwt_paths.build}}"
+    chdir: '{{libjwt_paths.build}}'
 
 - name: Add Conf to 'ld.so.conf.d/'
   template:
@@ -60,4 +60,4 @@
 - name: Ldconfig
   command:
     cmd: ldconfig
-    chdir: "{{libjwt_paths.src}}"
+    chdir: '{{libjwt_paths.src}}'

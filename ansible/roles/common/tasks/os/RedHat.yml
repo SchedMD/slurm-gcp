@@ -15,7 +15,7 @@
 
 - name: Upgrade {{ansible_os_family}} Family System Software
   yum:
-    name: "*"
+    name: '*'
     state: latest
     update_cache: yes
 

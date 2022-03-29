@@ -16,7 +16,7 @@
 - name: Install {{ansible_os_family}} Family Dependencies
   yum:
     name:
-      - nfs-utils
+    - nfs-utils
     state: present
 
 - name: Update NFS Config

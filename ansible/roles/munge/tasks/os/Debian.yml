@@ -16,6 +16,6 @@
 - name: Install {{ansible_os_family}} Family Dependencies
   apt:
     name:
-      - munge
-      - libmunge-dev
+    - munge
+    - libmunge-dev
     state: present

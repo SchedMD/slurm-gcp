@@ -16,6 +16,6 @@
 - name: Install {{ansible_os_family}} Family Kernel Packages
   apt:
     name:
-      - linux-headers-{{ansible_kernel}}
+    - linux-headers-{{ansible_kernel}}
     state: latest
     update_cache: yes

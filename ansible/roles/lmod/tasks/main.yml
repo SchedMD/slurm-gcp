@@ -14,30 +14,30 @@
 # limitations under the License.
 
 - name: Include OS Family Dependent Tasks
-  include_tasks: "os/{{ansible_os_family}}.yml"
+  include_tasks: os/{{ansible_os_family}}.yml
 
 
 - name: Mkdir
   file:
-    path: "{{item}}"
+    path: '{{item}}'
     state: directory
   loop:
-    - "{{paths.apps}}"
-    - "{{paths.modulefiles}}"
+  - '{{paths.apps}}'
+  - '{{paths.modulefiles}}'
 
 - name: Git Clone
   git:
-    repo: "{{lmod_git_url}}"
-    dest: "{{lmod_paths.src}}"
-    version: "{{lmod_version}}"
+    repo: '{{lmod_git_url}}'
+    dest: '{{lmod_paths.src}}'
+    version: '{{lmod_version}}'
     clone: yes
     # single_branch: yes # ansible 2.11
-    depth: "1"
+    depth: '1'
 
 - name: Create Modulespath
   template:
     src: modulespath.j2
-    dest: "{{paths.apps}}/lmod/.modulespath"
+    dest: '{{paths.apps}}/lmod/.modulespath'
     mode: 0644
 
 - name: Configure
@@ -47,19 +47,19 @@
       --prefix={{paths.apps}}
       --with-ModulePathInit={{paths.apps}}/lmod/.modulespath
       > /dev/null
-    chdir: "{{lmod_paths.src}}"
+    chdir: '{{lmod_paths.src}}'
 
 - name: Make Install
   shell:
     cmd: make install > /dev/null
-    chdir: "{{lmod_paths.src}}"
+    chdir: '{{lmod_paths.src}}'
 
 - name: Symbolic Link
   file:
-    src: "{{item.src}}"
-    dest: "{{item.dest}}"
+    src: '{{item.src}}'
+    dest: '{{item.dest}}'
     state: link
   with_items:
-    - { src: "{{lmod_paths.build}}/init/profile", dest: "/etc/profile.d/z00_lmod.sh" }
-    - { src: "{{lmod_paths.build}}/init/cshrc", dest: "/etc/profile.d/z00_lmod.csh" }
+  - {src: '{{lmod_paths.build}}/init/profile', dest: /etc/profile.d/z00_lmod.sh}
+  - {src: '{{lmod_paths.build}}/init/cshrc', dest: /etc/profile.d/z00_lmod.csh}
     # - { src: "{{lmod_paths.build}}/init/profile.fish", dest: "/etc/fish/conf.d/z00_lmod.fish" }

@@ -14,20 +14,20 @@
 # limitations under the License.
 
 ldap_packages:
-  - adcli
-  - authconfig
-  - krb5-workstation
-  - nss-pam-ldapd
-  - oddjob
-  - oddjob-mkhomedir
-  - openldap
-  - openldap-clients
-  - openssl
-  - pam_krb5
-  - realmd
-  - sssd
-  - sssd-ad
-  - sssd-winbind-idmap
-  - samba
-  - samba-common-tools
-  - samba-winbind
+- adcli
+- authconfig
+- krb5-workstation
+- nss-pam-ldapd
+- oddjob
+- oddjob-mkhomedir
+- openldap
+- openldap-clients
+- openssl
+- pam_krb5
+- realmd
+- sssd
+- sssd-ad
+- sssd-winbind-idmap
+- samba
+- samba-common-tools
+- samba-winbind

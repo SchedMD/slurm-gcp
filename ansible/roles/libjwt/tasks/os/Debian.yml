@@ -15,6 +15,6 @@
 
 - name: Install {{ansible_os_family}} Family Dependencies
   apt:
-    name: "{{item}}"
+    name: '{{item}}'
   loop:
-    - libjansson-dev
+  - libjansson-dev

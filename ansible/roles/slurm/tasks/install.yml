@@ -15,34 +15,34 @@
 
 - name: Slurm From Tarball
   block:
-    - name: Download Tarball
-      get_url:
-        url: "{{slurm_tar_baseurl}}/slurm-{{slurm_version}}.tar.bz2"
-        dest: "{{paths.src}}"
-      register: slurm_archive
+  - name: Download Tarball
+    get_url:
+      url: '{{slurm_tar_baseurl}}/slurm-{{slurm_version}}.tar.bz2'
+      dest: '{{paths.src}}'
+    register: slurm_archive
 
-    - name: Inflate Tarball
-      unarchive:
-        src: "{{slurm_archive.dest}}"
-        dest: "{{paths.src}}"
-        creates: "{{slurm_paths.src}}"
-        remote_src: yes
+  - name: Inflate Tarball
+    unarchive:
+      src: '{{slurm_archive.dest}}'
+      dest: '{{paths.src}}'
+      creates: '{{slurm_paths.src}}'
+      remote_src: yes
 
-    - name: Symbolic Link Directory
-      file:
-        src: "{{slurm_paths.src}}-{{slurm_version}}"
-        dest: "{{slurm_paths.src}}"
-        state: link
+  - name: Symbolic Link Directory
+    file:
+      src: '{{slurm_paths.src}}-{{slurm_version}}'
+      dest: '{{slurm_paths.src}}'
+      state: link
   when: not slurm_version.startswith("b:")
 
 - name: Slurm From Git Branch
   git:
-    repo: "{{slurm_git_url}}"
-    dest: "{{slurm_paths.src}}"
+    repo: '{{slurm_git_url}}'
+    dest: '{{slurm_paths.src}}'
     version: "{{slurm_version|regex_replace('^b:', '')}}"
     clone: yes
     # single_branch: yes # ansible 2.11
-    depth: "1"
+    depth: '1'
   when: slurm_version.startswith("b:")
 
 - name: Configure
@@ -53,17 +53,17 @@
       --sysconfdir={{slurm_paths.etc}}
       --with-jwt={{slurm_paths.install}}
       > /dev/null
-    chdir: "{{slurm_paths.build}}"
+    chdir: '{{slurm_paths.build}}'
 
 - name: Make Install Slurm
   shell:
     cmd: make --jobs install > /dev/null
-    chdir: "{{slurm_paths.build}}"
+    chdir: '{{slurm_paths.build}}'
 
 - name: Make Install Slurm Contribs
   shell:
     cmd: make --jobs install > /dev/null
-    chdir: "{{slurm_paths.build}}/contribs"
+    chdir: '{{slurm_paths.build}}/contribs'
 
 - name: Add Conf to 'ld.so.conf.d/'
   template:
@@ -73,7 +73,7 @@
 - name: Ldconfig
   command:
     cmd: ldconfig
-    chdir: "{{slurm_paths.src}}"
+    chdir: '{{slurm_paths.src}}'
 
 - name: Add Slurm to 'profile.d/'
   template:
@@ -82,6 +82,6 @@
 
 - name: Symbolic Link Directory
   file:
-    src: "{{slurm_paths.etc}}"
+    src: '{{slurm_paths.etc}}'
     dest: /etc/slurm
     state: link

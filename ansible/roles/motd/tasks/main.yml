@@ -26,5 +26,6 @@
 - name: Add Warning
   ansible.builtin.lineinfile:
     path: /etc/motd
-    line: "*** Slurm instance has not been set up yet. Did the startup-script run? ***\n"
+    line: "*** Slurm instance has not been set up yet. Did the startup-script run?\
+      \ ***\n"
     insertafter: EOF

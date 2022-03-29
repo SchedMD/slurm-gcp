@@ -28,12 +28,12 @@
 
 - name: Gather DEBs
   find:
-    path: "{{lustre_artifacts_dir}}"
-    patterns: "*.deb"
+    path: '{{lustre_artifacts_dir}}'
+    patterns: '*.deb'
   register: lustre_debs
 
 - name: Install DEBs
   apt:
-    deb: "{{item.path}}"
+    deb: '{{item.path}}'
     state: present
-  with_items: "{{lustre_debs.files}}"
+  with_items: '{{lustre_debs.files}}'

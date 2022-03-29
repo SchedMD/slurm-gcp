@@ -15,8 +15,8 @@
 
 lustre_rpm_url: https://downloads.whamcloud.com/public/lustre/latest-release/el{{ansible_distribution_major_version}}/client/RPMS/x86_64
 lustre_rpm_files:
-  - kmod-lustre-client-2*.rpm
-  - lustre-client-2*.rpm
+- kmod-lustre-client-2*.rpm
+- lustre-client-2*.rpm
 lustre_srpm_url: https://downloads.whamcloud.com/public/lustre/latest-release/el{{ansible_distribution_major_version}}/client/SRPMS
 lustre_srpm_files:
-  - lustre-client-dkms-2*.src.rpm
+- lustre-client-dkms-2*.src.rpm

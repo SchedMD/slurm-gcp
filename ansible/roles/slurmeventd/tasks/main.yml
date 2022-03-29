@@ -16,10 +16,10 @@
 - name: Copy Service Scripts
   copy:
     src: scripts/{{item}}
-    dest: "{{slurm_paths.scripts}}/{{item}}"
+    dest: '{{slurm_paths.scripts}}/{{item}}'
     mode: 0o755
   with_items:
-    - slurmeventd.py
+  - slurmeventd.py
 
 - name: Install Service
   template:

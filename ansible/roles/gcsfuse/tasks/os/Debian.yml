@@ -25,7 +25,8 @@
 
 - name: Add Gcsfuse Repository
   apt_repository:
-    repo: deb https://packages.cloud.google.com/apt gcsfuse-{{ansible_distribution_release}} main
+    repo: deb https://packages.cloud.google.com/apt gcsfuse-{{ansible_distribution_release}}
+      main
     filename: gcsfuse
     update_cache: yes
     state: present
@@ -33,6 +34,6 @@
 - name: Install Gcsfuse
   apt:
     name:
-      - gcsfuse
+    - gcsfuse
     state: present
     update_cache: yes
