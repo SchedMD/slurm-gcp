@@ -1,3 +1,4 @@
+---
 # Copyright 2021 SchedMD LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
 
 - name: Slurm From Tarball
   block:
@@ -39,7 +39,7 @@
   git:
     repo: "{{slurm_git_url}}"
     dest: "{{slurm_paths.src}}"
-    version: "{{slurm_version | regex_replace('^b:', '')}}"
+    version: "{{slurm_version|regex_replace('^b:', '')}}"
     clone: yes
     # single_branch: yes # ansible 2.11
     depth: "1"

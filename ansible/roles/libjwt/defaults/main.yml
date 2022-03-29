@@ -1,3 +1,4 @@
+---
 # Copyright 2021 SchedMD LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,14 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
 
 libjwt_git_url: https://github.com/benmcollins/libjwt.git
 libjwt_version: v1.13.1
 
-libjwt_paths: {
-  install: "{{paths.install}}",
-  src: "{{paths.src}}/libjwt",
-  etc: "{{paths.etc}}/libjwt",
-  build: "{{paths.build}}/libjwt/build",
-}
+libjwt_paths:
+  install: "{{paths.install}}"
+  src: "{{paths.src}}/libjwt"
+  etc: "{{paths.etc}}/libjwt"
+  build: "{{paths.build}}/libjwt/build"

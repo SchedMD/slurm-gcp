@@ -1,3 +1,4 @@
+---
 # Copyright 2021 SchedMD LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
 
 - name: Get RPMs
   shell: >
@@ -20,7 +20,7 @@
     --level=1
     --no-parent
     --no-directories
-    --accept={{lustre_rpm_files | join(',')}}
+    --accept={{lustre_rpm_files|join(',')}}
     --directory-prefix={{lustre_artifacts_dir}}
     {{lustre_rpm_url}}
 
@@ -31,7 +31,7 @@
     --level=1
     --no-parent
     --no-directories
-    --accept={{lustre_srpm_files | join(',')}}
+    --accept={{lustre_srpm_files|join(',')}}
     --directory-prefix={{lustre_artifacts_dir}}
     {{lustre_srpm_url}}
 
@@ -61,7 +61,7 @@
 
 - name: Convert SRPM to Archive
   shell:
-    cmd: rpm2cpio {{item.path}} | cpio -idmv
+    cmd: rpm2cpio {{item.path}}|cpio -idmv
     chdir: "{{lustre_artifacts_dir}}"
   with_items: "{{lustre_srpms.files}}"
 

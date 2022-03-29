@@ -1,3 +1,4 @@
+---
 # Copyright 2021 SchedMD LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,21 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
 
 - hosts: all
   become: yes
 
   vars:
     min_ansible_version: 2.7
-    paths: {
-      install: "/usr/local",
-      src: "/usr/local/src",
-      etc: "/usr/local/etc",
-      build: "/tmp",
-      apps: "/opt/apps",
+    paths:
+      install: "/usr/local"
+      src: "/usr/local/src"
+      etc: "/usr/local/etc"
+      build: "/tmp"
+      apps: "/opt/apps"
       modulefiles: "/opt/apps/modulefiles"
-    }
 
   pre_tasks:
     - name: Supported OS Check

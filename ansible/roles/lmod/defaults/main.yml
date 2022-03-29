@@ -1,3 +1,4 @@
+---
 # Copyright 2021 SchedMD LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,11 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
 
 lmod_git_url: https://github.com/TACC/Lmod.git
 lmod_version: 8.5.9
-lmod_paths: {
-  build: "{{paths.apps}}/lmod/{{lmod_version}}",
-  src: "{{paths.apps}}/lmod/src",
-}
+lmod_paths:
+  build: "{{paths.apps}}/lmod/{{lmod_version}}"
+  src: "{{paths.apps}}/lmod/src"

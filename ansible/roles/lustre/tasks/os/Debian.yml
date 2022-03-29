@@ -1,3 +1,4 @@
+---
 # Copyright 2021 SchedMD LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
 
 - name: Get DEBs
   shell: >
@@ -20,7 +20,7 @@
     --level=1
     --no-parent
     --no-directories
-    --accept="{{lustre_files | join(',')}}"
+    --accept="{{lustre_files|join(',')}}"
     --directory-prefix="{{lustre_artifacts_dir}}"
     {{lustre_deb_url}}
   args:
