@@ -15,6 +15,6 @@
 
 - name: Install {{ansible_os_family}} Family Dependencies
   yum:
-    name: 
+    name:
       - jansson-devel
     state: present
