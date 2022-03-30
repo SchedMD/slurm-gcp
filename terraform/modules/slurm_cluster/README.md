@@ -71,13 +71,15 @@ module.
 
 - [Terraform](https://www.terraform.io/downloads.html) is installed.
 - [Compute Engine API](../../../docs/glossary.md#compute-engine) is enabled.
-- [Python](../../../docs/glossary.md#python) is installed.
-  - Required Version: `>= 3.6.0, < 4.0.0`
-- [Pip](../../../../docs/glossary.md#pip) packages are installed.
-  - `pip3 install -r ../../../scripts/requirements.txt --user`
 
 #### Optional
 
+- [Python](../../../docs/glossary.md#python) is installed.
+  - Required Version: `>= 3.6.0, < 4.0.0`
+  - Required when `enable_hybrid=true` or `enable_reconfigure=true`.
+- [Pip](../../../../docs/glossary.md#pip) packages are installed.
+  - Required when `enable_hybrid=true` or `enable_reconfigure=true`.
+  - `pip3 install -r ../../../scripts/requirements.txt --user`
 - [Private Google Access](../../../docs/glossary.md#private-google-access) is
   enabled.
   - Required when any instances only have internal IPs.

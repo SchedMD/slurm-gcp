@@ -473,6 +473,8 @@ module "cleanup" {
 module "delta_critical" {
   source = "../slurm_destroy_nodes"
 
+  count = var.enable_reconfigure ? 1 : 0
+
   slurm_cluster_id = local.slurm_cluster_id
 
   triggers = merge(
@@ -500,6 +502,8 @@ module "delta_critical" {
 # Destroy all removed compute nodes when partitions change
 module "delta_compute_list" {
   source = "../slurm_destroy_nodes"
+
+  count = var.enable_reconfigure ? 1 : 0
 
   slurm_cluster_id = local.slurm_cluster_id
   exclude_list     = local.compute_list

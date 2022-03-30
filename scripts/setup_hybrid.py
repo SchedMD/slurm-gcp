@@ -55,7 +55,8 @@ def main(args):
             "timestamp": datetime.utcnow().isoformat(),
         }
     )
-    publish_message(project, lkp.cfg.pubsub_topic_id, message_json)
+    if lkp.cfg.enable_reconfigure:
+        publish_message(project, lkp.cfg.pubsub_topic_id, message_json)
 
     log.info("Done.")
 

@@ -63,6 +63,7 @@ locals {
 
   config = yamlencode({
     enable_bigquery_load = var.enable_bigquery_load
+    enable_reconfigure   = var.enable_reconfigure
     project              = var.project_id
     pubsub_topic_id      = var.enable_reconfigure ? google_pubsub_topic.this[0].name : null
     slurm_cluster_id     = local.slurm_cluster_id
@@ -372,6 +373,8 @@ module "cleanup" {
 module "delta_critical" {
   source = "../slurm_destroy_nodes"
 
+  count = var.enable_reconfigure ? 1 : 0
+
   slurm_cluster_id = local.slurm_cluster_id
 
   triggers = merge(
@@ -398,6 +401,8 @@ module "delta_critical" {
 # Destroy all removed compute nodes when partitions change
 module "delta_compute_list" {
   source = "../slurm_destroy_nodes"
+
+  count = var.enable_reconfigure ? 1 : 0
 
   slurm_cluster_id = local.slurm_cluster_id
   exclude_list     = local.compute_list

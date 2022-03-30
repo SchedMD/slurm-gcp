@@ -50,6 +50,7 @@ module "slurm_partition" {
   slurm_cluster_name      = var.slurm_cluster_name
   partition_nodes         = each.value.partition_nodes
   enable_job_exclusive    = each.value.enable_job_exclusive
+  enable_reconfigure      = var.enable_reconfigure
   enable_placement_groups = each.value.enable_placement_groups
   network_storage         = each.value.network_storage
   partition_name          = each.value.partition_name
