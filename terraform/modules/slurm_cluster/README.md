@@ -14,6 +14,13 @@
     - [TerraformUser](#terraformuser)
       - [Required](#required-1)
       - [Optional](#optional-1)
+    - [Controller SA](#controller-sa)
+      - [Required](#required-2)
+      - [Optional](#optional-2)
+    - [Compute SA](#compute-sa)
+      - [Optional](#optional-3)
+    - [Login SA](#login-sa)
+      - [Optional](#optional-4)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -102,6 +109,56 @@ TerraformUser can operate through a
   - Required when [TerraformUser](../../../docs/glossary.md#terraformuser) is
     using an [service account](../../../docs/glossary.md#service-account) to
     authenticate.
+
+### Controller SA
+
+[Service account](../../../docs/glossary.md#service-account) intended to be
+associated with the controller
+[instance template](../../../docs/glossary.md#instance-template) for
+[slurm_controller_instance](../slurm_controller_instance/).
+
+#### Required
+
+- Compute Instance Admin (v1) (`roles/compute.instanceAdmin.v1`)
+- Compute Instance Admin (beta) (`roles/compute.instanceAdmin`)
+- Service Account User (`roles/iam.serviceAccountUser`)
+
+#### Optional
+
+- BigQuery Data Editor (`roles/bigquery.dataEditor`)
+  - Required when `enable_bigquery_load=true`.
+- Logs Writer (`roles/logging.logWriter`)
+  - Recommended.
+- Monitoring Metric Writer (`roles/monitoring.metricWriter`)
+  - Recommended.
+
+### Compute SA
+
+[Service account](../../../docs/glossary.md#service-account) intended to be
+associated with the compute
+[instance templates](../../../docs/glossary.md#instance-template) created by
+[slurm_partition](../slurm_partition/).
+
+#### Optional
+
+- Logs Writer (`roles/logging.logWriter`)
+  - Recommended.
+- Monitoring Metric Writer (`roles/monitoring.metricWriter`)
+  - Recommended.
+
+### Login SA
+
+[Service account](../../../docs/glossary.md#service-account) intended to be
+associated with the login
+[instance templates](../../../docs/glossary.md#instance-template) created by
+[slurm_partition](../slurm_partition/).
+
+#### Optional
+
+- Logs Writer (`roles/logging.logWriter`)
+  - Recommended.
+- Monitoring Metric Writer (`roles/monitoring.metricWriter`)
+  - Recommended.
 
 ## Module API
 
