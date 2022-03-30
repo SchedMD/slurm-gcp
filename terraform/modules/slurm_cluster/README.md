@@ -8,6 +8,12 @@
   - [Overview](#overview)
   - [Usage](#usage)
   - [Dependencies](#dependencies)
+    - [Software](#software)
+      - [Required](#required)
+      - [Optional](#optional)
+    - [TerraformUser](#terraformuser)
+      - [Required](#required-1)
+      - [Optional](#optional-1)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -47,23 +53,55 @@ module "slurm_cluster" {
 
 ## Dependencies
 
-Summary based on dependencies from child modules:
+### Software
+
+Certain software must be installed on the local machine or APIs enabled in
+[GCP](../../../docs/glossary.md#gcp) for
+[TerraformUser](../../../docs/glossary.md#terraformuser) to be able to use this
+module.
+
+#### Required
 
 - [Terraform](https://www.terraform.io/downloads.html) is installed.
-- [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
 - [Compute Engine API](../../../docs/glossary.md#compute-engine) is enabled.
+- [Python](../../../docs/glossary.md#python) is installed.
+  - Required Version: `>= 3.6.0, < 4.0.0`
+- [Pip](../../../../docs/glossary.md#pip) packages are installed.
+  - `pip3 install -r ../../../scripts/requirements.txt --user`
+
+#### Optional
+
+- [Private Google Access](../../../docs/glossary.md#private-google-access) is
+  enabled.
+  - Required when any instances only have internal IPs.
 - [Secret Manager API](../../../docs/glossary.md#secret-manager) is enabled.
   - Required when `cloudsql != null`.
 - [Pub/Sub API](../../../docs/glossary.md#pubsub) is enabled.
   - Required when `enable_reconfigure=true`.
 - [Bigquery API](../../../docs/glossary.md#bigquery) is enabled.
   - Required when `enable_bigquery_load=true`.
-- [Private Google Access](../../../docs/glossary.md#private-google-access) is
-  enabled.
-- [Python](../../../docs/glossary.md#python) is installed.
-  - Required Version: `>= 3.6.0, < 4.0.0`
-- [Pip](../../../../docs/glossary.md#pip) packages are installed.
-  - `pip3 install -r ../../../scripts/requirements.txt --user`
+
+### TerraformUser
+
+[TerraformUser](../../../docs/glossary.md#terraformuser) authenticates with
+credentials to [Google Cloud](../../../docs/glossary.md#gcp). It is recommended
+to create a principal [IAM](../../../docs/glossary.md#iam) for this user and
+associate [roles](../../../docs/glossary.md#iam-roles) to them. Optionally, the
+TerraformUser can operate through a
+[service account](../../../docs/glossary.md#service-account).
+
+#### Required
+
+- Compute Instance Admin (v1) (`roles/compute.instanceAdmin.v1`)
+
+#### Optional
+
+- Pub/Sub Admin (`roles/pubsub.admin`)
+  - Required when `enable_reconfigure=true`.
+- Service Account User (`roles/iam.serviceAccountUser`)
+  - Required when [TerraformUser](../../../docs/glossary.md#terraformuser) is
+    using an [service account](../../../docs/glossary.md#service-account) to
+    authenticate.
 
 ## Module API
 
