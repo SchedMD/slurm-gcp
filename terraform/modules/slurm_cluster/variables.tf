@@ -358,8 +358,7 @@ variable "enable_bigquery_load" {
   description = <<EOD
 Enables loading of cluster job usage into big query.
 
-NOTE: Requires Google Bigquery API and 'roles/bigquery.dataEditor' on the
-controller service account.
+NOTE: Requires Google Bigquery API.
 EOD
   type        = bool
   default     = false
