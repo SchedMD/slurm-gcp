@@ -55,7 +55,7 @@ Summary based on dependencies from child modules:
 - [Secret Manager API](../../../docs/glossary.md#secret-manager) is enabled.
   - Required when `cloudsql != null`.
 - [Pub/Sub API](../../../docs/glossary.md#pubsub) is enabled.
-  - Required when `enable_reconfigure=true`
+  - Required when `enable_reconfigure=true`.
 - [Bigquery API](../../../docs/glossary.md#bigquery) is enabled.
   - Required when `enable_bigquery_load=true`.
 - [Private Google Access](../../../docs/glossary.md#private-google-access) is

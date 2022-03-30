@@ -83,6 +83,26 @@ provider "google" {
   region  = var.region
 }
 
+##############
+# Google API #
+##############
+
+module "project_services" {
+  source  = "terraform-google-modules/project-factory/google//modules/project_services"
+  version = "~> 12.0"
+
+  project_id = var.project_id
+
+  activate_apis = flatten([
+    "compute.googleapis.com",
+    "iam.googleapis.com",
+    var.enable_reconfigure ? ["pubsub.googleapis.com"] : [],
+  ])
+
+  enable_apis                 = true
+  disable_services_on_destroy = false
+}
+
 ###########
 # NETWORK #
 ###########

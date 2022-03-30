@@ -30,6 +30,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_project_services"></a> [project\_services](#module\_project\_services) | terraform-google-modules/project-factory/google//modules/project_services | ~> 12.0 |
 | <a name="module_slurm_cluster"></a> [slurm\_cluster](#module\_slurm\_cluster) | ../../../../modules/slurm_cluster | n/a |
 | <a name="module_slurm_firewall_rules"></a> [slurm\_firewall\_rules](#module\_slurm\_firewall\_rules) | ../../../../modules/slurm_firewall_rules | n/a |
 | <a name="module_slurm_network"></a> [slurm\_network](#module\_slurm\_network) | ../../../../modules/_network | n/a |
