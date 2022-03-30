@@ -35,6 +35,7 @@ from pathlib import Path
 from time import sleep, time
 
 import google.auth
+from google.oauth2 import service_account
 import googleapiclient.discovery
 import google_auth_httplib2
 from googleapiclient.http import set_user_agent
@@ -179,9 +180,15 @@ def compute_service(credentials=None, user_agent=USER_AGENT):
     """Make thread-safe compute service handle
     creates a new Http for each request
     """
-    if credentials is None:
-        # TODO when can this fail? if it were to fail, credentials should be
-        # left None
+    try:
+        key_path = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+    except KeyError:
+        key_path = None
+    if key_path is not None:
+        credentials = service_account.Credentials.from_service_account_file(
+            key_path, scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+    elif credentials is None:
         credentials = def_creds
 
     def build_request(http, *args, **kwargs):
