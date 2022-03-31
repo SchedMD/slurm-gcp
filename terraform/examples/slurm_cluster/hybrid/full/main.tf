@@ -156,6 +156,7 @@ module "slurm_cluster" {
   compute_d                = var.compute_d
   controller_hybrid_config = var.controller_hybrid_config
   enable_devel             = var.enable_devel
+  enable_cleanup           = var.enable_cleanup
   enable_bigquery_load     = var.enable_bigquery_load
   enable_reconfigure       = var.enable_reconfigure
   epilog_d                 = var.epilog_d

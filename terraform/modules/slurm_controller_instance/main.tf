@@ -173,7 +173,7 @@ module "slurm_controller_instance" {
   depends_on = [
     google_compute_project_metadata_item.controller_d,
     # Ensure nodes are destroyed before controller is
-    module.cleanup,
+    module.cleanup[0],
   ]
 }
 
@@ -465,6 +465,8 @@ module "notify_reconfigure" {
 module "cleanup" {
   source = "../slurm_destroy_nodes"
 
+  count = var.enable_cleanup ? 1 : 0
+
   slurm_cluster_id = local.slurm_cluster_id
   when_destroy     = true
 }
@@ -525,6 +527,8 @@ module "delta_compute_list" {
 # Destroy all resource policies on `terraform destroy`
 module "cleanup_resource_policies" {
   source = "../slurm_destroy_resource_policies"
+
+  count = var.enable_cleanup ? 1 : 0
 
   slurm_cluster_name = var.slurm_cluster_name
   when_destroy       = true

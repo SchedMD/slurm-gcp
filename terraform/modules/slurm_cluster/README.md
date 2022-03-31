@@ -76,9 +76,11 @@ module.
 
 - [Python](../../../docs/glossary.md#python) is installed.
   - Required Version: `>= 3.6.0, < 4.0.0`
-  - Required when `enable_hybrid=true` or `enable_reconfigure=true`.
+  - Required when `enable_hybrid=true` or `enable_cleanup=true` or
+    `enable_reconfigure=true`.
 - [Pip](../../../../docs/glossary.md#pip) packages are installed.
-  - Required when `enable_hybrid=true` or `enable_reconfigure=true`.
+  - Required when `enable_hybrid=true` or `enable_cleanup=true` or
+    `enable_reconfigure=true`.
   - `pip3 install -r ../../../scripts/requirements.txt --user`
 - [Private Google Access](../../../docs/glossary.md#private-google-access) is
   enabled.

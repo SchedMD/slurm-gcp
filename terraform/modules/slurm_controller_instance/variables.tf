@@ -112,6 +112,20 @@ variable "enable_devel" {
   default     = false
 }
 
+variable "enable_cleanup" {
+  description = <<EOD
+Enables automatic cleanup of compute nodes and resource policies (e.g.
+placement groups) managed by this module, when cluster is destroyed.
+
+NOTE: Requires Python and script dependencies.
+
+*WARNING*: Toggling this may impact the running workload. Deployed compute nodes
+may be destroyed and their jobs will be requeued.
+EOD
+  type        = bool
+  default     = true
+}
+
 variable "enable_reconfigure" {
   description = <<EOD
 Enables automatic Slurm reconfigure on when Slurm configuration changes (e.g.

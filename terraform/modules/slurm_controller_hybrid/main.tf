@@ -365,6 +365,8 @@ resource "google_pubsub_subscription_iam_member" "compute_pull_subscription_sa_b
 module "cleanup" {
   source = "../slurm_destroy_nodes"
 
+  count = var.enable_cleanup ? 1 : 0
+
   slurm_cluster_id = local.slurm_cluster_id
   when_destroy     = true
 }
@@ -424,6 +426,8 @@ module "delta_compute_list" {
 # Destroy all resource policies on `terraform destroy`
 module "cleanup_resource_policies" {
   source = "../slurm_destroy_resource_policies"
+
+  count = var.enable_cleanup ? 1 : 0
 
   slurm_cluster_name = var.slurm_cluster_name
   when_destroy       = true
