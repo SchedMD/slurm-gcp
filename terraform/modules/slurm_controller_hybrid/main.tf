@@ -326,7 +326,8 @@ module "slurm_pubsub" {
   project_id = var.project_id
   topic      = google_pubsub_topic.this[0].id
 
-  create_topic = false
+  create_topic        = false
+  grant_token_creator = false
 
   pull_subscriptions = [
     for nodename, sa_list in local.sa_node_map
