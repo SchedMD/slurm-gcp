@@ -373,7 +373,7 @@ module "cleanup_compute_nodes" {
 }
 
 # Destroy all compute nodes when the compute node environment changes
-module "delta_critical" {
+module "reconfigure_critical" {
   source = "../slurm_destroy_nodes"
 
   count = var.enable_reconfigure ? 1 : 0
@@ -402,7 +402,7 @@ module "delta_critical" {
 }
 
 # Destroy all removed compute nodes when partitions change
-module "delta_compute_list" {
+module "reconfigure_partitions" {
   source = "../slurm_destroy_nodes"
 
   count = var.enable_reconfigure ? 1 : 0
@@ -416,7 +416,7 @@ module "delta_compute_list" {
 
   depends_on = [
     # Prevent race condition
-    module.delta_critical,
+    module.reconfigure_critical,
   ]
 }
 

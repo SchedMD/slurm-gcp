@@ -32,9 +32,9 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_delta_critical"></a> [delta\_critical](#module\_delta\_critical) | ../slurm_destroy_nodes | n/a |
-| <a name="module_delta_node_groups"></a> [delta\_node\_groups](#module\_delta\_node\_groups) | ../slurm_destroy_nodes | n/a |
-| <a name="module_delta_placement_groups"></a> [delta\_placement\_groups](#module\_delta\_placement\_groups) | ../slurm_destroy_resource_policies | n/a |
+| <a name="module_reconfigure_critical"></a> [reconfigure\_critical](#module\_reconfigure\_critical) | ../slurm_destroy_nodes | n/a |
+| <a name="module_reconfigure_node_groups"></a> [reconfigure\_node\_groups](#module\_reconfigure\_node\_groups) | ../slurm_destroy_nodes | n/a |
+| <a name="module_reconfigure_placement_groups"></a> [reconfigure\_placement\_groups](#module\_reconfigure\_placement\_groups) | ../slurm_destroy_resource_policies | n/a |
 | <a name="module_slurm_compute_template"></a> [slurm\_compute\_template](#module\_slurm\_compute\_template) | ../slurm_instance_template | n/a |
 
 ## Resources

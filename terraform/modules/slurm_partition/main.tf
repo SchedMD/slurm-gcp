@@ -158,7 +158,7 @@ resource "google_compute_project_metadata_item" "partition_d" {
 ###########################
 
 # Destroy all compute nodes when partition environment changes
-module "delta_critical" {
+module "reconfigure_critical" {
   source = "../slurm_destroy_nodes"
 
   count = var.enable_reconfigure ? 1 : 0
@@ -189,7 +189,7 @@ module "delta_critical" {
 ##############################
 
 # Destroy compute group when node groups change
-module "delta_node_groups" {
+module "reconfigure_node_groups" {
   source = "../slurm_destroy_nodes"
 
   for_each = var.enable_reconfigure ? local.partition.partition_nodes : {}
@@ -208,7 +208,7 @@ module "delta_node_groups" {
 
   depends_on = [
     # Prevent race condition
-    module.delta_critical[0],
+    module.reconfigure_critical[0],
   ]
 }
 
@@ -217,7 +217,7 @@ module "delta_node_groups" {
 #############################
 
 # Destroy partition resource policies when they change
-module "delta_placement_groups" {
+module "reconfigure_placement_groups" {
   source = "../slurm_destroy_resource_policies"
 
   count = var.enable_reconfigure ? 1 : 0
