@@ -31,7 +31,11 @@ variable "slurm_cluster_name" {
 
 variable "enable_devel" {
   type        = bool
-  description = "Enables development process for faster iterations. NOTE: *NOT* intended for production use."
+  description = <<EOD
+Enables development mode.
+
+NOTE: *NOT* intended for production use.
+EOD
   default     = false
 }
 
