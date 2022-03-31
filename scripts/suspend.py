@@ -131,9 +131,11 @@ def epilog_suspend_nodes(nodelist, job_id):
         delete_placement_groups(job_id, region, partition.partition_name)
 
 
-def main(nodelist, job_id):
+def main(nodelist, job_id, force=False):
     """main called when run as script"""
     log.debug(f"main {nodelist} {job_id}")
+    if force:
+        suspend_nodes(nodelist)
     nodes = expand_nodelist(nodelist)
     normal, exclusive = seperate(is_exclusive_node, nodes)
     if job_id is not None:
@@ -155,6 +157,13 @@ parser.add_argument(
     nargs="?",
     default=None,
     help="Optional job id for node list. Implies that PrologSlurmctld called program",
+)
+parser.add_argument(
+    "--force",
+    "-f",
+    "--static",
+    action="store_true",
+    help="Force attempted creation of the nodelist, whether nodes are exclusive or not.",
 )
 parser.add_argument(
     "--debug", "-d", dest="debug", action="store_true", help="Enable debugging output"
@@ -184,4 +193,4 @@ if __name__ == "__main__":
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 
-    main(args.nodelist, args.job_id)
+    main(args.nodelist, args.job_id, args.force)
