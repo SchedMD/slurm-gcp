@@ -123,7 +123,7 @@ NOTE: Requires Python and script dependencies.
 may be destroyed and their jobs will be requeued.
 EOD
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "enable_reconfigure" {
@@ -138,7 +138,7 @@ NOTE: Requires Python and Google Pub/Sub API.
 will be destroyed and their jobs will be requeued.
 EOD
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "enable_bigquery_load" {
