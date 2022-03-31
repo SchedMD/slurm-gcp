@@ -696,7 +696,7 @@ def mount_fstab(mounts):
 
         # Iterate over futures, checking for exceptions
         for future in future_list:
-            result = future.exception(timeout=120)
+            result = future.exception()
             if result is not None:
                 raise result
 

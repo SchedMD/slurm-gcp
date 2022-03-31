@@ -601,8 +601,7 @@ def batch_execute(requests, compute=compute, retry_cb=None):
                 future = exe.submit(ensure_execute, batch)
                 futures.append(future)
             for future in futures:
-                # TODO 120s timeout - reasonable?
-                result = future.exception(timeout=120)
+                result = future.exception()
                 if result is not None:
                     raise result
 
