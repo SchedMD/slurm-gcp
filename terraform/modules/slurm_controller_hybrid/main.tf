@@ -363,7 +363,7 @@ resource "google_pubsub_subscription_iam_member" "compute_pull_subscription_sa_b
 #################
 
 # Destroy all compute nodes on `terraform destroy`
-module "cleanup" {
+module "cleanup_compute_nodes" {
   source = "../slurm_destroy_nodes"
 
   count = var.enable_cleanup ? 1 : 0

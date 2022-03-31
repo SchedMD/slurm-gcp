@@ -38,7 +38,7 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_cleanup"></a> [cleanup](#module\_cleanup) | ../slurm_destroy_nodes | n/a |
+| <a name="module_cleanup_compute_nodes"></a> [cleanup\_compute\_nodes](#module\_cleanup\_compute\_nodes) | ../slurm_destroy_nodes | n/a |
 | <a name="module_cleanup_resource_policies"></a> [cleanup\_resource\_policies](#module\_cleanup\_resource\_policies) | ../slurm_destroy_resource_policies | n/a |
 | <a name="module_delta_compute_list"></a> [delta\_compute\_list](#module\_delta\_compute\_list) | ../slurm_destroy_nodes | n/a |
 | <a name="module_delta_critical"></a> [delta\_critical](#module\_delta\_critical) | ../slurm_destroy_nodes | n/a |

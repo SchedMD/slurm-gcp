@@ -173,7 +173,7 @@ module "slurm_controller_instance" {
   depends_on = [
     google_compute_project_metadata_item.controller_d,
     # Ensure nodes are destroyed before controller is
-    module.cleanup[0],
+    module.cleanup_compute_nodes[0],
   ]
 }
 
@@ -463,7 +463,7 @@ module "notify_reconfigure" {
 #################
 
 # Destroy all compute nodes on `terraform destroy`
-module "cleanup" {
+module "cleanup_compute_nodes" {
   source = "../slurm_destroy_nodes"
 
   count = var.enable_cleanup ? 1 : 0
