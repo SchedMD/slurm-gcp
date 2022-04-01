@@ -39,12 +39,16 @@ locals {
       instance_template = data.google_compute_instance_template.group_template[x.group_name].self_link
       count_dynamic     = x.count_dynamic
       count_static      = x.count_static
-      node_list = formatlist("%s-%s-%s-%g",
-        var.slurm_cluster_name,
-        var.partition_name,
-        x.group_name,
-        range(0, sum([x.count_static, x.count_dynamic]))
-      )
+      node_list = flatten([
+        for offset in range(0, sum([x.count_dynamic, x.count_static]), 1024)
+        : formatlist(
+          "%s-%s-%s-%g",
+          var.slurm_cluster_name,
+          var.partition_name,
+          x.group_name,
+          range(offset, min(offset + 1024, sum([x.count_dynamic, x.count_static])))
+        )
+      ])
       service_account = data.google_compute_instance_template.group_template[x.group_name].service_account.*.email
     }
   }
@@ -195,12 +199,14 @@ module "reconfigure_node_groups" {
   for_each = var.enable_reconfigure ? local.partition.partition_nodes : {}
 
   slurm_cluster_id = var.slurm_cluster_id
-  target_list = flatten([formatlist("%s-%s-%s-%g",
-    var.slurm_cluster_name,
-    each.value.partition_name,
-    each.value.group_name,
-    range(0, sum([each.value.count_static, each.value.count_dynamic]))
-  )])
+  target_list = flatten([
+    for offset in range(0, sum([each.value.count_static, each.value.count_dynamic]), 1024)
+    : formatlist(
+      "%s-%s-%s-%g",
+      var.slurm_cluster_name, each.value.partition_name, each.value.group_name,
+      range(offset, min(offset + 1024, sum([each.value.count_static, each.value.count_dynamic])))
+    )
+  ])
 
   triggers = {
     instance_template = each.value.instance_template
