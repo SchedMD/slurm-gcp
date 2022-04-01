@@ -27,9 +27,15 @@ from itertools import groupby
 from addict import Dict as NSDict
 
 import util
-from util import run, chunked, seperate
+from util import execute_with_futures, run, chunked, seperate
 from util import cfg, lkp, compute
-from util import batch_execute, split_nodelist, is_exclusive_node, to_hostlist
+from util import (
+    batch_execute,
+    split_nodelist,
+    is_exclusive_node,
+    to_hostlist,
+    subscription_create,
+)
 
 
 filename = Path(__file__).name
@@ -176,6 +182,12 @@ def resume_nodes(nodelist, placement_groups=None):
         for chunk in chunked(nodes, n=BULK_INSERT_LIMIT)
     }
     log.debug(f"grouped_nodes: {grouped_nodes}")
+
+    if lkp.cfg.enable_reconfigure:
+        count = len(nodes)
+        hostlist = util.to_hostlist(nodes)
+        log.info("create {} subscriptions ({})".format(count, hostlist))
+        execute_with_futures(subscription_create, nodes)
 
     inserts = {
         ident: create_instances_request(nodes, placement_groups)

@@ -47,7 +47,6 @@ locals {
 
   partitions   = { for p in var.partitions[*].partition : p.partition_name => p }
   compute_list = flatten(var.partitions[*].compute_list)
-  sa_node_map  = merge(flatten(var.partitions[*].sa_node_map)...)
 }
 
 ####################
@@ -57,6 +56,7 @@ locals {
 locals {
   metadata_config = {
     enable_bigquery_load = var.enable_bigquery_load
+    enable_reconfigure   = var.enable_reconfigure
     cloudsql             = var.cloudsql != null ? true : false
     project              = var.project_id
     pubsub_topic_id      = var.enable_reconfigure ? google_pubsub_topic.this[0].name : null
@@ -344,27 +344,15 @@ module "slurm_pubsub" {
   create_topic        = false
   grant_token_creator = false
 
-  pull_subscriptions = flatten([
-    [
-      {
-        name                    = module.slurm_controller_instance.instances_details[0].name
-        ack_deadline_seconds    = 120
-        enable_message_ordering = true
-        maximum_backoff         = "300s"
-        minimum_backoff         = "30s"
-      },
-    ],
-    [
-      for nodename, sa_list in local.sa_node_map
-      : {
-        name                    = nodename
-        ack_deadline_seconds    = 60
-        enable_message_ordering = true
-        maximum_backoff         = "300s"
-        minimum_backoff         = "30s"
-      }
-    ],
-  ])
+  pull_subscriptions = [
+    {
+      name                    = module.slurm_controller_instance.instances_details[0].name
+      ack_deadline_seconds    = 120
+      enable_message_ordering = true
+      maximum_backoff         = "300s"
+      minimum_backoff         = "30s"
+    },
+  ]
 
   subscription_labels = {
     slurm_cluster_id = local.slurm_cluster_id
@@ -378,19 +366,6 @@ resource "google_pubsub_subscription_iam_member" "controller_pull_subscription_s
   subscription = module.slurm_controller_instance.instances_details[0].name
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${local.service_account_email}"
-
-  depends_on = [
-    module.slurm_pubsub,
-  ]
-}
-
-resource "google_pubsub_subscription_iam_member" "compute_pull_subscription_sa_binding_subscriber" {
-  for_each = var.enable_reconfigure ? local.sa_node_map : {}
-
-  project      = var.project_id
-  subscription = each.key
-  role         = "roles/pubsub.subscriber"
-  member       = "serviceAccount:${each.value[0]}"
 
   depends_on = [
     module.slurm_pubsub,

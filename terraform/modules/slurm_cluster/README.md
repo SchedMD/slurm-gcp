@@ -136,6 +136,8 @@ associated with the controller
   - Recommended.
 - Monitoring Metric Writer (`roles/monitoring.metricWriter`)
   - Recommended.
+- Pub/Sub Admin (`roles/pubsub.admin`)
+  - Required when `enable_reconfigure=true`.
 
 ### Compute SA
 

@@ -26,7 +26,14 @@ from pathlib import Path
 from addict import Dict as NSDict
 
 import util
-from util import run, batch_execute, ensure_execute, wait_for_operations
+from util import (
+    execute_with_futures,
+    run,
+    batch_execute,
+    ensure_execute,
+    subscription_delete,
+    wait_for_operations,
+)
 from util import seperate, split_nodelist, is_exclusive_node
 from util import lkp, cfg, compute
 
@@ -63,6 +70,12 @@ def delete_instances(instances):
         return
     invalid, valid = seperate(lambda inst: bool(lkp.instance(inst)), instances)
     log.debug("instances do not exist: {}".format(",".join(invalid)))
+
+    if lkp.cfg.enable_reconfigure:
+        count = len(instances)
+        hostlist = util.to_hostlist(instances)
+        log.info("delete {} subscriptions ({})".format(count, hostlist))
+        execute_with_futures(subscription_delete, instances)
 
     requests = {inst: delete_instance_request(inst) for inst in valid}
     done, failed = batch_execute(requests)

@@ -41,7 +41,6 @@ locals {
 
   partitions   = { for p in var.partitions[*].partition : p.partition_name => p }
   compute_list = flatten(var.partitions[*].compute_list)
-  sa_node_map  = merge(flatten(var.partitions[*].sa_node_map)...)
 
   google_app_cred_path = (
     var.google_app_cred_path != null
@@ -311,51 +310,6 @@ resource "google_pubsub_topic" "this" {
   lifecycle {
     create_before_destroy = true
   }
-}
-
-##########
-# PUBSUB #
-##########
-
-module "slurm_pubsub" {
-  source  = "terraform-google-modules/pubsub/google"
-  version = "~> 3.0"
-
-  count = var.enable_reconfigure ? 1 : 0
-
-  project_id = var.project_id
-  topic      = google_pubsub_topic.this[0].id
-
-  create_topic        = false
-  grant_token_creator = false
-
-  pull_subscriptions = [
-    for nodename, sa_list in local.sa_node_map
-    : {
-      name                    = nodename
-      ack_deadline_seconds    = 60
-      enable_message_ordering = true
-      maximum_backoff         = "300s"
-      minimum_backoff         = "30s"
-    }
-  ]
-
-  subscription_labels = {
-    slurm_cluster_id = local.slurm_cluster_id
-  }
-}
-
-resource "google_pubsub_subscription_iam_member" "compute_pull_subscription_sa_binding_subscriber" {
-  for_each = var.enable_reconfigure ? local.sa_node_map : {}
-
-  project      = var.project_id
-  subscription = each.key
-  role         = "roles/pubsub.subscriber"
-  member       = "serviceAccount:${each.value[0]}"
-
-  depends_on = [
-    module.slurm_pubsub,
-  ]
 }
 
 #################

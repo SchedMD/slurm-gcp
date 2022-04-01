@@ -59,12 +59,6 @@ locals {
   ])
 
   compute_list = flatten([for x in local.partition.partition_nodes : x.node_list])
-
-  sa_node_map = merge(values({
-    for node_group in local.partition.partition_nodes : node_group.group_name => {
-      for nodename in node_group.node_list : nodename => node_group.service_account
-    }
-  })...)
 }
 
 ####################

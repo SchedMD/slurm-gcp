@@ -159,6 +159,106 @@ def parse_self_link(self_link: str):
     return NSDict(link_patt.findall(self_link))
 
 
+def subscription_list(project_id=None, page_size=None):
+    """List pub/sub subscription"""
+    from google.cloud import pubsub_v1
+
+    if project_id is None:
+        project_id = lkp.project
+
+    subscriber = pubsub_v1.SubscriberClient()
+
+    subscriptions = []
+    # get first page
+    page = subscriber.list_subscriptions(
+        request={
+            "project": f"projects/{project_id}",
+            "page_size": page_size,
+        }
+    )
+    subscriptions.extend(page.subscriptions)
+    # walk the pages
+    while page.next_page_token:
+        page = subscriber.list_subscriptions(
+            request={
+                "project": f"projects/{project_id}",
+                "page_token": page.next_page_token,
+                "page_size": page_size,
+            }
+        )
+        subscriptions.extend(page.subscriptions)
+    # manual filter by label
+    subscriptions = [
+        s
+        for s in subscriptions
+        if parse_self_link(s.topic).topic == lkp.cfg.pubsub_topic_id
+        and s.labels.get("slurm_cluster_id") == lkp.cfg.slurm_cluster_id
+    ]
+
+    return subscriptions
+
+
+def subscription_create(subscription_id, project_id=None):
+    """Create pub/sub subscription"""
+    from google.cloud import pubsub_v1
+    from google.api_core import exceptions
+
+    if project_id is None:
+        project_id = lkp.project
+    topic_id = lkp.cfg.pubsub_topic_id
+
+    publisher = pubsub_v1.PublisherClient()
+    subscriber = pubsub_v1.SubscriberClient()
+    topic_path = publisher.topic_path(project_id, topic_id)
+    subscription_path = subscriber.subscription_path(project_id, subscription_id)
+
+    with subscriber:
+        request = {
+            "name": subscription_path,
+            "topic": topic_path,
+            "ack_deadline_seconds": 60,
+            "labels": {
+                "slurm_cluster_id": cfg.slurm_cluster_id,
+            },
+        }
+        try:
+            subscription = subscriber.create_subscription(request=request)
+            log.info(f"Subscription created: {subscription}")
+        except exceptions.AlreadyExists:
+            log.info(f"Subscription '{subscription_path}' already exists!")
+
+
+def subscription_delete(subscription_id, project_id=None):
+    """Delete pub/sub subscription"""
+    from google.cloud import pubsub_v1
+    from google.api_core import exceptions
+
+    if project_id is None:
+        project_id = lkp.project
+
+    subscriber = pubsub_v1.SubscriberClient()
+    subscription_path = subscriber.subscription_path(project_id, subscription_id)
+
+    with subscriber:
+        try:
+            subscriber.delete_subscription(request={"subscription": subscription_path})
+            log.info(f"Subscription deleted: {subscription_path}.")
+        except exceptions.NotFound:
+            log.info(f"Subscription '{subscription_path}' not found!")
+
+
+def execute_with_futures(func, list):
+    with ThreadPoolExecutor() as exe:
+        futures = []
+        for i in list:
+            future = exe.submit(func, i)
+            futures.append(future)
+        for future in futures:
+            result = future.exception()
+            if result is not None:
+                raise result
+
+
 def split_nodelist(nodelist):
     """split nodelist expression into independent host expressions"""
     # We do this in order to eliminate nodes we don't need to handle prior to
@@ -891,6 +991,13 @@ class Lookup:
         )
         return instances.get(instance_name)
 
+    def subscription(self, instance_name, project=None, slurm_cluster_id=None):
+        subscriptions = self.subscriptions(
+            project=project, slurm_cluster_id=slurm_cluster_id
+        )
+        subscriptions = [parse_self_link(s.name).subscription for s in subscriptions]
+        return instance_name in subscriptions
+
     @lru_cache(maxsize=1)
     def machine_types(self, project=None):
         project = project or self.project
@@ -993,6 +1100,10 @@ class Lookup:
             except OSError:
                 sleep(0.1)
                 continue
+
+    @lru_cache(maxsize=1)
+    def subscriptions(slef, project=None, slurm_cluster_id=None):
+        return subscription_list(project_id=project, slurm_cluster_id=slurm_cluster_id)
 
     def clear_template_info_cache(self):
         with shelve.open(str(self.template_cache_path), writeback=True) as cache:

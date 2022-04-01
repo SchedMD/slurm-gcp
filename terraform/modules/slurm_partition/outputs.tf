@@ -28,8 +28,3 @@ output "compute_list" {
   description = "List of compute node hostnames."
   value       = local.compute_list
 }
-
-output "sa_node_map" {
-  description = "Map of node group to service account."
-  value       = local.sa_node_map
-}

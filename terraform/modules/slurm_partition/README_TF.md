@@ -73,5 +73,4 @@ limitations under the License.
 | <a name="output_compute_list"></a> [compute\_list](#output\_compute\_list) | List of compute node hostnames. |
 | <a name="output_partition"></a> [partition](#output\_partition) | Partition for slurm controller. |
 | <a name="output_partition_nodes"></a> [partition\_nodes](#output\_partition\_nodes) | Partition for slurm controller. |
-| <a name="output_sa_node_map"></a> [sa\_node\_map](#output\_sa\_node\_map) | Map of node group to service account. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
