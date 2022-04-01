@@ -119,9 +119,11 @@ def epilog_suspend_nodes(nodelist, job_id):
     # Have to use "down" because it's the only, current, way to remove the
     # power_up flag from the node -- followed by a power_down -- if the
     # PrologSlurmctld fails with a non-zero exit code.
-    run(f"{lkp.scontrol} update node={nodelist} state=down reason='{job_id} finishing'")
+    run(
+        f"{lkp.scontrol} update node={','.join(nodelist)} state=down reason='{job_id} finishing'"
+    )
     # Power down nodes in slurm, so that they will become available again.
-    run(f"{lkp.scontrol} update node={nodelist} state=power_down")
+    run(f"{lkp.scontrol} update node={','.join(nodelist)} state=power_down")
 
     model = next(iter(nodes))
     region = lkp.node_region(model)
