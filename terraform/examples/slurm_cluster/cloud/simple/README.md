@@ -26,7 +26,7 @@ Then perform the following commands on this
 directory:
 
 - `terraform init` to get the plugins
-- `terraform validate -var-file=example.tfvars` to validate the configuration
+- `terraform validate` to validate the configuration
 - `terraform plan -var-file=example.tfvars` to see the infrastructure plan
 - `terraform apply -var-file=example.tfvars` to apply the infrastructure build
 - `terraform destroy -var-file=example.tfvars` to destroy the built
