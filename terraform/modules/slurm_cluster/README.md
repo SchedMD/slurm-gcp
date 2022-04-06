@@ -70,6 +70,7 @@ module.
 #### Required
 
 - [Terraform](https://www.terraform.io/downloads.html) is installed.
+- [GCP Cloud SDK](https://cloud.google.com/sdk/downloads) is installed.
 - [Compute Engine API](../../../docs/glossary.md#compute-engine) is enabled.
 
 #### Optional
