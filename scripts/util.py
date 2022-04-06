@@ -159,12 +159,14 @@ def parse_self_link(self_link: str):
     return NSDict(link_patt.findall(self_link))
 
 
-def subscription_list(project_id=None, page_size=None):
+def subscription_list(project_id=None, page_size=None, slurm_cluster_id=None):
     """List pub/sub subscription"""
     from google.cloud import pubsub_v1
 
     if project_id is None:
-        project_id = lkp.project
+        project_id = project
+    if slurm_cluster_id is None:
+        slurm_cluster_id = lkp.cfg.slurm_cluster_id
 
     subscriber = pubsub_v1.SubscriberClient()
 
@@ -189,10 +191,7 @@ def subscription_list(project_id=None, page_size=None):
         subscriptions.extend(page.subscriptions)
     # manual filter by label
     subscriptions = [
-        s
-        for s in subscriptions
-        if parse_self_link(s.topic).topic == lkp.cfg.pubsub_topic_id
-        and s.labels.get("slurm_cluster_id") == lkp.cfg.slurm_cluster_id
+        s for s in subscriptions if s.labels.get("slurm_cluster_id") == slurm_cluster_id
     ]
 
     return subscriptions

@@ -27,9 +27,10 @@ region = "us-central1"
 # *NOT* intended for production use
 # enable_devel = true
 
-enable_bigquery_load = true
-enable_cleanup       = true
-enable_reconfigure   = true
+enable_bigquery_load         = true
+enable_cleanup               = true
+enable_cleanup_subscriptions = true
+enable_reconfigure           = true
 
 ###########
 # NETWORK #

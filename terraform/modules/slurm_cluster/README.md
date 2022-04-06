@@ -77,11 +77,17 @@ module.
 
 - [Python](../../../docs/glossary.md#python) is installed.
   - Required Version: `>= 3.6.0, < 4.0.0`
-  - Required when `enable_hybrid=true` or `enable_cleanup=true` or
-    `enable_reconfigure=true`.
+  - Required when any of:
+    - `enable_hybrid=true`
+    - `enable_cleanup=true`
+    - `enable_cleanup_subscriptions=true`
+    - `enable_reconfigure=true`
 - [Pip](../../../../docs/glossary.md#pip) packages are installed.
-  - Required when `enable_hybrid=true` or `enable_cleanup=true` or
-    `enable_reconfigure=true`.
+  - Required when any of:
+    - `enable_hybrid=true`
+    - `enable_cleanup=true`
+    - `enable_cleanup_subscriptions=true`
+    - `enable_reconfigure=true`
   - `pip3 install -r ../../../scripts/requirements.txt --user`
 - [Private Google Access](../../../docs/glossary.md#private-google-access) is
   enabled.
@@ -89,7 +95,9 @@ module.
 - [Secret Manager API](../../../docs/glossary.md#secret-manager) is enabled.
   - Required when `cloudsql != null`.
 - [Pub/Sub API](../../../docs/glossary.md#pubsub) is enabled.
-  - Required when `enable_reconfigure=true`.
+  - Required when any of:
+    - `enable_cleanup_subscriptions=true`
+    - `enable_reconfigure=true`
 - [Bigquery API](../../../docs/glossary.md#bigquery) is enabled.
   - Required when `enable_bigquery_load=true`.
 

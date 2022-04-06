@@ -326,6 +326,15 @@ module "cleanup_compute_nodes" {
   when_destroy     = true
 }
 
+module "cleanup_subscriptions" {
+  source = "../slurm_destroy_subscriptions"
+
+  count = var.enable_cleanup_subscriptions ? 1 : 0
+
+  slurm_cluster_id = local.slurm_cluster_id
+  when_destroy     = true
+}
+
 # Destroy all compute nodes when the compute node environment changes
 module "reconfigure_critical" {
   source = "../slurm_destroy_nodes"

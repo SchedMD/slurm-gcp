@@ -339,6 +339,19 @@ EOD
   default     = false
 }
 
+variable "enable_cleanup_subscriptions" {
+  description = <<EOD
+Enables automatic cleanup of pub/sub subscriptions managed by this module, when
+cluster is destroyed.
+
+NOTE: Requires Python and script dependencies.
+
+*WARNING*: Toggling this may temporarily impact var.enable_reconfigure behavior.
+EOD
+  type        = bool
+  default     = false
+}
+
 variable "enable_reconfigure" {
   description = <<EOD
 Enables automatic Slurm reconfigure on when Slurm configuration changes (e.g.

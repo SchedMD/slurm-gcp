@@ -62,24 +62,25 @@ module "project_services" {
 module "slurm_cluster" {
   source = "../../../../modules/slurm_cluster"
 
-  cgroup_conf_tpl            = var.cgroup_conf_tpl
-  cloud_parameters           = local.cloud_parameters
-  cloudsql                   = var.cloudsql
-  slurm_cluster_name         = var.slurm_cluster_name
-  compute_d                  = var.compute_d
-  controller_instance_config = var.controller_instance_config
-  controller_d               = var.controller_d
-  enable_devel               = var.enable_devel
-  enable_bigquery_load       = var.enable_bigquery_load
-  enable_cleanup             = var.enable_cleanup
-  enable_reconfigure         = var.enable_reconfigure
-  epilog_d                   = var.epilog_d
-  login_network_storage      = var.login_network_storage
-  login_nodes                = var.login_nodes
-  network_storage            = var.network_storage
-  partitions                 = var.partitions
-  project_id                 = var.project_id
-  prolog_d                   = var.prolog_d
-  slurmdbd_conf_tpl          = var.slurmdbd_conf_tpl
-  slurm_conf_tpl             = var.slurm_conf_tpl
+  cgroup_conf_tpl              = var.cgroup_conf_tpl
+  cloud_parameters             = local.cloud_parameters
+  cloudsql                     = var.cloudsql
+  slurm_cluster_name           = var.slurm_cluster_name
+  compute_d                    = var.compute_d
+  controller_instance_config   = var.controller_instance_config
+  controller_d                 = var.controller_d
+  enable_devel                 = var.enable_devel
+  enable_bigquery_load         = var.enable_bigquery_load
+  enable_cleanup               = var.enable_cleanup
+  enable_cleanup_subscriptions = var.enable_cleanup_subscriptions
+  enable_reconfigure           = var.enable_reconfigure
+  epilog_d                     = var.epilog_d
+  login_network_storage        = var.login_network_storage
+  login_nodes                  = var.login_nodes
+  network_storage              = var.network_storage
+  partitions                   = var.partitions
+  project_id                   = var.project_id
+  prolog_d                     = var.prolog_d
+  slurmdbd_conf_tpl            = var.slurmdbd_conf_tpl
+  slurm_conf_tpl               = var.slurm_conf_tpl
 }
