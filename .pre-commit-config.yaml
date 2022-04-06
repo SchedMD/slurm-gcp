@@ -16,7 +16,7 @@ repos:
   - id: trailing-whitespace
   - id: detect-private-key
 - repo: https://github.com/executablebooks/mdformat
-  rev: 0.7.13
+  rev: 0.7.14
   hooks:
   - id: mdformat
     args:
@@ -25,7 +25,7 @@ repos:
     additional_dependencies:
     - mdformat-toc
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-  rev: 0.0.11
+  rev: 0.1.1
   hooks:
   - id: yamlfmt
     args:
@@ -34,7 +34,7 @@ repos:
     - --offset=0
     - --width=80
 - repo: https://github.com/antonbabenko/pre-commit-terraform
-  rev: v1.64.0
+  rev: v1.64.1
   hooks:
   - id: terraform_fmt
   - id: terraform_tflint
@@ -44,7 +44,7 @@ repos:
     - --hook-config=--create-file-if-not-exist=true
     - --hook-config=--path-to-file=README_TF.md
 - repo: https://github.com/psf/black
-  rev: 22.1.0
+  rev: 22.3.0
   hooks:
   - id: black
     exclude: ^dm/
