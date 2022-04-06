@@ -79,13 +79,13 @@ module.
   - Required Version: `>= 3.6.0, < 4.0.0`
   - Required when any of:
     - `enable_hybrid=true`
-    - `enable_cleanup=true`
+    - `enable_cleanup_compute=true`
     - `enable_cleanup_subscriptions=true`
     - `enable_reconfigure=true`
 - [Pip](../../../../docs/glossary.md#pip) packages are installed.
   - Required when any of:
     - `enable_hybrid=true`
-    - `enable_cleanup=true`
+    - `enable_cleanup_compute=true`
     - `enable_cleanup_subscriptions=true`
     - `enable_reconfigure=true`
   - `pip3 install -r ../../../scripts/requirements.txt --user`

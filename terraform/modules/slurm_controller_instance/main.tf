@@ -441,7 +441,7 @@ module "reconfigure_notify" {
 module "cleanup_compute_nodes" {
   source = "../slurm_destroy_nodes"
 
-  count = var.enable_cleanup ? 1 : 0
+  count = var.enable_cleanup_compute ? 1 : 0
 
   slurm_cluster_id = local.slurm_cluster_id
   when_destroy     = true
@@ -513,7 +513,7 @@ module "reconfigure_partitions" {
 module "cleanup_resource_policies" {
   source = "../slurm_destroy_resource_policies"
 
-  count = var.enable_cleanup ? 1 : 0
+  count = var.enable_cleanup_compute ? 1 : 0
 
   slurm_cluster_name = var.slurm_cluster_name
   when_destroy       = true

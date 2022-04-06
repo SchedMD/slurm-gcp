@@ -39,7 +39,7 @@ EOD
   default     = false
 }
 
-variable "enable_cleanup" {
+variable "enable_cleanup_compute" {
   description = <<EOD
 Enables automatic cleanup of compute nodes and resource policies (e.g.
 placement groups) managed by this module, when cluster is destroyed.

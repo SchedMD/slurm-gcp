@@ -71,7 +71,7 @@ module "slurm_cluster" {
   controller_d                 = var.controller_d
   enable_devel                 = var.enable_devel
   enable_bigquery_load         = var.enable_bigquery_load
-  enable_cleanup               = var.enable_cleanup
+  enable_cleanup_compute       = var.enable_cleanup_compute
   enable_cleanup_subscriptions = var.enable_cleanup_subscriptions
   enable_reconfigure           = var.enable_reconfigure
   epilog_d                     = var.epilog_d

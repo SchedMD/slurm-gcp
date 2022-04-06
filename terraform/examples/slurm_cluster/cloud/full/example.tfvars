@@ -28,7 +28,7 @@ region = "us-central1"
 # enable_devel = true
 
 enable_bigquery_load         = true
-enable_cleanup               = true
+enable_cleanup_compute       = true
 enable_cleanup_subscriptions = true
 enable_reconfigure           = true
 
