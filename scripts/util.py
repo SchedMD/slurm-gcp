@@ -26,7 +26,7 @@ import socket
 import subprocess
 import sys
 import tempfile
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from functools import lru_cache, reduce, partialmethod
@@ -402,6 +402,15 @@ def cd(path):
         os.chdir(prev)
 
 
+def with_static(**kwargs):
+    def decorate(func):
+        for var, val in kwargs.items():
+            setattr(func, var, val)
+        return func
+
+    return decorate
+
+
 def cached_property(f):
     return property(lru_cache()(f))
 
@@ -421,6 +430,14 @@ def chunked(iterable, n=API_REQ_LIMIT):
         if not chunk:
             return
         yield chunk
+
+
+def groupby_unsorted(seq, key):
+    indices = defaultdict(list)
+    for i, el in enumerate(seq):
+        indices[key(el)].append(i)
+    for k, idxs in indices.items():
+        yield k, (seq[i] for i in idxs)
 
 
 ROOT_URL = "http://metadata.google.internal/computeMetadata/v1"
@@ -479,7 +496,7 @@ def to_hostlist(nodenames):
     """make hostlist from list of node names"""
     # use tmp file because list could be large
     tmp_file = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
-    tmp_file.writelines("\n".join(nodenames))
+    tmp_file.writelines("\n".join(sorted(nodenames)))
     tmp_file.close()
     log.debug("tmp_file = {}".format(tmp_file.name))
 
@@ -491,22 +508,12 @@ def to_hostlist(nodenames):
 
 def to_hostnames(nodelist):
     """make list of hostnames from hostlist expression"""
-    hostlist = ",".join(nodelist)
+    if isinstance(nodelist, str):
+        hostlist = nodelist
+    else:
+        hostlist = ",".join(nodelist)
     hostnames = run(f"{lkp.scontrol} show hostnames {hostlist}").stdout.splitlines()
     return hostnames
-
-
-def static_nodelist():
-    return list(
-        filter(
-            None,
-            (
-                nodeset_lists(node, part.partition_name)[0]
-                for part in cfg.partitions.values()
-                for node in part.partition_nodes.values()
-            ),
-        )
-    )
 
 
 def retry_exception(exc):
@@ -801,6 +808,48 @@ class Lookup:
         return self.node_index(node_name) < node_group.count_static
 
     @lru_cache(maxsize=1)
+    def static_nodelist(self):
+        return list(
+            filter(
+                None,
+                (
+                    nodeset_lists(node, part.partition_name)[0]
+                    for part in self.cfg.partitions.values()
+                    for node in part.partition_nodes.values()
+                ),
+            )
+        )
+
+    @lru_cache(maxsize=None)
+    def slurm_nodes(self):
+        StateTuple = namedtuple("StateTuple", "base,flags")
+
+        def make_node_tuple(node_line):
+            """turn node,state line to (node, StateTuple(state))"""
+            # state flags include: CLOUD, COMPLETING, DRAIN, FAIL, POWERED_DOWN,
+            #   POWERING_DOWN
+            node, fullstate = node_line.split(",")
+            state = fullstate.split("+")
+            state_tuple = StateTuple(state[0], set(state[1:]))
+            return (node, state_tuple)
+
+        cmd = (
+            f"{self.scontrol} show nodes | "
+            r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
+            r"paste -sd',\n'"
+        )
+        node_lines = run(cmd, shell=True).stdout.rstrip().splitlines()
+        nodes = {
+            node: state
+            for node, state in map(make_node_tuple, node_lines)
+            if "CLOUD" in state.flags
+        }
+        return nodes
+
+    def slurm_node(self, nodename):
+        return self.slurm_nodes().get(nodename)
+
+    @lru_cache(maxsize=1)
     def instances(self, project=None, slurm_cluster_name=None):
         slurm_cluster_name = slurm_cluster_name or self.cfg.slurm_cluster_name
         project = project or self.project
@@ -820,7 +869,7 @@ class Lookup:
             metadata = {i["key"]: i["value"] for i in inst["metadata"]["items"]}
             inst["role"] = metadata["slurm_instance_role"]
             del inst["metadata"]  # no need to store all the metadata
-            return inst
+            return NSDict(inst)
 
         instances = {}
         while op is not None:

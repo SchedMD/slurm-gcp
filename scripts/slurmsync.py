@@ -19,11 +19,13 @@ import fcntl
 import logging
 import os
 import sys
-from pathlib import Path
 from collections import namedtuple
+from enum import Enum
+from itertools import chain
+from pathlib import Path
 
 import util
-from util import run, seperate, batch_execute, static_nodelist
+from util import run, seperate, batch_execute, with_static
 from util import lkp, cfg, compute, dirs
 from suspend import delete_instances
 
@@ -34,6 +36,21 @@ LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log
 log = logging.getLogger(filename)
 
 TOT_REQ_CNT = 1000
+
+
+NodeStatus = Enum(
+    "NodeAction",
+    (
+        "terminated",
+        "preempted",
+        "unbacked",
+        "restore",
+        "resume",
+        "orphan",
+        "unknown",
+        "unchanged",
+    ),
+)
 
 
 def start_instance_op(inst, project=None):
@@ -54,115 +71,126 @@ def start_instances(node_list):
     done, failed = batch_execute(ops)
 
 
-StateTuple = namedtuple("StateTuple", "base,flags")
+@with_static(static_nodeset=None)
+def find_node_status(nodename):
+    """Determine node/instance status that requires action"""
+    if find_node_status.static_nodeset is None:
+        find_node_status.static_nodeset = set(util.to_hostnames(lkp.static_nodelist()))
+    state = lkp.slurm_node(nodename)
+    inst = lkp.instance(nodename)
+    info = lkp.node_template_info(nodename)
+    if inst is None:
+        if state.base == "DOWN" and "POWERED_DOWN" in state.flags:
+            return NodeStatus.restore
+        if "POWERING_DOWN" in state.flags:
+            return NodeStatus.restore
+        if "COMPLETING" in state.flags:
+            return NodeStatus.unbacked
+        if state.base != "DOWN" and not (
+            set(("POWER_DOWN", "POWERING_UP", "POWERING_DOWN", "POWERED_DOWN"))
+            & state.flags
+        ):
+            return NodeStatus.unbacked
+        if nodename in find_node_status.static_nodeset:
+            return NodeStatus.resume
+    elif (
+        "POWERED_DOWN" not in state.flags
+        and "POWERING_DOWN" not in state.flags
+        and inst.status == "TERMINATED"
+    ):
+        if not state.base.startswith("DOWN"):
+            return NodeStatus.terminated
+        if info.scheduling.preemptible:
+            return NodeStatus.preempted
+    elif (state is None or "POWERED_DOWN" in state.flags) and inst.status == "RUNNING":
+        return NodeStatus.orphan
+    elif state is None:
+        # if state is None here, the instance exists but it's not in Slurm
+        return NodeStatus.unknown
+
+    return NodeStatus.unchanged
 
 
-def make_node_tuple(node_line):
-    """turn node,state line to (node, StateTuple(state))"""
-    # state flags include: CLOUD, COMPLETING, DRAIN, FAIL, POWERED_DOWN,
-    #   POWERING_DOWN
-    node, fullstate = node_line.split(",")
-    state = fullstate.split("+")
-    state_tuple = StateTuple(state[0], set(state[1:]))
-    return (node, state_tuple)
+def do_node_update(status, nodes):
+    """update node/instance based on node status"""
+    if status == NodeStatus.unchanged:
+        return
+    count = len(nodes)
+    hostlist = util.to_hostlist(nodes)
+
+    def nodes_down():
+        """down nodes"""
+        log.info(
+            f"{count} nodes set down due to node status '{status.name}' ({hostlist})"
+        )
+        run(
+            f"{lkp.scontrol} update nodename={hostlist} state=down reason='Instance stopped/deleted'"
+        )
+
+    def nodes_start():
+        """start instances for nodes"""
+        log.info(f"{count} instances restarted ({hostlist})")
+        start_instances(nodes)
+
+    def nodes_idle():
+        """idle nodes"""
+        log.info(f"{count} nodes to idle ({hostlist})")
+        run(f"{lkp.scontrol} update nodename={hostlist} state=resume")
+
+    def nodes_resume():
+        """resume nodes via scontrol"""
+        log.info(f"{count} instances to resume ({hostlist})")
+        run(f"{lkp.scontrol} update nodename={hostlist} state=power_up")
+
+    def nodes_delete():
+        """delete instances for nodes"""
+        log.info(f"{count} instances to delete ({hostlist})")
+        delete_instances(nodes)
+
+    def nodes_unknown():
+        """Error status, nodes shouldn't get in this status"""
+        log.error(f"{count} nodes have unexpected status: ({hostlist})")
+        first = next(iter(nodes))
+        state = lkp.slurm_node(first)
+        state = "{}+{}".format(state.base, "+".join(state.flags))
+        inst = lkp.instance(first)
+        log.error(f"{first} state: {state}, instance status:{inst.status}")
+
+    update = dict.get(
+        {
+            NodeStatus.terminated: nodes_down,
+            NodeStatus.preempted: nodes_start,
+            NodeStatus.unbacked: nodes_down,
+            NodeStatus.resume: nodes_resume,
+            NodeStatus.restore: nodes_idle,
+            NodeStatus.orphan: nodes_delete,
+            NodeStatus.unknown: nodes_unknown,
+            NodeStatus.unchanged: lambda x: None,
+        },
+        status,
+    )
+    update()
 
 
 def sync_slurm():
-    cmd = (
-        f"{lkp.scontrol} show nodes | "
-        r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
-        r"paste -sd',\n'"
+    all_nodes = list(
+        set(
+            chain(
+                (
+                    name
+                    for name, inst in lkp.instances().items()
+                    if inst.role == "compute"
+                ),
+                (name for name in lkp.slurm_nodes().keys()),
+            )
+        )
     )
-    node_lines = run(cmd, shell=True).stdout.rstrip().splitlines()
-    slurm_nodes = {
-        node: state
-        for node, state in map(make_node_tuple, node_lines)
-        if "CLOUD" in state.flags
+    node_statuses = {
+        k: list(v) for k, v in util.groupby_unsorted(all_nodes, find_node_status)
     }
 
-    gcp_instances = lkp.instances()
-    static_set = set(util.to_hostnames(static_nodelist()))
-
-    to_down = []
-    to_idle = []
-    to_start = []
-    to_resume = []
-    for node, state in slurm_nodes.items():
-        inst = lkp.instance(node)
-        info = lkp.node_template_info(node)
-
-        if ("POWERED_DOWN" not in state.flags) and ("POWERING_DOWN" not in state.flags):
-            # slurm nodes that aren't in power_save and are stopped in GCP:
-            #   mark down in slurm
-            #   start them in gcp
-            if inst and (inst.status == "TERMINATED"):
-                if not state.base.startswith("DOWN"):
-                    to_down.append(node)
-                if info.scheduling.preemptible:
-                    to_start.append(node)
-
-            # can't check if the node doesn't exist in GCP while the node
-            # is booting because it might not have been created yet by the
-            # resume script.
-            # This should catch the completing states as well.
-            if (
-                inst is None
-                and "POWERING_UP" not in state.flags
-                and state.base != "DOWN"
-            ):
-                to_down.append(node)
-
-        elif inst is None:
-            # find nodes that are down~ in slurm and don't exist in gcp:
-            #   mark idle~
-            if state.base.startswith("DOWN") and "POWERED_DOWN" in state.flags:
-                to_idle.append(node)
-            elif "POWERING_DOWN" in state.flags:
-                to_idle.append(node)
-            elif state.base.startswith("COMPLETING"):
-                to_down.append(node)
-            elif node in static_set:
-                to_resume.append(node)
-
-    if len(to_down):
-        log.info(
-            "{} stopped/deleted instances ({})".format(len(to_down), ",".join(to_down))
-        )
-        hostlist = util.to_hostlist(to_down)
-        run(
-            f"{lkp.scontrol} update nodename={hostlist} state=down "
-            "reason='Instance stopped/deleted'"
-        )
-
-    if len(to_start):
-        start_instances(to_start)
-
-    if len(to_idle):
-        log.info("{} instances to idle ({})".format(len(to_idle), ",".join(to_idle)))
-        hostlist = util.to_hostlist(to_idle)
-        run(f"{lkp.scontrol} update nodename={hostlist} state=resume")
-
-    if len(to_resume):
-        log.info(
-            "{} instances to resume ({})".format(len(to_resume), ",".join(to_resume))
-        )
-        hostlist = util.to_hostlist(to_resume)
-        # run(f"{lkp.scontrol} update nodename={hostlist} state=power_down_force")
-        run(f"{lkp.scontrol} update nodename={hostlist} state=power_up")
-
-    # orphans are powered down in slurm but still running in GCP. They must be
-    # purged
-    orphans = [
-        name
-        for name, inst in gcp_instances.items()
-        if inst.role == "compute"
-        and inst.status == "RUNNING"
-        and (name not in slurm_nodes or "POWERED_DOWN" in slurm_nodes[name].flags)
-    ]
-    if len(orphans):
-        hostlist = util.to_hostlist(orphans)
-        log.info(f"found orphaned instances, deleting {hostlist}")
-        delete_instances(orphans)
+    for status, nodes in node_statuses.items():
+        do_node_update(status, nodes)
 
 
 def main():

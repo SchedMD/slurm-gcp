@@ -34,7 +34,7 @@ from addict import Dict as NSDict
 
 import util
 from util import run, instance_metadata, project_metadata, seperate
-from util import nodeset_prefix, nodeset_lists, static_nodelist
+from util import nodeset_prefix, nodeset_lists
 from util import access_secret_version
 from util import lkp, cfg, dirs, slurmdirs
 import slurmsync
@@ -280,7 +280,7 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
         ]
         return "\n".join(lines)
 
-    static_nodes = ",".join(static_nodelist())
+    static_nodes = ",".join(lkp.static_nodelist())
     suspend_exc = (
         dict_to_conf(
             {
