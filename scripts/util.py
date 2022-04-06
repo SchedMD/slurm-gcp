@@ -822,16 +822,19 @@ class Lookup:
             del inst["metadata"]  # no need to store all the metadata
             return inst
 
+        instances = {}
         while op is not None:
             result = ensure_execute(op)
-            instances = {
-                inst["name"]: properties(inst)
-                for inst in chain.from_iterable(
-                    m["instances"] for m in result["items"].values()
-                )
-            }
+            instances.update(
+                {
+                    inst["name"]: properties(inst)
+                    for inst in chain.from_iterable(
+                        m["instances"] for m in result["items"].values()
+                    )
+                }
+            )
             op = act.aggregatedList_next(op, result)
-        return NSDict(instances)
+        return instances
 
     def instance(self, instance_name, project=None, slurm_cluster_name=None):
         instances = self.instances(
