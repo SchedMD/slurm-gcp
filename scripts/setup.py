@@ -189,10 +189,10 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
             "SuspendProgram": f"{scripts_dir}/suspend.py",
             "ResumeProgram": f"{scripts_dir}/resume.py",
             "ResumeFailProgram": f"{scripts_dir}/suspend.py",
-            "ResumeRate": cloud_parameters.get("ResumeRate", 0),
-            "ResumeTimeout": cloud_parameters.get("ResumeTimeout", 300),
-            "SuspendRate": cloud_parameters.get("SuspendRate", 0),
-            "SuspendTimeout": cloud_parameters.get("SuspendTimeout", 300),
+            "ResumeRate": cloud_parameters.get("resume_rate", 0),
+            "ResumeTimeout": cloud_parameters.get("resume_timeout", 300),
+            "SuspendRate": cloud_parameters.get("suspend_rate", 0),
+            "SuspendTimeout": cloud_parameters.get("suspend_timeout", 300),
         }
         return dict_to_conf(conf_options, delim="\n")
 
