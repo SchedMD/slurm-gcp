@@ -24,11 +24,10 @@ import sys
 from pathlib import Path
 from itertools import groupby
 
-from addict import Dict as NSDict
-
 import util
 from util import execute_with_futures, run, chunked, seperate
 from util import cfg, lkp, compute
+<<<<<<< HEAD
 from util import (
     batch_execute,
     split_nodelist,
@@ -36,6 +35,12 @@ from util import (
     to_hostlist,
     subscription_create,
 )
+||||||| parent of 9727d6a (Fix resume.py)
+from util import batch_execute, split_nodelist, is_exclusive_node, to_hostlist
+=======
+from util import batch_execute, split_nodelist, is_exclusive_node, to_hostlist
+from util import NSDict
+>>>>>>> 9727d6a (Fix resume.py)
 
 
 filename = Path(__file__).name
@@ -291,25 +296,25 @@ def prolog_resume_nodes(job_id, nodelist):
 def main(nodelist, job_id, force=False):
     """main called when run as script"""
     log.debug(f"main {nodelist} {job_id}")
+    # nodes are split between normal and exclusive
+    # exclusive nodes are handled by PrologSlurmctld
+    nodes = expand_nodelist(nodelist)
     if force:
-        hostlist = util.to_hostlist(nodelist)
-        log.info(f"force resume {hostlist} {job_id}")
-        resume_nodes(nodelist)
+        exclusive = normal = nodes
+        prelog = 'force '
     else:
-        # nodes are split between normal and exclusive
-        # exclusive nodes are handled by PrologSlurmctld
-        nodes = expand_nodelist(nodelist)
         normal, exclusive = seperate(is_exclusive_node, nodes)
-        if job_id is not None:
-            if exclusive:
-                hostlist = util.to_hostlist(exclusive)
-                log.info(f"exclusive resume {hostlist} {job_id}")
-                prolog_resume_nodes(job_id, exclusive)
-        else:
-            if normal:
-                hostlist = util.to_hostlist(normal)
-                log.info(f"resume {hostlist}")
-                resume_nodes(normal)
+        prelog = ''
+    if job_id is None or force:
+        if normal:
+            hostlist = to_hostlist(normal)
+            log.info(f"{prelog}resume {hostlist}")
+            resume_nodes(normal)
+    else:
+        if exclusive:
+            hostlist = to_hostlist(exclusive)
+            log.info(f"{prelog}exclusive resume {hostlist} {job_id}")
+            prolog_resume_nodes(job_id, exclusive)
 
 
 parser = argparse.ArgumentParser(
