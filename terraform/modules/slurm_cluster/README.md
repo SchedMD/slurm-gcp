@@ -118,6 +118,8 @@ TerraformUser can operate through a
 
 - Pub/Sub Admin (`roles/pubsub.admin`)
   - Required when `enable_reconfigure=true`.
+- Secret Manager Admin (`roles/secretmanager.admin`)
+  - Required when `cloudsql != null`.
 - Service Account User (`roles/iam.serviceAccountUser`)
   - Required when [TerraformUser](../../../docs/glossary.md#terraformuser) is
     using an [service account](../../../docs/glossary.md#service-account) to
@@ -140,6 +142,10 @@ associated with the controller
 
 - BigQuery Data Editor (`roles/bigquery.dataEditor`)
   - Required when `enable_bigquery_load=true`.
+- Cloud SQL Editor (`roles/cloudsql.editor`)
+  - Required when all of:
+    - `cloudsql != null`
+    - Communicating to CloudSQL instance
 - Logs Writer (`roles/logging.logWriter`)
   - Recommended.
 - Monitoring Metric Writer (`roles/monitoring.metricWriter`)
