@@ -48,16 +48,6 @@ def main(args):
     log.info("Generating new cloud_gres.conf for gres.conf")
     setup.gen_cloud_gres_conf(lkp)
 
-    # Send restart message to cluster topic
-    message_json = json.dumps(
-        {
-            "request": "restart",
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-    )
-    if lkp.cfg.enable_reconfigure:
-        publish_message(project, lkp.cfg.pubsub_topic_id, message_json)
-
     log.info("Done.")
 
 

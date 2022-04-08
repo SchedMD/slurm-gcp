@@ -312,6 +312,31 @@ resource "google_pubsub_topic" "this" {
   }
 }
 
+####################
+# NOTIFY: RECONFIG #
+####################
+
+module "reconfigure_notify" {
+  source = "../slurm_notify_cluster"
+
+  count = var.enable_reconfigure ? 1 : 0
+
+  topic = google_pubsub_topic.this[0].name
+  type  = "reconfig"
+
+  triggers = {
+    compute_list = join(",", local.compute_list)
+    config       = sha256(google_compute_project_metadata_item.config.value)
+  }
+
+  depends_on = [
+    # Ensure topic is created
+    google_pubsub_topic.this,
+    # Ensure config.yaml is created
+    null_resource.setup_hybrid,
+  ]
+}
+
 #################
 # NOTIFY: DEVEL #
 #################
