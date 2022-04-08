@@ -299,11 +299,13 @@ def main(nodelist, job_id, force=False):
     normal, exclusive = seperate(is_exclusive_node, nodes)
     if job_id is not None:
         if exclusive:
-            log.info(f"exclusive resume {nodelist} {job_id}")
+            hostlist = util.to_hostlist(exclusive)
+            log.info(f"exclusive resume {hostlist} {job_id}")
             prolog_resume_nodes(job_id, exclusive)
     else:
         if normal:
-            log.info(f"resume {normal}")
+            hostlist = util.to_hostlist(normal)
+            log.info(f"resume {hostlist}")
             resume_nodes(normal)
 
 

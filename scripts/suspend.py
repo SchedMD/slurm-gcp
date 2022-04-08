@@ -155,11 +155,13 @@ def main(nodelist, job_id, force=False):
     normal, exclusive = seperate(is_exclusive_node, nodes)
     if job_id is not None:
         if exclusive:
-            log.info(f"epilog suspend {exclusive} job_id={job_id}")
+            hostlist = util.to_hostlist(exclusive)
+            log.info(f"epilog suspend {hostlist} job_id={job_id}")
             epilog_suspend_nodes(exclusive, job_id)
     else:
         if normal:
-            log.info(f"suspend {normal}")
+            hostlist = util.to_hostlist(normal)
+            log.info(f"suspend {hostlist}")
             suspend_nodes(normal)
 
 
