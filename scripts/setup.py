@@ -352,13 +352,17 @@ def install_slurmdbd_conf(lkp):
         secret_name = f"{cfg.slurm_cluster_name}-slurm-secret-cloudsql"
         payload = json.loads(access_secret_version(util.project, secret_name))
 
-        conf_options.db_name = payload["db_name"]
-        conf_options.db_user = payload["user"]
-        conf_options.db_pass = payload["password"]
+        if payload["db_name"] and payload["db_name"] != "":
+            conf_options.db_name = payload["db_name"]
+        if payload["user"] and payload["user"] != "":
+            conf_options.db_user = payload["user"]
+        if payload["password"] and payload["password"] != "":
+            conf_options.db_pass = payload["password"]
 
         db_host_str = payload["server_ip"].split(":")
-        conf_options.db_host = db_host_str[0]
-        conf_options.db_port = db_host_str[1] if len(db_host_str) >= 2 else "3306"
+        if db_host_str[0] and db_host_str[0] != "":
+            conf_options.db_host = db_host_str[0]
+            conf_options.db_port = db_host_str[1] if len(db_host_str) >= 2 else "3306"
 
     conf_resp = project_metadata(f"{cfg.slurm_cluster_name}-slurm-tpl-slurmdbd-conf")
     conf = conf_resp.format(**conf_options)
