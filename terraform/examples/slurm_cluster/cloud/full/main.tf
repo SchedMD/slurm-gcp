@@ -174,7 +174,7 @@ module "project_services" {
   activate_apis = flatten([
     "compute.googleapis.com",
     "iam.googleapis.com",
-    var.cloudsql != null ? ["secretmanager.google.com"] : [],
+    var.cloudsql != null ? ["secretmanager.googleapis.com"] : [],
     var.enable_reconfigure ? ["pubsub.googleapis.com"] : [],
     var.enable_bigquery_load ? ["bigquery.googleapis.com"] : [],
   ])
