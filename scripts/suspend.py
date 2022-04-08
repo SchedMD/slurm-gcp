@@ -150,19 +150,22 @@ def main(nodelist, job_id, force=False):
     """main called when run as script"""
     log.debug(f"main {nodelist} {job_id}")
     if force:
+        hostlist = util.to_hostlist(nodelist)
+        log.info(f"force suspend {hostlist} {job_id}")
         suspend_nodes(nodelist)
-    nodes = expand_nodelist(nodelist)
-    normal, exclusive = seperate(is_exclusive_node, nodes)
-    if job_id is not None:
-        if exclusive:
-            hostlist = util.to_hostlist(exclusive)
-            log.info(f"epilog suspend {hostlist} job_id={job_id}")
-            epilog_suspend_nodes(exclusive, job_id)
     else:
-        if normal:
-            hostlist = util.to_hostlist(normal)
-            log.info(f"suspend {hostlist}")
-            suspend_nodes(normal)
+        nodes = expand_nodelist(nodelist)
+        normal, exclusive = seperate(is_exclusive_node, nodes)
+        if job_id is not None:
+            if exclusive:
+                hostlist = util.to_hostlist(exclusive)
+                log.info(f"epilog suspend {hostlist} job_id={job_id}")
+                epilog_suspend_nodes(exclusive, job_id)
+        else:
+            if normal:
+                hostlist = util.to_hostlist(normal)
+                log.info(f"suspend {hostlist}")
+                suspend_nodes(normal)
 
 
 parser = argparse.ArgumentParser(

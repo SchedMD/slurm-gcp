@@ -292,21 +292,24 @@ def main(nodelist, job_id, force=False):
     """main called when run as script"""
     log.debug(f"main {nodelist} {job_id}")
     if force:
+        hostlist = util.to_hostlist(nodelist)
+        log.info(f"force resume {hostlist} {job_id}")
         resume_nodes(nodelist)
-    # nodes are split between normal and exclusive
-    # exclusive nodes are handled by PrologSlurmctld
-    nodes = expand_nodelist(nodelist)
-    normal, exclusive = seperate(is_exclusive_node, nodes)
-    if job_id is not None:
-        if exclusive:
-            hostlist = util.to_hostlist(exclusive)
-            log.info(f"exclusive resume {hostlist} {job_id}")
-            prolog_resume_nodes(job_id, exclusive)
     else:
-        if normal:
-            hostlist = util.to_hostlist(normal)
-            log.info(f"resume {hostlist}")
-            resume_nodes(normal)
+        # nodes are split between normal and exclusive
+        # exclusive nodes are handled by PrologSlurmctld
+        nodes = expand_nodelist(nodelist)
+        normal, exclusive = seperate(is_exclusive_node, nodes)
+        if job_id is not None:
+            if exclusive:
+                hostlist = util.to_hostlist(exclusive)
+                log.info(f"exclusive resume {hostlist} {job_id}")
+                prolog_resume_nodes(job_id, exclusive)
+        else:
+            if normal:
+                hostlist = util.to_hostlist(normal)
+                log.info(f"resume {hostlist}")
+                resume_nodes(normal)
 
 
 parser = argparse.ArgumentParser(
