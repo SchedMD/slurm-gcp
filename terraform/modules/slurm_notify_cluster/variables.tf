@@ -25,8 +25,8 @@ variable "type" {
   default     = "reconfig"
 
   validation {
-    condition     = contains(["reconfig", "restart"], lower(var.type))
-    error_message = "Type can only be one of: reconfig; restart."
+    condition     = contains(["reconfig", "restart", "devel"], lower(var.type))
+    error_message = "Type can only be one of: reconfig; restart; devel."
   }
 }
 

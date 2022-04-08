@@ -41,6 +41,7 @@ limitations under the License.
 | <a name="module_cleanup_compute_nodes"></a> [cleanup\_compute\_nodes](#module\_cleanup\_compute\_nodes) | ../slurm_destroy_nodes | n/a |
 | <a name="module_cleanup_resource_policies"></a> [cleanup\_resource\_policies](#module\_cleanup\_resource\_policies) | ../slurm_destroy_resource_policies | n/a |
 | <a name="module_cleanup_subscriptions"></a> [cleanup\_subscriptions](#module\_cleanup\_subscriptions) | ../slurm_destroy_subscriptions | n/a |
+| <a name="module_devel_notify"></a> [devel\_notify](#module\_devel\_notify) | ../slurm_notify_cluster | n/a |
 | <a name="module_reconfigure_critical"></a> [reconfigure\_critical](#module\_reconfigure\_critical) | ../slurm_destroy_nodes | n/a |
 | <a name="module_reconfigure_partitions"></a> [reconfigure\_partitions](#module\_reconfigure\_partitions) | ../slurm_destroy_nodes | n/a |
 | <a name="module_slurm_metadata_devel"></a> [slurm\_metadata\_devel](#module\_slurm\_metadata\_devel) | ../_slurm_metadata_devel | n/a |

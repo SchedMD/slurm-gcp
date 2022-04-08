@@ -109,6 +109,18 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
     data = json.loads(message.data.decode("utf-8"))
 
+    def event_devel():
+        log.debug(f"Handling 'request={data['request']}'.")
+
+        if lkp.instance_role == "controller":
+            setup.fetch_devel_scripts()
+        elif lkp.instance_role == "compute":
+            setup.fetch_devel_scripts()
+        elif lkp.instance_role == "login":
+            log.info(f"NO-OP for 'Request={data['request']}'.")
+        else:
+            log.error(f"Unknown node role: {lkp.instance_role}")
+
     def event_reconfig():
         log.debug(f"Handling 'request={data['request']}'.")
         lkp.clear_template_info_cache()
@@ -170,6 +182,7 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
     event_handler = dict.get(
         {
+            "devel": event_devel,
             "reconfig": event_reconfig,
             "restart": event_restart,
         },

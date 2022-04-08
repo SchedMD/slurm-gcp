@@ -25,7 +25,10 @@ def main():
     )
     parser.add_argument("topic_id", help="Pubsub topic ID to publish to")
     parser.add_argument(
-        "--type", "-t", choices=["reconfig", "restart"], help="Notify message type"
+        "--type",
+        "-t",
+        choices=["reconfig", "restart", "devel"],
+        help="Notify message type",
     )
 
     args = parser.parse_args()

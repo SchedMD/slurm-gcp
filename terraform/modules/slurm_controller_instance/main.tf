@@ -434,6 +434,30 @@ module "reconfigure_notify" {
 }
 
 #################
+# NOTIFY: DEVEL #
+#################
+
+module "devel_notify" {
+  source = "../slurm_notify_cluster"
+
+  count = var.enable_devel && var.enable_reconfigure ? 1 : 0
+
+  topic = google_pubsub_topic.this[0].name
+  type  = "devel"
+
+  triggers = {
+    devel = sha256(module.slurm_metadata_devel[0].metadata.value)
+  }
+
+  depends_on = [
+    # Ensure subscriptions are created
+    module.slurm_pubsub,
+    # Ensure controller is created
+    module.slurm_controller_instance,
+  ]
+}
+
+#################
 # DESTROY NODES #
 #################
 
