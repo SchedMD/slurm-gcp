@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import httplib2
+import importlib
 import logging
 import logging.config
 import os
@@ -34,18 +35,40 @@ from itertools import chain, compress, islice
 from pathlib import Path
 from time import sleep, time
 
-import google.auth
-from google.oauth2 import service_account
-import googleapiclient.discovery
-import google_auth_httplib2
-from googleapiclient.http import set_user_agent
+required_modules = [
+    ("googleapiclient", "google-api-python-client"),
+    ("requests", "requests"),
+    ("yaml", "yaml"),
+    ("addict", "addict"),
+]
+missing_imports = False
+for module, name in required_modules:
+    if importlib.util.find_spec(module) is None:
+        missing_imports = True
+        print(f"ERROR: Missing Python module '{module} (pip:{name})'")
+if missing_imports:
+    print("Aborting due to missing Python modules")
+    exit(1)
 
-from requests import get as get_url
-from requests.exceptions import RequestException
+import google.auth  # noqa: E402
+from google.oauth2 import service_account  # noqa: E402
+import googleapiclient.discovery  # noqa: E402
+import google_auth_httplib2  # noqa: E402
+from googleapiclient.http import set_user_agent  # noqa: E402
 
-import yaml
-from addict import Dict as NSDict
+from requests import get as get_url  # noqa: E402
+from requests.exceptions import RequestException  # noqa: E402
 
+import yaml  # noqa: E402
+from addict import Dict as NSDict  # noqa: E402
+
+optional_modules = [
+    ("google.cloud.pubsub", "google-cloud-pubsub"),
+    ("google.cloud.secretmanager", "google-cloud-secret-manager"),
+]
+for module, name in optional_modules:
+    if importlib.util.find_spec(module) is None:
+        print(f"WARNING: Missing Python module '{module}' (pip:{name}) ")
 
 USER_AGENT = "Slurm_GCP_Scripts/1.5 (GPN:SchedMD)"
 ENV_CONFIG_YAML = os.getenv("SLURM_CONFIG_YAML")
