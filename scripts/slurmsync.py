@@ -120,10 +120,10 @@ def find_node_status(nodename):
         and "POWERING_DOWN" not in state.flags
         and inst.status == "TERMINATED"
     ):
-        if not state.base.startswith("DOWN"):
-            return NodeStatus.terminated
         if info.scheduling.preemptible:
             return NodeStatus.preempted
+        if not state.base.startswith("DOWN"):
+            return NodeStatus.terminated
     elif (state is None or "POWERED_DOWN" in state.flags) and inst.status == "RUNNING":
         return NodeStatus.orphan
     elif state is None:
@@ -149,7 +149,7 @@ def do_node_update(status, nodes):
             f"{lkp.scontrol} update nodename={hostlist} state=down reason='Instance stopped/deleted'"
         )
 
-    def nodes_start():
+    def nodes_restart():
         """start instances for nodes"""
         log.info(f"{count} instances restarted ({hostlist})")
         start_instances(nodes)
@@ -181,13 +181,13 @@ def do_node_update(status, nodes):
     update = dict.get(
         {
             NodeStatus.terminated: nodes_down,
-            NodeStatus.preempted: nodes_start,
+            NodeStatus.preempted: lambda: (nodes_down(), nodes_restart()),
             NodeStatus.unbacked: nodes_down,
             NodeStatus.resume: nodes_resume,
             NodeStatus.restore: nodes_idle,
             NodeStatus.orphan: nodes_delete,
             NodeStatus.unknown: nodes_unknown,
-            NodeStatus.unchanged: lambda x: None,
+            NodeStatus.unchanged: lambda: None,
         },
         status,
     )
