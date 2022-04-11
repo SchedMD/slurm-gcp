@@ -26,6 +26,7 @@ from pathlib import Path
 from addict import Dict as NSDict
 
 import util
+<<<<<<< HEAD
 from util import (
     execute_with_futures,
     run,
@@ -35,6 +36,13 @@ from util import (
     wait_for_operations,
 )
 from util import seperate, split_nodelist, is_exclusive_node
+||||||| parent of c4d5a4f (Minor logging refactor of suspend.py)
+from util import run, batch_execute, ensure_execute, wait_for_operations
+from util import seperate, split_nodelist, is_exclusive_node
+=======
+from util import run, batch_execute, ensure_execute, wait_for_operations
+from util import seperate, is_exclusive_node
+>>>>>>> c4d5a4f (Minor logging refactor of suspend.py)
 from util import lkp, cfg, compute
 
 
@@ -86,17 +94,11 @@ def delete_instances(instances):
     wait_for_operations(done.values())
 
 
-def expand_nodelist(nodelist):
-    """expand nodes in hostlist to hostnames"""
-    nodes = run(f"{lkp.scontrol} show hostnames {nodelist}").stdout.splitlines()
-    return nodes
-
-
 def suspend_nodes(nodelist):
     """suspend nodes in nodelist"""
     nodes = nodelist
     if not isinstance(nodes, list):
-        nodes = expand_nodelist(nodes)
+        nodes = util.to_hostnames(nodes)
     delete_instances(nodes)
 
 
@@ -125,7 +127,7 @@ def epilog_suspend_nodes(nodelist, job_id):
     """epilog suspend"""
     nodes = nodelist
     if not isinstance(nodes, list):
-        nodes = expand_nodelist(nodes)
+        nodes = util.to_hostnames(nodes)
     if any(not is_exclusive_node(node) for node in nodes):
         log.fatal(f"nodelist includes non-exclusive nodes: {nodelist}")
     # Mark nodes as off limits to new jobs while powering down.
@@ -149,23 +151,23 @@ def epilog_suspend_nodes(nodelist, job_id):
 def main(nodelist, job_id, force=False):
     """main called when run as script"""
     log.debug(f"main {nodelist} {job_id}")
+    nodes = util.to_hostnames(nodelist)
     if force:
-        hostlist = util.to_hostlist(nodelist)
-        log.info(f"force suspend {hostlist} {job_id}")
-        suspend_nodes(nodelist)
+        exclusive = normal = nodes
+        prelog = 'force '
     else:
-        nodes = expand_nodelist(nodelist)
         normal, exclusive = seperate(is_exclusive_node, nodes)
-        if job_id is not None:
-            if exclusive:
-                hostlist = util.to_hostlist(exclusive)
-                log.info(f"epilog suspend {hostlist} job_id={job_id}")
-                epilog_suspend_nodes(exclusive, job_id)
-        else:
-            if normal:
-                hostlist = util.to_hostlist(normal)
-                log.info(f"suspend {hostlist}")
-                suspend_nodes(normal)
+        prelog = ''
+    if job_id is not None:
+        if exclusive:
+            hostlist = util.to_hostlist(exclusive)
+            log.info(f"{prelog}epilog suspend {hostlist} job_id={job_id}")
+            epilog_suspend_nodes(exclusive, job_id)
+    else:
+        if normal:
+            hostlist = util.to_hostlist(normal)
+            log.info(f"{prelog}suspend {hostlist}")
+            suspend_nodes(normal)
 
 
 parser = argparse.ArgumentParser(
