@@ -176,9 +176,12 @@ def get_time_window():
     if not timestamp_file.is_file():
         timestamp_file.touch()
     try:
-        start = datetime.strptime(timestamp_file.read_text(), SLURM_TIME_FORMAT)
+        start = datetime.strptime(
+            timestamp_file.read_text().rstrip(), SLURM_TIME_FORMAT
+        )
     except ValueError:
-        start = datetime.fromtimestamp(0)
+        # timestamp 1 is 1 second after the epoch; timestamp 0 is special for sacct
+        start = datetime.fromtimestamp(1)
     # end is now truncated to the last second
     end = datetime.now().replace(microsecond=0)
     return start, end
