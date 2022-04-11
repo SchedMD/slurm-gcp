@@ -29,7 +29,7 @@ from util import (
     execute_with_futures,
     parse_self_link,
     run,
-    seperate,
+    separate,
     batch_execute,
     subscription_create,
     subscription_delete,
@@ -87,7 +87,7 @@ def start_instance_op(inst, project=None):
 def start_instances(node_list):
     log.info("{} instances to start ({})".format(len(node_list), ",".join(node_list)))
 
-    invalid, valid = seperate(lambda inst: bool(lkp.instance), node_list)
+    invalid, valid = separate(lambda inst: bool(lkp.instance), node_list)
     ops = {inst: start_instance_op(inst) for inst in valid}
 
     done, failed = batch_execute(ops)

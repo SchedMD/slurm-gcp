@@ -83,7 +83,7 @@ if __name__ == "__main__":
         "--no-comma-params",
         dest="no_comma_params",
         action="store_true",
-        help="Do not generate slurm parameters that are comma seperated.",
+        help="Do not generate slurm parameters that are comma separated.",
     )
     parser.add_argument(
         "--debug",

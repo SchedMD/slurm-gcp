@@ -514,7 +514,7 @@ def cached_property(f):
     return property(lru_cache()(f))
 
 
-def seperate(pred, coll):
+def separate(pred, coll):
     """filter into 2 lists based on pred returning True or False
     returns ([False], [True])
     """

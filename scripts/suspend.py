@@ -23,27 +23,18 @@ import os
 import sys
 from pathlib import Path
 
-from addict import Dict as NSDict
-
 import util
-<<<<<<< HEAD
 from util import (
-    execute_with_futures,
     run,
+    execute_with_futures,
     batch_execute,
     ensure_execute,
     subscription_delete,
     wait_for_operations,
+    separate,
+    is_exclusive_node,
 )
-from util import seperate, split_nodelist, is_exclusive_node
-||||||| parent of c4d5a4f (Minor logging refactor of suspend.py)
-from util import run, batch_execute, ensure_execute, wait_for_operations
-from util import seperate, split_nodelist, is_exclusive_node
-=======
-from util import run, batch_execute, ensure_execute, wait_for_operations
-from util import seperate, is_exclusive_node
->>>>>>> c4d5a4f (Minor logging refactor of suspend.py)
-from util import lkp, cfg, compute
+from util import lkp, cfg, compute, NSDict
 
 
 filename = Path(__file__).name
@@ -76,7 +67,7 @@ def delete_instances(instances):
     """Call regionInstances.bulkInsert to create instances"""
     if len(instances) == 0:
         return
-    invalid, valid = seperate(lambda inst: bool(lkp.instance(inst)), instances)
+    invalid, valid = separate(lambda inst: bool(lkp.instance(inst)), instances)
     log.debug("instances do not exist: {}".format(",".join(invalid)))
 
     if lkp.cfg.enable_reconfigure:
@@ -154,10 +145,10 @@ def main(nodelist, job_id, force=False):
     nodes = util.to_hostnames(nodelist)
     if force:
         exclusive = normal = nodes
-        prelog = 'force '
+        prelog = "force "
     else:
-        normal, exclusive = seperate(is_exclusive_node, nodes)
-        prelog = ''
+        normal, exclusive = separate(is_exclusive_node, nodes)
+        prelog = ""
     if job_id is not None:
         if exclusive:
             hostlist = util.to_hostlist(exclusive)

@@ -33,7 +33,7 @@ from subprocess import DEVNULL
 from addict import Dict as NSDict
 
 import util
-from util import run, instance_metadata, project_metadata, seperate
+from util import run, instance_metadata, project_metadata, separate
 from util import nodeset_prefix, nodeset_lists
 from util import access_secret_version
 from util import lkp, cfg, dirs, slurmdirs
@@ -616,7 +616,7 @@ def partition_mounts(mounts):
     def internal_mount(mount):
         return mount.server_ip == lkp.control_host
 
-    return seperate(internal_mount, mounts)
+    return separate(internal_mount, mounts)
 
 
 def setup_network_storage():

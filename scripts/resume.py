@@ -25,22 +25,17 @@ from pathlib import Path
 from itertools import groupby
 
 import util
-from util import execute_with_futures, run, chunked, seperate
-from util import cfg, lkp, compute
-<<<<<<< HEAD
 from util import (
+    run,
+    chunked,
+    separate,
     batch_execute,
+    execute_with_futures,
     split_nodelist,
     is_exclusive_node,
-    to_hostlist,
     subscription_create,
 )
-||||||| parent of 9727d6a (Fix resume.py)
-from util import batch_execute, split_nodelist, is_exclusive_node, to_hostlist
-=======
-from util import batch_execute, split_nodelist, is_exclusive_node, to_hostlist
-from util import NSDict
->>>>>>> 9727d6a (Fix resume.py)
+from util import cfg, lkp, compute, NSDict
 
 
 filename = Path(__file__).name
@@ -208,7 +203,7 @@ def resume_nodes(nodelist, placement_groups=None):
 
 def down_nodes(nodes, reason):
     """set nodes down with reason"""
-    nodelist = to_hostlist(nodes)
+    nodelist = util.to_hostlist(nodes)
     run(f"{lkp.scontrol} update nodename={nodelist} state=down reason='{reason}'")
 
 
@@ -301,18 +296,18 @@ def main(nodelist, job_id, force=False):
     nodes = expand_nodelist(nodelist)
     if force:
         exclusive = normal = nodes
-        prelog = 'force '
+        prelog = "force "
     else:
-        normal, exclusive = seperate(is_exclusive_node, nodes)
-        prelog = ''
+        normal, exclusive = separate(is_exclusive_node, nodes)
+        prelog = ""
     if job_id is None or force:
         if normal:
-            hostlist = to_hostlist(normal)
+            hostlist = util.to_hostlist(normal)
             log.info(f"{prelog}resume {hostlist}")
             resume_nodes(normal)
     else:
         if exclusive:
-            hostlist = to_hostlist(exclusive)
+            hostlist = util.to_hostlist(exclusive)
             log.info(f"{prelog}exclusive resume {hostlist} {job_id}")
             prolog_resume_nodes(job_id, exclusive)
 
