@@ -51,12 +51,15 @@ Support OS versions may vary with family.
 
 ## Custom Image
 
-To create minimal viable images for slurm cluster yourself, a custom image can
-be created. [Packer](./glossary.md#packer) and [Ansible](./glossary.md#ansible)
-are used to orchestrate custom image creation.
+To create [slurm_cluster](../terraform/modules/slurm_cluster/README.md)
+compliant images yourself, a custom slurm image can be created.
+[Packer](./glossary.md#packer) and [Ansible](./glossary.md#ansible) are used to
+orchestrate custom image creation.
 
-Custom images can be built from an existing private image or another supported
-public image.
+Custom images can be built from a supported private or public image (e.g.
+hpc-centos-7, centos-7). Additionally, ansible roles or scripts can be added
+into the provisioning process to install custom software and configure the
+custom slurm image.
 
 ### Requirements
 

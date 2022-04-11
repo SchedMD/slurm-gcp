@@ -211,3 +211,6 @@ Doing so will prevent `slurm-gcp` changes to the default image family from
 negatively impacting your cluster. Moreover, the controller and all other
 instances may be force replaced (destroyed, then deployed) when
 `terraform apply` detects that the image family of Slurm instances has changed.
+
+Optionally, you may generate and use your own slurm images. See
+[custom image creation](./images.md#custom-image) for more information.
