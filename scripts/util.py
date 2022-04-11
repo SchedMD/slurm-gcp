@@ -591,11 +591,18 @@ def nodeset_lists(node_group, part_name):
     return static_nodelist, dynamic_nodelist
 
 
+def natural_sort(text):
+    def atoi(text):
+        return int(text) if text.isdigit() else text
+
+    return [atoi(w) for w in re.split(r"(\d+)", text)]
+
+
 def to_hostlist(nodenames):
     """make hostlist from list of node names"""
     # use tmp file because list could be large
     tmp_file = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
-    tmp_file.writelines("\n".join(sorted(nodenames)))
+    tmp_file.writelines("\n".join(sorted(nodenames, key=natural_sort)))
     tmp_file.close()
     log.debug("tmp_file = {}".format(tmp_file.name))
 
