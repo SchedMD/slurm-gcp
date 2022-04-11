@@ -20,7 +20,8 @@ cluster images with ease.
 
 ## Usage
 
-Modify [example.pkr.hcl](./example.pkr.hcl) with required and desired values.
+Modify [example.pkr.hcl](./example.pkrvars.hcl) with required and desired
+values.
 
 Then perform the following commands on the
 [packer project](../docs/glossary.md#packer-project) root directory:
