@@ -139,26 +139,20 @@ def epilog_suspend_nodes(nodelist, job_id):
         delete_placement_groups(job_id, region, partition.partition_name)
 
 
-def main(nodelist, job_id, force=False):
+def main(nodelist, job_id):
     """main called when run as script"""
     log.debug(f"main {nodelist} {job_id}")
     nodes = util.to_hostnames(nodelist)
-    if force:
-        exclusive = normal = nodes
-        prelog = "force "
-    else:
-        normal, exclusive = separate(is_exclusive_node, nodes)
-        prelog = ""
     if job_id is not None:
+        _, exclusive = separate(is_exclusive_node, nodes)
         if exclusive:
             hostlist = util.to_hostlist(exclusive)
-            log.info(f"{prelog}epilog suspend {hostlist} job_id={job_id}")
+            log.info(f"epilog suspend {hostlist} job_id={job_id}")
             epilog_suspend_nodes(exclusive, job_id)
     else:
-        if normal:
-            hostlist = util.to_hostlist(normal)
-            log.info(f"{prelog}suspend {hostlist}")
-            suspend_nodes(normal)
+        # suspend is allowed to delete exclusive nodes
+        log.info(f"suspend {nodelist}")
+        suspend_nodes(nodes)
 
 
 parser = argparse.ArgumentParser(
@@ -170,13 +164,6 @@ parser.add_argument(
     nargs="?",
     default=None,
     help="Optional job id for node list. Implies that PrologSlurmctld called program",
-)
-parser.add_argument(
-    "--force",
-    "-f",
-    "--static",
-    action="store_true",
-    help="Force attempted creation of the nodelist, whether nodes are exclusive or not.",
 )
 parser.add_argument(
     "--debug", "-d", dest="debug", action="store_true", help="Enable debugging output"
@@ -206,4 +193,4 @@ if __name__ == "__main__":
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 
-    main(args.nodelist, args.job_id, args.force)
+    main(args.nodelist, args.job_id)

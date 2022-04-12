@@ -60,6 +60,8 @@ All notable changes to this project will be documented in this file.
 - Add pre-commit hooks for yaml formatting.
 - Add Google services enable/check to examples.
 - scripts - improve reporting of missing imported modules.
+- Allow suspend.py to delete exclusive instances, which allows power_down_force
+  to work on exclusive nodes.
 
 ## \[4.1.5\]
 
