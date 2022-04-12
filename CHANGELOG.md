@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 ## \[5.0.0\]
 
 - Convert NEWS to CHANGELOG.md
+- Create ansible roles from foundry build process.
+- Add packer and ansible based image building process and configuration.
+- Slurm scripts are baked into the image.
+- Remove foundry based image building process.
+- Create new slurm terraform modules and examples, using
+  [cloud-foundation-toolkit](https://cloud.google.com/foundation-toolkit) and
+  best practices.
+- Use terraform module to define slurm partitions.
+- Use instance templates to create slurm instances.
+- Support partitions with heterogeneous compute nodes.
+- Rename partition module boolean options.
+- Change how static and dynamic nodes are defined.
+- Change how zone policy is defined in partition module.
+- Store cluster slurm configuration data in project metadata.
+- Add top level terraform module for a slurm cluster.
+- Add pre-commit hooks for terraform validation, formatting, and documentation.
+- Slurm cluster resources are labeled with slurm_cluster_id.
+- All compute nodes are managed by the controller module.
+- Update module option for toggling simultaneous multithreading (SMT).
+- scripts - downgrade required python version to 3.6
+- Add new hybrid management process using terraform slurm modules.
+- Rename metadata slurm_instance_type to slurm_instance_role.
+- Add module option for cluster development mode.
+- Change terraform minimum required version to 1.0
+- Remove old terraform modules and examples.
+- Add ansible role to install custom user scripts from directory.
+- Change `*-custom-install` variable names and they can now accept multiple
+  custom user scripts.
+- Store cluster provisioning user scripts in project metadata.
+- Unify partition option naming with configuration object.
+- Add module option to toggle os-login based authentication.
+- Add new module for creating slurm cluster service accounts and IAM.
+- Add new module for creating slurm cluster firewall rules.
+- Add pre-commit hooks for python linting and formatting.
+- Add terraform examples to fully manage cluster deployment.
+- Add terraform example for custom authentication using winbind.
+- Change image naming template to prevent name collision with v4.
+- Default module image updated to `schedmd-v5-slurm-21-08-6-hpc-centos-7`.
+- Add job workflow helper script to submit and migrate job data.
+- Harden secrets management (e.g. cloudsql, munge, jwt).
+- Add module option for job level prolog and epilog user scripts.
+- Add module option for partition level node configuration scripts.
+- Add module option for partition line configuration.
+- Add module option for node line configuration.
+- Use Google ops-agent for cloud logging and monitoring.
+- Add packer configuration option for user ansible roles.
+- Add module option for job account data storage in BigQuery.
+- Add module option to cleanup orphaned compute and placement group resources.
+- Add module option to reconfigure the cluster when slurm configurations change
+  (e.g. slurm.conf, partition definitions).
+- Add module option to cleanup orphaned subscription resources.
+- Add pre-commit hooks for miscellaneous formatting and validation.
+- Add pre-commit hooks for yaml formatting.
+- Add Google services enable/check to examples.
+- scripts - improve reporting of missing imported modules.
 
 ## \[4.1.5\]
 
@@ -36,13 +91,9 @@ All notable changes to this project will be documented in this file.
 
 ## \[4.1.2\]
 
-### Changed
-
 - setup.py - change LLN=yes to LLN=no
 
 ## \[4.1.1\]
-
-### Changed
 
 - slurmsync.py - fix powering up nodes from being downed.
 
