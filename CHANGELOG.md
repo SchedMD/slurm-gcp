@@ -1,0 +1,77 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## \[5.0.0\]
+
+- Convert NEWS to CHANGELOG.md
+
+## \[4.1.5\]
+
+- Fix partition-specific network storage from controller to compute nodes.
+- Bump urllib3 from 1.26.4 to 1.26.5 in foundry.
+- Bump ipython from 7.21.0 to 7.31.1 in foundry.
+
+## \[4.1.4\]
+
+- Updated Singularity download URL in custom-controller-install script.
+- Fix static compute nodes being destroyed when `exclusive=true`
+- Add CompleteWait to mitigate a race of latent operations from
+  (Epilog|Prolog)Slurmctld from causing node failure on subsequent jobs.
+- Fix calling "scontrol ... state=resume" in suspend.py for all nodes multiple
+  times for exclusive jobs.
+
+## \[4.1.3\]
+
+- Add preliminary spot instance support (eg. preemptible_bursting = "spot").
+- Regularly delete instances corresponding to Slurm nodes that should be powered
+  down.
+- Upgrade to Slurm 21.08.4.
+- Pin Nvidia driver to 460.106.00-1.
+- Pin Cuda to 11.2.2.
+- Pin gcloud to 365.0.1-1 on centos images - workaround broken package.
+- Enable swap cgroup control on debian images - fixes a slurm compute node
+  error.
+- Add startup scripts as terraform vars.
+
+## \[4.1.2\]
+
+### Changed
+
+- setup.py - change LLN=yes to LLN=no
+
+## \[4.1.1\]
+
+### Changed
+
+- slurmsync.py - fix powering up nodes from being downed.
+
+## \[4.1.0\]
+
+- suspend.py - now handles "Quota exceeded" error
+- Support for Intel-select options
+- slurmrestd - changed user from root to user slurmrestd
+- resume.py - fix state=down reason being malformed
+- suspend.py - scontrol update now specifies new state=power_down_force
+- slurm.conf - update to AccountingStoreFlags=job_comment
+- slurmsync.py - state flags use new POWERED_DOWN state
+- Updated Slurm to version 21.08.2
+
+## \[4.0.4\]
+
+- Configure sockets, cores, threads on compute nodes for better performace with
+  `cons_tres`.
+
+## \[4.0.3\]
+
+- Introduce NEWS file
+- Recommended image is now
+  `schedmd-slurm-public/hpc-centos-7-schedmd-slurm-20-11-7`
+- Changed slurmrestd port to 6842 (from 80)
+- `partitions\[\].image_hyperthreads=false` now actively disables hyperthreads
+  on hpc-centos-7 images, starting with the now recommended image
+- `partitions\[\].image_hyperthreads` is now true in tfvars examples
+- Fixed running of \`custom-compute-install on login node
+- Fixed slurmrestd install on foundry debian images
+- Disable SELinux (was permissive) to fix hpc-centos-7 reboot issue
+- Updated Slurm to 20.11.07
