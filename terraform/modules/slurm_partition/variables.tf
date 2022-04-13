@@ -63,7 +63,16 @@ variable "partition_d" {
 }
 
 variable "partition_nodes" {
-  description = "Grouped nodes in the partition."
+  description = <<EOD
+Compute nodes contained with this partition.
+
+* count_static  : number of persistant nodes.
+* count_dynamic : number of burstable nodes.
+* group_name    : node group unique identifier.
+* node_conf     : map of Slurm node line configuration.
+
+See module slurm_instance_template.
+EOD
   type = list(object({
     count_static  = number
     count_dynamic = number
