@@ -34,6 +34,19 @@ and hybrid. Cloud mode will create a VM controller. Hybrid mode will generate
 configuration files, while managing a `config.yaml` file for internal module
 use.
 
+Partitions define what compute resources are available to the controller so it
+may allocate jobs. Slurm will resume/create compute instances as needed to run
+allocated jobs and will suspend/terminate the instances after they are no longer
+needed (e.g. IDLE for SuspendTimeout duration). Static nodes are persistant;
+they are exempt from being suspended/terminated under normal conditions. Dynamic
+nodes are burstable; they will scale up and down with workload.
+
+> **WARNING:** Destroying the controller before it has suspended/terminated all
+> static and dynamic node instances and supporting resources (e.g. placement
+> groups, subscription) will leave those resources orphaned unless cleanup
+> options are enabled (.e.g `enable_cleanup_compute`,
+> `enable_cleanup_subscriptions`).
+
 ## Usage
 
 See [examples](../../examples/slurm_cluster/) directory for sample usages.
