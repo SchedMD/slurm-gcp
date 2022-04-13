@@ -63,4 +63,9 @@ module "slurm_cluster" {
   partitions               = var.partitions
   project_id               = var.project_id
   prolog_d                 = var.prolog_d
+
+  depends_on = [
+    # Ensure services are enabled
+    module.project_services,
+  ]
 }

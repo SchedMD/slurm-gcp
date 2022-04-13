@@ -83,4 +83,9 @@ module "slurm_cluster" {
   prolog_d                     = var.prolog_d
   slurmdbd_conf_tpl            = var.slurmdbd_conf_tpl
   slurm_conf_tpl               = var.slurm_conf_tpl
+
+  depends_on = [
+    # Ensure services are enabled
+    module.project_services,
+  ]
 }

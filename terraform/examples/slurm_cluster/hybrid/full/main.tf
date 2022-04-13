@@ -116,6 +116,11 @@ module "slurm_network" {
   project_id              = var.project_id
 
   subnets = local.subnets
+
+  depends_on = [
+    # Ensure services are enabled
+    module.project_services,
+  ]
 }
 
 ##################
@@ -128,6 +133,11 @@ module "slurm_firewall_rules" {
   slurm_cluster_name = var.slurm_cluster_name
   network_name       = module.slurm_network.network.network_self_link
   project_id         = var.project_id
+
+  depends_on = [
+    # Ensure services are enabled
+    module.project_services,
+  ]
 }
 
 ##########################
@@ -142,6 +152,11 @@ module "slurm_sa_iam" {
   account_type       = each.value
   slurm_cluster_name = var.slurm_cluster_name
   project_id         = var.project_id
+
+  depends_on = [
+    # Ensure services are enabled
+    module.project_services,
+  ]
 }
 
 #################
@@ -166,6 +181,8 @@ module "slurm_cluster" {
   prolog_d                 = var.prolog_d
 
   depends_on = [
+    # Ensure services are enabled
+    module.project_services,
     # Guarantee the network is created before slurm cluster
     module.slurm_network,
   ]
