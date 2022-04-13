@@ -30,8 +30,9 @@
 This module creates a [Slurm](../../../docs/glossary.md#slurm) cluster on
 [GCP](../../../docs/glossary.md#gcp). There are two modes of operation: cloud;
 and hybrid. Cloud mode will create a VM controller. Hybrid mode will generate
-`cloud.conf` and `gres.conf` files to be included in the on-prem configuration
-files, while managing a `config.yaml` file for internal module use.
+`cloud.conf` and `cloud_gres.conf` files to be included in the on-prem
+configuration files, while managing a `config.yaml` file for internal module
+use.
 
 ## Usage
 
