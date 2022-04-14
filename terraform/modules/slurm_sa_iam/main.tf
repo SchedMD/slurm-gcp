@@ -22,11 +22,13 @@ locals {
   roles = {
     controller = [
       "roles/bigquery.dataEditor",
+      "roles/cloudsql.editor",
       "roles/compute.instanceAdmin.v1",
       "roles/compute.instanceAdmin", # Beta
       "roles/iam.serviceAccountUser",
       "roles/logging.logWriter",
       "roles/monitoring.metricWriter",
+      "roles/pubsub.admin",
     ]
     compute = [
       "roles/logging.logWriter",
