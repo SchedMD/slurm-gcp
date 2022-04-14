@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2017 SchedMD LLC.
-# Modified for use with the Slurm Resource Manager.
-#
+# Copyright (C) SchedMD LLC.
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

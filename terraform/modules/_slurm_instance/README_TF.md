@@ -1,9 +1,7 @@
 # \_slurm_instance
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
-Copyright 2022 SchedMD LLC
-Modified for use with the Slurm Resource Manager.
-
+Copyright (C) SchedMD LLC.
 Copyright 2018 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");

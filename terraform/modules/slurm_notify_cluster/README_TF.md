@@ -1,7 +1,7 @@
 # slurm_notify_cluster
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
-Copyright 2021 SchedMD LLC
+Copyright (C) SchedMD LLC.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
