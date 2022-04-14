@@ -62,6 +62,7 @@ All notable changes to this project will be documented in this file.
 - scripts - improve reporting of missing imported modules.
 - Allow suspend.py to delete exclusive instances, which allows power_down_force
   to work on exclusive nodes.
+- Add better error reporting in setup script for invalid machine types.
 
 ## \[4.1.5\]
 

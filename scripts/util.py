@@ -1062,12 +1062,17 @@ class Lookup:
             )
         else:
             machines = self.machine_types(project=project)
-            machine_info = next(iter(machines[machine_type].values()))
+            machine_info = next(iter(machines[machine_type].values()), None)
+            if machine_info is None:
+                raise Exception(f"machine type {machine_type} not found")
         return NSDict(machine_info)
 
     def template_machine_conf(self, template_link, project=None, zone=None):
 
         template = self.template_info(template_link)
+        if not template.machineType:
+            temp_name = parse_self_link(template_link).instanceTemplate
+            raise Exception(f"instance template {temp_name} has no machine type")
         template.machine_info = self.machine_type(template.machineType, zone=zone)
         machine = template.machine_info
         machine_conf = NSDict()
