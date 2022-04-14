@@ -19,7 +19,7 @@ This module can create three different sets of
 [IAM Roles](../../../docs/glossary.md#iam-roles), and
 [access scopes](../../../docs/glossary.md#access-scopes): controller; login;
 compute. These [service account](../../../docs/glossary.md#service-account) sets
-are intended to be passed to other sections of the slurm cluster configuration
+are intended to be passed to other sections of the Slurm cluster configuration
 to define [instances templates](../../../docs/glossary.md#instance-template).
 
 ## Usage

@@ -63,7 +63,7 @@
 
 1. Go to [Deployment Manager](https://console.cloud.google.com/dm/deployments).
 
-1. Select the slurm cluster deployment from list.
+1. Select the Slurm cluster deployment from list.
 
 1. Click "DELETE" and confirm action.
 

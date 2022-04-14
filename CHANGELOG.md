@@ -9,23 +9,23 @@ All notable changes to this project will be documented in this file.
 - Add packer and ansible based image building process and configuration.
 - Slurm scripts are baked into the image.
 - Remove foundry based image building process.
-- Create new slurm terraform modules and examples, using
+- Create new Slurm terraform modules and examples, using
   [cloud-foundation-toolkit](https://cloud.google.com/foundation-toolkit) and
   best practices.
-- Use terraform module to define slurm partitions.
-- Use instance templates to create slurm instances.
+- Use terraform module to define Slurm partitions.
+- Use instance templates to create Slurm instances.
 - Support partitions with heterogeneous compute nodes.
 - Rename partition module boolean options.
 - Change how static and dynamic nodes are defined.
 - Change how zone policy is defined in partition module.
-- Store cluster slurm configuration data in project metadata.
-- Add top level terraform module for a slurm cluster.
+- Store cluster Slurm configuration data in project metadata.
+- Add top level terraform module for a Slurm cluster.
 - Add pre-commit hooks for terraform validation, formatting, and documentation.
 - Slurm cluster resources are labeled with slurm_cluster_id.
 - All compute nodes are managed by the controller module.
 - Update module option for toggling simultaneous multithreading (SMT).
 - scripts - downgrade required python version to 3.6
-- Add new hybrid management process using terraform slurm modules.
+- Add new hybrid management process using terraform Slurm modules.
 - Rename metadata slurm_instance_type to slurm_instance_role.
 - Add module option for cluster development mode.
 - Change terraform minimum required version to 1.0
@@ -36,8 +36,8 @@ All notable changes to this project will be documented in this file.
 - Store cluster provisioning user scripts in project metadata.
 - Unify partition option naming with configuration object.
 - Add module option to toggle os-login based authentication.
-- Add new module for creating slurm cluster service accounts and IAM.
-- Add new module for creating slurm cluster firewall rules.
+- Add new module for creating Slurm cluster service accounts and IAM.
+- Add new module for creating Slurm cluster firewall rules.
 - Add pre-commit hooks for python linting and formatting.
 - Add terraform examples to fully manage cluster deployment.
 - Add terraform example for custom authentication using winbind.
@@ -53,7 +53,7 @@ All notable changes to this project will be documented in this file.
 - Add packer configuration option for user ansible roles.
 - Add module option for job account data storage in BigQuery.
 - Add module option to cleanup orphaned compute and placement group resources.
-- Add module option to reconfigure the cluster when slurm configurations change
+- Add module option to reconfigure the cluster when Slurm configurations change
   (e.g. slurm.conf, partition definitions).
 - Add module option to cleanup orphaned subscription resources.
 - Add pre-commit hooks for miscellaneous formatting and validation.
@@ -85,7 +85,7 @@ All notable changes to this project will be documented in this file.
 - Pin Nvidia driver to 460.106.00-1.
 - Pin Cuda to 11.2.2.
 - Pin gcloud to 365.0.1-1 on centos images - workaround broken package.
-- Enable swap cgroup control on debian images - fixes a slurm compute node
+- Enable swap cgroup control on debian images - fixes a Slurm compute node
   error.
 - Add startup scripts as terraform vars.
 

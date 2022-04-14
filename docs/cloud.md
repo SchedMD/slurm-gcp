@@ -14,7 +14,7 @@
 
 ## Overview
 
-This guide focuses on setting up a cloud [slurm cluster](./glossary.md#slurm).
+This guide focuses on setting up a cloud [Slurm cluster](./glossary.md#slurm).
 With cloud, there are decisions that need to be made and certain considerations
 taken into account. This guide will cover them and their recommended solutions.
 
@@ -53,7 +53,7 @@ to get you familiar.
 See the
 [full cluster example](../terraform/examples/slurm_cluster/cloud/full/README.md)
 for a great example to get started with. It will create all the infrastructure,
-service accounts and IAM to minimally support a slurm cluster. The
+service accounts and IAM to minimally support a Slurm cluster. The
 [TerraformUser](./glossary.md#terraformuser) will require more
 [roles](./glossary.md#iam-roles) to create the other supporting resources. You
 can configure certain elements of the example cluster, which is useful for

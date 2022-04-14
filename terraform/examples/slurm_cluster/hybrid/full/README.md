@@ -21,7 +21,7 @@ This example creates a
 [slurm_cluster](../../../../modules/slurm_cluster/README.md) in hybrid mode. It
 highly configurable through tfvars.
 
-All other components required to support the slurm cluster are minimally created
+All other components required to support the Slurm cluster are minimally created
 as well: VPC; subnetwork; firewall rules; service accounts.
 
 ## Usage

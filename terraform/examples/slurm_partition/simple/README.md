@@ -14,7 +14,7 @@
 
 ## Overview
 
-This exmaple creates a [slurm partition](../../../modules/slurm_partition/).
+This exmaple creates a [Slurm partition](../../../modules/slurm_partition/).
 
 ## Usage
 

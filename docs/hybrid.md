@@ -25,7 +25,7 @@ taken into account. This guide will cover them and their recommended solutions.
 There is a clear seperation of how on-prem and cloud resources are managed
 within your hybrid cluster. This means that you can modify either side of the
 hybrid cluster without disrupting the other side! You manage your on-prem and
-our [slurm cluster module](../terraform/modules/slurm_cluster/README.md) will
+our [Slurm cluster module](../terraform/modules/slurm_cluster/README.md) will
 manage the cloud.
 
 See [Cloud Scheduling Guide](https://slurm.schedmd.com/elastic_computing.html)
@@ -42,7 +42,7 @@ within your hybrid cluster. The
 hybrid mode, creates the required files to support an on-premise controller
 capable of cloud bursting.
 
-See the [slurm cluster module](../terraform/modules/slurm_cluster/README.md) for
+See the [Slurm cluster module](../terraform/modules/slurm_cluster/README.md) for
 details.
 
 If you are unfamiliar with [terraform](./glossary.md#terraform), then please
@@ -55,7 +55,7 @@ to get you familiar.
 See the
 [full cluster example](../terraform/examples/slurm_cluster/hybrid/full/README.md)
 for a great example to get started with. It will create all the infrastructure,
-service accounts and IAM to minimally support a slurm cluster. The
+service accounts and IAM to minimally support a Slurm cluster. The
 [TerraformUser](./glossary.md#terraformuser) will require more
 [roles](./glossary.md#iam-roles) to create the other supporting resources. You
 can configure certain elements of the example cluster, which is useful for

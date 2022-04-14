@@ -201,7 +201,7 @@ accross all instances and allows easy user control with
 
 By default, the [slurm_cluster](../terraform/modules/slurm_cluster/README.md)
 terraform module uses the latest Slurm image family (e.g.
-`schedmd-v5-slurm-21-08-6-hpc-centos-7`). As new slurm image families are
+`schedmd-v5-slurm-21-08-6-hpc-centos-7`). As new Slurm image families are
 released, coenciding with periodic Slurm releases, the terraform module will be
 updated to track the newest image family by setting it as the new default. This
 update can be considered a breaking change.
@@ -212,5 +212,5 @@ negatively impacting your cluster. Moreover, the controller and all other
 instances may be force replaced (destroyed, then deployed) when
 `terraform apply` detects that the image family of Slurm instances has changed.
 
-Optionally, you may generate and use your own slurm images. See
+Optionally, you may generate and use your own Slurm images. See
 [custom image creation](./images.md#custom-image) for more information.

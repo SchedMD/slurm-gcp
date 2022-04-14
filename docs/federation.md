@@ -86,7 +86,7 @@ please refer to [multiple-slurmdbd](#multiple-slurmdbd) section.
 1. Deploy [slurmdbd](./glossary.md#slurmdbd) and database (e.g. mariadb, mysql,
    etc..).
 
-1. Deploy slurm clusters by any chosen methods (e.g. cloud, hybrid, etc..).
+1. Deploy Slurm clusters by any chosen methods (e.g. cloud, hybrid, etc..).
 
    > **WARNING:** This type of configuration is not supported by
    > [slurm_cluster terraform module](../terraform/modules/slurm_cluster/README.md);
@@ -126,7 +126,7 @@ please refer to [multiple-slurmdbd](#multiple-slurmdbd) section.
    > [slurm_cluster terraform module](../terraform/modules/slurm_cluster/README.md)
    > conflates the controller instance and the database instance.
 
-1. Deploy slurm clusters by any chosen methods (e.g. cloud, hybrid, etc..).
+1. Deploy Slurm clusters by any chosen methods (e.g. cloud, hybrid, etc..).
 
    > **WARNING:** If using the
    > [slurm_cluster terraform module](../terraform/modules/slurm_cluster/README.md),

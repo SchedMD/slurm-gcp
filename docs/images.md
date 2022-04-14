@@ -19,7 +19,7 @@
 
 [Google Cloud Platform](./glossary.md#gcp) instances require a source image or
 source image family which the instance will boot from. SchedMD provides
-[public images](#public-image) for slurm instances, which contain an HPC
+[public images](#public-image) for Slurm instances, which contain an HPC
 software stack for HPC ready images. Otherwise, [custom images](#custom-image)
 can be created and used instead.
 
@@ -33,7 +33,7 @@ can be created and used instead.
 
 SchedMD releases public images on [Google Cloud Platform](./glossary.md#gcp)
 that are minimal viable images for deploying
-[slurm clusters](./glossary.md#slurm) through all method and configurations.
+[Slurm clusters](./glossary.md#slurm) through all method and configurations.
 
 We officially support images built on these OS families:
 
@@ -52,14 +52,14 @@ Support OS versions may vary with family.
 ## Custom Image
 
 To create [slurm_cluster](../terraform/modules/slurm_cluster/README.md)
-compliant images yourself, a custom slurm image can be created.
+compliant images yourself, a custom Slurm image can be created.
 [Packer](./glossary.md#packer) and [Ansible](./glossary.md#ansible) are used to
 orchestrate custom image creation.
 
 Custom images can be built from a supported private or public image (e.g.
 hpc-centos-7, centos-7). Additionally, ansible roles or scripts can be added
 into the provisioning process to install custom software and configure the
-custom slurm image.
+custom Slurm image.
 
 ### Requirements
 
