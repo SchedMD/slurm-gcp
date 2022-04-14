@@ -142,7 +142,7 @@ def dict_to_conf(conf, delim=" "):
     return delim.join(f"{k}={v}" for k, v in map(filter_conf, conf.items()) if v)
 
 
-def gen_cloud_conf(lkp, cloud_parameters=None):
+def make_cloud_conf(lkp=lkp, cloud_parameters=None):
     """generate cloud.conf snippet"""
     if cloud_parameters is None:
         cloud_parameters = lkp.cfg.cloud_parameters
@@ -250,12 +250,11 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
     def partitionlines(partition):
         """Make a partition line for the slurm.conf"""
         part_name = partition.partition_name
-        nodesets, nodelines = zip(
-            *(
-                node_group_lines(group, part_name)
-                for group in partition.partition_nodes.values()
-            )
-        )
+        group_lines = [
+            node_group_lines(group, part_name)
+            for group in partition.partition_nodes.values()
+        ]
+        nodesets, nodelines = zip(*group_lines)
 
         def defmempercpu(template_link):
             machine_conf = lkp.template_machine_conf(template_link)
@@ -298,12 +297,16 @@ def gen_cloud_conf(lkp, cloud_parameters=None):
         suspend_exc,
         "\n",
     ]
+    return "\n\n".join(filter(None, lines))
+
+
+def gen_cloud_conf(lkp=lkp, cloud_parameters=None):
+    content = make_cloud_conf(lkp, cloud_parameters=cloud_parameters)
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud.conf"
     conf_file_bak = conf_file.with_suffix(".conf.bak")
     if conf_file.is_file():
         shutil.copy2(conf_file, conf_file_bak)
-    content = "\n\n".join(filter(None, lines))
     conf_file.write_text(content)
     util.chown_slurm(conf_file, mode=0o644)
 
@@ -387,7 +390,7 @@ def install_cgroup_conf():
     util.chown_slurm(conf_file, mode=0o600)
 
 
-def gen_cloud_gres_conf(lkp):
+def gen_cloud_gres_conf(lkp=lkp):
     """generate cloud_gres.conf"""
 
     gpu_nodes = defaultdict(list)
@@ -872,8 +875,8 @@ def setup_controller():
     install_slurm_conf(lkp)
     install_slurmdbd_conf(lkp)
 
-    gen_cloud_conf(lkp)
-    gen_cloud_gres_conf(lkp)
+    gen_cloud_conf()
+    gen_cloud_gres_conf()
     install_gres_conf()
     install_cgroup_conf()
 
