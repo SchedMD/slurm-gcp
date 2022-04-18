@@ -103,7 +103,7 @@ def per_instance_properties(node, placement_groups=None):
     return props
 
 
-def create_instances_request(nodes, placement_groups=None):
+def create_instances_request(nodes, placement_groups=None, exclusive=False):
     """Call regionInstances.bulkInsert to create instances"""
     assert len(nodes) > 0
     assert len(nodes) <= BULK_INSERT_LIMIT
@@ -115,6 +115,8 @@ def create_instances_request(nodes, placement_groups=None):
 
     body = NSDict()
     body.count = len(nodes)
+    if not exclusive:
+        body.minCount = 1
 
     # source of instance properties
     body.sourceInstanceTemplate = template
@@ -156,7 +158,7 @@ def expand_nodelist(nodelist):
     return nodes
 
 
-def resume_nodes(nodelist, placement_groups=None):
+def resume_nodes(nodelist, placement_groups=None, exclusive=False):
     """resume nodes in nodelist"""
 
     def ident_key(n):
@@ -285,7 +287,7 @@ def prolog_resume_nodes(job_id, nodelist):
         )
         if not valid_placement_nodes(job_id, nodelist):
             return
-    resume_nodes(nodes, placement_groups)
+    resume_nodes(nodes, placement_groups, exclusive=True)
 
 
 def main(nodelist, job_id, force=False):
