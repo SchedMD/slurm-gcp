@@ -72,9 +72,9 @@ def delete_instances(instances):
 
     if lkp.cfg.enable_reconfigure:
         count = len(instances)
-        hostlist = util.to_hostlist(instances)
+        hostlist = util.to_hostlist(valid)
         log.info("delete {} subscriptions ({})".format(count, hostlist))
-        execute_with_futures(subscription_delete, instances)
+        execute_with_futures(subscription_delete, valid)
 
     requests = {inst: delete_instance_request(inst) for inst in valid}
     done, failed = batch_execute(requests)
