@@ -22,6 +22,7 @@
     - [How do I limit user access to only using login nodes?](#how-do-i-limit-user-access-to-only-using-login-nodes)
     - [What Slurm image do I use for production?](#what-slurm-image-do-i-use-for-production)
     - [What operating systems can I use `slurm-gcp` with?](#what-operating-systems-can-i-use-slurm-gcp-with)
+    - [Should I disable Simultaneous Multithreading (SMT)?](#should-i-disable-simultaneous-multithreading-smt)
 
 <!-- mdformat-toc end -->
 
@@ -221,3 +222,36 @@ Optionally, you may generate and use your own Slurm images. See
 You may use any OS supported by the image build process.
 
 See [image docs](./images.md#overview) for more information.
+
+### Should I disable Simultaneous Multithreading (SMT)?
+
+https://cloud.google.com/architecture/best-practices-for-using-mpi-on-compute-engine#disable_simultaneous_multithreading
+
+> Some HPC applications get better performance by disabling Simultaneous
+> Multithreading (SMT) in the guest OS. Simultaneous Multithreading, commonly
+> known as Intel Hyper-threading, allocates two virtual cores (vCPU) per
+> physical core on the node. For many general computing tasks or tasks that
+> require lots of I/O, SMT can increase application throughput significantly.
+> For compute-bound jobs in which both virtual cores are compute-bound, SMT can
+> hinder overall application performance and can add unpredictable variance to
+> jobs. Turning off SMT allows more predictable performance and can decrease job
+> times.
+
+> Important: Disabling SMT changes the way cores are counted, and may increase
+> the cost per core of the cluster depending on how you count cores. Although
+> cost per core is a common metric for on-premises hardware, a more appropriate
+> metric for the cloud is cost per workload or cost per job. For compute-bound
+> jobs, you pay for what you use. Turning off Hyper-Threading can reduce the
+> overall runtime, which can reduce the overall cost of the job. We recommend
+> that you benchmark your application and use this feature where it is
+> beneficial.
+
+> You can disable Simultaneous Multithreading at VM creation on all VM types
+> with the following exceptions:
+>
+> - VMs that run on machine types that have fewer than 2 vCPUs (such as
+>   n1-standard-1) or shared-core machines (such as e2-small).
+> - VMs that run on the Tau T2D machine type.
+
+When using `slurm-gcp` terraform modules, use option `disable_smt` to toggle
+Simultaneous Multithreading (SMT) on/off.
