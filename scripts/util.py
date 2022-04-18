@@ -285,16 +285,6 @@ def execute_with_futures(func, list):
                 raise result
 
 
-def split_nodelist(nodelist):
-    """split nodelist expression into independent host expressions"""
-    # We do this in order to eliminate nodes we don't need to handle prior to
-    # expansion
-    # split on commas that are not within brackets
-    hostlist_patt = re.compile(r",(?![^\[]*\])")
-    nodes = hostlist_patt.split(nodelist)
-    return nodes
-
-
 def is_exclusive_node(node):
     partition = lkp.node_partition(node)
     return not lkp.node_is_static(node) and (

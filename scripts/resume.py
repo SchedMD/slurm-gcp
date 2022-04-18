@@ -31,7 +31,6 @@ from util import (
     separate,
     batch_execute,
     execute_with_futures,
-    split_nodelist,
     is_exclusive_node,
     subscription_create,
     wait_for_operation,
@@ -292,7 +291,7 @@ def create_placement_groups(job_id, node_list, partition_name):
 def valid_placement_nodes(job_id, nodelist):
     machine_types = {
         lkp.node_prefix(node): lkp.node_template_info(node).machineType
-        for node in split_nodelist(nodelist)
+        for node in nodelist
     }
     fail = False
     for prefix, machine_type in machine_types.items():
