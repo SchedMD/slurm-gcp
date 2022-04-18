@@ -49,7 +49,6 @@ locals {
           range(offset, min(offset + 1024, sum([x.count_dynamic, x.count_static])))
         )
       ])
-      service_account = data.google_compute_instance_template.group_template[x.group_name].service_account.*.email
     }
   }
 
