@@ -23,6 +23,13 @@ source image family which the instance will boot from. SchedMD provides
 software stack for HPC ready images. Otherwise, [custom images](#custom-image)
 can be created and used instead.
 
+`slurm-gcp` supports images built on these OS families:
+
+- RHEL 7/8
+- CentOS 7/8
+- Debian 10
+- Ubuntu 20.04
+
 ### Installed Software for HPC
 
 - [lmod](https://lmod.readthedocs.io/en/latest/index.html)
@@ -34,15 +41,6 @@ can be created and used instead.
 SchedMD releases public images on [Google Cloud Platform](./glossary.md#gcp)
 that are minimal viable images for deploying
 [Slurm clusters](./glossary.md#slurm) through all method and configurations.
-
-We officially support images built on these OS families:
-
-- RHEL
-- CentOS
-- Debian
-- Ubuntu
-
-Support OS versions may vary with family.
 
 > **NOTE:** SchedMD generated images using the same process as for
 > [custom images](#custom-image) but without any additional software and only

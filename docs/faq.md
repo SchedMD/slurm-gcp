@@ -21,6 +21,7 @@
     - [How do I reduce compute costs?](#how-do-i-reduce-compute-costs)
     - [How do I limit user access to only using login nodes?](#how-do-i-limit-user-access-to-only-using-login-nodes)
     - [What Slurm image do I use for production?](#what-slurm-image-do-i-use-for-production)
+    - [What operating systems can I use `slurm-gcp` with?](#what-operating-systems-can-i-use-slurm-gcp-with)
 
 <!-- mdformat-toc end -->
 
@@ -214,3 +215,9 @@ instances may be force replaced (destroyed, then deployed) when
 
 Optionally, you may generate and use your own Slurm images. See
 [custom image creation](./images.md#custom-image) for more information.
+
+### What operating systems can I use `slurm-gcp` with?
+
+You may use any OS supported by the image build process.
+
+See [image docs](./images.md#overview) for more information.
