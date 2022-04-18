@@ -26,6 +26,8 @@ from itertools import groupby
 
 import util
 from util import (
+    get_insert_operations,
+    parse_self_link,
     run,
     chunked,
     separate,
@@ -34,9 +36,9 @@ from util import (
     split_nodelist,
     is_exclusive_node,
     subscription_create,
+    wait_for_operation,
 )
 from util import cfg, lkp, compute, NSDict
-
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
@@ -185,27 +187,67 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
     }
     log.debug(f"grouped_nodes: {grouped_nodes}")
 
-    if lkp.cfg.enable_reconfigure:
-        count = len(nodes)
-        hostlist = util.to_hostlist(nodes)
-        log.info("create {} subscriptions ({})".format(count, hostlist))
-        execute_with_futures(subscription_create, nodes)
-
+    # make all bulkInsert requests and execute with batch
     inserts = {
-        ident: create_instances_request(nodes, placement_groups)
+        ident: create_instances_request(nodes, placement_groups, exclusive)
         for ident, nodes in grouped_nodes.items()
     }
-    done, failed = batch_execute(inserts)
+    started, failed = batch_execute(inserts)
     if failed:
         failed_reqs = [f"{e}" for _, (_, e) in failed.items()]
-        log.error("bulkInsert failures: {}".format("\n".join(failed_reqs)))
+        log.error("bulkInsert API failures: {}".format("\n".join(failed_reqs)))
         for ident, (_, exc) in failed.items():
             down_nodes(grouped_nodes[ident], exc._get_reason())
 
+    # wait for all bulkInserts to complete and log any errors
+    bulk_operations = [wait_for_operation(op) for op in started.values()]
+    for bulk_op in bulk_operations:
+        if "error" in bulk_op:
+            error = bulk_op["error"]["errors"][0]
+            log.error(
+                f"bulkInsert operation error: {error['code']} operationName:'{bulk_op['name']}'"
+            )
 
-def down_nodes(nodes, reason):
+    # Fetch all insert operations from all bulkInserts. Group by error code and log
+    successful_inserts, failed_inserts = separate(
+        lambda op: "error" in op, get_insert_operations(bulk_operations)
+    )
+    # Apparently multiple errors are possible... so join with +.
+    # grouped_inserts could be made into a dict, but it's not really necessary. Save some memory.
+    grouped_inserts = util.groupby_unsorted(
+        failed_inserts,
+        lambda op: "+".join(err["code"] for err in op["error"]["errors"]),
+    )
+    for code, failed_ops in grouped_inserts:
+        # at least one insert failure
+        failed_nodes = [parse_self_link(op["targetLink"]).instance for op in failed_ops]
+        hostlist = util.to_hostlist(failed_nodes)
+        count = len(failed_nodes)
+        log.error(
+            f"{count} instances failed to start due to insert operation error: {code} ({hostlist})"
+        )
+        down_nodes(hostlist, code)
+        if log.isEnabledFor(logging.DEBUG):
+            msg = "\n".join(
+                err["message"] for err in next(failed_ops)["error"]["errors"]
+            )
+            log.debug(f"{code} message from first node: {msg}")
+
+    # If reconfigure enabled, create subscriptions for successfully started instances
+    if lkp.cfg.enable_reconfigure and len(successful_inserts):
+        started_nodes = [
+            parse_self_link(op["targetLink"]).instance for op in successful_inserts
+        ]
+        count = len(started_nodes)
+        hostlist = util.to_hostlist(started_nodes)
+        log.info("create {} subscriptions ({})".format(count, hostlist))
+        execute_with_futures(subscription_create, nodes)
+
+
+def down_nodes(nodelist, reason):
     """set nodes down with reason"""
-    nodelist = util.to_hostlist(nodes)
+    if isinstance(nodelist, list):
+        nodelist = util.to_hostlist(nodelist)
     run(f"{lkp.scontrol} update nodename={nodelist} state=down reason='{reason}'")
 
 

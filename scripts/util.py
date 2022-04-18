@@ -765,7 +765,25 @@ def wait_request(operation, project=project, compute=compute):
     return req
 
 
+def wait_for_operation(operation, project=project, compute=compute):
+    """wait for given operation"""
+    wait_req = wait_request(operation)
+
+    while True:
+        result = ensure_execute(wait_req)
+        if result["status"] == "DONE":
+            log_errors = " with errors" if "error" in result else ""
+            log.debug(
+                f"operation complete{log_errors}: type: {result['operationType']}, name: {result['name']}"
+            )
+            return result
+
+
 def wait_for_operations(operations, project=project, compute=compute):
+    return [wait_for_operation(op) for op in operations]
+
+
+def wait_for_operations_async(operations, project=project, compute=compute):
     """wait for all operations"""
 
     def operation_retry(resp):
@@ -775,40 +793,62 @@ def wait_for_operations(operations, project=project, compute=compute):
     return batch_execute(requests, retry_cb=operation_retry)
 
 
-def wait_for_operation(operation, project=project, compute=compute):
-    """wait for given operation"""
-    print("Waiting for operation to finish...")
-    wait_req = wait_request(operation)
-
-    while True:
-        result = ensure_execute(wait_req)
-        if result["status"] == "DONE":
-            print("done.")
-            return result
-
-
-def get_group_operations(operation, project=project, compute=compute):
+def get_filtered_operations(
+    op_filter,
+    zone=None,
+    region=None,
+    only_global=False,
+    project=project,
+    compute=compute,
+):
     """get list of operations associated with group id"""
 
-    group_id = operation["operationGroupId"]
-    if "zone" in operation:
-        operation = compute.zoneOperations().list(
-            project=project,
-            zone=operation["zone"].split("/")[-1],
-            filter=f"operationGroupId={group_id}",
-        )
-    elif "region" in operation:
-        operation = compute.regionOperations().list(
-            project=project,
-            region=operation["region"].split("/")[-1],
-            filter=f"operationGroupId={group_id}",
-        )
-    else:
-        operation = compute.globalOperations().list(
-            project=project, filter=f"operationGroupId={group_id}"
+    operations = []
+
+    def get_aggregated_operations(items):
+        # items is a dict of location key to value: dict(operations=<list of operations>) or an empty dict
+        operations.extend(
+            chain.from_iterable(
+                ops["operations"] for ops in items.values() if "operations" in ops
+            )
         )
 
-    return ensure_execute(operation)
+    def get_list_operations(items):
+        operations.extend(items)
+
+    handle_items = get_list_operations
+    if only_global:
+        act = compute.globalOperations()
+        op = act.list(project=project, filter=op_filter)
+        nxt = act.list_next
+    elif zone is not None:
+        act = compute.zoneOperations()
+        op = act.list(project=project, zone=zone, filter=op_filter)
+        nxt = act.list_next
+    elif region is not None:
+        act = compute.regionOperations()
+        op = act.list(project=project, region=region, filter=op_filter)
+        nxt = act.list_next
+    else:
+        act = compute.globalOperations()
+        op = act.aggregatedList(
+            project=project, filter=op_filter, fields="items.*.operations,nextPageToken"
+        )
+        nxt = act.aggregatedList_next
+        handle_items = get_aggregated_operations
+    while op is not None:
+        result = ensure_execute(op)
+        handle_items(result["items"])
+        op = nxt(op, result)
+    return operations
+
+
+def get_insert_operations(bulk_operations, project=project, compute=compute):
+    """get all group operations from list of bulk operations"""
+    flt = " OR ".join(
+        f"(operationGroupId={op['operationGroupId']})" for op in bulk_operations
+    )
+    return get_filtered_operations(f"(operationType=insert) AND ({flt})")
 
 
 class Dumper(yaml.SafeDumper):
