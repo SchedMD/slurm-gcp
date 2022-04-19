@@ -23,6 +23,7 @@
     - [What Slurm image do I use for production?](#what-slurm-image-do-i-use-for-production)
     - [What operating systems can I use `slurm-gcp` with?](#what-operating-systems-can-i-use-slurm-gcp-with)
     - [Should I disable Simultaneous Multithreading (SMT)?](#should-i-disable-simultaneous-multithreading-smt)
+    - [How do I automate custom cluster configurations?](#how-do-i-automate-custom-cluster-configurations)
 
 <!-- mdformat-toc end -->
 
@@ -255,3 +256,19 @@ https://cloud.google.com/architecture/best-practices-for-using-mpi-on-compute-en
 
 When using `slurm-gcp` terraform modules, use option `disable_smt` to toggle
 Simultaneous Multithreading (SMT) on/off.
+
+### How do I automate custom cluster configurations?
+
+The [Slurm cluster module](../terraform/modules/slurm_cluster/README.md) provide
+multiple variables (`controller_d`, `compute_d`, `partition_d`) which allow you
+input a list of scripts which will be run on different sets of hosts at set-up
+time. The scripts are run synchronousely and a non-zero exit will fail the setup
+step of the instance. Generally, `controller_d` will run only on the controller
+node; `compute_d` will run on the log and all compute nodes, and `partition_d`
+will on all compute nodes within that partition. See
+[Slurm cluster module variables](../terraform/modules/slurm_cluster/variables.tf)
+for details.
+
+If you want to install software, it is recommended to bake it into the image.
+Doing so will speed up the deployment of bursted compute nodes. See
+[customize image](./images.md#customize) for more information.
