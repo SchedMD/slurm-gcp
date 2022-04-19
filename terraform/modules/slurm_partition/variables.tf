@@ -231,7 +231,7 @@ NOTE: Requires Python and Google Pub/Sub API.
 will be destroyed and their jobs will be requeued.
 EOD
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "network_storage" {
