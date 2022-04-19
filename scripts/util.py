@@ -82,6 +82,10 @@ log = logging.getLogger(__name__)
 def_creds, project = google.auth.default()
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
+scripts_dir = next(
+    p for p in (Path(__file__).parent, Path("/slurm/scripts")) if p.is_dir()
+)
+
 # readily available compute api handle
 compute = None
 # slurm-gcp config object, could be None if not available
@@ -98,7 +102,7 @@ dirs = NSDict(
                 "home": "/home",
                 "apps": "/opt/apps",
                 "slurm": "/slurm",
-                "scripts": "/slurm/scripts",
+                "scripts": scripts_dir,
                 "custom_scripts": "/slurm/custom_scripts",
                 "munge": "/etc/munge",
                 "secdisk": "/mnt/disks/sec",
