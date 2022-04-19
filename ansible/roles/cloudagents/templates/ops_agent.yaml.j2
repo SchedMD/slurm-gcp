@@ -67,7 +67,7 @@ logging:
     parse_slurmlog2:
       type: parse_regex
       field: message
-      regex: "^(?<time>\S+ \S+) (?<process_id>\d+) (?<thread_id>\d+) (?<filename>[^ ]*) (?<severity>(CRITICAL|ERROR|WARNING|INFO|DEBUG)): (?<message>.*)$"
+      regex: "^(?<time>\S+ \S+) (?<filename>[^ ]*) (?<severity>(CRITICAL|ERROR|WARNING|INFO|DEBUG)): (?<message>.*)$"
       time_key: time
       time_format: "%Y-%m-%d %H:%M:%S,%N"
   service:
