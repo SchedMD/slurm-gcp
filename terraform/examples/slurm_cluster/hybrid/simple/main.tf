@@ -100,7 +100,7 @@ locals {
           }
           instance_template        = null
           labels                   = {}
-          machine_type             = "c2-standard-4"
+          machine_type             = "n1-standard-4"
           metadata                 = {}
           min_cpu_platform         = null
           on_host_maintenance      = null
