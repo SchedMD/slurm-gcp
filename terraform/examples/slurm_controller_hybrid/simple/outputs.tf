@@ -17,5 +17,4 @@
 output "slurm_controller_hybrid" {
   description = "Slurm controller hybrid"
   value       = module.slurm_controller_hybrid
-  sensitive   = true
 }
