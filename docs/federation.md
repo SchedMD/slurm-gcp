@@ -1,6 +1,7 @@
 # Federated Cluster Guide
 
-[FAQ](./faq.md) | [Glossary](./glossary.md)
+[FAQ](./faq.md) | [Troubleshooting](./troubleshooting.md) |
+[Glossary](./glossary.md)
 
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=1 -->
 

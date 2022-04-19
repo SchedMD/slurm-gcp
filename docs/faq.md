@@ -17,7 +17,6 @@
     - [How do I contribute to `slurm-gcp` or `slurm`?](#how-do-i-contribute-to-slurm-gcp-or-slurm)
     - [How do I use Terraform?](#how-do-i-use-terraform)
     - [How do I modify Slurm config files?](#how-do-i-modify-slurm-config-files)
-    - [Why did setup.py fail?](#why-did-setuppy-fail)
     - [What are GCP preemptible VMs?](#what-are-gcp-preemptible-vms)
     - [How do I reduce compute costs?](#how-do-i-reduce-compute-costs)
     - [How do I limit user access to only using login nodes?](#how-do-i-limit-user-access-to-only-using-login-nodes)
@@ -122,10 +121,6 @@ was used to deploy the cluster, see
 - slurm_conf_tpl
 - cgroup_conf_tpl
 - slurmdbd_conf_tpl
-
-### Why did setup.py fail?
-
-Check the `setup.log` at `/slurm/scripts/setup.log` for details.
 
 ### What are GCP preemptible VMs?
 

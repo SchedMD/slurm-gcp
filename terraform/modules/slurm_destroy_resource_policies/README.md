@@ -1,6 +1,8 @@
 # Module: Slurm Destroy Resource Policies
 
-[FAQ](../../../docs/faq.md) | [Glossary](../../../docs/glossary.md)
+[FAQ](../../../docs/faq.md) |
+[Troubleshooting](../../../docs/troubleshooting.md) |
+[Glossary](../../../docs/glossary.md)
 
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=1 -->
 
