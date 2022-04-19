@@ -5,11 +5,20 @@
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=1 -->
 
 - [Troubleshooting Guide](#troubleshooting-guide)
+  - [Customer support](#customer-support)
   - [The cluster is not behaving correctly](#the-cluster-is-not-behaving-correctly)
   - [Instance startup-script failed](#instance-startup-script-failed)
   - [Quota limits](#quota-limits)
 
 <!-- mdformat-toc end -->
+
+## Customer support
+
+For [Google Cloud](./glossary.md#gcp) issues, please direct support requests to
+[Google Cloud Support](https://cloud.google.com/support-hub).
+
+For [Slurm](./glossary.md#slurm) and `slurm-gcp` issues, please direct support
+requests to [SchedMD Support](https://bugs.schedmd.com).
 
 ## The cluster is not behaving correctly
 
