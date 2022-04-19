@@ -27,10 +27,10 @@ region = "us-central1"
 # *NOT* intended for production use
 # enable_devel = true
 
-enable_bigquery_load         = true
+enable_bigquery_load         = false
 enable_cleanup_compute       = true
-enable_cleanup_subscriptions = true
-enable_reconfigure           = true
+enable_cleanup_subscriptions = false
+enable_reconfigure           = false
 
 #################
 # CONFIGURATION #
