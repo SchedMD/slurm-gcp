@@ -419,7 +419,7 @@ def config_root_logger(
                 "format": "",
             },
             "stamp": {
-                "format": "%(asctime)s %(process)s %(thread)s %(name)s %(levelname)s: %(message)s",
+                "format": "%(asctime)s %(name)s %(levelname)s: %(message)s",
             },
         },
         "handlers": {
