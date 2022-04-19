@@ -18,6 +18,7 @@
     - [How do I use Terraform?](#how-do-i-use-terraform)
     - [How do I modify Slurm config files?](#how-do-i-modify-slurm-config-files)
     - [Why did setup.py fail?](#why-did-setuppy-fail)
+    - [What are GCP preemptible VMs?](#what-are-gcp-preemptible-vms)
     - [How do I reduce compute costs?](#how-do-i-reduce-compute-costs)
     - [How do I limit user access to only using login nodes?](#how-do-i-limit-user-access-to-only-using-login-nodes)
     - [What Slurm image do I use for production?](#what-slurm-image-do-i-use-for-production)
@@ -125,6 +126,20 @@ was used to deploy the cluster, see
 ### Why did setup.py fail?
 
 Check the `setup.log` at `/slurm/scripts/setup.log` for details.
+
+### What are GCP preemptible VMs?
+
+Preemptible instances are cheaper than on-demand instances, however they can be
+reclaimed given their Service Level Agreement (SLA). Google Cloud offers two
+types of preemptible VMs: [preemptible (v1)](./glossary.md#preemptible-vm);
+[spot (beta)](./glossary.md#spot-vm). Spot VMs offer more features and better
+control over the reclaim process and when they can be reclaimed.
+
+As far as [Slurm](./glossary.md#slurm) is concerned, all preemptible type
+instances are treated the same. When reclaimed (terminated or stopped), they are
+marked as "down" and their running jobs are requeued, otherwise canceled.
+slurmsync will detect this activity and clear the "down" state from the node so
+it may be allocated jobs again.
 
 ### How do I reduce compute costs?
 
