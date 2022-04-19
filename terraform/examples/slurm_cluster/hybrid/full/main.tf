@@ -93,11 +93,10 @@ module "project_services" {
 
   project_id = var.project_id
 
-  activate_apis = flatten([
+  activate_apis = [
     "compute.googleapis.com",
     "iam.googleapis.com",
-    var.enable_reconfigure ? ["pubsub.googleapis.com"] : [],
-  ])
+  ]
 
   enable_apis                 = true
   disable_services_on_destroy = false
