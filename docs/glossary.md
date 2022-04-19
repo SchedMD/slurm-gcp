@@ -25,6 +25,7 @@
   - [Pub/Sub](#pubsub)
   - [Python](#python)
   - [Pip](#pip)
+  - [GCP Quota](#gcp-quota)
   - [Service Account](#service-account)
   - [Secret Manager](#secret-manager)
   - [Self Link](#self-link)
@@ -241,6 +242,27 @@ https://en.wikipedia.org/wiki/Pip\_(package_manager)
 > packages, called the Python Package Index. pip can also be configured to
 > connect to other package repositories (local or remote), provided that they
 > comply to Python Enhancement Proposal 503.
+
+## GCP Quota
+
+https://cloud.google.com/docs/quota
+
+> Google Cloud uses quotas to restrict how much of a particular shared Google
+> Cloud resource that you can use. Each quota represents a specific countable
+> resource, such as API calls to a particular service, the number of load
+> balancers used concurrently by your project, or the number of projects that
+> you can create.
+
+> There are two categories for quotas:
+>
+> - Rate quotas are typically used for limiting the number of requests you can
+>   make to an API or service. Rate quotas reset after a time interval that is
+>   specific to the service—for example, the number of API requests per day.
+> - Allocation quotas are used to restrict the use of resources that don't have
+>   a rate of usage, such as the number of VMs used by your project at a given
+>   time. Allocation quotas don't reset over time, instead you must explicitly
+>   release the resource when you no longer want to use it—for example, by
+>   deleting a GKE cluster.
 
 ## Service Account
 

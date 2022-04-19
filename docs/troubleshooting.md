@@ -7,6 +7,7 @@
 - [Troubleshooting Guide](#troubleshooting-guide)
   - [The cluster is not behaving correctly](#the-cluster-is-not-behaving-correctly)
   - [Instance startup-script failed](#instance-startup-script-failed)
+  - [Quota limits](#quota-limits)
 
 <!-- mdformat-toc end -->
 
@@ -48,3 +49,12 @@ $ scontrol setdebugflags +power
 
 Upon startup-script failure, all users should be notified via `wall` and `motd`.
 Check `/slurm/scripts/setup.log` for details about the failure.
+
+## Quota limits
+
+[Google Cloud](./glossary.md#gcp) has [quota limits](./glossary.md#gcp-quota).
+Instances can fail to be deployed because they would exceed your CPU limits.
+Additionally, instance deployments can be throttled because of quota limits
+placed on API requests. If you are experiencing these quota limits with your
+cluster, consider requesting a limit increase to better meet your cluster
+demands.
