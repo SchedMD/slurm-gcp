@@ -182,6 +182,13 @@ priority for that zone.
 EOD
   type        = set(string)
   default     = []
+
+  validation {
+    condition = alltrue([
+      for x in var.zone_policy_allow : length(regexall("^[a-z]+-[a-z]+[0-9]-[a-z]$", x)) > 0
+    ])
+    error_message = "Must be a match of regex '^[a-z]+-[a-z]+[0-9]-[a-z]$'."
+  }
 }
 
 variable "zone_policy_deny" {
@@ -192,6 +199,13 @@ priority for that zone.
 EOD
   type        = set(string)
   default     = []
+
+  validation {
+    condition = alltrue([
+      for x in var.zone_policy_deny : length(regexall("^[a-z]+-[a-z]+[0-9]-[a-z]$", x)) > 0
+    ])
+    error_message = "Must be a match of regex '^[a-z]+-[a-z]+[0-9]-[a-z]$'."
+  }
 }
 
 variable "enable_job_exclusive" {

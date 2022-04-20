@@ -66,6 +66,7 @@ All notable changes to this project will be documented in this file.
 - Allow partial success in bulkInsert for resume.py
 - Add bulkInsert operation failure detection and logging
 - Force `enable_placement_groups=false` when `count_static > 0`.
+- Add module variable `zone_policy_*` validation.
 
 ## \[4.1.5\]
 
