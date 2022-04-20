@@ -49,6 +49,9 @@ locals {
           range(offset, min(offset + 1024, sum([x.count_dynamic, x.count_static])))
         )
       ])
+      # Beta Features
+      enable_spot_vm       = x.enable_spot_vm
+      spot_instance_config = x.spot_instance_config != null ? x.spot_instance_config : local.spot_instance_config
     }
   }
 
@@ -58,6 +61,10 @@ locals {
   ]) && alltrue([for x in local.partition_nodes : x.count_static == 0])
 
   compute_list = flatten([for x in local.partition.partition_nodes : x.node_list])
+
+  spot_instance_config = {
+    termination_action = "STOP"
+  }
 }
 
 ####################
@@ -202,7 +209,8 @@ module "reconfigure_node_groups" {
   ])
 
   triggers = {
-    instance_template = each.value.instance_template
+    instance_template    = each.value.instance_template
+    spot_instance_config = each.value.enable_spot_vm ? sha256(jsonencode(each.value.spot_instance_config)) : null
   }
 
   depends_on = [

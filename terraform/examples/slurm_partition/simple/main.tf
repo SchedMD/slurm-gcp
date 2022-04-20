@@ -59,6 +59,7 @@ module "slurm_partition" {
       enable_confidential_vm   = false
       enable_oslogin           = true
       enable_shielded_vm       = false
+      enable_spot_vm           = false
       gpu                      = null
       instance_template        = null
       labels                   = {}
@@ -69,6 +70,7 @@ module "slurm_partition" {
       preemptible              = false
       service_account          = module.slurm_compute_sa.service_account
       shielded_instance_config = null
+      spot_instance_config     = null
       source_image_family      = null
       source_image_project     = null
       source_image             = null

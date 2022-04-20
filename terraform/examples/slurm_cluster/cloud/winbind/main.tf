@@ -120,6 +120,7 @@ locals {
           enable_confidential_vm   = false
           enable_oslogin           = false
           enable_shielded_vm       = false
+          enable_spot_vm           = false
           gpu                      = null
           instance_template        = null
           labels                   = {}
@@ -130,6 +131,7 @@ locals {
           preemptible              = false
           service_account          = module.slurm_sa_iam["compute"].service_account
           shielded_instance_config = null
+          spot_instance_config     = null
           source_image_family      = null
           source_image_project     = null
           source_image             = null
@@ -166,6 +168,7 @@ locals {
           enable_confidential_vm = false
           enable_oslogin         = false
           enable_shielded_vm     = false
+          enable_spot_vm         = false
           gpu = {
             count = 1
             type  = "nvidia-tesla-v100"
@@ -179,6 +182,7 @@ locals {
           preemptible              = false
           service_account          = module.slurm_sa_iam["compute"].service_account
           shielded_instance_config = null
+          spot_instance_config     = null
           source_image_family      = null
           source_image_project     = null
           source_image             = null

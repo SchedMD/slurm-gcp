@@ -301,9 +301,13 @@ variable "partitions" {
       partition_nodes = map(object({
         count_dynamic     = number
         count_static      = number
+        enable_spot_vm    = bool
         group_name        = string
         instance_template = string
         node_conf         = map(string)
+        spot_instance_config = object({
+          termination_action = string
+        })
       }))
       subnetwork        = string
       zone_policy_allow = list(string)

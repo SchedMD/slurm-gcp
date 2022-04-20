@@ -69,6 +69,7 @@ All notable changes to this project will be documented in this file.
 - Add module variable `zone_policy_*` validation.
 - Filter module variable `zone_policy_*` input with region.
 - Change ansible to install cuda and nvidia from runfile
+- Reimplement spot instance support.
 
 ## \[4.1.5\]
 

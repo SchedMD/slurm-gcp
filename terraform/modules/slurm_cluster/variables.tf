@@ -267,6 +267,7 @@ EOD
       enable_confidential_vm = bool
       enable_oslogin         = bool
       enable_shielded_vm     = bool
+      enable_spot_vm         = bool
       gpu = object({
         count = number
         type  = string
@@ -286,6 +287,9 @@ EOD
         enable_integrity_monitoring = bool
         enable_secure_boot          = bool
         enable_vtpm                 = bool
+      })
+      spot_instance_config = object({
+        termination_action = string
       })
       source_image_family  = string
       source_image_project = string

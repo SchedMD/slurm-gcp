@@ -57,6 +57,7 @@ module "slurm_partition0" {
       enable_confidential_vm   = false
       enable_oslogin           = true
       enable_shielded_vm       = false
+      enable_spot_vm           = false
       gpu                      = null
       instance_template        = null
       labels                   = {}
@@ -67,6 +68,7 @@ module "slurm_partition0" {
       preemptible              = false
       service_account          = null
       shielded_instance_config = null
+      spot_instance_config     = null
       source_image_family      = null
       source_image_project     = null
       source_image             = null
@@ -103,6 +105,7 @@ module "slurm_partition1" {
       enable_confidential_vm = false
       enable_oslogin         = true
       enable_shielded_vm     = false
+      enable_spot_vm         = false
       gpu = {
         count = 1
         type  = "nvidia-tesla-v100"
@@ -116,6 +119,7 @@ module "slurm_partition1" {
       preemptible              = false
       service_account          = null
       shielded_instance_config = null
+      spot_instance_config     = null
       source_image_family      = null
       source_image_project     = null
       source_image             = null

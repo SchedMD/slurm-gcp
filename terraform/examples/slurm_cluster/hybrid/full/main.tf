@@ -40,6 +40,7 @@ locals {
         enable_confidential_vm   = n.enable_confidential_vm
         enable_oslogin           = n.enable_oslogin
         enable_shielded_vm       = n.enable_shielded_vm
+        enable_spot_vm           = n.enable_spot_vm
         gpu                      = n.gpu
         group_name               = n.group_name
         instance_template        = n.instance_template
@@ -52,6 +53,7 @@ locals {
         preemptible              = n.preemptible
         service_account          = module.slurm_sa_iam["compute"].service_account
         shielded_instance_config = n.shielded_instance_config
+        spot_instance_config     = n.spot_instance_config
         source_image_family      = n.source_image_family
         source_image_project     = n.source_image_project
         source_image             = n.source_image

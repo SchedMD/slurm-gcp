@@ -35,7 +35,7 @@ from util import (
     subscription_create,
     wait_for_operation,
 )
-from util import cfg, lkp, compute, NSDict
+from util import cfg, lkp, NSDict
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
@@ -45,7 +45,9 @@ log = logging.getLogger(filename)
 BULK_INSERT_LIMIT = 1000
 
 
-def instance_properties(partition, template):
+def instance_properties(partition, model):
+    node_group = lkp.node_group(model)
+    template = lkp.node_template(model)
     template_info = lkp.template_info(template)
 
     props = NSDict()
@@ -82,6 +84,20 @@ def instance_properties(partition, template):
         "slurm_instance_role": "compute",
     }
     props.labels = {**template_info.labels, **labels}
+
+    # provisioningModel=SPOT not supported by perInstanceProperties?
+    if node_group.enable_spot_vm:
+        util.compute = util.compute_service(version="beta")
+
+        props.scheduling = {
+            "automaticRestart": False,
+            "instanceTerminationAction": node_group.spot_instance_config.get(
+                "termination_action", "STOP"
+            ),
+            "onHostMaintenance": "TERMINATE",
+            "preemptible": True,
+            "provisioningModel": "SPOT",
+        }
 
     return props
 
@@ -121,7 +137,7 @@ def create_instances_request(nodes, placement_groups=None, exclusive=False):
     body.sourceInstanceTemplate = template
 
     # overwrites properties accross all instances
-    body.instanceProperties = instance_properties(partition, template)
+    body.instanceProperties = instance_properties(partition, model)
 
     # key is instance name, value overwrites properties
     body.perInstanceProperties = {
@@ -141,7 +157,7 @@ def create_instances_request(nodes, placement_groups=None, exclusive=False):
     if zones:
         body.locationPolicy = {"locations": zones}
 
-    request = compute.regionInstances().bulkInsert(
+    request = util.compute.regionInstances().bulkInsert(
         project=cfg.project, region=region, body=body.to_dict()
     )
     return request
@@ -262,7 +278,7 @@ def create_placement_request(pg_name, region):
             "collocation": "COLLOCATED",
         },
     }
-    return compute.resourcePolicies().insert(
+    return util.compute.resourcePolicies().insert(
         project=cfg.project, region=region, body=config
     )
 

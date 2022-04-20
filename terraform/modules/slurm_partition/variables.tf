@@ -96,6 +96,7 @@ EOD
     enable_confidential_vm = bool
     enable_oslogin         = bool
     enable_shielded_vm     = bool
+    enable_spot_vm         = bool
     gpu = object({
       count = number
       type  = string
@@ -115,6 +116,9 @@ EOD
       enable_integrity_monitoring = bool
       enable_secure_boot          = bool
       enable_vtpm                 = bool
+    })
+    spot_instance_config = object({
+      termination_action = string
     })
     source_image_family  = string
     source_image_project = string
@@ -153,6 +157,22 @@ EOD
       for x in var.partition_nodes : sum([x.count_static, x.count_dynamic]) > 0
     ])
     error_message = "Sum of 'count_static' and 'count_dynamic' must be > 0."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.partition_nodes
+      : contains(["STOP", "DELETE"], x.spot_instance_config.termination_action) if x.spot_instance_config != null
+    ])
+    error_message = "Value of spot_instance_config.termination_action must be one of: STOP; DELETE."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.partition_nodes
+      : x.enable_spot_vm == x.preemptible if x.enable_spot_vm == true && x.instance_template == null
+    ])
+    error_message = "Required: preemptible=true when enable_spot_vm=true."
   }
 }
 

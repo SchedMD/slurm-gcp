@@ -292,7 +292,7 @@ def is_exclusive_node(node):
     )
 
 
-def compute_service(credentials=None, user_agent=USER_AGENT):
+def compute_service(credentials=None, user_agent=USER_AGENT, version="v1"):
     """Make thread-safe compute service handle
     creates a new Http for each request
     """
@@ -315,9 +315,10 @@ def compute_service(credentials=None, user_agent=USER_AGENT):
             new_http = google_auth_httplib2.AuthorizedHttp(credentials, http=new_http)
         return googleapiclient.http.HttpRequest(new_http, *args, **kwargs)
 
+    log.debug(f"Using version={version} of Google Compute Engine API")
     return googleapiclient.discovery.build(
         "compute",
-        "v1",
+        version,
         requestBuilder=build_request,
         credentials=credentials,
     )
