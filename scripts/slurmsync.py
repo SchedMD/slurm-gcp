@@ -230,9 +230,13 @@ def find_subscription_status(nodename):
     elif not subscription:
         if nodename in find_node_status.static_nodeset:
             return SubscriptionStatus.missing
-        elif state.base != "DOWN" and not (
-            set(("POWER_DOWN", "POWERING_UP", "POWERING_DOWN", "POWERED_DOWN"))
-            & state.flags
+        elif (
+            inst
+            and state.base != "DOWN"
+            and not (
+                set(("POWER_DOWN", "POWERING_UP", "POWERING_DOWN", "POWERED_DOWN"))
+                & state.flags
+            )
         ):
             return SubscriptionStatus.deleted
     else:
