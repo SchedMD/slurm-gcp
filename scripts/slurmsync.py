@@ -221,7 +221,6 @@ def find_subscription_status(nodename):
     if find_node_status.static_nodeset is None:
         find_node_status.static_nodeset = set(util.to_hostnames(lkp.static_nodelist()))
     state = lkp.slurm_node(nodename)
-    inst = lkp.instance(nodename)
     subscription = lkp.subscription(nodename)
     info = lkp.node_template_info(nodename)
 
@@ -236,8 +235,6 @@ def find_subscription_status(nodename):
             & state.flags
         ):
             return SubscriptionStatus.deleted
-        elif info.scheduling.preemptible and inst.status != "TERMINATED":
-            return SubscriptionStatus.unbacked
     else:
         if state is None:
             return SubscriptionStatus.orphaned
