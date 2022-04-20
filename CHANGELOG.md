@@ -67,6 +67,7 @@ All notable changes to this project will be documented in this file.
 - Add bulkInsert operation failure detection and logging
 - Force `enable_placement_groups=false` when `count_static > 0`.
 - Add module variable `zone_policy_*` validation.
+- Filter module variable `zone_policy_*` input with region.
 
 ## \[4.1.5\]
 
