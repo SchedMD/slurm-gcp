@@ -1,12 +1,12 @@
 ---
 - hosts: all
-  become: True
+  become: true
   roles:
-    - ansible-role-cuda
+  - ansible-role-cuda
   vars:
-    - gpu: True
-    - cuda_restart_node_on_install: False
-    - cuda_init: True
-    - cuda_init_restart_service: False
+  - gpu: true
+  - cuda_restart_node_on_install: false
+  - cuda_init: true
+  - cuda_init_restart_service: false
 
 # vim:ft=ansible:

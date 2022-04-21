@@ -1,12 +1,12 @@
 ---
 # tasks file for ansible-role-cuda
-- name: "Gather OS specific variables"
-  include_vars: "{{ item }}"
+- name: Gather OS specific variables
+  include_vars: '{{ item }}'
   with_first_found:
-    - "{{ ansible_distribution|lower }}-{{ ansible_distribution_version }}.yml"
-    - "{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version }}.yml"
-    - "{{ ansible_distribution|lower }}.yml"
-    - "{{ ansible_os_family|lower }}.yml"
+  - '{{ ansible_distribution|lower }}-{{ ansible_distribution_version }}.yml'
+  - '{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version }}.yml'
+  - '{{ ansible_distribution|lower }}.yml'
+  - '{{ ansible_os_family|lower }}.yml'
 
 - block:
   - include_tasks: configure_yum.yml
@@ -18,16 +18,17 @@
   - include_tasks: install_runfile.yml
     when: cuda_use_runfile
 
-  - name: Install CUDA packages (1.5-2GB download, also restarts if cuda_restart_node_on_install is set to True)
+  - name: Install CUDA packages (1.5-2GB download, also restarts if cuda_restart_node_on_install
+      is set to True)
     package:
-      name: "{{ item }}"
+      name: '{{ item }}'
       state: present
-    with_items: "{{ cuda_packages }}"
+    with_items: '{{ cuda_packages }}'
     register: cuda_packages_installation
     when: not cuda_use_runfile
     notify:
-     - ZZ CUDA Restart server
-     - ZZ CUDA Wait for server to restart
+    - ZZ CUDA Restart server
+    - ZZ CUDA Wait for server to restart
 
   - name: Template CUDA paths to user environments
     template:
