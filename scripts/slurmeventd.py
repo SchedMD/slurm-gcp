@@ -131,13 +131,12 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
             update_partitions(partitions, "INACTIVE")
 
             # Fetch and write new config.yaml
-            cfg = util.config_from_metadata()
-            if not cfg.pubsub_topic_id:
+            util.cfg = util.config_from_metadata()
+            if not util.cfg.pubsub_topic_id:
                 log.info("Auto reconfigure is disabled. Aborting...")
                 exit(0)
-            util.save_config(cfg, util.CONFIG_FILE)
-            util.cfg = cfg
-            util.lkp = util.Lookup(cfg)
+            util.save_config(util.cfg, util.CONFIG_FILE)
+            util.lkp = util.Lookup(util.cfg)
 
             # Regenerate *.conf files
             log.info("Clean install custom scripts")
@@ -197,10 +196,10 @@ def main():
     config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
     sys.excepthook = handle_exception
 
-    cfg = util.config_from_metadata()
-    while not cfg.pubsub_topic_id:
+    util.cfg = util.config_from_metadata()
+    while not util.cfg.pubsub_topic_id:
         sleep(300)
-        cfg = util.config_from_metadata()
+        util.cfg = util.config_from_metadata()
 
     streaming_pull_future = subscriber.subscribe(subscription_path, callback=callback)
     log.info(f"Listening for messages on '{subscription_path}'...")

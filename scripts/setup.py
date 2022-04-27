@@ -394,7 +394,7 @@ def gen_cloud_gres_conf(lkp=lkp):
     """generate cloud_gres.conf"""
 
     gpu_nodes = defaultdict(list)
-    for part_name, partition in cfg.partitions.items():
+    for part_name, partition in lkp.cfg.partitions.items():
         for node in partition.partition_nodes.values():
             template_info = lkp.template_info(node.instance_template)
             gpu_count = template_info.gpu_count
