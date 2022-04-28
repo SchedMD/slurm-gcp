@@ -51,7 +51,7 @@ module "slurm_cluster" {
 
   cloud_parameters         = var.cloud_parameters
   slurm_cluster_name       = var.slurm_cluster_name
-  compute_d                = var.compute_d
+  compute_startup_scripts  = var.compute_startup_scripts
   controller_hybrid_config = var.controller_hybrid_config
   enable_devel             = var.enable_devel
   enable_cleanup_compute   = var.enable_cleanup_compute

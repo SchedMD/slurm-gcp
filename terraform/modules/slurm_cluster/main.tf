@@ -47,22 +47,22 @@ module "slurm_partition" {
 
   for_each = local.partition_map
 
-  slurm_cluster_name      = var.slurm_cluster_name
-  partition_nodes         = each.value.partition_nodes
-  enable_job_exclusive    = each.value.enable_job_exclusive
-  enable_reconfigure      = var.enable_reconfigure
-  enable_placement_groups = each.value.enable_placement_groups
-  network_storage         = each.value.network_storage
-  partition_name          = each.value.partition_name
-  partition_conf          = each.value.partition_conf
-  partition_d             = each.value.partition_d
-  project_id              = var.project_id
-  region                  = each.value.region
-  slurm_cluster_id        = local.slurm_cluster_id
-  subnetwork_project      = each.value.subnetwork_project
-  subnetwork              = each.value.subnetwork
-  zone_policy_allow       = each.value.zone_policy_allow
-  zone_policy_deny        = each.value.zone_policy_deny
+  slurm_cluster_name        = var.slurm_cluster_name
+  partition_nodes           = each.value.partition_nodes
+  enable_job_exclusive      = each.value.enable_job_exclusive
+  enable_reconfigure        = var.enable_reconfigure
+  enable_placement_groups   = each.value.enable_placement_groups
+  network_storage           = each.value.network_storage
+  partition_name            = each.value.partition_name
+  partition_conf            = each.value.partition_conf
+  partition_startup_scripts = each.value.partition_startup_scripts
+  project_id                = var.project_id
+  region                    = each.value.region
+  slurm_cluster_id          = local.slurm_cluster_id
+  subnetwork_project        = each.value.subnetwork_project
+  subnetwork                = each.value.subnetwork
+  zone_policy_allow         = each.value.zone_policy_allow
+  zone_policy_deny          = each.value.zone_policy_deny
 }
 
 ########################
@@ -129,8 +129,8 @@ module "slurm_controller_instance" {
   cgroup_conf_tpl              = var.cgroup_conf_tpl
   cloud_parameters             = var.cloud_parameters
   cloudsql                     = var.cloudsql
-  controller_d                 = var.controller_d
-  compute_d                    = var.compute_d
+  controller_startup_scripts   = var.controller_startup_scripts
+  compute_startup_scripts      = var.compute_startup_scripts
   enable_devel                 = var.enable_devel
   enable_bigquery_load         = var.enable_bigquery_load
   enable_cleanup_compute       = var.enable_cleanup_compute
@@ -163,7 +163,7 @@ module "slurm_controller_hybrid" {
   slurm_log_dir                = var.controller_hybrid_config.slurm_log_dir
   output_dir                   = var.controller_hybrid_config.output_dir
   cloud_parameters             = var.cloud_parameters
-  compute_d                    = var.compute_d
+  compute_startup_scripts      = var.compute_startup_scripts
   enable_devel                 = var.enable_devel
   enable_bigquery_load         = var.enable_bigquery_load
   enable_cleanup_compute       = var.enable_cleanup_compute
@@ -234,14 +234,14 @@ module "slurm_login_instance" {
     ? each.value.instance_template
     : module.slurm_login_template[each.key].self_link
   )
-  login_d          = var.login_d
-  num_instances    = each.value.num_instances
-  project_id       = var.project_id
-  region           = each.value.region
-  slurm_cluster_id = local.slurm_cluster_id
-  static_ips       = each.value.static_ips
-  subnetwork       = each.value.subnetwork
-  zone             = each.value.zone
+  login_startup_scripts = var.login_startup_scripts
+  num_instances         = each.value.num_instances
+  project_id            = var.project_id
+  region                = each.value.region
+  slurm_cluster_id      = local.slurm_cluster_id
+  static_ips            = each.value.static_ips
+  subnetwork            = each.value.subnetwork
+  zone                  = each.value.zone
 
   metadata = {
     slurm_depends_on_controller = var.enable_hybrid ? null : sha256(module.slurm_controller_instance[0].slurm_controller_instance.instances_details[0].id)

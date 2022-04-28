@@ -101,8 +101,8 @@ locals {
       partition_conf = {
         Default = "YES"
       }
-      partition_d    = []
-      partition_name = "debug"
+      partition_startup_scripts = []
+      partition_name            = "debug"
       partition_nodes = [
         {
           count_dynamic = 20
@@ -145,12 +145,12 @@ locals {
       zone_policy_deny   = []
     },
     {
-      enable_job_exclusive    = false
-      enable_placement_groups = false
-      network_storage         = []
-      partition_conf          = {}
-      partition_d             = []
-      partition_name          = "debug2"
+      enable_job_exclusive      = false
+      enable_placement_groups   = false
+      network_storage           = []
+      partition_conf            = {}
+      partition_startup_scripts = []
+      partition_name            = "debug2"
       partition_nodes = [
         {
           count_dynamic = 10
@@ -248,8 +248,8 @@ module "slurm_cluster" {
 
   slurm_cluster_name         = var.slurm_cluster_name
   controller_instance_config = local.controller_instance_config
-  compute_d                  = [data.local_file.winbind_sh]
-  controller_d               = [data.local_file.winbind_sh]
+  compute_startup_scripts    = [data.local_file.winbind_sh]
+  controller_startup_scripts = [data.local_file.winbind_sh]
   login_nodes                = local.login_nodes
   partitions                 = local.partitions
   project_id                 = var.project_id

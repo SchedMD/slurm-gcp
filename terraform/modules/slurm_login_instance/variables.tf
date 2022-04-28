@@ -72,7 +72,7 @@ variable "access_config" {
   default = []
 }
 
-variable "login_d" {
+variable "login_startup_scripts" {
   description = "List of scripts to be ran on login VM startup."
   type = list(object({
     filename = string

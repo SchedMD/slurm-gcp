@@ -200,7 +200,7 @@ EOD
   sensitive = true
 }
 
-variable "controller_d" {
+variable "controller_startup_scripts" {
   description = "List of scripts to be ran on controller VM startup."
   type = list(object({
     filename = string
@@ -209,7 +209,7 @@ variable "controller_d" {
   default = []
 }
 
-variable "compute_d" {
+variable "compute_startup_scripts" {
   description = "List of scripts to be ran on compute VM startup."
   type = list(object({
     filename = string

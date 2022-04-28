@@ -160,7 +160,7 @@ variable "cgroup_conf_tpl" {
   default     = null
 }
 
-variable "controller_d" {
+variable "controller_startup_scripts" {
   description = "List of scripts to be ran on controller VM startup."
   type = list(object({
     filename = string
@@ -169,7 +169,7 @@ variable "controller_d" {
   default = []
 }
 
-variable "compute_d" {
+variable "compute_startup_scripts" {
   description = "List of scripts to be ran on compute VM startup."
   type = list(object({
     filename = string
@@ -245,7 +245,7 @@ EOD
     enable_job_exclusive    = bool
     enable_placement_groups = bool
     partition_conf          = map(string)
-    partition_d = list(object({
+    partition_startup_scripts = list(object({
       filename = string
       content  = string
     }))

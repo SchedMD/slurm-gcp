@@ -95,12 +95,12 @@ locals {
 
   partitions = [
     for x in var.partitions : {
-      enable_job_exclusive    = x.enable_job_exclusive
-      enable_placement_groups = x.enable_placement_groups
-      network_storage         = x.network_storage
-      partition_conf          = x.partition_conf
-      partition_d             = x.partition_d
-      partition_name          = x.partition_name
+      enable_job_exclusive      = x.enable_job_exclusive
+      enable_placement_groups   = x.enable_placement_groups
+      network_storage           = x.network_storage
+      partition_conf            = x.partition_conf
+      partition_startup_scripts = x.partition_startup_scripts
+      partition_name            = x.partition_name
       partition_nodes = [for n in x.partition_nodes : {
         additional_disks         = n.additional_disks
         can_ip_forward           = n.can_ip_forward
@@ -249,15 +249,15 @@ module "slurm_cluster" {
   cloud_parameters           = local.cloud_parameters
   cloudsql                   = var.cloudsql
   slurm_cluster_name         = var.slurm_cluster_name
-  compute_d                  = var.compute_d
+  compute_startup_scripts    = var.compute_startup_scripts
   controller_instance_config = local.controller_instance_config[0]
-  controller_d               = var.controller_d
+  controller_startup_scripts = var.controller_startup_scripts
   enable_devel               = var.enable_devel
   enable_cleanup_compute     = var.enable_cleanup_compute
   enable_bigquery_load       = var.enable_bigquery_load
   enable_reconfigure         = var.enable_reconfigure
   epilog_d                   = var.epilog_d
-  login_d                    = var.login_d
+  login_startup_scripts      = var.login_startup_scripts
   login_network_storage      = var.login_network_storage
   login_nodes                = local.login_nodes
   network_storage            = var.network_storage

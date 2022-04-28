@@ -70,6 +70,7 @@ All notable changes to this project will be documented in this file.
 - Filter module variable `zone_policy_*` input with region.
 - Change ansible to install cuda and nvidia from runfile
 - Reimplement spot instance support.
+- Rename `*_d` startup script variables to `*_startup_scripts`.
 
 ## \[4.1.5\]
 

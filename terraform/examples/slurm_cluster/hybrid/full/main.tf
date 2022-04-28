@@ -21,12 +21,12 @@
 locals {
   partitions = [
     for x in var.partitions : {
-      enable_job_exclusive    = x.enable_job_exclusive
-      enable_placement_groups = x.enable_placement_groups
-      network_storage         = x.network_storage
-      partition_conf          = x.partition_conf
-      partition_d             = x.partition_d
-      partition_name          = x.partition_name
+      enable_job_exclusive      = x.enable_job_exclusive
+      enable_placement_groups   = x.enable_placement_groups
+      network_storage           = x.network_storage
+      partition_conf            = x.partition_conf
+      partition_startup_scripts = x.partition_startup_scripts
+      partition_name            = x.partition_name
       partition_nodes = [for n in x.partition_nodes : {
         additional_disks         = n.additional_disks
         can_ip_forward           = n.can_ip_forward
@@ -169,7 +169,7 @@ module "slurm_cluster" {
 
   cloud_parameters         = var.cloud_parameters
   slurm_cluster_name       = var.slurm_cluster_name
-  compute_d                = var.compute_d
+  compute_startup_scripts  = var.compute_startup_scripts
   controller_hybrid_config = var.controller_hybrid_config
   enable_devel             = var.enable_devel
   enable_cleanup_compute   = var.enable_cleanup_compute

@@ -69,7 +69,7 @@ module "slurm_login_instance" {
 
   depends_on = [
     # Ensure delta when user startup scripts change
-    google_compute_project_metadata_item.login_d,
+    google_compute_project_metadata_item.login_startup_scripts,
   ]
 }
 
@@ -77,11 +77,11 @@ module "slurm_login_instance" {
 # SCRIPTS #
 ###########
 
-resource "google_compute_project_metadata_item" "login_d" {
+resource "google_compute_project_metadata_item" "login_startup_scripts" {
   project = var.project_id
 
   for_each = {
-    for x in var.login_d
+    for x in var.login_startup_scripts
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 

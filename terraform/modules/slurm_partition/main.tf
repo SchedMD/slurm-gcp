@@ -145,11 +145,11 @@ module "slurm_compute_template" {
 # METADATA #
 ############
 
-resource "google_compute_project_metadata_item" "partition_d" {
+resource "google_compute_project_metadata_item" "partition_startup_scripts" {
   project = var.project_id
 
   for_each = {
-    for x in var.partition_d
+    for x in var.partition_startup_scripts
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
@@ -172,8 +172,8 @@ module "reconfigure_critical" {
 
   triggers = merge(
     {
-      for x in var.partition_d
-      : "partition_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
+      for x in var.partition_startup_scripts
+      : "partition_startup_scripts_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
       => sha256(x.content)
     },
     {
@@ -183,8 +183,8 @@ module "reconfigure_critical" {
   )
 
   depends_on = [
-    # Ensure partition_d metadata is updated before destroying nodes
-    google_compute_project_metadata_item.partition_d,
+    # Ensure partition_startup_scripts metadata is updated before destroying nodes
+    google_compute_project_metadata_item.partition_startup_scripts,
   ]
 }
 

@@ -171,7 +171,7 @@ module "slurm_controller_instance" {
   )
 
   depends_on = [
-    google_compute_project_metadata_item.controller_d,
+    google_compute_project_metadata_item.controller_startup_scripts,
     # Ensure nodes are destroyed before controller is
     module.cleanup_compute_nodes[0],
   ]
@@ -226,11 +226,11 @@ module "slurm_metadata_devel" {
 # METADATA: SCRIPTS #
 #####################
 
-resource "google_compute_project_metadata_item" "controller_d" {
+resource "google_compute_project_metadata_item" "controller_startup_scripts" {
   project = var.project_id
 
   for_each = {
-    for x in var.controller_d
+    for x in var.controller_startup_scripts
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
@@ -238,11 +238,11 @@ resource "google_compute_project_metadata_item" "controller_d" {
   value = each.value.content
 }
 
-resource "google_compute_project_metadata_item" "compute_d" {
+resource "google_compute_project_metadata_item" "compute_startup_scripts" {
   project = var.project_id
 
   for_each = {
-    for x in var.compute_d
+    for x in var.compute_startup_scripts
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
@@ -490,7 +490,7 @@ module "reconfigure_critical" {
 
   triggers = merge(
     {
-      for x in var.compute_d
+      for x in var.compute_startup_scripts
       : "compute_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
       => sha256(x.content)
     },

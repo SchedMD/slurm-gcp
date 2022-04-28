@@ -88,7 +88,7 @@ cloud_parameters = {
 }
 
 # scripts.d
-controller_d = [
+controller_startup_scripts = [
   #   {
   #     filename = "hello_controller.sh"
   #     content  = <<EOF
@@ -98,7 +98,7 @@ controller_d = [
   #     EOF
   #   },
 ]
-login_d = [
+login_startup_scripts = [
   #   {
   #     filename = "hello_login.sh"
   #     content  = <<EOF
@@ -108,7 +108,7 @@ login_d = [
   #     EOF
   #   },
 ]
-compute_d = [
+compute_startup_scripts = [
   #   {
   #     filename = "hello_compute.sh"
   #     content  = <<EOF
@@ -269,7 +269,7 @@ partitions = [
       Default     = "YES"
       SuspendTime = 300
     }
-    partition_d = [
+    partition_startup_scripts = [
       # {
       #   filename = "hello_part_debug.sh"
       #   content  = <<EOF
@@ -335,8 +335,8 @@ partitions = [
     partition_conf = {
       SuspendTime = 300
     }
-    partition_d    = []
-    partition_name = "debug2"
+    partition_startup_scripts = []
+    partition_name            = "debug2"
     partition_nodes = [
       {
         # Group Definition

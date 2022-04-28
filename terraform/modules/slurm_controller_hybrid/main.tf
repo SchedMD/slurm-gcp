@@ -231,11 +231,11 @@ module "slurm_metadata_devel" {
 # METADATA: SCRIPTS #
 #####################
 
-resource "google_compute_project_metadata_item" "compute_d" {
+resource "google_compute_project_metadata_item" "compute_startup_scripts" {
   project = var.project_id
 
   for_each = {
-    for x in var.compute_d
+    for x in var.compute_startup_scripts
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
@@ -392,7 +392,7 @@ module "reconfigure_critical" {
 
   triggers = merge(
     {
-      for x in var.compute_d
+      for x in var.compute_startup_scripts
       : "compute_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}" => sha256(x.content)
     },
     {

@@ -27,8 +27,8 @@ locals {
       partition_conf = {
         Default = "YES"
       }
-      partition_d    = []
-      partition_name = "debug"
+      partition_startup_scripts = []
+      partition_name            = "debug"
       partition_nodes = [
         {
           count_dynamic = 20
@@ -77,8 +77,8 @@ locals {
       partition_conf = {
         Default = "YES"
       }
-      partition_d    = []
-      partition_name = "debug2"
+      partition_startup_scripts = []
+      partition_name            = "debug2"
       partition_nodes = [
         {
           count_dynamic = 10

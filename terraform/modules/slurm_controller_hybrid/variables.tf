@@ -111,7 +111,7 @@ EOD
   default     = false
 }
 
-variable "compute_d" {
+variable "compute_startup_scripts" {
   description = "List of scripts to be ran on compute VM startup."
   type = list(object({
     filename = string
