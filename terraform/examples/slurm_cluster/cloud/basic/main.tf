@@ -72,6 +72,7 @@ module "slurm_cluster" {
   enable_cleanup_subscriptions = var.enable_cleanup_subscriptions
   enable_reconfigure           = var.enable_reconfigure
   epilog_d                     = var.epilog_d
+  login_d                      = var.login_d
   login_network_storage        = var.login_network_storage
   login_nodes                  = var.login_nodes
   network_storage              = var.network_storage

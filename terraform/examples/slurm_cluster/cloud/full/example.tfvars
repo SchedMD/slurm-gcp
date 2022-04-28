@@ -98,6 +98,16 @@ controller_d = [
   #     EOF
   #   },
 ]
+login_d = [
+  #   {
+  #     filename = "hello_login.sh"
+  #     content  = <<EOF
+  # #!/bin/bash
+  # set -ex
+  # echo "Hello, $(hostname) from $(dirname $0) !"
+  #     EOF
+  #   },
+]
 compute_d = [
   #   {
   #     filename = "hello_compute.sh"

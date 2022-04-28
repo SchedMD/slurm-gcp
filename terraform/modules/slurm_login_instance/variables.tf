@@ -72,6 +72,15 @@ variable "access_config" {
   default = []
 }
 
+variable "login_d" {
+  description = "List of scripts to be ran on login VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
 variable "num_instances" {
   type        = number
   description = "Number of instances to create. This value is ignored if static_ips is provided."

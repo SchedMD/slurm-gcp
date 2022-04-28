@@ -24,6 +24,8 @@ locals {
     ? flatten(regexall("/regions/([^/]*)", var.subnetwork))[0]
     : var.region
   )
+
+  suffix = random_string.suffix.result
 }
 
 ##########
@@ -46,9 +48,14 @@ module "slurm_login_instance" {
   access_config       = var.access_config
   add_hostname_suffix = true
   slurm_cluster_name  = var.slurm_cluster_name
-  hostname            = "${var.slurm_cluster_name}-login-${random_string.suffix.result}"
+  hostname            = "${var.slurm_cluster_name}-login-${local.suffix}"
   instance_template   = var.instance_template
-  metadata            = var.metadata
+  metadata = merge(
+    var.metadata,
+    {
+      slurm_login_suffix = local.suffix
+    },
+  )
   network             = var.network
   num_instances       = var.num_instances
   project_id          = var.project_id
@@ -59,4 +66,25 @@ module "slurm_login_instance" {
   subnetwork_project  = var.subnetwork_project
   subnetwork          = var.subnetwork
   zone                = var.zone
+
+  depends_on = [
+    # Ensure delta when user startup scripts change
+    google_compute_project_metadata_item.login_d,
+  ]
+}
+
+###########
+# SCRIPTS #
+###########
+
+resource "google_compute_project_metadata_item" "login_d" {
+  project = var.project_id
+
+  for_each = {
+    for x in var.login_d
+    : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
+  }
+
+  key   = "${var.slurm_cluster_name}-slurm-login_${local.suffix}-script-${each.key}"
+  value = each.value.content
 }

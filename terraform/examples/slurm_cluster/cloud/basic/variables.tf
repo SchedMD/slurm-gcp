@@ -199,6 +199,15 @@ variable "controller_d" {
   default = []
 }
 
+variable "login_d" {
+  description = "List of scripts to be ran on login VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
 variable "compute_d" {
   description = "List of scripts to be ran on compute VM startup."
   type = list(object({

@@ -234,6 +234,7 @@ module "slurm_login_instance" {
     ? each.value.instance_template
     : module.slurm_login_template[each.key].self_link
   )
+  login_d          = var.login_d
   num_instances    = each.value.num_instances
   project_id       = var.project_id
   region           = each.value.region

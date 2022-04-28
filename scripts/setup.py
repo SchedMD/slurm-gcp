@@ -490,9 +490,10 @@ def install_custom_scripts(clean=False):
         role, part, *_ = chain(path.parent.parts, (None,))
         role = role[:-2]  # strip off added '.d'
 
-        # login only needs compute scripts
+        # login only needs their login scripts
         if lkp.instance_role == "login":
-            script_types = ["compute"]
+            suffix = instance_metadata("attributes/slurm_login_suffix")
+            script_types = [f"login_{suffix}"]
             return role in script_types
         # compute needs compute, prolog, epilog, and the matching partition
         if lkp.instance_role == "compute":
@@ -536,8 +537,9 @@ def run_custom_scripts():
         # compute setup with compute.d and partition.d
         custom_dirs = [custom_dir / "compute.d", custom_dir / "partition.d"]
     elif lkp.instance_role == "login":
-        # login  setup with only compute.d
-        custom_dirs = [custom_dir / "compute.d"]
+        # login setup with only login_{suffix}.d
+        suffix = instance_metadata("attributes/slurm_login_suffix")
+        custom_dirs = [custom_dir / f"login_{suffix}.d"]
     else:
         # Unknown role: run nothing
         custom_dirs = []
