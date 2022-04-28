@@ -19,8 +19,6 @@
 ##########
 
 locals {
-  slurm_cluster_id = random_uuid.slurm_cluster_id.result
-
   partition_map = { for x in var.partitions : x.partition_name => x }
 
   have_template = (
@@ -29,13 +27,6 @@ locals {
     ? true
     : false
   )
-}
-
-##########
-# RANDOM #
-##########
-
-resource "random_uuid" "slurm_cluster_id" {
 }
 
 ###################
@@ -47,7 +38,6 @@ module "slurm_partition" {
 
   for_each = local.partition_map
 
-  slurm_cluster_name        = var.slurm_cluster_name
   partition_nodes           = each.value.partition_nodes
   enable_job_exclusive      = each.value.enable_job_exclusive
   enable_reconfigure        = var.enable_reconfigure
@@ -58,7 +48,7 @@ module "slurm_partition" {
   partition_startup_scripts = each.value.partition_startup_scripts
   project_id                = var.project_id
   region                    = each.value.region
-  slurm_cluster_id          = local.slurm_cluster_id
+  slurm_cluster_name        = var.slurm_cluster_name
   subnetwork_project        = each.value.subnetwork_project
   subnetwork                = each.value.subnetwork
   zone_policy_allow         = each.value.zone_policy_allow
@@ -76,7 +66,6 @@ module "slurm_controller_template" {
 
   additional_disks         = var.controller_instance_config.additional_disks
   can_ip_forward           = var.controller_instance_config.can_ip_forward
-  slurm_cluster_name       = var.slurm_cluster_name
   disable_smt              = var.controller_instance_config.disable_smt
   disk_auto_delete         = var.controller_instance_config.disk_auto_delete
   disk_labels              = var.controller_instance_config.disk_labels
@@ -97,7 +86,7 @@ module "slurm_controller_template" {
   region                   = var.controller_instance_config.region
   service_account          = var.controller_instance_config.service_account
   shielded_instance_config = var.controller_instance_config.shielded_instance_config
-  slurm_cluster_id         = local.slurm_cluster_id
+  slurm_cluster_name       = var.slurm_cluster_name
   slurm_instance_role      = "controller"
   source_image_family      = var.controller_instance_config.source_image_family
   source_image_project     = var.controller_instance_config.source_image_project
@@ -117,11 +106,10 @@ module "slurm_controller_instance" {
   count = var.enable_hybrid ? 0 : 1
 
   access_config      = var.controller_instance_config.access_config
-  slurm_cluster_name = var.slurm_cluster_name
   instance_template  = local.have_template ? var.controller_instance_config.instance_template : module.slurm_controller_template[0].self_link
   project_id         = var.project_id
   region             = var.controller_instance_config.region
-  slurm_cluster_id   = local.slurm_cluster_id
+  slurm_cluster_name = var.slurm_cluster_name
   static_ips         = var.controller_instance_config.static_ip != null ? [var.controller_instance_config.static_ip] : []
   subnetwork         = var.controller_instance_config.subnetwork
   zone               = var.controller_instance_config.zone
@@ -154,9 +142,8 @@ module "slurm_controller_hybrid" {
 
   count = var.enable_hybrid ? 1 : 0
 
-  slurm_cluster_name = var.slurm_cluster_name
   project_id         = var.project_id
-  slurm_cluster_id   = local.slurm_cluster_id
+  slurm_cluster_name = var.slurm_cluster_name
 
   google_app_cred_path         = var.controller_hybrid_config.google_app_cred_path
   slurm_bin_dir                = var.controller_hybrid_config.slurm_bin_dir
@@ -188,7 +175,6 @@ module "slurm_login_template" {
 
   additional_disks         = each.value.additional_disks
   can_ip_forward           = each.value.can_ip_forward
-  slurm_cluster_name       = var.slurm_cluster_name
   disable_smt              = each.value.disable_smt
   disk_auto_delete         = each.value.disk_auto_delete
   disk_labels              = each.value.disk_labels
@@ -208,7 +194,7 @@ module "slurm_login_template" {
   region                   = each.value.region
   service_account          = each.value.service_account
   shielded_instance_config = each.value.shielded_instance_config
-  slurm_cluster_id         = local.slurm_cluster_id
+  slurm_cluster_name       = var.slurm_cluster_name
   slurm_instance_role      = "login"
   source_image_family      = each.value.source_image_family
   source_image_project     = each.value.source_image_project
@@ -227,8 +213,7 @@ module "slurm_login_instance" {
 
   for_each = { for x in var.login_nodes : x.group_name => x }
 
-  access_config      = lookup(each.value, "access_config", [])
-  slurm_cluster_name = var.slurm_cluster_name
+  access_config = lookup(each.value, "access_config", [])
   instance_template = (
     each.value.instance_template != null && each.value.instance_template != ""
     ? each.value.instance_template
@@ -238,7 +223,7 @@ module "slurm_login_instance" {
   num_instances         = each.value.num_instances
   project_id            = var.project_id
   region                = each.value.region
-  slurm_cluster_id      = local.slurm_cluster_id
+  slurm_cluster_name    = var.slurm_cluster_name
   static_ips            = each.value.static_ips
   subnetwork            = each.value.subnetwork
   zone                  = each.value.zone

@@ -39,12 +39,6 @@ locals {
 ##################
 
 locals {
-  slurm_cluster_id = (
-    var.slurm_cluster_id == null || var.slurm_cluster_id == ""
-    ? random_uuid.slurm_cluster_id.result
-    : var.slurm_cluster_id
-  )
-
   partitions   = { for p in var.partitions[*].partition : p.partition_name => p }
   compute_list = flatten(var.partitions[*].compute_list)
 }
@@ -60,7 +54,6 @@ locals {
     cloudsql             = var.cloudsql != null ? true : false
     project              = var.project_id
     pubsub_topic_id      = var.enable_reconfigure ? google_pubsub_topic.this[0].name : null
-    slurm_cluster_id     = local.slurm_cluster_id
     slurm_cluster_name   = var.slurm_cluster_name
 
     # storage
@@ -129,9 +122,6 @@ data "google_compute_instance_template" "controller_template" {
 # RANDOM #
 ##########
 
-resource "random_uuid" "slurm_cluster_id" {
-}
-
 resource "random_string" "topic_suffix" {
   length  = 8
   special = false
@@ -146,13 +136,12 @@ module "slurm_controller_instance" {
 
   access_config       = var.access_config
   add_hostname_suffix = false
-  slurm_cluster_name  = var.slurm_cluster_name
   hostname            = "${var.slurm_cluster_name}-controller"
   instance_template   = var.instance_template
   network             = var.network
   project_id          = var.project_id
   region              = local.region
-  slurm_cluster_id    = local.slurm_cluster_id
+  slurm_cluster_name  = var.slurm_cluster_name
   slurm_instance_role = "controller"
   static_ips          = var.static_ips
   subnetwork_project  = var.subnetwork_project
@@ -311,7 +300,7 @@ resource "google_pubsub_topic" "this" {
   }
 
   labels = {
-    slurm_cluster_id = local.slurm_cluster_id
+    slurm_cluster_name = var.slurm_cluster_name
   }
 
   lifecycle {
@@ -355,7 +344,7 @@ module "slurm_pubsub" {
   ]
 
   subscription_labels = {
-    slurm_cluster_id = local.slurm_cluster_id
+    slurm_cluster_name = var.slurm_cluster_name
   }
 }
 
@@ -386,7 +375,7 @@ resource "google_secret_manager_secret" "cloudsql" {
   }
 
   labels = {
-    slurm_cluster_id = local.slurm_cluster_id
+    slurm_cluster_name = var.slurm_cluster_name
   }
 }
 
@@ -467,8 +456,8 @@ module "cleanup_compute_nodes" {
 
   count = var.enable_cleanup_compute ? 1 : 0
 
-  slurm_cluster_id = local.slurm_cluster_id
-  when_destroy     = true
+  slurm_cluster_name = var.slurm_cluster_name
+  when_destroy       = true
 }
 
 module "cleanup_subscriptions" {
@@ -476,8 +465,8 @@ module "cleanup_subscriptions" {
 
   count = var.enable_cleanup_subscriptions ? 1 : 0
 
-  slurm_cluster_id = local.slurm_cluster_id
-  when_destroy     = true
+  slurm_cluster_name = var.slurm_cluster_name
+  when_destroy       = true
 }
 
 # Destroy all compute nodes when the compute node environment changes
@@ -486,7 +475,7 @@ module "reconfigure_critical" {
 
   count = var.enable_reconfigure ? 1 : 0
 
-  slurm_cluster_id = local.slurm_cluster_id
+  slurm_cluster_name = var.slurm_cluster_name
 
   triggers = merge(
     {
@@ -516,8 +505,8 @@ module "reconfigure_partitions" {
 
   count = var.enable_reconfigure ? 1 : 0
 
-  slurm_cluster_id = local.slurm_cluster_id
-  exclude_list     = local.compute_list
+  slurm_cluster_name = var.slurm_cluster_name
+  exclude_list       = local.compute_list
 
   triggers = {
     compute_list = join(",", local.compute_list)

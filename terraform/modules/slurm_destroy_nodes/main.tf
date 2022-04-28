@@ -42,9 +42,9 @@ resource "null_resource" "destroy_nodes_on_create" {
   triggers = merge(
     var.triggers,
     {
-      scripts_dir      = local.scripts_dir
-      script_path      = data.local_file.destroy_nodes.filename
-      slurm_cluster_id = var.slurm_cluster_id
+      scripts_dir        = local.scripts_dir
+      script_path        = data.local_file.destroy_nodes.filename
+      slurm_cluster_name = var.slurm_cluster_name
     }
   )
 
@@ -54,7 +54,7 @@ resource "null_resource" "destroy_nodes_on_create" {
 ${self.triggers.script_path} \
 ${join(",", var.target_list) != "" ? "--target='${join(",", var.target_list)}'" : ""} \
 ${join(",", var.exclude_list) != "" ? "--exclude='${join(",", var.exclude_list)}'" : ""} \
-'${self.triggers.slurm_cluster_id}'
+'${self.triggers.slurm_cluster_name}'
 EOF
     when        = create
   }
@@ -70,11 +70,11 @@ resource "null_resource" "destroy_nodes_on_destroy" {
   triggers = merge(
     var.triggers,
     {
-      scripts_dir      = local.scripts_dir
-      script_path      = data.local_file.destroy_nodes.filename
-      slurm_cluster_id = var.slurm_cluster_id
-      target_list      = join(",", var.target_list)
-      exclude_list     = join(",", var.exclude_list)
+      scripts_dir        = local.scripts_dir
+      script_path        = data.local_file.destroy_nodes.filename
+      slurm_cluster_name = var.slurm_cluster_name
+      target_list        = join(",", var.target_list)
+      exclude_list       = join(",", var.exclude_list)
     }
   )
 
@@ -84,7 +84,7 @@ resource "null_resource" "destroy_nodes_on_destroy" {
 ${self.triggers.script_path} \
 ${self.triggers.target_list != "" ? "--target='${self.triggers.target_list}'" : ""} \
 ${self.triggers.exclude_list != "" ? "--exclude='${self.triggers.exclude_list}'" : ""} \
-'${self.triggers.slurm_cluster_id}'
+'${self.triggers.slurm_cluster_name}'
 EOF
     when        = destroy
   }

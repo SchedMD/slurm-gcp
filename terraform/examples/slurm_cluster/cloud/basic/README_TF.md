@@ -69,7 +69,7 @@ No resources.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Slurm cluster ID. |
+| <a name="output_slurm_cluster_name"></a> [slurm\_cluster\_name](#output\_slurm\_cluster\_name) | Slurm cluster name. |
 | <a name="output_slurm_controller_instance_self_links"></a> [slurm\_controller\_instance\_self\_links](#output\_slurm\_controller\_instance\_self\_links) | Slurm controller instance self\_link. |
 | <a name="output_slurm_login_instance_self_links"></a> [slurm\_login\_instance\_self\_links](#output\_slurm\_login\_instance\_self\_links) | Slurm login instance self\_link. |
 | <a name="output_slurm_partitions"></a> [slurm\_partitions](#output\_slurm\_partitions) | Slurm partition details. |

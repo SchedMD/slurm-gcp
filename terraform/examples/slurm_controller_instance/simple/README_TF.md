@@ -56,7 +56,6 @@ limitations under the License.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Slurm cluster ID |
 | <a name="output_slurm_cluster_name"></a> [slurm\_cluster\_name](#output\_slurm\_cluster\_name) | Slurm cluster name |
 | <a name="output_slurm_controller_instance"></a> [slurm\_controller\_instance](#output\_slurm\_controller\_instance) | Slurm controller instance self\_links |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

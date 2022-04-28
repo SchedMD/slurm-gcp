@@ -112,7 +112,6 @@ module "slurm_compute_template" {
 
   additional_disks         = each.value.additional_disks
   can_ip_forward           = each.value.can_ip_forward
-  slurm_cluster_name       = var.slurm_cluster_name
   disable_smt              = each.value.disable_smt
   disk_auto_delete         = each.value.disk_auto_delete
   disk_labels              = each.value.disk_labels
@@ -132,7 +131,7 @@ module "slurm_compute_template" {
   project_id               = var.project_id
   service_account          = each.value.service_account
   shielded_instance_config = each.value.shielded_instance_config
-  slurm_cluster_id         = var.slurm_cluster_id
+  slurm_cluster_name       = var.slurm_cluster_name
   slurm_instance_role      = "compute"
   source_image_family      = each.value.source_image_family
   source_image_project     = each.value.source_image_project
@@ -167,8 +166,8 @@ module "reconfigure_critical" {
 
   count = var.enable_reconfigure ? 1 : 0
 
-  slurm_cluster_id = var.slurm_cluster_id
-  target_list      = local.compute_list
+  slurm_cluster_name = var.slurm_cluster_name
+  target_list        = local.compute_list
 
   triggers = merge(
     {
@@ -198,7 +197,7 @@ module "reconfigure_node_groups" {
 
   for_each = var.enable_reconfigure ? local.partition.partition_nodes : {}
 
-  slurm_cluster_id = var.slurm_cluster_id
+  slurm_cluster_name = var.slurm_cluster_name
   target_list = flatten([
     for offset in range(0, sum([each.value.count_static, each.value.count_dynamic]), 1024)
     : formatlist(

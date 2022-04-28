@@ -52,7 +52,7 @@ def delete_instances(compute_list):
 
 def main(args):
     required_map = {
-        "labels.slurm_cluster_id": args.slurm_cluster_id,
+        "labels.slurm_cluster_name": args.slurm_cluster_name,
         "labels.slurm_instance_role": "compute",
     }
     required_list = [f"{k}={v}" for k, v in required_map.items()]
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("slurm_cluster_id", help="Slurm cluster ID label filter")
+    parser.add_argument("slurm_cluster_name", help="Slurm cluster name label filter")
     parser.add_argument(
         "--target", help="NodeNames targeted for destruction", type=str, default=None
     )

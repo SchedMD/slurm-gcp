@@ -71,6 +71,7 @@ All notable changes to this project will be documented in this file.
 - Change ansible to install cuda and nvidia from runfile
 - Reimplement spot instance support.
 - Rename `*_d` startup script variables to `*_startup_scripts`.
+- Eliminate redundant `slurm_cluster_id`.
 
 ## \[4.1.5\]
 

@@ -47,7 +47,6 @@ module "slurm_login_instance" {
 
   access_config       = var.access_config
   add_hostname_suffix = true
-  slurm_cluster_name  = var.slurm_cluster_name
   hostname            = "${var.slurm_cluster_name}-login-${local.suffix}"
   instance_template   = var.instance_template
   metadata = merge(
@@ -60,7 +59,7 @@ module "slurm_login_instance" {
   num_instances       = var.num_instances
   project_id          = var.project_id
   region              = local.region
-  slurm_cluster_id    = var.slurm_cluster_id
+  slurm_cluster_name  = var.slurm_cluster_name
   slurm_instance_role = "login"
   static_ips          = var.static_ips
   subnetwork_project  = var.subnetwork_project

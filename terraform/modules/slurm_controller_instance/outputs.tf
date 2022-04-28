@@ -32,11 +32,6 @@ output "slurm_cluster_name" {
   value       = var.slurm_cluster_name
 }
 
-output "slurm_cluster_id" {
-  description = "Cluster ID for cluster resource labeling."
-  value       = local.slurm_cluster_id
-}
-
 output "partitions" {
   description = "Cluster partitions."
   value       = local.partitions

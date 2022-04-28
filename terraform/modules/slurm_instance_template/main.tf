@@ -32,7 +32,6 @@ locals {
       disk_labels = merge(
         disk.disk_labels,
         {
-          slurm_cluster_id    = var.slurm_cluster_id
           slurm_cluster_name  = var.slurm_cluster_name
           slurm_instance_role = local.slurm_instance_role
         },
@@ -116,7 +115,6 @@ module "instance_template" {
   labels = merge(
     var.labels,
     {
-      slurm_cluster_id    = var.slurm_cluster_id
       slurm_cluster_name  = var.slurm_cluster_name
       slurm_instance_role = local.slurm_instance_role
     },
@@ -129,7 +127,6 @@ module "instance_template" {
     {
       enable-oslogin      = upper(var.enable_oslogin)
       google_mpi_tuning   = var.disable_smt == true ? "--nosmt" : null
-      slurm_cluster_id    = var.slurm_cluster_id
       slurm_cluster_name  = var.slurm_cluster_name
       slurm_instance_role = local.slurm_instance_role
       VmDnsSetting        = "GlobalOnly"
@@ -147,7 +144,6 @@ module "instance_template" {
   auto_delete  = var.disk_auto_delete
   disk_labels = merge(
     {
-      slurm_cluster_id    = var.slurm_cluster_id
       slurm_cluster_name  = var.slurm_cluster_name
       slurm_instance_role = local.slurm_instance_role
     },

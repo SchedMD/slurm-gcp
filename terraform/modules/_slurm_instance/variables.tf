@@ -120,9 +120,3 @@ variable "slurm_cluster_name" {
   description = "Cluster name, used for resource naming."
   type        = string
 }
-
-variable "slurm_cluster_id" {
-  description = "The Cluster ID, used to label resources."
-  type        = string
-  default     = null
-}

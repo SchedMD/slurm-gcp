@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-variable "slurm_cluster_id" {
-  description = "Destroy compute nodes labeled with this slurm_cluster_id."
+variable "slurm_cluster_name" {
+  description = "Destroy compute nodes labeled with this slurm_cluster_name."
   type        = string
 
   validation {
-    condition     = length(var.slurm_cluster_id) > 0
-    error_message = "The slurm_cluster_id must not be empty."
+    condition     = length(var.slurm_cluster_name) > 0
+    error_message = "The slurm_cluster_name must not be empty."
   }
 }

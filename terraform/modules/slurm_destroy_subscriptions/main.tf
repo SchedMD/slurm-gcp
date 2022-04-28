@@ -42,16 +42,16 @@ resource "null_resource" "destroy_subscriptions_on_create" {
   triggers = merge(
     var.triggers,
     {
-      scripts_dir      = local.scripts_dir
-      script_path      = data.local_file.destroy_subscriptions.filename
-      slurm_cluster_id = var.slurm_cluster_id
+      scripts_dir        = local.scripts_dir
+      script_path        = data.local_file.destroy_subscriptions.filename
+      slurm_cluster_name = var.slurm_cluster_name
     }
   )
 
   provisioner "local-exec" {
     working_dir = self.triggers.scripts_dir
     command     = <<EOF
-${self.triggers.script_path} '${self.triggers.slurm_cluster_id}'
+${self.triggers.script_path} '${self.triggers.slurm_cluster_name}'
 EOF
     when        = create
   }
@@ -67,16 +67,16 @@ resource "null_resource" "destroy_subscriptions_on_destroy" {
   triggers = merge(
     var.triggers,
     {
-      scripts_dir      = local.scripts_dir
-      script_path      = data.local_file.destroy_subscriptions.filename
-      slurm_cluster_id = var.slurm_cluster_id
+      scripts_dir        = local.scripts_dir
+      script_path        = data.local_file.destroy_subscriptions.filename
+      slurm_cluster_name = var.slurm_cluster_name
     }
   )
 
   provisioner "local-exec" {
     working_dir = self.triggers.scripts_dir
     command     = <<EOF
-${self.triggers.script_path} '${self.triggers.slurm_cluster_id}'
+${self.triggers.script_path} '${self.triggers.slurm_cluster_name}'
 EOF
     when        = destroy
   }

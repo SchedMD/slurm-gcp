@@ -186,14 +186,14 @@ def parse_self_link(self_link: str):
     return NSDict(link_patt.findall(self_link))
 
 
-def subscription_list(project_id=None, page_size=None, slurm_cluster_id=None):
+def subscription_list(project_id=None, page_size=None, slurm_cluster_name=None):
     """List pub/sub subscription"""
     from google.cloud import pubsub_v1
 
     if project_id is None:
         project_id = project
-    if slurm_cluster_id is None:
-        slurm_cluster_id = lkp.cfg.slurm_cluster_id
+    if slurm_cluster_name is None:
+        slurm_cluster_name = lkp.cfg.slurm_cluster_name
 
     subscriber = pubsub_v1.SubscriberClient()
 
@@ -218,7 +218,9 @@ def subscription_list(project_id=None, page_size=None, slurm_cluster_id=None):
         subscriptions.extend(page.subscriptions)
     # manual filter by label
     subscriptions = [
-        s for s in subscriptions if s.labels.get("slurm_cluster_id") == slurm_cluster_id
+        s
+        for s in subscriptions
+        if s.labels.get("slurm_cluster_name") == slurm_cluster_name
     ]
 
     return subscriptions
@@ -244,7 +246,7 @@ def subscription_create(subscription_id, project_id=None):
             "topic": topic_path,
             "ack_deadline_seconds": 60,
             "labels": {
-                "slurm_cluster_id": cfg.slurm_cluster_id,
+                "slurm_cluster_name": cfg.slurm_cluster_name,
             },
         }
         try:
@@ -1055,9 +1057,9 @@ class Lookup:
         )
         return instances.get(instance_name)
 
-    def subscription(self, instance_name, project=None, slurm_cluster_id=None):
+    def subscription(self, instance_name, project=None, slurm_cluster_name=None):
         subscriptions = self.subscriptions(
-            project=project, slurm_cluster_id=slurm_cluster_id
+            project=project, slurm_cluster_name=slurm_cluster_name
         )
         subscriptions = [parse_self_link(s.name).subscription for s in subscriptions]
         return instance_name in subscriptions
@@ -1171,8 +1173,10 @@ class Lookup:
                 continue
 
     @lru_cache(maxsize=1)
-    def subscriptions(slef, project=None, slurm_cluster_id=None):
-        return subscription_list(project_id=project, slurm_cluster_id=slurm_cluster_id)
+    def subscriptions(slef, project=None, slurm_cluster_name=None):
+        return subscription_list(
+            project_id=project, slurm_cluster_name=slurm_cluster_name
+        )
 
     def clear_template_info_cache(self):
         with shelve.open(str(self.template_cache_path), writeback=True) as cache:

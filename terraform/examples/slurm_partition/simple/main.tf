@@ -19,9 +19,6 @@ provider "google" {
   region  = var.region
 }
 
-resource "random_uuid" "slurm_cluster_id" {
-}
-
 data "google_compute_subnetwork" "default" {
   name   = "default"
   region = var.region
@@ -78,7 +75,6 @@ module "slurm_partition" {
     },
   ]
   project_id         = var.project_id
-  slurm_cluster_id   = random_uuid.slurm_cluster_id.result
   slurm_cluster_name = var.slurm_cluster_name
   subnetwork         = data.google_compute_subnetwork.default.self_link
 }

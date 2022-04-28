@@ -76,7 +76,6 @@ module "slurm_partition0" {
     },
   ]
   project_id         = var.project_id
-  slurm_cluster_id   = module.slurm_controller_hybrid.slurm_cluster_id
   slurm_cluster_name = local.slurm_cluster_name
   subnetwork         = data.google_compute_subnetwork.default.self_link
 }
@@ -127,7 +126,6 @@ module "slurm_partition1" {
     },
   ]
   project_id         = var.project_id
-  slurm_cluster_id   = module.slurm_controller_hybrid.slurm_cluster_id
   slurm_cluster_name = local.slurm_cluster_name
   subnetwork         = data.google_compute_subnetwork.default.self_link
 }

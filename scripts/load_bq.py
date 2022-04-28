@@ -122,7 +122,7 @@ client = bq.Client(project=cfg.project, credentials=def_creds)
 dataset_id = f"{cfg.slurm_cluster_name}_job_data"
 dataset = bq.DatasetReference(project=cfg.project, dataset_id=dataset_id)
 table = bq.Table(
-    bq.TableReference(dataset, f"jobs_{cfg.slurm_cluster_id}"), job_schema.values()
+    bq.TableReference(dataset, f"jobs_{cfg.slurm_cluster_name}"), job_schema.values()
 )
 
 

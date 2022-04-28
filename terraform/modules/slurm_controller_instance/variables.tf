@@ -100,12 +100,6 @@ variable "slurm_cluster_name" {
   }
 }
 
-variable "slurm_cluster_id" {
-  type        = string
-  description = "The Cluster ID to use. If 'null' or '', then an ID will be generated."
-  default     = null
-}
-
 variable "enable_devel" {
   type        = bool
   description = "Enables development mode. Not for production use."

@@ -87,7 +87,6 @@ resource "google_compute_instance_from_template" "slurm_instance" {
   labels = merge(
     data.google_compute_instance_template.base.labels,
     {
-      slurm_cluster_id    = var.slurm_cluster_id
       slurm_cluster_name  = var.slurm_cluster_name
       slurm_instance_role = local.slurm_instance_role
     },
@@ -96,7 +95,6 @@ resource "google_compute_instance_from_template" "slurm_instance" {
     data.google_compute_instance_template.base.metadata,
     var.metadata,
     {
-      slurm_cluster_id    = var.slurm_cluster_id
       slurm_cluster_name  = var.slurm_cluster_name
       slurm_instance_role = local.slurm_instance_role
       startup-script      = data.local_file.startup.content

@@ -59,7 +59,6 @@ def instance_properties(partition, model):
     ]
 
     slurm_metadata = {
-        "slurm_cluster_id": cfg.slurm_cluster_id,
         "slurm_cluster_name": cfg.slurm_cluster_name,
         "slurm_instance_role": "compute",
         "startup-script": (
@@ -79,7 +78,6 @@ def instance_properties(partition, model):
     }
 
     labels = {
-        "slurm_cluster_id": cfg.slurm_cluster_id,
         "slurm_cluster_name": cfg.slurm_cluster_name,
         "slurm_instance_role": "compute",
     }

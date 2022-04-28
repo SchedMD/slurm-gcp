@@ -29,11 +29,6 @@ variable "slurm_cluster_name" {
   }
 }
 
-variable "slurm_cluster_id" {
-  type        = string
-  description = "The Cluster ID, used to label resource."
-}
-
 variable "partition_name" {
   description = "Name of Slurm partition."
   type        = string

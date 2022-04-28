@@ -115,9 +115,3 @@ variable "slurm_cluster_name" {
     error_message = "Variable 'slurm_cluster_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
   }
 }
-
-variable "slurm_cluster_id" {
-  description = "The Cluster ID, used to label resources."
-  type        = string
-  default     = null
-}

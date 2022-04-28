@@ -295,12 +295,6 @@ variable "slurm_cluster_name" {
   }
 }
 
-variable "slurm_cluster_id" {
-  type        = string
-  description = "The Cluster ID, used to label resource."
-  default     = null
-}
-
 variable "disable_smt" {
   type        = bool
   description = "Disables Simultaneous Multi-Threading (SMT) on instance."

@@ -69,6 +69,6 @@ No resources.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Slurm cluster ID. |
+| <a name="output_slurm_cluster_name"></a> [slurm\_cluster\_name](#output\_slurm\_cluster\_name) | Slurm cluster name. |
 | <a name="output_slurm_partitions"></a> [slurm\_partitions](#output\_slurm\_partitions) | Slurm partition details. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

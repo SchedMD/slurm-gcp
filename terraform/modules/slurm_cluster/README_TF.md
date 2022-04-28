@@ -24,9 +24,7 @@ limitations under the License.
 
 ## Providers
 
-| Name | Version |
-|------|---------|
-| <a name="provider_random"></a> [random](#provider\_random) | 3.1.0 |
+No providers.
 
 ## Modules
 
@@ -41,9 +39,7 @@ limitations under the License.
 
 ## Resources
 
-| Name | Type |
-|------|------|
-| [random_uuid.slurm_cluster_id](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) | resource |
+No resources.
 
 ## Inputs
 
@@ -78,7 +74,7 @@ limitations under the License.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_slurm_cluster_id"></a> [slurm\_cluster\_id](#output\_slurm\_cluster\_id) | Slurm cluster ID. |
+| <a name="output_slurm_cluster_name"></a> [slurm\_cluster\_name](#output\_slurm\_cluster\_name) | Slurm cluster name. |
 | <a name="output_slurm_controller_instance_self_links"></a> [slurm\_controller\_instance\_self\_links](#output\_slurm\_controller\_instance\_self\_links) | Slurm controller instance self\_link. |
 | <a name="output_slurm_login_instance_self_links"></a> [slurm\_login\_instance\_self\_links](#output\_slurm\_login\_instance\_self\_links) | Slurm login instance self\_link. |
 | <a name="output_slurm_partition"></a> [slurm\_partition](#output\_slurm\_partition) | Slurm partition details. |

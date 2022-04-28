@@ -30,7 +30,7 @@ log = logging.getLogger(logger_name)
 
 
 def main(args):
-    subscriptions = subscription_list(slurm_cluster_id=args.slurm_cluster_id)
+    subscriptions = subscription_list(slurm_cluster_name=args.slurm_cluster_name)
     subscriptions = [s.name for s in subscriptions if "controller" not in s.name]
     log.info(
         "Deleting {0} subscriptions:\n{1}".format(
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("slurm_cluster_id", help="Slurm cluster ID filter")
+    parser.add_argument("slurm_cluster_name", help="Slurm cluster name filter")
     parser.add_argument(
         "--debug",
         "-d",

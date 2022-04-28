@@ -47,7 +47,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_exclude_list"></a> [exclude\_list](#input\_exclude\_list) | Exclude destruction of these compute nodes, by instance name. | `list(string)` | `[]` | no |
-| <a name="input_slurm_cluster_id"></a> [slurm\_cluster\_id](#input\_slurm\_cluster\_id) | Destroy compute nodes labeled with this slurm\_cluster\_id. | `string` | n/a | yes |
+| <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Destroy compute nodes labeled with this slurm\_cluster\_name. | `string` | n/a | yes |
 | <a name="input_target_list"></a> [target\_list](#input\_target\_list) | Target destruction of these compute nodes, by instance name. | `list(string)` | `[]` | no |
 | <a name="input_triggers"></a> [triggers](#input\_triggers) | Additional Terraform triggers. | `map(string)` | `{}` | no |
 | <a name="input_when_destroy"></a> [when\_destroy](#input\_when\_destroy) | Run only on `terraform destroy`? | `bool` | `false` | no |

@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-slurm_cluster_id = "<SLURM_CLUSTER_ID>"
+slurm_cluster_name = "<slurm_cluster_name>"

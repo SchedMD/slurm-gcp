@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-output "slurm_cluster_id" {
-  description = "Slurm cluster ID."
-  value       = local.slurm_cluster_id
+output "slurm_cluster_name" {
+  description = "Slurm cluster name."
+  value       = var.slurm_cluster_name
 }
 
 output "slurm_partition" {
