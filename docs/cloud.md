@@ -41,7 +41,7 @@ and manage cluster infrastructure. While this method can be more complex, it is
 a robust option. `slurm-gcp` provides terraform modules that enables you to
 create a Slurm cluster with ease.
 
-See the [slurm_cluster module](../terraform/modules/slurm_cluster/README.md) for
+See the [slurm_cluster module](../terraform/slurm_cluster/README.md) for
 details.
 
 If you are unfamiliar with [terraform](./glossary.md#terraform), then please
@@ -52,7 +52,7 @@ to get you familiar.
 ### Quickstart Examples
 
 See the
-[full cluster example](../terraform/examples/slurm_cluster/cloud/full/README.md)
+[full cluster example](../terraform/slurm_cluster/examples/slurm_cluster/cloud/full/README.md)
 for a great example to get started with. It will create all the infrastructure,
 service accounts and IAM to minimally support a Slurm cluster. The
 [TerraformUser](./glossary.md#terraformuser) will require more
@@ -61,7 +61,7 @@ can configure certain elements of the example cluster, which is useful for
 testing.
 
 See the
-[basic cluster example](../terraform/examples/slurm_cluster/cloud/basic/README.md)
+[basic cluster example](../terraform/slurm_cluster/examples/slurm_cluster/cloud/basic/README.md)
 for a great example to base a production configuration off of. It provides the
 bare minimum and leaves the rest to you. This allows for fine grain control over
 the cluster environment and removes [role](./glossary.md#iam-roles) requirements
@@ -69,6 +69,6 @@ from the [TerraformUser](./glossary.md#terraformuser). You can configure certain
 elements of the example cluster, which is useful for testing.
 
 > **NOTE:** It is recommended to use the
-> [slurm_cluster module](../terraform/modules/slurm_cluster/README.md) in your
-> own [terraform project](./glossary.md#terraform-project). It may be useful to
-> copy and modify one of the provided examples.
+> [slurm_cluster module](../terraform/slurm_cluster/README.md) in your own
+> [terraform project](./glossary.md#terraform-project). It may be useful to copy
+> and modify one of the provided examples.

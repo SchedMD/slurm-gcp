@@ -26,8 +26,7 @@ This guide focuses on setting up a
 [Federation](#federation) is a superset of [multi-cluster](#multi-cluster). By
 setting up federation, you are also setting up multi-cluster.
 
-If using
-[slurm_cluster terraform module](../terraform/modules/slurm_cluster/README.md),
+If using [slurm_cluster terraform module](../terraform/slurm_cluster/README.md),
 please refer to [multiple-slurmdbd](#multiple-slurmdbd) section.
 
 > **NOTE:** [slurmdbd](./glossary.md#slurmdbd) and the database (e.g. mariadb,
@@ -90,8 +89,8 @@ please refer to [multiple-slurmdbd](#multiple-slurmdbd) section.
 1. Deploy Slurm clusters by any chosen methods (e.g. cloud, hybrid, etc..).
 
    > **WARNING:** This type of configuration is not supported by
-   > [slurm_cluster terraform module](../terraform/modules/slurm_cluster/README.md);
-   > see the [multiple-slurmdbd](#multiple-slurmdbd) section instead.
+   > [slurm_cluster terraform module](../terraform/slurm_cluster/README.md); see
+   > the [multiple-slurmdbd](#multiple-slurmdbd) section instead.
 
 1. Update *slurm.conf* with accounting storage options:
 
@@ -124,14 +123,14 @@ please refer to [multiple-slurmdbd](#multiple-slurmdbd) section.
    mysql, etc..).
 
    > **NOTE:**
-   > [slurm_cluster terraform module](../terraform/modules/slurm_cluster/README.md)
+   > [slurm_cluster terraform module](../terraform/slurm_cluster/README.md)
    > conflates the controller instance and the database instance.
 
 1. Deploy Slurm clusters by any chosen methods (e.g. cloud, hybrid, etc..).
 
    > **WARNING:** If using the
-   > [slurm_cluster terraform module](../terraform/modules/slurm_cluster/README.md),
-   > do not use the `cloudsql` input, as this does not work with a federation
+   > [slurm_cluster terraform module](../terraform/slurm_cluster/README.md), do
+   > not use the `cloudsql` input, as this does not work with a federation
    > setup.
 
 1. Update each *slurm.conf* with:

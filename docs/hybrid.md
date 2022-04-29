@@ -26,8 +26,8 @@ taken into account. This guide will cover them and their recommended solutions.
 There is a clear seperation of how on-prem and cloud resources are managed
 within your hybrid cluster. This means that you can modify either side of the
 hybrid cluster without disrupting the other side! You manage your on-prem and
-our [Slurm cluster module](../terraform/modules/slurm_cluster/README.md) will
-manage the cloud.
+our [Slurm cluster module](../terraform/slurm_cluster/README.md) will manage the
+cloud.
 
 See [Cloud Scheduling Guide](https://slurm.schedmd.com/elastic_computing.html)
 for additional information.
@@ -39,11 +39,11 @@ for additional information.
 
 [Terraform](./glossary.md#terraform) is used to manage the cloud resources
 within your hybrid cluster. The
-[slurm_cluster](../terraform/modules/slurm_cluster/README.md) module, when in
-hybrid mode, creates the required files to support an on-premise controller
-capable of cloud bursting.
+[slurm_cluster](../terraform/slurm_cluster/README.md) module, when in hybrid
+mode, creates the required files to support an on-premise controller capable of
+cloud bursting.
 
-See the [Slurm cluster module](../terraform/modules/slurm_cluster/README.md) for
+See the [Slurm cluster module](../terraform/slurm_cluster/README.md) for
 details.
 
 If you are unfamiliar with [terraform](./glossary.md#terraform), then please
@@ -54,7 +54,7 @@ to get you familiar.
 ### Quickstart Examples
 
 See the
-[full cluster example](../terraform/examples/slurm_cluster/hybrid/full/README.md)
+[full cluster example](../terraform/slurm_cluster/examples/slurm_cluster/hybrid/full/README.md)
 for a great example to get started with. It will create all the infrastructure,
 service accounts and IAM to minimally support a Slurm cluster. The
 [TerraformUser](./glossary.md#terraformuser) will require more
@@ -63,7 +63,7 @@ can configure certain elements of the example cluster, which is useful for
 testing.
 
 See the
-[basic cluster example](../terraform/examples/slurm_cluster/hybrid/basic/README.md)
+[basic cluster example](../terraform/slurm_cluster/examples/slurm_cluster/hybrid/basic/README.md)
 for a great example to base a production configuration off of. It provides the
 bare minimum and leaves the rest to you. This allows for fine grain control over
 the cluster environment and removes [role](./glossary.md#iam-roles) requirements
@@ -151,7 +151,7 @@ configured on all [SchedMD public images](./images.md#public-images).
 ### Manual Configurations
 
 Once you have successfully configured a hybrid
-[slurm_cluster](../terraform/modules/slurm_cluster/README.md) and applied the
+[slurm_cluster](../terraform/slurm_cluster/README.md) and applied the
 [terraform](./glossary.md#terraform) infrastructure, the necessary files will be
 generated at `$output_dir`. It is recommended that `$output_dir` is equal to the
 path where Slurm searches for config files (e.g. `/etc/slurm`).
