@@ -72,6 +72,7 @@ All notable changes to this project will be documented in this file.
 - Reimplement spot instance support.
 - Rename `*_d` startup script variables to `*_startup_scripts`.
 - Eliminate redundant `slurm_cluster_id`.
+- Add additional validation slurm_cluster partitions.
 
 ## \[4.1.5\]
 

@@ -309,7 +309,62 @@ EOD
     zone_policy_allow  = list(string)
     zone_policy_deny   = list(string)
   }))
-  default = []
+  default = [
+    {
+      enable_job_exclusive    = false
+      enable_placement_groups = false
+      partition_conf = {
+        Default = "YES"
+      }
+      partition_startup_scripts = []
+      partition_name            = "debug"
+      partition_nodes = [
+        {
+          count_static             = 20
+          count_dynamic            = 0
+          group_name               = "test"
+          node_conf                = {}
+          additional_disks         = []
+          can_ip_forward           = false
+          disable_smt              = false
+          disk_auto_delete         = true
+          disk_labels              = {}
+          disk_size_gb             = null
+          disk_type                = null
+          enable_confidential_vm   = false
+          enable_oslogin           = true
+          enable_shielded_vm       = false
+          enable_spot_vm           = false
+          gpu                      = null
+          instance_template        = null
+          labels                   = {}
+          machine_type             = "n1-standard-1"
+          metadata                 = {}
+          min_cpu_platform         = null
+          on_host_maintenance      = null
+          preemptible              = false
+          service_account          = null
+          shielded_instance_config = null
+          spot_instance_config     = null
+          source_image_family      = null
+          source_image_project     = null
+          source_image             = null
+          tags                     = []
+        }
+      ]
+      network_storage    = []
+      region             = null
+      subnetwork_project = null
+      subnetwork         = "default"
+      zone_policy_allow  = []
+      zone_policy_deny   = []
+    },
+  ]
+
+  validation {
+    condition     = length(var.partitions) > 0
+    error_message = "Partitions cannot be empty."
+  }
 
   validation {
     condition = alltrue([
