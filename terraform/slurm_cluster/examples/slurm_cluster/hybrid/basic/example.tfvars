@@ -115,9 +115,9 @@ partitions = [
     partition_nodes = [
       {
         # Group Definition
-        group_name    = "test"
-        count_dynamic = 20
-        count_static  = 0
+        group_name             = "test"
+        node_count_dynamic_max = 20
+        node_count_static      = 0
         node_conf = {
           # Features = "test"
         }
@@ -180,10 +180,10 @@ partitions = [
     partition_nodes = [
       {
         # Group Definition
-        group_name    = "test"
-        count_dynamic = 10
-        count_static  = 0
-        node_conf     = {}
+        group_name             = "test"
+        node_count_dynamic_max = 10
+        node_count_static      = 0
+        node_conf              = {}
 
         # Template By Definition
         additional_disks       = []

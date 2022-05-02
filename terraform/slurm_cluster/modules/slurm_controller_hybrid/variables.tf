@@ -195,12 +195,12 @@ variable "partitions" {
       partition_conf = map(string)
       partition_name = string
       partition_nodes = map(object({
-        count_dynamic     = number
-        count_static      = number
-        enable_spot_vm    = bool
-        group_name        = string
-        instance_template = string
-        node_conf         = map(string)
+        node_count_dynamic_max = number
+        node_count_static      = number
+        enable_spot_vm         = bool
+        group_name             = string
+        instance_template      = string
+        node_conf              = map(string)
         spot_instance_config = object({
           termination_action = string
         })

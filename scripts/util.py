@@ -601,8 +601,8 @@ def nodeset_lists(node_group, part_name):
         return f"{start}" if count == 1 else f"[{start}-{end}]", end + 1
 
     prefix = nodeset_prefix(node_group, part_name)
-    static_count = node_group.count_static
-    dynamic_count = node_group.count_dynamic
+    static_count = node_group.node_count_static
+    dynamic_count = node_group.node_count_dynamic_max
     static_range, end = node_range(static_count) if static_count else (None, 0)
     dynamic_range, _ = node_range(dynamic_count, end) if dynamic_count else (None, 0)
 
@@ -971,7 +971,7 @@ class Lookup:
 
     def node_is_static(self, node_name=None):
         node_group = self.node_group(node_name)
-        return self.node_index(node_name) < node_group.count_static
+        return self.node_index(node_name) < node_group.node_count_static
 
     @lru_cache(maxsize=1)
     def static_nodelist(self):

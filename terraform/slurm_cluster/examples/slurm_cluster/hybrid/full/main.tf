@@ -30,8 +30,8 @@ locals {
       partition_nodes = [for n in x.partition_nodes : {
         additional_disks         = n.additional_disks
         can_ip_forward           = n.can_ip_forward
-        count_dynamic            = n.count_dynamic
-        count_static             = n.count_static
+        node_count_dynamic_max   = n.node_count_dynamic_max
+        node_count_static        = n.node_count_static
         disable_smt              = n.disable_smt
         disk_auto_delete         = n.disk_auto_delete
         disk_labels              = n.disk_labels

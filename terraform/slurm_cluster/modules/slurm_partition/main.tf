@@ -33,20 +33,20 @@ locals {
 
   partition_nodes = {
     for x in var.partition_nodes : x.group_name => {
-      group_name        = x.group_name
-      node_conf         = x.node_conf
-      partition_name    = var.partition_name
-      instance_template = data.google_compute_instance_template.group_template[x.group_name].self_link
-      count_dynamic     = x.count_dynamic
-      count_static      = x.count_static
+      group_name             = x.group_name
+      node_conf              = x.node_conf
+      partition_name         = var.partition_name
+      instance_template      = data.google_compute_instance_template.group_template[x.group_name].self_link
+      node_count_dynamic_max = x.node_count_dynamic_max
+      node_count_static      = x.node_count_static
       node_list = flatten([
-        for offset in range(0, sum([x.count_dynamic, x.count_static]), 1024)
+        for offset in range(0, sum([x.node_count_dynamic_max, x.node_count_static]), 1024)
         : formatlist(
           "%s-%s-%s-%g",
           var.slurm_cluster_name,
           var.partition_name,
           x.group_name,
-          range(offset, min(offset + 1024, sum([x.count_dynamic, x.count_static])))
+          range(offset, min(offset + 1024, sum([x.node_count_dynamic_max, x.node_count_static])))
         )
       ])
       # Beta Features
@@ -58,7 +58,7 @@ locals {
   enable_placement_groups = var.enable_placement_groups && alltrue([
     for x in data.google_compute_instance_template.group_template
     : length(regexall("^c2[0-9a-z]*-[0-9a-z]+-[0-9]+$", x.machine_type)) > 0
-  ]) && alltrue([for x in local.partition_nodes : x.count_static == 0])
+  ]) && alltrue([for x in local.partition_nodes : x.node_count_static == 0])
 
   compute_list = flatten([for x in local.partition.partition_nodes : x.node_list])
 
@@ -199,11 +199,11 @@ module "reconfigure_node_groups" {
 
   slurm_cluster_name = var.slurm_cluster_name
   target_list = flatten([
-    for offset in range(0, sum([each.value.count_static, each.value.count_dynamic]), 1024)
+    for offset in range(0, sum([each.value.node_count_static, each.value.node_count_dynamic_max]), 1024)
     : formatlist(
       "%s-%s-%s-%g",
       var.slurm_cluster_name, each.value.partition_name, each.value.group_name,
-      range(offset, min(offset + 1024, sum([each.value.count_static, each.value.count_dynamic])))
+      range(offset, min(offset + 1024, sum([each.value.node_count_static, each.value.node_count_dynamic_max])))
     )
   ])
 

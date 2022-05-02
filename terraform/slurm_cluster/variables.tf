@@ -245,10 +245,10 @@ EOD
     }))
     partition_name = string
     partition_nodes = list(object({
-      count_static  = number
-      count_dynamic = number
-      group_name    = string
-      node_conf     = map(string)
+      node_count_static      = number
+      node_count_dynamic_max = number
+      group_name             = string
+      node_conf              = map(string)
       additional_disks = list(object({
         disk_name    = string
         device_name  = string
@@ -320,8 +320,8 @@ EOD
       partition_name            = "debug"
       partition_nodes = [
         {
-          count_static             = 20
-          count_dynamic            = 0
+          node_count_static        = 20
+          node_count_dynamic_max   = 0
           group_name               = "test"
           node_conf                = {}
           additional_disks         = []

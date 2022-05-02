@@ -42,10 +42,10 @@ module "slurm_partition0" {
   }
   partition_nodes = [
     {
-      group_name    = "test"
-      count_dynamic = 10
-      count_static  = 0
-      node_conf     = {}
+      group_name             = "test"
+      node_count_dynamic_max = 10
+      node_count_static      = 0
+      node_conf              = {}
 
       additional_disks         = []
       can_ip_forward           = false
@@ -89,10 +89,10 @@ module "slurm_partition1" {
   }
   partition_nodes = [
     {
-      group_name    = "gpu"
-      count_dynamic = 10
-      count_static  = 0
-      node_conf     = {}
+      group_name             = "gpu"
+      node_count_dynamic_max = 10
+      node_count_static      = 0
+      node_conf              = {}
 
       additional_disks       = []
       can_ip_forward         = false

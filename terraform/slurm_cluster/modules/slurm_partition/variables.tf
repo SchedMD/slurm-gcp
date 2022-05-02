@@ -61,18 +61,18 @@ variable "partition_nodes" {
   description = <<EOD
 Compute nodes contained with this partition.
 
-* count_static  : number of persistant nodes.
-* count_dynamic : number of burstable nodes.
-* group_name    : node group unique identifier.
-* node_conf     : map of Slurm node line configuration.
+* node_count_static      : number of persistant nodes.
+* node_count_dynamic_max : max number of burstable nodes.
+* group_name             : node group unique identifier.
+* node_conf              : map of Slurm node line configuration.
 
 See module slurm_instance_template.
 EOD
   type = list(object({
-    count_static  = number
-    count_dynamic = number
-    group_name    = string
-    node_conf     = map(string)
+    node_count_static      = number
+    node_count_dynamic_max = number
+    group_name             = string
+    node_conf              = map(string)
     additional_disks = list(object({
       disk_name    = string
       device_name  = string
@@ -135,23 +135,23 @@ EOD
 
   validation {
     condition = alltrue([
-      for x in var.partition_nodes : x.count_static >= 0
+      for x in var.partition_nodes : x.node_count_static >= 0
     ])
-    error_message = "Items 'count_static' must be >= 0."
+    error_message = "Items 'node_count_static' must be >= 0."
   }
 
   validation {
     condition = alltrue([
-      for x in var.partition_nodes : x.count_dynamic >= 0
+      for x in var.partition_nodes : x.node_count_dynamic_max >= 0
     ])
-    error_message = "Items 'count_dynamic' must be >= 0."
+    error_message = "Items 'node_count_dynamic_max' must be >= 0."
   }
 
   validation {
     condition = alltrue([
-      for x in var.partition_nodes : sum([x.count_static, x.count_dynamic]) > 0
+      for x in var.partition_nodes : sum([x.node_count_static, x.node_count_dynamic_max]) > 0
     ])
-    error_message = "Sum of 'count_static' and 'count_dynamic' must be > 0."
+    error_message = "Sum of 'node_count_static' and 'node_count_dynamic_max' must be > 0."
   }
 
   validation {
@@ -242,7 +242,7 @@ If `enable_placement_groups=true`, then `enable_job_exclusive=true` will be forc
 `enable_placement_groups=false` will be forced when all are not satisfied:
 - only compute optimized `machine_type` (C2 or C2D family).
   - See https://cloud.google.com/compute/docs/machine-types
-- `count_static` == 0
+- `node_count_static` == 0
 EOD
   type        = bool
   default     = false

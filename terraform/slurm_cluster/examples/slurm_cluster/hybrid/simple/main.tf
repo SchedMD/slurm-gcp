@@ -31,10 +31,10 @@ locals {
       partition_name            = "debug"
       partition_nodes = [
         {
-          count_dynamic = 20
-          count_static  = 0
-          group_name    = "test"
-          node_conf     = {}
+          node_count_dynamic_max = 20
+          node_count_static      = 0
+          group_name             = "test"
+          node_conf              = {}
 
           additional_disks         = []
           can_ip_forward           = false
@@ -81,10 +81,10 @@ locals {
       partition_name            = "debug2"
       partition_nodes = [
         {
-          count_dynamic = 10
-          count_static  = 0
-          group_name    = "test"
-          node_conf     = {}
+          node_count_dynamic_max = 10
+          node_count_static      = 0
+          group_name             = "test"
+          node_conf              = {}
 
           additional_disks       = []
           can_ip_forward         = false
