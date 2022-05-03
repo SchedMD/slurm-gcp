@@ -115,3 +115,14 @@ variable "slurm_cluster_name" {
     error_message = "Variable 'slurm_cluster_name' must be a match of regex '(^[a-z][a-z0-9]*$)'."
   }
 }
+
+variable "slurm_depends_on" {
+  description = <<EOD
+Custom terraform dependencies without replacement on delta. This is useful to
+ensure order of resource creation.
+
+NOTE: Also see terraform meta-argument 'depends_on'.
+EOD
+  type        = list(string)
+  default     = []
+}

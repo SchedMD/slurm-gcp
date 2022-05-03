@@ -205,7 +205,7 @@ module "slurm_login_template" {
 }
 
 ###################
-# LOGIN: TEMPLATE #
+# LOGIN: INSTANCE #
 ###################
 
 module "slurm_login_instance" {
@@ -228,8 +228,8 @@ module "slurm_login_instance" {
   subnetwork            = each.value.subnetwork
   zone                  = each.value.zone
 
-  depends_on = [
+  slurm_depends_on = flatten([
     # Ensure Controller is up before attempting to mount file systems from it
-    module.slurm_controller_instance[0].slurm_controller_instance,
-  ]
+    module.slurm_controller_instance[0].slurm_controller_instances[*].instance_id,
+  ])
 }

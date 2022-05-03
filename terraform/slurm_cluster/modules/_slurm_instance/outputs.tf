@@ -15,6 +15,11 @@
  * limitations under the License.
  */
 
+output "slurm_instances" {
+  description = "List of all resource objects for compute instances"
+  value       = google_compute_instance_from_template.slurm_instance
+}
+
 output "instances_self_links" {
   description = "List of self-links for compute instances"
   value       = google_compute_instance_from_template.slurm_instance.*.self_link

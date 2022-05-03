@@ -66,6 +66,7 @@ module "slurm_login_instance" {
   subnetwork          = var.subnetwork
   zone                = var.zone
 
+  slurm_depends_on = var.slurm_depends_on
   depends_on = [
     # Ensure delta when user startup scripts change
     google_compute_project_metadata_item.login_startup_scripts,

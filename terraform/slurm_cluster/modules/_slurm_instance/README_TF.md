@@ -59,6 +59,7 @@ No modules.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | Region where the instances should be created. | `string` | `null` | no |
 | <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, used for resource naming. | `string` | n/a | yes |
+| <a name="input_slurm_depends_on"></a> [slurm\_depends\_on](#input\_slurm\_depends\_on) | Custom terraform dependencies without replacement on delta. This is useful to<br>ensure order of resource creation.<br><br>NOTE: Also see terraform meta-argument 'depends\_on'. | `list(string)` | `[]` | no |
 | <a name="input_slurm_instance_role"></a> [slurm\_instance\_role](#input\_slurm\_instance\_role) | Slurm instance type. Must be one of: controller; login; compute. | `string` | `null` | no |
 | <a name="input_static_ips"></a> [static\_ips](#input\_static\_ips) | List of static IPs for VM instances | `list(string)` | `[]` | no |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | Subnet to deploy to. Only one of network or subnetwork should be specified. | `string` | `""` | no |
@@ -72,4 +73,5 @@ No modules.
 | <a name="output_available_zones"></a> [available\_zones](#output\_available\_zones) | List of available zones in region |
 | <a name="output_instances_details"></a> [instances\_details](#output\_instances\_details) | List of all details for compute instances |
 | <a name="output_instances_self_links"></a> [instances\_self\_links](#output\_instances\_self\_links) | List of self-links for compute instances |
+| <a name="output_slurm_instances"></a> [slurm\_instances](#output\_slurm\_instances) | List of all resource objects for compute instances |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

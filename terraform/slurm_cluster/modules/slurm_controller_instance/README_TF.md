@@ -112,5 +112,6 @@ limitations under the License.
 | <a name="output_compute_list"></a> [compute\_list](#output\_compute\_list) | Cluster compute list. |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Cluster partitions. |
 | <a name="output_slurm_cluster_name"></a> [slurm\_cluster\_name](#output\_slurm\_cluster\_name) | Cluster name for resource naming and slurm accounting. |
-| <a name="output_slurm_controller_instance"></a> [slurm\_controller\_instance](#output\_slurm\_controller\_instance) | Controller instance |
+| <a name="output_slurm_controller_instance"></a> [slurm\_controller\_instance](#output\_slurm\_controller\_instance) | Controller instance module. |
+| <a name="output_slurm_controller_instances"></a> [slurm\_controller\_instances](#output\_slurm\_controller\_instances) | Controller instance resource. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

@@ -19,8 +19,13 @@
 ############
 
 output "slurm_controller_instance" {
-  description = "Controller instance"
+  description = "Controller instance module."
   value       = module.slurm_controller_instance
+}
+
+output "slurm_controller_instances" {
+  description = "Controller instance resource."
+  value       = module.slurm_controller_instance.slurm_instances
 }
 
 #########
