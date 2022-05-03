@@ -4,3 +4,5 @@ google-cloud-bigquery~=2.0
 google-cloud-pubsub~=2.0
 google-cloud-secret-manager~=2.0
 google-cloud-storage~=1.0
+more-executors~=2.0
+pyyaml~=6.0

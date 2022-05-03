@@ -11,6 +11,7 @@ google-api-python-client = "*"
 google-cloud-bigquery = "*"
 google-cloud-pubsub = "*"
 ipython = "*"
+more-executors = "*"
 
 [dev-packages]
 

@@ -24,7 +24,7 @@ import sys
 import stat
 import time
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import partialmethod, lru_cache
 from itertools import chain
 from pathlib import Path
@@ -691,23 +691,37 @@ def setup_network_storage():
 
 def mount_fstab(mounts):
     """Wait on each mount, then make sure all fstab is mounted"""
+    from more_executors import Executors, ExceptionRetryPolicy
 
     def mount_path(path):
+
         log.info(f"Waiting for '{path}' to be mounted...")
-        run(f"mount {path}", timeout=120)
+        try:
+            run(f"mount {path}", timeout=120)
+        except Exception as e:
+            exc_type, _, _ = sys.exc_info()
+            log.error(f"mount of path '{path}' failed: {exc_type}: {e}")
+            raise e
         log.info(f"Mount point '{path}' was mounted.")
 
+    MAX_MOUNT_TIMEOUT = 60 * 5
     future_list = []
-    with ThreadPoolExecutor() as exe:
+    retry_policy = ExceptionRetryPolicy(
+        max_attempts=40, exponent=1.6, sleep=1.0, max_sleep=16.0
+    )
+    with Executors.thread_pool().with_timeout(MAX_MOUNT_TIMEOUT).with_retry(
+        retry_policy=retry_policy
+    ) as exe:
         for path in mounts:
             future = exe.submit(mount_path, path)
             future_list.append(future)
 
         # Iterate over futures, checking for exceptions
-        for future in future_list:
-            result = future.exception()
-            if result is not None:
-                raise result
+        for future in as_completed(future_list):
+            try:
+                future.result()
+            except Exception as e:
+                raise e
 
 
 def setup_nfs_exports():

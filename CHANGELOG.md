@@ -76,6 +76,7 @@ All notable changes to this project will be documented in this file.
 - Disable LDAP ansible role for Debian family
 - Rename node count fields.
 - Upgrade Slurm to version 21.08.8
+- Add proper retry on mount attempts
 
 ## \[4.1.5\]
 
