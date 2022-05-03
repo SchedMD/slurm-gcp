@@ -150,13 +150,16 @@ module "slurm_controller_instance" {
 
   metadata = var.metadata
 
-  slurm_depends_on = [
-    google_compute_project_metadata_item.config.id,
-    google_compute_project_metadata_item.slurm_conf.id,
-    google_compute_project_metadata_item.cgroup_conf.id,
-    google_compute_project_metadata_item.slurmdbd_conf.id,
-    var.enable_devel ? module.slurm_metadata_devel[0].metadata.id : null,
-  ]
+  slurm_depends_on = flatten([
+    var.slurm_depends_on,
+    [
+      google_compute_project_metadata_item.config.id,
+      google_compute_project_metadata_item.slurm_conf.id,
+      google_compute_project_metadata_item.cgroup_conf.id,
+      google_compute_project_metadata_item.slurmdbd_conf.id,
+      var.enable_devel ? module.slurm_metadata_devel[0].metadata.id : null,
+    ],
+  ])
   depends_on = [
     google_compute_project_metadata_item.controller_startup_scripts,
     # Ensure nodes are destroyed before controller is

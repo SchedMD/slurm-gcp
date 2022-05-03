@@ -333,3 +333,14 @@ variable "cloud_parameters" {
     suspend_timeout = 300
   }
 }
+
+variable "slurm_depends_on" {
+  description = <<EOD
+Custom terraform dependencies without replacement on delta. This is useful to
+ensure order of resource creation.
+
+NOTE: Also see terraform meta-argument 'depends_on'.
+EOD
+  type        = list(string)
+  default     = []
+}

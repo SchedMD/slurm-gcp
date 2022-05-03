@@ -267,3 +267,14 @@ cloud.conf; cloud_gres.conf; config.yaml; resume.py; suspend.py; and util.py.
 EOD
   default     = null
 }
+
+variable "slurm_depends_on" {
+  description = <<EOD
+Custom terraform dependencies without replacement on delta. This is useful to
+ensure order of resource creation.
+
+NOTE: Also see terraform meta-argument 'depends_on'.
+EOD
+  type        = list(string)
+  default     = []
+}
