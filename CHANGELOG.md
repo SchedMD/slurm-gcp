@@ -74,6 +74,7 @@ All notable changes to this project will be documented in this file.
 - Eliminate redundant `slurm_cluster_id`.
 - Add additional validation slurm_cluster partitions.
 - Remove need for gpu instance by packer
+- Disable LDAP ansible role for Debian family
 
 ## \[4.1.5\]
 
