@@ -161,6 +161,7 @@ module "slurm_controller_instance" {
     ],
   ])
   depends_on = [
+    # Ensure delta when user startup scripts change
     google_compute_project_metadata_item.controller_startup_scripts,
     # Ensure nodes are destroyed before controller is
     module.cleanup_compute_nodes[0],
