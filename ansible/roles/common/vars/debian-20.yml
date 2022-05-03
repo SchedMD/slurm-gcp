@@ -32,6 +32,7 @@ common_packages:
 - libtool
 - lynx
 - make
+- pciutils
 - pdsh
 - pkg-config
 - python3
