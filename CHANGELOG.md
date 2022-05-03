@@ -73,6 +73,7 @@ All notable changes to this project will be documented in this file.
 - Rename `*_d` startup script variables to `*_startup_scripts`.
 - Eliminate redundant `slurm_cluster_id`.
 - Add additional validation slurm_cluster partitions.
+- Remove need for gpu instance by packer
 
 ## \[4.1.5\]
 

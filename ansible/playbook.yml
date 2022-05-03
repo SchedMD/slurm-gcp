@@ -57,9 +57,11 @@
   - role: cuda
     vars:
       gpu: true
-      cuda_use_runfile: true
       cuda_bash_profile: true
       cuda_restart_node_on_install: false
+      cuda_init_restart_service: false
+      cuda_use_runfile: true
+      cuda_runfile_disable_nvidia_drm: true
       cuda_runfile_url: https://developer.download.nvidia.com/compute/cuda/11.2.2/local_installers/cuda_11.2.2_460.32.03_linux.run
   - nfs
   - cgroups
