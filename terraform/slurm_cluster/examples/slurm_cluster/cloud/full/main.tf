@@ -256,14 +256,14 @@ module "slurm_cluster" {
   enable_cleanup_compute     = var.enable_cleanup_compute
   enable_bigquery_load       = var.enable_bigquery_load
   enable_reconfigure         = var.enable_reconfigure
-  epilog_d                   = var.epilog_d
+  epilog_scripts             = var.epilog_scripts
   login_startup_scripts      = var.login_startup_scripts
   login_network_storage      = var.login_network_storage
   login_nodes                = local.login_nodes
   network_storage            = var.network_storage
   partitions                 = local.partitions
   project_id                 = var.project_id
-  prolog_d                   = var.prolog_d
+  prolog_scripts             = var.prolog_scripts
   slurmdbd_conf_tpl          = var.slurmdbd_conf_tpl
   slurm_conf_tpl             = var.slurm_conf_tpl
 

@@ -182,8 +182,8 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
         epilog_path = Path(dirs.custom_scripts / "epilog.d")
         conf_options = {
             **(comma_params if not no_comma_params else {}),
-            "Prolog": f"{prolog_path}/*" if lkp.cfg.prolog_d else None,
-            "Epilog": f"{epilog_path}/*" if lkp.cfg.epilog_d else None,
+            "Prolog": f"{prolog_path}/*" if lkp.cfg.prolog_scripts else None,
+            "Epilog": f"{epilog_path}/*" if lkp.cfg.epilog_scripts else None,
             "PrologSlurmctld": f"{scripts_dir}/resume.py",
             "EpilogSlurmctld": f"{scripts_dir}/suspend.py",
             "SuspendProgram": f"{scripts_dir}/suspend.py",

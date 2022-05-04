@@ -124,11 +124,11 @@ module "slurm_controller_instance" {
   enable_cleanup_compute       = var.enable_cleanup_compute
   enable_cleanup_subscriptions = var.enable_cleanup_subscriptions
   enable_reconfigure           = var.enable_reconfigure
-  epilog_d                     = var.epilog_d
+  epilog_scripts               = var.epilog_scripts
   login_network_storage        = var.login_network_storage
   network_storage              = var.network_storage
   partitions                   = values(module.slurm_partition)[*]
-  prolog_d                     = var.prolog_d
+  prolog_scripts               = var.prolog_scripts
   slurmdbd_conf_tpl            = var.slurmdbd_conf_tpl
   slurm_conf_tpl               = var.slurm_conf_tpl
 }
@@ -156,9 +156,9 @@ module "slurm_controller_hybrid" {
   enable_cleanup_compute       = var.enable_cleanup_compute
   enable_cleanup_subscriptions = var.enable_cleanup_subscriptions
   enable_reconfigure           = var.enable_reconfigure
-  epilog_d                     = var.epilog_d
+  epilog_scripts               = var.epilog_scripts
   partitions                   = values(module.slurm_partition)[*]
-  prolog_d                     = var.prolog_d
+  prolog_scripts               = var.prolog_scripts
 }
 
 ###################

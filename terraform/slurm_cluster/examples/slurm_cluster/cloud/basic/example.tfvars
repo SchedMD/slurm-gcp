@@ -74,7 +74,7 @@ cloud_parameters = {
   suspend_timeout = 300
 }
 
-# scripts.d
+# scripts
 controller_startup_scripts = [
   #   {
   #     filename = "hello_controller.sh"
@@ -105,7 +105,7 @@ compute_startup_scripts = [
   #       EOF
   #   },
 ]
-prolog_d = [
+prolog_scripts = [
   #   {
   #     filename = "hello_prolog.sh"
   #     content  = <<EOF
@@ -115,7 +115,7 @@ prolog_d = [
   #     EOF
   #   },
 ]
-epilog_d = [
+epilog_scripts = [
   #   {
   #     filename = "hello_epilog.sh"
   #     content  = <<EOF

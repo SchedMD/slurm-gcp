@@ -61,8 +61,8 @@ locals {
     login_network_storage = var.login_network_storage
 
     # slurm conf
-    prolog_d         = [for x in google_compute_project_metadata_item.prolog_d : x.key]
-    epilog_d         = [for x in google_compute_project_metadata_item.epilog_d : x.key]
+    prolog_scripts   = [for x in google_compute_project_metadata_item.prolog_scripts : x.key]
+    epilog_scripts   = [for x in google_compute_project_metadata_item.epilog_scripts : x.key]
     cloud_parameters = var.cloud_parameters
     partitions       = local.partitions
   }
@@ -241,11 +241,11 @@ resource "google_compute_project_metadata_item" "compute_startup_scripts" {
   value = each.value.content
 }
 
-resource "google_compute_project_metadata_item" "prolog_d" {
+resource "google_compute_project_metadata_item" "prolog_scripts" {
   project = var.project_id
 
   for_each = {
-    for x in var.prolog_d
+    for x in var.prolog_scripts
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
@@ -253,11 +253,11 @@ resource "google_compute_project_metadata_item" "prolog_d" {
   value = each.value.content
 }
 
-resource "google_compute_project_metadata_item" "epilog_d" {
+resource "google_compute_project_metadata_item" "epilog_scripts" {
   project = var.project_id
 
   for_each = {
-    for x in var.epilog_d
+    for x in var.epilog_scripts
     : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
   }
 
@@ -486,12 +486,12 @@ module "reconfigure_critical" {
       => sha256(x.content)
     },
     {
-      for x in var.prolog_d
+      for x in var.prolog_scripts
       : "prolog_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
       => sha256(x.content)
     },
     {
-      for x in var.epilog_d
+      for x in var.epilog_scripts
       : "epilog_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
       => sha256(x.content)
     },

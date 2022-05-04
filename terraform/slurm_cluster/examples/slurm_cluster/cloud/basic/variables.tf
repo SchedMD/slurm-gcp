@@ -217,7 +217,7 @@ variable "compute_startup_scripts" {
   default = []
 }
 
-variable "prolog_d" {
+variable "prolog_scripts" {
   description = <<EOD
 List of scripts to be used for Prolog. Programs for the slurmd to execute
 whenever it is asked to run a job step from a new job allocation.
@@ -230,7 +230,7 @@ EOD
   default = []
 }
 
-variable "epilog_d" {
+variable "epilog_scripts" {
   description = <<EOD
 List of scripts to be used for Epilog. Programs for the slurmd to execute
 on every node when a user's job completes.

@@ -175,11 +175,11 @@ module "slurm_cluster" {
   enable_cleanup_compute   = var.enable_cleanup_compute
   enable_bigquery_load     = var.enable_bigquery_load
   enable_reconfigure       = var.enable_reconfigure
-  epilog_d                 = var.epilog_d
+  epilog_scripts           = var.epilog_scripts
   enable_hybrid            = true
   partitions               = local.partitions
   project_id               = var.project_id
-  prolog_d                 = var.prolog_d
+  prolog_scripts           = var.prolog_scripts
 
   depends_on = [
     # Ensure services are enabled
