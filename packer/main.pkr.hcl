@@ -109,6 +109,7 @@ build {
       "--extra-vars",
       "slurm_version=${var.slurm_version}",
     ]
+    use_proxy = false
   }
 
   dynamic "provisioner" {
