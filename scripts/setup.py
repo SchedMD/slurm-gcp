@@ -555,7 +555,7 @@ def run_custom_scripts():
     try:
         for script in custom_scripts:
             log.info(f"running script {script.name}")
-            result = run(str(script), timeout=300, check=False)
+            result = run(str(script), timeout=300, check=False, shell=True)
             runlog = (
                 f"{script.name} returncode={result.returncode}\n"
                 f"stdout={result.stdout}stderr={result.stderr}"
