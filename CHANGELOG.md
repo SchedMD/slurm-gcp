@@ -42,7 +42,6 @@ All notable changes to this project will be documented in this file.
 - Add terraform examples to fully manage cluster deployment.
 - Add terraform example for custom authentication using winbind.
 - Change image naming template to prevent name collision with v4.
-- Default module image updated to `schedmd-v5-slurm-21-08-6-hpc-centos-7`.
 - Add job workflow helper script to submit and migrate job data.
 - Harden secrets management (e.g. cloudsql, munge, jwt).
 - Add module option for job level prolog and epilog user scripts.
@@ -76,6 +75,7 @@ All notable changes to this project will be documented in this file.
 - Remove need for gpu instance by packer
 - Disable LDAP ansible role for Debian family
 - Rename node count fields.
+- Upgrade Slurm to version 21.08.8
 
 ## \[4.1.5\]
 

@@ -95,9 +95,9 @@ variable "tags" {
 #############
 
 variable "slurm_version" {
-  description = "Slurm version (e.g. 21.08.4, 21.08-latest) or branch (e.g. b:slurm-21-08-4-1)."
+  description = "Slurm version (e.g. 21.08.8, 21.08-latest) or branch (e.g. b:slurm-21-08-8-1)."
   type        = string
-  default     = "21.08.4"
+  default     = "21.08.8"
 
   validation {
     condition     = can(regex("^\\d{2}\\.\\d{2}(\\.\\d+|-latest)$|^b:.+$", var.slurm_version))
