@@ -144,7 +144,7 @@ def load_slurm_jobs(start, end):
     fields = ",".join(schema_fields.keys())
     cmd = f"{SACCT} --start {start_iso} --end {end_iso} -X -D --format={fields} --parsable2 --noheader"
     text = run(cmd).stdout.splitlines()
-    jobs = [Job(*line.split("|")) for line in text[1:]]
+    jobs = [Job(*line.split("|")) for line in text]
 
     job_rows = [
         make_job_row(job) for job in jobs if job.state not in ("PENDING", "RUNNING")
