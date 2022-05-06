@@ -24,6 +24,7 @@
     - [What operating systems can I use `slurm-gcp` with?](#what-operating-systems-can-i-use-slurm-gcp-with)
     - [Should I disable Simultaneous Multithreading (SMT)?](#should-i-disable-simultaneous-multithreading-smt)
     - [How do I automate custom cluster configurations?](#how-do-i-automate-custom-cluster-configurations)
+    - [How do I replace the controller?](#how-do-i-replace-the-controller)
 
 <!-- mdformat-toc end -->
 
@@ -283,3 +284,19 @@ details.
 If you want to install software, it is recommended to bake it into the image.
 Doing so will speed up the deployment of bursted compute nodes. See
 [customize image](./images.md#customize) for more information.
+
+### How do I replace the controller?
+
+Replacing the controller instance is a hazardous action.
+
+It is reccommeded to:
+
+1. Drain the cluster of all jobs.
+   - Optionally, `state=power_down` all nodes.
+1. Save and export all local data off the controller.
+   - By default, the database (mariadb) and `/home` (NFS mounted) are local.
+1. Replace the controller instance by either:
+   - Update `tfvars` configuration then `terraform apply`.
+   - Or, manually terminate the controller instance then `terraform apply`.
+1. Reboot all instances with NFS mounts to the controller.
+   - By default, this includes all login and compute nodes.
