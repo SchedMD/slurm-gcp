@@ -56,7 +56,7 @@ locals {
   source_image_project = (
     var.source_image_project != "" && var.source_image_project != null
     ? var.source_image_project
-    : "schedmd-slurm-public"
+    : "projects/schedmd-slurm-public/global/images/family"
   )
 
   source_image = (
