@@ -71,9 +71,9 @@ from the [TerraformUser](./glossary.md#terraformuser). You can configure certain
 elements of the example cluster, which is useful for testing.
 
 > **NOTE:** It is recommended to use the
-> [slurm_cluster module](../terraform/modules/slurm_cluster/README.md) in your
-> own [terraform project](./glossary.md#terraform-project). It may be useful to
-> copy and modify one of the provided examples.
+> [slurm_cluster module](../terraform/slurm_cluster/README.md) in your own
+> [terraform project](./glossary.md#terraform-project). It may be useful to copy
+> and modify one of the provided examples.
 
 ## On-Premises
 

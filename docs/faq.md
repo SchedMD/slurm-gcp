@@ -107,16 +107,16 @@ Enhancement requests can be submitted to
 Please see
 [Terraform documentation](https://learn.hashicorp.com/collections/terraform/gcp-get-started).
 
-For the [Slurm terraform modules](../terraform/modules/), please refer to their
-module API as documented in their README's. Additionally, please see the
-[Slurm terraform examples](../terraform/examples/) for sample usage.
+For the [Slurm terraform modules](../terraform/slurm_cluster/), please refer to
+their module API as documented in their README's. Additionally, please see the
+[Slurm terraform examples](../terraform/slurm_cluster/examples/) for sample
+usage.
 
 ### How do I modify Slurm config files?
 
-Presuming
-[slurm_cluster terraform module](../terraform/modules/slurm_cluster/README.md)
+Presuming [slurm_cluster terraform module](../terraform/slurm_cluster/README.md)
 was used to deploy the cluster, see
-[input parameters](../terraform/modules/slurm_cluster/README_TF.md#inputs):
+[input parameters](../terraform/slurm_cluster/README_TF.md#inputs):
 
 - slurm_conf_tpl
 - cgroup_conf_tpl
@@ -139,7 +139,7 @@ it may be allocated jobs again.
 ### How do I reduce compute costs?
 
 - In `partition_conf`, set a lower `SuspendTime` for a given
-  [slurm_partition](../terraform/modules/slurm_partition/README.md).
+  [slurm_partition](../terraform/slurm_cluster/modules/slurm_partition/README.md).
 
   For example:
 
@@ -150,8 +150,8 @@ it may be allocated jobs again.
   ```
 
 - For compute nodes within a given
-  [slurm_partition](../terraform/modules/slurm_partition/README.md), use
-  [preemptible VM](./glossary.md#preemptible-vm) instances.
+  [slurm_partition](../terraform/slurm_cluster/modules/slurm_partition/README.md),
+  use [preemptible VM](./glossary.md#preemptible-vm) instances.
 
   For example:
 
@@ -166,8 +166,8 @@ it may be allocated jobs again.
   ```
 
 - For compute nodes within a given
-  [slurm_partition](../terraform/modules/slurm_partition/README.md), use
-  [SPOT VM](./glossary.md#spot-vm) instances.
+  [slurm_partition](../terraform/slurm_cluster/modules/slurm_partition/README.md),
+  use [SPOT VM](./glossary.md#spot-vm) instances.
 
   For example:
 
@@ -212,8 +212,8 @@ accross all instances and allows easy user control with
 
 ### What Slurm image do I use for production?
 
-By default, the [slurm_cluster](../terraform/modules/slurm_cluster/README.md)
-terraform module uses the latest Slurm image family (e.g.
+By default, the [slurm_cluster](../terraform/slurm_cluster/README.md) terraform
+module uses the latest Slurm image family (e.g.
 `schedmd-v5-slurm-21-08-6-hpc-centos-7`). As new Slurm image families are
 released, coenciding with periodic Slurm releases, the terraform module will be
 updated to track the newest image family by setting it as the new default. This
@@ -269,15 +269,15 @@ Simultaneous Multithreading (SMT) on/off.
 
 ### How do I automate custom cluster configurations?
 
-The [Slurm cluster module](../terraform/modules/slurm_cluster/README.md) provide
+The [Slurm cluster module](../terraform/slurm_cluster/README.md) provide
 multiple variables (`controller_d`, `compute_d`, `partition_d`) which allow you
 input a list of scripts which will be run on different sets of hosts at set-up
 time. The scripts are run synchronousely and a non-zero exit will fail the setup
 step of the instance. Generally, `controller_d` will run only on the controller
 node; `compute_d` will run on the log and all compute nodes, and `partition_d`
 will on all compute nodes within that partition. See
-[Slurm cluster module variables](../terraform/modules/slurm_cluster/variables.tf)
-for details.
+[Slurm cluster module variables](../terraform/slurm_cluster/variables.tf) for
+details.
 
 If you want to install software, it is recommended to bake it into the image.
 Doing so will speed up the deployment of bursted compute nodes. See
