@@ -270,12 +270,13 @@ Simultaneous Multithreading (SMT) on/off.
 ### How do I automate custom cluster configurations?
 
 The [Slurm cluster module](../terraform/slurm_cluster/README.md) provide
-multiple variables (`controller_d`, `compute_d`, `partition_d`) which allow you
-input a list of scripts which will be run on different sets of hosts at set-up
-time. The scripts are run synchronousely and a non-zero exit will fail the setup
-step of the instance. Generally, `controller_d` will run only on the controller
-node; `compute_d` will run on the log and all compute nodes, and `partition_d`
-will on all compute nodes within that partition. See
+multiple variables (`controller_startup_scripts`, `compute_startup_scripts`,
+`partition_startup_scripts`) which allow you input a list of scripts which will
+be run on different sets of hosts at set-up time. The scripts are run
+synchronousely and a non-zero exit will fail the setup step of the instance.
+Generally, `controller_startup_scripts` will run only on the controller node;
+`compute_startup_scripts` will run on the log and all compute nodes, and
+`partition_startup_scripts` will on all compute nodes within that partition. See
 [Slurm cluster module variables](../terraform/slurm_cluster/variables.tf) for
 details.
 
