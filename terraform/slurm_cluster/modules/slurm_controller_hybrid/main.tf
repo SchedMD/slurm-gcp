@@ -103,6 +103,10 @@ data "local_file" "slurmsync_py" {
   filename = abspath("${local.scripts_dir}/slurmsync.py")
 }
 
+data "local_file" "startup_sh" {
+  filename = abspath("${local.scripts_dir}/startup.sh")
+}
+
 ##########
 # RANDOM #
 ##########
@@ -134,6 +138,11 @@ resource "local_file" "util_py" {
 resource "local_file" "slurmsync_py" {
   content  = data.local_file.slurmsync_py.content
   filename = abspath("${var.output_dir}/slurmsync.py")
+}
+
+resource "local_file" "startup_sh" {
+  content  = data.local_file.startup_sh.content
+  filename = abspath("${var.output_dir}/startup.sh")
 }
 
 ##########
