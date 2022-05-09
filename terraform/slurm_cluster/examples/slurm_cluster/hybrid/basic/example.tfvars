@@ -84,8 +84,8 @@ epilog_scripts = [
 controller_hybrid_config = {
   google_app_cred_path = null
   slurm_bin_dir        = "/usr/local/bin"
-  slurm_log_dir        = "/var/log/slurm"
-  output_dir           = "/etc/slurm"
+  slurm_log_dir        = "./log"
+  output_dir           = "./etc"
 }
 
 ##############

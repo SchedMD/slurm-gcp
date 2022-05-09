@@ -158,7 +158,7 @@ EOD
     google_app_cred_path = null
     slurm_bin_dir        = "/usr/local/bin"
     slurm_log_dir        = "/var/log/slurm"
-    output_dir           = "."
+    output_dir           = "/etc/slurm"
   }
 }
 
