@@ -21,12 +21,10 @@
 locals {
   partitions = [
     {
-      enable_job_exclusive    = false
-      enable_placement_groups = false
-      network_storage         = []
-      partition_conf = {
-        Default = "YES"
-      }
+      enable_job_exclusive      = false
+      enable_placement_groups   = false
+      network_storage           = []
+      partition_conf            = {}
       partition_startup_scripts = []
       partition_name            = "debug"
       partition_nodes = [

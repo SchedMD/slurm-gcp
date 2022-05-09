@@ -98,7 +98,6 @@ partitions = [
     enable_placement_groups = false
     network_storage         = []
     partition_conf = {
-      Default     = "YES"
       SuspendTime = 300
     }
     partition_startup_scripts = [
