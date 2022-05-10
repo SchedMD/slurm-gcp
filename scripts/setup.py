@@ -24,11 +24,10 @@ import sys
 import stat
 import time
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
 from functools import partialmethod, lru_cache
 from itertools import chain
 from pathlib import Path
-from subprocess import DEVNULL
 
 from addict import Dict as NSDict
 

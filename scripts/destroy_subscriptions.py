@@ -16,7 +16,6 @@
 import argparse
 import logging
 from pathlib import Path
-from xml.etree.ElementInclude import include
 from util import (
     config_root_logger,
     execute_with_futures,

@@ -16,7 +16,6 @@
 import argparse
 import logging
 from pathlib import Path
-from time import sleep
 from suspend import batch_execute, truncate_iter, wait_for_operations
 from util import compute, config_root_logger, project, parse_self_link
 

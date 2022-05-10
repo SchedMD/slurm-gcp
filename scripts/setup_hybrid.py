@@ -19,12 +19,9 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime
-import json
 import setup
 import util
-from util import project, lkp, config_root_logger, handle_exception
-from slurmeventd import publish_message
+from util import lkp, config_root_logger, handle_exception
 
 
 filename = Path(__file__).name

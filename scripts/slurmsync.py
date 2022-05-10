@@ -17,9 +17,7 @@
 import argparse
 import fcntl
 import logging
-import os
 import sys
-from collections import namedtuple
 from enum import Enum
 from itertools import chain
 from pathlib import Path
@@ -27,16 +25,14 @@ from pathlib import Path
 import util
 from util import (
     execute_with_futures,
-    parse_self_link,
     run,
     separate,
     batch_execute,
     subscription_create,
     subscription_delete,
-    subscription_list,
     with_static,
 )
-from util import lkp, cfg, compute, dirs
+from util import lkp, cfg, compute
 from suspend import delete_instances
 
 

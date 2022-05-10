@@ -32,7 +32,7 @@ from util import (
     separate,
     is_exclusive_node,
 )
-from util import lkp, cfg, compute, NSDict
+from util import lkp, cfg, compute
 
 
 filename = Path(__file__).name

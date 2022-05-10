@@ -2,20 +2,16 @@
 
 import argparse
 import os
-import sys
-import json
 from collections import namedtuple
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
-from addict import Dict as NSDict
 from google.cloud.bigquery import SchemaField
 from google.cloud import bigquery as bq
 from google.api_core import retry, exceptions
 
-import util
 from util import run
-from util import cfg, lkp, compute
+from util import cfg
 from util import def_creds
 
 
