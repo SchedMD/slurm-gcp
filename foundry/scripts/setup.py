@@ -243,10 +243,10 @@ def end_motd(broadcast=True):
 def install_slurmlog_conf():
     """ Install fluentd config for slurm logs """
 
-    slurmlog_config = util.get_metadata('attributes/fluentd-conf')
+    slurmlog_config = util.get_metadata('attributes/ops-agents-yaml')
     if slurmlog_config:
-        conf_file = Path('/etc/google-fluentd/config.d')
-        (conf_file/'slurmlogs.conf').write_text(slurmlog_config)
+        conf_file = Path('/etc/google-cloud-ops-agent/config.yaml')
+        conf_file.write_text(slurmlog_config)
 
 
 def install_lustre():
@@ -405,15 +405,10 @@ def install_apps():
     install_gcsfuse()
     install_cuda()
 
-    def install_agent(script):
-        url = f'https://dl.google.com/cloudagents/{script.name}'
-        urllib.request.urlretrieve(url, script)
-        util.run(f"bash {script} --also-install")
-
-    scripts = SCRIPTSDIR
-    for agent in ('add-monitoring-agent-repo.sh',
-                  'add-logging-agent-repo.sh',):
-        install_agent(scripts/agent)
+    script = SCRIPTSDIR/'add-google-cloud-ops-agent-repo.sh'
+    url = f'https://dl.google.com/cloudagents/{script.name}'
+    urllib.request.urlretrieve(url, script)
+    util.run(f"bash {script} --also-install")
     install_slurmlog_conf()
 
 

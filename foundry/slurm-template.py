@@ -62,7 +62,7 @@ meta_imports = {
     'startup-script': 'scripts/startup.sh',
     'util-script': 'scripts/util.py',
     'setup-script': 'scripts/setup.py',
-    'fluentd-conf': 'etc/fluentd.conf',
+    'ops-agent-yaml': 'etc/ops_agent.yaml',
 }
 
 

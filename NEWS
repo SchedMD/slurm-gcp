@@ -1,5 +1,6 @@
 Changes in Slurm-GCP 4.1.7
 ==========================
+ -- Switch legacy fluentd monitoring to google-cloud-ops-agent
 
 Changes in Slurm-GCP 4.1.6
 ==========================

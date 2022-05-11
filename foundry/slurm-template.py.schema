@@ -22,7 +22,7 @@ imports:
 - path: scripts/startup.sh
 - path: scripts/setup.py
 - path: scripts/util.py
-- path: etc/fluentd.conf
+- path: etc/ops_agent.yaml
 
 required:
 - zone
