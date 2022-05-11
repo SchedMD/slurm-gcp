@@ -118,9 +118,9 @@ access the mount.
 ### Public Slurm images
 There are currently 3 public image families available for use with Slurm-GCP:  
 `projects/schedmd-slurm-public/global/images/family/`  
-* `schedmd-slurm-21-08-6-hpc-centos-7`  
-* `schedmd-slurm-21-08-6-centos-7`  
-* `schedmd-slurm-21-08-6-debian-10`  
+* `schedmd-slurm-21-08-8-hpc-centos-7`  
+* `schedmd-slurm-21-08-8-centos-7`  
+* `schedmd-slurm-21-08-8-debian-10`  
 
 #### Hyperthreads
 The `hpc-centos-7` image has hyperthreads enabled by default, but can have the
