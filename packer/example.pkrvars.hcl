@@ -52,7 +52,7 @@ tags = [
 # PROVISION #
 #############
 
-slurm_version = "21.08.8"
+slurm_version = "21.08.8-2"
 
 prefix = "schedmd"
 
