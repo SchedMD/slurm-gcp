@@ -92,7 +92,7 @@ builds = [
     enable_integrity_monitoring = null
 
     ### storage ###
-    disk_size = null
+    disk_size = 32
     disk_type = null
   },
   {
@@ -116,7 +116,7 @@ builds = [
     enable_integrity_monitoring = null
 
     ### storage ###
-    disk_size = null
+    disk_size = 32
     disk_type = null
   },
   {
@@ -140,7 +140,7 @@ builds = [
     enable_integrity_monitoring = null
 
     ### storage ###
-    disk_size = null
+    disk_size = 32
     disk_type = null
   },
   {
@@ -164,7 +164,7 @@ builds = [
     enable_integrity_monitoring = null
 
     ### storage ###
-    disk_size = null
+    disk_size = 32
     disk_type = null
   },
 ]
