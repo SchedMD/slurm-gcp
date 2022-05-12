@@ -17,8 +17,9 @@
 ##########
 
 locals {
-  slurm_branch = trimprefix(trimprefix(var.slurm_version, "b:"), "slurm-")
-  slurm_semver = split(".", join(".", split("-", local.slurm_branch)))
+  slurm_version = regex("^(?P<major>\\d{2})\\.(?P<minor>\\d{2})(?P<end>\\.(?P<patch>\\d+)(?P<sub>-(?P<rev>\\d+\\w*))?|\\-(?P<meta>latest))$|^b:(?P<branch>.+)$", var.slurm_version)
+  slurm_branch  = local.slurm_version["branch"] != null ? replace(local.slurm_version["branch"], ".", "-") : null
+  slurm_semver  = join("-", compact([local.slurm_version["major"], local.slurm_version["minor"], local.slurm_version["patch"], local.slurm_branch]))
 
   ansible_dir = "../ansible"
   scripts_dir = "../scripts"
@@ -76,8 +77,8 @@ build {
       source_image        = source.value.source_image
       source_image_family = source.value.source_image_family
 
-      image_name        = "${var.prefix}-v5-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}-{{timestamp}}"
-      image_family      = "${var.prefix}-v5-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}"
+      image_name        = "${var.prefix}-v5-slurm-${local.slurm_semver}-${source.value.source_image_family}-{{timestamp}}"
+      image_family      = "${var.prefix}-v5-slurm-${local.slurm_semver}-${source.value.source_image_family}"
       image_description = "slurm-gcp-v5"
       image_licenses    = source.value.image_licenses
       image_labels      = source.value.labels
@@ -87,7 +88,7 @@ build {
       ssh_password = source.value.ssh_password
 
       ### instance ###
-      instance_name = "${var.prefix}-v5-slurm-${join("-", local.slurm_semver)}-${source.value.source_image_family}-{{timestamp}}"
+      instance_name = "${var.prefix}-v5-slurm-${local.slurm_semver}-${source.value.source_image_family}-{{timestamp}}"
       machine_type  = source.value.machine_type
       preemptible   = source.value.preemptible
       labels        = source.value.labels

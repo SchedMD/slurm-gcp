@@ -100,8 +100,8 @@ variable "slurm_version" {
   default     = "21.08.8"
 
   validation {
-    condition     = can(regex("^\\d{2}\\.\\d{2}(\\.\\d+|-latest)$|^b:.+$", var.slurm_version))
-    error_message = "Slurm version must pass '^\\d{2}\\.\\d{2}(\\.\\d+|-latest)$|^b:.+$'."
+    condition     = can(regex("^(?P<major>\\d{2})\\.(?P<minor>\\d{2})(?P<end>\\.(?P<patch>\\d+)(?P<sub>-(?P<rev>\\d+\\w*))?|\\-(?P<meta>latest))$|^b:(?P<branch>.+)$", var.slurm_version))
+    error_message = "Slurm version must pass '^(?P<major>\\d{2})\\.(?P<minor>\\d{2})(?P<end>\\.(?P<patch>\\d+)(?P<sub>-(?P<rev>\\d+\\w*))?|\\-(?P<meta>latest))$|^b:(?P<branch>.+)$'."
   }
 }
 
