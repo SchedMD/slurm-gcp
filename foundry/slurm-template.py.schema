@@ -60,6 +60,7 @@ properties:
   slurm_version:
     type: string
     description: Slurm version or public branch to install
+    pattern: '^(b\:(?P<branch>[\w\-\.]+))|((?P<major>\d{2}\.\d{2})[\.\-](?P<minor>(?<=\.)\d+|(?<=\-)latest(?=$))(-(?P<micro>\d+))?)$'
 
   libjwt_version:
     type: string

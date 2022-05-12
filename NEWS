@@ -2,6 +2,8 @@ Changes in Slurm-GCP 4.1.7
 ==========================
  -- Switch legacy fluentd monitoring to google-cloud-ops-agent
  -- Updated Slurm version to 21.08.8
+ -- Updated Slurm version to 21.08.8-2 and added micro version support
+    to foundry.
 
 Changes in Slurm-GCP 4.1.6
 ==========================
