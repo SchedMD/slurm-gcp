@@ -122,30 +122,6 @@ builds = [
   {
     ### image ###
     source_image        = null
-    source_image_family = "centos-8"
-    image_licenses      = null
-    labels              = null
-
-    ### ssh ###
-    ssh_username = "packer"
-    ssh_password = null
-
-    ### instance ###
-    machine_type = "n1-standard-4"
-    preemptible  = false
-
-    ### root of trust ###
-    enable_secure_boot          = null
-    enable_vtpm                 = null
-    enable_integrity_monitoring = null
-
-    ### storage ###
-    disk_size = null
-    disk_type = null
-  },
-  {
-    ### image ###
-    source_image        = null
     source_image_family = "debian-10"
     image_licenses      = null
     labels              = null
