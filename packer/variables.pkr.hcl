@@ -95,7 +95,20 @@ variable "tags" {
 #############
 
 variable "slurm_version" {
-  description = "Slurm version (e.g. 21.08.8, 21.08-latest) or branch (e.g. b:slurm-21-08-8-1)."
+  description = <<EOD
+The Slurm version to be installed via archive or 'git checkout'.
+
+This value can be:
+- archive stub (e.g. 21.08.8, 21.08.8-2, 21.08-latest)
+  - See https://download.schedmd.com/slurm/
+- git checkout [branch|tag|commit] (e.g. b:slurm-21.08, b:slurm-21-08-8-2)
+  - branch
+    - See https://github.com/SchedMD/slurm/branches
+  - tag
+    - See https://github.com/SchedMD/slurm/tags
+
+> NOTE: Use prefix 'b:' to install via 'git checkout' instead of archive.
+EOD
   type        = string
   default     = "21.08.8-2"
 
