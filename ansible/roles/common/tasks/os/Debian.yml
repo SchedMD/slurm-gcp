@@ -21,6 +21,3 @@
     name: '*'
     state: latest
     update_cache: yes
-
-- name: Reboot in case of kernel update
-  reboot:

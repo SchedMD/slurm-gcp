@@ -18,16 +18,6 @@
     name: '*'
     state: latest
     update_cache: yes
-  register: yum_updates
-
-- name: upgrade output
-  debug:
-    var: yum_updates.changes.updated
-
-- name: Reboot on kernel upgrade
-  reboot:
-  when: dict((yum_updates.changes|default(dict())).updated|default([])).kernel is
-    defined
 
 - name: Enable CentOS 8 PowerTools Repository
   shell: dnf config-manager --set-enabled powertools
