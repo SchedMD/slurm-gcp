@@ -13,9 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Disable SELinux
-  selinux:
-    configfile: '{{selinux_conf}}'
-    state: disabled
-    policy: targeted
+- block:
+  - name: Disable SELinux
+    selinux:
+      configfile: '{{selinux_conf}}'
+      state: disabled
+      policy: targeted
+    register: status
+
+  - name: Reboot
+    reboot:
+    when: status.reboot_required
   when: ansible_os_family == "RedHat"
