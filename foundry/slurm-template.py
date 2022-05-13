@@ -17,6 +17,7 @@ import yaml
 import io
 import zipfile as zf
 import base64
+import re
 
 
 def compress(name, text):
@@ -62,7 +63,7 @@ meta_imports = {
     'startup-script': 'scripts/startup.sh',
     'util-script': 'scripts/util.py',
     'setup-script': 'scripts/setup.py',
-    'fluentd-conf': 'etc/fluentd.conf',
+    'ops-agent-yaml': 'etc/ops_agent.yaml',
 }
 
 
@@ -80,7 +81,15 @@ def generate_config(context):
     meta['enable-oslogin'] = 'TRUE'
     meta['libjwt_version'] = props['libjwt_version']
     meta['ompi_version'] = props['ompi_version']
-    meta['slurm_version'] = slurm_version = props['slurm_version']
+
+    meta['slurm_version'] = slurm_version = str(props['slurm_version'])
+    version_patt = re.compile(
+        r"^(b\:(?P<branch>[\w\-\.]+))|((?P<major>\d{2}\.\d{2})[\.\-](?P<minor>(?<=\.)\d+|(?<=\-)latest(?=$))(-(?P<micro>\d+))?)$")
+    # the micro-version (micro) is not included in the image or family name
+    m = version_patt.match(slurm_version)
+    if m is None:
+        raise Exception("Invalid slurm_version")
+    slurm_version = m.groupdict()
 
     for path in filter(lambda x: x.startswith('custom.d/'),
                        context.imports.keys()):
@@ -97,12 +106,22 @@ def generate_config(context):
         machine_type = props['machine_type']
 
         # Use provided name formats to determine image name and family
-        keywords = {
-            'base': base,
-            'major': '-'.join(slurm_version.split('.')[:2]),
-            'minor': slurm_version.split('.')[-1],
-            'tag': '{tag}',
-        }
+        if 'major' in slurm_version:
+            keywords = {
+                'base': base,
+                'major': '-'.join(slurm_version['major'].split('.')),
+                'minor': slurm_version['minor'],
+                'micro': slurm_version['micro'] if 'micro' in slurm_version else "",
+                'tag': '{tag}',
+            }
+        else:
+            keywords = {
+                'base': base,
+                'major': 'b',
+                'minor': '-'.join(slurm_version['branch'].split('.')),
+                'micro': "",
+                'tag': '{tag}',
+            }
         family_format = spec['family'] or props['image_family']
         name_format = spec['name'] or props['image_name']
 
