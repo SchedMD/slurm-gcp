@@ -31,7 +31,6 @@
     dest: '{{lmod_paths.src}}'
     version: '{{lmod_version}}'
     clone: yes
-    # single_branch: yes # ansible 2.11
     depth: '1'
 
 - name: Create Modulespath

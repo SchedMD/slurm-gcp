@@ -30,7 +30,6 @@
     dest: '{{libjwt_paths.src}}'
     version: '{{libjwt_version}}'
     clone: yes
-    # single_branch: yes # ansible 2.11
     depth: '1'
 
 - name: Autoreconf

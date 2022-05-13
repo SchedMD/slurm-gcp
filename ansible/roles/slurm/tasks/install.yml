@@ -41,7 +41,6 @@
     dest: '{{slurm_paths.src}}'
     version: "{{slurm_version|regex_replace('^b:', '')}}"
     clone: yes
-    # single_branch: yes # ansible 2.11
     depth: '1'
   when: slurm_version.startswith("b:")
 

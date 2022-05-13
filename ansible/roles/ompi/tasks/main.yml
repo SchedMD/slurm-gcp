@@ -31,7 +31,6 @@
     dest: '{{ompi_paths.src}}'
     version: '{{ompi_version}}'
     clone: yes
-    # single_branch: yes # ansible 2.11
     depth: '1'
 
 - name: Autogen
