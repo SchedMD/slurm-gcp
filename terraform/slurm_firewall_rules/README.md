@@ -7,7 +7,6 @@
 
 - [Module: Slurm Firewall Rules](#module-slurm-firewall-rules)
   - [Overview](#overview)
-    - [Firewall Rules](#firewall-rules)
   - [Usage](#usage)
   - [Module API](#module-api)
 
@@ -17,15 +16,6 @@
 
 This module creates [firewall rules](../../docs/glossary.md#firewall-rules) to
 support [Slurm](../../docs/glossary.md#slurm) cluster communication.
-
-### Firewall Rules
-
-These are the [Firewall Rules](../../docs/glossary.md#firewall-rules) produced
-by this module.
-
-| Rule | Allow | Deny | |:---:|:---:|:---:| | allow-ssh-ingress | tcp:22 | |
-allow-iap-ingress | tcp:22,8642,6842 | | allow-internal-ingress | icmp,
-tcp:0-65535, udp:0-65535 |
 
 ## Usage
 
