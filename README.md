@@ -24,8 +24,8 @@
 create and manage [Slurm](./docs/glossary.md#slurm) cluster infrastructure in
 [GCP](./docs/glossary.md#gcp), deployed in different configurations.
 
-A more detailed guide is found in the
-[Slurm on Google Cloud User Guide](https://goo.gle/slurm-gcp-user-guide).
+A quickstart guide is found in the
+[GCP-Slurm v5 Quickstart Guide](https://bit.ly/slurm-gcp-v5guide).
 
 ### SchedMD
 
