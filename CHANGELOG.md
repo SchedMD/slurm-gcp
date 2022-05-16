@@ -77,6 +77,8 @@ All notable changes to this project will be documented in this file.
 - Rename node count fields.
 - Upgrade Slurm to version 21.08.8
 - Add proper retry on mount attempts
+- Add cluster_id and job_db_uuid fields to BQ table schema.
+- Fix potential race condition in loading BQ job data.
 
 ## \[4.1.5\]
 

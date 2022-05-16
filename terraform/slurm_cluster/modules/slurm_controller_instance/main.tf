@@ -52,6 +52,7 @@ locals {
     enable_bigquery_load = var.enable_bigquery_load
     enable_reconfigure   = var.enable_reconfigure
     cloudsql             = var.cloudsql != null ? true : false
+    cluster_id           = random_uuid.cluster_id.result
     project              = var.project_id
     pubsub_topic_id      = var.enable_reconfigure ? google_pubsub_topic.this[0].name : null
     slurm_cluster_name   = var.slurm_cluster_name
@@ -125,6 +126,10 @@ data "google_compute_instance_template" "controller_template" {
 resource "random_string" "topic_suffix" {
   length  = 8
   special = false
+}
+
+resource "random_uuid" "cluster_id" {
+
 }
 
 ############
