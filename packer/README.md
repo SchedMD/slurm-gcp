@@ -20,15 +20,16 @@ cluster images with ease.
 
 ## Usage
 
-Modify [example.pkvars.hcl](./example.pkrvars.hcl) with required and desired
+Modify [example.pkrvars.hcl](./example.pkrvars.hcl) with required and desired
 values.
 
 Then perform the following commands on the
 [packer project](../docs/glossary.md#packer-project) root directory:
 
 - `packer init .` to get the plugins
-- `packer validate -var-file=example.pkr.hcl .` to validate the configuration
-- `packer build -var-file=example.pkr.hcl .` to run the image build process
+- `packer validate -var-file=example.pkrvars.hcl .` to validate the
+  configuration
+- `packer build -var-file=example.pkrvars.hcl .` to run the image build process
 
 ## Dependencies
 
