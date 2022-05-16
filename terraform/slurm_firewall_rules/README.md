@@ -8,6 +8,9 @@
 - [Module: Slurm Firewall Rules](#module-slurm-firewall-rules)
   - [Overview](#overview)
   - [Usage](#usage)
+  - [Dependencies](#dependencies)
+    - [TerraformUser](#terraformuser)
+      - [Required](#required)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -38,6 +41,18 @@ module "slurm_firewall_rules" {
 > must be strictly controlled via
 > [revision](https://www.terraform.io/language/modules/sources#selecting-a-revision)
 > syntax on the source line.
+
+## Dependencies
+
+- [Terraform](https://www.terraform.io/downloads.html) is installed.
+- [Compute Engine API](../../docs/glossary.md#compute-engine) is enabled.
+
+### TerraformUser
+
+#### Required
+
+- Compute Security Admin (`roles/compute.securityAdmin`)
+- Service Account Admin (`roles/iam.serviceAccountAdmin`)
 
 ## Module API
 

@@ -37,8 +37,7 @@ directory:
 
 ## Dependencies
 
-See
-[slurm_cluster dependencies](../../../../../slurm_cluster/README.md#dependencies).
+- [slurm_cluster module](../../../../README.md#dependencies)
 
 ## Module API
 

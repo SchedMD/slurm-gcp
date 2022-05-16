@@ -9,6 +9,8 @@
   - [Overview](#overview)
   - [Usage](#usage)
   - [Dependencies](#dependencies)
+    - [TerraformUser](#terraformuser)
+      - [Required](#required)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -50,7 +52,13 @@ module "slurm_sa_iam" {
 ## Dependencies
 
 - [Terraform](https://www.terraform.io/downloads.html) is installed.
-- [Compute Engine API](../../docs/glossary.md#compute-engine) is enabled.
+- [IAM API](../../docs/glossary.md#iam) is enabled.
+
+### TerraformUser
+
+#### Required
+
+- Project IAM Admin (`roles/resourcemanager.projectIamAdmin`)
 
 ## Module API
 

@@ -4,6 +4,9 @@
 
 - [Module: Network](#module-network)
   - [Overview](#overview)
+  - [Dependencies](#dependencies)
+    - [TerraformUser](#terraformuser)
+      - [Required](#required)
   - [Module API](#module-api)
 
 <!-- mdformat-toc end -->
@@ -19,6 +22,17 @@ subnetwork.
 > - [terraform-google-modules/network/google](https://registry.terraform.io/modules/terraform-google-modules/network/google/latest)
 > - [terraform-google-modules/cloud-router/google](https://registry.terraform.io/modules/terraform-google-modules/cloud-router/google/latest)
 > - [terraform-google-modules/cloud-nat/google](https://registry.terraform.io/modules/terraform-google-modules/cloud-nat/google/latest)
+
+## Dependencies
+
+- [Terraform](https://www.terraform.io/downloads.html) is installed.
+- [Compute Engine API](../../docs/glossary.md#compute-engine) is enabled.
+
+### TerraformUser
+
+#### Required
+
+- Compute Network Admin (`roles/compute.networkAdmin`)
 
 ## Module API
 

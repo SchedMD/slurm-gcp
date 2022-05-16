@@ -9,9 +9,6 @@
   - [Overview](#overview)
   - [Usage](#usage)
   - [Dependencies](#dependencies)
-    - [TerraformUser](#terraformuser)
-      - [Required](#required)
-      - [Optional](#optional)
   - [Example API](#example-api)
 
 <!-- mdformat-toc end -->
@@ -41,24 +38,10 @@ directory:
 
 ## Dependencies
 
-See
-[slurm_cluster dependencies](../../../../../slurm_cluster/README.md#dependencies)
-for core dependencies.
-
-This
-[example terraform project](../../../../../../docs/glossary.md#terraform-project)
-has additional dependencies to satisfy.
-
-### TerraformUser
-
-#### Required
-
-- Compute Admin (`roles/compute.admin`)
-- Service Account Admin (`roles/iam.serviceAccountAdmin`)
-
-#### Optional
-
-- Service Usage Admin (`roles/serviceusage.serviceUsageAdmin`)
+- [slurm_cluster module](../../../../README.md#dependencies)
+- [slurm_firewall_rules module](../../../../../slurm_firewall_rules/README.md#dependencies)
+- [slurm_sa_iam module](../../../../../slurm_sa_iam/README.md#dependencies)
+- [\_network module](../../../../../_network/README.md#dependencies)
 
 ## Example API
 
