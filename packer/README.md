@@ -20,7 +20,7 @@ cluster images with ease.
 
 ## Usage
 
-Modify [example.pkr.hcl](./example.pkrvars.hcl) with required and desired
+Modify [example.pkvars.hcl](./example.pkrvars.hcl) with required and desired
 values.
 
 Then perform the following commands on the
