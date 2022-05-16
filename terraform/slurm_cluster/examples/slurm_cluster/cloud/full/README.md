@@ -15,8 +15,8 @@
 
 ## Overview
 
-This example creates a \[slurm_cluster../../../../../slurm_cluster/README.md) in
-cloud mode. It is highly configurable through tfvars.
+This example creates a [slurm_cluster](../../../../../slurm_cluster/README.md)
+in cloud mode. It is highly configurable through tfvars.
 
 All other components required to support the Slurm cluster are minimally created
 as well: VPC; subnetwork; firewall rules; service accounts.
