@@ -79,6 +79,7 @@ All notable changes to this project will be documented in this file.
 - Add proper retry on mount attempts
 - Add cluster_id and job_db_uuid fields to BQ table schema.
 - Fix potential race condition in loading BQ job data.
+- Remove deployment manager support.
 
 ## \[4.1.5\]
 
