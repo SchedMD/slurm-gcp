@@ -1,0 +1,5 @@
+---
+# vars file for ansible-role-cuda
+cuda_packaging_key_id: 7FA2AF80
+
+# vim:ft=ansible:

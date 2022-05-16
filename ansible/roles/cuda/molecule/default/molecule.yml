@@ -1,0 +1,49 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+- name: centos7_cuda_repo
+  image: docker.io/pycontribs/centos:7
+  pre_build_image: true
+  tmpfs:
+  - /run
+  volumes:
+  - /tmp/centos7_cuda_repo:/tmp:rw
+- name: centos7_cuda_run
+  image: docker.io/pycontribs/centos:7
+  pre_build_image: true
+  tmpfs:
+  - /run
+  volumes:
+  - /tmp/centos7_cuda_run:/tmp:rw
+provisioner:
+  name: ansible
+  inventory:
+    group_vars:
+      all:
+        gpu: true
+        cuda_driver_kernel_version: 3.10.0-1160.21.1.el7.x86_64 # The kernel to check kernel modules against
+    host_vars:
+      centos7_cuda_repo:
+        cuda_packages:
+        - cuda-libraries-11-2
+        cuda_restart_node_on_install: false
+        cuda_init: false
+        cuda_init_restart_service: false
+      centos7_cuda_run:
+        cuda_use_runfile: true
+        cuda_runfile_driver: true # Docker has different kernel than images kernel-headers
+        cuda_runfile_remove: false # Keep the installer in /tmp/centos7_cuda_run for multiple runs
+        cuda_restart_node_on_install: false
+        cuda_init: false
+        cuda_init_restart_service: false
+
+verifier:
+  name: ansible
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
+  flake8

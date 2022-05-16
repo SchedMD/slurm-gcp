@@ -1,6 +1,5 @@
-# Copyright 2017 SchedMD LLC.
-# Modified for use with the Slurm Resource Manager.
-#
+---
+# Copyright (C) SchedMD LLC.
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +22,9 @@ resources:
 - name: slurm-cluster
   type: schedmd-slurm-gcp.jinja
   properties:
-    cluster_name            : g1
+    cluster_name: g1
 
-    zone                    : us-central1-b
+    zone: us-central1-b
 
   # Optional network configuration fields
   # READ slurm.jinja.schema for prerequisites
@@ -34,7 +33,7 @@ resources:
     # shared_vpc_host_project   : < my-shared-vpc-project-name >
 
     controller_image: projects/slurm-184304/global/images/family/schedmd-slurm-21-08-8-centos-7
-    controller_machine_type : n1-standard-2
+    controller_machine_type: n1-standard-2
     # controller_disk_type      : pd-standard
     # controller_disk_size_gb   : 50
     # external_controller_ip    : False
@@ -51,8 +50,8 @@ resources:
     #   # Optional
     #   db_name: slurm_accounting
 
-    login_image         : projects/slurm-184304/global/images/family/schedmd-slurm-21-08-8-centos-7
-    login_machine_type        : n1-standard-2
+    login_image: projects/slurm-184304/global/images/family/schedmd-slurm-21-08-8-centos-7
+    login_machine_type: n1-standard-2
     # login_disk_type           : pd-standard
     # login_disk_size_gb        : 20
     # external_login_ips        : False
@@ -79,7 +78,7 @@ resources:
     #     local_mount: /shared
     #     fs_type: nfs
 
-    compute_image_machine_type  : n1-standard-2
+    compute_image_machine_type: n1-standard-2
     # compute_image_disk_type   : pd-standard
     # compute_image_disk_size_gb: 20
     # compute_image_labels      :
@@ -105,12 +104,12 @@ resources:
     # slurm_version             : 19.05-latest
     # ompi_version              : v3.1.x
 
-    partitions :
-    - name              : debug
-      image             : projects/slurm-184304/global/images/family/schedmd-slurm-21-08-8-centos-7
-      machine_type      : n1-standard-2
-      max_node_count    : 10
-      zone              : us-central1-a
+    partitions:
+    - name: debug
+      image: projects/slurm-184304/global/images/family/schedmd-slurm-21-08-8-centos-7
+      machine_type: n1-standard-2
+      max_node_count: 10
+      zone: us-central1-a
 
     # Optional compute configuration fields
 

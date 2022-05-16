@@ -1,0 +1,47 @@
+---
+# handlers file for ansible-role-cuda
+- name: reload systemd unit files
+  command: systemctl daemon-reload
+  when: ansible_connection != 'chroot'
+
+- name: Initialize the GPUs
+  command: /bin/bash /usr/local/bin/cuda_init.sh
+  when:
+  - cuda_init|bool
+  - cuda_init_restart_service|bool
+  - ansible_connection != 'chroot'
+
+- name: Restart cuda_init service
+  service:
+    name: cuda_init
+    state: restarted
+  when:
+  - cuda_init|bool
+  - cuda_init_restart_service|bool
+  - ansible_service_mgr == "systemd"
+
+- name: ZZ CUDA Restart server
+  command: sleep 2 && /sbin/shutdown -r now "Node software upgrade reboot"
+  async: 1
+  poll: 0
+  ignore_errors: true
+  when:
+  - cuda_packages_installation.changed
+  - cuda_restart_node_on_install|bool
+  - ansible_connection != 'chroot'
+
+# define the variable running_as_ansible_pull in the ansible-pull playbook, like local.yml
+- name: ZZ CUDA Wait for server to restart
+  wait_for:
+    host: '{{ ansible_ssh_host | default(inventory_hostname) }}'
+    state: started
+    delay: 30
+    timeout: 300
+  connection: local
+  become: false
+  when:
+  - cuda_restart_node_on_install|bool
+  - (running_as_ansible_pull is not defined or not running_as_ansible_pull)
+  - ansible_connection != 'chroot'
+
+# vim:ft=ansible:

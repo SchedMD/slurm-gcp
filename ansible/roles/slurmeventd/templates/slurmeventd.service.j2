@@ -1,0 +1,14 @@
+[Unit]
+Description=Slurm Cluster Event Daemon
+After=syslog.target
+After=network.target
+
+[Service]
+Type=simple
+ExecStart={{slurm_paths.scripts}}/slurmeventd.py
+KillSignal=SIGINT
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

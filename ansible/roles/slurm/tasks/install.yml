@@ -1,0 +1,86 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Slurm From Tarball
+  block:
+  - name: Download Tarball
+    get_url:
+      url: '{{slurm_tar_baseurl}}/slurm-{{slurm_version}}.tar.bz2'
+      dest: '{{paths.src}}'
+    register: slurm_archive
+
+  - name: Inflate Tarball
+    unarchive:
+      src: '{{slurm_archive.dest}}'
+      dest: '{{paths.src}}'
+      creates: '{{slurm_paths.src}}'
+      remote_src: yes
+
+  - name: Symbolic Link Directory
+    file:
+      src: '{{slurm_paths.src}}-{{slurm_version}}'
+      dest: '{{slurm_paths.src}}'
+      state: link
+  when: not slurm_version.startswith("b:")
+
+- name: Slurm From Git Branch
+  git:
+    repo: '{{slurm_git_url}}'
+    dest: '{{slurm_paths.src}}'
+    version: "{{slurm_version|regex_replace('^b:', '')}}"
+    clone: yes
+    depth: '1'
+  when: slurm_version.startswith("b:")
+
+- name: Configure
+  shell:
+    cmd: >
+      {{slurm_paths.src}}/configure
+      --prefix={{slurm_paths.install}}
+      --sysconfdir={{slurm_paths.etc}}
+      --with-jwt={{slurm_paths.install}}
+      > /dev/null
+    chdir: '{{slurm_paths.build}}'
+
+- name: Make Install Slurm
+  shell:
+    cmd: make --jobs install > /dev/null
+    chdir: '{{slurm_paths.build}}'
+
+- name: Make Install Slurm Contribs
+  shell:
+    cmd: make --jobs install > /dev/null
+    chdir: '{{slurm_paths.build}}/contribs'
+
+- name: Add Conf to 'ld.so.conf.d/'
+  template:
+    src: ld.so.conf.d/slurm.conf.j2
+    dest: /etc/ld.so.conf.d/slurm.conf
+
+- name: Ldconfig
+  command:
+    cmd: ldconfig
+    chdir: '{{slurm_paths.src}}'
+
+- name: Add Slurm to 'profile.d/'
+  template:
+    src: profile.d/slurm.sh.j2
+    dest: /etc/profile.d/slurm.sh
+
+- name: Symbolic Link Directory
+  file:
+    src: '{{slurm_paths.etc}}'
+    dest: /etc/slurm
+    state: link

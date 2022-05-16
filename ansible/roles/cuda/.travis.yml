@@ -1,0 +1,50 @@
+---
+language: python
+sudo: required
+dist: bionic
+
+matrix:
+  fast_finish: true
+
+cache:
+  directories: [$HOME/lxc/]
+  pip: true
+
+before_cache:
+- sudo mkdir $HOME/lxc && sudo tar cf $HOME/lxc/cache.tar /var/cache/lxc/ && sudo
+  chown $USER. $HOME/lxc/cache.tar
+
+install:
+- sudo tar xf $HOME/lxc/cache.tar -C / || true
+- sudo apt-get install -y expect-dev
+- python -m pip install --upgrade pip
+- pip --version
+- pip install ansible
+- ansible --version
+- printf '[defaults]\nroles_path=../\ncallback_whitelist=profile_tasks' >ansible.cfg
+- ansible-galaxy install lae.travis-lxc
+- ansible-playbook -vvv tests/install.yml -i tests/inventory
+
+script:
+  # Validates your deployment playbook's syntax, which should contain your role
+- ansible-playbook -i tests/inventory tests/deploy.yml --syntax-check
+
+  # Runs the deployment playbook
+- ansible-playbook -i tests/inventory -v tests/deploy.yml
+
+  # Basic role syntax check
+- ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+
+  # Perform a test run with the playbook
+- travis_wait ansible-playbook tests/test.yml -i tests/inventory
+
+  # Perform a another test run with the playbook to check for idempotency
+- unbuffer ansible-playbook tests/test.yml -i tests/inventory >/tmp/idempotency.log
+  2>&1
+- 'grep -A1 "PLAY RECAP" /tmp/idempotency.log | grep -qP "changed=0.*failed=0" &&
+  (echo "Idempotence: PASS"; exit 0) || (echo "Idempotence: FAIL"; cat /tmp/idempotency.log;
+  exit 1)'
+
+notifications:
+  email: false
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/

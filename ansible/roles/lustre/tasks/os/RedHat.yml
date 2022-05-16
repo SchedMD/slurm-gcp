@@ -1,0 +1,86 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Get RPMs
+  shell: >
+    wget
+    --recursive
+    --level=1
+    --no-parent
+    --no-directories
+    --accept={{lustre_rpm_files|join(',')}}
+    --directory-prefix={{lustre_artifacts_dir}}
+    {{lustre_rpm_url}}
+
+- name: Get SRPMs
+  shell: >
+    wget
+    --recursive
+    --level=1
+    --no-parent
+    --no-directories
+    --accept={{lustre_srpm_files|join(',')}}
+    --directory-prefix={{lustre_artifacts_dir}}
+    {{lustre_srpm_url}}
+
+- name: Gather RPMs
+  find:
+    path: '{{lustre_artifacts_dir}}'
+    patterns: '*.rpm'
+    excludes: '*.src.rpm'
+    use_regex: no
+    recurse: no
+  register: lustre_rpms
+
+- name: Install RPMs
+  yum:
+    name: '{{item.path}}'
+    state: present
+    disable_gpg_check: yes
+  with_items: '{{lustre_rpms.files}}'
+
+- name: Gather SRPMs
+  find:
+    path: '{{lustre_artifacts_dir}}'
+    patterns: '*.src.rpm'
+    use_regex: no
+    recurse: no
+  register: lustre_srpms
+
+- name: Convert SRPM to Archive
+  shell:
+    cmd: rpm2cpio {{item.path}}|cpio -idmv
+    chdir: '{{lustre_artifacts_dir}}'
+  with_items: '{{lustre_srpms.files}}'
+
+- name: Gather SRPM Archives
+  find:
+    path: '{{lustre_artifacts_dir}}'
+    patterns: lustre*.tar.gz
+    use_regex: no
+    recurse: no
+  register: lustre_srpms_archive
+
+- name: Install SRPM Archives
+  unarchive:
+    src: '{{item.path}}'
+    dest: /usr/src
+    remote_src: yes
+  with_items: '{{lustre_srpms_archive.files}}'
+
+- name: Modprobe
+  modprobe:
+    name: lustre
+    state: present

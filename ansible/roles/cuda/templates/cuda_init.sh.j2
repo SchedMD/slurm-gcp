@@ -1,0 +1,8 @@
+#!/bin/bash
+# During boot we initialize the GPUs (creates /dev/nvidia*)
+
+if [ ! -f "/usr/bin/nvidia-smi" ]; then
+        logger -s -t nvidia-smi "Script $0 could not find /usr/bin/nvidia-smi"
+else
+        /usr/bin/nvidia-smi --compute-mode={{ cuda_init_compute_mode }}
+fi

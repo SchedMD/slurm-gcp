@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  connection: local
+  roles:
+  - {name: lae.travis-lxc}
+  vars:
+    test_profiles:
+    - profile: ubuntu-xenial
+    - profile: centos-7
+    - profile: ubuntu-bionic
+
+
+# Run the following within the containers in the inventory
+- hosts: all
+  tasks:
+    # Solution for avahi-daemon issue from https://github.com/lxc/lxc/issues/25
+  - block:
+    - name: Install avahi-daemon early on Ubuntu 16 containers
+      package:
+        name: avahi-daemon
+      ignore_errors: true
+    - name: Remove nproc from avahi-daemon.conf
+      lineinfile:
+        dest: /etc/avahi/avahi-daemon.conf
+        regexp: ^rlimit-nproc=
+        state: absent
+    when: ansible_distribution_release == 'xenial'

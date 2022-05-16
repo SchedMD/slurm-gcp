@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019 SchedMD LLC.
+# Copyright (C) SchedMD LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,256 +15,325 @@
 # limitations under the License.
 
 import argparse
-import collections
 import fcntl
 import logging
-import os
 import sys
-import tempfile
-import time
+from enum import Enum
+from itertools import chain
 from pathlib import Path
 
-import googleapiclient.discovery
-
 import util
+from util import (
+    execute_with_futures,
+    run,
+    separate,
+    batch_execute,
+    subscription_create,
+    subscription_delete,
+    with_static,
+)
+from util import lkp, cfg, compute
+from suspend import delete_instances
 
 
-cfg = util.Config.load_config(Path(__file__).with_name('config.yaml'))
+filename = Path(__file__).name
+LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 
-SCONTROL = Path(cfg.slurm_cmd_path or '')/'scontrol'
-LOGFILE = (Path(cfg.log_dir or '')/Path(__file__).name).with_suffix('.log')
-SCRIPTS_DIR = Path(__file__).parent.resolve()
+log = logging.getLogger(filename)
 
 TOT_REQ_CNT = 1000
 
-retry_list = []
 
-if cfg.google_app_cred_path:
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = cfg.google_app_cred_path
-
-
-def to_hostlist(hostnames):
-    tmp_file = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-    tmp_file.writelines('\n'.join(hostnames))
-    tmp_file.close()
-    log.debug(f"tmp_file = {tmp_file.name}")
-
-    hostlist = util.run(
-        f"{SCONTROL} show hostlist {tmp_file.name}",
-        get_stdout=True).stdout.rstrip()
-    log.debug(f"hostlist = {hostlist}")
-    os.remove(tmp_file.name)
-    return hostlist
+NodeStatus = Enum(
+    "NodeAction",
+    (
+        "terminated",
+        "preempted",
+        "unbacked",
+        "restore",
+        "resume",
+        "orphan",
+        "unknown",
+        "unchanged",
+    ),
+)
 
 
-def start_instances_cb(request_id, response, exception):
-    if exception is not None:
-        log.error("start exception: " + str(exception))
-        if "Rate Limit Exceeded" in str(exception):
-            retry_list.append(request_id)
-        elif "was not found" in str(exception):
-            util.spawn(f"{SCRIPTS_DIR}/resume.py {request_id}")
-# [END start_instances_cb]
+SubscriptionStatus = Enum(
+    "SubscriptionAction",
+    (
+        "deleted",
+        "missing",
+        "orphaned",
+        "unbacked",
+        "unchanged",
+    ),
+)
 
 
-def start_instances(compute, node_list, gcp_nodes):
+def start_instance_op(inst, project=None):
+    project = project or lkp.project
+    return compute.instances().start(
+        project=project,
+        zone=lkp.instance(inst).zone,
+        instance=inst,
+    )
 
-    req_cnt = 0
-    curr_batch = 0
-    batch_list = []
-    batch_list.insert(
-        curr_batch,
-        compute.new_batch_http_request(callback=start_instances_cb))
 
-    for node in node_list:
+def start_instances(node_list):
+    log.info("{} instances to start ({})".format(len(node_list), ",".join(node_list)))
 
-        pid = util.get_pid(node)
-        zone = cfg.instance_defs[pid].zone
+    invalid, valid = separate(lambda inst: bool(lkp.instance), node_list)
+    ops = {inst: start_instance_op(inst) for inst in valid}
 
-        if cfg.instance_defs[pid].regional_capacity:
-            g_node = gcp_nodes.get(node, None)
-            if not g_node:
-                log.error(f"Didn't find regional GCP record for '{node}'")
-                continue
-            zone = g_node['zone'].split('/')[-1]
+    done, failed = batch_execute(ops)
 
-        if req_cnt >= TOT_REQ_CNT:
-            req_cnt = 0
-            curr_batch += 1
-            batch_list.insert(
-                curr_batch,
-                compute.new_batch_http_request(callback=start_instances_cb))
 
-        batch_list[curr_batch].add(
-            compute.instances().start(project=cfg.project, zone=zone,
-                                      instance=node),
-            request_id=node)
-        req_cnt += 1
-    try:
-        for i, batch in enumerate(batch_list):
-            util.ensure_execute(batch)
-            if i < (len(batch_list) - 1):
-                time.sleep(30)
-    except Exception:
-        log.exception("error in start batch: ")
+@with_static(static_nodeset=None)
+def find_node_status(nodename):
+    """Determine node/instance status that requires action"""
+    if find_node_status.static_nodeset is None:
+        find_node_status.static_nodeset = set(util.to_hostnames(lkp.static_nodelist()))
+    state = lkp.slurm_node(nodename)
+    inst = lkp.instance(nodename)
+    info = lkp.node_template_info(nodename)
+    if inst is None:
+        if state.base == "DOWN" and "POWERED_DOWN" in state.flags:
+            return NodeStatus.restore
+        if "POWERING_DOWN" in state.flags:
+            return NodeStatus.restore
+        if "COMPLETING" in state.flags:
+            return NodeStatus.unbacked
+        if state.base != "DOWN" and not (
+            set(("POWER_DOWN", "POWERING_UP", "POWERING_DOWN", "POWERED_DOWN"))
+            & state.flags
+        ):
+            return NodeStatus.unbacked
+        if nodename in find_node_status.static_nodeset:
+            return NodeStatus.resume
+    elif (
+        "POWERED_DOWN" not in state.flags
+        and "POWERING_DOWN" not in state.flags
+        and inst.status == "TERMINATED"
+    ):
+        if info.scheduling.preemptible:
+            return NodeStatus.preempted
+        if not state.base.startswith("DOWN"):
+            return NodeStatus.terminated
+    elif (state is None or "POWERED_DOWN" in state.flags) and inst.status == "RUNNING":
+        return NodeStatus.orphan
+    elif state is None:
+        # if state is None here, the instance exists but it's not in Slurm
+        return NodeStatus.unknown
 
-# [END start_instances]
+    return NodeStatus.unchanged
+
+
+def do_node_update(status, nodes):
+    """update node/instance based on node status"""
+    if status == NodeStatus.unchanged:
+        return
+    count = len(nodes)
+    hostlist = util.to_hostlist(nodes)
+
+    def nodes_down():
+        """down nodes"""
+        log.info(
+            f"{count} nodes set down due to node status '{status.name}' ({hostlist})"
+        )
+        run(
+            f"{lkp.scontrol} update nodename={hostlist} state=down reason='Instance stopped/deleted'"
+        )
+
+    def nodes_restart():
+        """start instances for nodes"""
+        log.info(f"{count} instances restarted ({hostlist})")
+        start_instances(nodes)
+
+    def nodes_idle():
+        """idle nodes"""
+        log.info(f"{count} nodes to idle ({hostlist})")
+        run(f"{lkp.scontrol} update nodename={hostlist} state=resume")
+
+    def nodes_resume():
+        """resume nodes via scontrol"""
+        log.info(f"{count} instances to resume ({hostlist})")
+        run(f"{lkp.scontrol} update nodename={hostlist} state=power_up")
+
+    def nodes_delete():
+        """delete instances for nodes"""
+        log.info(f"{count} instances to delete ({hostlist})")
+        delete_instances(nodes)
+
+    def nodes_unknown():
+        """Error status, nodes shouldn't get in this status"""
+        log.error(f"{count} nodes have unexpected status: ({hostlist})")
+        first = next(iter(nodes))
+        state = lkp.slurm_node(first)
+        state = "{}+{}".format(state.base, "+".join(state.flags))
+        inst = lkp.instance(first)
+        log.error(f"{first} state: {state}, instance status:{inst.status}")
+
+    update = dict.get(
+        {
+            NodeStatus.terminated: nodes_down,
+            NodeStatus.preempted: lambda: (nodes_down(), nodes_restart()),
+            NodeStatus.unbacked: nodes_down,
+            NodeStatus.resume: nodes_resume,
+            NodeStatus.restore: nodes_idle,
+            NodeStatus.orphan: nodes_delete,
+            NodeStatus.unknown: nodes_unknown,
+            NodeStatus.unchanged: lambda: None,
+        },
+        status,
+    )
+    update()
+
+
+def sync_slurm():
+    all_nodes = list(
+        set(
+            chain(
+                (
+                    name
+                    for name, inst in lkp.instances().items()
+                    if inst.role == "compute"
+                ),
+                (name for name in lkp.slurm_nodes().keys()),
+            )
+        )
+    )
+    node_statuses = {
+        k: list(v) for k, v in util.groupby_unsorted(all_nodes, find_node_status)
+    }
+
+    for status, nodes in node_statuses.items():
+        do_node_update(status, nodes)
+
+
+@with_static(static_nodeset=None)
+def find_subscription_status(nodename):
+    """Determine status of given subscription"""
+    if find_node_status.static_nodeset is None:
+        find_node_status.static_nodeset = set(util.to_hostnames(lkp.static_nodelist()))
+    state = lkp.slurm_node(nodename)
+    inst = lkp.instance(nodename)
+    subscription = lkp.subscription(nodename)
+    info = lkp.node_template_info(nodename)
+
+    if not info:
+        # NOTE: Node is not managed by slurm-gcp, ignore node
+        return SubscriptionStatus.unchanged
+    elif not subscription:
+        if nodename in find_node_status.static_nodeset:
+            return SubscriptionStatus.missing
+        elif (
+            inst
+            and state.base != "DOWN"
+            and not (
+                set(("POWER_DOWN", "POWERING_UP", "POWERING_DOWN", "POWERED_DOWN"))
+                & state.flags
+            )
+        ):
+            return SubscriptionStatus.deleted
+    else:
+        if state is None:
+            return SubscriptionStatus.orphaned
+        elif set(("POWERING_DOWN", "POWERED_DOWN")) & state.flags:
+            return SubscriptionStatus.unbacked
+
+    return SubscriptionStatus.unchanged
+
+
+def do_subscription_update(status, subscriptions):
+    """update node/instance based on node status"""
+    if status == SubscriptionStatus.unchanged:
+        return
+    count = len(subscriptions)
+    hostlist = util.to_hostlist(subscriptions)
+
+    def subscriptions_create():
+        """create subscriptions"""
+        log.info("Creating {} subcriptions ({})".format(count, hostlist))
+        execute_with_futures(subscription_create, subscriptions)
+
+    def subscriptions_delete():
+        """delete subscriptions"""
+        log.info("Deleting {} subcriptions ({})".format(count, hostlist))
+        execute_with_futures(subscription_delete, subscriptions)
+
+    update = dict.get(
+        {
+            SubscriptionStatus.deleted: subscriptions_create,
+            SubscriptionStatus.missing: subscriptions_create,
+            SubscriptionStatus.orphaned: subscriptions_delete,
+            SubscriptionStatus.unbacked: subscriptions_delete,
+            SubscriptionStatus.unchanged: lambda x: None,
+        },
+        status,
+    )
+    update()
+
+
+def sync_pubsub():
+    all_nodes = list(
+        set(
+            chain(
+                (
+                    name
+                    for name, inst in lkp.instances().items()
+                    if inst.role == "compute"
+                ),
+                (name for name in lkp.slurm_nodes().keys()),
+            )
+        )
+    )
+    subscriptions_statuses = {
+        k: list(v)
+        for k, v in util.groupby_unsorted(all_nodes, find_subscription_status)
+    }
+
+    for status, subscriptions in subscriptions_statuses.items():
+        do_subscription_update(status, subscriptions)
 
 
 def main():
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              cache_discovery=False)
-
     try:
-        s_nodes = dict()
-        cmd = (f"{SCONTROL} show nodes | "
-               r"grep -oP '^NodeName=\K(\S+)|State=\K(\S+)' | "
-               "paste -sd',\n'")
-        nodes = util.run(cmd, shell=True, check=True, get_stdout=True).stdout
-        if nodes:
-            # result is a list of tuples like:
-            # (nodename, (base='base_state', flags=<set of state flags>))
-            # from 'nodename,base_state+flag1+flag2'
-            # state flags include: CLOUD, COMPLETING, DRAIN, FAIL, POWERED_DOWN,
-            #   POWERING_DOWN
-            # Modifiers on base state still include: @ (reboot), $ (maint),
-            #   * (nonresponsive), # (powering up)
-            StateTuple = collections.namedtuple('StateTuple', 'base,flags')
-
-            def make_state_tuple(state):
-                return StateTuple(state[0], set(state[1:]))
-            s_nodes = {node: make_state_tuple(args.split('+'))
-                       for node, args in
-                       map(lambda x: x.split(','), nodes.rstrip().splitlines())
-                       if 'CLOUD' in args}
-
-        g_nodes = util.get_regional_instances(compute, cfg.project,
-                                              cfg.instance_defs)
-        for pid, part in cfg.instance_defs.items():
-            page_token = ""
-            while True:
-                if not part.regional_capacity:
-                    resp = util.ensure_execute(
-                        compute.instances().list(
-                            project=cfg.project, zone=part.zone,
-                            fields='items(name,zone,status),nextPageToken',
-                            pageToken=page_token, filter=f"name={pid}-*"))
-
-                    if "items" in resp:
-                        g_nodes.update({instance['name']: instance
-                                       for instance in resp['items']})
-                    if "nextPageToken" in resp:
-                        page_token = resp['nextPageToken']
-                        continue
-
-                break
-
-        to_down = []
-        to_idle = []
-        to_start = []
-        for s_node, s_state in s_nodes.items():
-            g_node = g_nodes.get(s_node, None)
-            pid = util.get_pid(s_node)
-
-            if (('POWERED_DOWN' not in s_state.flags) and
-                    ('POWERING_DOWN' not in s_state.flags)):
-                # slurm nodes that aren't powered down and are stopped in GCP:
-                #   mark down in slurm
-                #   start them in gcp
-                if g_node and (g_node['status'] == "TERMINATED"):
-                    if not s_state.base.startswith('DOWN'):
-                        to_down.append(s_node)
-                    if cfg.instance_defs[pid].preemptible_bursting != 'false':
-                        to_start.append(s_node)
-
-                # can't check if the node doesn't exist in GCP while the node
-                # is booting because it might not have been created yet by the
-                # resume script.
-                # This should catch the completing states as well.
-                if (g_node is None and "POWERING_UP" not in s_state.flags and
-                        not s_state.base.startswith('DOWN')):
-                    to_down.append(s_node)
-
-            elif g_node is None:
-                # find nodes that are down~ in slurm and don't exist in gcp:
-                #   mark idle~
-                if s_state.base.startswith('DOWN') and 'POWERED_DOWN' in s_state.flags:
-                    to_idle.append(s_node)
-                elif 'POWERING_DOWN' in s_state.flags:
-                    to_idle.append(s_node)
-                elif s_state.base.startswith('COMPLETING'):
-                    to_down.append(s_node)
-
-        if len(to_down):
-            log.info("{} stopped/deleted instances ({})".format(
-                len(to_down), ",".join(to_down)))
-            log.info("{} instances to start ({})".format(
-                len(to_start), ",".join(to_start)))
-            hostlist = to_hostlist(to_down)
-
-            util.run(f"{SCONTROL} update nodename={hostlist} state=down "
-                     "reason='Instance stopped/deleted'")
-
-            while True:
-                start_instances(compute, to_start, g_nodes)
-                if not len(retry_list):
-                    break
-
-                log.debug("got {} nodes to retry ({})"
-                          .format(len(retry_list), ','.join(retry_list)))
-                to_start = list(retry_list)
-                del retry_list[:]
-
-        if len(to_idle):
-            log.info("{} instances to resume ({})".format(
-                len(to_idle), ','.join(to_idle)))
-
-            hostlist = to_hostlist(to_idle)
-            util.run(f"{SCONTROL} update nodename={hostlist} state=resume")
-
-        orphans = [
-            inst for inst, info in g_nodes.items()
-            if info['status'] == 'RUNNING' and (
-                inst not in s_nodes or 'POWERED_DOWN' in s_nodes[inst].flags
-            )
-        ]
-        if orphans:
-            if args.debug:
-                for orphan in orphans:
-                    info = g_nodes.get(orphan)
-                    state = s_nodes.get(orphan, None)
-                    log.debug(f"orphan {orphan}: status={info['status']} state={state}")
-            hostlist = to_hostlist(orphans)
-            log.info(f"{len(orphans)} orphan instances found to terminate: {hostlist}")
-            util.run(f"{SCRIPTS_DIR}/suspend.py {hostlist}")
-
+        sync_slurm()
+        if lkp.cfg.enable_reconfigure:
+            sync_pubsub()
     except Exception:
         log.exception("failed to sync instances")
 
-# [END main]
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--debug', '-d', dest='debug', action='store_true',
-                        help='Enable debugging output')
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--debug",
+        "-d",
+        dest="debug",
+        action="store_true",
+        help="Enable debugging output",
+    )
 
     args = parser.parse_args()
+    util.chown_slurm(LOGFILE, mode=0o600)
     if args.debug:
-        util.config_root_logger(level='DEBUG', util_level='DEBUG',
-                                logfile=LOGFILE)
+        util.config_root_logger(
+            filename, level="DEBUG", util_level="DEBUG", logfile=LOGFILE
+        )
     else:
-        util.config_root_logger(level='INFO', util_level='ERROR',
-                                logfile=LOGFILE)
-    log = logging.getLogger(Path(__file__).name)
+        util.config_root_logger(
+            filename, level="INFO", util_level="ERROR", logfile=LOGFILE
+        )
     sys.excepthook = util.handle_exception
 
     # only run one instance at a time
-    pid_file = (Path('/tmp')/Path(__file__).name).with_suffix('.pid')
-    with pid_file.open('w') as fp:
+    pid_file = (Path("/tmp") / Path(__file__).name).with_suffix(".pid")
+    with pid_file.open("w") as fp:
         try:
             fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except IOError:

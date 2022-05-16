@@ -1,0 +1,74 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Include OS Vars
+  include_vars: '{{ansible_os_family|lower}}-{{ansible_distribution_major_version}}.yml'
+
+- name: Include User Tasks
+  include_tasks: user.yml
+
+- name: Install Packages
+  package:
+    name: '{{slurm_packages}}'
+    state: present
+
+- name: Mkdir
+  file:
+    path: '{{item}}'
+    state: directory
+    owner: '{{slurm_user.user}}'
+    group: '{{slurm_user.group}}'
+  loop:
+  - '{{slurm_paths.build}}'
+  - '{{slurm_paths.etc}}'
+  - '{{slurm_paths.scripts}}'
+  - '{{slurm_paths.log}}'
+  - '{{slurm_paths.state}}'
+  - '{{slurm_paths.run}}'
+
+- name: Include Install Tasks
+  include_tasks: install.yml
+
+- name: Include Service Tasks
+  include_tasks: service.yml
+
+- name: Create Tmpfile
+  template:
+    src: tmpfiles.d/slurm.conf.j2
+    dest: /etc/tmpfiles.d/slurm.conf
+
+- name: Copy Scripts
+  copy:
+    src: scripts/{{item}}
+    dest: '{{slurm_paths.scripts}}/{{item}}'
+    owner: '{{slurm_user.user}}'
+    group: '{{slurm_user.group}}'
+    mode: 0o755
+  with_items:
+  - resume.py
+  - setup.py
+  - startup.sh
+  - slurmsync.py
+  - suspend.py
+  - util.py
+  - load_bq.py
+
+- name: Copy Jobs
+  copy:
+    src: jobs/
+    dest: '{{slurm_paths.jobs}}'
+    owner: '{{slurm_user.user}}'
+    group: '{{slurm_user.group}}'
+    mode: 0o755

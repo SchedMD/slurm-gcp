@@ -1,0 +1,50 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Handle Slurmdbd Service
+  systemd:
+    name: slurmdbd
+    enabled: no
+    state: stopped
+
+- name: Handle Slurmctld Service
+  systemd:
+    name: slurmctld
+    enabled: no
+    state: stopped
+
+- name: Handle Slurmrestd Service
+  systemd:
+    name: slurmrestd
+    enabled: no
+    state: stopped
+
+- name: Handle Slurmd Service
+  systemd:
+    name: slurmd
+    enabled: no
+    state: stopped
+
+- name: Handle slurm_load_bigquery Service
+  systemd:
+    name: slurm_load_bq.service
+    enabled: no
+    state: stopped
+
+- name: Handle slurm_load_bigquery Timer
+  systemd:
+    name: slurm_load_bq.timer
+    enabled: no
+    state: stopped

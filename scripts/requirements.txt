@@ -1,0 +1,3 @@
+# requirements for terraform modules that run scripts
+addict~=2.0
+google-cloud-pubsub~=2.0

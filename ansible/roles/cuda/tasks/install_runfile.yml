@@ -1,0 +1,162 @@
+---
+
+- name: Determine running kernel
+  command: uname -r
+  register: cuda_driver_kernel_running
+
+- name: Determine kernel version
+  set_fact:
+    cuda_driver_kernel_version: '{{ cuda_driver_kernel_version | default(cuda_driver_kernel_running.stdout,
+      true) }}'
+
+- name: Ensure kernel headers are installed (yum)
+  yum:
+    name:
+    - kernel-headers-{{ cuda_driver_kernel_version }}*
+    - kernel-devel-{{ cuda_driver_kernel_version }}*
+    - '@Development tools'
+    - which
+    state: present
+    update_cache: true
+  when: ansible_pkg_mgr in ["yum", "dnf"]
+
+- name: Ensure kernel headers are installed (apt)
+  apt:
+    name:
+    - linux-headers-{{ ansible_kernel }}
+    - build-essential
+    state: present
+  when: ansible_pkg_mgr == "apt"
+
+- name: Disable nouveau
+  copy:
+    src: blacklist-nouveau.conf
+    dest: /etc/modprobe.d/blacklist-nouveau.conf
+
+- name: Register installer name
+  set_fact:
+    cuda_runfile_sh: '{{ cuda_runfile_url | basename }}'
+
+- name: Check NVIDIA kernel module
+  find:
+    path: /lib/modules/{{ cuda_driver_kernel_version }}
+    patterns: nvidia.ko.xz
+    recurse: true
+  register: cuda_driver_kernel_module_find
+
+- name: Check CUDA toolkit path
+  stat:
+    path: /usr/local/cuda
+  register: cuda_toolkit_path
+
+- name: Determine if driver and toolkit are installed
+  set_fact:
+    cuda_driver_installed: '{{ cuda_driver_kernel_module_find.matched > 0 }}'
+    cuda_toolkit_installed: '{{ cuda_toolkit_path.stat.exists }}'
+    cuda_runfile_checksum_url: "{{ cuda_runfile_checksum_url | default(cuda_runfile_url\
+      \ | regex_replace('local_installers/.*', 'docs/sidebar/md5sum.txt'), true) }}"
+
+- name: Print information about installed features
+  debug:
+    msg:
+    - 'Driver installed: {{ cuda_driver_installed }}'
+    - 'Toolkit installed: {{ cuda_toolkit_installed }}'
+    - 'Checksum url: {{ cuda_runfile_checksum_url }}'
+
+- name: Check whether runfile already exists
+  stat:
+    path: /tmp/cuda_runfile/{{ cuda_runfile_sh }}
+    checksum_algorithm: md5
+  register: cuda_runtime_file
+
+- name: Download checksum file
+  get_url:
+    url: '{{ cuda_runfile_checksum_url }}'
+    dest: /tmp/cuda_checksum.tsv
+  when: cuda_runfile_checksum
+
+- name: Get checksums from file
+  read_csv:
+    path: /tmp/cuda_checksum.tsv
+    delimiter: ' '
+    fieldnames: checksum,file
+    key: file
+  register: checksums
+  when: cuda_runfile_checksum
+
+- name: Get checksums from dict
+  set_fact:
+    cuda_runfile_valid_checksum: '{{checksums.dict[ cuda_runfile_sh ].checksum}} ==
+      cuda_runtime_file.stat.checksum'
+  when: cuda_runtime_file.stat.exists
+
+
+- name: Obtain runfile
+  block:
+
+  - name: Create temporary directory for runfile
+    file:
+      path: /tmp/cuda_runfile
+      state: directory
+
+  - name: Copy pre-downloaded runfile
+    copy:
+      src: '{{ cuda_runfile_sh }}'
+      dest: /tmp/cuda_runfile
+    when: not cuda_runfile_download
+
+  - name: Download runfile
+    get_url:
+      url: '{{ cuda_runfile_url }}'
+      dest: /tmp/cuda_runfile/{{ cuda_runfile_sh }}
+    when: cuda_runfile_download
+
+  when: not (cuda_runtime_file.stat.exists and cuda_runfile_valid_checksum) and ((cuda_runfile_toolkit
+    and not cuda_toolkit_installed) or (cuda_runfile_driver and not cuda_driver_installed))
+
+
+- name: Run installer for toolkit
+  command: bash /tmp/cuda_runfile/{{ cuda_runfile_sh }} --silent --toolkit
+  register: cuda_toolkit_install_out
+  when: cuda_runfile_toolkit and not cuda_toolkit_installed
+
+- name: Install driver
+  block:
+
+  - name: Extract installer for driver installation
+    command: bash /tmp/cuda_runfile/{{ cuda_runfile_sh }} --extract=/tmp/cuda_runfile
+
+  - name: Find NVIDIA runtime
+    find:
+      paths: /tmp/cuda_runfile
+      patterns: NVIDIA*.run
+    register: cuda_driver_runfile_find
+
+  - name: Set NVIDIA runfile path
+    set_fact:
+      cuda_driver_runfile: '{{ cuda_driver_runfile_find.files[0].path }}'
+
+  - name: Print information about driver
+    debug:
+      msg: Building driver {{ cuda_driver_runfile }} for kernel {{ cuda_driver_kernel_version
+        }}
+
+  - name: Install driver
+    command: >
+      bash {{ cuda_driver_runfile }} --silent
+      --kernel-name={{ cuda_driver_kernel_version }}
+      {{ "--no-drm" if cuda_runfile_disable_nvidia_drm else "" }}
+
+  - name: Install nvidia-persistenced systemd-file
+    copy:
+      src: files/nvidia-persistenced.service
+      dest: /etc/systemd/system/nvidia-persistenced.service
+    when: cuda_init_persistence_mode | bool
+
+  when: cuda_runfile_driver and not cuda_driver_installed
+
+- name: Remove installer
+  file:
+    path: /tmp/cuda_runfile
+    state: absent
+  when: cuda_runfile_remove

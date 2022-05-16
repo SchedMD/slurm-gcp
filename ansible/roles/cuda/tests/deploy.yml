@@ -1,0 +1,27 @@
+---
+- hosts: all
+  become: true
+  any_errors_fatal: true
+  tasks:
+  - name: Upload packaging key for EPEL 7
+    copy:
+      src: ../files/RPM-GPG-KEY-EPEL-7
+      dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+      mode: 0644
+    when: ansible_os_family == "RedHat"
+
+  - name: Import EPEL GPG key
+    rpm_key:
+      key: /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+      state: present
+    when: ansible_os_family == "RedHat"
+
+  - name: Add epel repository
+    yum_repository:
+      name: epel
+      description: EPEL YUM repo
+      baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
+      gpgkey: file://etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+      gpgcheck: yes
+      enabled: yes
+    when: ansible_os_family == "RedHat"

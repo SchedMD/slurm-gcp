@@ -1,0 +1,13 @@
+[Unit]
+Description=Initialize nvidia/cuda devices
+Before=slurm.service
+DefaultDependencies=no
+Conflicts=shutdown.target
+
+[Service]
+ExecStart=/usr/local/bin/cuda_init.sh
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

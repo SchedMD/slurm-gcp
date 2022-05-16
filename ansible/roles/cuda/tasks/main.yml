@@ -1,0 +1,58 @@
+---
+# tasks file for ansible-role-cuda
+- name: Gather OS specific variables
+  include_vars: '{{ item }}'
+  with_first_found:
+  - '{{ ansible_distribution|lower }}-{{ ansible_distribution_version }}.yml'
+  - '{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version }}.yml'
+  - '{{ ansible_distribution|lower }}.yml'
+  - '{{ ansible_os_family|lower }}.yml'
+
+- block:
+  - include_tasks: configure_yum.yml
+    when: ansible_pkg_mgr in ['yum', 'dnf'] and not cuda_use_runfile
+
+  - include_tasks: configure_apt.yml
+    when: ansible_pkg_mgr == 'apt' and not cuda_use_runfile
+
+  - include_tasks: install_runfile.yml
+    when: cuda_use_runfile
+
+  - name: Install CUDA packages (1.5-2GB download, also restarts if cuda_restart_node_on_install
+      is set to True)
+    package:
+      name: '{{ item }}'
+      state: present
+    with_items: '{{ cuda_packages }}'
+    register: cuda_packages_installation
+    when: not cuda_use_runfile
+    notify:
+    - ZZ CUDA Restart server
+    - ZZ CUDA Wait for server to restart
+
+  - name: Template CUDA paths to user environments
+    template:
+      src: cuda.sh.j2
+      dest: /etc/profile.d/cuda.sh
+      mode: 0755
+    when: cuda_bash_profile|bool
+
+  - include_tasks: cuda_init.yml
+    when: cuda_init
+
+  - name: Enable performance counters for all users via modprobe
+    template:
+      src: nvidia.conf.j2
+      dest: /etc/modprobe.d/nvidia.conf
+      mode: 0644
+    when: cuda_enable_perf_counters
+
+  # This is here because if we in the same playbook try to start slurmd without
+  # having run the cuda_init.sh script then slurmd doesn't start and the play fails.
+  # todo: reload nvidia modules/etc instead of restart
+  - name: flush the handlers - so that GPUs are initialized before we start slurm
+    meta: flush_handlers
+
+  when: gpu
+
+# vim:ft=ansible:

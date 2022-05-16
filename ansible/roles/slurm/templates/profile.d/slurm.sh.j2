@@ -1,0 +1,5 @@
+S_PATH={{slurm_paths.install}}
+bin=$S_PATH/bin
+sbin=$S_PATH/sbin
+[[ ":$PATH:" != *":$sbin:"* ]] && PATH="$sbin:${PATH}"
+[[ ":$PATH:" != *":$bin:"* ]] && PATH="$bin:${PATH}"

@@ -1,0 +1,34 @@
+---
+# defaults file for ansible-role-cuda
+# By default gpu is False, set it to True on the gpu nodes in the hosts file
+
+gpu: false
+cuda_repo_url: http://developer.download.nvidia.com/compute/cuda/repos/
+cuda_rpm_key_path: /etc/rpm/nvidia_packaging_key.asc
+cuda_packages:
+- cuda
+cuda_use_runfile: false
+cuda_runfile_url: https://developer.download.nvidia.com/compute/cuda/11.2.2/local_installers/cuda_11.2.2_460.32.03_linux.run
+cuda_runfile_checksum: true
+cuda_runfile_checksum_url: ''
+cuda_runfile_driver: true
+cuda_runfile_toolkit: true
+cuda_runfile_download: true
+cuda_runfile_remove: true
+cuda_runfile_disable_nvidia_drm: false
+cuda_restart_node_on_install: true
+cuda_init: true
+cuda_init_restart_service: true
+cuda_init_compute_mode: 0
+cuda_init_persistence_mode: 1
+cuda_gpu_name0: /dev/nvidia0
+cuda_bash_profile: true
+cuda_bash_path: /usr/local/cuda/bin
+cuda_bash_ld_lib_path: /usr/local/cuda/lib64
+cuda_bash_cuda_root: /usr/local/cuda
+cuda_bash_cuda_inc_dir: /usr/local/cuda/bin
+cuda_bash_cpath: /usr/local/cuda/include
+
+cuda_enable_perf_counters: false
+
+# vim:ft=ansible:

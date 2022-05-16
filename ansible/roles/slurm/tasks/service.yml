@@ -1,0 +1,56 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Install Slurmdbd Service
+  template:
+    src: systemd/slurmdbd.service.j2
+    dest: /usr/lib/systemd/system/slurmdbd.service
+    mode: 0o644
+  notify: Handle Slurmdbd Service
+
+- name: Install Slurmctld Service
+  template:
+    src: systemd/slurmctld.service.j2
+    dest: /usr/lib/systemd/system/slurmctld.service
+    mode: 0o644
+  notify: Handle Slurmctld Service
+
+- name: Install Slurmrestd Service
+  template:
+    src: systemd/slurmrestd.service.j2
+    dest: /usr/lib/systemd/system/slurmrestd.service
+    mode: 0o644
+  notify: Handle Slurmrestd Service
+
+- name: Install Slurmd Service
+  template:
+    src: systemd/slurmd.service.j2
+    dest: /usr/lib/systemd/system/slurmd.service
+    mode: 0o644
+  notify: Handle Slurmd Service
+
+- name: Install slurm_load_bigquery Service
+  template:
+    src: systemd/slurm_load_bq.service.j2
+    dest: /usr/lib/systemd/system/slurm_load_bq.service
+    mode: 0o644
+  notify: Handle slurm_load_bigquery Service
+
+- name: Install slurm_load_bigquery Timer
+  template:
+    src: systemd/slurm_load_bq.timer.j2
+    dest: /usr/lib/systemd/system/slurm_load_bq.timer
+    mode: 0o644
+  notify: Handle slurm_load_bigquery Timer

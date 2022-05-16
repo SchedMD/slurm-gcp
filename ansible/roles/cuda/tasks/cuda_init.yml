@@ -1,0 +1,86 @@
+---
+- name: template in cuda_init.sh used during boot
+  template:
+    src: cuda_init.sh.j2
+    dest: /usr/local/bin/cuda_init.sh
+    mode: 0755
+  notify:
+  - Initialize the GPUs
+
+- name: lineinfile/make sure cuda_init.sh script is absent from rc.local
+  lineinfile:
+    dest: /etc/rc.local
+    insertafter: ^touch /var/lock/subsys/local
+    regexp: ^/bin/bash /usr/local/bin/cuda_init.sh$
+    line: /bin/bash /usr/local/bin/cuda_init.sh
+    state: absent
+
+- name: template in cuda_init.service systemd script
+  template:
+    src: cuda_init.service.j2
+    dest: /etc/systemd/system/cuda_init.service
+    mode: 0644
+  notify:
+  - reload systemd unit files
+  - Restart cuda_init service
+  when: ansible_service_mgr == "systemd" or ansible_connection == 'chroot'
+
+- name: enable the cuda_init systemd service
+  service:
+    name: cuda_init
+    enabled: yes
+  when: ansible_service_mgr == "systemd"
+
+# Due to ansible bug 21026, cannot use service module on RHEL 7
+- name: enable the cuda_init systemd service in chroots
+  command: systemctl enable cuda_init
+  when:
+  - ansible_connection == 'chroot'
+  - ansible_os_family == 'RedHat'
+  - ansible_distribution_major_version|int >= 7
+
+- name: Enable nvidia-persistenced systemd service
+  service:
+    name: nvidia-persistenced
+    enabled: yes
+  when:
+  - ansible_connection != 'chroot'
+  - cuda_init_persistence_mode | bool
+
+# Due to ansible bug 21026, cannot use service module on RHEL 7
+- name: enable the nvidia-persistenced systemd service in chroots
+  command: systemctl enable nvidia-persistenced
+  when:
+  - ansible_connection == 'chroot'
+  - ansible_os_family == 'RedHat'
+  - ansible_distribution_major_version|int >= 7
+  - cuda_init_persistence_mode | bool
+
+- name: check if cuda_gpu_name0 ( /dev/nvidia0 ) exists
+  stat:
+    path: '{{ cuda_gpu_name0 }}'
+  register: reg_cuda_gpu_name0
+  check_mode: no
+
+- debug:
+    var: reg_cuda_gpu_name0
+    verbosity: 1
+
+- name: Initialize the GPUs  - run cuda_init.sh if there is no /dev/nvidia0
+  command: /bin/bash /usr/local/bin/cuda_init.sh
+  when:
+  - reg_cuda_gpu_name0.stat.exists is defined
+  - not reg_cuda_gpu_name0.stat.exists
+  - cuda_init_restart_service|bool
+
+- name: Start nvidia-persistenced if GPU found and not chroot
+  service:
+    name: nvidia-persistenced
+    state: started
+  when:
+  - ansible_connection != 'chroot'
+  - cuda_init_persistence_mode | bool
+  - reg_cuda_gpu_name0.stat.exists is defined
+  - reg_cuda_gpu_name0.stat.exists
+
+# vim:ft=ansible:

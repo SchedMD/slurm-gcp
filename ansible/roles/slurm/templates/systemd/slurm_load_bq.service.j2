@@ -1,0 +1,9 @@
+[Unit]
+Description=Load newest slurm job accounting data to Big Query
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=slurm
+ExecStart=/slurm/scripts/load_bq.py
+WorkingDirectory=/slurm/scripts

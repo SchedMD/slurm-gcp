@@ -1,0 +1,9 @@
+[Unit]
+Description=Run load_bq.py regularly
+
+[Timer]
+OnUnitInactiveSec=5min
+OnBootSec=1min
+
+[Install]
+WantedBy=timers.target

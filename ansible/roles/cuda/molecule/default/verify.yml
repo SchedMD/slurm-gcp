@@ -1,0 +1,29 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify CUDA toolkit installation
+  hosts: all
+  tasks:
+  - name: Check that CUDA has been installed
+    find:
+      path: /usr/local
+      patterns: cuda-.*
+      recurse: false
+      file_type: directory
+      use_regex: true
+    register: cuda_path_check
+  - name: Verify that CUDA folder exists
+    assert:
+      that: cuda_path_check.matched > 0
+- name: Verify NVIDIA driver kernel modules
+  hosts: centos7_cuda_run
+  tasks:
+  - name: Check that NVIDIA kernel module has been installed
+    find:
+      path: /lib/modules/{{ cuda_driver_kernel_version }}
+      patterns: nvidia.ko
+      recurse: true
+    register: nvidia_module_find
+  - name: Verify that kernel module exists
+    assert:
+      that: nvidia_module_find.matched > 0

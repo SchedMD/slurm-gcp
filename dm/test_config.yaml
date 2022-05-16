@@ -1,3 +1,4 @@
+---
 imports:
 - path: schedmd-slurm-gcp.jinja
 

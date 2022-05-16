@@ -1,0 +1,39 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Get DEBs
+  shell: >
+    wget
+    --recursive
+    --level=1
+    --no-parent
+    --no-directories
+    --accept="{{lustre_files|join(',')}}"
+    --directory-prefix="{{lustre_artifacts_dir}}"
+    {{lustre_deb_url}}
+  args:
+    warn: no
+
+- name: Gather DEBs
+  find:
+    path: '{{lustre_artifacts_dir}}'
+    patterns: '*.deb'
+  register: lustre_debs
+
+- name: Install DEBs
+  apt:
+    deb: '{{item.path}}'
+    state: present
+  with_items: '{{lustre_debs.files}}'

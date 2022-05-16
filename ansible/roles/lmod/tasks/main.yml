@@ -1,0 +1,64 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Include OS Family Dependent Tasks
+  include_tasks: os/{{ansible_os_family}}.yml
+
+
+- name: Mkdir
+  file:
+    path: '{{item}}'
+    state: directory
+  loop:
+  - '{{paths.apps}}'
+  - '{{paths.modulefiles}}'
+
+- name: Git Clone
+  git:
+    repo: '{{lmod_git_url}}'
+    dest: '{{lmod_paths.src}}'
+    version: '{{lmod_version}}'
+    clone: yes
+    depth: '1'
+
+- name: Create Modulespath
+  template:
+    src: modulespath.j2
+    dest: '{{paths.apps}}/lmod/.modulespath'
+    mode: 0644
+
+- name: Configure
+  shell:
+    cmd: >
+      {{lmod_paths.src}}/configure
+      --prefix={{paths.apps}}
+      --with-ModulePathInit={{paths.apps}}/lmod/.modulespath
+      > /dev/null
+    chdir: '{{lmod_paths.src}}'
+
+- name: Make Install
+  shell:
+    cmd: make install > /dev/null
+    chdir: '{{lmod_paths.src}}'
+
+- name: Symbolic Link
+  file:
+    src: '{{item.src}}'
+    dest: '{{item.dest}}'
+    state: link
+  with_items:
+  - {src: '{{lmod_paths.build}}/init/profile', dest: /etc/profile.d/z00_lmod.sh}
+  - {src: '{{lmod_paths.build}}/init/cshrc', dest: /etc/profile.d/z00_lmod.csh}
+    # - { src: "{{lmod_paths.build}}/init/profile.fish", dest: "/etc/fish/conf.d/z00_lmod.fish" }

@@ -1,0 +1,7 @@
+#!/bin/bash
+# {{ ansible_managed }}
+export PATH={{ cuda_bash_path }}:$PATH
+export LD_LIBRARY_PATH={{ cuda_bash_ld_lib_path }}:$LD_LIBRARY_PATH
+export CUDA_ROOT={{ cuda_bash_cuda_root }}
+export CUDA_INC_DIR={{ cuda_bash_cuda_inc_dir }}:$CUDA_INC_DIR
+export CPATH={{ cuda_bash_cpath }}:$CPATH

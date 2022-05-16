@@ -1,0 +1,23 @@
+---
+# Sample configuration for data migration
+
+# Stage-in job
+stage_in:
+  script: /slurm/jobs/data_migrate/stage_in.sh
+  environment:
+    MIGRATE_SRC: gs://slurm-input/input.dat
+    MIGRATE_DEST: $HOME/input.dat
+
+# Main job
+main:
+  script: /slurm/jobs/shuffle.sh
+  environment:
+    MIGRATE_INPUT: $HOME/input.dat
+    MIGRATE_OUTPUT: $HOME/output.dat
+
+# Stage-out job
+stage_out:
+  script: /slurm/jobs/data_migrate/stage_out.sh
+  environment:
+    MIGRATE_SRC: $HOME/output.dat
+    MIGRATE_DEST: gs://slurm-output/output.dat

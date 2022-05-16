@@ -1,0 +1,4 @@
+---
+cuda_repo_subfolder: ubuntu1804
+
+# vim:ft=ansible:

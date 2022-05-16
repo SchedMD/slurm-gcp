@@ -1,0 +1,7 @@
+---
+- name: Converge ansible-role-cuda
+  hosts: all
+  tasks:
+  - name: Include ansible-role-cuda
+    include_role:
+      name: ansible-role-cuda

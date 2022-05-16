@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2017 SchedMD LLC.
+# Copyright (C) SchedMD LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,79 +14,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib
+import json
 import logging
 import os
-import sys
+import re
 import shutil
+import subprocess
+import sys
+import stat
 import time
+from collections import defaultdict
+from concurrent.futures import as_completed
+from functools import partialmethod, lru_cache
+from itertools import chain
 from pathlib import Path
-from subprocess import DEVNULL
-from functools import reduce, partialmethod
-from concurrent.futures import ThreadPoolExecutor
 
-import googleapiclient.discovery
-import requests
-import yaml
+from addict import Dict as NSDict
 
+import util
+from util import run, instance_metadata, project_metadata, separate
+from util import nodeset_prefix, nodeset_lists
+from util import access_secret_version
+from util import lkp, cfg, dirs, slurmdirs
+import slurmsync
 
-# get util.py from metadata
-UTIL_FILE = Path('/tmp/util.py')
-try:
-    resp = requests.get('http://metadata.google.internal/computeMetadata/v1/instance/attributes/util-script',
-                        headers={'Metadata-Flavor': 'Google'})
-    resp.raise_for_status()
-    UTIL_FILE.write_text(resp.text)
-except requests.exceptions.RequestException:
-    print("util.py script not found in metadata")
-    if not UTIL_FILE.exists():
-        print(f"{UTIL_FILE} also does not exist, aborting")
-        sys.exit(1)
-
-spec = importlib.util.spec_from_file_location('util', UTIL_FILE)
-util = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = util
-spec.loader.exec_module(util)
-cd = util.cd  # import util.cd into local namespace
-NSDict = util.NSDict
+SETUP_SCRIPT = Path(__file__)
+filename = SETUP_SCRIPT.name
+LOGFILE = ((cfg.slurm_log_dir if cfg else ".") / SETUP_SCRIPT).with_suffix(".log")
+log = logging.getLogger(filename)
 
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
-util.config_root_logger(logfile='/tmp/setup.log')
-log = logging.getLogger(Path(__file__).name)
-sys.excepthook = util.handle_exception
-
-# get setup config from metadata
-config_yaml = yaml.safe_load(util.get_metadata('attributes/config'))
-cfg = util.Config.new_config(config_yaml)
-
-# load all directories as Paths into a dict-like namespace
-dirs = NSDict({n: Path(p) for n, p in dict.items({
-    'home': '/home',
-    'apps': '/apps',
-    'scripts': '/slurm/scripts',
-    'slurm': '/slurm',
-    'prefix': '/usr/local',
-    'munge': '/etc/munge',
-    'secdisk': '/mnt/disks/sec',
-})})
-
-slurmdirs = NSDict({n: Path(p) for n, p in dict.items({
-    'etc': '/usr/local/etc/slurm',
-    'log': '/var/log/slurm',
-    'state': '/var/spool/slurm',
-})})
-
-cfg['log_dir'] = slurmdirs.log
-cfg['slurm_cmd_path'] = dirs.prefix/'bin'
-
-RESUME_TIMEOUT = 300
-SUSPEND_TIMEOUT = 300
-
-CONTROL_MACHINE = cfg.cluster_name + '-controller'
 
 MOTD_HEADER = """
-
                                  SSSSSSS
                                 SSSSSSSSS
                                 SSSSSSSSS
@@ -123,286 +83,503 @@ SSSSSSSSSSSS    SSS   SSSS       SSSS   SSSS        SSSS     SSSS     SSSS
 SSSSSSSSSSSSS   SSS   SSSSSSSSSSSSSSS   SSSS        SSSS     SSSS     SSSS
 SSSSSSSSSSSS    SSS    SSSSSSSSSSSSS    SSSS        SSSS     SSSS     SSSS
 
+"""
 
+
+FILE_PREAMBLE = """
+# Warning:
+# This file is managed by a script. Manual modifications will be overwritten.
 """
 
 
 def start_motd():
-    """ advise in motd that slurm is currently configuring """
-    msg = MOTD_HEADER + """
-*** Slurm is currently being configured in the background. ***
-"""
-    Path('/etc/motd').write_text(msg)
-# END start_motd()
+    """advise in motd that slurm is currently configuring"""
+    wall_msg = "*** Slurm is currently being configured in the background. ***"
+    motd_msg = MOTD_HEADER + wall_msg + "\n\n"
+    Path("/etc/motd").write_text(motd_msg)
+    util.run(f"wall -n '{wall_msg}'", timeout=30)
 
 
 def end_motd(broadcast=True):
-    """ modify motd to signal that setup is complete """
-    Path('/etc/motd').write_text(MOTD_HEADER)
+    """modify motd to signal that setup is complete"""
+    Path("/etc/motd").write_text(MOTD_HEADER)
 
     if not broadcast:
         return
 
-    util.run("wall -n '*** Slurm {} setup complete ***'"
-             .format(cfg.instance_type))
-    if cfg.instance_type != 'controller':
-        util.run("""wall -n '
+    run(
+        "wall -n '*** Slurm {} setup complete ***'".format(lkp.instance_role),
+        timeout=30,
+    )
+    if lkp.instance_role != "controller":
+        run(
+            """wall -n '
 /home on the controller was mounted over the existing /home.
 Log back in to ensure your home directory is correct.
-'""")
-# END start_motd()
+'""",
+            timeout=30,
+        )
 
 
-def expand_instance_templates():
-    """ Expand instance template into instance_defs """
-
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              cache_discovery=False)
-    for pid, instance_def in cfg.instance_defs.items():
-        if (instance_def.instance_template and
-                (not instance_def.machine_type or not instance_def.gpu_count)):
-            template_resp = util.ensure_execute(
-                compute.instanceTemplates().get(
-                    project=cfg.project,
-                    instanceTemplate=instance_def.instance_template))
-            if template_resp:
-                template_props = template_resp['properties']
-                if not instance_def.machine_type:
-                    instance_def.machine_type = template_props['machineType']
-                if (not instance_def.gpu_count and
-                        'guestAccelerators' in template_props):
-                    accel_props = template_props['guestAccelerators'][0]
-                    instance_def.gpu_count = accel_props['acceleratorCount']
-                    instance_def.gpu_type = accel_props['acceleratorType']
-# END expand_instance_templates()
+def failed_motd():
+    """modify motd to signal that setup is failed"""
+    wall_msg = f"*** Slurm setup failed! Please view log: {LOGFILE} ***"
+    motd_msg = MOTD_HEADER + wall_msg + "\n\n"
+    Path("/etc/motd").write_text(motd_msg)
+    util.run(f"wall -n '{wall_msg}'", timeout=30)
 
 
-def expand_machine_type():
-    """ get machine type specs from api """
-    machines = {}
-    compute = googleapiclient.discovery.build('compute', 'v1',
-                                              cache_discovery=False)
-    for pid, part in cfg.instance_defs.items():
-        machine = {'cpus': 1, 'memory': 1}
-        machines[pid] = machine
+def dict_to_conf(conf, delim=" "):
+    """convert dict to delimited slurm-style key-value pairs"""
 
-        if not part.machine_type:
-            log.error("No machine type to get configuration from")
-            continue
+    def filter_conf(pair):
+        k, v = pair
+        if isinstance(v, list):
+            v = ",".join(el for el in v if el)
+        return k, (v or None)
 
-        type_resp = None
-        if part.regional_capacity:
-            filter = f"(zone={part.region}-*) AND (name={part.machine_type})"
-            list_resp = util.ensure_execute(
-                compute.machineTypes().aggregatedList(
-                    project=cfg.project, filter=filter))
+    return delim.join(f"{k}={v}" for k, v in map(filter_conf, conf.items()) if v)
 
-            if 'items' in list_resp:
-                zone_types = list_resp['items']
-                for k, v in zone_types.items():
-                    if part.region in k and 'machineTypes' in v:
-                        type_resp = v['machineTypes'][0]
-                        break
-        else:
-            type_resp = util.ensure_execute(
-                compute.machineTypes().get(
-                    project=cfg.project, zone=part.zone,
-                    machineType=part.machine_type))
 
-        if type_resp:
-            cpus = type_resp['guestCpus']
-            machine['cpus'] = (
-                cpus // (1 if part.image_hyperthreads else 2) or 1
+def make_cloud_conf(lkp=lkp, cloud_parameters=None):
+    """generate cloud.conf snippet"""
+    if cloud_parameters is None:
+        cloud_parameters = lkp.cfg.cloud_parameters
+
+    any_gpus = any(
+        lkp.template_info(node.instance_template).gpu_count > 0
+        for part in cfg.partitions.values()
+        for node in part.partition_nodes.values()
+    )
+
+    def conflines(cloud_parameters):
+        scripts_dir = lkp.cfg.output_dir or dirs.scripts
+        no_comma_params = cloud_parameters.get("no_comma_params", False)
+        comma_params = {
+            "PrivateData": [
+                "cloud",
+            ],
+            "LaunchParameters": [
+                "enable_nss_slurm",
+                "use_interactive_step",
+            ],
+            "SlurmctldParameters": [
+                "cloud_dns",
+                "idle_on_node_suspend",
+            ],
+            "SchedulerParameters": [
+                "salloc_wait_nodes",
+            ],
+            "CommunicationParameters": [
+                "NoAddrCache",
+            ],
+            "GresTypes": [
+                "gpu" if any_gpus else None,
+            ],
+        }
+        prolog_path = Path(dirs.custom_scripts / "prolog.d")
+        epilog_path = Path(dirs.custom_scripts / "epilog.d")
+        conf_options = {
+            **(comma_params if not no_comma_params else {}),
+            "Prolog": f"{prolog_path}/*" if lkp.cfg.prolog_scripts else None,
+            "Epilog": f"{epilog_path}/*" if lkp.cfg.epilog_scripts else None,
+            "PrologSlurmctld": f"{scripts_dir}/resume.py",
+            "EpilogSlurmctld": f"{scripts_dir}/suspend.py",
+            "SuspendProgram": f"{scripts_dir}/suspend.py",
+            "ResumeProgram": f"{scripts_dir}/resume.py",
+            "ResumeFailProgram": f"{scripts_dir}/suspend.py",
+            "ResumeRate": cloud_parameters.get("resume_rate", 0),
+            "ResumeTimeout": cloud_parameters.get("resume_timeout", 300),
+            "SuspendRate": cloud_parameters.get("suspend_rate", 0),
+            "SuspendTimeout": cloud_parameters.get("suspend_timeout", 300),
+        }
+        return dict_to_conf(conf_options, delim="\n")
+
+    def node_group_lines(node_group, part_name):
+        template_info = lkp.template_info(node_group.instance_template)
+        machine_conf = lkp.template_machine_conf(node_group.instance_template)
+
+        node_def = dict_to_conf(
+            {
+                "NodeName": "DEFAULT",
+                "State": "UNKNOWN",
+                "RealMemory": machine_conf.memory,
+                "Sockets": 1,
+                "CoresPerSocket": machine_conf.cpus,
+                "ThreadsPerCore": 1,
+                **node_group.node_conf,
+            }
+        )
+
+        gres = None
+        if template_info.gpu_count:
+            gres = f"gpu:{template_info.gpu_count}"
+
+        lines = [node_def]
+        static, dynamic = nodeset_lists(node_group, part_name)
+        nodeset = nodeset_prefix(node_group, part_name)
+        if static:
+            lines.append(
+                dict_to_conf(
+                    {
+                        "NodeName": static,
+                        "State": "CLOUD",
+                        "Gres": gres,
+                    }
+                )
             )
+        if dynamic:
+            lines.append(
+                dict_to_conf(
+                    {
+                        "NodeName": dynamic,
+                        "State": "CLOUD",
+                        "Gres": gres,
+                    }
+                )
+            )
+        lines.append(
+            dict_to_conf(
+                {"NodeSet": nodeset, "Nodes": ",".join(filter(None, (static, dynamic)))}
+            )
+        )
 
-            # Because the actual memory on the host will be different than
-            # what is configured (e.g. kernel will take it). From
-            # experiments, about 16 MB per GB are used (plus about 400 MB
-            # buffer for the first couple of GB's. Using 30 MB to be safe.
-            gb = type_resp['memoryMb'] // 1024
-            machine['memory'] = type_resp['memoryMb'] - (400 + (gb * 30))
+        return (nodeset, "\n".join(filter(None, lines)))
 
-    return machines
-# END expand_machine_type()
+    def partitionlines(partition):
+        """Make a partition line for the slurm.conf"""
+        part_name = partition.partition_name
+        group_lines = [
+            node_group_lines(group, part_name)
+            for group in partition.partition_nodes.values()
+        ]
+        nodesets, nodelines = zip(*group_lines)
+
+        def defmempercpu(template_link):
+            machine_conf = lkp.template_machine_conf(template_link)
+            return max(100, machine_conf.memory // machine_conf.cpus)
+
+        defmem = min(
+            defmempercpu(node.instance_template)
+            for node in partition.partition_nodes.values()
+        )
+        line_elements = {
+            "PartitionName": part_name,
+            "Nodes": ",".join(nodesets),
+            "State": "UP",
+            "DefMemPerCPU": defmem,
+            "SuspendTime": 300,
+            "Oversubscribe": "Exclusive" if partition.enable_job_exclusive else None,
+            **partition.partition_conf,
+        }
+        lines = [
+            *nodelines,
+            dict_to_conf(line_elements),
+        ]
+        return "\n".join(lines)
+
+    static_nodes = ",".join(lkp.static_nodelist())
+    suspend_exc = (
+        dict_to_conf(
+            {
+                "SuspendExcNodes": static_nodes,
+            }
+        )
+        if static_nodes
+        else None
+    )
+
+    lines = [
+        FILE_PREAMBLE,
+        conflines(cloud_parameters),
+        *(partitionlines(p) for p in lkp.cfg.partitions.values()),
+        suspend_exc,
+        "\n",
+    ]
+    return "\n\n".join(filter(None, lines))
 
 
-def install_slurm_conf():
-    """ install slurm.conf """
-    machines = expand_machine_type()
+def gen_cloud_conf(lkp=lkp, cloud_parameters=None):
+    content = make_cloud_conf(lkp, cloud_parameters=cloud_parameters)
 
-    if cfg.ompi_version:
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud.conf"
+    conf_file_bak = conf_file.with_suffix(".conf.bak")
+    if conf_file.is_file():
+        shutil.copy2(conf_file, conf_file_bak)
+    conf_file.write_text(content)
+    util.chown_slurm(conf_file, mode=0o644)
+
+
+def install_slurm_conf(lkp):
+    """install slurm.conf"""
+    if lkp.cfg.ompi_version:
         mpi_default = "pmi2"
     else:
         mpi_default = "none"
 
     conf_options = {
-        'name': cfg.cluster_name,
-        'control_host': CONTROL_MACHINE,
-        'scripts': dirs.scripts,
-        'slurmlog': slurmdirs.log,
-        'state_save': slurmdirs.state,
-        'resume_timeout': RESUME_TIMEOUT,
-        'suspend_timeout': SUSPEND_TIMEOUT,
-        'suspend_time': cfg.suspend_time,
-        'complete_wait_time': cfg.complete_wait_time,
-        'mpi_default': mpi_default,
+        "name": lkp.cfg.slurm_cluster_name,
+        "control_host": lkp.control_host,
+        "scripts": dirs.scripts,
+        "slurmlog": dirs.log,
+        "state_save": slurmdirs.state,
+        "mpi_default": mpi_default,
     }
-    conf_resp = util.get_metadata('attributes/slurm_conf_tpl')
+    conf_resp = project_metadata(f"{cfg.slurm_cluster_name}-slurm-tpl-slurm-conf")
     conf = conf_resp.format(**conf_options)
 
-    static_nodes = []
-    for i, (pid, machine) in enumerate(machines.items()):
-        part = cfg.instance_defs[pid]
-        static_range = ''
-        if part.static_node_count:
-            if part.static_node_count > 1:
-                static_range = '{}-[0-{}]'.format(
-                    pid, part.static_node_count - 1)
-            else:
-                static_range = f"{pid}-0"
-
-        cloud_range = ""
-        if (part.max_node_count and
-                (part.max_node_count != part.static_node_count)):
-            cloud_range = "{}-[{}-{}]".format(
-                pid, part.static_node_count,
-                part.max_node_count - 1)
-
-        conf += ("NodeName=DEFAULT "
-                 "Sockets=1 "
-                 f"CoresPerSocket={machine['cpus']} "
-                 "ThreadsPerCore=1 "
-                 f"RealMemory={machine['memory']} "
-                 "State=UNKNOWN")
-        conf += '\n'
-
-        # Nodes
-        gres = ""
-        if part.gpu_count:
-            gres = " Gres=gpu:" + str(part.gpu_count)
-        if static_range:
-            static_nodes.append(static_range)
-            conf += f"NodeName={static_range}{gres}\n"
-
-        if cloud_range:
-            conf += f"NodeName={cloud_range} State=CLOUD{gres}\n"
-
-        # instance_defs
-        part_nodes = f'{pid}-[0-{part.max_node_count - 1}]'
-
-        def_mem_per_cpu = max(100, machine['memory'] // machine['cpus'])
-
-        conf += ("PartitionName={} Nodes={} MaxTime=INFINITE "
-                 "State=UP DefMemPerCPU={} LLN=no"
-                 .format(part.name, part_nodes,
-                         def_mem_per_cpu))
-        if part.exclusive:
-            conf += " Oversubscribe=Exclusive"
-
-        # First partition specified is treated as the default partition
-        if i == 0:
-            conf += " Default=YES"
-        conf += "\n\n"
-
-    if len(static_nodes):
-        conf += "\nSuspendExcNodes={}\n".format(','.join(static_nodes))
-
-    conf_file = slurmdirs.etc/'slurm.conf'
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "slurm.conf"
+    conf_file_bak = conf_file.with_suffix(".conf.bak")
+    if conf_file.is_file():
+        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
-    shutil.chown(conf_file, user='slurm', group='slurm')
-# END install_slurm_conf()
+    util.chown_slurm(conf_file, mode=0o644)
 
 
-def install_slurmdbd_conf():
-    """ install slurmdbd.conf """
-    conf_options = NSDict({
-        'control_host': CONTROL_MACHINE,
-        'slurmlog': slurmdirs.log,
-        'state_save': slurmdirs.state,
-        'db_name': 'slurm_acct_db',
-        'db_user': 'slurm',
-        'db_pass': '""',
-        'db_host': 'localhost',
-        'db_port': '3306'
-    })
-    if cfg.cloudsql:
-        conf_options.db_name = cfg.cloudsql.db_name
-        conf_options.db_user = cfg.cloudsql.user
-        conf_options.db_pass = cfg.cloudsql.password
+def install_slurmdbd_conf(lkp):
+    """install slurmdbd.conf"""
+    conf_options = NSDict(
+        {
+            "control_host": lkp.control_host,
+            "slurmlog": dirs.log,
+            "state_save": slurmdirs.state,
+            "db_name": "slurm_acct_db",
+            "db_user": "slurm",
+            "db_pass": '""',
+            "db_host": "localhost",
+            "db_port": "3306",
+        }
+    )
+    if lkp.cfg.cloudsql:
+        secret_name = f"{cfg.slurm_cluster_name}-slurm-secret-cloudsql"
+        payload = json.loads(access_secret_version(util.project, secret_name))
 
-        db_host_str = cfg.cloudsql.server_ip.split(':')
-        conf_options.db_host = db_host_str[0]
-        conf_options.db_port = db_host_str[1] if len(db_host_str) >= 2 else '3306'
+        if payload["db_name"] and payload["db_name"] != "":
+            conf_options.db_name = payload["db_name"]
+        if payload["user"] and payload["user"] != "":
+            conf_options.db_user = payload["user"]
+        if payload["password"] and payload["password"] != "":
+            conf_options.db_pass = payload["password"]
 
-    conf_resp = util.get_metadata('attributes/slurmdbd_conf_tpl')
+        db_host_str = payload["server_ip"].split(":")
+        if db_host_str[0] and db_host_str[0] != "":
+            conf_options.db_host = db_host_str[0]
+            conf_options.db_port = db_host_str[1] if len(db_host_str) >= 2 else "3306"
+
+    conf_resp = project_metadata(f"{cfg.slurm_cluster_name}-slurm-tpl-slurmdbd-conf")
     conf = conf_resp.format(**conf_options)
 
-    conf_file = slurmdirs.etc/'slurmdbd.conf'
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "slurmdbd.conf"
+    conf_file_bak = conf_file.with_suffix(".conf.bak")
+    if conf_file.is_file():
+        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
-    shutil.chown(conf_file, user='slurm', group='slurm')
-    conf_file.chmod(0o600)
-# END install_slurmdbd_conf()
+    util.chown_slurm(conf_file, 0o600)
 
 
 def install_cgroup_conf():
-    """ install cgroup.conf """
-    conf = util.get_metadata('attributes/cgroup_conf_tpl')
+    """install cgroup.conf"""
+    conf = project_metadata(f"{cfg.slurm_cluster_name}-slurm-tpl-cgroup-conf")
 
-    conf_file = slurmdirs.etc/'cgroup.conf'
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cgroup.conf"
+    conf_file_bak = conf_file.with_suffix(".conf.bak")
+    if conf_file.is_file():
+        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
-    shutil.chown(conf_file, user='slurm', group='slurm')
-
-    gpu_conf = ""
-    for pid, part in cfg.instance_defs.items():
-        if not part.gpu_count:
-            continue
-        driver_range = '0'
-        if part.gpu_count > 1:
-            driver_range = '[0-{}]'.format(part.gpu_count-1)
-
-        gpu_conf += ("NodeName={}-[0-{}] Name=gpu File=/dev/nvidia{}\n"
-                     .format(pid, part.max_node_count - 1, driver_range))
-    if gpu_conf:
-        (slurmdirs.etc/'gres.conf').write_text(gpu_conf)
-# END install_cgroup_conf()
+    util.chown_slurm(conf_file, mode=0o600)
 
 
-def install_meta_files():
-    """ save config.yaml and download all scripts from metadata """
-    cfg.save_config(dirs.scripts/'config.yaml')
-    shutil.chown(dirs.scripts/'config.yaml', user='slurm', group='slurm')
+def gen_cloud_gres_conf(lkp=lkp):
+    """generate cloud_gres.conf"""
+
+    gpu_nodes = defaultdict(list)
+    for part_name, partition in lkp.cfg.partitions.items():
+        for node in partition.partition_nodes.values():
+            template_info = lkp.template_info(node.instance_template)
+            gpu_count = template_info.gpu_count
+            if gpu_count == 0:
+                continue
+            gpu_nodes[gpu_count].extend(filter(None, nodeset_lists(node, part_name)))
+
+    lines = [
+        dict_to_conf(
+            {
+                "NodeName": names,
+                "Name": "gpu",
+                "File": "/dev/nvidia{}".format(f"[0-{i-1}]" if i > 1 else "0"),
+            }
+        )
+        for i, names in gpu_nodes.items()
+    ]
+    lines.append("\n")
+    content = FILE_PREAMBLE + "\n".join(lines)
+
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud_gres.conf"
+    conf_file_bak = conf_file.with_suffix(".conf.bak")
+    if conf_file.is_file():
+        shutil.copy2(conf_file, conf_file_bak)
+    conf_file.write_text(content)
+    util.chown_slurm(conf_file, mode=0o600)
+
+
+def install_gres_conf():
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud_gres.conf"
+    gres_conf = Path(lkp.cfg.output_dir or slurmdirs.etc) / "gres.conf"
+    if not gres_conf.exists():
+        gres_conf.symlink_to(conf_file)
+    util.chown_slurm(gres_conf, mode=0o600)
+
+
+def fetch_devel_scripts():
+    """download scripts from project metadata if they are present"""
+
+    meta_json = project_metadata(f"{cfg.slurm_cluster_name}-slurm-devel")
+    if not meta_json:
+        return
+    metadata_devel = json.loads(meta_json)
 
     meta_entries = [
-        ('suspend.py', 'slurm-suspend'),
-        ('resume.py', 'slurm-resume'),
-        ('slurmsync.py', 'slurmsync'),
-        ('util.py', 'util-script'),
-        ('setup.py', 'setup-script'),
-        ('startup.sh', 'startup-script'),
-        ('custom-compute-install', 'custom-compute-install'),
-        ('custom-controller-install', 'custom-controller-install'),
+        ("slurmeventd.py", "slurmeventd"),
+        ("resume.py", "slurm-resume"),
+        ("slurmsync.py", "slurmsync"),
+        ("util.py", "util-script"),
+        ("setup.py", "setup-script"),
+        ("startup.sh", "startup-script"),
+        ("load_bq.py", "loadbq"),
     ]
 
-    def install_metafile(filename, metaname):
-        text = util.get_metadata('attributes/' + metaname)
-        if not text:
-            return
-        path = dirs.scripts/filename
-        path.write_text(text)
-        path.chmod(0o755)
-        shutil.chown(path, user='slurm', group='slurm')
-
-    with ThreadPoolExecutor() as exe:
-        exe.map(lambda x: install_metafile(*x), meta_entries)
-
-# END install_meta_files()
+    for script, name in meta_entries:
+        if name not in metadata_devel:
+            log.debug(f"{name} not found in project metadata, not updating")
+            continue
+        log.info(f"updating {script} from metadata")
+        content = metadata_devel[name]
+        path = (dirs.scripts / script).resolve()
+        # make sure parent dir exists
+        path.write_text(content)
+        util.chown_slurm(path, mode=0o755)
 
 
-def prepare_network_mounts(hostname, instance_type):
-    """ Prepare separate lists of cluster-internal and external mounts for the
-    given host instance, returning (external_mounts, internal_mounts)
+def install_custom_scripts(clean=False):
+    """download custom scripts from project metadata"""
+    script_pattern = re.compile(
+        rf"{cfg.slurm_cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)"
+    )
+    metadata_keys = project_metadata("/").splitlines()
+
+    def match_name(meta_key):
+        m = script_pattern.match(meta_key)
+        if not m:
+            # key does not match, skip
+            return None
+        # returned path is `partition.d/<part_name>/<name>`
+        # or `<controller/compute>.d/<name>`
+        parts = m["path"].split("-")
+        parts[0] += ".d"
+        name, _, ext = m["name"].rpartition("_")
+        name = ".".join((name, ext))
+        return meta_key, Path(*parts, name)
+
+    def filter_role(meta_entry):
+        if not meta_entry:
+            return False
+        key, path = meta_entry
+        # path is <role>.d/script.sh or partition.d/<part>/script.sh
+        # role is <role> or 'partition', part is None or <part>
+        role, part, *_ = chain(path.parent.parts, (None,))
+        role = role[:-2]  # strip off added '.d'
+
+        # login only needs their login scripts
+        if lkp.instance_role == "login":
+            suffix = instance_metadata("attributes/slurm_login_suffix")
+            script_types = [f"login_{suffix}"]
+            return role in script_types
+        # compute needs compute, prolog, epilog, and the matching partition
+        if lkp.instance_role == "compute":
+            script_types = ["compute", "prolog", "epilog"]
+            return role in script_types or (part and part == lkp.node_partition_name())
+        # controller downloads them all for good measure
+        return True
+
+    custom_scripts = list(filter(filter_role, map(match_name, metadata_keys)))
+    log.info(
+        "installing custom scripts: {}".format(
+            ",".join(str(path) for key, path in custom_scripts)
+        )
+    )
+
+    if clean:
+        path = Path(dirs.custom_scripts)
+        if path.exists() and path.is_dir():
+            # rm -rf custom_scripts
+            shutil.rmtree(path)
+
+    dirs.custom_scripts.mkdirp()
+    for key, path in custom_scripts:
+        fullpath = (dirs.custom_scripts / path).resolve()
+        fullpath.parent.mkdirp()
+        for par in path.parents:
+            util.chown_slurm(dirs.custom_scripts / par)
+        log.debug(path)
+        content = project_metadata(key)
+        fullpath.write_text(content)
+        util.chown_slurm(fullpath, mode=0o755)
+
+
+def run_custom_scripts():
+    """run custom scripts based on instance_role"""
+    custom_dir = dirs.custom_scripts
+    if lkp.instance_role == "controller":
+        # controller has all scripts, but only runs controller.d
+        custom_dirs = [custom_dir / "controller.d"]
+    elif lkp.instance_role == "compute":
+        # compute setup with compute.d and partition.d
+        custom_dirs = [custom_dir / "compute.d", custom_dir / "partition.d"]
+    elif lkp.instance_role == "login":
+        # login setup with only login_{suffix}.d
+        suffix = instance_metadata("attributes/slurm_login_suffix")
+        custom_dirs = [custom_dir / f"login_{suffix}.d"]
+    else:
+        # Unknown role: run nothing
+        custom_dirs = []
+    custom_scripts = [
+        p
+        for d in custom_dirs
+        for p in d.rglob("*")
+        if p.is_file() and not p.name.endswith(".disabled")
+    ]
+    print_scripts = ",".join(str(s.relative_to(custom_dir)) for s in custom_scripts)
+    log.debug(f"custom scripts to run: {custom_dir}/({print_scripts})")
+
+    try:
+        for script in custom_scripts:
+            log.info(f"running script {script.name}")
+            result = run(str(script), timeout=300, check=False, shell=True)
+            runlog = (
+                f"{script.name} returncode={result.returncode}\n"
+                f"stdout={result.stdout}stderr={result.stderr}"
+            )
+            log.info(runlog)
+            result.check_returncode()
+    except OSError as e:
+        log.error(f"script {script} is not executable")
+        raise e
+
+
+def local_mounts(mountlist):
+    """convert network_storage list of mounts to dict of mounts,
+    local_mount as key
     """
-    log.info("Set up network storage")
+    return {str(Path(m.local_mount).resolve()): m for m in mountlist}
+
+
+@lru_cache(maxsize=None)
+def resolve_network_storage(partition_name=None):
+    """Combine appropriate network_storage fields to a single list"""
+
+    if cfg.instance_role == "compute":
+        partition_name = lkp.node_partition_name()
+    partition = cfg.partitions[partition_name] if partition_name else None
 
     default_mounts = (
         slurmdirs.etc,
@@ -413,337 +590,419 @@ def prepare_network_mounts(hostname, instance_type):
 
     # create dict of mounts, local_mount: mount_info
     CONTROL_NFS = {
-        'server_ip': CONTROL_MACHINE,
-        'remote_mount': 'none',
-        'local_mount': 'none',
-        'fs_type': 'nfs',
-        'mount_options': 'defaults,hard,intr',
-    }
-    # seed the non-controller mounts with the default controller mounts
-    mounts = {
-        path: util.Config(CONTROL_NFS, local_mount=path, remote_mount=path)
-        for path in default_mounts
+        "server_ip": lkp.control_host,
+        "remote_mount": "none",
+        "local_mount": "none",
+        "fs_type": "nfs",
+        "mount_options": "defaults,hard,intr",
     }
 
-    # convert network_storage list of mounts to dict of mounts,
-    #   local_mount as key
-    def listtodict(mountlist):
-        return {Path(d['local_mount']).resolve(): d for d in mountlist}
-
+    # seed mounts with the default controller mounts
+    mounts = local_mounts(
+        [
+            NSDict(CONTROL_NFS, local_mount=str(path), remote_mount=str(path))
+            for path in default_mounts
+        ]
+    )
     # On non-controller instances, entries in network_storage could overwrite
     # default exports from the controller. Be careful, of course
-    mounts.update(listtodict(cfg.network_storage))
+    mounts.update(local_mounts(cfg.network_storage))
+    mounts.update(local_mounts(cfg.login_network_storage))
 
-    if instance_type == 'compute':
-        pid = util.get_pid(hostname)
-        mounts.update(listtodict(cfg.instance_defs[pid].network_storage))
-    else:
-        # login_network_storage is mounted on controller and login instances
-        mounts.update(listtodict(cfg.login_network_storage))
+    if partition is not None:
+        mounts.update(local_mounts(partition.network_storage))
+    return list(mounts.values())
 
-    # filter mounts into two dicts, cluster-internal and external mounts, and
-    # return both. (external_mounts, internal_mounts)
+
+def partition_mounts(mounts):
+    """partition into cluster-external and internal mounts"""
+
     def internal_mount(mount):
-        return mount[1].server_ip == CONTROL_MACHINE
+        return mount.server_ip == lkp.control_host
 
-    def partition(pred, coll):
-        """ filter into 2 lists based on pred returning True or False 
-            returns ([False], [True])
-        """
-        return reduce(
-            lambda acc, el: acc[pred(el)].append(el) or acc,
-            coll, ([], [])
-        )
-
-    return tuple(map(dict, partition(internal_mount, mounts.items())))
-# END prepare_network_mounts
+    return separate(internal_mount, mounts)
 
 
 def setup_network_storage():
-    """ prepare network fs mounts and add them to fstab """
+    """prepare network fs mounts and add them to fstab"""
+    log.info("Set up network storage")
+    # filter mounts into two dicts, cluster-internal and external mounts
 
-    global mounts
-    ext_mounts, int_mounts = prepare_network_mounts(cfg.hostname,
-                                                    cfg.instance_type)
+    all_mounts = resolve_network_storage()
+    ext_mounts, int_mounts = partition_mounts(all_mounts)
     mounts = ext_mounts
-    if cfg.instance_type != 'controller':
-        mounts.update(int_mounts)
+    if lkp.instance_role != "controller":
+        mounts.extend(int_mounts)
 
     # Determine fstab entries and write them out
     fstab_entries = []
-    for local_mount, mount in mounts.items():
+    for mount in mounts:
+        local_mount = Path(mount.local_mount)
         remote_mount = mount.remote_mount
         fs_type = mount.fs_type
         server_ip = mount.server_ip
-
-        # do not mount controller mounts to itself
-        if server_ip == CONTROL_MACHINE and cfg.instance_type == 'controller':
-            continue
-
-        log.info("Setting up mount ({}) {}{} to {}".format(
-            fs_type, server_ip+':' if fs_type != 'gcsfuse' else "",
-            remote_mount, local_mount))
-
         local_mount.mkdirp()
 
-        mount_options = (mount.mount_options.split(',') if mount.mount_options
-                         else [])
-        if not mount_options or '_netdev' not in mount_options:
-            mount_options += ['_netdev']
+        log.info(
+            "Setting up mount ({}) {}{} to {}".format(
+                fs_type,
+                server_ip + ":" if fs_type != "gcsfuse" else "",
+                remote_mount,
+                local_mount,
+            )
+        )
 
-        if fs_type == 'gcsfuse':
-            if 'nonempty' not in mount_options:
-                mount_options += ['nonempty']
+        mount_options = mount.mount_options.split(",") if mount.mount_options else []
+        if not mount_options or "_netdev" not in mount_options:
+            mount_options += ["_netdev"]
+
+        if fs_type == "gcsfuse":
+            if "nonempty" not in mount_options:
+                mount_options += ["nonempty"]
             fstab_entries.append(
-                "{0}   {1}     {2}     {3}     0 0"
-                .format(remote_mount, local_mount, fs_type,
-                        ','.join(mount_options)))
+                "{0}   {1}     {2}     {3}     0 0".format(
+                    remote_mount, local_mount, fs_type, ",".join(mount_options)
+                )
+            )
         else:
-            remote_mount = Path(remote_mount).resolve()
             fstab_entries.append(
-                "{0}:{1}    {2}     {3}      {4}  0 0"
-                .format(server_ip, remote_mount, local_mount,
-                        fs_type, ','.join(mount_options)))
+                "{0}:{1}    {2}     {3}      {4}  0 0".format(
+                    server_ip,
+                    remote_mount,
+                    local_mount,
+                    fs_type,
+                    ",".join(mount_options),
+                )
+            )
 
-    for mount in mounts:
-        Path(mount).mkdirp()
-    with open('/etc/fstab', 'a') as f:
-        f.write('\n')
+    fstab = Path("/etc/fstab")
+    if not Path(fstab.with_suffix(".bak")).is_file():
+        shutil.copy2(fstab, fstab.with_suffix(".bak"))
+    shutil.copy2(fstab.with_suffix(".bak"), fstab)
+    with open(fstab, "a") as f:
+        f.write("\n")
         for entry in fstab_entries:
             f.write(entry)
-            f.write('\n')
-# END setup_network_storage()
+            f.write("\n")
+
+    mount_fstab(local_mounts(mounts))
 
 
-def mount_fstab():
-    """ Wait on each mount, then make sure all fstab is mounted """
-    global mounts
+def mount_fstab(mounts):
+    """Wait on each mount, then make sure all fstab is mounted"""
+    from more_executors import Executors, ExceptionRetryPolicy
 
     def mount_path(path):
-        while not os.path.ismount(path):
-            log.info(f"Waiting for {path} to be mounted")
-            util.run(f"mount {path}", wait=5)
 
-    with ThreadPoolExecutor() as exe:
-        exe.map(mount_path, mounts.keys())
+        log.info(f"Waiting for '{path}' to be mounted...")
+        try:
+            run(f"mount {path}", timeout=120)
+        except Exception as e:
+            exc_type, _, _ = sys.exc_info()
+            log.error(f"mount of path '{path}' failed: {exc_type}: {e}")
+            raise e
+        log.info(f"Mount point '{path}' was mounted.")
 
-    util.run("mount -a", wait=1)
-# END mount_external
+    MAX_MOUNT_TIMEOUT = 60 * 5
+    future_list = []
+    retry_policy = ExceptionRetryPolicy(
+        max_attempts=40, exponent=1.6, sleep=1.0, max_sleep=16.0
+    )
+    with Executors.thread_pool().with_timeout(MAX_MOUNT_TIMEOUT).with_retry(
+        retry_policy=retry_policy
+    ) as exe:
+        for path in mounts:
+            future = exe.submit(mount_path, path)
+            future_list.append(future)
+
+        # Iterate over futures, checking for exceptions
+        for future in as_completed(future_list):
+            try:
+                future.result()
+            except Exception as e:
+                raise e
 
 
 def setup_nfs_exports():
-    """ nfs export all needed directories """
+    """nfs export all needed directories"""
     # The controller only needs to set up exports for cluster-internal mounts
     # switch the key to remote mount path since that is what needs exporting
-    _, con_mounts = prepare_network_mounts(cfg.hostname, cfg.instance_type)
-    con_mounts = {m.remote_mount: m for m in con_mounts.values()}
-    for pid, _ in cfg.instance_defs.items():
+    mounts = resolve_network_storage()
+    # controller mounts
+    _, con_mounts = partition_mounts(mounts)
+    con_mounts = {m.remote_mount: m for m in mounts}
+    for part in cfg.partitions:
         # get internal mounts for each partition by calling
         # prepare_network_mounts as from a node in each partition
-        _, part_mounts = prepare_network_mounts(f'{pid}-n', 'compute')
-        part_mounts = {m.remote_mount: m for m in part_mounts.values()}
+        part_mounts = resolve_network_storage(part)
+        part_mounts = {m.remote_mount: m for m in part_mounts}
         con_mounts.update(part_mounts)
 
     # export path if corresponding selector boolean is True
     exports = []
     for path in con_mounts:
         Path(path).mkdirp()
-        util.run(rf"sed -i '\#{path}#d' /etc/exports")
+        run(rf"sed -i '\#{path}#d' /etc/exports", timeout=30)
         exports.append(f"{path}  *(rw,no_subtree_check,no_root_squash)")
 
-    exportsd = Path('/etc/exports.d')
+    exportsd = Path("/etc/exports.d")
     exportsd.mkdirp()
-    with (exportsd/'slurm.exports').open('w') as f:
-        f.write('\n')
-        f.write('\n'.join(exports))
-    util.run("exportfs -a")
-# END setup_nfs_exports()
+    with (exportsd / "slurm.exports").open("w") as f:
+        f.write("\n")
+        f.write("\n".join(exports))
+    run("exportfs -a", timeout=30)
 
 
 def setup_secondary_disks():
-    """ Format and mount secondary disk """
-    util.run(
-        "sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb")
-    with open('/etc/fstab', 'a') as f:
+    """Format and mount secondary disk"""
+    run(
+        "sudo mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/sdb"
+    )
+    with open("/etc/fstab", "a") as f:
         f.write(
-            "\n/dev/sdb     {0}     ext4    discard,defaults,nofail     0 2"
-            .format(dirs.secdisk))
-
-# END setup_secondary_disks()
+            "\n/dev/sdb     {0}     ext4    discard,defaults,nofail     0 2".format(
+                dirs.secdisk
+            )
+        )
 
 
 def setup_sync_cronjob():
-    """ Create cronjob for running slurmsync.py """
-    util.run("crontab -u slurm -", input=(
-        f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
-
-# END setup_sync_cronjob()
+    """Create cronjob for running slurmsync.py"""
+    run("crontab -u slurm -", input=(f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
 
 
 def setup_jwt_key():
-    jwt_key = slurmdirs.state/'jwt_hs256.key'
+    jwt_key = Path(slurmdirs.state / "jwt_hs256.key")
 
-    if cfg.jwt_key:
-        with (jwt_key).open('w') as f:
-            f.write(cfg.jwt_key)
+    if jwt_key.exists():
+        log.info("JWT key already exists. Skipping key generation.")
     else:
-        util.run("dd if=/dev/urandom bs=32 count=1 >"+str(jwt_key), shell=True)
+        run("dd if=/dev/urandom bs=32 count=1 > " + str(jwt_key), shell=True)
 
-    util.run(f"chown -R slurm:slurm {jwt_key}")
-    jwt_key.chmod(0o400)
+    util.chown_slurm(jwt_key, mode=0o400)
 
 
 def setup_slurmd_cronjob():
-    """ Create cronjob for keeping slurmd service up """
-    util.run(
-        "crontab -u root -", input=(
+    """Create cronjob for keeping slurmd service up"""
+    run(
+        "crontab -u root -",
+        input=(
             "*/2 * * * * "
             "if [ `systemctl status slurmd | grep -c inactive` -gt 0 ]; then "
             "mount -a; "
             "systemctl restart munge; "
             "systemctl restart slurmd; "
             "fi\n"
-        ))
-# END setup_slurmd_cronjob()
+        ),
+        timeout=30,
+    )
+
+
+def setup_munge_key():
+    munge_key = Path(dirs.munge / "munge.key")
+
+    if munge_key.exists():
+        log.info("Munge key already exists. Skipping key generation.")
+    else:
+        run("create-munge-key -f", timeout=30)
+
+    shutil.chown(munge_key, user="munge", group="munge")
+    os.chmod(munge_key, stat.S_IRUSR)
+    run("systemctl restart munge", timeout=30)
 
 
 def setup_nss_slurm():
-    """ install and configure nss_slurm """
+    """install and configure nss_slurm"""
     # setup nss_slurm
-    Path('/var/spool/slurmd').mkdirp()
-    util.run("ln -s {}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2"
-             .format(dirs.prefix))
-    util.run(
-        r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf"
+    Path("/var/spool/slurmd").mkdirp()
+    run(
+        "ln -s {}/lib/libnss_slurm.so.2 /usr/lib64/libnss_slurm.so.2".format(
+            slurmdirs.prefix
+        ),
+        check=False,
     )
-# END setup_nss_slurm()
+    run(r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
+
+
+def configure_mysql():
+    cnfdir = Path("/etc/my.cnf.d")
+    if not cnfdir.exists():
+        cnfdir = Path("/etc/mysql/conf.d")
+    if not (cnfdir / "mysql_slurm.cnf").exists():
+        (cnfdir / "mysql_slurm.cnf").write_text(
+            """
+[mysqld]
+bind-address=127.0.0.1
+innodb_buffer_pool_size=1024M
+innodb_log_file_size=64M
+innodb_lock_wait_timeout=900
+"""
+        )
+    run("systemctl enable mariadb", timeout=30)
+    run("systemctl restart mariadb", timeout=30)
+
+    mysql = "mysql -u root -e"
+    run(f"""{mysql} "drop user 'slurm'@'localhost'";""", timeout=30, check=False)
+    run(f"""{mysql} "create user 'slurm'@'localhost'";""", timeout=30)
+    run(
+        f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""",
+        timeout=30,
+    )
+    run(
+        f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{lkp.control_host}'";""",
+        timeout=30,
+    )
 
 
 def configure_dirs():
 
     for p in dirs.values():
         p.mkdirp()
-    shutil.chown(dirs.slurm, user='slurm', group='slurm')
-    shutil.chown(dirs.scripts, user='slurm', group='slurm')
+    util.chown_slurm(dirs.slurm)
+    util.chown_slurm(dirs.scripts)
 
     for p in slurmdirs.values():
         p.mkdirp()
-        shutil.chown(p, user='slurm', group='slurm')
+        util.chown_slurm(p)
 
-    (dirs.scripts/'etc').symlink_to(slurmdirs.etc)
-    shutil.chown(dirs.scripts/'etc', user='slurm', group='slurm')
+    etc_slurm = Path("/etc/slurm")
+    if etc_slurm.exists() and etc_slurm.is_symlink():
+        etc_slurm.unlink()
+    etc_slurm.symlink_to(slurmdirs.etc)
 
-    (dirs.scripts/'log').symlink_to(slurmdirs.log)
-    shutil.chown(dirs.scripts/'log', user='slurm', group='slurm')
+    scripts_etc = dirs.scripts / "etc"
+    if scripts_etc.exists() and scripts_etc.is_symlink():
+        scripts_etc.unlink()
+    scripts_etc.symlink_to(slurmdirs.etc)
+
+    scripts_log = dirs.scripts / "log"
+    if scripts_log.exists() and scripts_log.is_symlink():
+        scripts_log.unlink()
+    scripts_log.symlink_to(dirs.log)
 
 
 def setup_controller():
-    """ Run controller setup """
-    expand_instance_templates()
+    """Run controller setup"""
+    log.info("Setting up controller")
+    util.chown_slurm(dirs.scripts / "config.yaml", mode=0o600)
+    install_custom_scripts()
+
+    install_slurm_conf(lkp)
+    install_slurmdbd_conf(lkp)
+
+    gen_cloud_conf()
+    gen_cloud_gres_conf()
+    install_gres_conf()
     install_cgroup_conf()
-    install_slurm_conf()
-    install_slurmdbd_conf()
+
     setup_jwt_key()
-    util.run("create-munge-key -f")
-    util.run("systemctl restart munge")
+    setup_munge_key()
 
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
     setup_network_storage()
-    mount_fstab()
 
-    try:
-        util.run(str(dirs.scripts/'custom-controller-install'))
-    except Exception:
-        # Ignore blank files with no shell magic.
-        pass
+    run_custom_scripts()
 
     if not cfg.cloudsql:
-        cnfdir = Path('/etc/my.cnf.d')
-        if not cnfdir.exists():
-            cnfdir = Path('/etc/mysql/conf.d')
-        (cnfdir/'mysql_slurm.cnf').write_text("""
-[mysqld]
-bind-address = 127.0.0.1
-""")
-        util.run('systemctl enable mariadb')
-        util.run('systemctl start mariadb')
+        configure_mysql()
 
-        mysql = "mysql -u root -e"
-        util.run(
-            f"""{mysql} "create user 'slurm'@'localhost'";""")
-        util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""")
-        util.run(
-            f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{CONTROL_MACHINE}'";""")
-
-    util.run("systemctl enable slurmdbd")
-    util.run("systemctl start slurmdbd")
+    run("systemctl enable slurmdbd", timeout=30)
+    run("systemctl restart slurmdbd", timeout=30)
 
     # Wait for slurmdbd to come up
     time.sleep(5)
 
-    sacctmgr = f"{dirs.prefix}/bin/sacctmgr -i"
-    util.run(f"{sacctmgr} add cluster {cfg.cluster_name}")
+    sacctmgr = f"{slurmdirs.prefix}/bin/sacctmgr -i"
+    result = run(
+        f"{sacctmgr} add cluster {cfg.slurm_cluster_name}", timeout=30, check=False
+    )
+    if "already exists" in result.stdout:
+        log.info(result.stdout)
+    elif result.returncode > 1:
+        result.check_returncode()  # will raise error
 
-    util.run("systemctl enable slurmctld")
-    util.run("systemctl start slurmctld")
+    run("systemctl enable slurmctld", timeout=30)
+    run("systemctl restart slurmctld", timeout=30)
 
-    util.run("systemctl enable slurmrestd")
-    util.run("systemctl start slurmrestd")
+    run("systemctl enable slurmrestd", timeout=30)
+    run("systemctl restart slurmrestd", timeout=30)
 
     # Export at the end to signal that everything is up
-    util.run("systemctl enable nfs-server")
-    util.run("systemctl start nfs-server")
+    run("systemctl enable nfs-server", timeout=30)
+    run("systemctl start nfs-server", timeout=30)
+
+    run("systemctl enable slurmeventd", timeout=30)
+    run("systemctl restart slurmeventd", timeout=30)
 
     setup_nfs_exports()
     setup_sync_cronjob()
+
+    log.info("Check status of cluster services")
+    run("systemctl status munge", timeout=30)
+    run("systemctl status slurmdbd", timeout=30)
+    run("systemctl status slurmctld", timeout=30)
+    run("systemctl status slurmrestd", timeout=30)
+    run("systemctl status slurmeventd", timeout=30)
+
+    slurmsync.sync_slurm()
+    if cfg.enable_bigquery_load:
+        run("systemctl enable slurm_load_bq.timer", timeout=30)
+        run("systemctl start slurm_load_bq.timer", timeout=30)
+        run("systemctl status slurm_load_bq.timer", timeout=30)
 
     log.info("Done setting up controller")
     pass
 
 
 def setup_login():
-    """ run login node setup """
-    setup_network_storage()
-    mount_fstab()
-    util.run("systemctl restart munge")
+    """run login node setup"""
+    log.info("Setting up login")
+    install_custom_scripts()
 
-    try:
-        util.run(str(dirs.scripts/'custom-compute-install'))
-    except Exception:
-        # Ignore blank files with no shell magic.
-        pass
+    setup_network_storage()
+    run("systemctl restart munge")
+
+    run_custom_scripts()
+
+    log.info("Check status of cluster services")
+    run("systemctl status munge", timeout=30)
+
     log.info("Done setting up login")
 
 
 def setup_compute():
-    """ run compute node setup """
+    """run compute node setup"""
+    log.info("Setting up compute")
+    util.chown_slurm(dirs.scripts / "config.yaml", mode=0o600)
+    install_custom_scripts()
+
     setup_nss_slurm()
     setup_network_storage()
-    mount_fstab()
 
-    pid = util.get_pid(cfg.hostname)
-    if (not cfg.instance_defs[pid].image_hyperthreads and
-            shutil.which('google_mpi_tuning')):
-        util.run("google_mpi_tuning --nosmt")
-    if cfg.instance_defs[pid].gpu_count:
-        retries = n = 50
-        while util.run("nvidia-smi").returncode != 0 and n > 0:
-            n -= 1
-            log.info(f"Nvidia driver not yet loaded, try {retries-n}")
-            time.sleep(5)
+    # template = lkp.node_template_info(zone=lkp.zone)
 
-    try:
-        util.run(str(dirs.scripts/'custom-compute-install'))
-    except Exception:
-        # Ignore blank files with no shell magic.
-        pass
+    # if (not cfg.instance_defs[pid].image_hyperthreads and
+    #         shutil.which('google_mpi_tuning')):
+    #     run("google_mpi_tuning --nosmt")
+    has_gpu = run("lspci | grep --ignore-case 'NVIDIA' | wc -l", shell=True).returncode
+    if has_gpu:
+        run("nvidia-smi")
+
+    run_custom_scripts()
 
     setup_slurmd_cronjob()
-    util.run("systemctl restart munge")
-    util.run("systemctl enable slurmd")
-    util.run("systemctl start slurmd")
+    run("systemctl restart munge", timeout=30)
+    run("systemctl enable slurmd", timeout=30)
+    run("systemctl restart slurmd", timeout=30)
+
+    run("systemctl enable slurmeventd", timeout=30)
+    run("systemctl restart slurmeventd", timeout=30)
+
+    log.info("Check status of cluster services")
+    run("systemctl status munge", timeout=30)
+    run("systemctl status slurmd", timeout=30)
+    run("systemctl status slurmeventd", timeout=30)
 
     log.info("Done setting up compute")
 
@@ -752,23 +1011,59 @@ def main():
 
     start_motd()
     configure_dirs()
-    install_meta_files()
+    fetch_devel_scripts()
 
     # call the setup function for the instance type
     setup = dict.get(
         {
-            'controller': setup_controller,
-            'compute': setup_compute,
-            'login': setup_login
+            "controller": setup_controller,
+            "compute": setup_compute,
+            "login": setup_login,
         },
-        cfg.instance_type,
-        lambda: log.fatal(f"Unknown instance type: {cfg.instance_type}")
+        lkp.instance_role,
+        lambda: log.fatal(f"Unknown node role: {lkp.instance_role}"),
     )
     setup()
 
     end_motd()
-# END main()
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    util.chown_slurm(LOGFILE, mode=0o600)
+    util.config_root_logger(filename, logfile=LOGFILE, util_level="DEBUG")
+    sys.excepthook = util.handle_exception
+
+    lkp = util.Lookup(cfg)  # noqa F811
+
+    try:
+        main()
+    except subprocess.TimeoutExpired as e:
+        log.error(
+            f"""TimeoutExpired:
+    command={e.cmd}
+    timeout={e.timeout}
+    stdout:
+{e.stdout.strip()}
+    stderr:
+{e.stderr.strip()}
+"""
+        )
+        log.error("Aborting setup...")
+        failed_motd()
+    except subprocess.CalledProcessError as e:
+        log.error(
+            f"""CalledProcessError:
+    command={e.cmd}
+    returncode={e.returncode}
+    stdout:
+{e.stdout.strip()}
+    stderr:
+{e.stderr.strip()}
+"""
+        )
+        log.error("Aborting setup...")
+        failed_motd()
+    except Exception as e:
+        log.exception(e)
+        log.error("Aborting setup...")
+        failed_motd()

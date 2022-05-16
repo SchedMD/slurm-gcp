@@ -1,0 +1,41 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Upgrade {{ansible_os_family}} Family System Software
+  yum:
+    name: '*'
+    state: latest
+    update_cache: yes
+
+- name: Enable CentOS 8 PowerTools Repository
+  shell: dnf config-manager --set-enabled powertools
+  args:
+    warn: false
+  when: |
+    ansible_distribution == "CentOS"
+    and ansible_distribution_major_version is version('8', '>=')
+
+- name: Enable RedHat 8 CloudReady Repository
+  shell: subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
+  args:
+    warn: false
+  when: |
+    ansible_distribution == "RedHat"
+    and ansible_distribution_major_version is version('8', '>=')
+
+- name: Install epel-release Repository
+  yum:
+    name: epel-release
+    state: present

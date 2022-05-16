@@ -1,7 +1,32 @@
-__pycache__
-**/.terraform
-**/*.tfstate
-**/*.tfstate.backup
-**/*.tfplan
-**/*.tfvars
+### General ###
+*.cache
+*.log
+
+### Ansible ###
+*.retry
+
+### Packer ###
+packer_cache/
+output-*/
+*.pkrvars.hcl
+!example.pkrvars.hcl
+*.pem
+*.json
+
+### Python ###
+__pycache__/
+*.py[cod]
+*$py.class
+*.lock
+
+### Terraform ###
+**/.terraform/*
+*.tfplan
+*.tfstate
+*.tfstate.*
+*.tfvars
+!example.tfvars
 .terraform.lock.hcl
+
+### Vagrant ###
+.vagrant/
