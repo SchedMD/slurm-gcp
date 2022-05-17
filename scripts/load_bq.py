@@ -210,7 +210,7 @@ def load_slurm_jobs(start, end):
     jobs = [dict(zip(bq_fields, line.split("|"))) for line in text]
 
     # The job index cache allows us to avoid sending duplicate jobs. This avoids a race condition with updating the database.
-    with shelve.open(str(job_idx_cache_path), flags="r") as job_idx_cache:
+    with shelve.open(str(job_idx_cache_path), flag="r") as job_idx_cache:
         job_rows = [
             make_job_row(job)
             for job in jobs
