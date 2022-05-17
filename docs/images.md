@@ -26,10 +26,10 @@ can be created and used instead.
 
 `slurm-gcp` supports images built on these OS families:
 
-- RHEL 7/8
-- CentOS 7/8
-- Debian 10
-- Ubuntu 20.04
+- RHEL 7
+- CentOS 7
+- Debian 10 - Coming Soon
+- Ubuntu 20.04 - Coming Soon
 
 ### Installed Software for HPC
 
