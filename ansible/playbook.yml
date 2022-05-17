@@ -73,7 +73,7 @@
   - slurmeventd
   - ompi
   - lustre
-      #- gcsfuse
+  - gcsfuse
   - cloudagents
   - logrotate
   - python
