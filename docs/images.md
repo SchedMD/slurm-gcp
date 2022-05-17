@@ -7,8 +7,10 @@
 
 - [Images](#images)
   - [Overview](#overview)
+    - [Supported Operating Systems](#supported-operating-systems)
     - [Installed Software for HPC](#installed-software-for-hpc)
   - [Public Image](#public-image)
+    - [Published Image Family](#published-image-family)
   - [Custom Image](#custom-image)
     - [Requirements](#requirements)
     - [Creation](#creation)
@@ -24,12 +26,14 @@ source image family which the instance will boot from. SchedMD provides
 software stack for HPC ready images. Otherwise, [custom images](#custom-image)
 can be created and used instead.
 
+### Supported Operating Systems
+
 `slurm-gcp` supports images built on these OS families:
 
 - RHEL 7
 - CentOS 7
-- Debian 10 - Coming Soon
-- Ubuntu 20.04 - Coming Soon
+- Debian 10
+- Ubuntu 20.04
 
 ### Installed Software for HPC
 
@@ -47,6 +51,13 @@ that are minimal viable images for deploying
 > [custom images](#custom-image) but without any additional software and only
 > using clean minimal base images for the source image (e.g.
 > `centos-cloud/centos-7`).
+
+### Published Image Family
+
+- `schedmd-v5-slurm-21-08-8-debian-10`
+- `schedmd-v5-slurm-21-08-8-ubuntu-2004-lts`
+- `schedmd-v5-slurm-21-08-8-centos-7`
+- `schedmd-v5-slurm-21-08-8-hpc-centos-7`
 
 ## Custom Image
 

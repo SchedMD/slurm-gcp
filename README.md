@@ -27,7 +27,7 @@ create and manage [Slurm](./docs/glossary.md#slurm) cluster infrastructure in
 A quickstart guide is found in the
 [GCP-Slurm v5 Quickstart Guide](https://bit.ly/slurm-gcp-v5guide).
 
-See supported [Operating Systems](./docs/images.md).
+See [supported Operating Systems](./docs/images.md#supported-operating-systems).
 
 ### SchedMD
 
