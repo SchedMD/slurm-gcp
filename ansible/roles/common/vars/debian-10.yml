@@ -37,6 +37,7 @@ common_packages:
 - pdsh
 - pkg-config
 - python3
+- python3-gdbm
 - software-properties-common
 - tmux
 - unzip
