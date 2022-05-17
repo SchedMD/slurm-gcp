@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[5.0.1\]
 
 - Disable ConstrainSwapSpace in etc/cgroup.conf.tpl
+- Remove leftover home dir after ansible provisioning of image.
 
 ## \[5.0.0\]
 

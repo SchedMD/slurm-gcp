@@ -131,12 +131,18 @@ build {
     }
   }
 
-
   ### post processor ###
   post-processor "manifest" {
     output = "manifest.json"
 
     strip_path = false
     strip_time = false
+  }
+
+  ### clean up /home/packer ###
+  provisioner "shell" {
+    inline = [
+      "sudo rm -rf /home/packer"
+    ]
   }
 }
