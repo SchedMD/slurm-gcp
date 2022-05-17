@@ -62,7 +62,7 @@
       cuda_init_restart_service: false
       cuda_use_runfile: true
       cuda_runfile_disable_nvidia_drm: true
-      cuda_runfile_url: https://developer.download.nvidia.com/compute/cuda/11.2.2/local_installers/cuda_11.2.2_460.32.03_linux.run
+      cuda_runfile_url: https://developer.download.nvidia.com/compute/cuda/11.4.4/local_installers/cuda_11.4.4_470.82.01_linux.run
   - nfs
   - cgroups
   - munge
