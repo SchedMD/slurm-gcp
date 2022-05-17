@@ -96,6 +96,11 @@ build {
       ### disk ###
       disk_size = source.value.disk_size
       disk_type = source.value.disk_type
+
+      ### metadata ###
+      metadata = {
+        block-project-ssh-keys = "TRUE"
+      }
     }
   }
 
