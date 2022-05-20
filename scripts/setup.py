@@ -850,6 +850,11 @@ innodb_lock_wait_timeout=900
         f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'localhost'";""",
         timeout=30,
     )
+    run(
+        f"""{mysql} "drop user 'slurm'@'{lkp.control_host}'";""",
+        timeout=30,
+        check=False,
+    )
     run(f"""{mysql} "create user 'slurm'@'{lkp.control_host}'";""", timeout=30)
     run(
         f"""{mysql} "grant all on slurm_acct_db.* TO 'slurm'@'{lkp.control_host}'";""",
