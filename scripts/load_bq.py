@@ -287,6 +287,9 @@ def update_job_idx_cache(jobs, timestamp):
 
 
 def main():
+    if not cfg.enable_bigquery_load:
+        print("bigquery load is not currently enabled")
+        exit(0)
     init_table()
 
     start, end = get_time_window()

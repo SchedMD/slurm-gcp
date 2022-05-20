@@ -947,10 +947,9 @@ def setup_controller():
     run("systemctl status slurmeventd", timeout=30)
 
     slurmsync.sync_slurm()
-    if cfg.enable_bigquery_load:
-        run("systemctl enable slurm_load_bq.timer", timeout=30)
-        run("systemctl start slurm_load_bq.timer", timeout=30)
-        run("systemctl status slurm_load_bq.timer", timeout=30)
+    run("systemctl enable slurm_load_bq.timer", timeout=30)
+    run("systemctl start slurm_load_bq.timer", timeout=30)
+    run("systemctl status slurm_load_bq.timer", timeout=30)
 
     log.info("Done setting up controller")
     pass
