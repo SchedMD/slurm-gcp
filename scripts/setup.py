@@ -135,10 +135,12 @@ def dict_to_conf(conf, delim=" "):
     def filter_conf(pair):
         k, v = pair
         if isinstance(v, list):
-            v = ",".join(el for el in v if el)
-        return k, (v or None)
+            v = ",".join(el for el in v if el is not None)
+        return k, (v if bool(v) or v == 0 else None)
 
-    return delim.join(f"{k}={v}" for k, v in map(filter_conf, conf.items()) if v)
+    return delim.join(
+        f"{k}={v}" for k, v in map(filter_conf, conf.items()) if v is not None
+    )
 
 
 def make_cloud_conf(lkp=lkp, cloud_parameters=None):

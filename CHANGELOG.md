@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[5.0.2\]
 
 - Fix applying enable_bigquery_load to an existing cluster
+- Fix setting resume/suspend_rate
 
 ## \[5.0.1\]
 
