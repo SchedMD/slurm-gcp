@@ -181,12 +181,15 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
         }
         prolog_path = Path(dirs.custom_scripts / "prolog.d")
         epilog_path = Path(dirs.custom_scripts / "epilog.d")
+        any_exclusive = any(
+            bool(p.enable_job_exclusive) for p in lkp.cfg.partitions.values()
+        )
         conf_options = {
             **(comma_params if not no_comma_params else {}),
             "Prolog": f"{prolog_path}/*" if lkp.cfg.prolog_scripts else None,
             "Epilog": f"{epilog_path}/*" if lkp.cfg.epilog_scripts else None,
-            "PrologSlurmctld": f"{scripts_dir}/resume.py",
-            "EpilogSlurmctld": f"{scripts_dir}/suspend.py",
+            "PrologSlurmctld": f"{scripts_dir}/resume.py" if any_exclusive else None,
+            "EpilogSlurmctld": f"{scripts_dir}/suspend.py" if any_exclusive else None,
             "SuspendProgram": f"{scripts_dir}/suspend.py",
             "ResumeProgram": f"{scripts_dir}/resume.py",
             "ResumeFailProgram": f"{scripts_dir}/suspend.py",

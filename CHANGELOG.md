@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 - Fix applying enable_bigquery_load to an existing cluster
 - Fix setting resume/suspend_rate
+- Do not set PrologSlurmctld and EpilogSlurmctld when no partitions have
+  enable_job_exclusive.
 
 ## \[5.0.1\]
 
