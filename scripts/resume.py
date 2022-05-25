@@ -292,13 +292,15 @@ def create_placement_groups(job_id, node_list, partition_name):
     model = next(iter(node_list))
     region = lkp.node_region(model)
 
-    requests = [
-        create_placement_request(group, region) for group, incl_nodes in groups.items()
-    ]
+    requests = {
+        group: create_placement_request(group, region)
+        for group, incl_nodes in groups.items()
+    }
     done, failed = batch_execute(requests)
     if failed:
         reqs = [f"{e}" for _, e in failed.values()]
         log.fatal("failed to create placement policies: {}".format("\n".join(reqs)))
+    log.info(f"created {len(done)} placement groups ({','.join(done.keys())})")
     return reverse_groups
 
 
