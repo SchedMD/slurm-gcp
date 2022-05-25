@@ -282,7 +282,7 @@ def create_placement_request(pg_name, region):
 
 
 def create_placement_groups(job_id, node_list, partition_name):
-    PLACEMENT_MAX_CNT = 22
+    PLACEMENT_MAX_CNT = 150
     groups = {
         f"{cfg.slurm_cluster_name}-{partition_name}-{job_id}-{i}": nodes
         for i, nodes in enumerate(chunked(node_list, n=PLACEMENT_MAX_CNT))

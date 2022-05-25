@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fix setting resume/suspend_rate
 - Do not set PrologSlurmctld and EpilogSlurmctld when no partitions have
   enable_job_exclusive.
+- Change max size of placement group to 150.
 
 ## \[5.0.1\]
 
