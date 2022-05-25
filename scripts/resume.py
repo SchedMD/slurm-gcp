@@ -308,12 +308,15 @@ def valid_placement_nodes(job_id, nodelist):
         for node in nodelist
     }
     fail = False
+    valid_types = ["c2", "c2d"]
     for prefix, machine_type in machine_types.items():
-        if machine_type.split("-")[0] not in ("c2", "c2d"):
+        if machine_type.split("-")[0] not in valid_types:
             log.error(f"Unsupported machine type for placement policy: {machine_type}.")
             fail = True
     if fail:
-        log.error("Please use c2 or c2d machine types with placement policy")
+        log.error(
+            f"Please use a valid machine type with placement policy: ({','.join(valid_types)})"
+        )
         hold_job(
             job_id, "Node machine type in partition does not support placement policy."
         )
