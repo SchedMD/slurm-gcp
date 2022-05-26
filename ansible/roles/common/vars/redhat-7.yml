@@ -17,6 +17,7 @@ common_packages:
 - '@Development tools'
 - autoconf
 - automake
+- bash-completion
 - clang
 - curl
 - deltarpm

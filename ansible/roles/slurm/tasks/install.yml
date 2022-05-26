@@ -79,6 +79,12 @@
     src: profile.d/slurm.sh.j2
     dest: /etc/profile.d/slurm.sh
 
+- name: Add Slurm shell completion
+  file:
+    src: '{{slurm_paths.src}}/contribs/slurm_completion_help/slurm_completion.sh'
+    dest: /etc/bash_completion.d/slurm
+    state: link
+
 - name: Symbolic Link Directory
   file:
     src: '{{slurm_paths.etc}}'

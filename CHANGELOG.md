@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Change max size of placement group to 150.
 - Allow a2 machine types in placement groups.
 - Constrain length of variables that influence resource names.
+- Add Slurm shell completion script to environment.
 
 ## \[5.0.1\]
 

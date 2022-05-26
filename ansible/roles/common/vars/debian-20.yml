@@ -16,6 +16,7 @@
 common_packages:
 - autoconf
 - automake
+- bash-completion
 - build-essential
 - clang
 - curl
