@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
   enable_job_exclusive.
 - Change max size of placement group to 150.
 - Allow a2 machine types in placement groups.
+- Constrain length of variables that influence resource names.
 
 ## \[5.0.1\]
 
