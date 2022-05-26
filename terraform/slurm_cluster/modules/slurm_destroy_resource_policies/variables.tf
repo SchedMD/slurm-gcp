@@ -19,8 +19,8 @@ variable "slurm_cluster_name" {
   type        = string
 
   validation {
-    condition     = length(var.slurm_cluster_name) > 0
-    error_message = "The slurm_cluster_name must not be empty."
+    condition     = can(regex("^[a-z](?:[a-z0-9]*)$", var.slurm_cluster_name))
+    error_message = "Variable 'slurm_cluster_name' must be a match of regex '^[a-z](?:[a-z0-9]*)$'."
   }
 }
 
@@ -28,6 +28,11 @@ variable "partition_name" {
   description = "Partition name."
   type        = string
   default     = ""
+
+  validation {
+    condition     = length(var.partition_name) > 0 ? can(regex("^[a-z](?:[a-z0-9]*)$", var.partition_name)) : true
+    error_message = "Variable 'partition_name' must be a match of regex '^[a-z](?:[a-z0-9]*)$'."
+  }
 }
 
 variable "triggers" {
