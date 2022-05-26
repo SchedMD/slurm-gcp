@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Do not set PrologSlurmctld and EpilogSlurmctld when no partitions have
   enable_job_exclusive.
 - Change max size of placement group to 150.
+- Allow a2 machine types in placement groups.
 
 ## \[5.0.1\]
 
