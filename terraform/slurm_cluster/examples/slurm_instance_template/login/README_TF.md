@@ -27,8 +27,8 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.11.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.1.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | 4.22.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.2.0 |
 
 ## Modules
 
