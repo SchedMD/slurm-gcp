@@ -24,8 +24,8 @@ variable "slurm_cluster_name" {
   description = "Cluster name, used for resource naming and slurm accounting."
 
   validation {
-    condition     = can(regex("^[a-z](?:[a-z0-9]*)$", var.slurm_cluster_name))
-    error_message = "Variable 'slurm_cluster_name' must be a match of regex '^[a-z](?:[a-z0-9]*)$'."
+    condition     = can(regex("^[a-z](?:[a-z0-9]{0,9})$", var.slurm_cluster_name))
+    error_message = "Variable 'slurm_cluster_name' must be a match of regex '^[a-z](?:[a-z0-9]{0,9})$'."
   }
 }
 
@@ -34,8 +34,8 @@ variable "partition_name" {
   type        = string
 
   validation {
-    condition     = can(regex("^[a-z](?:[a-z0-9]*)$", var.partition_name))
-    error_message = "Variable 'partition_name' must be a match of regex '^[a-z](?:[a-z0-9]*)$'."
+    condition     = can(regex("^[a-z](?:[a-z0-9]{0,6})$", var.partition_name))
+    error_message = "Variable 'partition_name' must be a match of regex '^[a-z](?:[a-z0-9]{0,6})$'."
   }
 }
 
@@ -128,9 +128,9 @@ EOD
 
   validation {
     condition = alltrue([
-      for x in var.partition_nodes : can(regex("^[a-z](?:[a-z0-9]*)$", x.group_name))
+      for x in var.partition_nodes : can(regex("^[a-z](?:[a-z0-9]{0,5})$", x.group_name))
     ])
-    error_message = "Items 'group_name' must be a match of regex '^[a-z](?:[a-z0-9]*)$'."
+    error_message = "Items 'group_name' must be a match of regex '^[a-z](?:[a-z0-9]{0,5})$'."
   }
 
   validation {
