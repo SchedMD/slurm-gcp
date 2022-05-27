@@ -51,6 +51,7 @@
       --prefix={{slurm_paths.install}}
       --sysconfdir={{slurm_paths.etc}}
       --with-jwt={{slurm_paths.install}}
+      --with-systemdsystemunitdir=/usr/lib/systemd/system/
       > /dev/null
     chdir: '{{slurm_paths.build}}'
 

@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Allow a2 machine types in placement groups.
 - Constrain length of variables that influence resource names.
 - Add Slurm shell completion script to environment.
+- Use Slurm service files compiled from source.
 
 ## \[5.0.1\]
 

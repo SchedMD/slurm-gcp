@@ -13,33 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Install Slurmdbd Service
-  template:
-    src: systemd/slurmdbd.service.j2
-    dest: /usr/lib/systemd/system/slurmdbd.service
-    mode: 0o644
-  notify: Handle Slurmdbd Service
-
-- name: Install Slurmctld Service
-  template:
-    src: systemd/slurmctld.service.j2
-    dest: /usr/lib/systemd/system/slurmctld.service
-    mode: 0o644
-  notify: Handle Slurmctld Service
-
 - name: Install Slurmrestd Service
   template:
     src: systemd/slurmrestd.service.j2
     dest: /usr/lib/systemd/system/slurmrestd.service
     mode: 0o644
   notify: Handle Slurmrestd Service
-
-- name: Install Slurmd Service
-  template:
-    src: systemd/slurmd.service.j2
-    dest: /usr/lib/systemd/system/slurmd.service
-    mode: 0o644
-  notify: Handle Slurmd Service
 
 - name: Install slurm_load_bigquery Service
   template:
