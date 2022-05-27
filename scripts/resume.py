@@ -59,6 +59,14 @@ def instance_properties(partition, model):
         }
     ]
 
+    if node_group.bandwidth_tier == "virtio_enabled":
+        props.networkInterfaces[0]["nicType"] = "VirtioNet"
+    elif node_group.bandwidth_tier in ["tier_1_enabled", "gvnic_enabled"]:
+        props.networkInterfaces[0]["nicType"] = "gVNIC"
+
+    if node_group.bandwidth_tier == "tier_1_enabled":
+        props.networkPerformanceConfig = {"totalEgressBandwidthTier": "TIER_1"}
+
     slurm_metadata = {
         "slurm_cluster_name": cfg.slurm_cluster_name,
         "slurm_instance_role": "compute",

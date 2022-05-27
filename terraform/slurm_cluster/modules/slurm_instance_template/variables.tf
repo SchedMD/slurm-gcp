@@ -193,6 +193,26 @@ variable "preemptible" {
   default     = false
 }
 
+variable "bandwidth_tier" {
+  description = <<EOD
+  Tier 1 bandwidth increases the maximum egress bandwidth for VMs.
+  Using the `tier_1_enabled` setting will enable both gVNIC and TIER_1 higher bandwidth networking.
+  Using the `gvnic_enabled` setting will only enable gVNIC and will not enable TIER_1.
+  Using the `virtio_enabled` setting will enable VirtIO which does not support TIER_1.
+  Using the `platform_default` setting will allow the Google Cloud Platform API to decide the network interface to use.
+  NOTE: TIER_1 only works with specific machine families and shapes, and requires an image that supports gVNIC.
+  See [official docs](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration)
+  for more details.
+  EOD
+  type        = string
+  default     = "platform_default"
+
+  validation {
+    condition     = contains(["platform_default", "virtio_enabled", "gvnic_enabled", "tier_1_enabled"], var.bandwidth_tier)
+    error_message = "Allowed values for bandwidth_tier are 'platform_default', 'virtio_enabled', 'gvnic_enabled', or  'tier_1_enabled'."
+  }
+}
+
 ############
 # METADATA #
 ############

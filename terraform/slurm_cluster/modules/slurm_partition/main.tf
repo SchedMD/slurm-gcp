@@ -49,6 +49,8 @@ locals {
           range(offset, min(offset + 1024, sum([x.node_count_dynamic_max, x.node_count_static])))
         )
       ])
+      # Additional Features
+      bandwidth_tier = x.bandwidth_tier != null ? x.bandwidth_tier : local.bandwidth_tier
       # Beta Features
       enable_spot_vm       = x.enable_spot_vm
       spot_instance_config = x.spot_instance_config != null ? x.spot_instance_config : local.spot_instance_config
@@ -61,6 +63,8 @@ locals {
   ]) && alltrue([for x in local.partition_nodes : x.node_count_static == 0])
 
   compute_list = flatten([for x in local.partition.partition_nodes : x.node_list])
+
+  bandwidth_tier = "platform_default"
 
   spot_instance_config = {
     termination_action = "STOP"
@@ -209,6 +213,7 @@ module "reconfigure_node_groups" {
 
   triggers = {
     instance_template    = each.value.instance_template
+    bandwidth_tier       = each.value.bandwidth_tier
     spot_instance_config = each.value.enable_spot_vm ? sha256(jsonencode(each.value.spot_instance_config)) : null
   }
 

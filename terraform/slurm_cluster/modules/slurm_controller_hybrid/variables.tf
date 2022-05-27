@@ -201,6 +201,7 @@ variable "partitions" {
       partition_nodes = map(object({
         node_count_dynamic_max = number
         node_count_static      = number
+        bandwidth_tier         = string
         enable_spot_vm         = bool
         group_name             = string
         instance_template      = string

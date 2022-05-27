@@ -176,6 +176,7 @@ partitions = [
         instance_template = null
 
         # Instance Definition
+        bandwidth_tier = "platform_default"
         enable_spot_vm = false
         spot_instance_config = {
           termination_action = "STOP"
@@ -234,6 +235,7 @@ partitions = [
         instance_template = null
 
         # Instance Definition
+        bandwidth_tier = "platform_default"
         enable_spot_vm = false
         spot_instance_config = {
           termination_action = "STOP"
