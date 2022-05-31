@@ -163,9 +163,9 @@ def create_instance(compute, instance_def, node_list, placement_group_name):
             {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
         ]
 
-    if instance_def.bandwidth_tier == 'not_enabled':
+    if instance_def.bandwidth_tier == 'virtio_enabled':
         config['networkInterfaces'][0]['nicType'] = 'VirtioNet'
-    else:
+    elif instance_def.bandwidth_tier in ['tier_1_enabled', 'gvnic_enabled']:
         config['networkInterfaces'][0]['nicType'] = 'gVNIC'
 
     if instance_def.bandwidth_tier == 'tier_1_enabled':
