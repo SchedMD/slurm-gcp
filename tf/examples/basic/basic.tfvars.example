@@ -117,6 +117,7 @@ partitions = [
     enable_placement     = false
     regional_capacity    = false
     regional_policy      = {}
+    bandwidth_tier       = "platform_default"
     instance_template    = null
   },
   #  { name                 = "partition2"
@@ -160,6 +161,26 @@ partitions = [
   #            }
   #        }
   #    }
+  #
+  #    # allowed values of bandwidth_tier are
+  #    # 1) "platform_default"
+  #    # 2) "virtio_enabled"
+  #    # 3) "gvnic_enabled"
+  #    # 4) "tier_1_enabled"
+  #    # These specify:
+  #    # 1) use the default networking behavior of Google Compute Engine
+  #    # 2) use the VirtioNet adapter in VMs
+  #    # 3) enabling the gVNIC network adapter on images such as the "HPC VM
+  #         Image" that support gVNIC
+  #    # 4) enabling both the gVNIC network adapter and increased "Tier 1"
+  #    #    network bandwidth. Tier 1 networking can only be enabled on VMs
+  #    #    with minimum core counts. For example, VM creation will fail if
+  #    #    Tier 1 networking is enabled on an N2 VM with fewer than 30 vCPUs.
+  #    #    See the link below for full details:
+  #    #
+  #    # https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration
+  #
+  #    bandwidth_tier       = "platform_default"
   #
   #    # When specifying an instance template, specified compute fields will
   #    # override the template properties.
