@@ -366,8 +366,8 @@ def main(arg_nodes, arg_job_id):
 
     if (arg_job_id and
             cfg.instance_defs[pid].enable_placement):
-        supported_placements = ["c2", "c2d", "a2"]
-        if cfg.instance_defs[pid].machine_type.split('-')[0] in supported_placements:
+        supported_placements = ["c2", "c2d", "a2", "n2", "n2d"]
+        if cfg.instance_defs[pid].machine_type.split('-')[0] not in supported_placements:
             msg = (
                 "Unsupported placement policy configuration. "
                 "Supported machine types are: {}".format(
