@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Constrain length of variables that influence resource names.
 - Add Slurm shell completion script to environment.
 - Use Slurm service files compiled from source.
+- Mitigate importlib.util failing on python > 3.8
 
 ## \[5.0.1\]
 

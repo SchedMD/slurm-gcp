@@ -15,7 +15,7 @@
 # limitations under the License.
 
 import httplib2
-import importlib
+import importlib.util
 import logging
 import logging.config
 import os
