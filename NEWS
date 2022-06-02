@@ -1,6 +1,9 @@
 Changes in Slurm-GCP 4.2.0
 ==========================
  -- Add placement group support for c2d and a2
+ -- Add network tier support, including gVNIC and VirtioNet. This adds the field
+    'bandwidth_tier' to partitions in tfvars.
+    This field must be added to existing tfvars.
 
 Changes in Slurm-GCP 4.1.8
 ==========================
