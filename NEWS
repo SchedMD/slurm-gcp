@@ -4,6 +4,7 @@ Changes in Slurm-GCP 4.2.0
  -- Add network tier support, including gVNIC and VirtioNet. This adds the field
     'bandwidth_tier' to partitions in tfvars.
     This field must be added to existing tfvars.
+ -- Add complete_wait_time field to DM
 
 Changes in Slurm-GCP 4.1.8
 ==========================

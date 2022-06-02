@@ -186,6 +186,15 @@ properties:
     minimum     : 10
     maximum     : 64000
     description : Size of disk for the secondary disk.
+  
+  complete_wait_time:
+    type: integer
+    default: 60
+    description: The time to wait, in seconds, when any job is in the COMPLETING
+                 state before any additional jobs are scheduled. This  is  to 
+                 attempt to keep jobs on nodes that were recently in use, with 
+                 the goal of preventing fragmentation.  If set to zero, pending
+                 jobs will be started as soon as possible.
 
   compute_node_scopes:
     type        : array
