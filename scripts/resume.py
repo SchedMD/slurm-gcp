@@ -336,9 +336,12 @@ def main(arg_nodes, arg_job_id):
         f"{SCONTROL} show config | "
         "awk '/SuspendExcNodes.*=/{print $3}'", shell=True,
         get_stdout=True).stdout
-    nodes_exc_str = util.run(f"{SCONTROL} show hostnames {exc_nodes_hostlist}",
-                             check=True, get_stdout=True).stdout
-    node_exc_list = sorted(nodes_exc_str.splitlines(), key=util.get_pid)
+    node_exc_list = []
+    if exc_nodes_hostlist != '(null)':
+        nodes_exc_str = util.run(
+            f"{SCONTROL} show hostnames {exc_nodes_hostlist}",
+            check=True, get_stdout=True).stdout
+        node_exc_list = sorted(nodes_exc_str.splitlines(), key=util.get_pid)
 
     placement_groups = None
     pid = util.get_pid(node_list[0])
