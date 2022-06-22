@@ -52,7 +52,7 @@ tags = [
 # PROVISION #
 #############
 
-slurm_version = "21.08.8-2"
+slurm_version = "22.05.2"
 
 # Disable some ansible roles here; they are enabled by default
 # install_cuda = false

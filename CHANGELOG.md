@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Fix lustre rpm download url for image creation.
 - Remove erroring and redundant package libpam-dev from debian image creation.
 - Upgrade python library google-cloud-storage to ~2.0.
+- Upgrade Slurm to 22.05.2.
 
 ## \[5.0.1\]
 

@@ -6,5 +6,4 @@ CgroupAutomount=no
 ConstrainCores=yes
 ConstrainRamSpace=yes
 ConstrainSwapSpace=no
-TaskAffinity=no
 ConstrainDevices=yes
