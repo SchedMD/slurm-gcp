@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Mitigate importlib.util failing on python > 3.8
 - Add options to build lighter-weight images by disabling some ansible roles
   (eg. CUDA).
+- Fix lustre rpm download url for image creation.
 
 ## \[5.0.1\]
 

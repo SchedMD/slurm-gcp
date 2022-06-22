@@ -13,10 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-lustre_rpm_url: https://downloads.whamcloud.com/public/lustre/latest-release/el{{ansible_distribution_major_version}}/client/RPMS/x86_64
+# lustre added minor versions to the url, but ansible doesn't expose that for redhat
+el_versions:
+  '7': el7.9
+  '8': el8.5
+el_version: "{{ vars.el_versions.get(ansible_distribution_major_version, 'el7.9')\
+  \ }}"
+
+lustre_rpm_url: https://downloads.whamcloud.com/public/lustre/latest-release/{{ el_version
+  }}/client/RPMS/x86_64
 lustre_rpm_files:
 - kmod-lustre-client-2*.rpm
 - lustre-client-2*.rpm
-lustre_srpm_url: https://downloads.whamcloud.com/public/lustre/latest-release/el{{ansible_distribution_major_version}}/client/SRPMS
+lustre_srpm_url: https://downloads.whamcloud.com/public/lustre/latest-release/{{ el_version
+  }}/client/SRPMS
 lustre_srpm_files:
 - lustre-client-dkms-2*.src.rpm
