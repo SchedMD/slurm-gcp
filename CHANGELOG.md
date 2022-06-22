@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Add options to build lighter-weight images by disabling some ansible roles
   (eg. CUDA).
 - Fix lustre rpm download url for image creation.
+- Remove erroring and redundant package libpam-dev from debian image creation.
 
 ## \[5.0.1\]
 

@@ -30,7 +30,6 @@ slurm_packages:
 - liblz4-dev
 - libncurses-dev
 - libnuma-dev
-- libpam-dev
 - libpam0g-dev
 - libperl-dev
 - libreadline-dev
