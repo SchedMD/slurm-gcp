@@ -23,6 +23,14 @@ locals {
 
   ansible_dir = "../ansible"
   scripts_dir = "../scripts"
+
+  ansible_vars = {
+    slurm_version = var.slurm_version
+    install_cuda = var.install_cuda
+    install_ompi = var.install_ompi
+    install_lustre = var.install_lustre
+    install_gcsfuse = var.install_gcsfuse
+  }
 }
 
 ##########
@@ -113,7 +121,7 @@ build {
     ]
     extra_arguments = [
       "--extra-vars",
-      "slurm_version=${var.slurm_version}",
+      "${jsonencode(local.ansible_vars)}",
     ]
     use_proxy = false
   }

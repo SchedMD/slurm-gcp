@@ -129,6 +129,30 @@ variable "prefix" {
   }
 }
 
+variable "install_cuda" {
+  description = "enable install of cuda and nvidia driver"
+  type = bool
+  default = true
+}
+
+variable "install_ompi" {
+  description = "enable install of OpenMPI"
+  type = bool
+  default = true
+}
+
+variable "install_lustre" {
+  description = "enable install of lustre fs client driver"
+  type = bool
+  default = true
+}
+
+variable "install_gcsfuse" {
+  description = "enable install of GCS fuse driver"
+  type = bool
+  default = true
+}
+
 ##########
 # BUILDS #
 ##########

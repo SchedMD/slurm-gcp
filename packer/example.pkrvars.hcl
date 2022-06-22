@@ -54,6 +54,12 @@ tags = [
 
 slurm_version = "21.08.8-2"
 
+# Disable some ansible roles here; they are enabled by default
+# install_cuda = false
+# install_ompi = false
+# install_lustre = false
+# install_gcsfuse = false
+
 prefix = "schedmd"
 
 ##########
