@@ -317,7 +317,7 @@ def install_cuda():
     nvidia_run = TMPDIR/f'NVIDIA-Linux-x86_64-{nvidia_version}.run'
     nvidia_url = f'https://us.download.nvidia.com/tesla/{nvidia_version}/{nvidia_run.name}'
     util.run(f"wget -nv {nvidia_url} -O {nvidia_run}")
-    util.run(f"bash {nvidia_run} --silent --dkms")
+    util.run(f"bash {nvidia_run} --silent --dkms --no-drm")
 
     cuda_version = '11.2.2'
     cuda_driver_version = '460.32.03'

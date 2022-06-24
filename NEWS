@@ -1,6 +1,7 @@
 Changes in Slurm-GCP 4.2.1
 ==========================
  -- Fix gcsfuse network mounts failing due to unsupported mount option 'nonempty'.
+ -- Remove gpu requirement for foundry instances.
 
 Changes in Slurm-GCP 4.2.0
 ==========================

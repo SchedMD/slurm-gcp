@@ -49,9 +49,6 @@ properties:
   serviceAccounts:
   - email: default
     scopes: ['https://www.googleapis.com/auth/cloud-platform']
-  guestAccelerators:
-    - acceleratorType: projects/slurm-184304/zones/{zone}/acceleratorTypes/nvidia-tesla-v100
-      acceleratorCount: 1
   scheduling:
     onHostMaintenance: TERMINATE
   labels: {{}}
