@@ -33,6 +33,15 @@ repos:
     - --sequence=2
     - --offset=0
     - --width=80
+- repo: local
+  hooks:
+  - id: packer_fmt
+    name: Packer fmt
+    entry: packer fmt -recursive .
+    files: \.pkr(vars)?\.hcl$
+    language: system
+    types: [file, text]
+    pass_filenames: false
 - repo: https://github.com/antonbabenko/pre-commit-terraform
   rev: v1.64.1
   hooks:
