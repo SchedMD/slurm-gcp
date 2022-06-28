@@ -12,6 +12,7 @@
     - [Cloud](#cloud)
     - [Hybrid](#hybrid)
     - [Multi-Cluster/Federation](#multi-clusterfederation)
+  - [Upgrade to v5](#upgrade-to-v5)
   - [Help and Support](#help-and-support)
 
 <!-- mdformat-toc end -->
@@ -66,6 +67,10 @@ Two or more clusters are connected, allowing for jobs to be submitted from and
 ran on different clusters. This can be a mix between onprem and cloud clusters.
 
 See the [Federated Cluster Guide](./docs/federation.md) for details.
+
+## Upgrade to v5
+
+See the [Upgrade to v5 Guide](./docs/upgrade_to_v5.md) for details.
 
 ## Help and Support
 
