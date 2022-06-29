@@ -24,6 +24,7 @@ repos:
     exclude: README_TF\.md
     additional_dependencies:
     - mdformat-toc
+    - mdformat-tables
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
   rev: 0.1.1
   hooks:
