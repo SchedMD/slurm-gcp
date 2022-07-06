@@ -336,6 +336,8 @@ def load_config_data(config):
         cfg.slurm_log_dir = dirs.log
     if not cfg.slurm_bin_dir:
         cfg.slurm_bin_dir = slurmdirs.prefix / "bin"
+    if not cfg.slurm_control_host:
+        cfg.slurm_control_host = f"{cfg.slurm_cluster_name}-controller"
     return cfg
 
 
@@ -354,8 +356,8 @@ def new_config(config):
         ),
     )
     for netstore in network_storage_iter:
-        if netstore.server_ip == "$controller":
-            netstore.server_ip = cfg.slurm_cluster_name + "-controller"
+        if not netstore.server_ip or netstore.server_ip == "$controller":
+            netstore.server_ip = cfg.slurm_control_host
     return cfg
 
 

@@ -74,6 +74,7 @@ locals {
     # hybrid
     google_app_cred_path = local.google_app_cred_path
     output_dir           = local.output_dir
+    slurm_control_host   = var.slurm_control_host
     slurm_bin_dir        = local.slurm_bin_dir
     slurm_log_dir        = local.slurm_log_dir
   })

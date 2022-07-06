@@ -125,6 +125,7 @@ locals {
 
   controller_hybrid_config = {
     google_app_cred_path = null
+    slurm_control_host   = null
     slurm_log_dir        = "/var/log/slurm"
     slurm_bin_dir        = "/usr/local/bin"
     output_dir           = "./etc"

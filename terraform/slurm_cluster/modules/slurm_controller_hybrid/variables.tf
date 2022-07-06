@@ -241,6 +241,17 @@ variable "slurm_log_dir" {
   default     = "/var/log/slurm"
 }
 
+variable "slurm_control_host" {
+  type        = string
+  description = <<EOD
+The short, or long, hostname of the machine where Slurm control daemon is
+executed (i.e. the name returned by the command "hostname -s").
+
+See https://slurm.schedmd.com/slurm.conf.html#OPT_SlurmctldHost
+EOD
+  default     = null
+}
+
 variable "cloud_parameters" {
   description = "cloud.conf options."
   type = object({

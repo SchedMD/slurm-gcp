@@ -146,6 +146,7 @@ module "slurm_controller_hybrid" {
   slurm_cluster_name = var.slurm_cluster_name
 
   google_app_cred_path         = var.controller_hybrid_config.google_app_cred_path
+  slurm_control_host           = var.controller_hybrid_config.slurm_control_host
   slurm_bin_dir                = var.controller_hybrid_config.slurm_bin_dir
   slurm_log_dir                = var.controller_hybrid_config.slurm_log_dir
   output_dir                   = var.controller_hybrid_config.output_dir
