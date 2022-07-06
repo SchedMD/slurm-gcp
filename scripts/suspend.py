@@ -141,6 +141,15 @@ def main(nodelist, job_id):
     """main called when run as script"""
     log.debug(f"main {nodelist} {job_id}")
     nodes = util.to_hostnames(nodelist)
+
+    # Filter out nodes not in config.yaml
+    cloud_nodes, local_nodes = lkp.filter_nodes(nodes)
+    log.debug(
+        f"Ignoring local nodes '{util.to_hostlist(local_nodes)}' from '{nodelist}'"
+    )
+    log.debug(f"Using cloud nodes '{util.to_hostlist(cloud_nodes)}' from '{nodelist}'")
+    nodes = cloud_nodes
+
     if job_id is not None:
         _, exclusive = separate(is_exclusive_node, nodes)
         if exclusive:

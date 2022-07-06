@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[5.0.3\]
 
 - Allow configuring controller hostname for hybrid deployments.
+- {resume|suspend}.py ignore nodes not in cloud configuration (config.yaml).
 
 ## \[5.0.2\]
 

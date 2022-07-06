@@ -354,6 +354,15 @@ def main(nodelist, job_id, force=False):
     # nodes are split between normal and exclusive
     # exclusive nodes are handled by PrologSlurmctld
     nodes = expand_nodelist(nodelist)
+
+    # Filter out nodes not in config.yaml
+    cloud_nodes, local_nodes = lkp.filter_nodes(nodes)
+    log.debug(
+        f"Ignoring local nodes '{util.to_hostlist(local_nodes)}' from '{nodelist}'"
+    )
+    log.debug(f"Using cloud nodes '{util.to_hostlist(cloud_nodes)}' from '{nodelist}'")
+    nodes = cloud_nodes
+
     if force:
         exclusive = normal = nodes
         prelog = "force "

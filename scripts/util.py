@@ -1017,6 +1017,33 @@ class Lookup:
     def slurm_node(self, nodename):
         return self.slurm_nodes().get(nodename)
 
+    def cloud_nodes(self):
+        static_nodes = []
+        dynamic_nodes = []
+
+        for partition in lkp.cfg.partitions.values():
+            part_name = partition.partition_name
+            for node_group in partition.partition_nodes.values():
+                static, dynamic = nodeset_lists(node_group, part_name)
+                if static is not None:
+                    static_nodes.extend(to_hostnames(static))
+                if dynamic is not None:
+                    dynamic_nodes.extend(to_hostnames(dynamic))
+
+        return static_nodes, dynamic_nodes
+
+    def filter_nodes(self, nodes):
+        static_nodes, dynamic_nodes = lkp.cloud_nodes()
+
+        all_cloud_nodes = []
+        all_cloud_nodes.extend(static_nodes)
+        all_cloud_nodes.extend(dynamic_nodes)
+
+        cloud_nodes = list(set(nodes).intersection(all_cloud_nodes))
+        local_nodes = list(set(nodes).difference(all_cloud_nodes))
+
+        return cloud_nodes, local_nodes
+
     @lru_cache(maxsize=1)
     def instances(self, project=None, slurm_cluster_name=None):
         slurm_cluster_name = slurm_cluster_name or self.cfg.slurm_cluster_name
