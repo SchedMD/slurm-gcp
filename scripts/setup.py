@@ -63,7 +63,7 @@ ensure_execute = util.ensure_execute
 # monkey patch?
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
-util.config_root_logger(logfile='/tmp/setup.log')
+util.config_root_logger(logfile='/slurm/scripts/setup.log')
 log = logging.getLogger(Path(__file__).name)
 sys.excepthook = util.handle_exception
 

@@ -31,8 +31,10 @@ fi
 URL="http://metadata.google.internal/computeMetadata/v1/instance/attributes"
 HEADER="Metadata-Flavor:Google"
 
-SETUP_MOUNT="/slurm/scripts"
+SETUP_DIR="/slurm/scripts"
 SETUP_SCRIPT="setup.py"
+mkdir -p $SETUP_DIR
+
 if MOUNT=$(curl -f -s -H $HEADER $URL/external-setup-mount); then
 	# repeat apt-get update to avoid lock
 	until apt-get update; do sleep 5; done
@@ -44,26 +46,30 @@ if MOUNT=$(curl -f -s -H $HEADER $URL/external-setup-mount); then
 		OPTIONS="-o $OPTIONS"
 	fi
 
-	cmd="mount -t $TYPE $REMOTE $SETUP_MOUNT $OPTIONS"
+	cmd="mount -t $TYPE $REMOTE $SETUP_DIR $OPTIONS"
 	echo found metadata for external setup script location, mounting
 	echo $cmd
-	mkdir -p $SETUP_MOUNT
-	$cmd
-	cd $SETUP_MOUNT
-	./$SETUP_SCRIPT
-	exit
+    if ! ( $cmd ) ; then
+        echo "Failed to mount external setup from: $REMOTE"
+        exit 1
+    fi
+else
+    SETUP_META="setup-script"
+    cmd="wget -nv --header $HEADER $URL/setup-script -O $SETUP_DIR/$SETUP_SCRIPT"
+    echo $cmd
+    if ! ( $cmd ) ; then
+        echo "Failed to fetch $SETUP_META:$SETUP_SCRIPT from metadata"
+        exit 1
+    fi
+    chmod +x $SETUP_DIR/$SETUP_SCRIPT
 fi
 
-DIR="/tmp"
-SETUP_SCRIPT="setup.py"
-SETUP_META="setup-script"
-cmd="wget -nv --header $HEADER $URL/setup-script -O $DIR/$SETUP_SCRIPT"
-echo $cmd
-if ! ( $cmd ) ; then
-    echo "Failed to fetch $SETUP_META:$SETUP_SCRIPT from metadata"
-    exit 1
+# requests and pyaml are also required, but they are also dependencies of googleapiclient
+if ! ( python3 -c "import googleapiclient" ); then
+    echo "python3 library google-api-python-client not found, installing"
+    pip3 install google-api-python-client
 fi
 
 echo "running python cluster setup script"
-chmod +x $DIR/$SETUP_SCRIPT
-$DIR/$SETUP_SCRIPT
+cd $SETUP_DIR
+$SETUP_DIR/$SETUP_SCRIPT
