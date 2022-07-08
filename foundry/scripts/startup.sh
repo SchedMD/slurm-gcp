@@ -63,6 +63,8 @@ until ( $pacman ${PACKAGES[*]} ) ; do
     sleep 5
 done
 
+echo "pip3 install --upgrade pip"
+pip3 install --upgrade pip
 echo   "pip3 install --upgrade ${PY_PACKAGES[*]}"
 until ( pip3 install --upgrade ${PY_PACKAGES[*]} ) ; do
     echo "pip3 failed to install python packages. Trying again in 5 seconds"
