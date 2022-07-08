@@ -31,7 +31,7 @@ resources:
     machine_type: n1-standard-8
     image_family: "schedmd-slurm-{major}-{minor}-{base}"
     image_name: "schedmd-slurm-{major}-{minor}-{base}-{tag}"
-    slurm_version: 20.11.7
+    slurm_version: 20.11.9
     libjwt_version: v1.13.1
     ompi_version: v4.1.x
     images:
@@ -40,14 +40,12 @@ resources:
       #- base: hpc-centos-7
       #  base_image: projects/cloud-hpc-image-public/global/images/family/hpc-centos-7
       #  packages: *centos-7
-      #- key: centos-8
-      #  base_image: projects/centos-cloud/global/images/family/centos-8
       #- base: debian-10
       #  base_image: projects/debian-cloud/global/images/family/debian-10
       - base: ubuntu-2004
         base_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
         metadata:
           external-slurm-install: |
-            remote: 10.59.176.2:/external_slurm
+            remote: <filestore ip>:<filestore location>
             mount: /opt/slurm
             type: nfs
