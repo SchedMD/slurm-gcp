@@ -1,3 +1,9 @@
+# Alpha TPU VM support
+This branch has alpha support for Cloud TPUs and is currently branched from Slurm-GCP
+version 4.0.3.
+
+Documentation for the TPU VM features is [here](doc/tpu-readme.md)
+
 # Slurm on Google Cloud Platform
 
 The following describes setting up a Slurm cluster using [Google Cloud
