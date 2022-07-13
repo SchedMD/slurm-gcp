@@ -7,7 +7,7 @@ Please note that this MVP does not work with Cloud TPU Nodes.
 
 # Installation 
 
-The slurm for Cloud TPU is under active developed under the `tpu-vm` branch
+The slurm for Cloud TPU is under active developement under the `tpu-vm` branch
 
 ```bash
 git clone https://github.com/SchedMD/slurm-gcp.git .
@@ -16,14 +16,14 @@ git checkout tpu-vm
 
 ## NFS share to store the slurm Binaries
 
-The cloud TPU-VM worker nodes require access to the slurm binaries.The current installation procedure requires that you store the Slurm binaries in an NFS share, such as filestore and make them avaiable to the Cloud TPU-VM workers. This step is required to reduce the boot up time because there currently does not exist a slurm customized tpu-vm image, this might change in the future. 
+The cloud TPU-VM worker nodes require access to the slurm binaries. The current installation procedure requires that you store the Slurm binaries in an NFS share, such as filestore and make them avaiable to the Cloud TPU-VM workers. This step is required to reduce the boot up time because there currently does not exist a Slurm customized tpu-vm image, this might change in the future. 
 
-Staging of the binaries is a two step preocess 1) Create the NFS share, then  2) Use Slurm's [foundry.py](foundry/foundry.py) script to stage the files in the NFS share
+Staging of the binaries is a two step process 1) Create the NFS share, then  2) Use Slurm's [foundry.py](../foundry/foundry.py) script to stage the files in the NFS share
 
 
 ### **Create a NFS share**
 
-Create NFS share using filestore and and grab the ip address. If you are using a custom network other than the `default` network , you can include the optional flag `--network=name="network-other-than-defualt"` to ensure NFS share is created on custom network.
+Create NFS share using filestore and and grab the ip address. If you are using a custom network other than the `default` network , you can include the optional flag `--network=name="network-other-than-default"` to ensure NFS share is created on custom network.
 
 ```bash
 cloudshell$ gcloud beta filestore instances create slurm-nfs --zone=europe-west4-a --tier=BASIC_HDD --file-share=name="custom-slurm-nfs",capacity=1TB 
@@ -45,9 +45,9 @@ CREATE_TIME: 2022-06-21T14:01:17
 
 ### **Modify the `images.yaml` with the nessary medatadata to compile the slurm binary.**
 
-Modify the [images.yaml](foundry/images.yaml) with the  `filestore location` and `filestore ip`. 
+Modify the [images.yaml](../foundry/images.yaml) with the  `filestore location` and `filestore ip`. 
 
-Make sure that the base image is set to `Ubuntu 20.04` in the [images.yaml](foundry/images.yaml), this is the version that Ubuntu version that TPU VM instances run.
+Make sure that the base image is set to `Ubuntu 20.04` in the [images.yaml](../foundry/images.yaml), this is the version that Ubuntu version that TPU VM instances run.
 
 ```
 cloudshell$ cat foundry/images.yaml
@@ -66,7 +66,7 @@ cloudshell$ cat foundry/images.yaml
 
 ### **Use the Cloud Foundry Script to compile and stage the files in the NFS share share**
 
-SchedMD has provided the [external_install_slurm.py](foundry/custom.d/external_install_slurm.py) script that will compile and install
+SchedMD has provided the [external_install_slurm.py](../foundry/custom.d/external_install_slurm.py) script that will compile and install
 slurm to the external mount location in the metadata. The process of creating this image and installing Slurm to the external mount could take as much as **40 minutes**. 
 
 ```bash
@@ -81,7 +81,7 @@ The rest of the Slurm installation follows the offical Slurm GCP installation gu
 
 ### **Edit the tfvars**
 
-Modify the cloud TPU-VM partition configuration in [basic.tfvars](tf/examples/basic/basic.tfvars.example) file
+Modify the cloud TPU-VM partition configuration in [basic.tfvars](../tf/examples/basic/basic.tfvars.example) file
 
 - Modify the project name and default networks
 
@@ -242,7 +242,7 @@ From there you can also check the slurmd log using `systemctl status slurmd` or 
 
 # Addtional customization
 
-You can add additional customization in the tpu-image using the [external_install_slurm.sh](foundry/scripts/custom.d/ external_install_slurm.py) script
+You can add additional customization in the tpu-image using the [external_install_slurm.sh](../foundry/scripts/custom.d/ external_install_slurm.py) script
 
 ```bash
 cloudshell$ ls foundry/scripts/custom.d/external_install_slurm.sh
