@@ -23,10 +23,10 @@ Staging of the binaries is a two step process 1) Create the NFS share, then  2) 
 
 ### **Create a NFS share**
 
-Create NFS share using filestore and and grab the ip address. If you are using a custom network other than the `default` network , you can include the optional flag `--network=name="network-other-than-default"` to ensure NFS share is created on custom network.
+Create NFS share using filestore and and grab the ip address. If you are using a custom network other than the `default` network, you can change the `--network` argument to ensure NFS share is created on custom network.
 
 ```bash
-cloudshell$ gcloud beta filestore instances create slurm-nfs --zone=europe-west4-a --tier=BASIC_HDD --file-share=name="custom-slurm-nfs",capacity=1TB 
+cloudshell$ gcloud beta filestore instances create slurm-nfs --zone=europe-west4-a --tier=BASIC_HDD --file-share=name="custom_slurm_nfs",capacity=1TB --network=name="default"
 ```
 
 Grab the `filestore location` and `filestore ip` and use that in the next step below
@@ -37,7 +37,7 @@ INSTANCE_NAME: nfs-server
 LOCATION: europe-west4-a
 TIER: BASIC_HDD
 CAPACITY_GB: 1024
-FILE_SHARE_NAME: custom-slurm-nfs
+FILE_SHARE_NAME: custom_slurm_nfs
 IP_ADDRESS: 10.1.1.2
 STATE: READY
 CREATE_TIME: 2022-06-21T14:01:17
@@ -58,7 +58,7 @@ cloudshell$ cat foundry/images.yaml
       base_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
       metadata:
         external-slurm-install: |
-          remote: 10.1.1.2:/custom-slurm-nfs
+          remote: 10.1.1.2:/custom_slurm_nfs
           mount: /opt/slurm
           type: nfs
 ...
@@ -127,7 +127,7 @@ cloudshell$ cat tf/examples/basic/basic.tfvars.example
     gpu_type             = null
     network_storage      = [{
       server_ip     = "10.1.1.2"
-      remote_mount  = "/custom-slurm-nfs"
+      remote_mount  = "/custom_slurm_nfs"
       local_mount   = "/opt/slurm"
       fs_type       = "nfs"
 	  mount_options = null
