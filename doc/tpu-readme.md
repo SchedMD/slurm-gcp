@@ -23,10 +23,10 @@ Staging of the binaries is a two step process 1) Create the NFS share, then  2) 
 
 ### **Create a NFS share**
 
-Create NFS share using filestore and and grab the ip address. If you are using a custom network other than the `default` network , you can include the optional flag `--network=name="network-other-than-default"` to ensure NFS share is created on custom network.
+Create NFS share using filestore and and grab the ip address. If you are using a custom network other than the `default` network, you can change the `--network` argument to ensure NFS share is created on custom network.
 
 ```bash
-cloudshell$ gcloud beta filestore instances create slurm-nfs --zone=europe-west4-a --tier=BASIC_HDD --file-share=name="custom-slurm-nfs",capacity=1TB 
+cloudshell$ gcloud beta filestore instances create slurm-nfs --zone=europe-west4-a --tier=BASIC_HDD --file-share=name="custom_slurm_nfs",capacity=1TB --network=name="default"
 ```
 
 Grab the `filestore location` and `filestore ip` and use that in the next step below
