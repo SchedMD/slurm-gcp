@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - Allow configuring controller hostname for hybrid deployments.
 - {resume|suspend}.py ignore nodes not in cloud configuration (config.yaml).
+- Constrain packages in Pipfile and requirements.txt
 
 ## \[5.0.2\]
 
