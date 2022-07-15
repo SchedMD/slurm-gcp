@@ -508,8 +508,12 @@ def chown_slurm(path, mode=None):
             path.touch()
     try:
         shutil.chown(path, user="slurm", group="slurm")
+    except LookupError:
+        log.error(f"User 'slurm' does not exist. Cannot 'chown slurm:slurm {path}'.")
     except PermissionError:
         log.error(f"Not authorized to 'chown slurm:slurm {path}'.")
+    except Exception as err:
+        log.error(err)
 
 
 @contextmanager
