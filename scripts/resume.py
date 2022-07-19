@@ -21,6 +21,7 @@ import os
 import sys
 from pathlib import Path
 from itertools import groupby
+from suspend import delete_placement_groups
 
 import util
 from util import (
@@ -299,6 +300,8 @@ def create_placement_groups(job_id, node_list, partition_name):
     done, failed = batch_execute(requests)
     if failed:
         reqs = [f"{e}" for _, e in failed.values()]
+        # delete any placement groups that managed to be created.
+        delete_placement_groups(job_id, region, partition_name)
         log.fatal("failed to create placement policies: {}".format("\n".join(reqs)))
     log.info(f"created {len(done)} placement groups ({','.join(done.keys())})")
     return reverse_groups

@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
   deployments.
 - Add disable_default_mounts option to terraform modules. This is needed for
   hybrid deployments.
+- Ensure removal of placement groups on failed resume.
 
 ## \[5.0.2\]
 
