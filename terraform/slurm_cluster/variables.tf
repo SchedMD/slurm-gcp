@@ -456,6 +456,20 @@ variable "cloud_parameters" {
   }
 }
 
+variable "disable_default_mounts" {
+  description = <<-EOD
+    Disable default global network storage from the controller
+    * /usr/local/etc/slurm
+    * /etc/munge
+    * /home
+    * /apps
+    If these are disabled, the slurm etc and munge dirs must be added manually,
+    or some other mechanism must be used to synchronize the slurm conf files
+    and the munge key across the cluster.
+    EOD
+  default     = false
+}
+
 variable "network_storage" {
   description = <<EOD
 Storage to mounted on all instances.

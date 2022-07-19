@@ -158,6 +158,8 @@ module "slurm_cluster" {
 
   slurm_cluster_name       = var.slurm_cluster_name
   controller_hybrid_config = local.controller_hybrid_config
+  disable_default_mounts   = var.disable_default_mounts
+  network_storage          = var.network_storage
   enable_hybrid            = true
   partitions               = local.partitions
   project_id               = var.project_id

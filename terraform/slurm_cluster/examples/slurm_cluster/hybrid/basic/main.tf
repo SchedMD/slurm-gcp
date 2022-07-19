@@ -53,6 +53,8 @@ module "slurm_cluster" {
   slurm_cluster_name       = var.slurm_cluster_name
   compute_startup_scripts  = var.compute_startup_scripts
   controller_hybrid_config = var.controller_hybrid_config
+  disable_default_mounts   = var.disable_default_mounts
+  network_storage          = var.network_storage
   enable_devel             = var.enable_devel
   enable_cleanup_compute   = var.enable_cleanup_compute
   enable_bigquery_load     = var.enable_bigquery_load

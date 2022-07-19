@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - Allow hybrid scripts to succeed when slurm user does not exist.
 - Fix pushing cluster config to project metadata in hybrid terraform
   deployments.
+- Add disable_default_mounts option to terraform modules. This is needed for
+  hybrid deployments.
 
 ## \[5.0.2\]
 

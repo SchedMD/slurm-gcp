@@ -126,6 +126,7 @@ module "slurm_controller_instance" {
   enable_reconfigure           = var.enable_reconfigure
   epilog_scripts               = var.epilog_scripts
   login_network_storage        = var.login_network_storage
+  disable_default_mounts       = var.disable_default_mounts
   network_storage              = var.network_storage
   partitions                   = values(module.slurm_partition)[*]
   prolog_scripts               = var.prolog_scripts

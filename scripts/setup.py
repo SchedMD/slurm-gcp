@@ -603,11 +603,15 @@ def resolve_network_storage(partition_name=None):
     }
 
     # seed mounts with the default controller mounts
-    mounts = local_mounts(
-        [
-            NSDict(CONTROL_NFS, local_mount=str(path), remote_mount=str(path))
-            for path in default_mounts
-        ]
+    mounts = (
+        local_mounts(
+            [
+                NSDict(CONTROL_NFS, local_mount=str(path), remote_mount=str(path))
+                for path in default_mounts
+            ]
+        )
+        if not cfg.disable_default_mounts
+        else {}
     )
     # On non-controller instances, entries in network_storage could overwrite
     # default exports from the controller. Be careful, of course
