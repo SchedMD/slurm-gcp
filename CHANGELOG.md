@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Add disable_default_mounts option to terraform modules. This is needed for
   hybrid deployments.
 - Ensure removal of placement groups on failed resume.
+- Add retries and error logging to writing the template info cache file.
 
 ## \[5.0.2\]
 

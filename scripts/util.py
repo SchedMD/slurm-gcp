@@ -565,6 +565,26 @@ def groupby_unsorted(seq, key):
         yield k, (seq[i] for i in idxs)
 
 
+def backoff_delay(start, cap=None, floor=None, mul=1, max_total=None, max_count=None):
+    assert start > 0
+    assert mul > 0
+    count = 1
+    wait = total = start
+    yield start
+    while (max_total is None or total < max_total) and (
+        max_count is None or count < max_count
+    ):
+        wait *= mul
+        if floor is not None:
+            wait = max(floor, wait)
+        if cap is not None:
+            wait = min(cap, wait)
+        total += wait
+        count += 1
+        yield wait
+    return
+
+
 ROOT_URL = "http://metadata.google.internal/computeMetadata/v1"
 
 
@@ -661,16 +681,13 @@ def ensure_execute(request):
     """Handle rate limits and socket time outs"""
 
     retry = 0
-    wait = 1
-    max_wait = 60
-    while True:
+    for wait in backoff_delay(0.5, cap=60, mul=2, max_total=10 * 60):
         try:
             return request.execute()
 
         except googleapiclient.errors.HttpError as e:
             if retry_exception(e):
                 retry += 1
-                wait = min(wait * 2, max_wait)
                 log.error(f"retry:{retry} sleep:{wait} '{e}'")
                 sleep(wait)
                 continue
@@ -1198,12 +1215,18 @@ class Lookup:
         project = project or self.project
 
         # In the event of concurrent write access to the cache, _get_template_info could fail
-        while True:
+        err = None
+        for wait in backoff_delay(0.1, cap=2, mul=1.6, max_count=20):
             try:
                 return self._get_template_info(template_link, project)
-            except OSError:
-                sleep(0.1)
+            except OSError as e:
+                err = e
+                log.debug(f"Failed to access template info cache: {e}")
+                sleep(wait)
                 continue
+        log.fatal(
+            f"Failed to fetch template info and access cache file. Latest error: {err}"
+        )
 
     @lru_cache(maxsize=1)
     def subscriptions(slef, project=None, slurm_cluster_name=None):
