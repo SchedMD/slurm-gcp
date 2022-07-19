@@ -1229,7 +1229,7 @@ class Lookup:
         )
 
     @lru_cache(maxsize=1)
-    def subscriptions(slef, project=None, slurm_cluster_name=None):
+    def subscriptions(self, project=None, slurm_cluster_name=None):
         return subscription_list(
             project_id=project, slurm_cluster_name=slurm_cluster_name
         )
