@@ -174,28 +174,18 @@ def expand_nodelist(nodelist):
 
 def resume_nodes(nodelist, placement_groups=None, exclusive=False):
     """resume nodes in nodelist"""
-
-    def ident_key(n):
-        # ident here will refer to the combination of partition and group
-        return "-".join(
-            (
-                lkp.node_partition_name(n),
-                lkp.node_group_name(n),
-            )
-        )
-
     # support already expanded list
     nodes = nodelist
     if isinstance(nodes, str):
         nodelist = expand_nodelist(nodelist)
 
-    nodes = sorted(nodelist, key=ident_key)
+    nodes = sorted(nodelist, key=lkp.node_prefix)
     if len(nodes) == 0:
         return
     grouped_nodes = {
         ident: chunk
-        for ident, nodes in groupby(nodes, ident_key)
-        for chunk in chunked(nodes, n=BULK_INSERT_LIMIT)
+        for ident, some_nodes in groupby(nodes, lkp.node_prefix)
+        for chunk in chunked(some_nodes, n=BULK_INSERT_LIMIT)
     }
     log.debug(f"grouped_nodes: {grouped_nodes}")
 
