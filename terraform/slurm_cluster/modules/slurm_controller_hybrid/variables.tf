@@ -23,16 +23,6 @@ variable "project_id" {
   description = "Project ID to create resources in."
 }
 
-############
-# METADATA #
-############
-
-variable "metadata" {
-  type        = map(string)
-  description = "Metadata key/value pairs."
-  default     = null
-}
-
 #########
 # SLURM #
 #########
