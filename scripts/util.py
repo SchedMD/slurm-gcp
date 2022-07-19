@@ -1174,13 +1174,38 @@ class Lookup:
         machine_conf.memory = machine.memoryMb - (400 + (30 * gb))
         return machine_conf
 
-    def _get_template_info(self, template_link, project):
-        template_name = template_link.split("/")[-1]
+    @contextmanager
+    def template_cache(self, writeback=False):
+        flag = "c" if writeback else "r"
+        err = None
+        for wait in backoff_delay(0.125, cap=4, mul=2, max_count=20):
+            try:
+                cache = shelve.open(
+                    str(self.template_cache_path), flag=flag, writeback=writeback
+                )
+                break
+            except OSError as e:
+                err = e
+                log.debug(f"Failed to access template info cache: {e}")
+                sleep(wait)
+                continue
+        else:
+            # reached max_count of waits
+            log.fatal(f"Failed to access cache file. Latest error: {err}")
+        try:
+            yield cache
+        finally:
+            cache.close()
 
+    @lru_cache(maxsize=None)
+    def template_info(self, template_link, project=None):
+
+        project = project or self.project
+        template_name = template_link.split("/")[-1]
         # split read and write access to minimize write-lock. This might be a
         # bit slower? TODO measure
         if self.template_cache_path.exists():
-            with shelve.open(str(self.template_cache_path), flag="r") as cache:
+            with self.template_cache() as cache:
                 if template_name in cache:
                     return NSDict(cache[template_name])
 
@@ -1205,28 +1230,10 @@ class Lookup:
             template.gpu_count = 0
 
         # keep write access open for minimum time
-        with shelve.open(str(self.template_cache_path), writeback=True) as cache:
+        with self.template_cache(writeback=True) as cache:
             cache[template_name] = template.to_dict()
 
         return template
-
-    @lru_cache(maxsize=None)
-    def template_info(self, template_link, project=None):
-        project = project or self.project
-
-        # In the event of concurrent write access to the cache, _get_template_info could fail
-        err = None
-        for wait in backoff_delay(0.1, cap=2, mul=1.6, max_count=20):
-            try:
-                return self._get_template_info(template_link, project)
-            except OSError as e:
-                err = e
-                log.debug(f"Failed to access template info cache: {e}")
-                sleep(wait)
-                continue
-        log.fatal(
-            f"Failed to fetch template info and access cache file. Latest error: {err}"
-        )
 
     @lru_cache(maxsize=1)
     def subscriptions(self, project=None, slurm_cluster_name=None):
