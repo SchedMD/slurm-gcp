@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
   hybrid deployments.
 - Ensure removal of placement groups on failed resume.
 - Add retries and error logging to writing the template info cache file.
+- Remove nonempty option from gcsfuse mounts. That option is no longer supported
+  in fusermount3
 
 ## \[5.0.2\]
 

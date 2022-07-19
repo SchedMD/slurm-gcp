@@ -666,8 +666,6 @@ def setup_network_storage():
             mount_options += ["_netdev"]
 
         if fs_type == "gcsfuse":
-            if "nonempty" not in mount_options:
-                mount_options += ["nonempty"]
             fstab_entries.append(
                 "{0}   {1}     {2}     {3}     0 0".format(
                     remote_mount, local_mount, fs_type, ",".join(mount_options)
