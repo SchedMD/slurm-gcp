@@ -16,6 +16,6 @@ more-executors = "2"
 [dev-packages]
 
 [requires]
-# Supports: python >= 3.7
+# Supports: python >= 3.6
 # REF: https://github.com/pypa/pipenv/issues/1050
 python_version = "3"
