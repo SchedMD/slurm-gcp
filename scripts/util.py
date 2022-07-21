@@ -356,7 +356,7 @@ def new_config(config):
         ),
     )
     for netstore in network_storage_iter:
-        if not netstore.server_ip or netstore.server_ip == "$controller":
+        if netstore.server_ip is None or netstore.server_ip == "$controller":
             netstore.server_ip = cfg.slurm_control_host
     return cfg
 
