@@ -150,12 +150,14 @@ See 'main.tf' for valid keys.
 EOD
   type = object({
     google_app_cred_path = string
+    slurm_control_host   = string
     slurm_bin_dir        = string
     slurm_log_dir        = string
     output_dir           = string
   })
   default = {
     google_app_cred_path = null
+    slurm_control_host   = null
     slurm_bin_dir        = "/usr/local/bin"
     slurm_log_dir        = "/var/log/slurm"
     output_dir           = "/etc/slurm"
@@ -452,6 +454,20 @@ variable "cloud_parameters" {
     suspend_rate    = 0
     suspend_timeout = 300
   }
+}
+
+variable "disable_default_mounts" {
+  description = <<-EOD
+    Disable default global network storage from the controller
+    * /usr/local/etc/slurm
+    * /etc/munge
+    * /home
+    * /apps
+    If these are disabled, the slurm etc and munge dirs must be added manually,
+    or some other mechanism must be used to synchronize the slurm conf files
+    and the munge key across the cluster.
+    EOD
+  default     = false
 }
 
 variable "network_storage" {

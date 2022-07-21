@@ -125,6 +125,7 @@ locals {
 
   controller_hybrid_config = {
     google_app_cred_path = null
+    slurm_control_host   = null
     slurm_log_dir        = "/var/log/slurm"
     slurm_bin_dir        = "/usr/local/bin"
     output_dir           = "./etc"
@@ -157,6 +158,8 @@ module "slurm_cluster" {
 
   slurm_cluster_name       = var.slurm_cluster_name
   controller_hybrid_config = local.controller_hybrid_config
+  disable_default_mounts   = var.disable_default_mounts
+  network_storage          = var.network_storage
   enable_hybrid            = true
   partitions               = local.partitions
   project_id               = var.project_id

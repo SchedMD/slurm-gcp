@@ -23,3 +23,16 @@ project_id = "<PROJECT_ID>"
 slurm_cluster_name = "simple"
 
 region = "us-central1"
+
+# Network storage
+# hybrid requires synchronizing the slurm.conf directory and the munge.key from the controller
+disable_default_mounts = true
+network_storage = [
+  # {
+  #   server_ip     = "<storage host>"
+  #   remote_mount  = "/home"
+  #   local_mount   = "/home"
+  #   fs_type       = "nfs"
+  #   mount_options = null
+  # },
+]

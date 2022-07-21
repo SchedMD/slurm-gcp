@@ -21,6 +21,7 @@ import os
 import sys
 from pathlib import Path
 from itertools import groupby
+from suspend import delete_placement_groups
 
 import util
 from util import (
@@ -173,28 +174,18 @@ def expand_nodelist(nodelist):
 
 def resume_nodes(nodelist, placement_groups=None, exclusive=False):
     """resume nodes in nodelist"""
-
-    def ident_key(n):
-        # ident here will refer to the combination of partition and group
-        return "-".join(
-            (
-                lkp.node_partition_name(n),
-                lkp.node_group_name(n),
-            )
-        )
-
     # support already expanded list
     nodes = nodelist
     if isinstance(nodes, str):
         nodelist = expand_nodelist(nodelist)
 
-    nodes = sorted(nodelist, key=ident_key)
+    nodes = sorted(nodelist, key=lkp.node_prefix)
     if len(nodes) == 0:
         return
     grouped_nodes = {
         ident: chunk
-        for ident, nodes in groupby(nodes, ident_key)
-        for chunk in chunked(nodes, n=BULK_INSERT_LIMIT)
+        for ident, some_nodes in groupby(nodes, lkp.node_prefix)
+        for chunk in chunked(some_nodes, n=BULK_INSERT_LIMIT)
     }
     log.debug(f"grouped_nodes: {grouped_nodes}")
 
@@ -299,6 +290,8 @@ def create_placement_groups(job_id, node_list, partition_name):
     done, failed = batch_execute(requests)
     if failed:
         reqs = [f"{e}" for _, e in failed.values()]
+        # delete any placement groups that managed to be created.
+        delete_placement_groups(job_id, region, partition_name)
         log.fatal("failed to create placement policies: {}".format("\n".join(reqs)))
     log.info(f"created {len(done)} placement groups ({','.join(done.keys())})")
     return reverse_groups
@@ -354,6 +347,15 @@ def main(nodelist, job_id, force=False):
     # nodes are split between normal and exclusive
     # exclusive nodes are handled by PrologSlurmctld
     nodes = expand_nodelist(nodelist)
+
+    # Filter out nodes not in config.yaml
+    cloud_nodes, local_nodes = lkp.filter_nodes(nodes)
+    log.debug(
+        f"Ignoring local nodes '{util.to_hostlist(local_nodes)}' from '{nodelist}'"
+    )
+    log.debug(f"Using cloud nodes '{util.to_hostlist(cloud_nodes)}' from '{nodelist}'")
+    nodes = cloud_nodes
+
     if force:
         exclusive = normal = nodes
         prelog = "force "

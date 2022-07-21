@@ -260,6 +260,7 @@ module "slurm_cluster" {
   login_startup_scripts      = var.login_startup_scripts
   login_network_storage      = var.login_network_storage
   login_nodes                = local.login_nodes
+  disable_default_mounts     = var.disable_default_mounts
   network_storage            = var.network_storage
   partitions                 = local.partitions
   project_id                 = var.project_id

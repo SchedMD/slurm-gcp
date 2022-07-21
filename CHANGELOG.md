@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[5.0.3\]
+
+- Allow configuring controller hostname for hybrid deployments.
+- {resume|suspend}.py ignore nodes not in cloud configuration (config.yaml).
+- Constrain packages in Pipfile and requirements.txt
+- Allow hybrid scripts to succeed when slurm user does not exist.
+- Fix pushing cluster config to project metadata in hybrid terraform
+  deployments.
+- Add disable_default_mounts option to terraform modules. This is needed for
+  hybrid deployments.
+- Ensure removal of placement groups on failed resume.
+- Add retries and error logging to writing the template info cache file.
+- Remove nonempty option from gcsfuse mounts. That option is no longer supported
+  in fusermount3
+- Restore lustre download url in ansible role. The url change was reverted.
+
 ## \[5.0.2\]
 
 - Fix applying enable_bigquery_load to an existing cluster

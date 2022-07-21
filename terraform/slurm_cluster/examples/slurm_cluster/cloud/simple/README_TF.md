@@ -26,7 +26,7 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.22.0 |
+| <a name="provider_google"></a> [google](#provider\_google) | 4.29.0 |
 
 ## Modules
 

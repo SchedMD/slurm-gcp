@@ -336,6 +336,8 @@ def load_config_data(config):
         cfg.slurm_log_dir = dirs.log
     if not cfg.slurm_bin_dir:
         cfg.slurm_bin_dir = slurmdirs.prefix / "bin"
+    if not cfg.slurm_control_host:
+        cfg.slurm_control_host = f"{cfg.slurm_cluster_name}-controller"
     return cfg
 
 
@@ -354,8 +356,8 @@ def new_config(config):
         ),
     )
     for netstore in network_storage_iter:
-        if netstore.server_ip == "$controller":
-            netstore.server_ip = cfg.slurm_cluster_name + "-controller"
+        if netstore.server_ip is None or netstore.server_ip == "$controller":
+            netstore.server_ip = cfg.slurm_control_host
     return cfg
 
 
@@ -506,8 +508,12 @@ def chown_slurm(path, mode=None):
             path.touch()
     try:
         shutil.chown(path, user="slurm", group="slurm")
+    except LookupError:
+        log.error(f"User 'slurm' does not exist. Cannot 'chown slurm:slurm {path}'.")
     except PermissionError:
         log.error(f"Not authorized to 'chown slurm:slurm {path}'.")
+    except Exception as err:
+        log.error(err)
 
 
 @contextmanager
@@ -557,6 +563,26 @@ def groupby_unsorted(seq, key):
         indices[key(el)].append(i)
     for k, idxs in indices.items():
         yield k, (seq[i] for i in idxs)
+
+
+def backoff_delay(start, cap=None, floor=None, mul=1, max_total=None, max_count=None):
+    assert start > 0
+    assert mul > 0
+    count = 1
+    wait = total = start
+    yield start
+    while (max_total is None or total < max_total) and (
+        max_count is None or count < max_count
+    ):
+        wait *= mul
+        if floor is not None:
+            wait = max(floor, wait)
+        if cap is not None:
+            wait = min(cap, wait)
+        total += wait
+        count += 1
+        yield wait
+    return
 
 
 ROOT_URL = "http://metadata.google.internal/computeMetadata/v1"
@@ -655,16 +681,13 @@ def ensure_execute(request):
     """Handle rate limits and socket time outs"""
 
     retry = 0
-    wait = 1
-    max_wait = 60
-    while True:
+    for wait in backoff_delay(0.5, cap=60, mul=2, max_total=10 * 60):
         try:
             return request.execute()
 
         except googleapiclient.errors.HttpError as e:
             if retry_exception(e):
                 retry += 1
-                wait = min(wait * 2, max_wait)
                 log.error(f"retry:{retry} sleep:{wait} '{e}'")
                 sleep(wait)
                 continue
@@ -1015,6 +1038,33 @@ class Lookup:
     def slurm_node(self, nodename):
         return self.slurm_nodes().get(nodename)
 
+    def cloud_nodes(self):
+        static_nodes = []
+        dynamic_nodes = []
+
+        for partition in lkp.cfg.partitions.values():
+            part_name = partition.partition_name
+            for node_group in partition.partition_nodes.values():
+                static, dynamic = nodeset_lists(node_group, part_name)
+                if static is not None:
+                    static_nodes.extend(to_hostnames(static))
+                if dynamic is not None:
+                    dynamic_nodes.extend(to_hostnames(dynamic))
+
+        return static_nodes, dynamic_nodes
+
+    def filter_nodes(self, nodes):
+        static_nodes, dynamic_nodes = lkp.cloud_nodes()
+
+        all_cloud_nodes = []
+        all_cloud_nodes.extend(static_nodes)
+        all_cloud_nodes.extend(dynamic_nodes)
+
+        cloud_nodes = list(set(nodes).intersection(all_cloud_nodes))
+        local_nodes = list(set(nodes).difference(all_cloud_nodes))
+
+        return cloud_nodes, local_nodes
+
     @lru_cache(maxsize=1)
     def instances(self, project=None, slurm_cluster_name=None):
         slurm_cluster_name = slurm_cluster_name or self.cfg.slurm_cluster_name
@@ -1124,13 +1174,38 @@ class Lookup:
         machine_conf.memory = machine.memoryMb - (400 + (30 * gb))
         return machine_conf
 
-    def _get_template_info(self, template_link, project):
-        template_name = template_link.split("/")[-1]
+    @contextmanager
+    def template_cache(self, writeback=False):
+        flag = "c" if writeback else "r"
+        err = None
+        for wait in backoff_delay(0.125, cap=4, mul=2, max_count=20):
+            try:
+                cache = shelve.open(
+                    str(self.template_cache_path), flag=flag, writeback=writeback
+                )
+                break
+            except OSError as e:
+                err = e
+                log.debug(f"Failed to access template info cache: {e}")
+                sleep(wait)
+                continue
+        else:
+            # reached max_count of waits
+            log.fatal(f"Failed to access cache file. Latest error: {err}")
+        try:
+            yield cache
+        finally:
+            cache.close()
 
+    @lru_cache(maxsize=None)
+    def template_info(self, template_link, project=None):
+
+        project = project or self.project
+        template_name = template_link.split("/")[-1]
         # split read and write access to minimize write-lock. This might be a
         # bit slower? TODO measure
         if self.template_cache_path.exists():
-            with shelve.open(str(self.template_cache_path), flag="r") as cache:
+            with self.template_cache() as cache:
                 if template_name in cache:
                     return NSDict(cache[template_name])
 
@@ -1155,25 +1230,13 @@ class Lookup:
             template.gpu_count = 0
 
         # keep write access open for minimum time
-        with shelve.open(str(self.template_cache_path), writeback=True) as cache:
+        with self.template_cache(writeback=True) as cache:
             cache[template_name] = template.to_dict()
 
         return template
 
-    @lru_cache(maxsize=None)
-    def template_info(self, template_link, project=None):
-        project = project or self.project
-
-        # In the event of concurrent write access to the cache, _get_template_info could fail
-        while True:
-            try:
-                return self._get_template_info(template_link, project)
-            except OSError:
-                sleep(0.1)
-                continue
-
     @lru_cache(maxsize=1)
-    def subscriptions(slef, project=None, slurm_cluster_name=None):
+    def subscriptions(self, project=None, slurm_cluster_name=None):
         return subscription_list(
             project_id=project, slurm_cluster_name=slurm_cluster_name
         )

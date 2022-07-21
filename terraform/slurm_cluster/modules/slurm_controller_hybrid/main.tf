@@ -54,7 +54,7 @@ locals {
     : null
   )
 
-  config = yamlencode({
+  config = {
     enable_bigquery_load = var.enable_bigquery_load
     enable_reconfigure   = var.enable_reconfigure
     project              = var.project_id
@@ -74,9 +74,10 @@ locals {
     # hybrid
     google_app_cred_path = local.google_app_cred_path
     output_dir           = local.output_dir
+    slurm_control_host   = var.slurm_control_host
     slurm_bin_dir        = local.slurm_bin_dir
     slurm_log_dir        = local.slurm_log_dir
-  })
+  }
 }
 
 ################
@@ -151,7 +152,7 @@ resource "local_file" "startup_sh" {
 
 resource "local_file" "config_yaml" {
   filename = abspath("${local.output_dir}/config.yaml")
-  content  = local.config
+  content  = yamlencode(local.config)
 
   file_permission = "0644"
 }
@@ -210,7 +211,7 @@ resource "google_compute_project_metadata_item" "config" {
   project = var.project_id
 
   key   = "${var.slurm_cluster_name}-slurm-config"
-  value = jsonencode(var.metadata)
+  value = jsonencode(local.config)
 }
 
 ###################

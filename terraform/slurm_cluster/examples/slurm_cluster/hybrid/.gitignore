@@ -1,4 +1,5 @@
 *.bak
 *.conf
 *.py
+*.sh
 *.yaml
