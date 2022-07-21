@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Add retries and error logging to writing the template info cache file.
 - Remove nonempty option from gcsfuse mounts. That option is no longer supported
   in fusermount3
+- Restore lustre download url in ansible role. The url change was reverted.
 
 ## \[5.0.2\]
 
