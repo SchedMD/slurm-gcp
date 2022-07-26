@@ -79,7 +79,7 @@ else:
 API_REQ_LIMIT = 2000
 
 log = logging.getLogger(__name__)
-def_creds, project = google.auth.default()
+def_creds, auth_project = google.auth.default()
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
 scripts_dir = next(
@@ -191,7 +191,7 @@ def subscription_list(project_id=None, page_size=None, slurm_cluster_name=None):
     from google.cloud import pubsub_v1
 
     if project_id is None:
-        project_id = project
+        project_id = auth_project
     if slurm_cluster_name is None:
         slurm_cluster_name = lkp.cfg.slurm_cluster_name
 
@@ -764,8 +764,10 @@ def batch_execute(requests, compute=compute, retry_cb=None):
     return done, failed
 
 
-def wait_request(operation, project=project, compute=compute):
+def wait_request(operation, project=None, compute=compute):
     """makes the appropriate wait request for a given operation"""
+    if project is None:
+        project = lkp.project
     if "zone" in operation:
         req = compute.zoneOperations().wait(
             project=project,
@@ -785,9 +787,9 @@ def wait_request(operation, project=project, compute=compute):
     return req
 
 
-def wait_for_operation(operation, project=project, compute=compute):
+def wait_for_operation(operation, project=None, compute=compute):
     """wait for given operation"""
-    wait_req = wait_request(operation)
+    wait_req = wait_request(operation, project=project, compute=compute)
 
     while True:
         result = ensure_execute(wait_req)
@@ -799,17 +801,19 @@ def wait_for_operation(operation, project=project, compute=compute):
             return result
 
 
-def wait_for_operations(operations, project=project, compute=compute):
-    return [wait_for_operation(op) for op in operations]
+def wait_for_operations(operations, project=None, compute=compute):
+    return [
+        wait_for_operation(op, project=project, compute=compute) for op in operations
+    ]
 
 
-def wait_for_operations_async(operations, project=project, compute=compute):
+def wait_for_operations_async(operations, project=None, compute=compute):
     """wait for all operations"""
 
     def operation_retry(resp):
         return resp["status"] != "DONE"
 
-    requests = [wait_request(op) for op in operations]
+    requests = [wait_request(op, project=project, compute=compute) for op in operations]
     return batch_execute(requests, retry_cb=operation_retry)
 
 
@@ -818,11 +822,13 @@ def get_filtered_operations(
     zone=None,
     region=None,
     only_global=False,
-    project=project,
+    project=None,
     compute=compute,
 ):
     """get list of operations associated with group id"""
 
+    if project is None:
+        project = lkp.project
     operations = []
 
     def get_aggregated_operations(items):
@@ -863,8 +869,10 @@ def get_filtered_operations(
     return operations
 
 
-def get_insert_operations(bulk_operations, project=project, compute=compute):
+def get_insert_operations(bulk_operations, project=None, compute=compute):
     """get all group operations from list of bulk operations"""
+    if project is None:
+        project = lkp.project
     flt = " OR ".join(
         f"(operationGroupId={op['operationGroupId']})" for op in bulk_operations
     )
@@ -915,7 +923,7 @@ class Lookup:
 
     @property
     def project(self):
-        return self.cfg.project or project
+        return self.cfg.project or auth_project
 
     @property
     def control_host(self):

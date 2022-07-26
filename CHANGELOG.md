@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - Add support for gvnic and tier1 networking
 - Fix get_insert_operations using empty filter item.
+- Fix project id in wait_for_operation for resume.py from some hybrid setups.
 
 ## \[5.0.3\]
 
