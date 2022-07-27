@@ -868,7 +868,8 @@ def get_insert_operations(bulk_operations, project=project, compute=compute):
     flt = " OR ".join(
         f"(operationGroupId={op['operationGroupId']})" for op in bulk_operations
     )
-    return get_filtered_operations(f"(operationType=insert) AND ({flt})")
+    predicate = f"AND ({flt})" if flt else ""
+    return get_filtered_operations(f"(operationType=insert) {predicate}")
 
 
 class Dumper(yaml.SafeDumper):

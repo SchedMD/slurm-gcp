@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[5.1.0\]
 
 - Add support for gvnic and tier1 networking
+- Fix get_insert_operations using empty filter item.
 
 ## \[5.0.3\]
 
