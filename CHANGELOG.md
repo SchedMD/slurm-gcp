@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[5.1.0\]
+
 ## \[5.0.3\]
 
 - Allow configuring controller hostname for hybrid deployments.
