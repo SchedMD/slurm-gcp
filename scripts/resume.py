@@ -19,8 +19,9 @@ import argparse
 import logging
 import os
 import sys
-from pathlib import Path
+from collections import Counter
 from itertools import groupby
+from pathlib import Path
 from suspend import delete_placement_groups
 
 import util
@@ -215,7 +216,7 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
         if "error" in bulk_op:
             error = bulk_op["error"]["errors"][0]
             log.error(
-                f"bulkInsert operation error: {error['code']} operationName:'{bulk_op['name']}'"
+                f"bulkInsert operation error: {error['code']} name:'{bulk_op['name']}' operationGroupId:'{bulk_op['operationGroupId']}'"
             )
 
     # Fetch all insert operations from all bulkInserts. Group by error code and log
@@ -228,6 +229,19 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
         failed_inserts,
         lambda op: "+".join(err["code"] for err in op["error"]["errors"]),
     )
+
+    # Log bulkInsert group ids with failed inserts to make looking up the operations easier
+    # --filter="targetLink:<node name> AND operationGroupId=(<bulkInsert group ids>)"
+    incomplete_bulk_ids = Counter(
+        op["operationGroupId"] for op in failed_inserts if "operationGroupId" in op
+    )
+    if len(incomplete_bulk_ids) > 0:
+        log.error(
+            "Some instance inserts failed in these bulkInsert groups: operationGroupId=({})".format(
+                ",".join(map(str, incomplete_bulk_ids))
+            )
+        )
+
     for code, failed_ops in grouped_inserts:
         # at least one insert failure
         failed_nodes = [parse_self_link(op["targetLink"]).instance for op in failed_ops]
