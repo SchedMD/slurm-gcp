@@ -1184,10 +1184,17 @@ class Lookup:
             raise Exception(f"instance template {temp_name} has no machine type")
         template.machine_info = self.machine_type(template.machineType, zone=zone)
         machine = template.machine_info
+
         machine_conf = NSDict()
-        # TODO how is smt passed?
-        # machine['cpus'] = machine['guestCpus'] // (1 if part.image_hyperthreads else 2) or 1
-        machine_conf.cpus = machine.guestCpus
+        machine_conf.boards = 1  # No information, assume 1
+        machine_conf.sockets = 1  # No information, assume 1
+        # Each physical core is assumed to have two threads unless disabled or incapable
+        _threads = template.advancedMachineFeatures.threadsPerCore
+        _threads_per_core = _threads if _threads else 2
+        _threads_per_core_div = 2 if _threads_per_core == 1 else 1
+        machine_conf.threads_per_core = 1
+        machine_conf.cpus = int(machine.guestCpus / _threads_per_core_div)
+        machine_conf.cores_per_socket = int(machine_conf.cpus / machine_conf.sockets)
         # Because the actual memory on the host will be different than
         # what is configured (e.g. kernel will take it). From
         # experiments, about 16 MB per GB are used (plus about 400 MB

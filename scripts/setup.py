@@ -209,9 +209,11 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
                 "NodeName": "DEFAULT",
                 "State": "UNKNOWN",
                 "RealMemory": machine_conf.memory,
-                "Sockets": 1,
-                "CoresPerSocket": machine_conf.cpus,
-                "ThreadsPerCore": 1,
+                "Boards": machine_conf.boards,
+                "Sockets": machine_conf.sockets,
+                "CoresPerSocket": machine_conf.cores_per_socket,
+                "ThreadsPerCore": machine_conf.threads_per_core,
+                "CPUs": machine_conf.cpus,
                 **node_group.node_conf,
             }
         )
@@ -992,11 +994,6 @@ def setup_compute():
     setup_nss_slurm()
     setup_network_storage()
 
-    # template = lkp.node_template_info(zone=lkp.zone)
-
-    # if (not cfg.instance_defs[pid].image_hyperthreads and
-    #         shutil.which('google_mpi_tuning')):
-    #     run("google_mpi_tuning --nosmt")
     has_gpu = run("lspci | grep --ignore-case 'NVIDIA' | wc -l", shell=True).returncode
     if has_gpu:
         run("nvidia-smi")

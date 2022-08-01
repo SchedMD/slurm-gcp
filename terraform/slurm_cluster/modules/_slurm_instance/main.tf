@@ -67,6 +67,8 @@ resource "google_compute_instance_from_template" "slurm_instance" {
   project = var.project_id
   zone    = var.zone == null ? data.google_compute_zones.available.names[count.index % length(data.google_compute_zones.available.names)] : var.zone
 
+  allow_stopping_for_update = true
+
   network_interface {
     network            = var.network
     subnetwork         = var.subnetwork
