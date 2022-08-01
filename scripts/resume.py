@@ -23,6 +23,7 @@ from collections import Counter
 from itertools import groupby
 from pathlib import Path
 from suspend import delete_placement_groups
+import yaml
 
 import util
 from util import (
@@ -184,24 +185,24 @@ def expand_nodelist(nodelist):
 def resume_nodes(nodelist, placement_groups=None, exclusive=False):
     """resume nodes in nodelist"""
     # support already expanded list
-    nodes = nodelist
-    if isinstance(nodes, str):
+    if isinstance(nodelist, str):
         nodelist = expand_nodelist(nodelist)
-
-    nodes = sorted(nodelist, key=lkp.node_prefix)
-    if len(nodes) == 0:
+    if len(nodelist) == 0:
         return
+    nodelist = sorted(nodelist, key=lkp.node_prefix)
+
     grouped_nodes = {
-        ident: chunk
-        for ident, some_nodes in groupby(nodes, lkp.node_prefix)
-        for chunk in chunked(some_nodes, n=BULK_INSERT_LIMIT)
+        f"{prefix}:{i}": chunk
+        for prefix, nodes in groupby(nodelist, lkp.node_prefix)
+        for i, chunk in enumerate(chunked(nodes, n=BULK_INSERT_LIMIT))
     }
-    log.debug(f"grouped_nodes: {grouped_nodes}")
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug("node bulk groups: \n{}".format(yaml.safe_dump(grouped_nodes)))
 
     # make all bulkInsert requests and execute with batch
     inserts = {
-        ident: create_instances_request(nodes, placement_groups, exclusive)
-        for ident, nodes in grouped_nodes.items()
+        group: create_instances_request(nodes, placement_groups, exclusive)
+        for group, nodes in grouped_nodes.items()
     }
     started, failed = batch_execute(inserts)
     if failed:
@@ -265,7 +266,7 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
         count = len(started_nodes)
         hostlist = util.to_hostlist(started_nodes)
         log.info("create {} subscriptions ({})".format(count, hostlist))
-        execute_with_futures(subscription_create, nodes)
+        execute_with_futures(subscription_create, nodelist)
 
 
 def down_nodes(nodelist, reason):

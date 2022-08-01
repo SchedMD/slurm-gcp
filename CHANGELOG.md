@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fix get_insert_operations using empty filter item.
 - Fix project id in wait_for_operation for resume.py from some hybrid setups.
 - Add more useful error logging to resume.py
+- Fix resume.py starting more than 1k identical nodes at a time.
 
 ## \[5.0.3\]
 
