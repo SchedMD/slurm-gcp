@@ -509,9 +509,9 @@ def chown_slurm(path, mode=None):
     try:
         shutil.chown(path, user="slurm", group="slurm")
     except LookupError:
-        log.error(f"User 'slurm' does not exist. Cannot 'chown slurm:slurm {path}'.")
+        log.warning(f"User 'slurm' does not exist. Cannot 'chown slurm:slurm {path}'.")
     except PermissionError:
-        log.error(f"Not authorized to 'chown slurm:slurm {path}'.")
+        log.warning(f"Not authorized to 'chown slurm:slurm {path}'.")
     except Exception as err:
         log.error(err)
 
@@ -1200,7 +1200,7 @@ class Lookup:
                 continue
         else:
             # reached max_count of waits
-            log.fatal(f"Failed to access cache file. Latest error: {err}")
+            raise Exception(f"Failed to access cache file. latest error: {err}")
         try:
             yield cache
         finally:
@@ -1241,6 +1241,8 @@ class Lookup:
         # keep write access open for minimum time
         with self.template_cache(writeback=True) as cache:
             cache[template_name] = template.to_dict()
+        # cache should be owned by slurm
+        chown_slurm(self.template_cache_path)
 
         return template
 
@@ -1251,7 +1253,7 @@ class Lookup:
         )
 
     def clear_template_info_cache(self):
-        with shelve.open(str(self.template_cache_path), writeback=True) as cache:
+        with self.template_cache(writeback=True) as cache:
             cache.clear()
         self.template_info.cache_clear()
 
