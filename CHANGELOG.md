@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Fix resume.py starting more than 1k identical nodes at a time.
 - Ensure proper slurm ownership on instance template info cache.
 - Honor `disable_smt=true` on compute instances.
+- Improve logging and add logging flags to show API request details.
 
 ## \[5.0.3\]
 

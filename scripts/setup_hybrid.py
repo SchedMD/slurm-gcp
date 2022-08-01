@@ -93,9 +93,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.debug:
-        config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
+        config_root_logger(filename, level="DEBUG", logfile=logfile)
     else:
-        config_root_logger(filename, level="INFO", util_level="ERROR", logfile=logfile)
+        config_root_logger(filename, level="INFO", logfile=logfile)
     sys.excepthook = handle_exception
 
     main(args)

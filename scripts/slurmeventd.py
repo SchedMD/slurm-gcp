@@ -30,7 +30,6 @@ from util import config_root_logger, handle_exception, run, publish_message
 filename = Path(__file__).name
 logfile = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 util.chown_slurm(logfile, mode=0o600)
-config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
 log = logging.getLogger(filename)
 
 project_id = lkp.project
@@ -193,7 +192,7 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
 
 def main():
-    config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
+    config_root_logger(filename, level="DEBUG", logfile=logfile)
     sys.excepthook = handle_exception
 
     util.cfg = util.config_from_metadata()
@@ -214,4 +213,5 @@ def main():
 
 
 if __name__ == "__main__":
+    config_root_logger(filename, level="DEBUG", logfile=logfile)
     main()

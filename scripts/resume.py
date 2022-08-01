@@ -19,7 +19,6 @@ import argparse
 import logging
 import os
 import sys
-from collections import Counter
 from itertools import groupby
 from pathlib import Path
 from suspend import delete_placement_groups
@@ -28,6 +27,7 @@ import yaml
 import util
 from util import (
     get_insert_operations,
+    log_api_request,
     parse_self_link,
     run,
     chunked,
@@ -36,6 +36,8 @@ from util import (
     execute_with_futures,
     is_exclusive_node,
     subscription_create,
+    to_hostlist,
+    trim_self_link,
     wait_for_operation,
 )
 from util import cfg, lkp, NSDict
@@ -169,6 +171,12 @@ def create_instances_request(nodes, placement_groups=None, exclusive=False):
     request = util.compute.regionInstances().bulkInsert(
         project=cfg.project, region=region, body=body.to_dict()
     )
+
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug(
+            f"new request: endpoint={request.methodId} nodes={to_hostlist(nodes)}"
+        )
+    log_api_request(request)
     return request
 
 
@@ -197,7 +205,13 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
         for i, chunk in enumerate(chunked(nodes, n=BULK_INSERT_LIMIT))
     }
     if log.isEnabledFor(logging.DEBUG):
-        log.debug("node bulk groups: \n{}".format(yaml.safe_dump(grouped_nodes)))
+        # grouped_nodelists is used in later debug logs too
+        grouped_nodelists = {
+            group: to_hostlist(nodes) for group, nodes in grouped_nodes.items()
+        }
+        log.debug(
+            "node bulk groups: \n{}".format(yaml.safe_dump(grouped_nodelists).rstrip())
+        )
 
     # make all bulkInsert requests and execute with batch
     inserts = {
@@ -207,59 +221,65 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
     started, failed = batch_execute(inserts)
     if failed:
         failed_reqs = [f"{e}" for _, (_, e) in failed.items()]
-        log.error("bulkInsert API failures: {}".format("\n".join(failed_reqs)))
+        log.error("bulkInsert API failures: {}".format("; ".join(failed_reqs)))
         for ident, (_, exc) in failed.items():
             down_nodes(grouped_nodes[ident], exc._get_reason())
 
+    if log.isEnabledFor(logging.DEBUG):
+        for group, op in started.items():
+            group_nodes = grouped_nodelists[group]
+            name = op["name"]
+            gid = op["operationGroupId"]
+            log.debug(
+                f"new bulkInsert operation started: group={group} nodes={group_nodes} name={name} operationGroupId={gid}"
+            )
     # wait for all bulkInserts to complete and log any errors
-    bulk_operations = [wait_for_operation(op) for op in started.values()]
-    for bulk_op in bulk_operations:
+    bulk_operations = {group: wait_for_operation(op) for group, op in started.items()}
+    all_successful_inserts = []
+
+    for group, bulk_op in bulk_operations.items():
+        group_id = bulk_op["operationGroupId"]
+        bulk_op_name = bulk_op["name"]
         if "error" in bulk_op:
             error = bulk_op["error"]["errors"][0]
+            group_nodes = to_hostlist(grouped_nodes[group])
+            log.warning(
+                f"bulkInsert operation errors: {error['code']} name={bulk_op_name} operationGroupId={group_id} nodes={group_nodes}"
+            )
+        successful_inserts, failed_inserts = separate(
+            lambda op: "error" in op, get_insert_operations(group_id)
+        )
+        # Apparently multiple errors are possible... so join with +.
+        by_error_inserts = util.groupby_unsorted(
+            failed_inserts,
+            lambda op: "+".join(err["code"] for err in op["error"]["errors"]),
+        )
+        for code, failed_ops in by_error_inserts:
+            failed_nodes = {trim_self_link(op["targetLink"]): op for op in failed_ops}
+            hostlist = util.to_hostlist(failed_nodes)
+            count = len(failed_nodes)
             log.error(
-                f"bulkInsert operation error: {error['code']} name:'{bulk_op['name']}' operationGroupId:'{bulk_op['operationGroupId']}'"
+                f"{count} instances failed to start: {code} ({hostlist}) operationGroupId={group_id}"
+            )
+            if code != "RESOURCE_ALREADY_EXISTS":
+                down_nodes(hostlist, code)
+            failed_node, failed_op = next(iter(failed_nodes.items()))
+            msg = "; ".join(
+                f"{err['code']}: {err['message'] if 'message' in err else 'no message'}"
+                for err in failed_op["error"]["errors"]
+            )
+            log.error(
+                f"errors from insert for node '{failed_node}' ({failed_op['name']}): {msg}"
             )
 
-    # Fetch all insert operations from all bulkInserts. Group by error code and log
-    successful_inserts, failed_inserts = separate(
-        lambda op: "error" in op, get_insert_operations(bulk_operations)
-    )
-    # Apparently multiple errors are possible... so join with +.
-    # grouped_inserts could be made into a dict, but it's not really necessary. Save some memory.
-    grouped_inserts = util.groupby_unsorted(
-        failed_inserts,
-        lambda op: "+".join(err["code"] for err in op["error"]["errors"]),
-    )
-
-    # Log bulkInsert group ids with failed inserts to make looking up the operations easier
-    # --filter="targetLink:<node name> AND operationGroupId=(<bulkInsert group ids>)"
-    incomplete_bulk_ids = Counter(
-        op["operationGroupId"] for op in failed_inserts if "operationGroupId" in op
-    )
-    if len(incomplete_bulk_ids) > 0:
-        log.error(
-            "Some instance inserts failed in these bulkInsert groups: operationGroupId=({})".format(
-                ",".join(map(str, incomplete_bulk_ids))
-            )
-        )
-
-    for code, failed_ops in grouped_inserts:
-        # at least one insert failure
-        failed_nodes = [parse_self_link(op["targetLink"]).instance for op in failed_ops]
-        hostlist = util.to_hostlist(failed_nodes)
-        count = len(failed_nodes)
-        log.error(
-            f"{count} instances failed to start due to insert operation error: {code} ({hostlist})"
-        )
-        down_nodes(hostlist, code)
-        if log.isEnabledFor(logging.DEBUG):
-            msg = "\n".join(
-                err["message"] for err in next(failed_ops)["error"]["errors"]
-            )
-            log.debug(f"{code} message from first node: {msg}")
+        ready_nodes = {trim_self_link(op["targetLink"]) for op in successful_inserts}
+        if len(ready_nodes) > 0:
+            ready_nodelist = to_hostlist(ready_nodes)
+            log.info(f"created {len(ready_nodes)} instances: nodes={ready_nodelist}")
+            all_successful_inserts.extend(successful_inserts)
 
     # If reconfigure enabled, create subscriptions for successfully started instances
-    if lkp.cfg.enable_reconfigure and len(successful_inserts):
+    if lkp.cfg.enable_reconfigure and len(all_successful_inserts):
         started_nodes = [
             parse_self_link(op["targetLink"]).instance for op in successful_inserts
         ]
@@ -290,9 +310,11 @@ def create_placement_request(pg_name, region):
             "collocation": "COLLOCATED",
         },
     }
-    return util.compute.resourcePolicies().insert(
+    request = util.compute.resourcePolicies().insert(
         project=cfg.project, region=region, body=config
     )
+    log_api_request(request)
+    return request
 
 
 def create_placement_groups(job_id, node_list, partition_name):
@@ -306,6 +328,11 @@ def create_placement_groups(job_id, node_list, partition_name):
     model = next(iter(node_list))
     region = lkp.node_region(model)
 
+    if log.isEnabledFor(logging.DEBUG):
+        debug_groups = {group: to_hostlist(nodes) for group, nodes in groups.items()}
+        log.debug(
+            f"creating {len(groups)} placement groups: \n{yaml.safe_dump(debug_groups).rstrip()}"
+        )
     requests = {
         group: create_placement_request(group, region)
         for group, incl_nodes in groups.items()
@@ -315,8 +342,9 @@ def create_placement_groups(job_id, node_list, partition_name):
         reqs = [f"{e}" for _, e in failed.values()]
         # delete any placement groups that managed to be created.
         delete_placement_groups(job_id, region, partition_name)
-        log.fatal("failed to create placement policies: {}".format("\n".join(reqs)))
-    log.info(f"created {len(done)} placement groups ({','.join(done.keys())})")
+        log.fatal("failed to create placement policies: {}".format("; ".join(reqs)))
+        exit(1)
+    log.info(f"created {len(done)} placement groups ({to_hostlist(done.keys())})")
     return reverse_groups
 
 
@@ -366,17 +394,27 @@ def prolog_resume_nodes(job_id, nodelist):
 
 def main(nodelist, job_id, force=False):
     """main called when run as script"""
-    log.debug(f"main {nodelist} {job_id}")
+    if job_id is None:
+        log.debug(f"ResumeProgram {nodelist}")
+    else:
+        log.debug(f"PrologSlurmctld exclusive resume {nodelist} {job_id}")
     # nodes are split between normal and exclusive
     # exclusive nodes are handled by PrologSlurmctld
     nodes = expand_nodelist(nodelist)
 
     # Filter out nodes not in config.yaml
     cloud_nodes, local_nodes = lkp.filter_nodes(nodes)
-    log.debug(
-        f"Ignoring local nodes '{util.to_hostlist(local_nodes)}' from '{nodelist}'"
-    )
-    log.debug(f"Using cloud nodes '{util.to_hostlist(cloud_nodes)}' from '{nodelist}'")
+    if len(local_nodes) > 0:
+        log.debug(
+            f"Ignoring local nodes '{util.to_hostlist(local_nodes)}' from '{nodelist}'"
+        )
+    if len(cloud_nodes) > 0:
+        log.debug(
+            f"Using cloud nodes '{util.to_hostlist(cloud_nodes)}' from '{nodelist}'"
+        )
+    else:
+        log.debug("No cloud nodes to resume")
+        return
     nodes = cloud_nodes
 
     if force:
@@ -386,15 +424,17 @@ def main(nodelist, job_id, force=False):
         normal, exclusive = separate(is_exclusive_node, nodes)
         prelog = ""
     if job_id is None or force:
-        if normal:
+        if len(normal) > 0:
             hostlist = util.to_hostlist(normal)
             log.info(f"{prelog}resume {hostlist}")
             resume_nodes(normal)
     else:
-        if exclusive:
+        if len(exclusive) > 0:
             hostlist = util.to_hostlist(exclusive)
             log.info(f"{prelog}exclusive resume {hostlist} {job_id}")
             prolog_resume_nodes(job_id, exclusive)
+        else:
+            log.debug("No exclusive nodes to resume")
 
 
 parser = argparse.ArgumentParser(
@@ -415,7 +455,19 @@ parser.add_argument(
     help="Force attempted creation of the nodelist, whether nodes are exclusive or not.",
 )
 parser.add_argument(
-    "--debug", "-d", dest="debug", action="store_true", help="Enable debugging output"
+    "--debug",
+    "-d",
+    dest="loglevel",
+    action="store_const",
+    const=logging.DEBUG,
+    default=logging.INFO,
+    help="Enable debugging output",
+)
+parser.add_argument(
+    "--trace-api",
+    "-t",
+    action="store_true",
+    help="Enable detailed api request output",
 )
 
 
@@ -430,15 +482,13 @@ if __name__ == "__main__":
     else:
         args = parser.parse_args()
 
+    if cfg.enable_debug_logging:
+        args.loglevel = logging.DEBUG
+    if args.trace_api:
+        cfg.extra_logging_flags = list(cfg.extra_logging_flags)
+        cfg.extra_logging_flags.append("trace_api")
     util.chown_slurm(LOGFILE, mode=0o600)
-    if args.debug:
-        util.config_root_logger(
-            filename, level="DEBUG", util_level="DEBUG", logfile=LOGFILE
-        )
-    else:
-        util.config_root_logger(
-            filename, level="INFO", util_level="ERROR", logfile=LOGFILE
-        )
+    util.config_root_logger(filename, level=args.loglevel, logfile=LOGFILE)
     sys.excepthook = util.handle_exception
 
     main(args.nodelist, args.job_id, args.force)

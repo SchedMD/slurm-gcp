@@ -1039,7 +1039,7 @@ def main():
 
 if __name__ == "__main__":
     util.chown_slurm(LOGFILE, mode=0o600)
-    util.config_root_logger(filename, logfile=LOGFILE, util_level="DEBUG")
+    util.config_root_logger(filename, logfile=LOGFILE)
     sys.excepthook = util.handle_exception
 
     lkp = util.Lookup(cfg)  # noqa F811

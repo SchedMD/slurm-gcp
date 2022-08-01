@@ -57,12 +57,8 @@ if __name__ == "__main__":
 
     logfile = (Path(__file__).parent / logger_name).with_suffix(".log")
     if args.debug:
-        config_root_logger(
-            logger_name, level="DEBUG", util_level="DEBUG", logfile=logfile
-        )
+        config_root_logger(logger_name, level="DEBUG", logfile=logfile)
     else:
-        config_root_logger(
-            logger_name, level="INFO", util_level="ERROR", logfile=logfile
-        )
+        config_root_logger(logger_name, level="INFO", logfile=logfile)
 
     main(args)
