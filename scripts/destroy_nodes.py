@@ -23,7 +23,7 @@ from suspend import (
     truncate_iter,
     wait_for_operations,
 )
-from util import compute, config_root_logger, project, parse_self_link
+from util import lkp, compute, config_root_logger, parse_self_link
 
 logger_name = Path(__file__).name
 log = logging.getLogger(logger_name)
@@ -78,7 +78,7 @@ def main(args):
     # NOTE: It is not technically possible to filter by metadata or other
     #       complex nested items
     result = (
-        compute.instances().aggregatedList(project=project, filter=filter).execute()
+        compute.instances().aggregatedList(project=lkp.project, filter=filter).execute()
     )
 
     compute_list = []

@@ -17,7 +17,7 @@ import argparse
 import logging
 from pathlib import Path
 from suspend import batch_execute, truncate_iter, wait_for_operations
-from util import compute, config_root_logger, project, parse_self_link
+from util import lkp, compute, config_root_logger, parse_self_link
 
 logger_name = Path(__file__).name
 log = logging.getLogger(logger_name)
@@ -63,7 +63,7 @@ def main(args):
 
     result = (
         compute.resourcePolicies()
-        .aggregatedList(project=project, filter=filter)
+        .aggregatedList(project=lkp.project, filter=filter)
         .execute()
     )
 

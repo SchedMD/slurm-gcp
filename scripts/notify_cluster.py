@@ -16,7 +16,7 @@
 from datetime import datetime
 import argparse
 import json
-from util import project, publish_message
+from util import lkp, publish_message
 
 
 def main():
@@ -39,7 +39,7 @@ def main():
             "timestamp": datetime.utcnow().isoformat(),
         }
     )
-    publish_message(project, args.topic_id, message_json)
+    publish_message(lkp.project, args.topic_id, message_json)
 
 
 if __name__ == "__main__":
