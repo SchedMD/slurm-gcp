@@ -186,6 +186,17 @@ def parse_self_link(self_link: str):
     return NSDict(link_patt.findall(self_link))
 
 
+def trim_self_link(link: str):
+    """get resource name from self link url, eg.
+    https://.../v1/projects/<project>/regions/<region>
+    -> <region>
+    """
+    try:
+        return link[link.rindex("/") + 1 :]
+    except ValueError:
+        raise Exception(f"'/' not found, not a self link: '{link}' ")
+
+
 def subscription_list(project_id=None, page_size=None, slurm_cluster_name=None):
     """List pub/sub subscription"""
     from google.cloud import pubsub_v1
@@ -771,13 +782,13 @@ def wait_request(operation, project=None, compute=compute):
     if "zone" in operation:
         req = compute.zoneOperations().wait(
             project=project,
-            zone=operation["zone"].split("/")[-1],
+            zone=trim_self_link(operation["zone"]),
             operation=operation["name"],
         )
     elif "region" in operation:
         req = compute.regionOperations().wait(
             project=project,
-            region=operation["region"].split("/")[-1],
+            region=trim_self_link(operation["region"]),
             operation=operation["name"],
         )
     else:
@@ -1087,8 +1098,10 @@ class Lookup:
 
         def properties(inst):
             """change instance properties to a preferred format"""
-            inst["zone"] = inst["zone"].split("/")[-1]
-            inst["machineType"] = inst["machineType"].split("/")[-1]
+            inst["zone"] = trim_self_link(inst["zone"])
+            machine_link = inst["machineType"]
+            inst["machineType"] = trim_self_link(machine_link)
+            inst["machineTypeLink"] = machine_link
             # metadata is fetched as a dict of dicts like:
             # {'key': key, 'value': value}, kinda silly
             metadata = {i["key"]: i["value"] for i in inst["metadata"]["items"]}
@@ -1167,7 +1180,7 @@ class Lookup:
 
         template = self.template_info(template_link)
         if not template.machineType:
-            temp_name = parse_self_link(template_link).instanceTemplate
+            temp_name = trim_self_link(template_link)
             raise Exception(f"instance template {temp_name} has no machine type")
         template.machine_info = self.machine_type(template.machineType, zone=zone)
         machine = template.machine_info
@@ -1210,7 +1223,7 @@ class Lookup:
     def template_info(self, template_link, project=None):
 
         project = project or self.project
-        template_name = template_link.split("/")[-1]
+        template_name = trim_self_link(template_link)
         # split read and write access to minimize write-lock. This might be a
         # bit slower? TODO measure
         if self.template_cache_path.exists():
