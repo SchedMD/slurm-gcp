@@ -269,8 +269,10 @@ partitions = [
     enable_placement_groups = false
     network_storage         = []
     partition_conf = {
-      Default     = "YES"
-      SuspendTime = 300
+      Default        = "YES"
+      ResumeTimeout  = 300
+      SuspendTimeout = 300
+      SuspendTime    = 300
     }
     partition_startup_scripts = [
       # {
@@ -290,7 +292,7 @@ partitions = [
         node_count_dynamic_max = 20
         node_count_static      = 0
         node_conf = {
-          # Features = "test"
+          Features = "test"
         }
 
         # Template By Definition
@@ -345,7 +347,9 @@ partitions = [
     enable_placement_groups = false
     network_storage         = []
     partition_conf = {
-      SuspendTime = 300
+      ResumeTimeout  = 300
+      SuspendTimeout = 300
+      SuspendTime    = 300
     }
     partition_startup_scripts = []
     partition_name            = "debug2"
