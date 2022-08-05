@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Ensure proper slurm ownership on instance template info cache.
 - Honor `disable_smt=true` on compute instances.
 - Improve logging and add logging flags to show API request details.
+- Fix usage of slurm_control_host in config.yaml.
 
 ## \[5.0.3\]
 

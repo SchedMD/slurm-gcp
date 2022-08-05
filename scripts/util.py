@@ -1034,9 +1034,7 @@ class Lookup:
 
     @property
     def control_host(self):
-        if self.cfg.slurm_cluster_name:
-            return f"{self.cfg.slurm_cluster_name}-controller"
-        return None
+        return self.cfg.slurm_control_host
 
     @property
     def scontrol(self):
