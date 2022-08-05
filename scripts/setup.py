@@ -584,7 +584,7 @@ def local_mounts(mountlist):
 def resolve_network_storage(partition_name=None):
     """Combine appropriate network_storage fields to a single list"""
 
-    if cfg.instance_role == "compute":
+    if lkp.instance_role == "compute":
         partition_name = lkp.node_partition_name()
     partition = cfg.partitions[partition_name] if partition_name else None
 

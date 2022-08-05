@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Honor `disable_smt=true` on compute instances.
 - Improve logging and add logging flags to show API request details.
 - Fix usage of slurm_control_host in config.yaml.
+- Fix partition network storage.
 
 ## \[5.0.3\]
 
