@@ -26,8 +26,10 @@ import yaml
 
 import util
 from util import (
+    ensure_execute,
     get_insert_operations,
     log_api_request,
+    map_with_futures,
     parse_self_link,
     run,
     chunked,
@@ -218,7 +220,15 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
         group: create_instances_request(nodes, placement_groups, exclusive)
         for group, nodes in grouped_nodes.items()
     }
-    started, failed = batch_execute(inserts)
+
+    bulk_ops = dict(
+        zip(inserts.keys(), map_with_futures(ensure_execute, inserts.values()))
+    )
+    log.debug(f"bulk_ops={yaml.safe_dump(bulk_ops)}")
+    started = {group: op for group, (op, err) in bulk_ops.items() if err is None}
+    failed = {
+        group: (op, err) for group, (op, err) in bulk_ops.items() if err is not None
+    }
     if failed:
         failed_reqs = [f"{e}" for _, (_, e) in failed.items()]
         log.error("bulkInsert API failures: {}".format("; ".join(failed_reqs)))

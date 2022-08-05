@@ -342,16 +342,26 @@ def subscription_delete(subscription_id, project_id=None):
             log.info(f"Subscription '{subscription_path}' not found!")
 
 
-def execute_with_futures(func, list):
+def execute_with_futures(func, seq):
     with ThreadPoolExecutor() as exe:
         futures = []
-        for i in list:
+        for i in seq:
             future = exe.submit(func, i)
             futures.append(future)
         for future in futures:
             result = future.exception()
             if result is not None:
                 raise result
+
+
+def map_with_futures(func, seq):
+    with ThreadPoolExecutor() as exe:
+        futures = []
+        for i in seq:
+            future = exe.submit(func, i)
+            futures.append(future)
+        for future in futures:
+            yield future.result(), future.exception()
 
 
 def is_exclusive_node(node):

@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Improve logging and add logging flags to show API request details.
 - Fix usage of slurm_control_host in config.yaml.
 - Fix partition network storage.
+- Improved speed of creating instances.
 
 ## \[5.0.3\]
 
