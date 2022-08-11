@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Fix usage of slurm_control_host in config.yaml.
 - Fix partition network storage.
 - Improved speed of creating instances.
+- In scripts, ignore GCP instances without Slurm-GCP metadata.
 
 ## \[5.0.3\]
 

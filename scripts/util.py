@@ -1208,7 +1208,9 @@ class Lookup:
             inst["machineTypeLink"] = machine_link
             # metadata is fetched as a dict of dicts like:
             # {'key': key, 'value': value}, kinda silly
-            metadata = {i["key"]: i["value"] for i in inst["metadata"]["items"]}
+            metadata = {i["key"]: i["value"] for i in inst["metadata"].get("items", [])}
+            if "slurm_instance_role" not in metadata:
+                return None
             inst["role"] = metadata["slurm_instance_role"]
             del inst["metadata"]  # no need to store all the metadata
             return NSDict(inst)
@@ -1216,13 +1218,14 @@ class Lookup:
         instances = {}
         while op is not None:
             result = ensure_execute(op)
+            instance_iter = (
+                (inst["name"], properties(inst))
+                for inst in chain.from_iterable(
+                    m["instances"] for m in result["items"].values()
+                )
+            )
             instances.update(
-                {
-                    inst["name"]: properties(inst)
-                    for inst in chain.from_iterable(
-                        m["instances"] for m in result["items"].values()
-                    )
-                }
+                {name: props for name, props in instance_iter if props is not None}
             )
             op = act.aggregatedList_next(op, result)
         return instances
