@@ -11,6 +11,7 @@
     - [How do I get support for `slurm-gcp` and `Slurm`?](#how-do-i-get-support-for-slurm-gcp-and-slurm)
   - [For Users](#for-users)
     - [Where can I find the Slurm logs?](#where-can-i-find-the-slurm-logs)
+    - [How do I enable additional logging for Slurm-GCP?](#how-do-i-enable-additional-logging-for-slurm-gcp)
     - [How do I move data for a job?](#how-do-i-move-data-for-a-job)
     - [How do I connect to Slurm instances?](#how-do-i-connect-to-slurm-instances)
   - [For Administrators](#for-administrators)
@@ -67,6 +68,25 @@ out. Tickets can be submitted via
 - On Slurm cloud nodes, check `/var/log/slurm/*.log`.
 - Otherwise check `/var/log/messages` (RHEL/CentOS) or `/var/log/syslog`
   (Debian/Ubuntu).
+
+### How do I enable additional logging for Slurm-GCP?
+
+1. Enable debug logging in cluster `config.yaml`
+1. If you need more, such as verbose GCP API request information, enable the
+   appropriate logging flag in `config.yaml`.
+   - For verbose API request information, use the `trace_api` logging flag.
+1. These increase the logging to Slurm-GCP script logs only, such as
+   `resume.log` and `suspend.log`.
+
+```yaml
+# /slurm/scripts/config.yaml
+enable_debug_logging: false
+extra_logging_flags:
+  trace_api: false
+  subproc: false
+  hostlists: false
+  subscriptions: false
+```
 
 ### How do I move data for a job?
 
