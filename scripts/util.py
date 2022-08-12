@@ -472,7 +472,7 @@ def load_config_file(path):
         content = yaml.safe_load(Path(path).read_text())
     except FileNotFoundError:
         log.error(f"config file not found: {path}")
-        return None
+        return NSDict()
     return load_config_data(content)
 
 
