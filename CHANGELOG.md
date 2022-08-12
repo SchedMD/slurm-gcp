@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Fix partition network storage.
 - Improved speed of creating instances.
 - In scripts, ignore GCP instances without Slurm-GCP metadata.
+- Upgrade Slurm to 22.05.3.
 
 ## \[5.0.3\]
 
