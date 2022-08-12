@@ -1196,7 +1196,7 @@ class Lookup:
         fields = (
             "items.zones.instances(name,zone,status,machineType,metadata),nextPageToken"
         )
-        flt = f"name={slurm_cluster_name}-*"
+        flt = f"labels.slurm_cluster_name={slurm_cluster_name} AND name:{slurm_cluster_name}-*"
         act = self.compute.instances()
         op = act.aggregatedList(project=project, fields=fields, filter=flt)
 
