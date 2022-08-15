@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Improved speed of creating instances.
 - In scripts, ignore GCP instances without Slurm-GCP metadata.
 - Upgrade Slurm to 22.05.3.
+- Pin lustre version to 2.12.
 
 ## \[5.0.3\]
 
