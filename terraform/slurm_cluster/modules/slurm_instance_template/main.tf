@@ -51,7 +51,7 @@ locals {
   source_image_family = (
     var.source_image_family != "" && var.source_image_family != null
     ? var.source_image_family
-    : "schedmd-v5-slurm-22-05-2-hpc-centos-7"
+    : "schedmd-v5-slurm-22-05-3-hpc-centos-7"
   )
   source_image_project = (
     var.source_image_project != "" && var.source_image_project != null
@@ -108,6 +108,7 @@ module "instance_template" {
   gpu                      = var.gpu
   service_account          = local.service_account
   shielded_instance_config = var.shielded_instance_config
+  threads_per_core         = var.disable_smt && length(regexall("^(t2[ad]-\\w+-\\w+|\\w+-\\w+(-1)?)$", var.machine_type)) == 0 ? 1 : null
   enable_confidential_vm   = var.enable_confidential_vm
   enable_shielded_vm       = var.enable_shielded_vm
   preemptible              = var.preemptible
@@ -126,7 +127,6 @@ module "instance_template" {
     var.metadata,
     {
       enable-oslogin      = upper(var.enable_oslogin)
-      google_mpi_tuning   = var.disable_smt == true ? "--nosmt" : null
       slurm_cluster_name  = var.slurm_cluster_name
       slurm_instance_role = local.slurm_instance_role
       VmDnsSetting        = "GlobalOnly"

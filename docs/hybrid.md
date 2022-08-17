@@ -169,6 +169,10 @@ controller to be able to burst into the cloud.
    # gres.conf
    include $output_dir/cloud_gres.conf
    ```
+1. The `$output_dir` and its contents should be owned by the `SlurmUser`, eg.
+   ```sh
+   chown -R slurm: $output_dir
+   ```
 1. Add a cronjob/crontab to call slurmsync.py as SlurmUser.
    ```conf
    */1 * * * * $output_dir/slurmsync.py

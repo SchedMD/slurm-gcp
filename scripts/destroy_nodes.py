@@ -23,7 +23,7 @@ from suspend import (
     truncate_iter,
     wait_for_operations,
 )
-from util import compute, config_root_logger, project, parse_self_link
+from util import lkp, compute, config_root_logger, parse_self_link
 
 logger_name = Path(__file__).name
 log = logging.getLogger(logger_name)
@@ -78,7 +78,7 @@ def main(args):
     # NOTE: It is not technically possible to filter by metadata or other
     #       complex nested items
     result = (
-        compute.instances().aggregatedList(project=project, filter=filter).execute()
+        compute.instances().aggregatedList(project=lkp.project, filter=filter).execute()
     )
 
     compute_list = []
@@ -119,12 +119,8 @@ if __name__ == "__main__":
 
     logfile = (Path(__file__).parent / logger_name).with_suffix(".log")
     if args.debug:
-        config_root_logger(
-            logger_name, level="DEBUG", util_level="DEBUG", logfile=logfile
-        )
+        config_root_logger(logger_name, level="DEBUG", logfile=logfile)
     else:
-        config_root_logger(
-            logger_name, level="INFO", util_level="ERROR", logfile=logfile
-        )
+        config_root_logger(logger_name, level="INFO", logfile=logfile)
 
     main(args)

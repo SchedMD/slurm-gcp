@@ -47,6 +47,7 @@ module "slurm_partition" {
       node_conf              = {}
 
       additional_disks         = []
+      bandwidth_tier           = "platform_default"
       can_ip_forward           = false
       disable_smt              = false
       disk_auto_delete         = true

@@ -24,16 +24,15 @@ import util
 from collections import namedtuple
 from pathlib import Path
 from google.cloud import pubsub_v1
-from util import project, lkp, cfg
+from util import lkp, cfg
 from util import config_root_logger, handle_exception, run, publish_message
 
 filename = Path(__file__).name
 logfile = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 util.chown_slurm(logfile, mode=0o600)
-config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
 log = logging.getLogger(filename)
 
-project_id = project
+project_id = lkp.project
 subscription_id = lkp.hostname
 
 subscriber = pubsub_v1.SubscriberClient()
@@ -159,7 +158,7 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
                     "timestamp": datetime.utcnow().isoformat(),
                 }
             )
-            publish_message(project, util.cfg.pubsub_topic_id, message_json)
+            publish_message(lkp.project, util.cfg.pubsub_topic_id, message_json)
         elif lkp.instance_role == "compute":
             log.info(f"NO-OP for 'Request={data['request']}'.")
         elif lkp.instance_role == "login":
@@ -193,7 +192,7 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
 
 
 def main():
-    config_root_logger(filename, level="DEBUG", util_level="DEBUG", logfile=logfile)
+    config_root_logger(filename, level="DEBUG", logfile=logfile)
     sys.excepthook = handle_exception
 
     util.cfg = util.config_from_metadata()
@@ -214,4 +213,5 @@ def main():
 
 
 if __name__ == "__main__":
+    config_root_logger(filename, level="DEBUG", logfile=logfile)
     main()

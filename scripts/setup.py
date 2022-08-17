@@ -209,9 +209,11 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
                 "NodeName": "DEFAULT",
                 "State": "UNKNOWN",
                 "RealMemory": machine_conf.memory,
-                "Sockets": 1,
-                "CoresPerSocket": machine_conf.cpus,
-                "ThreadsPerCore": 1,
+                "Boards": machine_conf.boards,
+                "Sockets": machine_conf.sockets,
+                "CoresPerSocket": machine_conf.cores_per_socket,
+                "ThreadsPerCore": machine_conf.threads_per_core,
+                "CPUs": machine_conf.cpus,
                 **node_group.node_conf,
             }
         )
@@ -582,7 +584,7 @@ def local_mounts(mountlist):
 def resolve_network_storage(partition_name=None):
     """Combine appropriate network_storage fields to a single list"""
 
-    if cfg.instance_role == "compute":
+    if lkp.instance_role == "compute":
         partition_name = lkp.node_partition_name()
     partition = cfg.partitions[partition_name] if partition_name else None
 
@@ -992,11 +994,6 @@ def setup_compute():
     setup_nss_slurm()
     setup_network_storage()
 
-    # template = lkp.node_template_info(zone=lkp.zone)
-
-    # if (not cfg.instance_defs[pid].image_hyperthreads and
-    #         shutil.which('google_mpi_tuning')):
-    #     run("google_mpi_tuning --nosmt")
     has_gpu = run("lspci | grep --ignore-case 'NVIDIA' | wc -l", shell=True).returncode
     if has_gpu:
         run("nvidia-smi")
@@ -1042,7 +1039,7 @@ def main():
 
 if __name__ == "__main__":
     util.chown_slurm(LOGFILE, mode=0o600)
-    util.config_root_logger(filename, logfile=LOGFILE, util_level="DEBUG")
+    util.config_root_logger(filename, logfile=LOGFILE)
     sys.excepthook = util.handle_exception
 
     lkp = util.Lookup(cfg)  # noqa F811

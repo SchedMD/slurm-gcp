@@ -260,6 +260,7 @@ EOD
         auto_delete  = bool
         boot         = bool
       }))
+      bandwidth_tier         = string
       can_ip_forward         = bool
       disable_smt            = bool
       disk_auto_delete       = bool
@@ -327,6 +328,7 @@ EOD
           group_name               = "test"
           node_conf                = {}
           additional_disks         = []
+          bandwidth_tier           = "platform_default"
           can_ip_forward           = false
           disable_smt              = false
           disk_auto_delete         = true

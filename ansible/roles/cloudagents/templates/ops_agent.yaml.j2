@@ -63,13 +63,13 @@ logging:
       field: message
       regex: "^\[(?<time>[^ ]*)\] (?<message>(?<severity>(fatal|error|verbose|debug[0-9]?):)?.*)$"
       time_key: time
-      time_format: "%Y-%m-%dT%H:%M:%S.%N"
+      time_format: "%Y-%M-%dT%H:%M:%S.%L"
     parse_slurmlog2:
       type: parse_regex
       field: message
-      regex: "^(?<time>\S+ \S+) (?<filename>[^ ]*) (?<severity>(CRITICAL|ERROR|WARNING|INFO|DEBUG)): (?<message>.*)$"
+      regex: "^(?<time>\S+ \S+) (?<severity>(CRITICAL|ERROR|WARNING|INFO|DEBUG))(\(\S+\))?: (?<message>.*)$"
       time_key: time
-      time_format: "%Y-%m-%d %H:%M:%S,%N"
+      time_format: "%Y-%M-%d %H:%M:%S,%L"
   service:
     pipelines:
       default_pipeline:

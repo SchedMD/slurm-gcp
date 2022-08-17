@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[5.1.0\]
+
+- Add support for gvnic and tier1 networking.
+  - **WARNING:** Breaking change to `slurm_cluster`, `slurm_partition` modules
+    -- new field `bandwidth_tier`.
+- Fix get_insert_operations using empty filter item.
+- Fix project id in wait_for_operation for resume.py from some hybrid setups.
+- Add more useful error logging to resume.py
+- Fix resume.py starting more than 1k identical nodes at a time.
+- Ensure proper slurm ownership on instance template info cache.
+- Honor `disable_smt=true` on compute instances.
+- Improve logging and add logging flags to show API request details.
+- Fix usage of slurm_control_host in config.yaml.
+- Fix partition network storage.
+- Improved speed of creating instances.
+- In scripts, ignore GCP instances without Slurm-GCP metadata.
+- Upgrade Slurm to 22.05.3.
+- Pin lustre version to 2.12.
+
 ## \[5.0.3\]
 
 - Allow configuring controller hostname for hybrid deployments.

@@ -21,6 +21,7 @@ import sys
 from enum import Enum
 from itertools import chain
 from pathlib import Path
+import yaml
 
 import util
 from util import (
@@ -30,6 +31,7 @@ from util import (
     batch_execute,
     subscription_create,
     subscription_delete,
+    to_hostlist,
     with_static,
 )
 from util import lkp, cfg, compute
@@ -45,7 +47,7 @@ TOT_REQ_CNT = 1000
 
 
 NodeStatus = Enum(
-    "NodeAction",
+    "NodeStatus",
     (
         "terminated",
         "preempted",
@@ -60,7 +62,7 @@ NodeStatus = Enum(
 
 
 SubscriptionStatus = Enum(
-    "SubscriptionAction",
+    "SubscriptionStatus",
     (
         "deleted",
         "missing",
@@ -191,21 +193,29 @@ def do_node_update(status, nodes):
 
 
 def sync_slurm():
+    compute_instances = [
+        name for name, inst in lkp.instances().items() if inst.role == "compute"
+    ]
+    slurm_nodes = list(lkp.slurm_nodes().keys())
     all_nodes = list(
         set(
             chain(
-                (
-                    name
-                    for name, inst in lkp.instances().items()
-                    if inst.role == "compute"
-                ),
-                (name for name in lkp.slurm_nodes().keys()),
+                compute_instances,
+                slurm_nodes,
             )
         )
+    )
+    log.debug(
+        f"reconciling {len(compute_instances)} ({len(all_nodes)-len(compute_instances)}) GCP instances and {len(slurm_nodes)} Slurm nodes ({len(all_nodes)-len(slurm_nodes)})."
     )
     node_statuses = {
         k: list(v) for k, v in util.groupby_unsorted(all_nodes, find_node_status)
     }
+    if log.isEnabledFor(logging.DEBUG):
+        status_nodelist = {
+            status.name: to_hostlist(nodes) for status, nodes in node_statuses.items()
+        }
+        log.debug(f"node statuses: \n{yaml.safe_dump(status_nodelist).rstrip()}")
 
     for status, nodes in node_statuses.items():
         do_node_update(status, nodes)
@@ -306,29 +316,37 @@ def main():
         log.exception("failed to sync instances")
 
 
-if __name__ == "__main__":
+parser = argparse.ArgumentParser(
+    description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+)
+parser.add_argument(
+    "--debug",
+    "-d",
+    dest="loglevel",
+    action="store_const",
+    const=logging.DEBUG,
+    default=logging.INFO,
+    help="Enable debugging output",
+)
+parser.add_argument(
+    "--trace-api",
+    "-t",
+    action="store_true",
+    help="Enable detailed api request output",
+)
 
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--debug",
-        "-d",
-        dest="debug",
-        action="store_true",
-        help="Enable debugging output",
-    )
+if __name__ == "__main__":
 
     args = parser.parse_args()
     util.chown_slurm(LOGFILE, mode=0o600)
-    if args.debug:
-        util.config_root_logger(
-            filename, level="DEBUG", util_level="DEBUG", logfile=LOGFILE
-        )
-    else:
-        util.config_root_logger(
-            filename, level="INFO", util_level="ERROR", logfile=LOGFILE
-        )
+
+    if cfg.enable_debug_logging:
+        args.loglevel = logging.DEBUG
+    if args.trace_api:
+        cfg.extra_logging_flags = list(cfg.extra_logging_flags)
+        cfg.extra_logging_flags.append("trace_api")
+    util.config_root_logger(filename, level=args.loglevel, logfile=LOGFILE)
+
     sys.excepthook = util.handle_exception
 
     # only run one instance at a time

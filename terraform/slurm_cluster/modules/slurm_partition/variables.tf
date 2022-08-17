@@ -82,6 +82,7 @@ EOD
       auto_delete  = bool
       boot         = bool
     }))
+    bandwidth_tier         = string
     can_ip_forward         = bool
     disable_smt            = bool
     disk_auto_delete       = bool

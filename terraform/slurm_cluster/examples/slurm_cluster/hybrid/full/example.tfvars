@@ -125,7 +125,9 @@ partitions = [
     enable_placement_groups = false
     network_storage         = []
     partition_conf = {
-      SuspendTime = 300
+      ResumeTimeout  = 300
+      SuspendTimeout = 300
+      SuspendTime    = 300
     }
     partition_startup_scripts = [
       # {
@@ -145,7 +147,7 @@ partitions = [
         node_count_dynamic_max = 20
         node_count_static      = 0
         node_conf = {
-          # Features = "test"
+          Features = "test"
         }
 
         # Template By Definition
@@ -176,6 +178,7 @@ partitions = [
         instance_template = null
 
         # Instance Definition
+        bandwidth_tier = "platform_default"
         enable_spot_vm = false
         spot_instance_config = {
           termination_action = "STOP"
@@ -191,7 +194,9 @@ partitions = [
     enable_placement_groups = false
     network_storage         = []
     partition_conf = {
-      SuspendTime = 300
+      ResumeTimeout  = 300
+      SuspendTimeout = 300
+      SuspendTime    = 300
     }
     partition_startup_scripts = []
     partition_name            = "debug2"
@@ -234,6 +239,7 @@ partitions = [
         instance_template = null
 
         # Instance Definition
+        bandwidth_tier = "platform_default"
         enable_spot_vm = false
         spot_instance_config = {
           termination_action = "STOP"

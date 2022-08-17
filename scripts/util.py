@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import inspect
+import json
 import httplib2
 import importlib.util
 import logging
@@ -77,9 +79,9 @@ if ENV_CONFIG_YAML:
 else:
     CONFIG_FILE = Path(__file__).with_name("config.yaml")
 API_REQ_LIMIT = 2000
+URI_REGEX = r"[a-z]([-a-z0-9]*[a-z0-9])?"
 
-log = logging.getLogger(__name__)
-def_creds, project = google.auth.default()
+def_creds, auth_project = google.auth.default()
 Path.mkdirp = partialmethod(Path.mkdir, parents=True, exist_ok=True)
 
 scripts_dir = next(
@@ -124,6 +126,59 @@ slurmdirs = NSDict(
         )
     }
 )
+
+
+class LogFormatter(logging.Formatter):
+    """adds logging flags to the levelname in log records"""
+
+    def format(self, record):
+        new_fmt = self._fmt
+        flag = getattr(record, "flag", None)
+        if flag is not None:
+            start, level, end = new_fmt.partition("%(levelname)s")
+            if level:
+                new_fmt = f"{start}{level}(%(flag)s){end}"
+        # insert function name if record level is DEBUG
+        if record.levelno < logging.INFO:
+            prefix, msg, suffix = new_fmt.partition("%(message)s")
+            new_fmt = f"{prefix}%(funcName)s: {msg}{suffix}"
+        self._style._fmt = new_fmt
+        return super().format(record)
+
+
+class FlagLogAdapter(logging.LoggerAdapter):
+    """creates log adapters that add a flag to the log record,
+    allowing it to be filtered"""
+
+    def __init__(self, logger, flag, extra=None):
+        if extra is None:
+            extra = {}
+        self.flag = flag
+        super().__init__(logger, extra)
+
+    @property
+    def enabled(self):
+        return cfg.extra_logging_flags.get(self.flag, False)
+
+    def process(self, msg, kwargs):
+        extra = kwargs.setdefault("extra", {})
+        extra.update(self.extra)
+        extra["flag"] = self.flag
+        return msg, kwargs
+
+
+logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+log = logging.getLogger(__name__)
+logging_flags = [
+    "trace_api",
+    "subproc",
+    "hostlists",
+    "subscriptions",
+]
+log_trace_api = FlagLogAdapter(log, "trace_api")
+log_subproc = FlagLogAdapter(log, "subproc")
+log_hostlists = FlagLogAdapter(log, "hostlists")
+log_subscriptions = FlagLogAdapter(log, "subscriptions")
 
 
 def publish_message(project_id, topic_id, message) -> None:
@@ -186,12 +241,23 @@ def parse_self_link(self_link: str):
     return NSDict(link_patt.findall(self_link))
 
 
+def trim_self_link(link: str):
+    """get resource name from self link url, eg.
+    https://.../v1/projects/<project>/regions/<region>
+    -> <region>
+    """
+    try:
+        return link[link.rindex("/") + 1 :]
+    except ValueError:
+        raise Exception(f"'/' not found, not a self link: '{link}' ")
+
+
 def subscription_list(project_id=None, page_size=None, slurm_cluster_name=None):
     """List pub/sub subscription"""
     from google.cloud import pubsub_v1
 
     if project_id is None:
-        project_id = project
+        project_id = auth_project
     if slurm_cluster_name is None:
         slurm_cluster_name = lkp.cfg.slurm_cluster_name
 
@@ -251,7 +317,8 @@ def subscription_create(subscription_id, project_id=None):
         }
         try:
             subscription = subscriber.create_subscription(request=request)
-            log.info(f"Subscription created: {subscription}")
+            log.info(f"Subscription created: {subscription_path}")
+            log_subscriptions.debug(f"{subscription}")
         except exceptions.AlreadyExists:
             log.info(f"Subscription '{subscription_path}' already exists!")
 
@@ -275,16 +342,26 @@ def subscription_delete(subscription_id, project_id=None):
             log.info(f"Subscription '{subscription_path}' not found!")
 
 
-def execute_with_futures(func, list):
+def execute_with_futures(func, seq):
     with ThreadPoolExecutor() as exe:
         futures = []
-        for i in list:
+        for i in seq:
             future = exe.submit(func, i)
             futures.append(future)
         for future in futures:
             result = future.exception()
             if result is not None:
                 raise result
+
+
+def map_with_futures(func, seq):
+    with ThreadPoolExecutor() as exe:
+        futures = []
+        for i in seq:
+            future = exe.submit(func, i)
+            futures.append(future)
+        for future in futures:
+            yield future.result(), future.exception()
 
 
 def is_exclusive_node(node):
@@ -338,6 +415,12 @@ def load_config_data(config):
         cfg.slurm_bin_dir = slurmdirs.prefix / "bin"
     if not cfg.slurm_control_host:
         cfg.slurm_control_host = f"{cfg.slurm_cluster_name}-controller"
+
+    if not cfg.enable_debug_logging and isinstance(cfg.enable_debug_logging, NSDict):
+        cfg.enable_debug_logging = False
+    cfg.extra_logging_flags = NSDict(
+        {flag: cfg.extra_logging_flags.get(flag, False) for flag in logging_flags}
+    )
     return cfg
 
 
@@ -389,7 +472,7 @@ def load_config_file(path):
         content = yaml.safe_load(Path(path).read_text())
     except FileNotFoundError:
         log.error(f"config file not found: {path}")
-        return None
+        return NSDict()
     return load_config_data(content)
 
 
@@ -398,12 +481,26 @@ def save_config(cfg, path):
     Path(path).write_text(yaml.dump(cfg, Dumper=Dumper))
 
 
-def config_root_logger(
-    caller_logger, level="DEBUG", util_level=None, stdout=True, logfile=None
-):
+def filter_logging_flags(record):
+    """logging filter for flags
+    if there are no flags, always pass. If there are flags, only pass if a flag
+    matches an enabled flag in cfg.extra_logging_flags"""
+    flag = getattr(record, "flag", None)
+    if flag is None:
+        return True
+    return cfg.extra_logging_flags.get(flag, False)
+
+
+def owned_file_handler(filename):
+    """create file handler"""
+    if filename is None:
+        return None
+    chown_slurm(filename)
+    return logging.handlers.WatchedFileHandler(filename, delay=True)
+
+
+def config_root_logger(caller_logger, level="DEBUG", stdout=True, logfile=None):
     """configure the root logger, disabling all existing loggers"""
-    if not util_level:
-        util_level = level
     handlers = list(compress(("stdout_handler", "file_handler"), (stdout, logfile)))
 
     config = {
@@ -411,23 +508,31 @@ def config_root_logger(
         "disable_existing_loggers": True,
         "formatters": {
             "standard": {
-                "format": "",
+                "()": LogFormatter,
+                "fmt": "%(levelname)s: %(message)s",
             },
             "stamp": {
-                "format": "%(asctime)s %(name)s %(levelname)s: %(message)s",
+                "()": LogFormatter,
+                "fmt": "%(asctime)s %(levelname)s: %(message)s",
             },
+        },
+        "filters": {
+            "logging_flags": {"()": lambda: filter_logging_flags},
         },
         "handlers": {
             "stdout_handler": {
-                "level": "DEBUG",
+                "level": logging.DEBUG,
                 "formatter": "standard",
                 "class": "logging.StreamHandler",
                 "stream": sys.stdout,
+                "filters": ["logging_flags"],
             },
-        },
-        "loggers": {
-            __name__: {  # enable util.py logging
-                "level": util_level,
+            "file_handler": {
+                "()": owned_file_handler,
+                "level": logging.DEBUG,
+                "formatter": "stamp",
+                "filters": ["logging_flags"],
+                "filename": logfile,
             },
         },
         "root": {
@@ -435,15 +540,11 @@ def config_root_logger(
             "level": level,
         },
     }
-    if logfile:
-        config["handlers"]["file_handler"] = {
-            "level": "DEBUG",
-            "formatter": "stamp",
-            "class": "logging.handlers.WatchedFileHandler",
-            "filename": logfile,
-        }
+    if not logfile:
+        del config["handlers"]["file_handler"]
     logging.config.dictConfig(config)
     loggers = (
+        __name__,
         "resume",
         "suspend",
         "slurmsync",
@@ -452,6 +553,19 @@ def config_root_logger(
     )
     for logger in map(logging.getLogger, loggers):
         logger.disabled = False
+
+
+def log_api_request(request):
+    """log.trace info about a compute API request"""
+    if log_trace_api.enabled:
+        # output the whole request object as pretty yaml
+        # the body is nested json, so load it as well
+        rep = json.loads(request.to_json())
+        if rep.get("body", None) is not None:
+            rep["body"] = json.loads(rep["body"])
+        pretty_req = yaml.safe_dump(rep).rstrip()
+        # label log message with the calling function
+        log_trace_api.debug(f"{inspect.stack()[1].function}:\n{pretty_req}")
 
 
 def handle_exception(exc_type, exc_value, exc_trace):
@@ -473,7 +587,7 @@ def run(
     **kwargs,
 ):
     """Wrapper for subprocess.run() with convenient defaults"""
-    log.debug(f"run: {cmd}")
+    log_subproc.debug(f"run: {cmd}")
     args = cmd if shell else shlex.split(cmd)
     result = subprocess.run(
         args,
@@ -491,7 +605,7 @@ def run(
 def spawn(cmd, quiet=False, shell=False, **kwargs):
     """nonblocking spawn of subprocess"""
     if not quiet:
-        log.debug(f"spawn: {cmd}")
+        log_subproc.debug(f"spawn: {cmd}")
     args = cmd if shell else shlex.split(cmd)
     return subprocess.Popen(args, shell=shell, **kwargs)
 
@@ -509,9 +623,9 @@ def chown_slurm(path, mode=None):
     try:
         shutil.chown(path, user="slurm", group="slurm")
     except LookupError:
-        log.error(f"User 'slurm' does not exist. Cannot 'chown slurm:slurm {path}'.")
+        log.warning(f"User 'slurm' does not exist. Cannot 'chown slurm:slurm {path}'.")
     except PermissionError:
-        log.error(f"Not authorized to 'chown slurm:slurm {path}'.")
+        log.warning(f"Not authorized to 'chown slurm:slurm {path}'.")
     except Exception as err:
         log.error(err)
 
@@ -650,10 +764,9 @@ def to_hostlist(nodenames):
     tmp_file = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
     tmp_file.writelines("\n".join(sorted(nodenames, key=natural_sort)))
     tmp_file.close()
-    log.debug("tmp_file = {}".format(tmp_file.name))
 
     hostlist = run(f"{lkp.scontrol} show hostlist {tmp_file.name}").stdout.rstrip()
-    log.debug("hostlist = {}".format(hostlist))
+    log_hostlists.debug(f"hostlist({len(nodenames)}): {hostlist}".format(hostlist))
     os.remove(tmp_file.name)
     return hostlist
 
@@ -665,6 +778,7 @@ def to_hostnames(nodelist):
     else:
         hostlist = ",".join(nodelist)
     hostnames = run(f"{lkp.scontrol} show hostnames {hostlist}").stdout.splitlines()
+    log_hostlists.debug(f"hostnames({len(hostnames)}) from {hostlist}")
     return hostnames
 
 
@@ -764,18 +878,20 @@ def batch_execute(requests, compute=compute, retry_cb=None):
     return done, failed
 
 
-def wait_request(operation, project=project, compute=compute):
+def wait_request(operation, project=None, compute=compute):
     """makes the appropriate wait request for a given operation"""
+    if project is None:
+        project = lkp.project
     if "zone" in operation:
         req = compute.zoneOperations().wait(
             project=project,
-            zone=operation["zone"].split("/")[-1],
+            zone=trim_self_link(operation["zone"]),
             operation=operation["name"],
         )
     elif "region" in operation:
         req = compute.regionOperations().wait(
             project=project,
-            region=operation["region"].split("/")[-1],
+            region=trim_self_link(operation["region"]),
             operation=operation["name"],
         )
     else:
@@ -785,31 +901,33 @@ def wait_request(operation, project=project, compute=compute):
     return req
 
 
-def wait_for_operation(operation, project=project, compute=compute):
+def wait_for_operation(operation, project=None, compute=compute):
     """wait for given operation"""
-    wait_req = wait_request(operation)
+    wait_req = wait_request(operation, project=project, compute=compute)
 
     while True:
         result = ensure_execute(wait_req)
         if result["status"] == "DONE":
             log_errors = " with errors" if "error" in result else ""
             log.debug(
-                f"operation complete{log_errors}: type: {result['operationType']}, name: {result['name']}"
+                f"operation complete{log_errors}: type={result['operationType']}, name={result['name']}"
             )
             return result
 
 
-def wait_for_operations(operations, project=project, compute=compute):
-    return [wait_for_operation(op) for op in operations]
+def wait_for_operations(operations, project=None, compute=compute):
+    return [
+        wait_for_operation(op, project=project, compute=compute) for op in operations
+    ]
 
 
-def wait_for_operations_async(operations, project=project, compute=compute):
+def wait_for_operations_async(operations, project=None, compute=compute):
     """wait for all operations"""
 
     def operation_retry(resp):
         return resp["status"] != "DONE"
 
-    requests = [wait_request(op) for op in operations]
+    requests = [wait_request(op, project=project, compute=compute) for op in operations]
     return batch_execute(requests, retry_cb=operation_retry)
 
 
@@ -818,11 +936,13 @@ def get_filtered_operations(
     zone=None,
     region=None,
     only_global=False,
-    project=project,
+    project=None,
     compute=compute,
 ):
     """get list of operations associated with group id"""
 
+    if project is None:
+        project = lkp.project
     operations = []
 
     def get_aggregated_operations(items):
@@ -863,12 +983,18 @@ def get_filtered_operations(
     return operations
 
 
-def get_insert_operations(bulk_operations, project=project, compute=compute):
-    """get all group operations from list of bulk operations"""
-    flt = " OR ".join(
-        f"(operationGroupId={op['operationGroupId']})" for op in bulk_operations
-    )
-    return get_filtered_operations(f"(operationType=insert) AND ({flt})")
+def get_insert_operations(group_ids, flt=None, project=None, compute=compute):
+    """get all insert operations from a list of operationGroupId"""
+    if project is None:
+        project = lkp.project
+    if isinstance(group_ids, str):
+        group_ids = group_ids.split(",")
+    filters = [
+        "operationType=insert",
+        flt,
+        " OR ".join(f"(operationGroupId={id})" for id in group_ids),
+    ]
+    return get_filtered_operations(" AND ".join(f"({f})" for f in filters if f))
 
 
 class Dumper(yaml.SafeDumper):
@@ -914,13 +1040,11 @@ class Lookup:
 
     @property
     def project(self):
-        return self.cfg.project or project
+        return self.cfg.project or auth_project
 
     @property
     def control_host(self):
-        if self.cfg.slurm_cluster_name:
-            return f"{self.cfg.slurm_cluster_name}-controller"
-        return None
+        return self.cfg.slurm_control_host
 
     @property
     def scontrol(self):
@@ -1072,17 +1196,21 @@ class Lookup:
         fields = (
             "items.zones.instances(name,zone,status,machineType,metadata),nextPageToken"
         )
-        flt = f"name={slurm_cluster_name}-*"
+        flt = f"labels.slurm_cluster_name={slurm_cluster_name} AND name:{slurm_cluster_name}-*"
         act = self.compute.instances()
         op = act.aggregatedList(project=project, fields=fields, filter=flt)
 
         def properties(inst):
             """change instance properties to a preferred format"""
-            inst["zone"] = inst["zone"].split("/")[-1]
-            inst["machineType"] = inst["machineType"].split("/")[-1]
+            inst["zone"] = trim_self_link(inst["zone"])
+            machine_link = inst["machineType"]
+            inst["machineType"] = trim_self_link(machine_link)
+            inst["machineTypeLink"] = machine_link
             # metadata is fetched as a dict of dicts like:
             # {'key': key, 'value': value}, kinda silly
-            metadata = {i["key"]: i["value"] for i in inst["metadata"]["items"]}
+            metadata = {i["key"]: i["value"] for i in inst["metadata"].get("items", [])}
+            if "slurm_instance_role" not in metadata:
+                return None
             inst["role"] = metadata["slurm_instance_role"]
             del inst["metadata"]  # no need to store all the metadata
             return NSDict(inst)
@@ -1090,13 +1218,14 @@ class Lookup:
         instances = {}
         while op is not None:
             result = ensure_execute(op)
+            instance_iter = (
+                (inst["name"], properties(inst))
+                for inst in chain.from_iterable(
+                    m["instances"] for m in result["items"].values()
+                )
+            )
             instances.update(
-                {
-                    inst["name"]: properties(inst)
-                    for inst in chain.from_iterable(
-                        m["instances"] for m in result["items"].values()
-                    )
-                }
+                {name: props for name, props in instance_iter if props is not None}
             )
             op = act.aggregatedList_next(op, result)
         return instances
@@ -1158,14 +1287,21 @@ class Lookup:
 
         template = self.template_info(template_link)
         if not template.machineType:
-            temp_name = parse_self_link(template_link).instanceTemplate
+            temp_name = trim_self_link(template_link)
             raise Exception(f"instance template {temp_name} has no machine type")
         template.machine_info = self.machine_type(template.machineType, zone=zone)
         machine = template.machine_info
+
         machine_conf = NSDict()
-        # TODO how is smt passed?
-        # machine['cpus'] = machine['guestCpus'] // (1 if part.image_hyperthreads else 2) or 1
-        machine_conf.cpus = machine.guestCpus
+        machine_conf.boards = 1  # No information, assume 1
+        machine_conf.sockets = 1  # No information, assume 1
+        # Each physical core is assumed to have two threads unless disabled or incapable
+        _threads = template.advancedMachineFeatures.threadsPerCore
+        _threads_per_core = _threads if _threads else 2
+        _threads_per_core_div = 2 if _threads_per_core == 1 else 1
+        machine_conf.threads_per_core = 1
+        machine_conf.cpus = int(machine.guestCpus / _threads_per_core_div)
+        machine_conf.cores_per_socket = int(machine_conf.cpus / machine_conf.sockets)
         # Because the actual memory on the host will be different than
         # what is configured (e.g. kernel will take it). From
         # experiments, about 16 MB per GB are used (plus about 400 MB
@@ -1191,7 +1327,7 @@ class Lookup:
                 continue
         else:
             # reached max_count of waits
-            log.fatal(f"Failed to access cache file. Latest error: {err}")
+            raise Exception(f"Failed to access cache file. latest error: {err}")
         try:
             yield cache
         finally:
@@ -1201,7 +1337,7 @@ class Lookup:
     def template_info(self, template_link, project=None):
 
         project = project or self.project
-        template_name = template_link.split("/")[-1]
+        template_name = trim_self_link(template_link)
         # split read and write access to minimize write-lock. This might be a
         # bit slower? TODO measure
         if self.template_cache_path.exists():
@@ -1232,6 +1368,8 @@ class Lookup:
         # keep write access open for minimum time
         with self.template_cache(writeback=True) as cache:
             cache[template_name] = template.to_dict()
+        # cache should be owned by slurm
+        chown_slurm(self.template_cache_path)
 
         return template
 
@@ -1242,7 +1380,7 @@ class Lookup:
         )
 
     def clear_template_info_cache(self):
-        with shelve.open(str(self.template_cache_path), writeback=True) as cache:
+        with self.template_cache(writeback=True) as cache:
             cache.clear()
         self.template_info.cache_clear()
 
