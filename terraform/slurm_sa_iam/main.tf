@@ -41,7 +41,7 @@ locals {
   }
 
   account = {
-    "${var.account_type}" = local.roles[var.account_type]
+    (var.account_type) = local.roles[var.account_type]
   }
 }
 
