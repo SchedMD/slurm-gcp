@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## \[5.1.0\]
 
-- Add support for gvnic and tier1 networking
+- Add support for gvnic and tier1 networking.
+  - **WARNING:** Breaking change to `slurm_cluster`, `slurm_partition` modules
+    -- new field `bandwidth_tier`.
 - Fix get_insert_operations using empty filter item.
 - Fix project id in wait_for_operation for resume.py from some hybrid setups.
 - Add more useful error logging to resume.py
