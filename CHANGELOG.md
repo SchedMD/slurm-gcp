@@ -203,7 +203,7 @@ All notable changes to this project will be documented in this file.
 - `partitions\[\].image_hyperthreads=false` now actively disables hyperthreads
   on hpc-centos-7 images, starting with the now recommended image
 - `partitions\[\].image_hyperthreads` is now true in tfvars examples
-- Fixed running of \`custom-compute-install on login node
+- Fixed running of `custom-compute-install` on login node
 - Fixed slurmrestd install on foundry debian images
 - Disable SELinux (was permissive) to fix hpc-centos-7 reboot issue
-- Updated Slurm to 20.11.07
+- Updated Slurm to 20.11.7
