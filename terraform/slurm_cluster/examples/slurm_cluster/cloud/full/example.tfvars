@@ -201,8 +201,8 @@ controller_instance_config = {
   # Instance Definition
   access_config = [
     # {
-    #   nat_ip       = "<NAT_IP>"
-    #   network_tier = "STANDARD"
+    #   nat_ip       = null
+    #   network_tier = null
     # },
   ]
   network_ip = null
