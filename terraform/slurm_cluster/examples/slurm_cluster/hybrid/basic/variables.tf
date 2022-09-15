@@ -247,6 +247,9 @@ EOD
         auto_delete  = bool
         boot         = bool
       }))
+      access_config = list(object({
+        network_tier = string
+      }))
       bandwidth_tier         = string
       can_ip_forward         = bool
       disable_smt            = bool

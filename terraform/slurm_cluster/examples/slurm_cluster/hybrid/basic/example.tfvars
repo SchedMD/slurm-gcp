@@ -138,7 +138,12 @@ partitions = [
         }
 
         # Template By Definition
-        additional_disks       = []
+        additional_disks = []
+        access_config = [
+          # {
+          #   network_tier = null
+          # },
+        ]
         can_ip_forward         = false
         disable_smt            = false
         disk_auto_delete       = true
@@ -205,6 +210,7 @@ partitions = [
 
         # Template By Definition
         additional_disks       = []
+        access_config          = []
         can_ip_forward         = false
         disable_smt            = false
         disk_auto_delete       = true

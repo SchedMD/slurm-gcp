@@ -50,6 +50,7 @@ locals {
         )
       ])
       # Additional Features
+      access_config  = x.access_config
       bandwidth_tier = x.bandwidth_tier != null ? x.bandwidth_tier : local.bandwidth_tier
       # Beta Features
       enable_spot_vm       = x.enable_spot_vm

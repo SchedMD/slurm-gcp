@@ -260,6 +260,9 @@ EOD
         auto_delete  = bool
         boot         = bool
       }))
+      access_config = list(object({
+        network_tier = string
+      }))
       bandwidth_tier         = string
       can_ip_forward         = bool
       disable_smt            = bool
@@ -328,6 +331,7 @@ EOD
           group_name               = "test"
           node_conf                = {}
           additional_disks         = []
+          access_config            = []
           bandwidth_tier           = "platform_default"
           can_ip_forward           = false
           disable_smt              = false

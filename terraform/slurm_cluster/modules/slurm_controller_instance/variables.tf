@@ -307,6 +307,9 @@ variable "partitions" {
       partition_conf = map(string)
       partition_name = string
       partition_nodes = map(object({
+        access_config = list(object({
+          network_tier = string
+        }))
         bandwidth_tier         = string
         node_count_dynamic_max = number
         node_count_static      = number

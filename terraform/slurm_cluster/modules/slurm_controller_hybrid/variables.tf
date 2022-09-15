@@ -201,11 +201,14 @@ variable "partitions" {
       partition_nodes = map(object({
         node_count_dynamic_max = number
         node_count_static      = number
-        bandwidth_tier         = string
-        enable_spot_vm         = bool
-        group_name             = string
-        instance_template      = string
-        node_conf              = map(string)
+        access_config = list(object({
+          network_tier = string
+        }))
+        bandwidth_tier    = string
+        enable_spot_vm    = bool
+        group_name        = string
+        instance_template = string
+        node_conf         = map(string)
         spot_instance_config = object({
           termination_action = string
         })

@@ -82,6 +82,9 @@ EOD
       auto_delete  = bool
       boot         = bool
     }))
+    access_config = list(object({
+      network_tier = string
+    }))
     bandwidth_tier         = string
     can_ip_forward         = bool
     disable_smt            = bool
@@ -169,6 +172,14 @@ EOD
       : x.enable_spot_vm == x.preemptible if x.enable_spot_vm == true && x.instance_template == null
     ])
     error_message = "Required: preemptible=true when enable_spot_vm=true."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.partition_nodes
+      : length(x.access_config) <= 1
+    ])
+    error_message = "At most one access config currently supported (per partition_nodes group/object)."
   }
 }
 
