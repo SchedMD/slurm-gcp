@@ -168,21 +168,22 @@ module "slurm_sa_iam" {
 module "slurm_cluster" {
   source = "../../../../../slurm_cluster"
 
-  cloud_parameters         = var.cloud_parameters
-  slurm_cluster_name       = var.slurm_cluster_name
-  compute_startup_scripts  = var.compute_startup_scripts
-  controller_hybrid_config = var.controller_hybrid_config
-  disable_default_mounts   = var.disable_default_mounts
-  network_storage          = var.network_storage
-  enable_devel             = var.enable_devel
-  enable_cleanup_compute   = var.enable_cleanup_compute
-  enable_bigquery_load     = var.enable_bigquery_load
-  enable_reconfigure       = var.enable_reconfigure
-  epilog_scripts           = var.epilog_scripts
-  enable_hybrid            = true
-  partitions               = local.partitions
-  project_id               = var.project_id
-  prolog_scripts           = var.prolog_scripts
+  cloud_parameters                = var.cloud_parameters
+  slurm_cluster_name              = var.slurm_cluster_name
+  compute_startup_scripts_timeout = var.compute_startup_scripts_timeout
+  compute_startup_scripts         = var.compute_startup_scripts
+  controller_hybrid_config        = var.controller_hybrid_config
+  disable_default_mounts          = var.disable_default_mounts
+  network_storage                 = var.network_storage
+  enable_devel                    = var.enable_devel
+  enable_cleanup_compute          = var.enable_cleanup_compute
+  enable_bigquery_load            = var.enable_bigquery_load
+  enable_reconfigure              = var.enable_reconfigure
+  epilog_scripts                  = var.epilog_scripts
+  enable_hybrid                   = true
+  partitions                      = local.partitions
+  project_id                      = var.project_id
+  prolog_scripts                  = var.prolog_scripts
 
   depends_on = [
     # Ensure services are enabled

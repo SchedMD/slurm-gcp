@@ -246,28 +246,31 @@ module "slurm_sa_iam" {
 module "slurm_cluster" {
   source = "../../../../../slurm_cluster"
 
-  cgroup_conf_tpl            = var.cgroup_conf_tpl
-  cloud_parameters           = local.cloud_parameters
-  cloudsql                   = var.cloudsql
-  slurm_cluster_name         = var.slurm_cluster_name
-  compute_startup_scripts    = var.compute_startup_scripts
-  controller_instance_config = local.controller_instance_config[0]
-  controller_startup_scripts = var.controller_startup_scripts
-  enable_devel               = var.enable_devel
-  enable_cleanup_compute     = var.enable_cleanup_compute
-  enable_bigquery_load       = var.enable_bigquery_load
-  enable_reconfigure         = var.enable_reconfigure
-  epilog_scripts             = var.epilog_scripts
-  login_startup_scripts      = var.login_startup_scripts
-  login_network_storage      = var.login_network_storage
-  login_nodes                = local.login_nodes
-  disable_default_mounts     = var.disable_default_mounts
-  network_storage            = var.network_storage
-  partitions                 = local.partitions
-  project_id                 = var.project_id
-  prolog_scripts             = var.prolog_scripts
-  slurmdbd_conf_tpl          = var.slurmdbd_conf_tpl
-  slurm_conf_tpl             = var.slurm_conf_tpl
+  cgroup_conf_tpl                    = var.cgroup_conf_tpl
+  cloud_parameters                   = local.cloud_parameters
+  cloudsql                           = var.cloudsql
+  slurm_cluster_name                 = var.slurm_cluster_name
+  compute_startup_scripts_timeout    = var.compute_startup_scripts_timeout
+  compute_startup_scripts            = var.compute_startup_scripts
+  controller_instance_config         = local.controller_instance_config[0]
+  controller_startup_scripts_timeout = var.controller_startup_scripts_timeout
+  controller_startup_scripts         = var.controller_startup_scripts
+  enable_devel                       = var.enable_devel
+  enable_cleanup_compute             = var.enable_cleanup_compute
+  enable_bigquery_load               = var.enable_bigquery_load
+  enable_reconfigure                 = var.enable_reconfigure
+  epilog_scripts                     = var.epilog_scripts
+  login_startup_scripts_timeout      = var.login_startup_scripts_timeout
+  login_startup_scripts              = var.login_startup_scripts
+  login_network_storage              = var.login_network_storage
+  login_nodes                        = local.login_nodes
+  disable_default_mounts             = var.disable_default_mounts
+  network_storage                    = var.network_storage
+  partitions                         = local.partitions
+  project_id                         = var.project_id
+  prolog_scripts                     = var.prolog_scripts
+  slurmdbd_conf_tpl                  = var.slurmdbd_conf_tpl
+  slurm_conf_tpl                     = var.slurm_conf_tpl
 
   depends_on = [
     # Ensure services are enabled

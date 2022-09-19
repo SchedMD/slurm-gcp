@@ -194,6 +194,18 @@ EOD
   sensitive = true
 }
 
+variable "login_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in login_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
 variable "controller_startup_scripts" {
   description = "List of scripts to be ran on controller VM startup."
   type = list(object({
@@ -203,6 +215,18 @@ variable "controller_startup_scripts" {
   default = []
 }
 
+variable "controller_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in controller_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
 variable "compute_startup_scripts" {
   description = "List of scripts to be ran on compute VM startup."
   type = list(object({
@@ -210,6 +234,18 @@ variable "compute_startup_scripts" {
     content  = string
   }))
   default = []
+}
+
+variable "compute_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in compute_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
 }
 
 variable "prolog_scripts" {
@@ -321,9 +357,10 @@ variable "partitions" {
           termination_action = string
         })
       }))
-      subnetwork        = string
-      zone_policy_allow = list(string)
-      zone_policy_deny  = list(string)
+      partition_startup_scripts_timeout = number
+      subnetwork                        = string
+      zone_policy_allow                 = list(string)
+      zone_policy_deny                  = list(string)
     })
   }))
   default = []

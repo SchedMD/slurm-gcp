@@ -104,6 +104,18 @@ variable "compute_startup_scripts" {
   default = []
 }
 
+variable "compute_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in compute_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
 variable "prolog_scripts" {
   description = <<EOD
 List of scripts to be used for Prolog. Programs for the slurmd to execute
@@ -213,9 +225,10 @@ variable "partitions" {
           termination_action = string
         })
       }))
-      subnetwork        = string
-      zone_policy_allow = list(string)
-      zone_policy_deny  = list(string)
+      partition_startup_scripts_timeout = number
+      subnetwork                        = string
+      zone_policy_allow                 = list(string)
+      zone_policy_deny                  = list(string)
     })
   }))
   default = []

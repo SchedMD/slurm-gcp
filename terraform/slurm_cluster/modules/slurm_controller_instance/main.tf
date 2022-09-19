@@ -62,6 +62,11 @@ locals {
     network_storage        = var.network_storage
     login_network_storage  = var.login_network_storage
 
+    # timeouts
+    controller_startup_scripts_timeout = var.controller_startup_scripts_timeout
+    compute_startup_scripts_timeout    = var.compute_startup_scripts_timeout
+    login_startup_scripts_timeout      = var.login_startup_scripts_timeout
+
     # slurm conf
     prolog_scripts   = [for x in google_compute_project_metadata_item.prolog_scripts : x.key]
     epilog_scripts   = [for x in google_compute_project_metadata_item.epilog_scripts : x.key]

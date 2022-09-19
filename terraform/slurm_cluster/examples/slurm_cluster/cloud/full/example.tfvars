@@ -88,6 +88,7 @@ cloud_parameters = {
 }
 
 # scripts
+controller_startup_scripts_timeout = 300
 controller_startup_scripts = [
   #   {
   #     filename = "hello_controller.sh"
@@ -98,6 +99,7 @@ controller_startup_scripts = [
   #     EOF
   #   },
 ]
+login_startup_scripts_timeout = 300
 login_startup_scripts = [
   #   {
   #     filename = "hello_login.sh"
@@ -108,6 +110,7 @@ login_startup_scripts = [
   #     EOF
   #   },
 ]
+compute_startup_scripts_timeout = 300
 compute_startup_scripts = [
   #   {
   #     filename = "hello_compute.sh"

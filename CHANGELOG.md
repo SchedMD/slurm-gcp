@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Add support for `access_config` on partition compute nodes.
   - **WARNING:** Breaking change to `slurm_cluster`, `slurm_partition` modules
     -- new field `access_config`.
+- Add support for configurable startup script timeout.
+  - **WARNING:** Breaking change to `slurm_cluster`, `slurm_partition` modules
+    -- new field `partition_startup_script_timeout`.
 
 ## \[5.1.0\]
 

@@ -57,6 +57,18 @@ variable "partition_startup_scripts" {
   default = []
 }
 
+variable "partition_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in partition_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
 variable "partition_nodes" {
   description = <<EOD
 Compute nodes contained with this partition.

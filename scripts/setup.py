@@ -560,8 +560,21 @@ def run_custom_scripts():
 
     try:
         for script in custom_scripts:
-            log.info(f"running script {script.name}")
-            result = run(str(script), timeout=300, check=False, shell=True)
+            if "/controller.d/" in str(script):
+                timeout = lkp.cfg.get("controller_startup_scripts_timeout", 300)
+            elif "/compute.d/" in str(script):
+                timeout = lkp.cfg.get("compute_startup_scripts_timeout", 300)
+            elif "/login.d/" in str(script):
+                timeout = lkp.cfg.get("login_startup_scripts_timeout", 300)
+            elif "/partition.d/" in str(script):
+                partition_name = lkp.node_partition_name()
+                partition = cfg.partitions[partition_name] if partition_name else None
+                timeout = partition.get("partition_startup_scripts_timeout", 300)
+            else:
+                timeout = 300
+            timeout = None if not timeout or timeout < 0 else timeout
+            log.info(f"running script {script.name} with timeout={timeout}")
+            result = run(str(script), timeout=timeout, check=False, shell=True)
             runlog = (
                 f"{script.name} returncode={result.returncode}\n"
                 f"stdout={result.stdout}stderr={result.stderr}"
@@ -570,6 +583,13 @@ def run_custom_scripts():
             result.check_returncode()
     except OSError as e:
         log.error(f"script {script} is not executable")
+        raise e
+    except subprocess.TimeoutExpired as e:
+        log.error(f"script {script} did not complete within timeout={timeout}")
+        raise e
+    except Exception as e:
+        log.error(f"script {script} encountered an exception")
+        log.exception(e)
         raise e
 
 

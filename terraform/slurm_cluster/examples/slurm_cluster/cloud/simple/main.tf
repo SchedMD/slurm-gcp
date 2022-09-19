@@ -101,8 +101,9 @@ locals {
       partition_conf = {
         Default = "YES"
       }
-      partition_startup_scripts = []
-      partition_name            = "debug"
+      partition_startup_scripts_timeout = 300
+      partition_startup_scripts         = []
+      partition_name                    = "debug"
       partition_nodes = [
         {
           node_count_dynamic_max = 20
@@ -147,12 +148,13 @@ locals {
       zone_policy_deny   = []
     },
     {
-      enable_job_exclusive      = false
-      enable_placement_groups   = false
-      network_storage           = []
-      partition_conf            = {}
-      partition_startup_scripts = []
-      partition_name            = "debug2"
+      enable_job_exclusive              = false
+      enable_placement_groups           = false
+      network_storage                   = []
+      partition_conf                    = {}
+      partition_startup_scripts_timeout = 300
+      partition_startup_scripts         = []
+      partition_name                    = "debug2"
       partition_nodes = [
         {
           node_count_dynamic_max = 10

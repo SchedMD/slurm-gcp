@@ -20,15 +20,16 @@
 
 locals {
   partition = {
-    partition_name          = var.partition_name
-    partition_conf          = var.partition_conf
-    partition_nodes         = local.partition_nodes
-    subnetwork              = data.google_compute_subnetwork.partition_subnetwork.self_link
-    zone_policy_allow       = setsubtract([for x in var.zone_policy_allow : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0], var.zone_policy_deny)
-    zone_policy_deny        = [for x in var.zone_policy_deny : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0]
-    enable_job_exclusive    = local.enable_placement_groups || var.enable_job_exclusive
-    enable_placement_groups = local.enable_placement_groups
-    network_storage         = var.network_storage
+    partition_name                    = var.partition_name
+    partition_conf                    = var.partition_conf
+    partition_nodes                   = local.partition_nodes
+    partition_startup_scripts_timeout = var.partition_startup_scripts_timeout
+    subnetwork                        = data.google_compute_subnetwork.partition_subnetwork.self_link
+    zone_policy_allow                 = setsubtract([for x in var.zone_policy_allow : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0], var.zone_policy_deny)
+    zone_policy_deny                  = [for x in var.zone_policy_deny : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0]
+    enable_job_exclusive              = local.enable_placement_groups || var.enable_job_exclusive
+    enable_placement_groups           = local.enable_placement_groups
+    network_storage                   = var.network_storage
   }
 
   partition_nodes = {

@@ -72,6 +72,7 @@ network_storage = [
 ]
 
 # scripts
+compute_startup_scripts_timeout = 300
 compute_startup_scripts = [
   #   {
   #     filename = "hello_compute.sh"
