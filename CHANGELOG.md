@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Fix enable_cleanup_subscriptions defined but not used in certain examples.
 - Fix `slurm_controller_hybrid` not respecting `disable_default_mounts`.
 - Removed unused `slurm_depends_on` from modules.
+- Fix scripts running without config.yaml.
 
 ## \[5.1.0\]
 

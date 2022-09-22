@@ -448,7 +448,7 @@ def config_from_metadata():
     # get setup config from metadata
     slurm_cluster_name = instance_metadata("attributes/slurm_cluster_name")
     if not slurm_cluster_name:
-        return None
+        return NSDict()
 
     metadata_key = f"{slurm_cluster_name}-slurm-config"
     RETRY_WAIT = 5
