@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Remove unused `disable_default_mounts` from `slurm_controller_hybrid`.
 - Removed unused `slurm_depends_on` from modules.
 - Fix scripts running without config.yaml.
+- Reimplement backoff delay on retry attempts.
 
 ## \[5.1.0\]
 

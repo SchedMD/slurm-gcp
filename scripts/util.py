@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import inspect
-import json
 import httplib2
 import importlib.util
+import inspect
+import json
 import logging
 import logging.config
 import os
@@ -451,16 +451,16 @@ def config_from_metadata():
         return NSDict()
 
     metadata_key = f"{slurm_cluster_name}-slurm-config"
-    RETRY_WAIT = 5
-    for i in range(8):
-        if i:
-            log.error(f"config not found in project metadata, retry {i}")
-            sleep(RETRY_WAIT)
+    for retry, wait in enumerate(backoff_delay(0.25, count=4, timeout=12)):
         config_yaml = project_metadata.__wrapped__(metadata_key)
-        if config_yaml is not None:
+        if config_yaml is None:
+            log.error(f"config not found in project metadata, retry {retry}")
+            sleep(wait)
+            break
+        else:
             break
     else:
-        return None
+        config_yaml = instance_metadata("slurm-config")
     cfg = new_config(yaml.safe_load(config_yaml))
     return cfg
 
@@ -679,23 +679,72 @@ def groupby_unsorted(seq, key):
         yield k, (seq[i] for i in idxs)
 
 
-def backoff_delay(start, cap=None, floor=None, mul=1, max_total=None, max_count=None):
+@lru_cache(maxsize=32)
+def find_ratio(a, n, s, r0=None):
+    """given the start (a), count (n), and sum (s), find the ratio required"""
+    if n == 2:
+        return s / a - 1
+    an = a * n
+    if n == 1 or s == an:
+        return 1
+    if r0 is None:
+        # we only need to know which side of 1 to guess, and the iteration will work
+        r0 = 1.1 if an < s else 0.9
+
+    # geometric sum formula
+    def f(r):
+        return a * (1 - r**n) / (1 - r) - s
+
+    # derivative of f
+    def df(r):
+        rm1 = r - 1
+        rn = r**n
+        return (a * (rn * (n * rm1 - r) + r)) / (r * rm1**2)
+
+    MIN_DR = 0.001  # negligible change
+    r = r0
+    # print(f"r(0)={r0}")
+    MAX_TRIES = 32
+    for i in range(1, MAX_TRIES + 1):
+        try:
+            dr = f(r) / df(r)
+        except ZeroDivisionError:
+            log.error(f"Failed to find ratio due to zero division! Returning r={r0}")
+            return r0
+        r = r - dr
+        # print(f"r({i})={r}")
+        # if the change in r is small, we are close enough
+        if abs(dr) < MIN_DR:
+            break
+    else:
+        log.error(f"Could not find ratio after {MAX_TRIES}! Returning r={r0}")
+        return r0
+    return r
+
+
+def backoff_delay(start, count: int, timeout=None, ratio=None):
+    """generates `count` waits starting at `start`
+    sum of waits is `timeout` or each one is `ratio` bigger than the last
+    the last wait is always 0"""
+    # timeout or ratio must be set but not both
+    assert (timeout is None) ^ (ratio is None)
+    assert ratio is None or ratio > 0
+    assert timeout is None or timeout >= start
+    assert count > 1 and isinstance(count, int)
     assert start > 0
-    assert mul > 0
-    count = 1
-    wait = total = start
+
     yield start
-    while (max_total is None or total < max_total) and (
-        max_count is None or count < max_count
-    ):
-        wait *= mul
-        if floor is not None:
-            wait = max(floor, wait)
-        if cap is not None:
-            wait = min(cap, wait)
-        total += wait
-        count += 1
+    # if ratio is set:
+    # timeout = start * (1 - ratio**(count - 1)) / (1 - ratio)
+    if ratio is None:
+        ratio = find_ratio(start, count - 1, timeout)
+
+    wait = start
+    # we have start and 0, so we only need to generate count - 2
+    for _ in range(count - 2):
+        wait *= ratio
         yield wait
+    yield 0
     return
 
 
@@ -794,15 +843,12 @@ def retry_exception(exc):
 def ensure_execute(request):
     """Handle rate limits and socket time outs"""
 
-    retry = 0
-    for wait in backoff_delay(0.5, cap=60, mul=2, max_total=10 * 60):
+    for retry, wait in enumerate(backoff_delay(0.5, count=20, timeout=10 * 60)):
         try:
             return request.execute()
-
         except googleapiclient.errors.HttpError as e:
             if retry_exception(e):
-                retry += 1
-                log.error(f"retry:{retry} sleep:{wait} '{e}'")
+                log.error(f"retry:{retry} '{e}'")
                 sleep(wait)
                 continue
             raise
@@ -1314,7 +1360,7 @@ class Lookup:
     def template_cache(self, writeback=False):
         flag = "c" if writeback else "r"
         err = None
-        for wait in backoff_delay(0.125, cap=4, mul=2, max_count=20):
+        for wait in backoff_delay(0.125, count=20, timeout=60):
             try:
                 cache = shelve.open(
                     str(self.template_cache_path), flag=flag, writeback=writeback
