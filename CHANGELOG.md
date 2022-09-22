@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
     -- new field `partition_startup_script_timeout`.
 - Fix enable_cleanup_subscriptions defined but not used in certain examples.
 - Fix `slurm_controller_hybrid` not respecting `disable_default_mounts`.
+- Removed unused `slurm_depends_on` from modules.
 
 ## \[5.1.0\]
 
