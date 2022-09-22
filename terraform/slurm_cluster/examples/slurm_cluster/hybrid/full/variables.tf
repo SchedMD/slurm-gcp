@@ -153,6 +153,7 @@ variable "disable_default_mounts" {
     or some other mechanism must be used to synchronize the slurm conf files
     and the munge key across the cluster.
     EOD
+  type        = bool
   default     = false
 }
 
@@ -173,24 +174,6 @@ EOD
     mount_options = string
   }))
   default = []
-}
-
-variable "slurmdbd_conf_tpl" {
-  description = "Slurm slurmdbd.conf template file path."
-  type        = string
-  default     = null
-}
-
-variable "slurm_conf_tpl" {
-  description = "Slurm slurm.conf template file path."
-  type        = string
-  default     = null
-}
-
-variable "cgroup_conf_tpl" {
-  description = "Slurm cgroup.conf template file path."
-  type        = string
-  default     = null
 }
 
 variable "compute_startup_scripts_timeout" {

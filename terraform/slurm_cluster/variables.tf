@@ -475,6 +475,7 @@ variable "disable_default_mounts" {
     or some other mechanism must be used to synchronize the slurm conf files
     and the munge key across the cluster.
     EOD
+  type        = bool
   default     = false
 }
 
