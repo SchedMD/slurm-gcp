@@ -360,8 +360,9 @@ partitions = [
       SuspendTimeout = 300
       SuspendTime    = 300
     }
-    partition_startup_scripts = []
-    partition_name            = "debug2"
+    partition_startup_scripts_timeout = 300
+    partition_startup_scripts         = []
+    partition_name                    = "debug2"
     partition_nodes = [
       {
         # Group Definition
