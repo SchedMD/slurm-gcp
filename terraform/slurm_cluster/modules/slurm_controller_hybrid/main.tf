@@ -62,9 +62,8 @@ locals {
     slurm_cluster_name   = var.slurm_cluster_name
 
     # storage
-    disable_default_mounts = var.disable_default_mounts
-    network_storage        = var.network_storage
-    login_network_storage  = var.login_network_storage
+    network_storage       = var.network_storage
+    login_network_storage = var.login_network_storage
 
     # slurm conf
     prolog_scripts   = [for x in google_compute_project_metadata_item.prolog_scripts : x.key]
