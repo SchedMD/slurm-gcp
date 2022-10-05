@@ -92,11 +92,9 @@ def instance_properties(partition, model):
         ).read_text(),
         "VmDnsSetting": "GlobalOnly",
     }
-    info_metadata = {}
-    for i in template_info.metadata["items"]:
-        key = i.get("key")
-        value = i.get("value")
-        info_metadata[key] = value
+    info_metadata = {
+        item.get("key"): item.get("value") for item in template_info.metadata["items"]
+    }
 
     props_metadata = {**info_metadata, **slurm_metadata}
     props.metadata = {

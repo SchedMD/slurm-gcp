@@ -1267,7 +1267,7 @@ class Lookup:
             instance_iter = (
                 (inst["name"], properties(inst))
                 for inst in chain.from_iterable(
-                    m["instances"] for m in result["items"].values()
+                    m["instances"] for m in result.get("items", {}).values()
                 )
             )
             instances.update(
