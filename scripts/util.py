@@ -456,12 +456,12 @@ def config_from_metadata():
         if config_yaml is None:
             log.error(f"config not found in project metadata, retry {retry}")
             sleep(wait)
-            break
+            continue
         else:
             break
     else:
-        config_yaml = instance_metadata("slurm-config")
-    cfg = new_config(yaml.safe_load(config_yaml))
+        config_yaml = instance_metadata("attributes/slurm-config")
+    cfg = new_config(yaml.safe_load(config_yaml or ""))
     return cfg
 
 
