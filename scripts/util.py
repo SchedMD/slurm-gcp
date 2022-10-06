@@ -91,7 +91,7 @@ scripts_dir = next(
 # readily available compute api handle
 compute = None
 # slurm-gcp config object, could be None if not available
-cfg = None
+cfg = NSDict()
 # caching Lookup object
 lkp = None
 
