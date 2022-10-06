@@ -300,7 +300,7 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
     # If reconfigure enabled, create subscriptions for successfully started instances
     if lkp.cfg.enable_reconfigure and len(all_successful_inserts):
         started_nodes = [
-            parse_self_link(op["targetLink"]).instance for op in successful_inserts
+            parse_self_link(op["targetLink"]).instance for op in all_successful_inserts
         ]
         count = len(started_nodes)
         hostlist = util.to_hostlist(started_nodes)
