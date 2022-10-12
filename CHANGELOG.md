@@ -16,6 +16,9 @@ All notable changes to this project will be documented in this file.
 - Removed unused `slurm_depends_on` from modules.
 - Fix scripts running without config.yaml.
 - Reimplement backoff delay on retry attempts.
+- Upgrade Slurm to 22.05.4.
+  - **WARNING:** Breaking change to terraform modules -- default image has
+    changed.
 
 ## \[5.1.0\]
 
