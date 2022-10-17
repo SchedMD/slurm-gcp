@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Upgrade Slurm to 22.05.4.
   - **WARNING:** Breaking change to terraform modules -- default image has
     changed.
+- Fix Nvidia ansible role install when kernel is updated.
 
 ## \[5.1.0\]
 

@@ -36,3 +36,6 @@
 
 - name: Reboot
   reboot:
+
+- name: Gather facts after reboot
+  setup:
