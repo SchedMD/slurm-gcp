@@ -29,6 +29,7 @@ locals {
       partition_startup_scripts         = x.partition_startup_scripts
       partition_name                    = x.partition_name
       partition_nodes = [for n in x.partition_nodes : {
+        access_config            = n.access_config
         additional_disks         = n.additional_disks
         bandwidth_tier           = n.bandwidth_tier
         can_ip_forward           = n.can_ip_forward
