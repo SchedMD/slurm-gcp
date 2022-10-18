@@ -456,7 +456,7 @@ def config_from_metadata():
     for retry, wait in enumerate(backoff_delay(0.25, count=4, timeout=12)):
         config_yaml = project_metadata.__wrapped__(metadata_key)
         if config_yaml is None:
-            log.error(f"config not found in project metadata, retry {retry}")
+            log.warning(f"config not found in project metadata, retry {retry}")
             sleep(wait)
             continue
         else:
@@ -473,7 +473,7 @@ def load_config_file(path):
     try:
         content = yaml.safe_load(Path(path).read_text())
     except FileNotFoundError:
-        log.error(f"config file not found: {path}")
+        log.warning(f"config file not found: {path}")
         return NSDict()
     return load_config_data(content)
 
@@ -1440,7 +1440,6 @@ class Lookup:
 # Define late globals
 cfg = load_config_file(CONFIG_FILE)
 if not cfg:
-    log.warning(f"{CONFIG_FILE} not found")
     cfg = config_from_metadata()
     if cfg:
         save_config(cfg, CONFIG_FILE)
