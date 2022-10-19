@@ -408,6 +408,7 @@ partitions = [
         instance_template = null
 
         # Instance Definition
+        access_config  = []
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
         spot_instance_config = {

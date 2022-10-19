@@ -140,12 +140,7 @@ partitions = [
         }
 
         # Template By Definition
-        additional_disks = []
-        access_config = [
-          # {
-          #   network_tier = null
-          # },
-        ]
+        additional_disks       = []
         can_ip_forward         = false
         disable_smt            = false
         disk_auto_delete       = true
@@ -178,6 +173,11 @@ partitions = [
         instance_template = null
 
         # Instance Definition
+        access_config = [
+          # {
+          #   network_tier = null
+          # },
+        ]
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
         spot_instance_config = {
@@ -213,7 +213,6 @@ partitions = [
 
         # Template By Definition
         additional_disks       = []
-        access_config          = []
         can_ip_forward         = false
         disable_smt            = false
         disk_auto_delete       = true
@@ -249,6 +248,7 @@ partitions = [
         instance_template = null
 
         # Instance Definition
+        access_config  = []
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
         spot_instance_config = {
