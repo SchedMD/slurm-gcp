@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[5.2.0\]
+
+- `module.slurm_instance_template` - remove unused `var.bandwidth_tier`.
+- Add support for `access_config` on partition compute nodes.
+  - **WARNING:** Breaking change to `slurm_cluster`, `slurm_partition` modules
+    -- new field `access_config`.
+- Add support for configurable startup script timeout.
+  - **WARNING:** Breaking change to `slurm_cluster`, `slurm_partition` modules
+    -- new field `partition_startup_script_timeout`.
+- Fix enable_cleanup_subscriptions defined but not used in certain examples.
+- Remove unused `disable_default_mounts` from `slurm_controller_hybrid`.
+- Removed unused `slurm_depends_on` from modules.
+- Fix scripts running without config.yaml.
+- Reimplement backoff delay on retry attempts.
+- Upgrade Slurm to 22.05.4.
+  - **WARNING:** Breaking change to terraform modules -- default image has
+    changed.
+- Fix Nvidia ansible role install when kernel is updated.
+
 ## \[5.1.0\]
 
 - Add support for gvnic and tier1 networking.
@@ -203,7 +222,7 @@ All notable changes to this project will be documented in this file.
 - `partitions\[\].image_hyperthreads=false` now actively disables hyperthreads
   on hpc-centos-7 images, starting with the now recommended image
 - `partitions\[\].image_hyperthreads` is now true in tfvars examples
-- Fixed running of \`custom-compute-install on login node
+- Fixed running of `custom-compute-install` on login node
 - Fixed slurmrestd install on foundry debian images
 - Disable SELinux (was permissive) to fix hpc-centos-7 reboot issue
-- Updated Slurm to 20.11.07
+- Updated Slurm to 20.11.7

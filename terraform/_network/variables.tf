@@ -103,14 +103,3 @@ The network MTU. Must be a value between 1460 and 1500 inclusive. If set to 0
 EOD
   default     = 0
 }
-
-variable "slurm_depends_on" {
-  description = <<EOD
-Custom terraform dependencies without replacement on delta. This is useful to
-ensure order of resource creation.
-
-NOTE: Also see terraform meta-argument 'depends_on'.
-EOD
-  type        = list(string)
-  default     = []
-}

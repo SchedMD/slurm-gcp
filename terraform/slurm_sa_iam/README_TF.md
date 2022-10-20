@@ -27,8 +27,8 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.29.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.3.2 |
+| <a name="provider_google"></a> [google](#provider\_google) | 4.38.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.4.3 |
 
 ## Modules
 
@@ -50,7 +50,6 @@ limitations under the License.
 | <a name="input_account_type"></a> [account\_type](#input\_account\_type) | Account to create. May be one of: controller; login; or compute. | `string` | `"controller"` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID of the project that holds the network. | `string` | n/a | yes |
 | <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, used for resource naming. | `string` | n/a | yes |
-| <a name="input_slurm_depends_on"></a> [slurm\_depends\_on](#input\_slurm\_depends\_on) | Custom terraform dependencies without replacement on delta. This is useful to<br>ensure order of resource creation.<br><br>NOTE: Also see terraform meta-argument 'depends\_on'. | `list(string)` | `[]` | no |
 
 ## Outputs
 

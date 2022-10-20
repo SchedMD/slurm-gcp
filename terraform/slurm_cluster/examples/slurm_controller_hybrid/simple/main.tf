@@ -48,6 +48,7 @@ module "slurm_partition0" {
       node_conf              = {}
 
       additional_disks         = []
+      access_config            = []
       bandwidth_tier           = "platform_default"
       can_ip_forward           = false
       disable_smt              = false
@@ -96,6 +97,7 @@ module "slurm_partition1" {
       node_conf              = {}
 
       additional_disks       = []
+      access_config          = []
       bandwidth_tier         = "platform_default"
       can_ip_forward         = false
       disable_smt            = false

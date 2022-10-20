@@ -57,6 +57,18 @@ variable "partition_startup_scripts" {
   default = []
 }
 
+variable "partition_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in partition_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
 variable "partition_nodes" {
   description = <<EOD
 Compute nodes contained with this partition.
@@ -81,6 +93,9 @@ EOD
       disk_labels  = map(string)
       auto_delete  = bool
       boot         = bool
+    }))
+    access_config = list(object({
+      network_tier = string
     }))
     bandwidth_tier         = string
     can_ip_forward         = bool
@@ -169,6 +184,14 @@ EOD
       : x.enable_spot_vm == x.preemptible if x.enable_spot_vm == true && x.instance_template == null
     ])
     error_message = "Required: preemptible=true when enable_spot_vm=true."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.partition_nodes
+      : length(x.access_config) <= 1
+    ])
+    error_message = "At most one access config currently supported (per partition_nodes group/object)."
   }
 }
 

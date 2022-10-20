@@ -65,6 +65,17 @@ def instance_properties(partition, model):
         }
     ]
 
+    if len(node_group.access_config) > 0:
+        props.networkInterfaces[0]["accessConfigs"] = []
+        for ac in node_group.access_config:
+            props.networkInterfaces[0]["accessConfigs"].append(
+                {
+                    "type": "ONE_TO_ONE_NAT",
+                    "name": "External NAT",
+                    "networkTier": ac.get("network_tier", None),
+                }
+            )
+
     if node_group.bandwidth_tier == "virtio_enabled":
         props.networkInterfaces[0]["nicType"] = "VirtioNet"
     elif node_group.bandwidth_tier in ["tier_1_enabled", "gvnic_enabled"]:
@@ -81,11 +92,9 @@ def instance_properties(partition, model):
         ).read_text(),
         "VmDnsSetting": "GlobalOnly",
     }
-    info_metadata = {}
-    for i in template_info.metadata["items"]:
-        key = i.get("key")
-        value = i.get("value")
-        info_metadata[key] = value
+    info_metadata = {
+        item.get("key"): item.get("value") for item in template_info.metadata["items"]
+    }
 
     props_metadata = {**info_metadata, **slurm_metadata}
     props.metadata = {
@@ -291,7 +300,7 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
     # If reconfigure enabled, create subscriptions for successfully started instances
     if lkp.cfg.enable_reconfigure and len(all_successful_inserts):
         started_nodes = [
-            parse_self_link(op["targetLink"]).instance for op in successful_inserts
+            parse_self_link(op["targetLink"]).instance for op in all_successful_inserts
         ]
         count = len(started_nodes)
         hostlist = util.to_hostlist(started_nodes)

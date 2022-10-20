@@ -104,6 +104,18 @@ variable "compute_startup_scripts" {
   default = []
 }
 
+variable "compute_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in compute_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
 variable "prolog_scripts" {
   description = <<EOD
 List of scripts to be used for Prolog. Programs for the slurmd to execute
@@ -128,20 +140,6 @@ EOD
     content  = string
   }))
   default = []
-}
-
-variable "disable_default_mounts" {
-  description = <<-EOD
-    Disable default global network storage from the controller
-    * /usr/local/etc/slurm
-    * /etc/munge
-    * /home
-    * /apps
-    If these are disabled, the slurm etc and munge dirs must be added manually,
-    or some other mechanism must be used to synchronize the slurm conf files
-    and the munge key across the cluster.
-    EOD
-  default     = false
 }
 
 variable "network_storage" {
@@ -201,18 +199,22 @@ variable "partitions" {
       partition_nodes = map(object({
         node_count_dynamic_max = number
         node_count_static      = number
-        bandwidth_tier         = string
-        enable_spot_vm         = bool
-        group_name             = string
-        instance_template      = string
-        node_conf              = map(string)
+        access_config = list(object({
+          network_tier = string
+        }))
+        bandwidth_tier    = string
+        enable_spot_vm    = bool
+        group_name        = string
+        instance_template = string
+        node_conf         = map(string)
         spot_instance_config = object({
           termination_action = string
         })
       }))
-      subnetwork        = string
-      zone_policy_allow = list(string)
-      zone_policy_deny  = list(string)
+      partition_startup_scripts_timeout = number
+      subnetwork                        = string
+      zone_policy_allow                 = list(string)
+      zone_policy_deny                  = list(string)
     })
   }))
   default = []
@@ -282,15 +284,4 @@ Directory where this module will write its files to. These files include:
 cloud.conf; cloud_gres.conf; config.yaml; resume.py; suspend.py; and util.py.
 EOD
   default     = null
-}
-
-variable "slurm_depends_on" {
-  description = <<EOD
-Custom terraform dependencies without replacement on delta. This is useful to
-ensure order of resource creation.
-
-NOTE: Also see terraform meta-argument 'depends_on'.
-EOD
-  type        = list(string)
-  default     = []
 }

@@ -88,6 +88,7 @@ cloud_parameters = {
 }
 
 # scripts
+controller_startup_scripts_timeout = 300
 controller_startup_scripts = [
   #   {
   #     filename = "hello_controller.sh"
@@ -98,6 +99,7 @@ controller_startup_scripts = [
   #     EOF
   #   },
 ]
+login_startup_scripts_timeout = 300
 login_startup_scripts = [
   #   {
   #     filename = "hello_login.sh"
@@ -108,6 +110,7 @@ login_startup_scripts = [
   #     EOF
   #   },
 ]
+compute_startup_scripts_timeout = 300
 compute_startup_scripts = [
   #   {
   #     filename = "hello_compute.sh"
@@ -201,8 +204,8 @@ controller_instance_config = {
   # Instance Definition
   access_config = [
     # {
-    #   nat_ip       = "<NAT_IP>"
-    #   network_tier = "STANDARD"
+    #   nat_ip       = null
+    #   network_tier = null
     # },
   ]
   network_ip = null
@@ -269,6 +272,7 @@ partitions = [
       Default     = "YES"
       SuspendTime = 300
     }
+    partition_startup_scripts_timeout = 300
     partition_startup_scripts = [
       # {
       #   filename = "hello_part_debug.sh"
@@ -318,6 +322,11 @@ partitions = [
         instance_template = null
 
         # Instance Definition
+        access_config = [
+          # {
+          #   network_tier = null
+          # },
+        ]
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
         spot_instance_config = {
@@ -338,8 +347,9 @@ partitions = [
       SuspendTimeout = 300
       SuspendTime    = 300
     }
-    partition_startup_scripts = []
-    partition_name            = "debug2"
+    partition_startup_scripts_timeout = 300
+    partition_startup_scripts         = []
+    partition_name                    = "debug2"
     partition_nodes = [
       {
         # Group Definition
@@ -379,6 +389,7 @@ partitions = [
         instance_template = null
 
         # Instance Definition
+        access_config  = []
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
         spot_instance_config = {

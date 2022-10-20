@@ -71,6 +71,9 @@ locals {
     cloud_parameters = var.cloud_parameters
     partitions       = local.partitions
 
+    # timeouts
+    compute_startup_scripts_timeout = var.compute_startup_scripts_timeout
+
     # hybrid
     google_app_cred_path = local.google_app_cred_path
     output_dir           = local.output_dir

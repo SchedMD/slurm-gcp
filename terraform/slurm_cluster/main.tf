@@ -38,21 +38,22 @@ module "slurm_partition" {
 
   for_each = local.partition_map
 
-  partition_nodes           = each.value.partition_nodes
-  enable_job_exclusive      = each.value.enable_job_exclusive
-  enable_reconfigure        = var.enable_reconfigure
-  enable_placement_groups   = each.value.enable_placement_groups
-  network_storage           = each.value.network_storage
-  partition_name            = each.value.partition_name
-  partition_conf            = each.value.partition_conf
-  partition_startup_scripts = each.value.partition_startup_scripts
-  project_id                = var.project_id
-  region                    = each.value.region
-  slurm_cluster_name        = var.slurm_cluster_name
-  subnetwork_project        = each.value.subnetwork_project
-  subnetwork                = each.value.subnetwork
-  zone_policy_allow         = each.value.zone_policy_allow
-  zone_policy_deny          = each.value.zone_policy_deny
+  partition_nodes                   = each.value.partition_nodes
+  enable_job_exclusive              = each.value.enable_job_exclusive
+  enable_reconfigure                = var.enable_reconfigure
+  enable_placement_groups           = each.value.enable_placement_groups
+  network_storage                   = each.value.network_storage
+  partition_name                    = each.value.partition_name
+  partition_conf                    = each.value.partition_conf
+  partition_startup_scripts_timeout = each.value.partition_startup_scripts_timeout
+  partition_startup_scripts         = each.value.partition_startup_scripts
+  project_id                        = var.project_id
+  region                            = each.value.region
+  slurm_cluster_name                = var.slurm_cluster_name
+  subnetwork_project                = each.value.subnetwork_project
+  subnetwork                        = each.value.subnetwork
+  zone_policy_allow                 = each.value.zone_policy_allow
+  zone_policy_deny                  = each.value.zone_policy_deny
 }
 
 ########################
@@ -114,24 +115,27 @@ module "slurm_controller_instance" {
   subnetwork         = var.controller_instance_config.subnetwork
   zone               = var.controller_instance_config.zone
 
-  cgroup_conf_tpl              = var.cgroup_conf_tpl
-  cloud_parameters             = var.cloud_parameters
-  cloudsql                     = var.cloudsql
-  controller_startup_scripts   = var.controller_startup_scripts
-  compute_startup_scripts      = var.compute_startup_scripts
-  enable_devel                 = var.enable_devel
-  enable_bigquery_load         = var.enable_bigquery_load
-  enable_cleanup_compute       = var.enable_cleanup_compute
-  enable_cleanup_subscriptions = var.enable_cleanup_subscriptions
-  enable_reconfigure           = var.enable_reconfigure
-  epilog_scripts               = var.epilog_scripts
-  login_network_storage        = var.login_network_storage
-  disable_default_mounts       = var.disable_default_mounts
-  network_storage              = var.network_storage
-  partitions                   = values(module.slurm_partition)[*]
-  prolog_scripts               = var.prolog_scripts
-  slurmdbd_conf_tpl            = var.slurmdbd_conf_tpl
-  slurm_conf_tpl               = var.slurm_conf_tpl
+  cgroup_conf_tpl                    = var.cgroup_conf_tpl
+  cloud_parameters                   = var.cloud_parameters
+  cloudsql                           = var.cloudsql
+  controller_startup_scripts         = var.controller_startup_scripts
+  controller_startup_scripts_timeout = var.controller_startup_scripts_timeout
+  compute_startup_scripts            = var.compute_startup_scripts
+  compute_startup_scripts_timeout    = var.compute_startup_scripts_timeout
+  enable_devel                       = var.enable_devel
+  enable_bigquery_load               = var.enable_bigquery_load
+  enable_cleanup_compute             = var.enable_cleanup_compute
+  enable_cleanup_subscriptions       = var.enable_cleanup_subscriptions
+  enable_reconfigure                 = var.enable_reconfigure
+  epilog_scripts                     = var.epilog_scripts
+  login_network_storage              = var.login_network_storage
+  login_startup_scripts_timeout      = var.login_startup_scripts_timeout
+  disable_default_mounts             = var.disable_default_mounts
+  network_storage                    = var.network_storage
+  partitions                         = values(module.slurm_partition)[*]
+  prolog_scripts                     = var.prolog_scripts
+  slurmdbd_conf_tpl                  = var.slurmdbd_conf_tpl
+  slurm_conf_tpl                     = var.slurm_conf_tpl
 }
 
 ######################
@@ -146,21 +150,22 @@ module "slurm_controller_hybrid" {
   project_id         = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
 
-  google_app_cred_path         = var.controller_hybrid_config.google_app_cred_path
-  slurm_control_host           = var.controller_hybrid_config.slurm_control_host
-  slurm_bin_dir                = var.controller_hybrid_config.slurm_bin_dir
-  slurm_log_dir                = var.controller_hybrid_config.slurm_log_dir
-  output_dir                   = var.controller_hybrid_config.output_dir
-  cloud_parameters             = var.cloud_parameters
-  compute_startup_scripts      = var.compute_startup_scripts
-  enable_devel                 = var.enable_devel
-  enable_bigquery_load         = var.enable_bigquery_load
-  enable_cleanup_compute       = var.enable_cleanup_compute
-  enable_cleanup_subscriptions = var.enable_cleanup_subscriptions
-  enable_reconfigure           = var.enable_reconfigure
-  epilog_scripts               = var.epilog_scripts
-  partitions                   = values(module.slurm_partition)[*]
-  prolog_scripts               = var.prolog_scripts
+  google_app_cred_path            = var.controller_hybrid_config.google_app_cred_path
+  slurm_control_host              = var.controller_hybrid_config.slurm_control_host
+  slurm_bin_dir                   = var.controller_hybrid_config.slurm_bin_dir
+  slurm_log_dir                   = var.controller_hybrid_config.slurm_log_dir
+  output_dir                      = var.controller_hybrid_config.output_dir
+  cloud_parameters                = var.cloud_parameters
+  compute_startup_scripts         = var.compute_startup_scripts
+  compute_startup_scripts_timeout = var.compute_startup_scripts_timeout
+  enable_devel                    = var.enable_devel
+  enable_bigquery_load            = var.enable_bigquery_load
+  enable_cleanup_compute          = var.enable_cleanup_compute
+  enable_cleanup_subscriptions    = var.enable_cleanup_subscriptions
+  enable_reconfigure              = var.enable_reconfigure
+  epilog_scripts                  = var.epilog_scripts
+  partitions                      = values(module.slurm_partition)[*]
+  prolog_scripts                  = var.prolog_scripts
 }
 
 ###################

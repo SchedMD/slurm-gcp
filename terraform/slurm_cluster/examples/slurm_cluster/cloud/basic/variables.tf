@@ -199,6 +199,18 @@ variable "controller_startup_scripts" {
   default = []
 }
 
+variable "controller_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in controller_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
 variable "login_startup_scripts" {
   description = "List of scripts to be ran on login VM startup."
   type = list(object({
@@ -208,6 +220,18 @@ variable "login_startup_scripts" {
   default = []
 }
 
+variable "login_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in login_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
 variable "compute_startup_scripts" {
   description = "List of scripts to be ran on compute VM startup."
   type = list(object({
@@ -215,6 +239,18 @@ variable "compute_startup_scripts" {
     content  = string
   }))
   default = []
+}
+
+variable "compute_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in compute_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
 }
 
 variable "prolog_scripts" {
@@ -428,9 +464,10 @@ Variables map to:
 - [slurm_instance_template](../../../../modules/slurm_instance_template/README_TF.md#inputs)
 EOD
   type = list(object({
-    enable_job_exclusive    = bool
-    enable_placement_groups = bool
-    partition_conf          = map(string)
+    enable_job_exclusive              = bool
+    enable_placement_groups           = bool
+    partition_conf                    = map(string)
+    partition_startup_scripts_timeout = number
     partition_startup_scripts = list(object({
       filename = string
       content  = string
@@ -449,6 +486,9 @@ EOD
         disk_labels  = map(string)
         auto_delete  = bool
         boot         = bool
+      }))
+      access_config = list(object({
+        network_tier = string
       }))
       bandwidth_tier         = string
       can_ip_forward         = bool
