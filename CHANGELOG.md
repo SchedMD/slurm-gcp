@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[Next\]
+
 ## \[5.2.0\]
 
 - `module.slurm_instance_template` - remove unused `var.bandwidth_tier`.
