@@ -167,6 +167,7 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
             ],
             "SlurmctldParameters": [
                 "cloud_dns",
+                "enable_configless",
                 "idle_on_node_suspend",
             ],
             "SchedulerParameters": [
@@ -327,6 +328,7 @@ def install_slurm_conf(lkp):
     conf_options = {
         "name": lkp.cfg.slurm_cluster_name,
         "control_host": lkp.control_host,
+        "control_host_port": lkp.control_host_port,
         "scripts": dirs.scripts,
         "slurmlog": dirs.log,
         "state_save": slurmdirs.state,
@@ -609,7 +611,6 @@ def resolve_network_storage(partition_name=None):
     partition = cfg.partitions[partition_name] if partition_name else None
 
     default_mounts = (
-        slurmdirs.etc,
         dirs.munge,
         dirs.home,
         dirs.apps,
@@ -853,6 +854,22 @@ def setup_nss_slurm():
     run(r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
 
 
+def update_system_config(file, content):
+    """Add system defaults options for service files"""
+    sysconfig = Path("/etc/sysconfig")
+    default = Path("/etc/default")
+
+    if sysconfig.exists():
+        conf_dir = sysconfig
+    elif default.exists():
+        conf_dir = default
+    else:
+        raise Exception("Cannot determine system configuration directory.")
+
+    slurmd_file = Path(conf_dir, file)
+    slurmd_file.write_text(content)
+
+
 def configure_mysql():
     cnfdir = Path("/etc/my.cnf.d")
     if not cnfdir.exists():
@@ -992,9 +1009,17 @@ def setup_controller():
 def setup_login():
     """run login node setup"""
     log.info("Setting up login")
+    slurmd_options = [
+        f"-N {lkp.hostname}",
+        f'--conf-server="{lkp.control_host}:{lkp.control_host_port}"',
+        "-Z",
+    ]
+    sysconf = f'SLURMD_OPTIONS="{" ".join(slurmd_options)}"'
+    update_system_config("slurmd", sysconf)
     install_custom_scripts()
 
     setup_network_storage()
+    setup_slurmd_cronjob()
     run("systemctl restart munge")
 
     run_custom_scripts()
@@ -1009,6 +1034,12 @@ def setup_compute():
     """run compute node setup"""
     log.info("Setting up compute")
     util.chown_slurm(dirs.scripts / "config.yaml", mode=0o600)
+    slurmd_options = [
+        f"-N {lkp.hostname}",
+        f'--conf-server="{lkp.control_host}:{lkp.control_host_port}"',
+    ]
+    sysconf = f'SLURMD_OPTIONS="{" ".join(slurmd_options)}"'
+    update_system_config("slurmd", sysconf)
     install_custom_scripts()
 
     setup_nss_slurm()

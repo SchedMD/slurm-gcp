@@ -415,6 +415,8 @@ def load_config_data(config):
         cfg.slurm_bin_dir = slurmdirs.prefix / "bin"
     if not cfg.slurm_control_host:
         cfg.slurm_control_host = f"{cfg.slurm_cluster_name}-controller"
+    if not cfg.slurm_control_host_port:
+        cfg.slurm_control_host_port = "6820-6830"
 
     if not cfg.enable_debug_logging and isinstance(cfg.enable_debug_logging, NSDict):
         cfg.enable_debug_logging = False
@@ -1091,6 +1093,10 @@ class Lookup:
     @property
     def control_host(self):
         return self.cfg.slurm_control_host
+
+    @property
+    def control_host_port(self):
+        return self.cfg.slurm_control_host_port
 
     @property
     def scontrol(self):
