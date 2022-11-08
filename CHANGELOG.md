@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[Next\]
 
 - Use configless mode for cluster configuration management.
+- Hybrid - Write files with more restrictive permissions.
 
 ## \[5.2.0\]
 

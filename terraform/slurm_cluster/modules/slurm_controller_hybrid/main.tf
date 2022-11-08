@@ -127,26 +127,36 @@ resource "random_string" "topic_suffix" {
 resource "local_file" "resume_py" {
   content  = data.local_file.resume_py.content
   filename = abspath("${var.output_dir}/resume.py")
+
+  file_permission = "0700"
 }
 
 resource "local_file" "suspend_py" {
   content  = data.local_file.suspend_py.content
   filename = abspath("${var.output_dir}/suspend.py")
+
+  file_permission = "0700"
 }
 
 resource "local_file" "util_py" {
   content  = data.local_file.util_py.content
   filename = abspath("${var.output_dir}/util.py")
+
+  file_permission = "0700"
 }
 
 resource "local_file" "slurmsync_py" {
   content  = data.local_file.slurmsync_py.content
   filename = abspath("${var.output_dir}/slurmsync.py")
+
+  file_permission = "0700"
 }
 
 resource "local_file" "startup_sh" {
   content  = data.local_file.startup_sh.content
   filename = abspath("${var.output_dir}/startup.sh")
+
+  file_permission = "0700"
 }
 
 ##########
@@ -157,7 +167,7 @@ resource "local_file" "config_yaml" {
   filename = abspath("${local.output_dir}/config.yaml")
   content  = yamlencode(local.config)
 
-  file_permission = "0644"
+  file_permission = "0600"
 }
 
 #########
