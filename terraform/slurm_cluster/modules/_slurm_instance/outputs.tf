@@ -22,12 +22,12 @@ output "slurm_instances" {
 
 output "instances_self_links" {
   description = "List of self-links for compute instances"
-  value       = google_compute_instance_from_template.slurm_instance.*.self_link
+  value       = google_compute_instance_from_template.slurm_instance[*].self_link
 }
 
 output "instances_details" {
   description = "List of all details for compute instances"
-  value       = google_compute_instance_from_template.slurm_instance.*
+  value       = google_compute_instance_from_template.slurm_instance[*]
 }
 
 output "available_zones" {
