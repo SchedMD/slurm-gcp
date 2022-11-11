@@ -1014,18 +1014,21 @@ def setup_login():
         f'--conf-server="{lkp.control_host}:{lkp.control_host_port}"',
         "-Z",
     ]
-    sysconf = f'SLURMD_OPTIONS="{" ".join(slurmd_options)}"'
+    sysconf = f"""SLURMD_OPTIONS='{" ".join(slurmd_options)}'"""
     update_system_config("slurmd", sysconf)
     install_custom_scripts()
 
     setup_network_storage()
     setup_slurmd_cronjob()
     run("systemctl restart munge")
+    run("systemctl enable slurmd", timeout=30)
+    run("systemctl restart slurmd", timeout=30)
 
     run_custom_scripts()
 
     log.info("Check status of cluster services")
     run("systemctl status munge", timeout=30)
+    run("systemctl status slurmd", timeout=30)
 
     log.info("Done setting up login")
 
@@ -1038,7 +1041,7 @@ def setup_compute():
         f"-N {lkp.hostname}",
         f'--conf-server="{lkp.control_host}:{lkp.control_host_port}"',
     ]
-    sysconf = f'SLURMD_OPTIONS="{" ".join(slurmd_options)}"'
+    sysconf = f"""SLURMD_OPTIONS='{" ".join(slurmd_options)}'"""
     update_system_config("slurmd", sysconf)
     install_custom_scripts()
 

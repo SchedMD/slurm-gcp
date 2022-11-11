@@ -39,6 +39,7 @@ SlurmdPort=6818
 SlurmdSpoolDir=/var/spool/slurmd
 SlurmUser=slurm
 StateSaveLocation={state_save}
+MaxNodeCount=64000
 
 #
 #
