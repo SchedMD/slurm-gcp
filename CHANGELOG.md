@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
   - **WARNING:** Breaking change to `slurm_cluster`, `slurm_partition` modules
     -- new field `partition_startup_script_timeout`.
 - Fix enable_cleanup_subscriptions defined but not used in certain examples.
-- Remove unused `disable_default_mounts` from `slurm_controller_hybrid`.
+- Fix `slurm_controller_hybrid` not respecting `disable_default_mounts`.
 - Removed unused `slurm_depends_on` from modules.
 - Fix scripts running without config.yaml.
 - Reimplement backoff delay on retry attempts.
