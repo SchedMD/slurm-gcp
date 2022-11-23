@@ -158,6 +158,7 @@ module "slurm_controller_hybrid" {
   cloud_parameters                = var.cloud_parameters
   compute_startup_scripts         = var.compute_startup_scripts
   compute_startup_scripts_timeout = var.compute_startup_scripts_timeout
+  disable_default_mounts          = var.disable_default_mounts
   enable_devel                    = var.enable_devel
   enable_bigquery_load            = var.enable_bigquery_load
   enable_cleanup_compute          = var.enable_cleanup_compute

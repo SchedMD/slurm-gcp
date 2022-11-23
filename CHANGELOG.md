@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 - Use configless mode for cluster configuration management.
 - Hybrid - Write files with more restrictive permissions.
+- Fix `module.slurm_cluster` not propagating `var.disable_default_mounts` to
+  `module.slurm_controller_hybrid`.
 
 ## \[5.2.0\]
 
