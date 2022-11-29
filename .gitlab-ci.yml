@@ -1,0 +1,48 @@
+---
+image:
+  name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.3
+
+variables:
+  #DOCKER_HOST: tcp://docker:2376
+  #DOCKER_TLS_CERTDIR: "/certs"
+  #TAG_LATEST: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
+  #TAG_COMMIT: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
+  GOOGLE_APPLICATION_CREDENTIALS: /tmp/$CI_PIPELINE_ID.json
+  SLURM_VERSION: 22.05.4
+
+before_script:
+  #- docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+- packer --version
+- echo $SERVICE_ACCOUNT > $GOOGLE_APPLICATION_CREDENTIALS
+- gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
+- GCP_PROJECT_ID=$(jq -r .project_id < $GOOGLE_APPLICATION_CREDENTIALS)
+
+stages:
+- validate
+- build
+
+validate-packer:
+  stage: validate
+  script:
+  - echo "Validating packer configuration"
+  - printenv
+  - cd packer
+  - packer init .
+  - >
+    packer validate -var-file=example.pkrvars.hcl
+    -var "project_id=$GCP_PROJECT_ID"
+    -var "slurm_version=$SLURM_VERSION"
+    .
+
+build-images:
+  stage: build
+  script:
+  - echo "Building images"
+  - cd packer
+  - packer init .
+  - >
+    packer build -var-file=example.pkrvars.hcl
+    -var "project_id=$GCP_PROJECT_ID"
+    -var "slurm_version=$SLURM_VERSION"
+    .
+  - echo "packer build completed"
