@@ -269,9 +269,34 @@ variable "slurm_control_host" {
 The short, or long, hostname of the machine where Slurm control daemon is
 executed (i.e. the name returned by the command "hostname -s").
 
+This value is passed to slurm.conf such that:
+SlurmctldHost={var.slurm_control_host}\({var.slurm_control_addr}\)
+
+See https://slurm.schedmd.com/slurm.conf.html#OPT_SlurmctldHost
+EOD
+
+  validation {
+    condition     = (var.slurm_control_host != null && var.slurm_control_host != "")
+    error_message = "Variable 'slurm_control_host' cannot be empty (\"\") or omitted (null)."
+  }
+}
+
+variable "slurm_control_addr" {
+  type        = string
+  description = <<EOD
+The IP address or a name by which the address can be identified.
+
+This value is passed to slurm.conf such that:
+SlurmctldHost={var.slurm_control_host}\({var.slurm_control_addr}\)
+
 See https://slurm.schedmd.com/slurm.conf.html#OPT_SlurmctldHost
 EOD
   default     = null
+
+  validation {
+    condition     = var.slurm_control_addr != ""
+    error_message = "Variable 'slurm_control_host' cannot be empty (\"\")."
+  }
 }
 
 variable "cloud_parameters" {

@@ -26,7 +26,7 @@ SlurmdDebug=info
 #              vvvvv  WARNING: DO NOT MODIFY SECTION BELOW  vvvvv              #
 ################################################################################
 
-SlurmctldHost={control_host}
+SlurmctldHost={control_host}({control_addr})
 
 AuthType=auth/munge
 AuthInfo=cred_expire=120

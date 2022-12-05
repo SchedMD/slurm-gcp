@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - Fix `module.slurm_cluster` not propagating `var.disable_default_mounts` to
   `module.slurm_controller_hybrid`.
 - Fix creation of instances in placement groups.
+- slurm_controller_hybrid - add `var.slurm_control_addr` option to allow a
+  secondary address to be used.
 
 ## \[5.2.0\]
 

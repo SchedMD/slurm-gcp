@@ -144,4 +144,5 @@ module "slurm_controller_hybrid" {
     module.slurm_partition0,
     module.slurm_partition1,
   ]
+  slurm_control_host = "localhost"
 }

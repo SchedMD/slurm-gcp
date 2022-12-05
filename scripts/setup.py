@@ -327,6 +327,7 @@ def install_slurm_conf(lkp):
 
     conf_options = {
         "name": lkp.cfg.slurm_cluster_name,
+        "control_addr": lkp.control_addr if lkp.control_addr else lkp.control_host,
         "control_host": lkp.control_host,
         "control_host_port": lkp.control_host_port,
         "scripts": dirs.scripts,
@@ -1009,9 +1010,12 @@ def setup_controller():
 def setup_login():
     """run login node setup"""
     log.info("Setting up login")
+    slurmctld_host = f"{lkp.control_host}"
+    if lkp.control_addr:
+        slurmctld_host = f"{lkp.control_host}({lkp.control_addr})"
     slurmd_options = [
         f"-N {lkp.hostname}",
-        f'--conf-server="{lkp.control_host}:{lkp.control_host_port}"',
+        f'--conf-server="{slurmctld_host}:{lkp.control_host_port}"',
         "-Z",
     ]
     sysconf = f"""SLURMD_OPTIONS='{" ".join(slurmd_options)}'"""
@@ -1037,9 +1041,12 @@ def setup_compute():
     """run compute node setup"""
     log.info("Setting up compute")
     util.chown_slurm(dirs.scripts / "config.yaml", mode=0o600)
+    slurmctld_host = f"{lkp.control_host}"
+    if lkp.control_addr:
+        slurmctld_host = f"{lkp.control_host}({lkp.control_addr})"
     slurmd_options = [
         f"-N {lkp.hostname}",
-        f'--conf-server="{lkp.control_host}:{lkp.control_host_port}"',
+        f'--conf-server="{slurmctld_host}:{lkp.control_host_port}"',
     ]
     sysconf = f"""SLURMD_OPTIONS='{" ".join(slurmd_options)}'"""
     update_system_config("slurmd", sysconf)

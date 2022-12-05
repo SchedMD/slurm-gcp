@@ -1091,6 +1091,10 @@ class Lookup:
         return self.cfg.project or auth_project
 
     @property
+    def control_addr(self):
+        return self.cfg.slurm_control_addr
+
+    @property
     def control_host(self):
         return self.cfg.slurm_control_host
 
