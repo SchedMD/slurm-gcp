@@ -311,9 +311,6 @@ def gen_cloud_conf(lkp=lkp, cloud_parameters=None):
     content = make_cloud_conf(lkp, cloud_parameters=cloud_parameters)
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud.conf"
-    conf_file_bak = conf_file.with_suffix(".conf.bak")
-    if conf_file.is_file():
-        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(content)
     util.chown_slurm(conf_file, mode=0o644)
 
@@ -339,9 +336,6 @@ def install_slurm_conf(lkp):
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "slurm.conf"
-    conf_file_bak = conf_file.with_suffix(".conf.bak")
-    if conf_file.is_file():
-        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
     util.chown_slurm(conf_file, mode=0o644)
 
@@ -380,9 +374,6 @@ def install_slurmdbd_conf(lkp):
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "slurmdbd.conf"
-    conf_file_bak = conf_file.with_suffix(".conf.bak")
-    if conf_file.is_file():
-        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
     util.chown_slurm(conf_file, 0o600)
 
@@ -392,9 +383,6 @@ def install_cgroup_conf():
     conf = project_metadata(f"{cfg.slurm_cluster_name}-slurm-tpl-cgroup-conf")
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cgroup.conf"
-    conf_file_bak = conf_file.with_suffix(".conf.bak")
-    if conf_file.is_file():
-        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(conf)
     util.chown_slurm(conf_file, mode=0o600)
 
@@ -425,9 +413,6 @@ def gen_cloud_gres_conf(lkp=lkp):
     content = FILE_PREAMBLE + "\n".join(lines)
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud_gres.conf"
-    conf_file_bak = conf_file.with_suffix(".conf.bak")
-    if conf_file.is_file():
-        shutil.copy2(conf_file, conf_file_bak)
     conf_file.write_text(content)
     util.chown_slurm(conf_file, mode=0o600)
 

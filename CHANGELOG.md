@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Fix creation of instances in placement groups.
 - slurm_controller_hybrid - add `var.slurm_control_addr` option to allow a
   secondary address to be used.
+- No longer create \*.conf.bak files.
 
 ## \[5.2.0\]
 
