@@ -27,7 +27,7 @@ resources:
 - name: slurm-images
   type: slurm-template.py
   properties:
-    zone: us-west1-b
+    zone: europe-west4-a
     machine_type: n1-standard-8
     image_family: "schedmd-slurm-{major}-{minor}-{base}"
     image_name: "schedmd-slurm-{major}-{minor}-{base}-{tag}"
@@ -46,6 +46,6 @@ resources:
         base_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
         metadata:
           external-slurm-install: |
-            remote: <filestore ip>:<filestore location>
+            remote: 10.164.195.154:/slurm
             mount: /opt/slurm
             type: nfs

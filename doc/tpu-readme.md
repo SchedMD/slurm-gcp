@@ -1,4 +1,4 @@
-
+  
 # Using TPUs with Slurm GCP
 
 This is the Alpha release of Slurm that supports scheduling of jobs in Cloud TPU-VM. This installation includes additional steps not found in the [official GCP slurm installation](https://github.com/SchedMD/slurm-gcp) that include staging Slurm binaries in an external mount such as filestore.
@@ -104,7 +104,6 @@ Use "n2d-407-240-tpu" for v4
 ```
 
 - Under network storage, specify the `filestore location` and `filestore ip` from the NFS share. 
-
 - There should not be any static nodes in this partition; it won't work.
 - The partition is not strictly required to be exclusive, but it is preferred. That way the TPU is allocated and torn down for each job.
 - Only a single node is allowed per job on this partition.
@@ -141,7 +140,7 @@ cloudshell$ cat tf/examples/basic/basic.tfvars.example
     instance_template    = null
     tpu_type             = "v3-32"
     tpu_version          = "tpu-vm-base"
-	tpu_args			 = "--reserved"
+    tpu_args             = "--reserved"
   },
   ...
 ```
@@ -156,7 +155,6 @@ cloudshell$ mv basic.tfvars.example basic.tfvars
 cloudshell$ terraform init
 cloudshell$ terraform validate
 ```
-
 
 Then, apply the configuration.
 
@@ -175,9 +173,7 @@ Do you want to perform these actions?
 
 The operation can take a few minutes to complete, so please be patient.
 
-
 Note: You may need to authorize gcloud to make a GCP API call. If so, click Authorize.
-
 
 Once the deployment has completed you will see output similar to:
 
@@ -201,7 +197,6 @@ login_network_ips = [
 zone = "us-central1-a"
 ...
 ```
-
 # Logging into the login node and launching a TPU job 
 
 You can now ssh into the Slurm login node or Controller and launch a job, any will work
@@ -226,6 +221,168 @@ If you need access to slurm commands from within the TPU VM:
 source /etc/profile.d/slurm.sh
 sinfo
 ```
+# How to run a job on all Cloud TPU workers using Slurm
+When Slurm instantiates a TPU pod that includes N number of worker VMs, the the Slum daemon will only run  on Cloud TPU `worker0`. In order to execute a Slurm job that runs all the Cloud TPU workers, you will need to use the Cloud TPU [gcloud](https://cloud.google.com/sdk/gcloud/reference/alpha/compute/tpus/tpu-vm/ssh) command and include the flag `--worker-all` from Cloud TPU `worker0`. Below is an example of how this can be accomplished  directly on the Cloud TPU worker and in a Docker container. 
+
+### Running a job on all Cloud TPU workers directly on  `worker0` OS (JAX example)
+
+Create a script with your job code
+```bash
+cat <<EOF >> pod-train.sh
+#!/bin/bash -xe 
+export ZONE=europe-west4-a
+gcloud compute tpus tpu-vm ssh \
+	$SLURMD_NODENAME --zone ${ZONE} --worker=all --command \
+	"\
+	python3 -c \
+	\"import jax; \
+	print('global device count:', jax.device_count()); \
+	print('local device count:', jax.local_device_count()) \
+	\""
+EOF
+```
+
+Change permissions on the file
+```
+chmod a+x pod-train.sh
+```
+
+Launch the Slurm job 
+
+```
+$ sinfo
+PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
+v2_32*       up   infinite     10  idle~ g0-compute-0-[0-9]
+v2_8         up   infinite     10  idle~ g0-compute-1-[0-9]
+
+$ sbatch -N1 -p v2_32 pod-train.sh
+
+```
+
+The output file of the training job will look something similar to this
+```
+cat slurm.6
+......
+Warning: Permanently added 'tpu.83988282433886287-2-ka9f4w' (ECDSA) to the list of known hosts.
+Warning: Permanently added 'tpu.83988282433886287-0-+hgdrs' (ECDSA) to the list of known hosts.
+Warning: Permanently added 'tpu.83988282433886287-1-vb2vut' (ECDSA) to the list of known hosts.
+Warning: Permanently added 'tpu.83988282433886287-3-m6blmv' (ECDSA) to the list of known hosts.
+global device count: 32
+local device count: 8
+global device count: 32
+local device count: 8
+global device count: 32
+local device count: 8
+global device count: 32
+local device count: 8
+```
+### Running a job on all Cloud TPU workers  using Docker containers (JAX example)
+This example is based off the official how to guide for [Docker containers with Cloud TPU Pods](https://cloud.google.com/tpu/docs/run-in-container#tpu-pod_1)
+
+Add this script to the [custom-compute-install](../scripts/custom-compute-install) script to to modify  `/etc/nsswitch.conf` during power on, allowing you to get elevate permissions (sudo) without a password. You will need to sudo to use Docker comamnds. 
+
+```bash
+echo <EOF > /scripts/custom-compute-install
+#!/bin/sh
+sed -e "s/slurm//g" -i /etc/nsswitch.conf *
+EOF
+```
+
+Create a Artifactory Docker Repository 
+
+```bash
+export PROJECT=cloud-tpu-slurm-demo
+export REPO_NAME=cloud-tpu-slurm-demo
+export IMAGE_NAME=cloud-tpu-slurm-demo
+export TAG=jax
+export ZONE=europe-west4-a
+export LOCATION=europe-west4
+
+gcloud artifacts repositories create ${REPO_NAME} --repository-format=Docker --location=${LOCATION} --description="Demo Artifactory Repo"
+```
+
+Create a Docker container 
+
+```bash
+cat <<EOF >> Dockerfile
+FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:latest  
+RUN pip install "jax[tpu]" -f https://storage.googleapis.com/jax-releases/libtpu_releases.html  
+RUN pip install --upgrade clu  
+RUN git clone https://github.com/google/flax.git  
+RUN pip install --user -e flax  
+WORKDIR ./flax/examples/mnist
+EOF
+
+docker build -t $IMAGE_NAME .
+```
+
+Tag the image and push it to the Artifactory Docker Repository 
+```bash
+docker tag $IMAGE_NAME ${LOCATION}-docker.pkg.dev/${PROJECT}/${REPO_NAME}/${IMAGE_NAME}:${TAG}
+docker push ${LOCATION}-docker.pkg.dev/${PROJECT}/${REPO_NAME}/${IMAGE_NAME}:${TAG}
+```
+
+Create a script with your Cloud TPU job code, in this simple example we are  counting the number of cores in each worker an globally
+```bash
+cat <<EOF >> pod-train-docker.sh
+#!/bin/bash -xe
+export PROJECT=cloud-tpu-slurm-demo
+export REPO_NAME=cloud-tpu-slurm-demo
+export IMAGE_NAME=cloud-tpu-slurm-demo
+export TAG=jax
+export ZONE=europe-west4-a
+export LOCATION=europe-west4
+
+gcloud compute tpus tpu-vm ssh $SLURMD_NODENAME --zone ${ZONE} --worker=all \
+        --command="sudo usermod -a -G docker $USER
+        sudo gcloud auth configure-docker $LOCATION-docker.pkg.dev --quiet
+        sudo docker pull ${LOCATION}-docker.pkg.dev/${PROJECT}/${REPO_NAME}/${IMAGE_NAME}:${TAG}
+	sudo docker run -ti -d --privileged --net=host --name ${IMAGE_NAME} ${LOCATION}-docker.pkg.dev/${PROJECT}/${REPO_NAME}/${IMAGE_NAME}:${TAG}
+        sudo docker exec --privileged ${IMAGE_NAME} python3 -c \
+	\"import jax; \
+	print('global device count:', jax.device_count()); \
+	print('local device count:', jax.local_device_count()) \
+	\""
+EOF
+```
+
+Change permissions on the file
+```
+chmod a+x pod-train-docker.sh
+```
+
+Launch the Slurm job 
+
+```
+$ sinfo
+PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
+v2_32*       up   infinite     10  idle~ g0-compute-0-[0-9]
+v2_8         up   infinite     10  idle~ g0-compute-1-[0-9]
+
+$ sbatch -N1 -p v2_32 pod-train-docker.sh
+
+```
+
+The output file of the training job will look something similar to this
+```
+cat slurm.6
+......
+Digest: sha256:9355ced353d0a899f5a831941dd154ad13d8c4317d5710c3f9df1d333be2c87c
+Status: Downloaded newer image for europe-west4-docker.pkg.dev/cloud-tpu-slurm-demo/cloud-tpu-slurm-demo/cloud-tpu-slurm-demo:jax
+europe-west4-docker.pkg.dev/cloud-tpu-slurm-demo/cloud-tpu-slurm-demo/cloud-tpu-slurm-demo:jax
+b3bf75e75425b39da37ffc0e1472a588f04b22cd447ce9b9ae24ac356809526f
+4cace519dcd4ca45c3ea5bbf27ecda847f19ce8e5e1aaf2779ba93c814b1c267
+d2f2f374a90755c27aa8ab96a446d94f867a874be34cc2a61935ad4c3264cb8c
+fd643d7ddcef86f42f03979f3ed26148471b468c587e5b3e07efda49c12a93d4
+global device count: 32
+local device count: 8
+global device count: 32
+local device count: 8
+global device count: 32
+local device count: 8
+global device count: 32
+local device count: 8
+```
 
 # Troubleshooting
 Logs are located in `/var/log/slurm` on both the controller instance and the 
@@ -236,11 +393,11 @@ on the TPU VM:
 # tpu name is the same as the node name in Slurm sinfo
 cloudshell$ gcloud compute tpus tpu-vm ssh <tpu name> --zone=<tpu zone>
 ...
-sudo journalctl -o cat -u google-startup-scripts
+sudo journalctl -o cat -u google-startup-scripts -f
 ```
 From there you can also check the slurmd log using `systemctl status slurmd` or the log file in `/var/log/slurm`.
 
-# Addtional customization
+# Additional customization
 
 You can add additional customization in the tpu-image using the [external_install_slurm.sh](../foundry/scripts/custom.d/ external_install_slurm.py) script
 
@@ -249,3 +406,4 @@ cloudshell$ ls foundry/scripts/custom.d/external_install_slurm.sh
 #!/bin/bash
 echo custom script run
 ```
+
