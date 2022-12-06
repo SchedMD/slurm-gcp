@@ -12,6 +12,9 @@ All notable changes to this project will be documented in this file.
 - slurm_controller_hybrid - add `var.slurm_control_addr` option to allow a
   secondary address to be used.
 - No longer create \*.conf.bak files.
+- Upgrade Slurm to 22.05.6.
+  - **WARNING:** Breaking change to terraform modules -- default image has
+    changed.
 
 ## \[5.2.0\]
 
