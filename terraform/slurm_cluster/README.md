@@ -102,7 +102,7 @@ module.
     - `enable_cleanup_compute=true`
     - `enable_cleanup_subscriptions=true`
     - `enable_reconfigure=true`
-  - `pip3 install -r ../../../scripts/requirements.txt --user`
+  - `pip3 install -r ../../scripts/requirements.txt --user`
 - [Private Google Access](../../docs/glossary.md#private-google-access) is
   enabled.
   - Required when any instances only have internal IPs.

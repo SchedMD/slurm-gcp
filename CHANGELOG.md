@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[Next\]
+
+- Use configless mode for cluster configuration management.
+- Hybrid - Write files with more restrictive permissions.
+- Fix `module.slurm_cluster` not propagating `var.disable_default_mounts` to
+  `module.slurm_controller_hybrid`.
+- Fix creation of instances in placement groups.
+- slurm_controller_hybrid - add `var.slurm_control_addr` option to allow a
+  secondary address to be used.
+- No longer create \*.conf.bak files.
+- Upgrade Slurm to 22.05.6.
+  - **WARNING:** Breaking change to terraform modules -- default image has
+    changed.
+
 ## \[5.2.0\]
 
 - `module.slurm_instance_template` - remove unused `var.bandwidth_tier`.
@@ -12,7 +26,7 @@ All notable changes to this project will be documented in this file.
   - **WARNING:** Breaking change to `slurm_cluster`, `slurm_partition` modules
     -- new field `partition_startup_script_timeout`.
 - Fix enable_cleanup_subscriptions defined but not used in certain examples.
-- Remove unused `disable_default_mounts` from `slurm_controller_hybrid`.
+- Fix `slurm_controller_hybrid` not respecting `disable_default_mounts`.
 - Removed unused `slurm_depends_on` from modules.
 - Fix scripts running without config.yaml.
 - Reimplement backoff delay on retry attempts.

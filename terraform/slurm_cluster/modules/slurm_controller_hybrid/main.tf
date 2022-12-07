@@ -62,8 +62,9 @@ locals {
     slurm_cluster_name   = var.slurm_cluster_name
 
     # storage
-    network_storage       = var.network_storage
-    login_network_storage = var.login_network_storage
+    disable_default_mounts = var.disable_default_mounts
+    network_storage        = var.network_storage
+    login_network_storage  = var.login_network_storage
 
     # slurm conf
     prolog_scripts   = [for x in google_compute_project_metadata_item.prolog_scripts : x.key]
@@ -78,6 +79,7 @@ locals {
     google_app_cred_path = local.google_app_cred_path
     output_dir           = local.output_dir
     slurm_control_host   = var.slurm_control_host
+    slurm_control_addr   = var.slurm_control_addr
     slurm_bin_dir        = local.slurm_bin_dir
     slurm_log_dir        = local.slurm_log_dir
   }
@@ -127,26 +129,36 @@ resource "random_string" "topic_suffix" {
 resource "local_file" "resume_py" {
   content  = data.local_file.resume_py.content
   filename = abspath("${var.output_dir}/resume.py")
+
+  file_permission = "0700"
 }
 
 resource "local_file" "suspend_py" {
   content  = data.local_file.suspend_py.content
   filename = abspath("${var.output_dir}/suspend.py")
+
+  file_permission = "0700"
 }
 
 resource "local_file" "util_py" {
   content  = data.local_file.util_py.content
   filename = abspath("${var.output_dir}/util.py")
+
+  file_permission = "0700"
 }
 
 resource "local_file" "slurmsync_py" {
   content  = data.local_file.slurmsync_py.content
   filename = abspath("${var.output_dir}/slurmsync.py")
+
+  file_permission = "0700"
 }
 
 resource "local_file" "startup_sh" {
   content  = data.local_file.startup_sh.content
   filename = abspath("${var.output_dir}/startup.sh")
+
+  file_permission = "0700"
 }
 
 ##########
@@ -157,7 +169,7 @@ resource "local_file" "config_yaml" {
   filename = abspath("${local.output_dir}/config.yaml")
   content  = yamlencode(local.config)
 
-  file_permission = "0644"
+  file_permission = "0600"
 }
 
 #########

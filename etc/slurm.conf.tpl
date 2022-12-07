@@ -26,7 +26,7 @@ SlurmdDebug=info
 #              vvvvv  WARNING: DO NOT MODIFY SECTION BELOW  vvvvv              #
 ################################################################################
 
-SlurmctldHost={control_host}
+SlurmctldHost={control_host}({control_addr})
 
 AuthType=auth/munge
 AuthInfo=cred_expire=120
@@ -34,11 +34,12 @@ AuthAltTypes=auth/jwt
 CredType=cred/munge
 MpiDefault={mpi_default}
 ReturnToService=2
-SlurmctldPort=6820-6830
+SlurmctldPort={control_host_port}
 SlurmdPort=6818
 SlurmdSpoolDir=/var/spool/slurmd
 SlurmUser=slurm
 StateSaveLocation={state_save}
+MaxNodeCount=64000
 
 #
 #

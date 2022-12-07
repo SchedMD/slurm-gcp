@@ -28,7 +28,7 @@ limitations under the License.
 | Name | Version |
 |------|---------|
 | <a name="provider_local"></a> [local](#provider\_local) | 2.2.3 |
-| <a name="provider_null"></a> [null](#provider\_null) | 3.1.1 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.0 |
 
 ## Modules
 

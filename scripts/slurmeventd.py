@@ -174,7 +174,7 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
         elif lkp.instance_role == "compute":
             run("systemctl restart slurmd")
         elif lkp.instance_role == "login":
-            log.info(f"NO-OP for 'Request={data['request']}'.")
+            run("systemctl restart slurmd")
         else:
             log.error(f"Unknown node role: {lkp.instance_role}")
 

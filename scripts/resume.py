@@ -23,6 +23,7 @@ from itertools import groupby
 from pathlib import Path
 from suspend import delete_placement_groups
 import yaml
+import collections
 
 import util
 from util import (
@@ -49,10 +50,13 @@ LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log
 
 log = logging.getLogger(filename)
 
-BULK_INSERT_LIMIT = 1000
+PLACEMENT_MAX_CNT = 150
+# Placement group needs to be the same for an entire bulk_insert hence
+# if placement is used the actual BULK_INSERT_LIMIT will be 
+# max([1000, PLACEMENT_MAX_CNT])
+BULK_INSERT_LIMIT = 1000 
 
-
-def instance_properties(partition, model):
+def instance_properties(partition, model, placement_group):
     node_group = lkp.node_group(model)
     template = lkp.node_template(model)
     template_info = lkp.template_info(template)
@@ -107,6 +111,15 @@ def instance_properties(partition, model):
     }
     props.labels = {**template_info.labels, **labels}
 
+    if (placement_group):
+        props.scheduling = {
+            "onHostMaintenance": "TERMINATE",
+            "automaticRestart": False,
+        }
+        props.resourcePolicies = [
+            placement_group,
+        ]
+
     # provisioningModel=SPOT not supported by perInstanceProperties?
     if node_group.enable_spot_vm:
         util.compute = util.compute_service(version="beta")
@@ -124,26 +137,21 @@ def instance_properties(partition, model):
     return props
 
 
-def per_instance_properties(node, placement_groups=None):
+def per_instance_properties(node):
     props = NSDict()
-
-    if placement_groups:
-        # certain properties are constrained
-        props.scheduling = {
-            "onHostMaintenance": "TERMINATE",
-            "automaticRestart": False,
-        }
-        props.resourcePolicies = [
-            placement_groups[node],
-        ]
+    # No properties beyond name are supported yet.
 
     return props
 
 
-def create_instances_request(nodes, placement_groups=None, exclusive=False):
+def create_instances_request(nodes, placement_group, exclusive=False):
     """Call regionInstances.bulkInsert to create instances"""
     assert len(nodes) > 0
-    assert len(nodes) <= BULK_INSERT_LIMIT
+    if placement_group:
+        assert len(nodes) <= min(PLACEMENT_MAX_CNT, BULK_INSERT_LIMIT)
+    else:
+        assert len(nodes) <= BULK_INSERT_LIMIT
+    
     # model here indicates any node that can be used to describe the rest
     model = next(iter(nodes))
     partition = lkp.node_partition(model)
@@ -159,11 +167,11 @@ def create_instances_request(nodes, placement_groups=None, exclusive=False):
     body.sourceInstanceTemplate = template
 
     # overwrites properties accross all instances
-    body.instanceProperties = instance_properties(partition, model)
+    body.instanceProperties = instance_properties(partition, model, placement_group)
 
     # key is instance name, value overwrites properties
     body.perInstanceProperties = {
-        k: per_instance_properties(k, placement_groups) for k in nodes
+        k: per_instance_properties(k) for k in nodes
     }
 
     zones = {
@@ -210,15 +218,28 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
         return
     nodelist = sorted(nodelist, key=lkp.node_prefix)
 
-    grouped_nodes = {
-        f"{prefix}:{i}": chunk
-        for prefix, nodes in groupby(nodelist, lkp.node_prefix)
-        for i, chunk in enumerate(chunked(nodes, n=BULK_INSERT_LIMIT))
-    }
+    # Group on placement_group since only one placement group is
+    # allowed per bulkInsert call.
+    BulkChunk = collections.namedtuple('BulkChunk', ['nodes', 'placement_group'])
+    if placement_groups:
+        grouped_nodes = {
+            f"{prefix}:{placement_group}:{i}": BulkChunk(chunk, placement_group)
+            for placement_group, placement_group_nodes in placement_groups.items()
+            for prefix, nodes in groupby(placement_group_nodes, lkp.node_prefix)
+            for i, chunk in enumerate(chunked(nodes, n=BULK_INSERT_LIMIT))
+        }
+    else: 
+        grouped_nodes = {
+            f"{prefix}:{i}": BulkChunk(chunk, None)
+            for prefix, nodes in groupby(nodelist, lkp.node_prefix)
+            for i, chunk in enumerate(chunked(nodes, n=BULK_INSERT_LIMIT))
+        }
+
+
     if log.isEnabledFor(logging.DEBUG):
         # grouped_nodelists is used in later debug logs too
         grouped_nodelists = {
-            group: to_hostlist(nodes) for group, nodes in grouped_nodes.items()
+            group: to_hostlist(chunk.nodes) for group, chunk in grouped_nodes.items()
         }
         log.debug(
             "node bulk groups: \n{}".format(yaml.safe_dump(grouped_nodelists).rstrip())
@@ -226,8 +247,8 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
 
     # make all bulkInsert requests and execute with batch
     inserts = {
-        group: create_instances_request(nodes, placement_groups, exclusive)
-        for group, nodes in grouped_nodes.items()
+        group: create_instances_request(chunk.nodes, chunk.placement_group, exclusive)
+        for group, chunk in grouped_nodes.items()
     }
 
     bulk_ops = dict(
@@ -242,7 +263,7 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
         failed_reqs = [f"{e}" for _, (_, e) in failed.items()]
         log.error("bulkInsert API failures: {}".format("; ".join(failed_reqs)))
         for ident, (_, exc) in failed.items():
-            down_nodes(grouped_nodes[ident], exc._get_reason())
+            down_nodes(grouped_nodes[ident].nodes, exc._get_reason())
 
     if log.isEnabledFor(logging.DEBUG):
         for group, op in started.items():
@@ -261,7 +282,7 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
         bulk_op_name = bulk_op["name"]
         if "error" in bulk_op:
             error = bulk_op["error"]["errors"][0]
-            group_nodes = to_hostlist(grouped_nodes[group])
+            group_nodes = to_hostlist(grouped_nodes[group].nodes)
             log.warning(
                 f"bulkInsert operation errors: {error['code']} name={bulk_op_name} operationGroupId={group_id} nodes={group_nodes}"
             )
@@ -337,12 +358,10 @@ def create_placement_request(pg_name, region):
 
 
 def create_placement_groups(job_id, node_list, partition_name):
-    PLACEMENT_MAX_CNT = 150
     groups = {
         f"{cfg.slurm_cluster_name}-{partition_name}-{job_id}-{i}": nodes
         for i, nodes in enumerate(chunked(node_list, n=PLACEMENT_MAX_CNT))
     }
-    reverse_groups = {node: group for group, nodes in groups.items() for node in nodes}
 
     model = next(iter(node_list))
     region = lkp.node_region(model)
@@ -364,7 +383,7 @@ def create_placement_groups(job_id, node_list, partition_name):
         log.fatal("failed to create placement policies: {}".format("; ".join(reqs)))
         exit(1)
     log.info(f"created {len(done)} placement groups ({to_hostlist(done.keys())})")
-    return reverse_groups
+    return groups
 
 
 def valid_placement_nodes(job_id, nodelist):

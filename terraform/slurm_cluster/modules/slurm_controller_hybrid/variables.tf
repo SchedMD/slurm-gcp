@@ -142,6 +142,21 @@ EOD
   default = []
 }
 
+variable "disable_default_mounts" {
+  description = <<-EOD
+    Disable default global network storage from the controller
+    * /usr/local/etc/slurm
+    * /etc/munge
+    * /home
+    * /apps
+    If these are disabled, the slurm etc and munge dirs must be added manually,
+    or some other mechanism must be used to synchronize the slurm conf files
+    and the munge key across the cluster.
+    EOD
+  type        = bool
+  default     = false
+}
+
 variable "network_storage" {
   description = <<EOD
 Storage to mounted on all instances.
@@ -254,9 +269,34 @@ variable "slurm_control_host" {
 The short, or long, hostname of the machine where Slurm control daemon is
 executed (i.e. the name returned by the command "hostname -s").
 
+This value is passed to slurm.conf such that:
+SlurmctldHost={var.slurm_control_host}\({var.slurm_control_addr}\)
+
+See https://slurm.schedmd.com/slurm.conf.html#OPT_SlurmctldHost
+EOD
+
+  validation {
+    condition     = (var.slurm_control_host != null && var.slurm_control_host != "")
+    error_message = "Variable 'slurm_control_host' cannot be empty (\"\") or omitted (null)."
+  }
+}
+
+variable "slurm_control_addr" {
+  type        = string
+  description = <<EOD
+The IP address or a name by which the address can be identified.
+
+This value is passed to slurm.conf such that:
+SlurmctldHost={var.slurm_control_host}\({var.slurm_control_addr}\)
+
 See https://slurm.schedmd.com/slurm.conf.html#OPT_SlurmctldHost
 EOD
   default     = null
+
+  validation {
+    condition     = var.slurm_control_addr != ""
+    error_message = "Variable 'slurm_control_host' cannot be empty (\"\")."
+  }
 }
 
 variable "cloud_parameters" {

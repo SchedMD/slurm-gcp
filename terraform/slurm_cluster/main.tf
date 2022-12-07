@@ -152,12 +152,14 @@ module "slurm_controller_hybrid" {
 
   google_app_cred_path            = var.controller_hybrid_config.google_app_cred_path
   slurm_control_host              = var.controller_hybrid_config.slurm_control_host
+  slurm_control_addr              = var.controller_hybrid_config.slurm_control_addr
   slurm_bin_dir                   = var.controller_hybrid_config.slurm_bin_dir
   slurm_log_dir                   = var.controller_hybrid_config.slurm_log_dir
   output_dir                      = var.controller_hybrid_config.output_dir
   cloud_parameters                = var.cloud_parameters
   compute_startup_scripts         = var.compute_startup_scripts
   compute_startup_scripts_timeout = var.compute_startup_scripts_timeout
+  disable_default_mounts          = var.disable_default_mounts
   enable_devel                    = var.enable_devel
   enable_bigquery_load            = var.enable_bigquery_load
   enable_cleanup_compute          = var.enable_cleanup_compute
