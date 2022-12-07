@@ -10,7 +10,7 @@ addict==2.4.0
 asttokens==2.0.5
 backcall==0.2.0
 cachetools==5.2.0; python_version ~= '3.7'
-certifi==2022.6.15; python_version >= '3.6'
+certifi==2022.12.7; python_version >= '3.6'
 charset-normalizer==2.1.0; python_version >= '3.6'
 decorator==5.1.1; python_version >= '3.5'
 executing==0.8.3
