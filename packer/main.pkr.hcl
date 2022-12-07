@@ -79,7 +79,8 @@ build {
       "sources.googlecompute.image",
     ]
     content {
-      name = source.key
+      #name = source.key
+      name = source.value.source_image_family
 
       ### image ###
       source_image        = source.value.source_image

@@ -34,15 +34,36 @@ validate-packer:
     -var "slurm_version=$SLURM_VERSION"
     .
 
-build-images:
+build-centos-7:
   stage: build
-  script:
-  - echo "Building images"
+  variables:
+    IMAGE_FAMILY: centos-7
+  script: &build-image
+  - echo "Building $IMAGE_FAMILY image"
   - cd packer
   - packer init .
   - >
     packer build -var-file=example.pkrvars.hcl
     -var "project_id=$GCP_PROJECT_ID"
     -var "slurm_version=$SLURM_VERSION"
+    -only "*.$IMAGE_FAMILY"
     .
-  - echo "packer build completed"
+  - echo "packer build $IMAGE_FAMILY completed"
+
+build-hpc-centos-7:
+  stage: build
+  variables:
+    IMAGE_FAMILY: hpc-centos-7
+  script: *build-image
+
+build-debian-10:
+  stage: build
+  variables:
+    IMAGE_FAMILY: debian-10
+  script: *build-image
+
+build-ubuntu-2004-lts:
+  stage: build
+  variables:
+    IMAGE_FAMILY: ubuntu-2004-lts
+  script: *build-image
