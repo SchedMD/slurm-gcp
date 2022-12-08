@@ -23,8 +23,6 @@
     --accept="{{lustre_files|join(',')}}"
     --directory-prefix="{{lustre_artifacts_dir}}"
     {{lustre_deb_url}}
-  args:
-    warn: no
 
 - name: Gather DEBs
   find:
