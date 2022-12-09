@@ -102,6 +102,7 @@ controller_hybrid_config = {
   slurm_bin_dir        = "/usr/local/bin"
   slurm_log_dir        = "./log"
   output_dir           = "./etc"
+  install_dir          = null
 }
 
 ##############

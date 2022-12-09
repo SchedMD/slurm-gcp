@@ -156,6 +156,7 @@ module "slurm_controller_hybrid" {
   slurm_bin_dir                   = var.controller_hybrid_config.slurm_bin_dir
   slurm_log_dir                   = var.controller_hybrid_config.slurm_log_dir
   output_dir                      = var.controller_hybrid_config.output_dir
+  install_dir                     = var.controller_hybrid_config.install_dir
   cloud_parameters                = var.cloud_parameters
   compute_startup_scripts         = var.compute_startup_scripts
   compute_startup_scripts_timeout = var.compute_startup_scripts_timeout

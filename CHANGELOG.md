@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Add `var.install_dir` to `module.slurm_controller_hybrid` to specify the
+  intended directory where the files are to be installed.
+
 ## \[5.3.0\]
 
 - Use configless mode for cluster configuration management.

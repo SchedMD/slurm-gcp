@@ -155,6 +155,7 @@ EOD
     slurm_bin_dir        = string
     slurm_log_dir        = string
     output_dir           = string
+    install_dir          = string
   })
   default = {
     google_app_cred_path = null
@@ -163,6 +164,7 @@ EOD
     slurm_bin_dir        = "/usr/local/bin"
     slurm_log_dir        = "/var/log/slurm"
     output_dir           = "/etc/slurm"
+    install_dir          = null
   }
 }
 

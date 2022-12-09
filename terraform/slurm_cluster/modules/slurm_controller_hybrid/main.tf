@@ -26,6 +26,12 @@ locals {
     ? abspath(".")
     : abspath(var.output_dir)
   )
+
+  install_dir = (
+    var.install_dir == null || var.install_dir == ""
+    ? local.output_dir
+    : abspath(var.install_dir)
+  )
 }
 
 ##################
@@ -78,6 +84,7 @@ locals {
     # hybrid
     google_app_cred_path = local.google_app_cred_path
     output_dir           = local.output_dir
+    install_dir          = local.install_dir
     slurm_control_host   = var.slurm_control_host
     slurm_control_addr   = var.slurm_control_addr
     slurm_bin_dir        = local.slurm_bin_dir

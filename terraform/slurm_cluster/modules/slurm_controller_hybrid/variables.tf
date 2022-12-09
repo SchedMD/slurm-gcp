@@ -325,3 +325,18 @@ cloud.conf; cloud_gres.conf; config.yaml; resume.py; suspend.py; and util.py.
 EOD
   default     = null
 }
+
+variable "install_dir" {
+  type        = string
+  description = <<EOD
+Directory where the hybrid configuration directory will be installed on the
+on-premise controller (e.g. /etc/slurm/hybrid). This updates the prefix path
+for the resume and suspend scripts in the generated `cloud.conf` file.
+
+This variable should be used when the TerraformHost and the SlurmctldHost
+are different.
+
+This will default to var.output_dir if null.
+EOD
+  default     = null
+}

@@ -155,7 +155,7 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
     )
 
     def conflines(cloud_parameters):
-        scripts_dir = lkp.cfg.output_dir or dirs.scripts
+        scripts_dir = lkp.cfg.get("install_dir", dirs.scripts)
         no_comma_params = cloud_parameters.get("no_comma_params", False)
         comma_params = {
             "PrivateData": [
