@@ -153,8 +153,10 @@ configured on all [SchedMD public images](./images.md#public-images).
 Once you have successfully configured a hybrid
 [slurm_cluster](../terraform/slurm_cluster/README.md) and applied the
 [terraform](./glossary.md#terraform) infrastructure, the necessary files will be
-generated at `$output_dir`. It is recommended that `$output_dir` is equal to the
-path where Slurm searches for config files (e.g. `/etc/slurm`).
+generated at `$output_dir`. Should another machine be the TerraformHost or
+non-SlurmUser be the TerraformUser, then set `$install_dir` to the intended
+directory where the generated files will be deployed on the Slurm controller
+(e.g. `var.install_dir = "/etc/slurm"`).
 
 Follow the below steps to complete the process of configuring your on-prem
 controller to be able to burst into the cloud.
@@ -162,12 +164,12 @@ controller to be able to burst into the cloud.
 1. In your *slurm.conf*, include the generated *cloud.conf*:
    ```conf
    # slurm.conf
-   include $output_dir/cloud.conf
+   include $install_dir/cloud.conf
    ```
 1. In your *gres.conf*, include the generated *cloud_gres.conf*:
    ```conf
    # gres.conf
-   include $output_dir/cloud_gres.conf
+   include $install_dir/cloud_gres.conf
    ```
 1. The `$output_dir` and its contents should be owned by the `SlurmUser`, eg.
    ```sh
@@ -175,7 +177,7 @@ controller to be able to burst into the cloud.
    ```
 1. Add a cronjob/crontab to call slurmsync.py as SlurmUser.
    ```conf
-   */1 * * * * $output_dir/slurmsync.py
+   */1 * * * * $install_dir/slurmsync.py
    ```
 1. Restart slurmctld and resolve include conflicts.
 1. Test cloud bursting.
