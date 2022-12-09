@@ -161,6 +161,24 @@ directory where the generated files will be deployed on the Slurm controller
 Follow the below steps to complete the process of configuring your on-prem
 controller to be able to burst into the cloud.
 
+1. Configure terraform modules (e.g. slurm_cluster; slurm_controller_hybrid)
+   with desired configurations.
+1. Apply terraform project and its configuration.
+   ```sh
+   terraform init
+   terraform apply
+   ```
+1. The `$output_dir` and its contents should be owned by the `SlurmUser`, eg.
+   ```sh
+   chown -R slurm:slurm $output_dir
+   ```
+1. Move files from `$output_dir` on TerraformHost to `$install_dir` of
+   SlurmctldHost and make sure SlurmUser owns the files.
+   ```sh
+   scp ${output_dir}/* ${SLURMCTLD_HOST}:${install_dir}/
+   ssh $SLURMCTLD_HOST
+   sudo chown -R ${SLURM_USER}:${SLURM_USER} $output_dir
+   ```
 1. In your *slurm.conf*, include the generated *cloud.conf*:
    ```conf
    # slurm.conf
@@ -170,10 +188,6 @@ controller to be able to burst into the cloud.
    ```conf
    # gres.conf
    include $install_dir/cloud_gres.conf
-   ```
-1. The `$output_dir` and its contents should be owned by the `SlurmUser`, eg.
-   ```sh
-   chown -R slurm: $output_dir
    ```
 1. Add a cronjob/crontab to call slurmsync.py as SlurmUser.
    ```conf
