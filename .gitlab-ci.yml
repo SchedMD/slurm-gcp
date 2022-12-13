@@ -83,7 +83,9 @@ build-ubuntu-2004-lts:
 
 test-centos-7:
   stage: test-clusters
-  needs: [build-centos-7]
+  needs:
+  - job: build-centos-7
+    optional: true
   variables:
     IMAGE_FAMILY: centos-7
   script: &test-cluster
@@ -100,21 +102,27 @@ test-centos-7:
 
 test-hpc-centos-7:
   stage: test-clusters
-  needs: [build-hpc-centos-7]
+  needs:
+  - job: build-hpc-centos-7
+    optional: true
   variables:
     IMAGE_FAMILY: hpc-centos-7
   script: *test-cluster
 
 test-debian-10:
   stage: test-clusters
-  needs: [build-debian-10]
+  needs:
+  - job: build-debian-10
+    optional: true
   variables:
     IMAGE_FAMILY: debian-10
   script: *test-cluster
 
 test-ubuntu-2004-lts:
   stage: test-clusters
-  needs: [build-ubuntu-2004-lts]
+  needs:
+  - job: build-ubuntu-2004-lts
+    optional: true
   variables:
     IMAGE_FAMILY: ubuntu-2004-lts
   script: *test-cluster
