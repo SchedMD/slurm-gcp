@@ -26,6 +26,13 @@ stages:
 
 validate-packer:
   stage: validate
+  rules: &build-image-rules
+  - if: $CI_PIPELINE_SOURCE == "schedule"
+    when: always
+    allow_failure: true
+  - when: manual
+    if: $BUILD_IMAGES == "true"
+    allow_failure: true
   script:
   - echo "Validating packer configuration"
   - printenv
@@ -39,13 +46,8 @@ validate-packer:
 
 build-centos-7:
   stage: build-images
-  rules: &build-image-rules
-  - if: $CI_PIPELINE_SOURCE == "schedule"
-    when: always
-    allow_failure: true
-  - when: manual
-    if: $BUILD_IMAGES == "true"
-    allow_failure: true
+  rules: *build-image-rules
+  needs: [validate-packer]
   variables:
     IMAGE_FAMILY: centos-7
   script: &build-image
@@ -63,6 +65,7 @@ build-centos-7:
 build-hpc-centos-7:
   stage: build-images
   rules: *build-image-rules
+  needs: [validate-packer]
   variables:
     IMAGE_FAMILY: hpc-centos-7
   script: *build-image
@@ -70,6 +73,7 @@ build-hpc-centos-7:
 build-debian-10:
   stage: build-images
   rules: *build-image-rules
+  needs: [validate-packer]
   variables:
     IMAGE_FAMILY: debian-10
   script: *build-image
@@ -77,6 +81,7 @@ build-debian-10:
 build-ubuntu-2004-lts:
   stage: build-images
   rules: *build-image-rules
+  needs: [validate-packer]
   variables:
     IMAGE_FAMILY: ubuntu-2004-lts
   script: *build-image
