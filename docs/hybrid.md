@@ -7,6 +7,7 @@
 
 - [Hybrid Cluster Guide](#hybrid-cluster-guide)
   - [Overview](#overview)
+    - [Background](#background)
   - [Terraform](#terraform)
     - [Quickstart Examples](#quickstart-examples)
   - [On-Premises](#on-premises)
@@ -14,6 +15,7 @@
     - [Node Addressing](#node-addressing)
     - [Users and Groups](#users-and-groups)
     - [Manual Configurations](#manual-configurations)
+    - [Manage Secrets](#manage-secrets)
 
 <!-- mdformat-toc end -->
 
@@ -34,6 +36,55 @@ for additional information.
 
 > *NOTE*: The [manual configurations](#manual-configurations) are required to
 > finish the hybrid setup.
+
+### Background
+
+[Terraform](./glossary.md#terraform) is used to setup and manage most cloud
+resources for your hybrid cluster. It will ensure that the cloud contains
+resources as described in your
+[terraform project](./glossary.md#terraform-project).
+
+We provide terraform modules that support a hybrid cluster use case.
+Specifically,
+[slurm_controller_hybrid](../terraform/slurm_cluster/modules/slurm_controller_hybrid/README.md)
+is responsible for generating slurm configuration files based upon your
+configurations and our cloud scripts (e.g. `ResumeProgram`, `SuspendProgram`)
+for your on-premise controller to use.
+
+There are a set of scripts and files that support the functionality of creating
+and terminating nodes in the cloud:
+
+- `cloud_gres.conf`
+  - Contains Slurm GRES configuration lines about cloud compute GRES resources.
+  - To be included in your `gres.conf`.
+- `cloud.conf`
+  - Contains Slurm configuration lines to support a hybrid/cloud environment.
+  - To be included in your `slurm.conf`.
+  - **WARNING:** Certain lines may need reconciliation with your `slurm.conf`
+    (e.g. `SlurmctldParameters`).
+- `config.yaml`
+  - Encodes information about your configuration and compute resources for
+    `resume.py` and `suspend.py`.
+- `resume.py`
+  - `ResumeProgram` in `slurm.conf`.
+  - Creates compute node resources based upon Slurm job allocation and
+    configured compute resources.
+- `slurmsync.py`
+  - Synchronizes the Slurm state and the GCP state, reducing discrepencies from
+    manual admin activity or other edge cases.
+  - May update Slurm node states, create or destroy GCP compute resources or
+    other script managed GCP resources.
+  - To be run under `crontab` or `systemd` on an interval.
+- `startup.sh`
+  - Compute node startup script.
+- `suspend.py`
+  - `SuspendProgram` in `slurm.conf`.
+- `util.py`
+  - Contains utility functions for the other python scripts.
+
+The compute resources in GCP use
+[configless mode](https://slurm.schedmd.com/configless_slurm.html) to manage
+their `slurm.conf`, by default.
 
 ## Terraform
 
@@ -199,3 +250,12 @@ controller to be able to burst into the cloud.
    scontrol update nodename=$NODENAME state=power_up reason=test
    scontrol update nodename=$NODENAME state=power_down reason=test
    ```
+
+### Manage Secrets
+
+Additionally, [MUNGE](./glossary.md#munge) secrets must be consistant across the
+cluster. There are a few safe ways to deal with munge.key distribution:
+
+- Use NFS to mount `/etc/munge` from the controller (default behavior).
+- Create a [custom image](./images.md#custom-image) that contains the
+  `munge.key` for your cluster.
