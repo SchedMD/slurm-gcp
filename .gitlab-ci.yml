@@ -1,6 +1,6 @@
 ---
 image:
-  name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.3
+  name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.4
 
 variables:
   #DOCKER_HOST: tcp://docker:2376
