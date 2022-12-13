@@ -75,7 +75,9 @@ def plan(configuration):
 @pytest.fixture(scope="session")
 def applied(request, configuration):
     def finalize():
-        configuration.tf.destroy()
+        configuration.tf.destroy(
+            tf_vars=configuration.tfvars, tf_var_file=configuration.tfvars_file.name
+        )
 
     request.addfinalizer(finalize)
     configuration.tf.apply(
