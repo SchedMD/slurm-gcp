@@ -20,13 +20,14 @@ from testutils import backoff, spawn, run_out, term_proc
 
 
 log = logging.getLogger()
-log.setLevel("INFO")
+log.setLevel("DEBUG")
 handler = logging.StreamHandler(sys.stdout)
-handler.setLevel("INFO")
+handler.setLevel("DEBUG")
 # formatter = logging.Formatter()
 log.addHandler(handler)
 
 logging.getLogger("tftest").setLevel("WARNING")
+logging.getLogger("paramiko").setLevel("WARNING")
 
 
 def get_gcloud_user():
