@@ -78,7 +78,7 @@ def applied(configuration):
         tf_vars=configuration.tfvars, tf_var_file=configuration.tfvars_file.name
     )
     yield configuration.tf
-    # configuration.tf.destroy()
+    configuration.tf.destroy()
 
 
 @pytest.fixture(scope="session")
