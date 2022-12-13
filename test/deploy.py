@@ -26,6 +26,8 @@ handler.setLevel("INFO")
 # formatter = logging.Formatter()
 log.addHandler(handler)
 
+logging.getLogger("tftest").setLevel("WARNING")
+
 
 def get_gcloud_user():
     auth = json.loads(run_out("gcloud auth list --format=json"))
