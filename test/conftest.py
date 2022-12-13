@@ -73,16 +73,24 @@ def plan(configuration):
 
 
 @pytest.fixture(scope="session")
-def applied(configuration):
+def applied(request, configuration):
+    def finalize():
+        configuration.tf.destroy()
+
+    request.addfinalizer(finalize)
     configuration.tf.apply(
         tf_vars=configuration.tfvars, tf_var_file=configuration.tfvars_file.name
     )
-    yield configuration.tf
-    configuration.tf.destroy()
+    return configuration.tf
 
 
 @pytest.fixture(scope="session")
-def cluster(applied):
+def cluster(request, applied):
+    def finalize():
+        nonlocal cluster
+        cluster.disconnect()
+
+    request.addfinalizer(finalize)
     cluster = Cluster(applied)
-    yield cluster
-    cluster.disconnect()
+    cluster.activate()
+    return cluster
