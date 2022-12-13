@@ -101,10 +101,9 @@ test-centos-7:
   - >
     pipenv run pytest -v
     --project-id=$GCP_PROJECT_ID
-    --cluster-name=$(echo $IMAGE_FAMILY | tr -d -)$(tr -dc a-z </dev/urandom | head
-    -c2)
+    --cluster-name=test$(tr -dc a-z </dev/urandom | head -c2)
     --image-project=$GCP_PROJECT_ID
-    --image-family=schedmd-v5-$SLURM_VERSION_ALT-$IMAGE_FAMILY
+    --image-family=schedmd-v5-slurm-$SLURM_VERSION_ALT-$IMAGE_FAMILY
 
 test-hpc-centos-7:
   stage: test-clusters
