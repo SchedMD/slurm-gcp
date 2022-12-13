@@ -210,22 +210,24 @@ Variables map to:
 - [slurm_controller_hybrid](../../../../modules/slurm_controller_hybrid/README_TF.md#inputs)
 EOD
   type = object({
-    google_app_cred_path = string
-    slurm_control_host   = string
-    slurm_control_addr   = string
-    slurm_bin_dir        = string
-    slurm_log_dir        = string
-    output_dir           = string
-    install_dir          = string
+    google_app_cred_path    = string
+    slurm_control_host      = string
+    slurm_control_host_port = string
+    slurm_control_addr      = string
+    slurm_bin_dir           = string
+    slurm_log_dir           = string
+    output_dir              = string
+    install_dir             = string
   })
   default = {
-    google_app_cred_path = null
-    slurm_control_host   = null
-    slurm_control_addr   = null
-    slurm_bin_dir        = "/usr/local/bin"
-    slurm_log_dir        = "/var/log/slurm"
-    output_dir           = "/etc/slurm"
-    install_dir          = null
+    google_app_cred_path    = null
+    slurm_control_host      = null
+    slurm_control_host_port = null
+    slurm_control_addr      = null
+    slurm_bin_dir           = "/usr/local/bin"
+    slurm_log_dir           = "/var/log/slurm"
+    output_dir              = "/etc/slurm"
+    install_dir             = null
   }
 }
 

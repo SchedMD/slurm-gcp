@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 - Add `var.install_dir` to `module.slurm_controller_hybrid` to specify the
   intended directory where the files are to be installed.
+- Add `var.slurm_control_host_port` to `module.slurm_controller_hybrid` to
+  specify the port for slurmd to connect for configless setup.
 
 ## \[5.3.0\]
 

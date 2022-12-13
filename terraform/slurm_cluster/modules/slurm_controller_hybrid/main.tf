@@ -82,13 +82,14 @@ locals {
     compute_startup_scripts_timeout = var.compute_startup_scripts_timeout
 
     # hybrid
-    google_app_cred_path = local.google_app_cred_path
-    output_dir           = local.output_dir
-    install_dir          = local.install_dir
-    slurm_control_host   = var.slurm_control_host
-    slurm_control_addr   = var.slurm_control_addr
-    slurm_bin_dir        = local.slurm_bin_dir
-    slurm_log_dir        = local.slurm_log_dir
+    google_app_cred_path    = local.google_app_cred_path
+    output_dir              = local.output_dir
+    install_dir             = local.install_dir
+    slurm_control_host      = var.slurm_control_host
+    slurm_control_host_port = var.slurm_control_host_port
+    slurm_control_addr      = var.slurm_control_addr
+    slurm_bin_dir           = local.slurm_bin_dir
+    slurm_log_dir           = local.slurm_log_dir
   }
 }
 
