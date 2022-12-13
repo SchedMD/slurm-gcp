@@ -110,7 +110,7 @@ class Configuration:
         self.tf = TerraformTest(self.moduledir)
         tmp = self._template_tfvars = self.tfvars_file
         self.tfvars_file = self._template_tfvars.with_name(
-            f"{self.cluster_name}-{tmp.stem}{''.join(tmp.suffixes[:-1])}"
+            f"{self.cluster_name}-{tmp.stem}"
         )
         self.tfvars_file.write_text(
             Template(tmp.read_text()).substitute(

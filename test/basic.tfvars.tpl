@@ -107,9 +107,10 @@ partitions = [
       #   content  = <<EOF
       # #!/bin/bash
       # set -ex
-      # echo "Hello, $(hostname) from $(dirname $0) !"
+      # echo "Hello, $$(hostname) from $$(dirname $$0) !"
       #   EOF
-      # },
+      #
+      #},
     ]
     partition_name = "debug"
     partition_nodes = [
@@ -159,7 +160,8 @@ partitions = [
         access_config = [
           # {
           #   network_tier = null
-          # },
+          #
+          #},
         ]
         bandwidth_tier = "platform_default"
         enable_spot_vm = false

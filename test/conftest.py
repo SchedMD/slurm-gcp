@@ -43,7 +43,7 @@ def pytest_runtest_makereport(item, call):
 CONFIGS = {
     pytest.param("basic"): dict(
         moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/cloud/basic",
-        tfvars_file=test_path / "basic.tfvars",
+        tfvars_file=test_path / "basic.tfvars.tpl",
         tfvars={},
     ),
 }
