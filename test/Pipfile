@@ -13,13 +13,9 @@ ipdb = "*"
 pytest-benchmark = "*"
 python-hostlist = "*"
 pytest-xdist = {extras = ["psutil"], version = "*"}
-filelock = "*"
 tftest = "*"
 
 [dev-packages]
 
 [requires]
 #python_version = "3.8"
-
-[pipenv]
-allow_prereleases = true
