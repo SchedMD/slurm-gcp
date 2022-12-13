@@ -91,6 +91,7 @@ test-centos-7:
   script: &test-cluster
   - echo "Testing $IMAGE_FAMILY"
   - cd test
+  - pip3 install pipenv
   - pipenv install
   - >
     pipenv run pytest -v
