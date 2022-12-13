@@ -148,6 +148,10 @@ build {
     strip_time = false
   }
 
+  post-processor "shell-local" {
+    inline = ["echo $PACKER_BUILD_NAME >> build.txt"]
+  }
+
   ### clean up /home/packer ###
   provisioner "shell" {
     inline = [
