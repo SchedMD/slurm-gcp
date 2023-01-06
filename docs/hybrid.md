@@ -16,6 +16,7 @@
     - [Users and Groups](#users-and-groups)
     - [Manual Configurations](#manual-configurations)
     - [Manage Secrets](#manage-secrets)
+      - [Considerations](#considerations)
 
 <!-- mdformat-toc end -->
 
@@ -259,3 +260,26 @@ cluster. There are a few safe ways to deal with munge.key distribution:
 - Use NFS to mount `/etc/munge` from the controller (default behavior).
 - Create a [custom image](./images.md#custom-image) that contains the
   `munge.key` for your cluster.
+
+Regardless of chosen secret delivery system, tight access control is required to
+maintain the security of your cluster.
+
+#### Considerations
+
+Should NFS or another shared filesystem method be used, then controlling
+connections to the munge NFS is critical.
+
+- Isolate the cloud compute nodes of the cluster into their own project, VPC,
+  and subnetworks. Use project or network peering to enable access to other
+  cloud infrastructure in a controlled mannor.
+- Setup firewall rules to control ingress and egress to the controller such that
+  only trusted machines or networks use its NFS.
+- Only allow trusted private address (ranges) for communication to the
+  controller.
+
+Should secrets be 'baked' into an image, then controlling deployment of images
+is critical.
+
+- Only cluster admins or sudoer's should be allowed to deploy those images.
+- Never allow regular users to gain sudo privledges.
+- Never allow export/download of image.
