@@ -130,12 +130,14 @@ locals {
   ]
 
   controller_hybrid_config = {
-    google_app_cred_path = null
-    slurm_control_host   = "localhost"
-    slurm_control_addr   = null
-    slurm_log_dir        = "/var/log/slurm"
-    slurm_bin_dir        = "/usr/local/bin"
-    output_dir           = "./etc"
+    google_app_cred_path    = null
+    slurm_control_host      = "localhost"
+    slurm_control_host_port = null
+    slurm_control_addr      = null
+    slurm_log_dir           = "/var/log/slurm"
+    slurm_bin_dir           = "/usr/local/bin"
+    output_dir              = "./etc"
+    install_dir             = null
   }
 }
 
