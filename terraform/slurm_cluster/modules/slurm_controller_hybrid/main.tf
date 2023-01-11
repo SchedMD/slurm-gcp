@@ -32,6 +32,13 @@ locals {
     ? local.output_dir
     : abspath(var.install_dir)
   )
+
+  munge_mount = {
+    server_ip     = lookup(var.munge_mount, "server_ip", coalesce(var.slurm_control_addr, var.slurm_control_host))
+    remote_mount  = lookup(var.munge_mount, "remote_mount", "/etc/munge/")
+    fs_type       = lookup(var.munge_mount, "fs_type", "nfs")
+    mount_options = lookup(var.munge_mount, "mount_options", "")
+  }
 }
 
 ##################
@@ -71,6 +78,7 @@ locals {
     disable_default_mounts = var.disable_default_mounts
     network_storage        = var.network_storage
     login_network_storage  = var.login_network_storage
+    munge_mount            = local.munge_mount
 
     # slurm conf
     prolog_scripts   = [for x in google_compute_project_metadata_item.prolog_scripts : x.key]

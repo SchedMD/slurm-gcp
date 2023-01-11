@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
   intended directory where the files are to be installed.
 - Add `var.slurm_control_host_port` to `module.slurm_controller_hybrid` to
   specify the port for slurmd to connect for configless setup.
+- Add `var.munge_mount` to `module.slurm_controller_hybrid` to specify an
+  external munge.key source.
 
 ## \[5.3.0\]
 

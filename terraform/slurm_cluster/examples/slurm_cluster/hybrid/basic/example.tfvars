@@ -104,6 +104,12 @@ controller_hybrid_config = {
   slurm_log_dir           = "./log"
   output_dir              = "./etc"
   install_dir             = null
+  munge_mount = {
+    server_ip     = null
+    remote_mount  = "/etc/munge/"
+    fs_type       = "nfs"
+    mount_options = null
+  }
 }
 
 ##############

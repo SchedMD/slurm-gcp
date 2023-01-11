@@ -417,6 +417,16 @@ def load_config_data(config):
         cfg.slurm_control_host = f"{cfg.slurm_cluster_name}-controller"
     if not cfg.slurm_control_host_port:
         cfg.slurm_control_host_port = "6820-6830"
+    if not cfg.munge_mount:
+        # NOTE: should only happen with cloud controller
+        cfg.munge_mount = NSDict(
+            {
+                "server_ip": cfg.slurm_control_addr or cfg.slurm_control_host,
+                "remote_mount": "/etc/munge",
+                "fs_type": "nfs",
+                "mount_options": "defaults,hard,intr,_netdev",
+            }
+        )
 
     if not cfg.enable_debug_logging and isinstance(cfg.enable_debug_logging, NSDict):
         cfg.enable_debug_logging = False
