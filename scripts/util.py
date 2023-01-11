@@ -579,7 +579,7 @@ def handle_exception(exc_type, exc_value, exc_trace):
 
 
 def run(
-    cmd,
+    args,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
     shell=False,
@@ -589,8 +589,12 @@ def run(
     **kwargs,
 ):
     """Wrapper for subprocess.run() with convenient defaults"""
-    log_subproc.debug(f"run: {cmd}")
-    args = cmd if shell else shlex.split(cmd)
+    if isinstance(args, list):
+        args = list(filter(lambda x: x is not None, args))
+        args = " ".join(args)
+    if not shell and isinstance(args, str):
+        args = shlex.split(args)
+    log_subproc.debug(f"run: {args}")
     result = subprocess.run(
         args,
         stdout=stdout,
