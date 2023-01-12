@@ -33,7 +33,6 @@ from addict import Dict as NSDict
 
 import util
 from util import run, instance_metadata, project_metadata, separate
-from util import nodeset_prefix, nodeset_lists
 from util import access_secret_version
 from util import lkp, cfg, dirs, slurmdirs
 import slurmsync
@@ -224,8 +223,8 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
             gres = f"gpu:{template_info.gpu_count}"
 
         lines = [node_def]
-        static, dynamic = nodeset_lists(node_group, part_name)
-        nodeset = nodeset_prefix(node_group, part_name)
+        static, dynamic = lkp.nodeset_lists(node_group, part_name)
+        nodeset = lkp.nodeset_prefix(node_group, part_name)
         if static:
             lines.append(
                 dict_to_conf(
@@ -397,7 +396,9 @@ def gen_cloud_gres_conf(lkp=lkp):
             gpu_count = template_info.gpu_count
             if gpu_count == 0:
                 continue
-            gpu_nodes[gpu_count].extend(filter(None, nodeset_lists(node, part_name)))
+            gpu_nodes[gpu_count].extend(
+                filter(None, lkp.nodeset_lists(node, part_name))
+            )
 
     lines = [
         dict_to_conf(
