@@ -771,18 +771,18 @@ def munge_mount_handler():
             "gcsfuse",
             f"--only-dir={remote_mount}" if remote_mount != "" else None,
             server_ip,
-            local_mount,
+            str(local_mount),
         ]
         run(cmd, timeout=120)
     else:
         if remote_mount is None:
-            remote_mount = "/etc/munge"
+            remote_mount = Path("/etc/munge")
         cmd = [
             "mount",
             f"--types={fs_type}",
             f"--options={mount_options}" if mount_options != "" else None,
             f"{server_ip}:{remote_mount}",
-            local_mount,
+            str(local_mount),
         ]
         run(cmd, timeout=120)
 
