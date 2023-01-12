@@ -1,8 +1,12 @@
+import sys
 from pathlib import Path
 
 import pytest
 
-from deploy import Cluster, Configuration
+sys.path.append("../scripts")
+import util  # noqa: E402
+
+from deploy import Cluster, Configuration  # noqa: E402
 
 root = Path(__file__).parent.parent
 tf_path = root / "terraform"
@@ -51,6 +55,7 @@ CONFIGS = {
 
 @pytest.fixture(params=CONFIGS.keys(), scope="session")
 def configuration(request):
+    """fixture providing terraform cluster configuration"""
     config = Configuration(
         project_id=request.config.getoption("project_id"),
         cluster_name=request.config.getoption("cluster_name"),
@@ -74,6 +79,8 @@ def plan(configuration):
 
 @pytest.fixture(scope="session")
 def applied(request, configuration):
+    """fixture providing applied terraform handle"""
+
     def finalize():
         configuration.tf.destroy(
             tf_vars=configuration.tfvars, tf_var_file=configuration.tfvars_file.name
@@ -88,11 +95,33 @@ def applied(request, configuration):
 
 @pytest.fixture(scope="session")
 def cluster(request, applied):
+    """fixture providing deploy.Cluster communication handle for the cluster"""
+
     def finalize():
         nonlocal cluster
+        cluster.save_logs()
         cluster.disconnect()
 
     request.addfinalizer(finalize)
     cluster = Cluster(applied)
     cluster.activate()
     return cluster
+
+
+@pytest.fixture(scope="session")
+def cfg(cluster: Cluster):
+    """fixture providing util config for the cluster"""
+    # download the config.yaml from the controller and load it locally
+    cluster_name = cluster.tf.output()["slurm_cluster_name"]
+    cfgfile = Path(f"{cluster_name}-config.yaml")
+    cfgfile.write_text(
+        cluster.controller_exec_output("sudo cat /slurm/scripts/config.yaml")
+    )
+    return util.load_config_file(cfgfile)
+
+
+@pytest.fixture(scope="session")
+def lkp(cfg: util.NSDict):
+    """fixture providing util.Lookup for the cluster"""
+    lkp = util.Lookup(cfg)
+    return lkp

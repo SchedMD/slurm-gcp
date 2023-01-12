@@ -2,10 +2,17 @@ import logging
 import re
 import shlex
 import subprocess as sp
+import sys
 import time
 
 import psutil
 import yaml
+
+scripts = "../scripts"
+if scripts not in sys.path:
+    sys.path.append(scripts)
+import util  # noqa: F401 E402
+from util import backoff_delay, NSDict  # noqa: F401 E402
 
 
 log = logging.getLogger()
@@ -70,42 +77,26 @@ def spawn(cmd, quiet=False, shell=False, **kwargs):
     return sp.Popen(args, shell=shell, **kwargs)
 
 
-def backoff(start, cap, mult=1.61, max=None, exc=True):
-    val = start
-    total = 0
-    while True:
-        total += val
-        if max is not None and total > max:
-            if exc:
-                raise Exception("Max backoff time reached")
-            else:
-                break
-        yield val
-        val = min(cap, val * mult)
-
-
-def wait_state(get_state, states, max_wait=None):
-    wait = backoff(0.5, 10, max=max_wait or 360)
-
-    while True:
-        time.sleep(next(wait))
-        state = get_state()
-        if state in states:
-            log.info(f"{state} state found")
-            break
-    return state
+def wait_until(check, *args, max_wait=None):
+    if max_wait is None:
+        max_wait = 360
+    for wait in backoff_delay(1, count=20, timeout=max_wait):
+        if check(*args):
+            return True
+        time.sleep(wait)
+    return False
 
 
 def wait_job_state(cluster, job_id, *states, max_wait=None):
     states = set(states)
     states_str = "{{ {} }}".format(", ".join(states))
 
-    def get_job_state():
+    def is_job_state():
         state = cluster.get_job(job_id)["job_state"]
         log.info(f"job {job_id}: {state} waiting for {states_str}")
-        return state
+        return state in states
 
-    wait_state(get_job_state, states, max_wait)
+    wait_until(is_job_state, max_wait=max_wait)
     return cluster.get_job(job_id)
 
 
@@ -113,12 +104,12 @@ def wait_node_state(cluster, nodename, *states, max_wait=None):
     states = set(states)
     states_str = "{{ {} }}".format(", ".join(states))
 
-    def get_node_state():
+    def is_node_state():
         state = cluster.get_node(nodename)["state"]
         log.info(f"job {nodename}: {state} waiting for {states_str}")
         return state
 
-    wait_state(get_node_state, states, max_wait)
+    wait_until(is_node_state, max_wait=max_wait)
     return cluster.get_node(nodename)
 
 
@@ -126,8 +117,10 @@ batch_id = re.compile(r"^Submitted batch job (\d+)$")
 
 
 def sbatch(cluster, cmd):
-    out = cluster.login_exec_output(cmd)
-    m = batch_id.match(out)
+    submit = cluster.login_exec(cmd)
+    m = batch_id.match(submit.stdout)
+    if submit.exit_status or m is None:
+        raise Exception(f"job submit failed: {yaml.safe_dump(submit.to_dict())}")
     assert m is not None
     job_id = int(m[1])
     return job_id
@@ -138,7 +131,3 @@ def get_zone(instance):
         run_out(f"gcloud compute instances describe {instance} --format=yaml(zone)")
     )["zone"]
     return zone
-
-
-def get_file(cluster, path):
-    return cluster.login_exec_output(f"cat {path}")

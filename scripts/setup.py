@@ -224,7 +224,7 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
 
         lines = [node_def]
         static, dynamic = lkp.nodeset_lists(node_group, part_name)
-        nodeset = lkp.nodeset_prefix(node_group, part_name)
+        nodeset = lkp.nodeset_prefix(node_group.group_name, part_name)
         if static:
             lines.append(
                 dict_to_conf(

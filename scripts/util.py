@@ -1166,8 +1166,8 @@ class Lookup:
         node_group = self.node_group(node_name)
         return self.node_index(node_name) < node_group.node_count_static
 
-    def nodeset_prefix(self, node_group, part_name):
-        return f"{self.cfg.slurm_cluster_name}-{part_name}-{node_group.group_name}"
+    def nodeset_prefix(self, group_name, part_name):
+        return f"{self.cfg.slurm_cluster_name}-{part_name}-{group_name}"
 
     def nodeset_lists(self, node_group, part_name):
         """Return static and dynamic nodenames given a partition node type
@@ -1178,7 +1178,7 @@ class Lookup:
             end = start + count - 1
             return f"{start}" if count == 1 else f"[{start}-{end}]", end + 1
 
-        prefix = self.nodeset_prefix(node_group, part_name)
+        prefix = self.nodeset_prefix(node_group.group_name, part_name)
         static_count = node_group.node_count_static
         dynamic_count = node_group.node_count_dynamic_max
         static_range, end = node_range(static_count) if static_count else (None, 0)

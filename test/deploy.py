@@ -16,13 +16,14 @@ from string import Template
 
 import paramiko
 from tftest import TerraformTest
-from testutils import backoff, spawn, run_out, term_proc
+from testutils import backoff_delay, spawn, run_out, term_proc, NSDict
 
 
 log = logging.getLogger()
-log.setLevel("DEBUG")
+log.setLevel("INFO")
+log.handlers = []
 handler = logging.StreamHandler(sys.stdout)
-handler.setLevel("DEBUG")
+handler.setLevel("INFO")
 # formatter = logging.Formatter()
 log.addHandler(handler)
 
@@ -159,7 +160,7 @@ class Tunnel:
             )
             stdout_sel = select.poll()
             stdout_sel.register(stdout, select.POLLIN)
-            for w in backoff(0.5, 1, mult=1.1, max=20, exc=False):
+            for w in backoff_delay(0.5, count=30, timeout=30):
                 time.sleep(w)
                 if proc.poll() is None:
                     if stdout_sel.poll(1):
@@ -203,20 +204,18 @@ class Cluster:
 
     def wait_on_active(self):
         node_state = re.compile(r"State=(\S+)\s")
-        MAX_WAIT = 120
-        total = 0
-        wait_time = backoff(2, 20)
-        while total < MAX_WAIT:
-            wait = next(wait_time)
-            total += wait
+        for wait in backoff_delay(2, count=20, timeout=240):
+            try:
+                result = self.controller_exec("scontrol show -o nodes")
+                if result.exit_status == 0 and all(
+                    s[1].startswith("IDLE")
+                    for s in node_state.finditer(result["stdout"])
+                    if s[1]
+                ):
+                    break
+            except Exception as e:
+                log.error(e.msg)
             time.sleep(wait)
-            result = self.controller_exec("scontrol show -o nodes")
-            if result["exit_status"] == 0 and all(
-                s[1].startswith("IDLE")
-                for s in node_state.finditer(result["stdout"])
-                if s[1]
-            ):
-                break
         else:
             raise Exception("Cluster never came up")
         self.active = True
@@ -237,17 +236,14 @@ class Cluster:
         ssh = paramiko.SSHClient()
         key = paramiko.RSAKey.from_private_key_file(self.keyfile)
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        tries = 12
-        wait = backoff(1, 20)
-        while tries > 0:
+        for wait in backoff_delay(1, count=20, timeout=300):
             tun = self.tunnels[instance]
             try:
                 ssh.connect("127.0.0.1", username=self.user, pkey=key, port=tun.port)
                 break
             except paramiko.ssh_exception.NoValidConnectionsError:
                 log.error("ssh connection failed")
-                tries -= 1
-                time.sleep(next(wait))
+                time.sleep(wait)
                 tun = self.tunnels.pop(instance)
                 tun.close()
                 continue
@@ -269,7 +265,6 @@ class Cluster:
     def disconnect(self):
         for instance in list(self.ssh_conns):
             self._close_ssh(instance)
-        self.keyfile.unlink()
 
     @property
     def controller_ssh(self):
@@ -279,7 +274,9 @@ class Cluster:
     def login_ssh(self):
         return self.ssh(self.login_link)
 
-    def exec_cmd(self, ssh, cmd, input="", prefix="", timeout=60, quiet=False):
+    def exec_cmd(
+        self, ssh, cmd, input="", prefix="", timeout=60, quiet=True, check=False
+    ):
         if not quiet:
             log.info(f"{prefix}: {cmd}")
         start = time.time()
@@ -292,7 +289,7 @@ class Cluster:
         status = stdout.channel.recv_exit_status()
         stdout = stdout.read().decode()
         stderr = stderr.read().decode()
-        if status:
+        if status and check:
             raise Exception(f"Error running command '{cmd}' stderr:{stderr}")
 
         duration = round(time.time() - start, 3)
@@ -303,23 +300,25 @@ class Cluster:
             if status:
                 log.debug(f"{stderr}")
 
-        result = {
-            "command": cmd,
-            "start_time": start,
-            "duration": duration,
-            "exit_status": status,
-            "stdout": stdout,
-            "stderr": stderr,
-        }
+        result = NSDict(
+            {
+                "command": cmd,
+                "start_time": start,
+                "duration": duration,
+                "exit_status": status,
+                "stdout": stdout,
+                "stderr": stderr,
+            }
+        )
         return result
 
     def login_exec_output(self, *args, **kwargs):
         r = self.login_exec(*args, **kwargs)
-        return r["stdout"] or r["stderr"]
+        return r.stdout or r.stderr
 
     def controller_exec_output(self, *args, **kwargs):
         r = self.controller_exec(*args, **kwargs)
-        return r["stdout"] or r["stderr"]
+        return r.stdout or r.stderr
 
     def login_exec(self, *args, **kwargs):
         return self.exec_cmd(self.login_ssh, *args, prefix=self.login_name, **kwargs)
@@ -359,3 +358,40 @@ class Cluster:
 
     def get_node(self, nodename):
         return next((n for n in self.get_nodes() if n["name"] == nodename), None)
+
+    def get_file(self, ssh, path):
+        with ssh.open_sftp() as sftp:
+            with sftp.file(str(path), "r") as f:
+                return f.read().decode()
+
+    def login_get_file(self, path):
+        return self.get_file(self.login_ssh, path)
+
+    def controller_get_file(self, path):
+        return self.get_file(self.controller_ssh, path)
+
+    def save_logs(self):
+        local_dir = Path("cluster_logs")
+        cl_dir = Path("/slurm/scripts/")
+        paths = [
+            "log/slurmdbd.log",
+            "log/slurmctld.log",
+            "log/resume.log",
+            "log/suspend.log",
+            "log/slurmsync.log",
+            "etc/slurm.conf",
+            "etc/cloud.conf",
+            "etc/gres.conf",
+            "config.yaml",
+        ]
+        with self.controller_ssh.open_sftp() as sftp:
+            for path in paths:
+                clpath = cl_dir / path
+                fpath = local_dir / clpath.name
+                try:
+                    with sftp.file(str(clpath), "r") as f:
+                        content = f.read().decode()
+                        fpath.parent.mkdir(parents=True, exist_ok=True)
+                        fpath.write_text(content)
+                except IOError:
+                    log.error(f"failed to save file {clpath}")
