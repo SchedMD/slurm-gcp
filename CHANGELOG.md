@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
   specify the port for slurmd to connect for configless setup.
 - Add `var.munge_mount` to `module.slurm_controller_hybrid` to specify an
   external munge.key source.
+- Fix unwanted mounting of login_network_storage on compute nodes.
 
 ## \[5.3.0\]
 

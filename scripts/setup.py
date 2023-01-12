@@ -624,7 +624,8 @@ def resolve_network_storage(partition_name=None):
     # On non-controller instances, entries in network_storage could overwrite
     # default exports from the controller. Be careful, of course
     mounts.update(local_mounts(cfg.network_storage))
-    mounts.update(local_mounts(cfg.login_network_storage))
+    if partition is None:
+        mounts.update(local_mounts(cfg.login_network_storage))
 
     if partition is not None:
         mounts.update(local_mounts(partition.network_storage))
