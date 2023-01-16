@@ -13,11 +13,12 @@ variables:
 before_script:
   #- docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 - packer --version
-- GOOGLE_APPLICATION_CREDENTIALS=$PWD/$GOOGLE_APPLICATION_CREDENTIALS
+- GOOGLE_APPLICATION_CREDENTIALS=$PWD/schedmd-test.gac
 - echo $SERVICE_ACCOUNT > $GOOGLE_APPLICATION_CREDENTIALS
-- gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
 - GCP_PROJECT_ID=$(jq -r .project_id < $GOOGLE_APPLICATION_CREDENTIALS)
 - SLURM_VERSION_ALT=$(tr \. - <<< $SLURM_VERSION)
+- gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
+- gcloud config set project $GCP_PROJECT_ID
 
 stages:
 - validate

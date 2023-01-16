@@ -393,5 +393,6 @@ class Cluster:
                         content = f.read().decode()
                         fpath.parent.mkdir(parents=True, exist_ok=True)
                         fpath.write_text(content)
+                        log.info(f"saved {fpath.name}")
                 except IOError:
                     log.error(f"failed to save file {clpath}")
