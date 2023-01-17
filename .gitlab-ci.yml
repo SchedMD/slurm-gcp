@@ -30,6 +30,11 @@ stages:
 validate-packer:
   stage: validate
   rules: &build-image-rules
+  - changes:
+      paths:
+      - scripts/*.{py,sh}
+      - scripts/Pipfile
+      - scripts/requirements.txt
   - if: $CI_PIPELINE_SOURCE == "schedule"
     when: always
     allow_failure: true
