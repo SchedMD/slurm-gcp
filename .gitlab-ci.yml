@@ -16,6 +16,8 @@ before_script:
 - GOOGLE_APPLICATION_CREDENTIALS=$PWD/schedmd-test.gac
 - echo $SERVICE_ACCOUNT > $GOOGLE_APPLICATION_CREDENTIALS
 - GCP_PROJECT_ID=$(jq -r .project_id < $GOOGLE_APPLICATION_CREDENTIALS)
+- GCP_SA_EMAIL=$(jq -r .client_email < $GOOGLE_APPLICATION_CREDENTIALS)
+- GCP_SA_ID=$(jq -r .client_id < $GOOGLE_APPLICATION_CREDENTIALS)
 - SLURM_VERSION_ALT=$(tr \. - <<< $SLURM_VERSION)
 - gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
 - gcloud config set project $GCP_PROJECT_ID

@@ -16,7 +16,7 @@ from string import Template
 
 import paramiko
 from tftest import TerraformTest
-from testutils import backoff_delay, spawn, run_out, term_proc, NSDict
+from testutils import backoff_delay, spawn, term_proc, NSDict
 
 
 log = logging.getLogger()
@@ -30,14 +30,16 @@ log.addHandler(handler)
 logging.getLogger("tftest").setLevel("WARNING")
 logging.getLogger("paramiko").setLevel("WARNING")
 
+cred_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+if cred_file:
+    with Path(cred_file).open("r") as f:
+        credentials = json.load(f)
+else:
+    credentials = {}
 
-def get_gcloud_user():
-    auth = json.loads(run_out("gcloud auth list --format=json"))
-    try:
-        user = next(d["account"] for d in auth if d["status"] == "ACTIVE")
-    except StopIteration:
-        raise Exception("No gcloud user found")
-    return re.sub(r"\W", "_", user)
+
+def get_sa_user():
+    return f"sa_{credentials['client_id']}"
 
 
 def trim_self_link(link: str):
@@ -184,7 +186,7 @@ class Tunnel:
 
 class Cluster:
     def __init__(self, tf, user=None):
-        self.user = user or get_gcloud_user()
+        self.user = user or get_sa_user()
 
         self.tf = tf
 
@@ -214,7 +216,7 @@ class Cluster:
                 ):
                     break
             except Exception as e:
-                log.error(e.msg)
+                log.error(e)
             time.sleep(wait)
         else:
             raise Exception("Cluster never came up")
@@ -388,6 +390,7 @@ class Cluster:
             for path in paths:
                 clpath = cl_dir / path
                 fpath = local_dir / clpath.name
+                self.controller_exec(f"sudo chmod 777 {clpath}")
                 try:
                     with sftp.file(str(clpath), "r") as f:
                         content = f.read().decode()
