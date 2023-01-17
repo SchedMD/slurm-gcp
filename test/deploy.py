@@ -233,13 +233,15 @@ class Cluster:
     def ssh(self, instance):
         if instance in self.ssh_conns:
             return self.ssh_conns[instance]
-        log.info(f"start ssh connection to {trim_self_link(instance)}")
 
         ssh = paramiko.SSHClient()
         key = paramiko.RSAKey.from_private_key_file(self.keyfile)
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         for wait in backoff_delay(1, count=20, timeout=300):
             tun = self.tunnels[instance]
+            log.info(
+                f"start ssh connection to {self.user}@{trim_self_link(instance)} port {tun.port}"
+            )
             try:
                 ssh.connect("127.0.0.1", username=self.user, pkey=key, port=tun.port)
                 break
@@ -249,6 +251,8 @@ class Cluster:
                 tun = self.tunnels.pop(instance)
                 tun.close()
                 continue
+            except Exception as e:
+                log.error(f"error on start ssh connection: {e}")
         else:
             log.error(f"Cannot connect through tunnel: {instance}")
             raise Exception(f"Cannot connect through tunnel: {instance}")
