@@ -1,0 +1,141 @@
+---
+image:
+  name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.4
+
+variables:
+  #DOCKER_HOST: tcp://docker:2376
+  #DOCKER_TLS_CERTDIR: "/certs"
+  #TAG_LATEST: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
+  #TAG_COMMIT: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
+  GOOGLE_APPLICATION_CREDENTIALS: $CI_PIPELINE_ID.json
+  SLURM_VERSION: 22.05.6
+
+before_script:
+  #- docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+- packer --version
+- GOOGLE_APPLICATION_CREDENTIALS=$PWD/schedmd-test.gac
+- echo $SERVICE_ACCOUNT > $GOOGLE_APPLICATION_CREDENTIALS
+- GCP_PROJECT_ID=$(jq -r .project_id < $GOOGLE_APPLICATION_CREDENTIALS)
+- GCP_SA_EMAIL=$(jq -r .client_email < $GOOGLE_APPLICATION_CREDENTIALS)
+- GCP_SA_ID=$(jq -r .client_id < $GOOGLE_APPLICATION_CREDENTIALS)
+- SLURM_VERSION_ALT=$(tr \. - <<< $SLURM_VERSION)
+- gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
+- gcloud config set project $GCP_PROJECT_ID
+
+stages:
+- validate
+- build-images
+- test-clusters
+
+validate-packer:
+  stage: validate
+  rules: &build-image-rules
+  - changes:
+      paths:
+      - scripts/*.{py,sh}
+      - scripts/Pipfile
+      - scripts/requirements.txt
+  - if: $CI_PIPELINE_SOURCE == "schedule"
+    when: always
+    allow_failure: true
+  - when: manual
+    if: $BUILD_IMAGES == "true"
+    allow_failure: true
+  script:
+  - echo "Validating packer configuration"
+  - printenv
+  - cd packer
+  - packer init .
+  - >
+    packer validate -var-file=example.pkrvars.hcl
+    -var "project_id=$GCP_PROJECT_ID"
+    -var "slurm_version=$SLURM_VERSION"
+    .
+
+build-centos-7:
+  stage: build-images
+  rules: *build-image-rules
+  needs: [validate-packer]
+  variables:
+    IMAGE_FAMILY: centos-7
+  script: &build-image
+  - echo "Building $IMAGE_FAMILY image"
+  - cd packer
+  - packer init .
+  - >
+    packer build -var-file=example.pkrvars.hcl
+    -var "project_id=$GCP_PROJECT_ID"
+    -var "slurm_version=$SLURM_VERSION"
+    -only "*.$IMAGE_FAMILY"
+    .
+  - echo "packer build $IMAGE_FAMILY completed"
+
+build-hpc-centos-7:
+  stage: build-images
+  rules: *build-image-rules
+  needs: [validate-packer]
+  variables:
+    IMAGE_FAMILY: hpc-centos-7
+  script: *build-image
+
+build-debian-10:
+  stage: build-images
+  rules: *build-image-rules
+  needs: [validate-packer]
+  variables:
+    IMAGE_FAMILY: debian-10
+  script: *build-image
+
+build-ubuntu-2004-lts:
+  stage: build-images
+  rules: *build-image-rules
+  needs: [validate-packer]
+  variables:
+    IMAGE_FAMILY: ubuntu-2004-lts
+  script: *build-image
+
+test-centos-7:
+  stage: test-clusters
+  needs:
+  - job: build-centos-7
+    optional: true
+  variables:
+    IMAGE_FAMILY: centos-7
+  script: &test-cluster
+  - echo "Testing $IMAGE_FAMILY"
+  - cd test
+  - pip3 install pipenv
+  - pipenv install
+  - >
+    pipenv run pytest -vs
+    --project-id=$GCP_PROJECT_ID
+    --cluster-name=test$(tr -dc a-z </dev/urandom | head -c2)
+    --image-project=$GCP_PROJECT_ID
+    --image-family=schedmd-v5-slurm-$SLURM_VERSION_ALT-$IMAGE_FAMILY
+
+test-hpc-centos-7:
+  stage: test-clusters
+  needs:
+  - job: build-hpc-centos-7
+    optional: true
+  variables:
+    IMAGE_FAMILY: hpc-centos-7
+  script: *test-cluster
+
+test-debian-10:
+  stage: test-clusters
+  needs:
+  - job: build-debian-10
+    optional: true
+  variables:
+    IMAGE_FAMILY: debian-10
+  script: *test-cluster
+
+test-ubuntu-2004-lts:
+  stage: test-clusters
+  needs:
+  - job: build-ubuntu-2004-lts
+    optional: true
+  variables:
+    IMAGE_FAMILY: ubuntu-2004-lts
+  script: *test-cluster

@@ -1,0 +1,26 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ipython = "*"
+pyaml = "*"
+pytest = "*"
+paramiko = "*"
+psutil = "*"
+ipdb = "*"
+pytest-benchmark = "*"
+python-hostlist = "*"
+pytest-xdist = {extras = ["psutil"], version = "*"}
+tftest = "*"
+requests = "*"
+pyyaml = "*"
+addict = "*"
+google-api-python-client = "*"
+more-executors = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
