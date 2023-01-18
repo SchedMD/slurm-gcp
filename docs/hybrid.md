@@ -7,6 +7,7 @@
 
 - [Hybrid Cluster Guide](#hybrid-cluster-guide)
   - [Overview](#overview)
+    - [Background](#background)
   - [Terraform](#terraform)
     - [Quickstart Examples](#quickstart-examples)
   - [On-Premises](#on-premises)
@@ -14,6 +15,8 @@
     - [Node Addressing](#node-addressing)
     - [Users and Groups](#users-and-groups)
     - [Manual Configurations](#manual-configurations)
+    - [Manage Secrets](#manage-secrets)
+      - [Considerations](#considerations)
 
 <!-- mdformat-toc end -->
 
@@ -34,6 +37,55 @@ for additional information.
 
 > *NOTE*: The [manual configurations](#manual-configurations) are required to
 > finish the hybrid setup.
+
+### Background
+
+[Terraform](./glossary.md#terraform) is used to setup and manage most cloud
+resources for your hybrid cluster. It will ensure that the cloud contains
+resources as described in your
+[terraform project](./glossary.md#terraform-project).
+
+We provide terraform modules that support a hybrid cluster use case.
+Specifically,
+[slurm_controller_hybrid](../terraform/slurm_cluster/modules/slurm_controller_hybrid/README.md)
+is responsible for generating slurm configuration files based upon your
+configurations and our cloud scripts (e.g. `ResumeProgram`, `SuspendProgram`)
+for your on-premise controller to use.
+
+There are a set of scripts and files that support the functionality of creating
+and terminating nodes in the cloud:
+
+- `cloud_gres.conf`
+  - Contains Slurm GRES configuration lines about cloud compute GRES resources.
+  - To be included in your `gres.conf`.
+- `cloud.conf`
+  - Contains Slurm configuration lines to support a hybrid/cloud environment.
+  - To be included in your `slurm.conf`.
+  - **WARNING:** Certain lines may need reconciliation with your `slurm.conf`
+    (e.g. `SlurmctldParameters`).
+- `config.yaml`
+  - Encodes information about your configuration and compute resources for
+    `resume.py` and `suspend.py`.
+- `resume.py`
+  - `ResumeProgram` in `slurm.conf`.
+  - Creates compute node resources based upon Slurm job allocation and
+    configured compute resources.
+- `slurmsync.py`
+  - Synchronizes the Slurm state and the GCP state, reducing discrepencies from
+    manual admin activity or other edge cases.
+  - May update Slurm node states, create or destroy GCP compute resources or
+    other script managed GCP resources.
+  - To be run under `crontab` or `systemd` on an interval.
+- `startup.sh`
+  - Compute node startup script.
+- `suspend.py`
+  - `SuspendProgram` in `slurm.conf`.
+- `util.py`
+  - Contains utility functions for the other python scripts.
+
+The compute resources in GCP use
+[configless mode](https://slurm.schedmd.com/configless_slurm.html) to manage
+their `slurm.conf`, by default.
 
 ## Terraform
 
@@ -153,29 +205,45 @@ configured on all [SchedMD public images](./images.md#public-images).
 Once you have successfully configured a hybrid
 [slurm_cluster](../terraform/slurm_cluster/README.md) and applied the
 [terraform](./glossary.md#terraform) infrastructure, the necessary files will be
-generated at `$output_dir`. It is recommended that `$output_dir` is equal to the
-path where Slurm searches for config files (e.g. `/etc/slurm`).
+generated at `$output_dir`. Should another machine be the TerraformHost or
+non-SlurmUser be the TerraformUser, then set `$install_dir` to the intended
+directory where the generated files will be deployed on the Slurm controller
+(e.g. `var.install_dir = "/etc/slurm"`).
 
 Follow the below steps to complete the process of configuring your on-prem
 controller to be able to burst into the cloud.
 
+1. Configure terraform modules (e.g. slurm_cluster; slurm_controller_hybrid)
+   with desired configurations.
+1. Apply terraform project and its configuration.
+   ```sh
+   terraform init
+   terraform apply
+   ```
+1. The `$output_dir` and its contents should be owned by the `SlurmUser`, eg.
+   ```sh
+   chown -R slurm:slurm $output_dir
+   ```
+1. Move files from `$output_dir` on TerraformHost to `$install_dir` of
+   SlurmctldHost and make sure SlurmUser owns the files.
+   ```sh
+   scp ${output_dir}/* ${SLURMCTLD_HOST}:${install_dir}/
+   ssh $SLURMCTLD_HOST
+   sudo chown -R ${SLURM_USER}:${SLURM_USER} $output_dir
+   ```
 1. In your *slurm.conf*, include the generated *cloud.conf*:
    ```conf
    # slurm.conf
-   include $output_dir/cloud.conf
+   include $install_dir/cloud.conf
    ```
 1. In your *gres.conf*, include the generated *cloud_gres.conf*:
    ```conf
    # gres.conf
-   include $output_dir/cloud_gres.conf
-   ```
-1. The `$output_dir` and its contents should be owned by the `SlurmUser`, eg.
-   ```sh
-   chown -R slurm: $output_dir
+   include $install_dir/cloud_gres.conf
    ```
 1. Add a cronjob/crontab to call slurmsync.py as SlurmUser.
    ```conf
-   */1 * * * * $output_dir/slurmsync.py
+   */1 * * * * $install_dir/slurmsync.py
    ```
 1. Restart slurmctld and resolve include conflicts.
 1. Test cloud bursting.
@@ -183,3 +251,35 @@ controller to be able to burst into the cloud.
    scontrol update nodename=$NODENAME state=power_up reason=test
    scontrol update nodename=$NODENAME state=power_down reason=test
    ```
+
+### Manage Secrets
+
+Additionally, [MUNGE](./glossary.md#munge) secrets must be consistant across the
+cluster. There are a few safe ways to deal with munge.key distribution:
+
+- Use NFS to mount `/etc/munge` from the controller (default behavior).
+- Create a [custom image](./images.md#custom-image) that contains the
+  `munge.key` for your cluster.
+
+Regardless of chosen secret delivery system, tight access control is required to
+maintain the security of your cluster.
+
+#### Considerations
+
+Should NFS or another shared filesystem method be used, then controlling
+connections to the munge NFS is critical.
+
+- Isolate the cloud compute nodes of the cluster into their own project, VPC,
+  and subnetworks. Use project or network peering to enable access to other
+  cloud infrastructure in a controlled mannor.
+- Setup firewall rules to control ingress and egress to the controller such that
+  only trusted machines or networks use its NFS.
+- Only allow trusted private address (ranges) for communication to the
+  controller.
+
+Should secrets be 'baked' into an image, then controlling deployment of images
+is critical.
+
+- Only cluster admins or sudoer's should be allowed to deploy those images.
+- Never allow regular users to gain sudo privledges.
+- Never allow export/download of image.

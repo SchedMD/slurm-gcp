@@ -1,120 +1,98 @@
-/**
- * Copyright (C) SchedMD LLC.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
-###########
-# GENERAL #
-###########
+#project_id = "<PROJECT_ID>"
 
-project_id = "<PROJECT_ID>"
-
-slurm_cluster_name = "basic"
+#slurm_cluster_name = "basic"
 
 region = "us-central1"
-
-# *NOT* intended for production use
-# enable_devel = true
 
 enable_bigquery_load         = false
 enable_cleanup_compute       = true
 enable_cleanup_subscriptions = false
 enable_reconfigure           = false
 
-#################
-# CONFIGURATION #
-#################
-
-# Slurm config
-cloud_parameters = {
-  no_comma_params = false
-  resume_rate     = 0
-  resume_timeout  = 300
-  suspend_rate    = 0
-  suspend_timeout = 300
+controller_instance_config = {
+  access_config            = []
+  additional_disks         = []
+  can_ip_forward           = false
+  disable_smt              = false
+  disk_auto_delete         = true
+  disk_labels              = null
+  disk_size_gb             = null
+  disk_type                = null
+  enable_confidential_vm   = false
+  enable_oslogin           = true
+  enable_shielded_vm       = false
+  gpu                      = null
+  instance_template        = null
+  labels                   = null
+  machine_type             = "n1-standard-8"
+  metadata                 = null
+  min_cpu_platform         = null
+  network_ip               = null
+  on_host_maintenance      = null
+  preemptible              = false
+  service_account          = null
+  shielded_instance_config = null
+  region                   = null
+  source_image_family      = $image_family
+  source_image_project     = $image_project
+  source_image             = $image
+  static_ip                = null
+  subnetwork_project       = null
+  subnetwork               = "default"
+  tags                     = []
+  zone                     = null
 }
 
-# Network storage
-# hybrid requires synchronizing the slurm.conf directory and the munge.key from the controller
-disable_default_mounts = true
-network_storage = [
-  # {
-  #   server_ip     = "<storage host>"
-  #   remote_mount  = "/home"
-  #   local_mount   = "/home"
-  #   fs_type       = "nfs"
-  #   mount_options = null
-  # },
-]
+login_nodes = [
+  {
+    # Group Definition
+    group_name = "l0"
 
-# scripts
-compute_startup_scripts_timeout = 300
-compute_startup_scripts = [
-  #   {
-  #     filename = "hello_compute.sh"
-  #     content  = <<EOF
-  # #!/bin/bash
-  # set -ex
-  # echo "Hello, $(hostname) from $(dirname $0) !"
-  #     EOF
-  #   },
-]
-prolog_scripts = [
-  #   {
-  #     filename = "hello_prolog.sh"
-  #     content  = <<EOF
-  # #!/bin/bash
-  # set -ex
-  # echo "Hello, $(hostname) from $(dirname $0) !"
-  #     EOF
-  #   },
-]
-epilog_scripts = [
-  #   {
-  #     filename = "hello_epilog.sh"
-  #     content  = <<EOF
-  # #!/bin/bash
-  # set -ex
-  # echo "Hello, $(hostname) from $(dirname $0) !"
-  #     EOF
-  #   },
-]
+    # Template By Definition
+    additional_disks       = []
+    can_ip_forward         = false
+    disable_smt            = false
+    disk_auto_delete       = true
+    disk_labels            = {}
+    disk_size_gb           = 32
+    disk_type              = "pd-standard"
+    enable_confidential_vm = false
+    enable_oslogin         = true
+    enable_shielded_vm     = false
+    gpu                    = null
+    labels                 = {}
+    machine_type           = "n1-standard-1"
+    metadata               = {}
+    min_cpu_platform       = null
+    on_host_maintenance    = null
+    preemptible            = false
+    service_account = {
+      email = "default"
+      scopes = [
+        "https://www.googleapis.com/auth/cloud-platform",
+      ]
+    }
+    shielded_instance_config = null
+    source_image_family      = $image_family
+    source_image_project     = $image_project
+    source_image             = $image
+    tags                     = []
 
-##############
-# CONTROLLER #
-##############
+    # Template By Source
+    instance_template = null
 
-controller_hybrid_config = {
-  google_app_cred_path    = null
-  slurm_control_host      = null
-  slurm_control_host_port = null
-  slurm_control_addr      = null
-  slurm_bin_dir           = "/usr/local/bin"
-  slurm_log_dir           = "./log"
-  output_dir              = "./etc"
-  install_dir             = null
-  munge_mount = {
-    server_ip     = null
-    remote_mount  = "/etc/munge/"
-    fs_type       = "nfs"
-    mount_options = null
-  }
-}
-
-##############
-# PARTITIONS #
-##############
+    # Instance Definition
+    access_config      = []
+    network_ips        = []
+    num_instances      = 1
+    region             = null
+    static_ips         = []
+    subnetwork_project = null
+    subnetwork         = "default"
+    zone               = null
+  },
+]
 
 partitions = [
   {
@@ -122,6 +100,7 @@ partitions = [
     enable_placement_groups = false
     network_storage         = []
     partition_conf = {
+      Default        = "YES"
       ResumeTimeout  = 300
       SuspendTimeout = 300
       SuspendTime    = 300
@@ -133,17 +112,18 @@ partitions = [
       #   content  = <<EOF
       # #!/bin/bash
       # set -ex
-      # echo "Hello, $(hostname) from $(dirname $0) !"
+      # echo "Hello, $$(hostname) from $$(dirname $$0) !"
       #   EOF
-      # },
+      #
+      #},
     ]
     partition_name = "debug"
     partition_nodes = [
       {
         # Group Definition
-        group_name             = "test"
+        group_name             = "n1"
         node_count_dynamic_max = 20
-        node_count_static      = 0
+        node_count_static      = 1
         node_conf = {
           Features = "test"
         }
@@ -161,7 +141,7 @@ partitions = [
         enable_shielded_vm     = false
         gpu                    = null
         labels                 = {}
-        machine_type           = "c2-standard-4"
+        machine_type           = "n1-standard-2"
         metadata               = {}
         min_cpu_platform       = null
         on_host_maintenance    = null
@@ -173,9 +153,9 @@ partitions = [
           ]
         }
         shielded_instance_config = null
-        source_image_family      = null
-        source_image_project     = null
-        source_image             = null
+        source_image_family      = $image_family
+        source_image_project     = $image_project
+        source_image             = $image
         tags                     = []
 
         # Template By Source
@@ -185,7 +165,8 @@ partitions = [
         access_config = [
           # {
           #   network_tier = null
-          # },
+          #
+          #},
         ]
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
@@ -211,11 +192,11 @@ partitions = [
     }
     partition_startup_scripts_timeout = 300
     partition_startup_scripts         = []
-    partition_name                    = "debug2"
+    partition_name                    = "gpu"
     partition_nodes = [
       {
         # Group Definition
-        group_name             = "test"
+        group_name             = "v100"
         node_count_dynamic_max = 10
         node_count_static      = 0
         node_conf              = {}
@@ -248,9 +229,9 @@ partitions = [
           ]
         }
         shielded_instance_config = null
-        source_image_family      = null
-        source_image_project     = null
-        source_image             = null
+        source_image_family      = $image_family
+        source_image_project     = $image_project
+        source_image             = $image
         tags                     = []
 
         # Template By Source

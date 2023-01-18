@@ -79,7 +79,8 @@ build {
       "sources.googlecompute.image",
     ]
     content {
-      name = source.key
+      #name = source.key
+      name = source.value.source_image_family
 
       ### image ###
       source_image        = source.value.source_image
@@ -145,6 +146,10 @@ build {
 
     strip_path = false
     strip_time = false
+  }
+
+  post-processor "shell-local" {
+    inline = ["echo $PACKER_BUILD_NAME >> build.txt"]
   }
 
   ### clean up /home/packer ###

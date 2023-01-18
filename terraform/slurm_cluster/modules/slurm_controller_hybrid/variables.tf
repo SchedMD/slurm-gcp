@@ -281,6 +281,21 @@ EOD
   }
 }
 
+variable "slurm_control_host_port" {
+  type        = string
+  description = <<EOD
+The port number that the Slurm controller, slurmctld, listens to for work.
+
+See https://slurm.schedmd.com/slurm.conf.html#OPT_SlurmctldPort
+EOD
+  default     = null
+
+  validation {
+    condition     = var.slurm_control_host_port != ""
+    error_message = "Variable 'slurm_control_host_port' cannot be empty (\"\")."
+  }
+}
+
 variable "slurm_control_addr" {
   type        = string
   description = <<EOD
@@ -295,7 +310,7 @@ EOD
 
   validation {
     condition     = var.slurm_control_addr != ""
-    error_message = "Variable 'slurm_control_host' cannot be empty (\"\")."
+    error_message = "Variable 'slurm_control_addr' cannot be empty (\"\")."
   }
 }
 
@@ -324,4 +339,41 @@ Directory where this module will write its files to. These files include:
 cloud.conf; cloud_gres.conf; config.yaml; resume.py; suspend.py; and util.py.
 EOD
   default     = null
+}
+
+variable "install_dir" {
+  type        = string
+  description = <<EOD
+Directory where the hybrid configuration directory will be installed on the
+on-premise controller (e.g. /etc/slurm/hybrid). This updates the prefix path
+for the resume and suspend scripts in the generated `cloud.conf` file.
+
+This variable should be used when the TerraformHost and the SlurmctldHost
+are different.
+
+This will default to var.output_dir if null.
+EOD
+  default     = null
+}
+
+variable "munge_mount" {
+  description = <<-EOD
+  Remote munge mount for compute and login nodes to acquire the munge.key.
+
+  By default, the munge mount server will be assumed to be the
+  `var.slurm_control_host` (or `var.slurm_control_addr` if non-null) when
+  `server_ip=null`.
+  EOD
+  type = object({
+    server_ip     = string
+    remote_mount  = string
+    fs_type       = string
+    mount_options = string
+  })
+  default = {
+    server_ip     = null
+    remote_mount  = "/etc/munge/"
+    fs_type       = "nfs"
+    mount_options = ""
+  }
 }

@@ -52,9 +52,10 @@ log = logging.getLogger(filename)
 
 PLACEMENT_MAX_CNT = 150
 # Placement group needs to be the same for an entire bulk_insert hence
-# if placement is used the actual BULK_INSERT_LIMIT will be 
+# if placement is used the actual BULK_INSERT_LIMIT will be
 # max([1000, PLACEMENT_MAX_CNT])
-BULK_INSERT_LIMIT = 1000 
+BULK_INSERT_LIMIT = 1000
+
 
 def instance_properties(partition, model, placement_group):
     node_group = lkp.node_group(model)
@@ -111,7 +112,7 @@ def instance_properties(partition, model, placement_group):
     }
     props.labels = {**template_info.labels, **labels}
 
-    if (placement_group):
+    if placement_group:
         props.scheduling = {
             "onHostMaintenance": "TERMINATE",
             "automaticRestart": False,
@@ -151,7 +152,7 @@ def create_instances_request(nodes, placement_group, exclusive=False):
         assert len(nodes) <= min(PLACEMENT_MAX_CNT, BULK_INSERT_LIMIT)
     else:
         assert len(nodes) <= BULK_INSERT_LIMIT
-    
+
     # model here indicates any node that can be used to describe the rest
     model = next(iter(nodes))
     partition = lkp.node_partition(model)
@@ -170,9 +171,7 @@ def create_instances_request(nodes, placement_group, exclusive=False):
     body.instanceProperties = instance_properties(partition, model, placement_group)
 
     # key is instance name, value overwrites properties
-    body.perInstanceProperties = {
-        k: per_instance_properties(k) for k in nodes
-    }
+    body.perInstanceProperties = {k: per_instance_properties(k) for k in nodes}
 
     zones = {
         **{
@@ -220,7 +219,7 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
 
     # Group on placement_group since only one placement group is
     # allowed per bulkInsert call.
-    BulkChunk = collections.namedtuple('BulkChunk', ['nodes', 'placement_group'])
+    BulkChunk = collections.namedtuple("BulkChunk", ["nodes", "placement_group"])
     if placement_groups:
         grouped_nodes = {
             f"{prefix}:{placement_group}:{i}": BulkChunk(chunk, placement_group)
@@ -228,13 +227,12 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
             for prefix, nodes in groupby(placement_group_nodes, lkp.node_prefix)
             for i, chunk in enumerate(chunked(nodes, n=BULK_INSERT_LIMIT))
         }
-    else: 
+    else:
         grouped_nodes = {
             f"{prefix}:{i}": BulkChunk(chunk, None)
             for prefix, nodes in groupby(nodelist, lkp.node_prefix)
             for i, chunk in enumerate(chunked(nodes, n=BULK_INSERT_LIMIT))
         }
-
 
     if log.isEnabledFor(logging.DEBUG):
         # grouped_nodelists is used in later debug logs too

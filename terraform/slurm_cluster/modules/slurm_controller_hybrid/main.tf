@@ -26,6 +26,19 @@ locals {
     ? abspath(".")
     : abspath(var.output_dir)
   )
+
+  install_dir = (
+    var.install_dir == null || var.install_dir == ""
+    ? local.output_dir
+    : abspath(var.install_dir)
+  )
+
+  munge_mount = {
+    server_ip     = lookup(var.munge_mount, "server_ip", coalesce(var.slurm_control_addr, var.slurm_control_host))
+    remote_mount  = lookup(var.munge_mount, "remote_mount", "/etc/munge/")
+    fs_type       = lookup(var.munge_mount, "fs_type", "nfs")
+    mount_options = lookup(var.munge_mount, "mount_options", "")
+  }
 }
 
 ##################
@@ -65,6 +78,7 @@ locals {
     disable_default_mounts = var.disable_default_mounts
     network_storage        = var.network_storage
     login_network_storage  = var.login_network_storage
+    munge_mount            = local.munge_mount
 
     # slurm conf
     prolog_scripts   = [for x in google_compute_project_metadata_item.prolog_scripts : x.key]
@@ -76,12 +90,14 @@ locals {
     compute_startup_scripts_timeout = var.compute_startup_scripts_timeout
 
     # hybrid
-    google_app_cred_path = local.google_app_cred_path
-    output_dir           = local.output_dir
-    slurm_control_host   = var.slurm_control_host
-    slurm_control_addr   = var.slurm_control_addr
-    slurm_bin_dir        = local.slurm_bin_dir
-    slurm_log_dir        = local.slurm_log_dir
+    google_app_cred_path    = local.google_app_cred_path
+    output_dir              = local.output_dir
+    install_dir             = local.install_dir
+    slurm_control_host      = var.slurm_control_host
+    slurm_control_host_port = var.slurm_control_host_port
+    slurm_control_addr      = var.slurm_control_addr
+    slurm_bin_dir           = local.slurm_bin_dir
+    slurm_log_dir           = local.slurm_log_dir
   }
 }
 

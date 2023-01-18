@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Add `var.install_dir` to `module.slurm_controller_hybrid` to specify the
+  intended directory where the files are to be installed.
+- Add `var.slurm_control_host_port` to `module.slurm_controller_hybrid` to
+  specify the port for slurmd to connect for configless setup.
+- Add `var.munge_mount` to `module.slurm_controller_hybrid` to specify an
+  external munge.key source.
+- Fix unwanted mounting of login_network_storage on compute nodes.
+
 ## \[5.3.0\]
 
 - Use configless mode for cluster configuration management.
