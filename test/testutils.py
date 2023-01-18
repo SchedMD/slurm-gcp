@@ -96,7 +96,8 @@ def wait_job_state(cluster, job_id, *states, max_wait=None):
         log.info(f"job {job_id}: {state} waiting for {states_str}")
         return state in states
 
-    wait_until(is_job_state, max_wait=max_wait)
+    if not wait_until(is_job_state, max_wait=max_wait):
+        raise Exception(f"job {job_id} did not reach expected state")
     return cluster.get_job(job_id)
 
 
@@ -106,11 +107,22 @@ def wait_node_state(cluster, nodename, *states, max_wait=None):
 
     def is_node_state():
         state = cluster.get_node(nodename)["state"]
-        log.info(f"job {nodename}: {state} waiting for {states_str}")
-        return state
+        log.info(f"node {nodename}: {state} waiting for {states_str}")
+        return state in states
 
     wait_until(is_node_state, max_wait=max_wait)
     return cluster.get_node(nodename)
+
+
+# https://stackoverflow.com/questions/3844801/check-if-all-elements-in-a-list-are-identical
+def all_equal(coll):
+    """Return true if coll is empty or all elements are equal"""
+    it = iter(coll)
+    try:
+        first = next(it)
+    except StopIteration:
+        return True
+    return all(first == x for x in it)
 
 
 batch_id = re.compile(r"^Submitted batch job (\d+)$")
