@@ -417,6 +417,16 @@ def load_config_data(config):
         cfg.slurm_control_host = f"{cfg.slurm_cluster_name}-controller"
     if not cfg.slurm_control_host_port:
         cfg.slurm_control_host_port = "6820-6830"
+    if not cfg.munge_mount:
+        # NOTE: should only happen with cloud controller
+        cfg.munge_mount = NSDict(
+            {
+                "server_ip": cfg.slurm_control_addr or cfg.slurm_control_host,
+                "remote_mount": "/etc/munge",
+                "fs_type": "nfs",
+                "mount_options": "defaults,hard,intr,_netdev",
+            }
+        )
 
     if not cfg.enable_debug_logging and isinstance(cfg.enable_debug_logging, NSDict):
         cfg.enable_debug_logging = False
@@ -579,7 +589,7 @@ def handle_exception(exc_type, exc_value, exc_trace):
 
 
 def run(
-    cmd,
+    args,
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
     shell=False,
@@ -589,8 +599,12 @@ def run(
     **kwargs,
 ):
     """Wrapper for subprocess.run() with convenient defaults"""
-    log_subproc.debug(f"run: {cmd}")
-    args = cmd if shell else shlex.split(cmd)
+    if isinstance(args, list):
+        args = list(filter(lambda x: x is not None, args))
+        args = " ".join(args)
+    if not shell and isinstance(args, str):
+        args = shlex.split(args)
+    log_subproc.debug(f"run: {args}")
     result = subprocess.run(
         args,
         stdout=stdout,
@@ -776,30 +790,6 @@ def instance_metadata(path):
 def project_metadata(key):
     """Get project metadata project/attributes/<slurm_cluster_name>-<path>"""
     return get_metadata(key, root=f"{ROOT_URL}/project/attributes")
-
-
-def nodeset_prefix(node_group, part_name):
-    return f"{cfg.slurm_cluster_name}-{part_name}-{node_group.group_name}"
-
-
-def nodeset_lists(node_group, part_name):
-    """Return static and dynamic nodenames given a partition node type
-    definition
-    """
-
-    def node_range(count, start=0):
-        end = start + count - 1
-        return f"{start}" if count == 1 else f"[{start}-{end}]", end + 1
-
-    prefix = nodeset_prefix(node_group, part_name)
-    static_count = node_group.node_count_static
-    dynamic_count = node_group.node_count_dynamic_max
-    static_range, end = node_range(static_count) if static_count else (None, 0)
-    dynamic_range, _ = node_range(dynamic_count, end) if dynamic_count else (None, 0)
-
-    static_nodelist = f"{prefix}-{static_range}" if static_count else None
-    dynamic_nodelist = f"{prefix}-{dynamic_range}" if dynamic_count else None
-    return static_nodelist, dynamic_nodelist
 
 
 def natural_sort(text):
@@ -1176,13 +1166,37 @@ class Lookup:
         node_group = self.node_group(node_name)
         return self.node_index(node_name) < node_group.node_count_static
 
+    def nodeset_prefix(self, group_name, part_name):
+        return f"{self.cfg.slurm_cluster_name}-{part_name}-{group_name}"
+
+    def nodeset_lists(self, node_group, part_name):
+        """Return static and dynamic nodenames given a partition node type
+        definition
+        """
+
+        def node_range(count, start=0):
+            end = start + count - 1
+            return f"{start}" if count == 1 else f"[{start}-{end}]", end + 1
+
+        prefix = self.nodeset_prefix(node_group.group_name, part_name)
+        static_count = node_group.node_count_static
+        dynamic_count = node_group.node_count_dynamic_max
+        static_range, end = node_range(static_count) if static_count else (None, 0)
+        dynamic_range, _ = (
+            node_range(dynamic_count, end) if dynamic_count else (None, 0)
+        )
+
+        static_nodelist = f"{prefix}-{static_range}" if static_count else None
+        dynamic_nodelist = f"{prefix}-{dynamic_range}" if dynamic_count else None
+        return static_nodelist, dynamic_nodelist
+
     @lru_cache(maxsize=1)
     def static_nodelist(self):
         return list(
             filter(
                 None,
                 (
-                    nodeset_lists(node, part.partition_name)[0]
+                    self.nodeset_lists(node, part.partition_name)[0]
                     for part in self.cfg.partitions.values()
                     for node in part.partition_nodes.values()
                 ),
@@ -1225,7 +1239,7 @@ class Lookup:
         for partition in lkp.cfg.partitions.values():
             part_name = partition.partition_name
             for node_group in partition.partition_nodes.values():
-                static, dynamic = nodeset_lists(node_group, part_name)
+                static, dynamic = self.nodeset_lists(node_group, part_name)
                 if static is not None:
                     static_nodes.extend(to_hostnames(static))
                 if dynamic is not None:
