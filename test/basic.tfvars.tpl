@@ -5,6 +5,11 @@
 
 region = "us-central1"
 
+enable_bigquery_load         = false
+enable_cleanup_compute       = true
+enable_cleanup_subscriptions = false
+enable_reconfigure           = false
+
 controller_instance_config = {
   access_config            = []
   additional_disks         = []
