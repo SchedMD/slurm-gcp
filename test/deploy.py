@@ -286,13 +286,21 @@ class Cluster:
         return self.ssh(self.login_link)
 
     def exec_cmd(
-        self, ssh, cmd, input="", prefix="", timeout=60, quiet=True, check=False
+        self,
+        ssh,
+        cmd,
+        input="",
+        prefix="",
+        timeout=60,
+        quiet=True,
+        check=False,
+        **kwargs,
     ):
         if not quiet:
             log.info(f"{prefix}: {cmd}")
         start = time.time()
 
-        stdin, stdout, stderr = ssh.exec_command(cmd, timeout)
+        stdin, stdout, stderr = ssh.exec_command(cmd, timeout, **kwargs)
         if input:
             stdin.write(input)
             stdin.flush()
