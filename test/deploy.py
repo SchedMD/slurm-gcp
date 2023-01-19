@@ -127,6 +127,10 @@ class Configuration:
             )
         )
 
+    def __str__(self):
+        image = self.image or self.image_family
+        return f"{self.cluster_name}: project={self.project_id} image={self.image_project}/{image} tfmodule={self.moduledir} tfvars={self.tfvars_file}"
+
 
 class Tunnel:
     def __init__(self, host, target_port=22):

@@ -12,7 +12,6 @@ from testutils import (
     util,
 )
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
