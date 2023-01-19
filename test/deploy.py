@@ -201,8 +201,9 @@ class Cluster:
         self.active = False
 
         self.keyfile = Path("gcp_login_id")
-        self.keyfile.write_text(os.environ["GCP_LOGIN_ID"])
-        self.keyfile.chmod(0o400)
+        if not self.keyfile.exists():
+            self.keyfile.write_text(os.environ["GCP_LOGIN_ID"])
+            self.keyfile.chmod(0o400)
 
     def activate(self):
         if not self.active:
