@@ -101,6 +101,10 @@ test-centos-7:
     optional: true
   variables:
     IMAGE_FAMILY: centos-7
+  artifacts: &artifacts
+    name: $CI_JOB_STAGE-$CI_COMMIT_REF_NAME
+    paths:
+    - cluster_logs/
   script: &test-cluster
   - echo "Testing $IMAGE_FAMILY"
   - cd test
@@ -120,6 +124,7 @@ test-hpc-centos-7:
     optional: true
   variables:
     IMAGE_FAMILY: hpc-centos-7
+  artifacts: *artifacts
   script: *test-cluster
 
 test-debian-10:
@@ -129,6 +134,7 @@ test-debian-10:
     optional: true
   variables:
     IMAGE_FAMILY: debian-10
+  artifacts: *artifacts
   script: *test-cluster
 
 test-ubuntu-2004-lts:
@@ -138,4 +144,5 @@ test-ubuntu-2004-lts:
     optional: true
   variables:
     IMAGE_FAMILY: ubuntu-2004-lts
+  artifacts: *artifacts
   script: *test-cluster
