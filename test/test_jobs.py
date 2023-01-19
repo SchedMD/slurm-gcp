@@ -45,8 +45,10 @@ int main(int argc, char **argv)
 }
 """
     cluster.login_exec("tee hello.c", input=prog)
-    cluster.login_exec("module load openmpi; mpicc -o hello hello.c")
-    job_id = sbatch(cluster, "module load openmpi; sbatch -N3 --wrap='srun hello'")
+    cluster.login_exec(
+        "bash --login -c 'module load openmpi && mpicc -o hello hello.c'"
+    )
+    job_id = sbatch(cluster, "sbatch -N3 --wrap='srun hello'")
     job = wait_job_state(cluster, job_id, "COMPLETED", "FAILED", "CANCELLED")
     log.info(cluster.login_get_file(f"slurm-{job_id}.out"))
     assert job["job_state"] == "COMPLETED"
