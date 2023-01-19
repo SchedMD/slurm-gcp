@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 
@@ -7,6 +8,9 @@ sys.path.append("../scripts")
 import util  # noqa: E402
 
 from deploy import Cluster, Configuration  # noqa: E402
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
 
 root = Path(__file__).parent.parent
 tf_path = root / "terraform"
@@ -64,6 +68,7 @@ def configuration(request):
         image=request.config.getoption("image"),
         **CONFIGS[pytest.param(request.param)],
     )
+    log.info(f"init cluster {str(config)}")
     config.tf.setup(extra_files=[config.tfvars_file], cleanup_on_exit=False)
     return config
 
@@ -87,24 +92,29 @@ def applied(request, configuration):
         )
 
     request.addfinalizer(finalize)
+    log.info(f"apply deployment {str(configuration)}")
     configuration.tf.apply(
         tf_vars=configuration.tfvars, tf_var_file=configuration.tfvars_file.name
     )
     return configuration.tf
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def cluster(request, applied):
     """fixture providing deploy.Cluster communication handle for the cluster"""
 
     def finalize():
         nonlocal cluster
         cluster.save_logs()
+        log.info("tearing down cluster")
         cluster.disconnect()
+        # TODO verify all instances are removed
 
     request.addfinalizer(finalize)
     cluster = Cluster(applied)
+    log.info("waiting for cluster to be available")
     cluster.activate()
+    log.info("cluster is now responding")
     return cluster
 
 
@@ -123,5 +133,4 @@ def cfg(cluster: Cluster):
 @pytest.fixture(scope="session")
 def lkp(cfg: util.NSDict):
     """fixture providing util.Lookup for the cluster"""
-    lkp = util.Lookup(cfg)
-    return lkp
+    return util.Lookup(cfg)

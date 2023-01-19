@@ -9,7 +9,6 @@ import pytest
 #    get_file,
 # )
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 
