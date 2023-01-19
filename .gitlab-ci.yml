@@ -63,6 +63,10 @@ build-centos-7:
   needs: [validate-packer]
   variables:
     IMAGE_FAMILY: centos-7
+  artifacts: &build-artifact
+    name: image-manifest-$IMAGE_FAMILY
+    paths:
+    - packer/manifest.json
   script: &build-image
   - echo "Building $IMAGE_FAMILY image"
   - cd packer
@@ -81,6 +85,7 @@ build-hpc-centos-7:
   needs: [validate-packer]
   variables:
     IMAGE_FAMILY: hpc-centos-7
+  artifacts: *build-artifact
   script: *build-image
 
 build-debian-10:
@@ -89,6 +94,7 @@ build-debian-10:
   needs: [validate-packer]
   variables:
     IMAGE_FAMILY: debian-10
+  artifacts: *build-artifact
   script: *build-image
 
 build-ubuntu-2004-lts:
@@ -97,6 +103,7 @@ build-ubuntu-2004-lts:
   needs: [validate-packer]
   variables:
     IMAGE_FAMILY: ubuntu-2004-lts
+  artifacts: *build-artifact
   script: *build-image
 
 test-centos-7:
@@ -106,12 +113,15 @@ test-centos-7:
     optional: true
   variables:
     IMAGE_FAMILY: centos-7
+    SLURM_IMAGE_FAMILY: schedmd-v5-slurm-$SLURM_VERSION_ALT-$IMAGE_FAMILY
   artifacts: &artifacts
-    name: $CI_JOB_STAGE-$CI_COMMIT_REF_NAME
+    name: $CI_JOB_STAGE-$CI_COMMIT_REF_NAME-logs
     paths:
-    - cluster_logs/
+    - test/cluster_logs/
   script: &test-cluster
-  - echo "Testing $IMAGE_FAMILY"
+  - IMAGE_NAME=$(jq -r ".last_run_uuid as $uuid | .builds | map(select(.packer_run_uuid
+    == $uuid)) | .[].artifact_id" < $GOOGLE_APPLICATION_CREDENTIALS)
+  - echo "Testing ${IMAGE_NAME:SLURM_IMAGE_FAMILY}"
   - cd test
   - pip3 install pipenv
   - pipenv install
@@ -120,7 +130,8 @@ test-centos-7:
     --project-id=$GCP_PROJECT_ID
     --cluster-name=test$(tr -dc a-z </dev/urandom | head -c2)
     --image-project=$GCP_PROJECT_ID
-    --image-family=schedmd-v5-slurm-$SLURM_VERSION_ALT-$IMAGE_FAMILY
+    --image-family=$SLURM_IMAGE_FAMILY
+    --image=${IMAGE_NAME:null}
 
 test-hpc-centos-7:
   stage: test-clusters
