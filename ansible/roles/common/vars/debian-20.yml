@@ -14,12 +14,16 @@
 # limitations under the License.
 
 common_packages:
+- acl
 - autoconf
 - automake
 - bash-completion
+- bamtools
+- bowtie2
 - build-essential
 - clang
 - curl
+- default-jre
 - doxygen
 - emacs
 - g++
@@ -29,16 +33,23 @@ common_packages:
 - htop
 - iputils-ping
 - jq
+- libbz2-dev
+- liblzma-dev
 - libssl-dev
+- libxt-dev
 - libtool
 - lynx
 - make
+- openjdk-8-jdk
+- picard-tools
 - pciutils
 - pdsh
 - pkg-config
 - python3
 - python3-gdbm
+- subread
 - tmux
 - unzip
 - valgrind
 - vim
+- zlib1g-dev

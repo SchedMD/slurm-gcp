@@ -9,6 +9,7 @@
 packer_cache/
 output-*/
 *.pkrvars.hcl
+!conception.pkrvars.hcl
 !example.pkrvars.hcl
 *.pem
 *.json
