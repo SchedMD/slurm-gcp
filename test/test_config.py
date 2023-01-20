@@ -3,11 +3,10 @@ import logging
 import pytest
 
 # from hostlist import expand_hostlist as expand
-# from testutils import (
-#    wait_job_state,
-#    sbatch,
-#    get_file,
-# )
+from testutils import (
+    util,
+    # get_file,
+)
 
 log = logging.getLogger()
 
@@ -29,6 +28,19 @@ def test_gpu_config(cluster, lkp):
             ":"
         )[1]
         assert int(count) == template.gpu_count
+
+
+def test_ops_agent(cluster, lkp):
+    ops_agent_service = "google-cloud-ops-agent-fluent-bit.service"
+
+    def check_ops_agent(inst):
+        log.info(f"checking if ops agent is active on {inst.name}")
+        ssh = cluster.ssh(inst.selfLink)
+        result = cluster.exec_cmd(ssh, f"sudo systemctl is-active {ops_agent_service}")
+        assert result.exit_status == 0
+
+    lkp.instances.cache_clear()
+    util.execute_with_futures(check_ops_agent, lkp.instances().values())
 
 
 # def test_network_mounts(cluster):
