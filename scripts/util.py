@@ -1116,6 +1116,10 @@ class Lookup:
         return socket.gethostname()
 
     @cached_property
+    def hostname_fqdn(self):
+        return socket.getfqdn()
+
+    @cached_property
     def zone(self):
         return instance_metadata("zone")
 
