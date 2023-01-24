@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[Next\]
 
 - Use FQDN as default `slurm_control_addr`.
+- Mounts use `slurm_control_addr`, if available, otherwise `slurm_control_host`.
 
 ## \[5.4.0\]
 
