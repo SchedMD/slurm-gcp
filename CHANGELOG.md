@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Add support for custom machine types.
+
 ## \[5.5.0\]
 
 - Fix external network_storage being added to exportfs

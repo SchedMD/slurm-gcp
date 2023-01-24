@@ -1395,6 +1395,12 @@ class Lookup:
                     project=project, zone=zone, machineType=machine_type
                 )
             )
+        elif "custom" in machine_type:
+            cpu_type, _, cpus, mem = machine_type.split("-")
+            machine_info = {
+                "guestCpus": int(cpus),
+                "memoryMb": int(mem),
+            }
         else:
             machines = self.machine_types(project=project)
             machine_info = next(iter(machines[machine_type].values()), None)
