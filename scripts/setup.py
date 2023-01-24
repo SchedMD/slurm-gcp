@@ -604,7 +604,7 @@ def resolve_network_storage(partition_name=None):
 
     # create dict of mounts, local_mount: mount_info
     CONTROL_NFS = {
-        "server_ip": lkp.control_host,
+        "server_ip": lkp.control_addr or lkp.control_host,
         "remote_mount": "none",
         "local_mount": "none",
         "fs_type": "nfs",
