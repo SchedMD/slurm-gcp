@@ -54,10 +54,10 @@ that are minimal viable images for deploying
 
 ### Published Image Family
 
-- `schedmd-v5-slurm-22-05-6-debian-10`
-- `schedmd-v5-slurm-22-05-6-ubuntu-2004-lts`
-- `schedmd-v5-slurm-22-05-6-centos-7`
-- `schedmd-v5-slurm-22-05-6-hpc-centos-7`
+- `schedmd-v5-slurm-22-05-8-debian-10`
+- `schedmd-v5-slurm-22-05-8-ubuntu-2004-lts`
+- `schedmd-v5-slurm-22-05-8-centos-7`
+- `schedmd-v5-slurm-22-05-8-hpc-centos-7`
 
 ## Custom Image
 
