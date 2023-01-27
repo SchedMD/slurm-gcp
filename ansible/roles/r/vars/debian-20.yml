@@ -1,0 +1,23 @@
+r_packages:
+- r-base
+- r-base-core
+- r-base-dev
+# - r-bioc-biocgenerics
+# - r-bioc-delayedarray
+# - r-bioc-limma
+# - r-cran-biocmanager
+# - r-cran-crayon
+# - r-cran-devtools
+# - r-cran-sf
+# - r-cran-terra
+# - r-cran-hdf5r
+- r-recommended
+- libmysqlclient-dev
+- default-libmysqlclient-dev
+- libgdal-dev
+- libproj-dev
+- libgeos-dev
+- libudunits2-dev
+- libnode-dev
+- libcairo2-dev
+- libnetcdf-dev

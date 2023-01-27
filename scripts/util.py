@@ -186,7 +186,6 @@ def publish_message(project_id, topic_id, message) -> None:
     from google.cloud import pubsub_v1
     from google import api_core
 
-    print(f"The project_id is {project_id}")
     publisher = pubsub_v1.PublisherClient()
     topic_path = publisher.topic_path(project_id, topic_id)
 

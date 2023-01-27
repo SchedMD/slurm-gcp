@@ -1,0 +1,34 @@
+---
+# tasks file for ansible-role-cuda
+
+# sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+- name: Trust packaging key for R repositories (apt)
+  apt_key:
+    id: E298A3A825C0D65DFD57CBB651716619E084DAB9
+    keyserver: keyserver.ubuntu.com
+    state: present
+
+- name: Configure R repository (apt)
+  apt_repository:
+    repo: deb https://cloud.r-project.org/bin/linux/ubuntu {{ ansible_distribution_release }}-cran40/
+    state: present
+
+- name: Trust packaging key for R GIS repositories (apt)
+  apt_key:
+    id: 089EBE08314DF160
+    keyserver: hkp://keyserver.ubuntu.com:80
+    state: present
+
+- name: Configure R GIS repository (apt)
+  apt_repository:
+    repo: deb http://ppa.launchpad.net/ubuntugis/ubuntugis-unstable/ubuntu {{ ansible_distribution_release }} main
+    state: present
+
+- name: Configure R cran2deb4ubuntu (apt)
+  shell: add-apt-repository -y ppa:c2d4u.team/c2d4u4.0+ && apt update
+
+- name: Install Packages
+  apt:
+    name: '{{ r_packages }}'
+    # force_apt_get: yes
+    state: present
