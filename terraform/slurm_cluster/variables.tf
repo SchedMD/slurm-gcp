@@ -394,12 +394,12 @@ EOD
     error_message = "Partitions cannot be empty."
   }
 
-  validation {
-    condition = alltrue([
-      for x in var.partitions : can(regex("^[a-z](?:[a-z0-9]{0,6})$", x.partition_name))
-    ])
-    error_message = "Items 'partition_name' must be a match of regex '^[a-z](?:[a-z0-9]{0,6})$'."
-  }
+  # validation {
+  #   condition = alltrue([
+  #     for x in var.partitions : can(regex("^[a-z](?:[a-z0-9]{0,6})$", x.partition_name))
+  #   ])
+  #   error_message = "Items 'partition_name' must be a match of regex '^[a-z](?:[a-z0-9]{0,6})$'."
+  # }
 }
 
 #########

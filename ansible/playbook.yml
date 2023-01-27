@@ -89,6 +89,8 @@
   - cloudagents
   - logrotate
   - python
+  - R
+  - conception
   - role: ldap
     when: ansible_os_family != 'Debian'
   - scripts
