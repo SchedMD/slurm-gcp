@@ -38,6 +38,8 @@ validate-packer:
       - scripts/*.{py,sh}
       - scripts/Pipfile
       - scripts/requirements.txt
+      - ansible/**/*
+      - packer/**/*
   - if: $CI_PIPELINE_SOURCE == "schedule"
     when: always
     allow_failure: true
