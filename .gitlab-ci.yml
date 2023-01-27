@@ -27,6 +27,9 @@ stages:
 - build-images
 - test-clusters
 
+default:
+  retry: 2
+
 validate-packer:
   stage: validate
   rules: &build-image-rules
