@@ -323,7 +323,7 @@ def install_slurm_conf(lkp):
 
     conf_options = {
         "name": lkp.cfg.slurm_cluster_name,
-        "control_addr": lkp.control_addr if lkp.control_addr else lkp.control_host,
+        "control_addr": lkp.control_addr if lkp.control_addr else lkp.hostname_fqdn,
         "control_host": lkp.control_host,
         "control_host_port": lkp.control_host_port,
         "scripts": dirs.scripts,
@@ -604,7 +604,7 @@ def resolve_network_storage(partition_name=None):
 
     # create dict of mounts, local_mount: mount_info
     CONTROL_NFS = {
-        "server_ip": lkp.control_host,
+        "server_ip": lkp.control_addr or lkp.control_host,
         "remote_mount": "none",
         "local_mount": "none",
         "fs_type": "nfs",

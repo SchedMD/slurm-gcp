@@ -30,7 +30,7 @@ import subprocess
 import sys
 import tempfile
 from collections import defaultdict, namedtuple
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from functools import lru_cache, reduce, partialmethod
 from itertools import chain, compress, islice
@@ -348,7 +348,7 @@ def execute_with_futures(func, seq):
         for i in seq:
             future = exe.submit(func, i)
             futures.append(future)
-        for future in futures:
+        for future in as_completed(futures):
             result = future.exception()
             if result is not None:
                 raise result
@@ -1116,6 +1116,10 @@ class Lookup:
         return socket.gethostname()
 
     @cached_property
+    def hostname_fqdn(self):
+        return socket.getfqdn()
+
+    @cached_property
     def zone(self):
         return instance_metadata("zone")
 
@@ -1282,7 +1286,8 @@ class Lookup:
             if "slurm_instance_role" not in metadata:
                 return None
             inst["role"] = metadata["slurm_instance_role"]
-            del inst["metadata"]  # no need to store all the metadata
+            inst["metadata"] = metadata
+            # del inst["metadata"]  # no need to store all the metadata
             return NSDict(inst)
 
         instances = {}
@@ -1305,6 +1310,20 @@ class Lookup:
             project=project, slurm_cluster_name=slurm_cluster_name
         )
         return instances.get(instance_name)
+
+    def describe_instance(self, instance_name, project=None, zone=None):
+        project = project or self.project
+        if zone is None:
+            self.instances.cache_clear()
+            inst = self.instance(instance_name, project=project)
+            if inst is None:
+                raise Exception(f"instance {instance_name} not found")
+            zone = inst.zone
+        op = self.compute.instances().get(
+            instance=instance_name, project=project, zone=zone
+        )
+        info = ensure_execute(op)
+        return NSDict(info)
 
     def subscription(self, instance_name, project=None, slurm_cluster_name=None):
         subscriptions = self.subscriptions(

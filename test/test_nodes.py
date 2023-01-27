@@ -6,7 +6,6 @@ from itertools import chain
 from deploy import Cluster
 from testutils import wait_until, util
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 

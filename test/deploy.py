@@ -127,6 +127,10 @@ class Configuration:
             )
         )
 
+    def __str__(self):
+        image = self.image or self.image_family
+        return f"{self.cluster_name}: project={self.project_id} image={self.image_project}/{image} tfmodule={self.moduledir} tfvars={self.tfvars_file}"
+
 
 class Tunnel:
     def __init__(self, host, target_port=22):
@@ -197,8 +201,9 @@ class Cluster:
         self.active = False
 
         self.keyfile = Path("gcp_login_id")
-        self.keyfile.write_text(os.environ["GCP_LOGIN_ID"])
-        self.keyfile.chmod(0o400)
+        if not self.keyfile.exists():
+            self.keyfile.write_text(os.environ["GCP_LOGIN_ID"])
+            self.keyfile.chmod(0o400)
 
     def activate(self):
         if not self.active:
@@ -281,13 +286,21 @@ class Cluster:
         return self.ssh(self.login_link)
 
     def exec_cmd(
-        self, ssh, cmd, input="", prefix="", timeout=60, quiet=True, check=False
+        self,
+        ssh,
+        cmd,
+        input="",
+        prefix="",
+        timeout=60,
+        quiet=True,
+        check=False,
+        **kwargs,
     ):
         if not quiet:
             log.info(f"{prefix}: {cmd}")
         start = time.time()
 
-        stdin, stdout, stderr = ssh.exec_command(cmd, timeout)
+        stdin, stdout, stderr = ssh.exec_command(cmd, timeout, **kwargs)
         if input:
             stdin.write(input)
             stdin.flush()
