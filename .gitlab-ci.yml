@@ -6,6 +6,10 @@ workflow:
   # skip pipeline if the source is a tag
 - if: $CI_COMMIT_TAG
   when: never
+  # Skip pipeline on merge request event
+  # TODO this should be possible, but I'm not sure how it works yet
+- if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  when: never
 - when: always
 
 variables:
