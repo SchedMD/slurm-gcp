@@ -2,6 +2,12 @@
 image:
   name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.4
 
+workflow:
+  # skip pipeline if the source is a tag
+- if: $CI_COMMIT_TAG
+  when: never
+- when: always
+
 variables:
   #DOCKER_HOST: tcp://docker:2376
   #DOCKER_TLS_CERTDIR: "/certs"
