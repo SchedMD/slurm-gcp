@@ -15,6 +15,7 @@ variables:
   #TAG_COMMIT: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
   GOOGLE_APPLICATION_CREDENTIALS: $CI_PROJECT_DIR/sa.json
   SLURM_VERSION: 22.05.8
+  IMAGE_PREFIX: $CI_COMMIT_BRANCH
 
 before_script:
   #- docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -23,7 +24,10 @@ before_script:
 - GCP_PROJECT_ID=$(jq -r .project_id < $GOOGLE_APPLICATION_CREDENTIALS)
 - GCP_SA_EMAIL=$(jq -r .client_email < $GOOGLE_APPLICATION_CREDENTIALS)
 - GCP_SA_ID=$(jq -r .client_id < $GOOGLE_APPLICATION_CREDENTIALS)
+
 - SLURM_VERSION_ALT=$(tr \. - <<< $SLURM_VERSION)
+- IMAGE_FAMILY_ROOT=$IMAGE_PREFIX-v5-slurm-$SLURM_VERSION_ALT
+
 - gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
 - gcloud config set project $GCP_PROJECT_ID
 
@@ -67,29 +71,30 @@ build-centos-7:
   rules: *build-image-rules
   needs: [validate-packer]
   variables:
-    IMAGE_FAMILY: centos-7
+    IMAGE_OS: centos-7
   artifacts: &build-artifact
-    name: image-manifest-$IMAGE_FAMILY
+    name: image-manifest-$IMAGE_PREFIX-$IMAGE_OS
     paths:
     - packer/manifest.json
   script: &build-image
-  - echo "Building $IMAGE_FAMILY image"
+  - echo "Building $IMAGE_OS image for $IMAGE_PREFIX"
   - cd packer
   - packer init .
   - >
     packer build -var-file=example.pkrvars.hcl
     -var "project_id=$GCP_PROJECT_ID"
     -var "slurm_version=$SLURM_VERSION"
-    -only "*.$IMAGE_FAMILY"
+    -var "prefix=b$IMAGE_PREFIX"
+    -only "*.$IMAGE_OS"
     .
-  - echo "packer build $IMAGE_FAMILY completed"
+  - echo "packer build $IMAGE_OS completed"
 
 build-hpc-centos-7:
   stage: build-images
   rules: *build-image-rules
   needs: [validate-packer]
   variables:
-    IMAGE_FAMILY: hpc-centos-7
+    IMAGE_OS: hpc-centos-7
   artifacts: *build-artifact
   script: *build-image
 
@@ -98,7 +103,7 @@ build-debian-10:
   rules: *build-image-rules
   needs: [validate-packer]
   variables:
-    IMAGE_FAMILY: debian-10
+    IMAGE_OS: debian-10
   artifacts: *build-artifact
   script: *build-image
 
@@ -107,7 +112,7 @@ build-ubuntu-2004-lts:
   rules: *build-image-rules
   needs: [validate-packer]
   variables:
-    IMAGE_FAMILY: ubuntu-2004-lts
+    IMAGE_OS: ubuntu-2004-lts
   artifacts: *build-artifact
   script: *build-image
 
@@ -117,13 +122,13 @@ test-centos-7:
   - job: build-centos-7
     optional: true
   variables:
-    IMAGE_FAMILY: centos-7
-    SLURM_IMAGE_FAMILY: schedmd-v5-slurm-$SLURM_VERSION_ALT-$IMAGE_FAMILY
+    IMAGE_OS: centos-7
   artifacts: &artifacts
     name: $CI_JOB_STAGE-$CI_COMMIT_REF_NAME-logs
     paths:
     - test/cluster_logs/
   script: &test-cluster
+  - IMAGE_FAMILY=$IMAGE_FAMILY_ROOT-$IMAGE_OS
   - IMAGE_NAME=$(jq -r ".last_run_uuid as $uuid | .builds | map(select(.packer_run_uuid
     == $uuid)) | .[].artifact_id" < $GOOGLE_APPLICATION_CREDENTIALS)
   - echo "Testing ${IMAGE_NAME:SLURM_IMAGE_FAMILY}"
@@ -144,7 +149,7 @@ test-hpc-centos-7:
   - job: build-hpc-centos-7
     optional: true
   variables:
-    IMAGE_FAMILY: hpc-centos-7
+    IMAGE_OS: hpc-centos-7
   artifacts: *artifacts
   script: *test-cluster
 
@@ -154,7 +159,7 @@ test-debian-10:
   - job: build-debian-10
     optional: true
   variables:
-    IMAGE_FAMILY: debian-10
+    IMAGE_OS: debian-10
   artifacts: *artifacts
   script: *test-cluster
 
@@ -164,6 +169,6 @@ test-ubuntu-2004-lts:
   - job: build-ubuntu-2004-lts
     optional: true
   variables:
-    IMAGE_FAMILY: ubuntu-2004-lts
+    IMAGE_OS: ubuntu-2004-lts
   artifacts: *artifacts
   script: *test-cluster
