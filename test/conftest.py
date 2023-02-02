@@ -69,7 +69,7 @@ def configuration(request):
         **CONFIGS[pytest.param(request.param)],
     )
     log.info(f"init cluster {str(config)}")
-    config.tf.setup(extra_files=[config.tfvars_file], cleanup_on_exit=False)
+    config.setup()
     return config
 
 
@@ -85,37 +85,28 @@ def plan(configuration):
 @pytest.fixture(scope="session")
 def applied(request, configuration):
     """fixture providing applied terraform handle"""
-
-    def finalize():
-        configuration.tf.destroy(
-            tf_vars=configuration.tfvars, tf_var_file=configuration.tfvars_file.name
-        )
-
-    request.addfinalizer(finalize)
+    request.addfinalizer(configuration.destroy)
     log.info(f"apply deployment {str(configuration)}")
-    configuration.tf.apply(
-        tf_vars=configuration.tfvars, tf_var_file=configuration.tfvars_file.name
-    )
+    configuration.apply()
     return configuration.tf
 
 
 @pytest.fixture(scope="session", autouse=True)
 def cluster(request, applied):
     """fixture providing deploy.Cluster communication handle for the cluster"""
+    cluster = Cluster(applied)
 
-    def finalize():
+    def disconnect():
         nonlocal cluster
         cluster.save_logs()
         log.info("tearing down cluster")
         cluster.disconnect()
         # TODO verify all instances are removed
 
-    request.addfinalizer(finalize)
-    cluster = Cluster(applied)
+    request.addfinalizer(disconnect)
     log.info("waiting for cluster to be available")
     cluster.activate()
     log.info("cluster is now responding")
-    return cluster
 
 
 @pytest.fixture(scope="session")

@@ -1,7 +1,6 @@
+project_id = $project_id
 
-#project_id = "<PROJECT_ID>"
-
-#slurm_cluster_name = "basic"
+slurm_cluster_name = $cluster_name
 
 region = "us-central1"
 
