@@ -45,7 +45,7 @@ default:
   rules:
   - changes:
       paths:
-      # - .gitlab-ci.yml
+      - .gitlab-ci.yml
       - scripts/*.{py,sh}
       - scripts/Pipfile
       - scripts/requirements.txt
@@ -63,7 +63,7 @@ default:
     packer build -var-file=example.pkrvars.hcl
     -var "project_id=$GCP_PROJECT_ID"
     -var "slurm_version=$SLURM_VERSION"
-    -var "prefix=b$IMAGE_PREFIX"
+    -var "prefix=$IMAGE_PREFIX"
     -only "*.$IMAGE_OS"
     .
   - echo "packer build $IMAGE_OS completed"
