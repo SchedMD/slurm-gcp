@@ -13,16 +13,16 @@ stages:
 - build-images
 - test-clusters
 
+variables:
+  GOOGLE_APPLICATION_CREDENTIALS: $CI_PROJECT_DIR/sa.json
+  SLURM_VERSION: 22.05.8
+  IMAGE_PREFIX: $CI_COMMIT_BRANCH
+
 default:
   image:
     name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.4
 
   retry: 2
-
-  variables:
-    GOOGLE_APPLICATION_CREDENTIALS: $CI_PROJECT_DIR/sa.json
-    SLURM_VERSION: 22.05.8
-    IMAGE_PREFIX: $CI_COMMIT_BRANCH
 
   before_script:
   - packer --version
