@@ -72,3 +72,9 @@ elements of the example cluster, which is useful for testing.
 > [slurm_cluster module](../terraform/slurm_cluster/README.md) in your own
 > [terraform project](./glossary.md#terraform-project). It may be useful to copy
 > and modify one of the provided examples.
+
+Alternatively, see
+[HPC Blueprints](https://cloud.google.com/hpc-toolkit/docs/setup/hpc-blueprint)
+for
+[HPC Toolkit](https://cloud.google.com/blog/products/compute/new-google-cloud-hpc-toolkit)
+examples.
