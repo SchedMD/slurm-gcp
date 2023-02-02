@@ -26,6 +26,7 @@ default:
   retry: 2
 
   before_script:
+  - set +o pipefail
   - packer --version
   - echo $SERVICE_ACCOUNT > $GOOGLE_APPLICATION_CREDENTIALS
   - GCP_PROJECT_ID=$(jq -r .project_id < $GOOGLE_APPLICATION_CREDENTIALS)
@@ -37,13 +38,14 @@ default:
 
   - gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
   - gcloud config set project $GCP_PROJECT_ID
+  - pip3 install pipenv
 
 .build-image:
   stage: build-images
   rules:
   - changes:
       paths:
-      - .gitlab-ci.yml
+      # - .gitlab-ci.yml
       - scripts/*.{py,sh}
       - scripts/Pipfile
       - scripts/requirements.txt
@@ -94,23 +96,27 @@ build-ubuntu-2004-lts:
     - test/cluster_logs/
   script:
   - IMAGE_FAMILY=$IMAGE_FAMILY_ROOT-$IMAGE_OS
-  - IMAGE_NAME=$(jq -r ".last_run_uuid as $uuid | .builds | map(select(.packer_run_uuid
-    == $uuid)) | .[].artifact_id" < $GOOGLE_APPLICATION_CREDENTIALS)
-  - CLUSTER_NAME=test$(tr -dc a-z </dev/urandom | head -c2)
-  - echo $CLUSTER_NAME > cluster_name
-  - echo "Testing ${IMAGE_NAME:SLURM_IMAGE_FAMILY}"
+  - echo "Image family $IMAGE_FAMILY"
+  - >
+    IMAGE_NAME=$(
+    jq -r '.last_run_uuid as $uuid | .builds | map(select(.packer_run_uuid == $uuid))
+    | .[].artifact_id' < packer/manifest.json || true
+    )
+  - echo "Testing ${IMAGE_NAME:-$IMAGE_FAMILY}"
   - cd test
-  - pip3 install pipenv
+  - CLUSTER_NAME="test$(tr -dc a-z </dev/urandom | head -c2)"
+  - echo $CLUSTER_NAME | tee cluster_name
   - pipenv install
   - >
     pipenv run pytest -vs
     --project-id=$GCP_PROJECT_ID
-    --cluster-name=
+    --cluster-name=$CLUSTER_NAME
     --image-project=$GCP_PROJECT_ID
-    --image-family=$SLURM_IMAGE_FAMILY
-    --image=${IMAGE_NAME:null}
+    --image-family=$IMAGE_FAMILY
+    --image=${IMAGE_NAME:-null}
   after_script:
   - cd test
+  - pipenv install
   - pipenv run ./cleanup $(cat cluster_name)
 
 test-centos-7:
