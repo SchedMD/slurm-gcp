@@ -22,8 +22,18 @@ def pytest_addoption(parser):
         "--project-id", action="store", help="GCP project to deploy the cluster to"
     )
     parser.addoption("--cluster-name", action="store", help="cluster name to deploy")
+    none_list = set(
+        [
+            "null",
+            "none",
+        ]
+    )
     parser.addoption(
-        "--image", action="store", nargs="?", help="image name to use for test cluster"
+        "--image",
+        action="store",
+        nargs="?",
+        type=lambda a: None if a.lower() in none_list else a,
+        help="image name to use for test cluster",
     )
     parser.addoption(
         "--image-family",
