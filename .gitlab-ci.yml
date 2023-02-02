@@ -1,7 +1,4 @@
 ---
-image:
-  name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.4
-
 workflow:
   # skip pipeline if the source is a tag
 - if: $CI_COMMIT_TAG
@@ -12,75 +9,50 @@ workflow:
   when: never
 - when: always
 
-variables:
-  #DOCKER_HOST: tcp://docker:2376
-  #DOCKER_TLS_CERTDIR: "/certs"
-  #TAG_LATEST: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
-  #TAG_COMMIT: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
-  GOOGLE_APPLICATION_CREDENTIALS: $CI_PROJECT_DIR/sa.json
-  SLURM_VERSION: 22.05.8
-  IMAGE_PREFIX: $CI_COMMIT_BRANCH
-
-before_script:
-  #- docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-- packer --version
-- echo $SERVICE_ACCOUNT > $GOOGLE_APPLICATION_CREDENTIALS
-- GCP_PROJECT_ID=$(jq -r .project_id < $GOOGLE_APPLICATION_CREDENTIALS)
-- GCP_SA_EMAIL=$(jq -r .client_email < $GOOGLE_APPLICATION_CREDENTIALS)
-- GCP_SA_ID=$(jq -r .client_id < $GOOGLE_APPLICATION_CREDENTIALS)
-
-- SLURM_VERSION_ALT=$(tr \. - <<< $SLURM_VERSION)
-- IMAGE_FAMILY_ROOT=$IMAGE_PREFIX-v5-slurm-$SLURM_VERSION_ALT
-
-- gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
-- gcloud config set project $GCP_PROJECT_ID
-
 stages:
-- validate
 - build-images
 - test-clusters
 
 default:
+  image:
+    name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.4
+
   retry: 2
 
-validate-packer:
-  stage: validate
-  rules: &build-image-rules
+  variables:
+    GOOGLE_APPLICATION_CREDENTIALS: $CI_PROJECT_DIR/sa.json
+    SLURM_VERSION: 22.05.8
+    IMAGE_PREFIX: $CI_COMMIT_BRANCH
+
+  before_script:
+  - packer --version
+  - echo $SERVICE_ACCOUNT > $GOOGLE_APPLICATION_CREDENTIALS
+  - GCP_PROJECT_ID=$(jq -r .project_id < $GOOGLE_APPLICATION_CREDENTIALS)
+  - GCP_SA_EMAIL=$(jq -r .client_email < $GOOGLE_APPLICATION_CREDENTIALS)
+  - GCP_SA_ID=$(jq -r .client_id < $GOOGLE_APPLICATION_CREDENTIALS)
+
+  - SLURM_VERSION_ALT=$(tr \. - <<< $SLURM_VERSION)
+  - IMAGE_FAMILY_ROOT=$IMAGE_PREFIX-v5-slurm-$SLURM_VERSION_ALT
+
+  - gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
+  - gcloud config set project $GCP_PROJECT_ID
+
+.build-image:
+  stage: build-images
+  rules:
   - changes:
       paths:
+      - .gitlab-ci.yml
       - scripts/*.{py,sh}
       - scripts/Pipfile
       - scripts/requirements.txt
       - ansible/**/*
       - packer/**/*
-  - if: $CI_PIPELINE_SOURCE == "schedule"
-    when: always
-    allow_failure: true
-  - when: manual
-    if: $BUILD_IMAGES == "true"
-    allow_failure: true
-  script:
-  - echo "Validating packer configuration"
-  - printenv
-  - cd packer
-  - packer init .
-  - >
-    packer validate -var-file=example.pkrvars.hcl
-    -var "project_id=$GCP_PROJECT_ID"
-    -var "slurm_version=$SLURM_VERSION"
-    .
-
-build-centos-7:
-  stage: build-images
-  rules: *build-image-rules
-  needs: [validate-packer]
-  variables:
-    IMAGE_OS: centos-7
-  artifacts: &build-artifact
+  artifacts:
     name: image-manifest-$IMAGE_PREFIX-$IMAGE_OS
     paths:
     - packer/manifest.json
-  script: &build-image
+  script:
   - echo "Building $IMAGE_OS image for $IMAGE_PREFIX"
   - cd packer
   - packer init .
@@ -93,48 +65,38 @@ build-centos-7:
     .
   - echo "packer build $IMAGE_OS completed"
 
-build-hpc-centos-7:
-  stage: build-images
-  rules: *build-image-rules
-  needs: [validate-packer]
-  variables:
-    IMAGE_OS: hpc-centos-7
-  artifacts: *build-artifact
-  script: *build-image
-
-build-debian-10:
-  stage: build-images
-  rules: *build-image-rules
-  needs: [validate-packer]
-  variables:
-    IMAGE_OS: debian-10
-  artifacts: *build-artifact
-  script: *build-image
-
-build-ubuntu-2004-lts:
-  stage: build-images
-  rules: *build-image-rules
-  needs: [validate-packer]
-  variables:
-    IMAGE_OS: ubuntu-2004-lts
-  artifacts: *build-artifact
-  script: *build-image
-
-test-centos-7:
-  stage: test-clusters
-  needs:
-  - job: build-centos-7
-    optional: true
+build-centos-7:
+  extends: .build-image
   variables:
     IMAGE_OS: centos-7
-  artifacts: &artifacts
-    name: $CI_JOB_STAGE-$CI_COMMIT_REF_NAME-logs
+
+build-hpc-centos-7:
+  extends: .build-image
+  variables:
+    IMAGE_OS: hpc-centos-7
+
+build-debian-10:
+  extends: .build-image
+  variables:
+    IMAGE_OS: debian-10
+
+build-ubuntu-2004-lts:
+  extends: .build-image
+  variables:
+    IMAGE_OS: ubuntu-2004-lts
+
+.test-image:
+  stage: test-clusters
+  artifacts:
+    name: $CI_COMMIT_REF_NAME-$CI_JOB_NAME-logs
     paths:
     - test/cluster_logs/
-  script: &test-cluster
+  script:
   - IMAGE_FAMILY=$IMAGE_FAMILY_ROOT-$IMAGE_OS
   - IMAGE_NAME=$(jq -r ".last_run_uuid as $uuid | .builds | map(select(.packer_run_uuid
     == $uuid)) | .[].artifact_id" < $GOOGLE_APPLICATION_CREDENTIALS)
+  - CLUSTER_NAME=test$(tr -dc a-z </dev/urandom | head -c2)
+  - echo $CLUSTER_NAME > cluster_name
   - echo "Testing ${IMAGE_NAME:SLURM_IMAGE_FAMILY}"
   - cd test
   - pip3 install pipenv
@@ -142,37 +104,42 @@ test-centos-7:
   - >
     pipenv run pytest -vs
     --project-id=$GCP_PROJECT_ID
-    --cluster-name=test$(tr -dc a-z </dev/urandom | head -c2)
+    --cluster-name=
     --image-project=$GCP_PROJECT_ID
     --image-family=$SLURM_IMAGE_FAMILY
     --image=${IMAGE_NAME:null}
+  after_script:
+  - cd test
+  - pipenv run ./cleanup $(cat cluster_name)
+
+test-centos-7:
+  extends: .test-image
+  needs:
+  - job: build-centos-7
+    optional: true
+  variables:
+    IMAGE_OS: centos-7
 
 test-hpc-centos-7:
-  stage: test-clusters
+  extends: .test-image
   needs:
   - job: build-hpc-centos-7
     optional: true
   variables:
     IMAGE_OS: hpc-centos-7
-  artifacts: *artifacts
-  script: *test-cluster
 
 test-debian-10:
-  stage: test-clusters
+  extends: .test-image
   needs:
   - job: build-debian-10
     optional: true
   variables:
     IMAGE_OS: debian-10
-  artifacts: *artifacts
-  script: *test-cluster
 
 test-ubuntu-2004-lts:
-  stage: test-clusters
+  extends: .test-image
   needs:
   - job: build-ubuntu-2004-lts
     optional: true
   variables:
     IMAGE_OS: ubuntu-2004-lts
-  artifacts: *artifacts
-  script: *test-cluster
