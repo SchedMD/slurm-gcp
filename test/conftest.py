@@ -117,6 +117,7 @@ def cluster(request, applied):
     log.info("waiting for cluster to be available")
     cluster.activate()
     log.info("cluster is now responding")
+    return cluster
 
 
 @pytest.fixture(scope="session")
