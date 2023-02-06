@@ -117,7 +117,7 @@ build-ubuntu-2004-lts:
   after_script:
   - cd test
   - pipenv install
-  - pipenv run ./cleanup $(cat cluster_name)
+  - pipenv run ./cleanup.py $(cat cluster_name)
 
 test-centos-7:
   extends: .test-image
