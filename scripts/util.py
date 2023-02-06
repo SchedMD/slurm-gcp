@@ -1101,6 +1101,22 @@ class Lookup:
         return Path(self.cfg.slurm_bin_dir if cfg else "") / "scontrol"
 
     @property
+    def sinfo_bin(self):
+        return Path(self.cfg.slurm_bin_dir if cfg else "") / "sinfo"
+
+    def sinfo(self, cmd=None):
+        cmd = " ".join(str(s) for s in (self.sinfo_bin, cmd) if s is not None)
+        return run(cmd).stdout.rstrip()
+
+    @property
+    def squeue_bin(self):
+        return Path(self.cfg.slurm_bin_dir if cfg else "") / "squeue"
+
+    def squeue(self, cmd=None):
+        cmd = " ".join(str(s) for s in (self.squeue_bin, cmd) if s is not None)
+        return run(cmd).stdout.rstrip()
+
+    @property
     def template_map(self):
         return self.cfg.template_map
 
@@ -1273,30 +1289,38 @@ class Lookup:
         project = project or self.project
         instance_fields = ",".join(
             [
-                "kind",
-                "id",
-                "creationTimestamp",
-                "name",
-                "tags",
-                "machineType",
-                "status",
-                "zone",
-                "networkInterfaces",
-                "disks",
-                "metadata",
-                "serviceAccounts",
-                "selfLink",
-                "scheduling",
+                "advancedMachineFeatures",
                 "cpuPlatform",
-                "labels",
-                "labelFingerprint",
-                # "startRestricted",
-                # "deletionProtection",
-                "shieldedInstanceConfig",
-                "shieldedInstanceIntegrityPolicy",
+                "creationTimestamp",
+                "disks",
+                "disks",
                 "fingerprint",
+                "guestAccelerators",
+                "hostname",
+                "id",
+                "kind",
+                "labelFingerprint",
+                "labels",
                 "lastStartTimestamp",
                 "lastStopTimestamp",
+                "lastSuspendedTimestamp",
+                "machineType",
+                "metadata",
+                "name",
+                "networkInterfaces",
+                "resourceStatus",
+                "scheduling",
+                "selfLink",
+                "serviceAccounts",
+                "shieldedInstanceConfig",
+                "shieldedInstanceIntegrityPolicy",
+                "sourceMachineImage",
+                "status",
+                "statusMessage",
+                "tags",
+                "zone",
+                # "deletionProtection",
+                # "startRestricted",
             ]
         )
         fields = f"items.zones.instances({instance_fields}),nextPageToken"

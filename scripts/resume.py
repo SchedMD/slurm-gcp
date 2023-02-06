@@ -57,7 +57,7 @@ PLACEMENT_MAX_CNT = 150
 BULK_INSERT_LIMIT = 1000
 
 
-def instance_properties(partition, model, placement_group):
+def instance_properties(partition, model, placement_group, labels=None):
     node_group = lkp.node_group(model)
     template = lkp.node_template(model)
     template_info = lkp.template_info(template)
@@ -109,8 +109,13 @@ def instance_properties(partition, model, placement_group):
     labels = {
         "slurm_cluster_name": cfg.slurm_cluster_name,
         "slurm_instance_role": "compute",
+        **(labels or {}),
     }
     props.labels = {**template_info.labels, **labels}
+
+    for disk in template_info.disks:
+        disk.initializeParams.labels.update(labels)
+    props.disks = template_info.disks
 
     if placement_group:
         props.scheduling = {
@@ -145,7 +150,7 @@ def per_instance_properties(node):
     return props
 
 
-def create_instances_request(nodes, placement_group, exclusive=False):
+def create_instances_request(nodes, placement_group, exclusive_job=None):
     """Call regionInstances.bulkInsert to create instances"""
     assert len(nodes) > 0
     if placement_group:
@@ -161,14 +166,17 @@ def create_instances_request(nodes, placement_group, exclusive=False):
 
     body = NSDict()
     body.count = len(nodes)
-    if not exclusive:
+    if exclusive_job is not None:
         body.minCount = 1
 
     # source of instance properties
     body.sourceInstanceTemplate = template
 
+    labels = dict(slurm_job_ids=exclusive_job or "")
     # overwrites properties accross all instances
-    body.instanceProperties = instance_properties(partition, model, placement_group)
+    body.instanceProperties = instance_properties(
+        partition, model, placement_group, labels
+    )
 
     # key is instance name, value overwrites properties
     body.perInstanceProperties = {k: per_instance_properties(k) for k in nodes}
@@ -208,7 +216,7 @@ def expand_nodelist(nodelist):
     return nodes
 
 
-def resume_nodes(nodelist, placement_groups=None, exclusive=False):
+def resume_nodes(nodelist, placement_groups=None, exclusive_job=False):
     """resume nodes in nodelist"""
     # support already expanded list
     if isinstance(nodelist, str):
@@ -245,7 +253,9 @@ def resume_nodes(nodelist, placement_groups=None, exclusive=False):
 
     # make all bulkInsert requests and execute with batch
     inserts = {
-        group: create_instances_request(chunk.nodes, chunk.placement_group, exclusive)
+        group: create_instances_request(
+            chunk.nodes, chunk.placement_group, exclusive_job
+        )
         for group, chunk in grouped_nodes.items()
     }
 
@@ -425,7 +435,7 @@ def prolog_resume_nodes(job_id, nodelist):
         )
         if not valid_placement_nodes(job_id, nodelist):
             return
-    resume_nodes(nodes, placement_groups, exclusive=True)
+    resume_nodes(nodes, placement_groups, exclusive_job=job_id)
 
 
 def main(nodelist, job_id, force=False):
