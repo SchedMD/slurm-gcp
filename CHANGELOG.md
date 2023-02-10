@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Fix external network_storage being added to exportfs
+
 ## \[5.4.1\]
 
 - Use FQDN as default `slurm_control_addr`.
