@@ -812,7 +812,7 @@ def setup_nfs_exports():
     mounts = resolve_network_storage()
     # controller mounts
     _, con_mounts = partition_mounts(mounts)
-    con_mounts = {m.remote_mount: m for m in mounts}
+    con_mounts = {m.remote_mount: m for m in con_mounts}
     # manually add munge_mount
     con_mounts.update(
         {
@@ -829,7 +829,8 @@ def setup_nfs_exports():
         # get internal mounts for each partition by calling
         # prepare_network_mounts as from a node in each partition
         part_mounts = resolve_network_storage(part)
-        part_mounts = {m.remote_mount: m for m in part_mounts}
+        _, p_mounts = partition_mounts(part_mounts)
+        part_mounts = {m.remote_mount: m for m in p_mounts}
         con_mounts.update(part_mounts)
 
     # export path if corresponding selector boolean is True
