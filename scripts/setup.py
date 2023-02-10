@@ -23,6 +23,7 @@ import subprocess
 import sys
 import stat
 import time
+import socket
 from collections import defaultdict
 from concurrent.futures import as_completed
 from functools import partialmethod, lru_cache
@@ -637,7 +638,8 @@ def partition_mounts(mounts):
     """partition into cluster-external and internal mounts"""
 
     def internal_mount(mount):
-        return mount.server_ip == lkp.control_host
+        mount_addr = socket.gethostbyname(mount.server_ip)
+        return mount_addr == lkp.control_host_addr
 
     return separate(internal_mount, mounts)
 

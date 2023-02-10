@@ -1088,6 +1088,10 @@ class Lookup:
     def control_host(self):
         return self.cfg.slurm_control_host
 
+    @cached_property
+    def control_host_addr(self):
+        return socket.gethostbyname(self.cfg.slurm_control_host)
+
     @property
     def control_host_port(self):
         return self.cfg.slurm_control_host_port
