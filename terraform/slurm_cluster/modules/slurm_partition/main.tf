@@ -61,7 +61,7 @@ locals {
 
   enable_placement_groups = var.enable_placement_groups && alltrue([
     for x in data.google_compute_instance_template.group_template
-    : length(regexall("^((c2d?)|(a2))\\-\\w+\\-\\w+$", x.machine_type)) > 0
+    : length(regexall("^(a2|c2d?|n2d?)\\-\\w+\\-\\w+$", x.machine_type)) > 0
   ]) && alltrue([for x in local.partition_nodes : x.node_count_static == 0])
 
   compute_list = flatten([for x in local.partition.partition_nodes : x.node_list])

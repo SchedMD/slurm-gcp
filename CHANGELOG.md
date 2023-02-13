@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[Next\]
 
 - Fix external network_storage being added to exportfs
+- Fix supported instance family for placement groups
 
 ## \[5.4.1\]
 
