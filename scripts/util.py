@@ -1271,19 +1271,45 @@ class Lookup:
     def instances(self, project=None, slurm_cluster_name=None):
         slurm_cluster_name = slurm_cluster_name or self.cfg.slurm_cluster_name
         project = project or self.project
-        fields = (
-            "items.zones.instances(name,zone,status,machineType,metadata),nextPageToken"
+        instance_fields = ",".join(
+            [
+                "kind",
+                "id",
+                "creationTimestamp",
+                "name",
+                "tags",
+                "machineType",
+                "status",
+                "zone",
+                "networkInterfaces",
+                "disks",
+                "metadata",
+                "serviceAccounts",
+                "selfLink",
+                "scheduling",
+                "cpuPlatform",
+                "labels",
+                "labelFingerprint",
+                # "startRestricted",
+                # "deletionProtection",
+                "shieldedInstanceConfig",
+                "shieldedInstanceIntegrityPolicy",
+                "fingerprint",
+                "lastStartTimestamp",
+                "lastStopTimestamp",
+            ]
         )
+        fields = f"items.zones.instances({instance_fields}),nextPageToken"
         flt = f"labels.slurm_cluster_name={slurm_cluster_name} AND name:{slurm_cluster_name}-*"
         act = self.compute.instances()
         op = act.aggregatedList(project=project, fields=fields, filter=flt)
 
         def properties(inst):
             """change instance properties to a preferred format"""
+            inst["zoneLink"] = inst["zone"]
             inst["zone"] = trim_self_link(inst["zone"])
-            machine_link = inst["machineType"]
-            inst["machineType"] = trim_self_link(machine_link)
-            inst["machineTypeLink"] = machine_link
+            inst["machineTypeLink"] = inst["machineType"]
+            inst["machineType"] = trim_self_link(inst["machineType"])
             # metadata is fetched as a dict of dicts like:
             # {'key': key, 'value': value}, kinda silly
             metadata = {i["key"]: i["value"] for i in inst["metadata"].get("items", [])}
