@@ -411,6 +411,7 @@ class Cluster:
             "etc/slurm.conf",
             "etc/cloud.conf",
             "etc/gres.conf",
+            "setup.log",
             "config.yaml",
         ]
         with self.controller_ssh.open_sftp() as sftp:
