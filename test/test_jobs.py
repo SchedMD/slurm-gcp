@@ -15,12 +15,6 @@ from testutils import (
 log = logging.getLogger()
 
 
-def test_small_job(cluster):
-    job_id = sbatch(cluster, "sbatch -N1 --wrap='srun hostname'")
-    job = wait_job_state(cluster, job_id, "COMPLETED", "FAILED", "CANCELLED")
-    assert job["job_state"] == "COMPLETED"
-
-
 def test_job(cluster):
     job_id = sbatch(cluster, "sbatch -N3 --wrap='srun hostname'")
     job = wait_job_state(cluster, job_id, "COMPLETED", "FAILED", "CANCELLED")

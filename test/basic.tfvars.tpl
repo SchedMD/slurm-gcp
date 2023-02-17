@@ -1,11 +1,10 @@
+project_id = $project_id
 
-#project_id = "<PROJECT_ID>"
-
-#slurm_cluster_name = "basic"
+slurm_cluster_name = $cluster_name
 
 region = "us-central1"
 
-enable_bigquery_load         = false
+enable_bigquery_load         = true
 enable_cleanup_compute       = true
 enable_cleanup_subscriptions = false
 enable_reconfigure           = false

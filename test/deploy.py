@@ -107,14 +107,9 @@ class Configuration:
     image_family: str = None
 
     def __post_init__(self):
-        self.tfvars.update(
-            {
-                "project_id": self.project_id,
-                "slurm_cluster_name": self.cluster_name,
-            }
-        )
         self.tf = TerraformTest(self.moduledir)
         tmp = self._template_tfvars = self.tfvars_file
+        # basic.tfvars.tpl -> <cluster_name>-basic.tfvars
         self.tfvars_file = self._template_tfvars.with_name(
             f"{self.cluster_name}-{tmp.stem}"
         )
@@ -130,6 +125,21 @@ class Configuration:
     def __str__(self):
         image = self.image or self.image_family
         return f"{self.cluster_name}: project={self.project_id} image={self.image_project}/{image} tfmodule={self.moduledir} tfvars={self.tfvars_file}"
+
+    def setup(self, **kwargs):
+        all_args = dict(extra_files=[self.tfvars_file], cleanup_on_exit=False)
+        all_args.update(kwargs)
+        return self.tf.setup(**all_args)
+
+    def apply(self, **kwargs):
+        all_args = dict(tf_vars=self.tfvars, tf_var_file=self.tfvars_file.name)
+        all_args.update(kwargs)
+        return self.tf.apply(**all_args)
+
+    def destroy(self, **kwargs):
+        all_args = dict(tf_vars=self.tfvars, tf_var_file=self.tfvars_file.name)
+        all_args.update(kwargs)
+        return self.tf.destroy(**all_args)
 
 
 class Tunnel:
@@ -401,6 +411,7 @@ class Cluster:
             "etc/slurm.conf",
             "etc/cloud.conf",
             "etc/gres.conf",
+            "setup.log",
             "config.yaml",
         ]
         with self.controller_ssh.open_sftp() as sftp:

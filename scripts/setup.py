@@ -23,6 +23,7 @@ import subprocess
 import sys
 import stat
 import time
+import socket
 from collections import defaultdict
 from concurrent.futures import as_completed
 from functools import partialmethod, lru_cache
@@ -637,7 +638,8 @@ def partition_mounts(mounts):
     """partition into cluster-external and internal mounts"""
 
     def internal_mount(mount):
-        return mount.server_ip == lkp.control_host
+        mount_addr = socket.gethostbyname(mount.server_ip)
+        return mount_addr == lkp.control_host_addr
 
     return separate(internal_mount, mounts)
 
@@ -810,7 +812,7 @@ def setup_nfs_exports():
     mounts = resolve_network_storage()
     # controller mounts
     _, con_mounts = partition_mounts(mounts)
-    con_mounts = {m.remote_mount: m for m in mounts}
+    con_mounts = {m.remote_mount: m for m in con_mounts}
     # manually add munge_mount
     con_mounts.update(
         {
@@ -827,7 +829,8 @@ def setup_nfs_exports():
         # get internal mounts for each partition by calling
         # prepare_network_mounts as from a node in each partition
         part_mounts = resolve_network_storage(part)
-        part_mounts = {m.remote_mount: m for m in part_mounts}
+        _, p_mounts = partition_mounts(part_mounts)
+        part_mounts = {m.remote_mount: m for m in p_mounts}
         con_mounts.update(part_mounts)
 
     # export path if corresponding selector boolean is True

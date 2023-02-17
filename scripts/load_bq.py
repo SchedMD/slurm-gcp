@@ -100,6 +100,9 @@ schema_fields = [
     schema_field("wckey", "STRING", "job wckey"),
     schema_field("qos", "STRING", "job qos"),
     schema_field("comment", "STRING", "job comment"),
+    schema_field("admin_comment", "STRING", "job admin comment"),
+    # extra will be added in 23.02
+    # schema_field("extra", "STRING", "job extra field"),
     schema_field("exitcode", "STRING", "job exit code"),
     schema_field("alloc_cpus", "INT64", "count of allocated CPUs"),
     schema_field("alloc_nodes", "INT64", "number of nodes allocated to job"),
@@ -139,6 +142,8 @@ slurm_field_map = {
     "wckey": "Wckey",
     "qos": "Qos",
     "comment": "Comment",
+    "admin_comment": "AdminComment",
+    # "extra": "Extra",
     "exit_code": "ExitCode",
     "alloc_cpus": "AllocCPUs",
     "alloc_nodes": "AllocNodes",

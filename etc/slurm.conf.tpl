@@ -51,6 +51,7 @@ MessageTimeout=60
 # LOGGING AND ACCOUNTING
 AccountingStorageType=accounting_storage/slurmdbd
 AccountingStorageHost={control_host}
+AccountingStoreFlags=job_comment
 ClusterName={name}
 SlurmctldLogFile={slurmlog}/slurmctld.log
 SlurmdLogFile={slurmlog}/slurmd-%n.log

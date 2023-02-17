@@ -25,8 +25,12 @@
 create and manage [Slurm](./docs/glossary.md#slurm) cluster infrastructure in
 [GCP](./docs/glossary.md#gcp), deployed in different configurations.
 
-A quickstart guide is found in the
-[GCP-Slurm v5 Quickstart Guide](https://bit.ly/slurm-gcp-v5guide).
+Google's
+[HPC Toolkit](https://cloud.google.com/blog/products/compute/new-google-cloud-hpc-toolkit),
+on [github](https://github.com/GoogleCloudPlatform/hpc-toolkit), can be used to
+manage and deploy [Slurm clusters](./docs/glossary.md#slurm) and other
+supporting infrastrucutre via
+[HPC Blueprints](https://cloud.google.com/hpc-toolkit/docs/setup/hpc-blueprint).
 
 See [supported Operating Systems](./docs/images.md#supported-operating-systems).
 
@@ -47,6 +51,12 @@ Also, join comunity discussions on either the
 
 `slurm-gcp` can be deployed and used in different configurations and methods to
 meet your computing needs.
+
+See
+[HPC Blueprints](https://cloud.google.com/hpc-toolkit/docs/setup/hpc-blueprint)
+for
+[HPC Toolkit](https://cloud.google.com/blog/products/compute/new-google-cloud-hpc-toolkit)
+example cluster configurations that are production ready.
 
 ### Cloud
 
