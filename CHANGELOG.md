@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fix supported instance family for placement groups
 - Add support for c3 instance family for placement groups.
 - Properly export job comment and admin comment to BigQuery.
+- Slurm updated to 22.05.8
 
 ## \[5.4.1\]
 
