@@ -52,6 +52,10 @@ logging:
       type: files
       include_paths:
       - /var/log/slurm/slurmsync.log
+    setup:
+      type: files
+      include_paths:
+      - /slurm/scripts/setup.log
     syslog:
       type: files
       include_paths:
@@ -94,6 +98,7 @@ logging:
         - slurm_resume
         - slurm_suspend
         - slurm_sync
+        - setup
         processors:
         - parse_slurmlog2
 metrics:

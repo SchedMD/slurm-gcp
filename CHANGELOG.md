@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[Next\]
 
 - Fix Terraform 1.4.0 incompatibilities.
+- `setup.log` now discoverable in GCP Cloud Logger.
 
 ## \[5.6.0\]
 
