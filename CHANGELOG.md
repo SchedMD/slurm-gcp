@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Fix Terraform 1.4.0 incompatibilities.
 - `setup.log` now discoverable in GCP Cloud Logger.
 - Job `admin_comment` contains last allocated node failure.
+- Resume failures now notify srun of the error.
 
 ## \[5.6.0\]
 

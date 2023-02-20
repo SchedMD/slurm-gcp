@@ -357,6 +357,7 @@ def update_job_comment(nodelist, comment):
     )
     for job in job_list:
         run(f"{lkp.scontrol} update jobid={job.job_id} admincomment='{comment}'")
+        run(f"{lkp.scontrol} notify {job.job_id} '{comment}'")
 
 
 def down_nodes(nodelist, reason):
