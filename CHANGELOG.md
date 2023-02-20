@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Resume failures now notify srun of the error.
 - startup-script - Add logging level prefixes for parsing.
 - Fix slurm and slurm-gcp logs not showing up in Cloud Logging.
+- resume.py - No longer validate machine_type with placement groups.
 
 ## \[5.6.0\]
 

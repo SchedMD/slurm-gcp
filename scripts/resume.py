@@ -427,14 +427,11 @@ def valid_placement_nodes(job_id, nodelist):
     valid_types = ["a2", "c2", "c2d", "c3", "n2", "n2d"]
     for prefix, machine_type in machine_types.items():
         if machine_type.split("-")[0] not in valid_types:
-            log.error(f"Unsupported machine type for placement policy: {machine_type}.")
+            log.warn(f"Unsupported machine type for placement policy: {machine_type}.")
             fail = True
     if fail:
-        log.error(
+        log.warn(
             f"Please use a valid machine type with placement policy: ({','.join(valid_types)})"
-        )
-        hold_job(
-            job_id, "Node machine type in partition does not support placement policy."
         )
         return False
     return True
@@ -457,8 +454,7 @@ def prolog_resume_nodes(job_id, nodelist):
         placement_groups = create_placement_groups(
             job_id, nodes, partition.partition_name
         )
-        if not valid_placement_nodes(job_id, nodelist):
-            return
+        valid_placement_nodes(job_id, nodelist)
     resume_nodes(nodes, placement_groups, exclusive_job=job_id)
 
 
