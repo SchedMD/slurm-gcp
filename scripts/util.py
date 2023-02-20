@@ -128,6 +128,11 @@ slurmdirs = NSDict(
 )
 
 
+yaml.SafeDumper.yaml_representers[
+    None
+] = lambda self, data: yaml.representer.SafeRepresenter.represent_str(self, str(data))
+
+
 class LogFormatter(logging.Formatter):
     """adds logging flags to the levelname in log records"""
 
@@ -361,7 +366,13 @@ def map_with_futures(func, seq):
             future = exe.submit(func, i)
             futures.append(future)
         for future in futures:
-            yield future.result(), future.exception()
+            # Will be result or raise Exception
+            res = None
+            try:
+                res = future.result()
+            except Exception as e:
+                res = e
+            yield res
 
 
 def is_exclusive_node(node):

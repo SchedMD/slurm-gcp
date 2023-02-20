@@ -264,14 +264,16 @@ def resume_nodes(nodelist, placement_groups=None, exclusive_job=None):
         zip(inserts.keys(), map_with_futures(ensure_execute, inserts.values()))
     )
     log.debug(f"bulk_ops={yaml.safe_dump(bulk_ops)}")
-    started = {group: op for group, (op, err) in bulk_ops.items() if err is None}
+    started = {
+        group: op for group, op in bulk_ops.items() if not isinstance(op, Exception)
+    }
     failed = {
-        group: (op, err) for group, (op, err) in bulk_ops.items() if err is not None
+        group: err for group, err in bulk_ops.items() if isinstance(err, Exception)
     }
     if failed:
-        failed_reqs = [f"{e}" for _, (_, e) in failed.items()]
+        failed_reqs = [str(e) for e in failed.items()]
         log.error("bulkInsert API failures: {}".format("; ".join(failed_reqs)))
-        for ident, (_, exc) in failed.items():
+        for ident, exc in failed.items():
             down_nodes(grouped_nodes[ident].nodes, exc._get_reason())
 
     if log.isEnabledFor(logging.DEBUG):
