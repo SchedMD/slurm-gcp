@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -340,10 +341,29 @@ def resume_nodes(nodelist, placement_groups=None, exclusive_job=None):
         execute_with_futures(subscription_create, nodelist)
 
 
+def update_job_comment(nodelist, comment):
+    resume_data = get_resume_file_data()
+    if resume_data is None:
+        return
+    else:
+        resume_data = NSDict(resume_data)
+    if isinstance(nodelist, list):
+        nodelist = util.to_hostlist(nodelist)
+
+    job_list = (
+        job
+        for job in resume_data.jobs
+        if any(map(lambda each: each in nodelist, to_hostlist(job.nodes)))
+    )
+    for job in job_list:
+        run(f"{lkp.scontrol} update jobid={job.job_id} admincomment='{comment}'")
+
+
 def down_nodes(nodelist, reason):
     """set nodes down with reason"""
     if isinstance(nodelist, list):
         nodelist = util.to_hostlist(nodelist)
+    update_job_comment(nodelist, reason)
     run(f"{lkp.scontrol} update nodename={nodelist} state=down reason='{reason}'")
 
 
@@ -439,6 +459,18 @@ def prolog_resume_nodes(job_id, nodelist):
         if not valid_placement_nodes(job_id, nodelist):
             return
     resume_nodes(nodes, placement_groups, exclusive_job=job_id)
+
+
+def get_resume_file_data():
+    # Only ResumeProgram will have this
+    SLURM_RESUME_FILE = os.getenv("SLURM_RESUME_FILE")
+    obj = None
+
+    if SLURM_RESUME_FILE is not None:
+        resume_data = open(SLURM_RESUME_FILE)
+        obj = json.loads(resume_data.read())
+
+    return obj
 
 
 def main(nodelist, job_id, force=False):
