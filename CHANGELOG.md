@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - `setup.log` now discoverable in GCP Cloud Logger.
 - Job `admin_comment` contains last allocated node failure.
 - Resume failures now notify srun of the error.
+- startup-script - Add logging level prefixes for parsing.
 
 ## \[5.6.0\]
 
