@@ -138,6 +138,12 @@ locals {
     slurm_bin_dir           = "/usr/local/bin"
     output_dir              = "./etc"
     install_dir             = null
+    munge_mount = {
+      server_ip     = null
+      remote_mount  = "/etc/munge"
+      fs_type       = "nfs"
+      mount_options = null
+    }
   }
 }
 
