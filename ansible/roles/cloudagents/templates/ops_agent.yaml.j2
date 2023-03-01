@@ -14,12 +14,6 @@
 
 logging:
   receivers:
-    mysql_error:
-      type: mysql_error
-    mysql_general:
-      type: mysql_general
-    mysql_slow:
-      type: mysql_slow
     slurmdbd:
       type: files
       include_paths:
@@ -56,11 +50,6 @@ logging:
       type: files
       include_paths:
       - /slurm/scripts/setup.log
-    syslog:
-      type: files
-      include_paths:
-      - /var/log/messages
-      - /var/log/syslog
   processors:
     parse_slurmlog:
       type: parse_regex
@@ -76,14 +65,6 @@ logging:
       time_format: "%Y-%M-%d %H:%M:%S,%L"
   service:
     pipelines:
-      default_pipeline:
-        receivers:
-        - syslog
-      mysql:
-        receivers:
-        - mysql_error
-        - mysql_general
-        - mysql_slow
       slurmlog_pipeline:
         receivers:
         - slurmdbd
@@ -101,18 +82,3 @@ logging:
         - setup
         processors:
         - parse_slurmlog2
-metrics:
-  receivers:
-    hostmetrics:
-      type: hostmetrics
-      collection_interval: 60s
-    mysql:
-      type: mysql
-  service:
-    pipelines:
-      default_pipeline:
-        receivers:
-        - hostmetrics
-      mysql:
-        receivers:
-        - mysql
