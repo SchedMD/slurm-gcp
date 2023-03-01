@@ -191,8 +191,9 @@ def create_instances_request(nodes, placement_group, exclusive_job=None):
             for zone in partition.zone_policy_deny or []
         },
     }
+    body.locationPolicy.targetShape = cfg.zone_target_shape or "ANY_SINGLE_ZONE"
     if zones:
-        body.locationPolicy = {"locations": zones}
+        body.locationPolicy.locations = zones
 
     request = util.compute.regionInstances().bulkInsert(
         project=cfg.project, region=region, body=body.to_dict()

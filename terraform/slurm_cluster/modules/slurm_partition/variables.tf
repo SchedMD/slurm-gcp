@@ -213,6 +213,31 @@ variable "region" {
   default     = ""
 }
 
+variable "zone_target_shape" {
+  description = <<EOD
+Strategy for distributing VMs across zones in a region.
+ANY
+  GCE picks zones for creating VM instances to fulfill the requested number of VMs
+  within present resource constraints and to maximize utilization of unused zonal
+  reservations.
+ANY_SINGLE_ZONE (default)
+  GCE always selects a single zone for all the VMs, optimizing for resource quotas,
+  available reservations and general capacity.
+BALANCED
+  GCE prioritizes acquisition of resources, scheduling VMs in zones where resources
+  are available while distributing VMs as evenly as possible across allowed zones
+  to minimize the impact of zonal failure.
+EOD
+  type        = string
+  default     = "ANY_SINGLE_ZONE"
+  validation {
+    condition     = contains(["ANY", "ANY_SINGLE_ZONE", "BALANCED"], var.zone_target_shape)
+    error_message = <<-EOD
+      Allowed values for zone_target_shape are "ANY", "ANY_SINGLE_ZONE", or "BALANCED".
+      EOD
+  }
+}
+
 variable "zone_policy_allow" {
   description = <<EOD
 Partition nodes will prefer to be created in the listed zones. If a zone appears

@@ -52,6 +52,7 @@ module "slurm_partition" {
   slurm_cluster_name                = var.slurm_cluster_name
   subnetwork_project                = each.value.subnetwork_project
   subnetwork                        = each.value.subnetwork
+  zone_target_shape                 = each.value.zone_target_shape
   zone_policy_allow                 = each.value.zone_policy_allow
   zone_policy_deny                  = each.value.zone_policy_deny
 }

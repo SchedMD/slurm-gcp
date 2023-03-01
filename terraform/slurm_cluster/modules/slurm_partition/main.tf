@@ -25,6 +25,7 @@ locals {
     partition_nodes                   = local.partition_nodes
     partition_startup_scripts_timeout = var.partition_startup_scripts_timeout
     subnetwork                        = data.google_compute_subnetwork.partition_subnetwork.self_link
+    zone_target_shape                 = var.zone_target_shape
     zone_policy_allow                 = setsubtract([for x in var.zone_policy_allow : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0], var.zone_policy_deny)
     zone_policy_deny                  = [for x in var.zone_policy_deny : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0]
     enable_job_exclusive              = local.enable_placement_groups || var.enable_job_exclusive

@@ -539,6 +539,7 @@ EOD
     region             = string
     subnetwork_project = string
     subnetwork         = string
+    zone_target_shape  = string
     zone_policy_allow  = list(string)
     zone_policy_deny   = list(string)
   }))

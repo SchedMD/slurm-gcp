@@ -177,6 +177,7 @@ partitions = [
     region             = null
     subnetwork_project = null
     subnetwork         = "default"
+    zone_target_shape = "ANY_SINGLE_ZONE"
     zone_policy_allow  = []
     zone_policy_deny   = []
   },
@@ -248,6 +249,7 @@ partitions = [
     region             = null
     subnetwork_project = null
     subnetwork         = "default"
+    zone_target_shape = "ANY_SINGLE_ZONE"
     zone_policy_allow  = []
     zone_policy_deny   = []
   },
@@ -334,6 +336,7 @@ partitions = [
     region             = null
     subnetwork_project = null
     subnetwork         = "default"
+    zone_target_shape = "ANY_SINGLE_ZONE"
     zone_policy_allow  = []
     zone_policy_deny   = []
   },
@@ -420,6 +423,7 @@ partitions = [
     region             = null
     subnetwork_project = null
     subnetwork         = "default"
+    zone_target_shape = "ANY_SINGLE_ZONE"
     zone_policy_allow  = []
     zone_policy_deny   = []
   },

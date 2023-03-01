@@ -228,6 +228,7 @@ variable "partitions" {
       }))
       partition_startup_scripts_timeout = number
       subnetwork                        = string
+      zone_target_shape                 = string
       zone_policy_allow                 = list(string)
       zone_policy_deny                  = list(string)
     })

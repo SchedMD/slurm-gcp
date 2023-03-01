@@ -196,6 +196,7 @@ partitions = [
       },
     ]
     region            = null
+    zone_target_shape = "ANY_SINGLE_ZONE"
     zone_policy_allow = []
     zone_policy_deny  = []
   },
@@ -259,6 +260,7 @@ partitions = [
       },
     ]
     region            = null
+    zone_target_shape = "ANY_SINGLE_ZONE"
     zone_policy_allow = []
     zone_policy_deny  = []
   },

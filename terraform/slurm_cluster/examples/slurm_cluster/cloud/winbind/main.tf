@@ -144,6 +144,7 @@ locals {
       region             = null
       subnetwork_project = null
       subnetwork         = data.google_compute_subnetwork.this.self_link
+      zone_target_shape  = "ANY_SINGLE_ZONE"
       zone_policy_allow  = []
       zone_policy_deny   = []
     },
@@ -198,6 +199,7 @@ locals {
       region             = null
       subnetwork_project = null
       subnetwork         = data.google_compute_subnetwork.this.self_link
+      zone_target_shape  = "ANY_SINGLE_ZONE"
       zone_policy_allow  = []
       zone_policy_deny   = []
     },
