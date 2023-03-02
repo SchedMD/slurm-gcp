@@ -1412,6 +1412,10 @@ class Lookup:
 
     def machine_type(self, machine_type, project=None, zone=None):
         """ """
+        custom_patt = re.compile(
+            r"((?P<family>\w+)-)?custom-(?P<cpus>\d+)-(?P<mem>\d+)"
+        )
+        custom_match = custom_patt.match(machine_type)
         if zone:
             project = project or self.project
             machine_info = ensure_execute(
@@ -1419,8 +1423,9 @@ class Lookup:
                     project=project, zone=zone, machineType=machine_type
                 )
             )
-        elif "custom" in machine_type:
-            cpu_type, _, cpus, mem = machine_type.split("-")
+        elif custom_match is not None:
+            groups = custom_match.groupdict()
+            cpus, mem = (groups[k] for k in ["cpus", "mem"])
             machine_info = {
                 "guestCpus": int(cpus),
                 "memoryMb": int(mem),
