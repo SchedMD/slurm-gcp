@@ -172,7 +172,7 @@ def create_instances_request(nodes, placement_group, exclusive_job=None):
     # source of instance properties
     body.sourceInstanceTemplate = template
 
-    labels = dict(slurm_job_ids=exclusive_job or "")
+    labels = dict(slurm_job_id=exclusive_job) if exclusive_job is not None else None
     # overwrites properties accross all instances
     body.instanceProperties = instance_properties(
         partition, model, placement_group, labels
@@ -217,7 +217,7 @@ def expand_nodelist(nodelist):
     return nodes
 
 
-def resume_nodes(nodelist, placement_groups=None, exclusive_job=False):
+def resume_nodes(nodelist, placement_groups=None, exclusive_job=None):
     """resume nodes in nodelist"""
     # support already expanded list
     if isinstance(nodelist, str):
