@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Add support for custom machine types.
 - Add job id label for exclusive nodes.
 - Add zone_target_shape to partitions, mapped to bulkInsert targetShape.
+- Fix luster mounts failing because of failing to resolve server IP address.
 
 ## \[5.5.0\]
 

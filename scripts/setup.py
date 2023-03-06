@@ -638,7 +638,9 @@ def partition_mounts(mounts):
     """partition into cluster-external and internal mounts"""
 
     def internal_mount(mount):
-        mount_addr = socket.gethostbyname(mount.server_ip)
+        # NOTE: Valid Luster server_ip can take the form of '<IP>@tcp'
+        server_ip = mount.server_ip.split("@")[0]
+        mount_addr = socket.gethostbyname(server_ip)
         return mount_addr == lkp.control_host_addr
 
     return separate(internal_mount, mounts)
