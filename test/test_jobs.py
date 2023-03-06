@@ -4,9 +4,9 @@ import pytest
 
 from hostlist import expand_hostlist as expand
 from testutils import (
-    wait_until,
     wait_job_state,
     wait_node_state,
+    wait_node_flags_any,
     sbatch,
     run,
     util,
@@ -78,16 +78,6 @@ def test_placement_groups(cluster, lkp):
         pytest.skip("no partitions with placement groups enabled")
         return
 
-    def is_node_powered_down(node):
-        info = cluster.get_node(node)
-        state = info["state"]
-        flags = set(info["state_flags"])
-        log.info(
-            f"waiting for node {node} to be powered_down; state={state} flags={','.join(flags)}"
-        )
-        powered_down = set(["POWERED_DOWN"])
-        return state == "idle" and (powered_down & flags)
-
     def placement_job(part_name):
         job_id = sbatch(
             cluster, f"sbatch -N2 --partition={part_name} --wrap='sleep 600'"
@@ -107,7 +97,7 @@ def test_placement_groups(cluster, lkp):
         cluster.login_exec(f"scancel {job_id}")
         job = wait_job_state(cluster, job_id, "CANCELLED")
         for node in nodes:
-            assert wait_until(is_node_powered_down, node, max_wait=240)
+            wait_node_flags_any(cluster, node, "idle", "POWERED_DOWN", max_wait=240)
 
     util.execute_with_futures(placement_job, partitions)
 
@@ -141,7 +131,6 @@ def test_preemption(cluster, lkp):
             cluster, f"sbatch -N2 --partition={part_name} --wrap='srun sleep 9999'"
         )
         job = wait_job_state(cluster, job_id, "RUNNING")
-        assert job["job_state"] == "RUNNING"
         last_node = expand(job["nodes"])[-1]
 
         lkp.instances.cache_clear()

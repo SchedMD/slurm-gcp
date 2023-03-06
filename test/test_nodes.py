@@ -2,9 +2,18 @@ import logging
 import hostlist
 
 from itertools import chain
+import pytest
 
 from deploy import Cluster
-from testutils import wait_until, util
+from hostlist import expand_hostlist as expand
+from testutils import (
+    wait_node_flags_any,
+    wait_until,
+    wait_job_state,
+    sbatch,
+    util,
+)
+
 
 log = logging.getLogger()
 
@@ -32,3 +41,34 @@ def test_static(cluster: Cluster, lkp: util.Lookup):
         hostlist.expand_hostlist(nodes) for nodes in lkp.static_nodelist()
     ):
         assert wait_until(is_node_up, node)
+
+
+def test_exclusive_labels(cluster: Cluster, lkp: util.Lookup):
+
+    partitions = []
+    for part_name, partition in lkp.cfg.partitions.items():
+        if partition.enable_job_exclusive:
+            partitions.append(part_name)
+    if not partitions:
+        pytest.skip("no partitions with enable_job_exclusive")
+        return
+
+    def check_node_labels(partition):
+        job_id = sbatch(
+            cluster, f"sbatch -N2 --partition={partition} --wrap='sleep 600'"
+        )
+        job = wait_job_state(cluster, job_id, "RUNNING", max_wait=300)
+        nodes = expand(job["nodes"])
+
+        node_labels = [lkp.describe_instance(node).labels for node in nodes]
+        assert all(
+            "slurm_job_id" in labels and int(labels.slurm_job_id) == job_id
+            for labels in node_labels
+        )
+
+        cluster.login_exec(f"scancel {job_id}")
+        job = wait_job_state(cluster, job_id, "CANCELLED")
+        for node in nodes:
+            wait_node_flags_any(cluster, node, "idle", "POWERED_DOWN")
+
+    util.execute_with_futures(check_node_labels, partitions)
