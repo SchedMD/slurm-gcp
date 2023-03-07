@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+## \[5.6.0\]
+
 - Add support for custom machine types.
 - Add job id label for exclusive nodes.
 - Add zone_target_shape to partitions, mapped to bulkInsert targetShape.
