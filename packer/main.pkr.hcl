@@ -62,6 +62,13 @@ source "googlecompute" "image" {
   ### service account ###
   service_account_email = var.service_account_email
   scopes                = var.service_account_scopes
+
+  state_timeout = "10m"
+
+  ### metadata ###
+  metadata = {
+    block-project-ssh-keys = "TRUE"
+  }
 }
 
 #########
@@ -105,11 +112,6 @@ build {
       ### disk ###
       disk_size = source.value.disk_size
       disk_type = source.value.disk_type
-
-      ### metadata ###
-      metadata = {
-        block-project-ssh-keys = "TRUE"
-      }
     }
   }
 
