@@ -4,6 +4,7 @@ import shlex
 import subprocess as sp
 import sys
 import time
+from itertools import chain
 
 import psutil
 import yaml
@@ -96,9 +97,42 @@ def wait_job_state(cluster, job_id, *states, max_wait=None):
         log.info(f"job {job_id}: {state} waiting for {states_str}")
         return state in states
 
-    if not wait_until(is_job_state, max_wait=max_wait):
-        raise Exception(f"job {job_id} did not reach expected state")
+    assert wait_until(is_job_state, max_wait=max_wait)
     return cluster.get_job(job_id)
+
+
+def wait_node_flags_subset(cluster, nodename, state, *flags, max_wait=None):
+    flags = set(flags)
+    flags_str = "+".join(chain([state], flags))
+
+    def check_node_flags():
+        info = cluster.get_node(nodename)
+        node_state = info["state"]
+        node_flags = set(info["state_flags"])
+        log.info(
+            f"waiting for node {nodename} to be {flags_str}; state={node_state} flags={','.join(node_flags)}"
+        )
+        return node_state == state and (flags <= node_flags)
+
+    assert wait_until(check_node_flags, max_wait=max_wait)
+    return cluster.get_node(nodename)
+
+
+def wait_node_flags_any(cluster, nodename, state, *flags, max_wait=None):
+    flags = set(flags)
+    flags_str = "{state}+{flags}".format(state=state, flags=" or ".join(flags))
+
+    def check_node_flags():
+        info = cluster.get_node(nodename)
+        node_state = info["state"]
+        node_flags = set(info["state_flags"])
+        log.info(
+            f"waiting for node {nodename} to be {flags_str}; state={state} flags={','.join(node_flags)}"
+        )
+        return node_state == state and (flags & node_flags)
+
+    assert wait_until(check_node_flags, max_wait=max_wait)
+    return cluster.get_node(nodename)
 
 
 def wait_node_state(cluster, nodename, *states, max_wait=None):
@@ -110,7 +144,7 @@ def wait_node_state(cluster, nodename, *states, max_wait=None):
         log.info(f"node {nodename}: {state} waiting for {states_str}")
         return state in states
 
-    wait_until(is_node_state, max_wait=max_wait)
+    assert wait_until(is_node_state, max_wait=max_wait)
     return cluster.get_node(nodename)
 
 

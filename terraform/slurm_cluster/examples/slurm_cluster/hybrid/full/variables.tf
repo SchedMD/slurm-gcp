@@ -243,6 +243,12 @@ EOD
     slurm_log_dir           = string
     output_dir              = string
     install_dir             = string
+    munge_mount = object({
+      server_ip     = string
+      remote_mount  = string
+      fs_type       = string
+      mount_options = string
+    })
   })
   default = {
     google_app_cred_path    = null
@@ -253,6 +259,12 @@ EOD
     slurm_log_dir           = "/var/log/slurm"
     output_dir              = "."
     install_dir             = null
+    munge_mount = {
+      server_ip     = null
+      remote_mount  = "/etc/munge"
+      fs_type       = "nfs"
+      mount_options = null
+    }
   }
 }
 
@@ -338,6 +350,7 @@ EOD
       mount_options = string
     }))
     region            = string
+    zone_target_shape = string
     zone_policy_allow = list(string)
     zone_policy_deny  = list(string)
   }))

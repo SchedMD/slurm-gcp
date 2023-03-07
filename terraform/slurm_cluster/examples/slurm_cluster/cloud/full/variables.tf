@@ -560,6 +560,7 @@ EOD
       mount_options = string
     }))
     region            = string
+    zone_target_shape = string
     zone_policy_allow = list(string)
     zone_policy_deny  = list(string)
   }))

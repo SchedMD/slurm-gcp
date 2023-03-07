@@ -90,7 +90,7 @@ scripts_dir = next(
 
 # readily available compute api handle
 compute = None
-# slurm-gcp config object, could be None if not available
+# slurm-gcp config object, could be empty if not available
 cfg = NSDict()
 # caching Lookup object
 lkp = None
@@ -1101,6 +1101,22 @@ class Lookup:
         return Path(self.cfg.slurm_bin_dir if cfg else "") / "scontrol"
 
     @property
+    def sinfo_bin(self):
+        return Path(self.cfg.slurm_bin_dir if cfg else "") / "sinfo"
+
+    def sinfo(self, cmd=None):
+        cmd = " ".join(str(s) for s in (self.sinfo_bin, cmd) if s is not None)
+        return run(cmd).stdout.rstrip()
+
+    @property
+    def squeue_bin(self):
+        return Path(self.cfg.slurm_bin_dir if cfg else "") / "squeue"
+
+    def squeue(self, cmd=None):
+        cmd = " ".join(str(s) for s in (self.squeue_bin, cmd) if s is not None)
+        return run(cmd).stdout.rstrip()
+
+    @property
     def template_map(self):
         return self.cfg.template_map
 
@@ -1273,30 +1289,38 @@ class Lookup:
         project = project or self.project
         instance_fields = ",".join(
             [
-                "kind",
-                "id",
-                "creationTimestamp",
-                "name",
-                "tags",
-                "machineType",
-                "status",
-                "zone",
-                "networkInterfaces",
-                "disks",
-                "metadata",
-                "serviceAccounts",
-                "selfLink",
-                "scheduling",
+                "advancedMachineFeatures",
                 "cpuPlatform",
-                "labels",
-                "labelFingerprint",
-                # "startRestricted",
-                # "deletionProtection",
-                "shieldedInstanceConfig",
-                "shieldedInstanceIntegrityPolicy",
+                "creationTimestamp",
+                "disks",
+                "disks",
                 "fingerprint",
+                "guestAccelerators",
+                "hostname",
+                "id",
+                "kind",
+                "labelFingerprint",
+                "labels",
                 "lastStartTimestamp",
                 "lastStopTimestamp",
+                "lastSuspendedTimestamp",
+                "machineType",
+                "metadata",
+                "name",
+                "networkInterfaces",
+                "resourceStatus",
+                "scheduling",
+                "selfLink",
+                "serviceAccounts",
+                "shieldedInstanceConfig",
+                "shieldedInstanceIntegrityPolicy",
+                "sourceMachineImage",
+                "status",
+                "statusMessage",
+                "tags",
+                "zone",
+                # "deletionProtection",
+                # "startRestricted",
             ]
         )
         fields = f"items.zones.instances({instance_fields}),nextPageToken"
@@ -1388,6 +1412,10 @@ class Lookup:
 
     def machine_type(self, machine_type, project=None, zone=None):
         """ """
+        custom_patt = re.compile(
+            r"((?P<family>\w+)-)?custom-(?P<cpus>\d+)-(?P<mem>\d+)"
+        )
+        custom_match = custom_patt.match(machine_type)
         if zone:
             project = project or self.project
             machine_info = ensure_execute(
@@ -1395,6 +1423,13 @@ class Lookup:
                     project=project, zone=zone, machineType=machine_type
                 )
             )
+        elif custom_match is not None:
+            groups = custom_match.groupdict()
+            cpus, mem = (groups[k] for k in ["cpus", "mem"])
+            machine_info = {
+                "guestCpus": int(cpus),
+                "memoryMb": int(mem),
+            }
         else:
             machines = self.machine_types(project=project)
             machine_info = next(iter(machines[machine_type].values()), None)

@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Add support for custom machine types.
+- Add job id label for exclusive nodes.
+- Add zone_target_shape to partitions, mapped to bulkInsert targetShape.
+- Fix Lustre mounts failing because of failing to resolve server IP address.
+
 ## \[5.5.0\]
 
 - Fix external network_storage being added to exportfs

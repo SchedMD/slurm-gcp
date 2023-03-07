@@ -69,6 +69,9 @@ test_nodes.py
 - test_static
   - get the list of static nodes in the cluster and wait for them all to be
     powered up and idle
+- test_exclusive_labels
+  - run job on exclusive nodes and check the instances for the correct job ID
+    label
 - \[ \] Catching leaked nodes
   - Tear down cluster while nodes are still provisioned, verify all nodes get
     torn down

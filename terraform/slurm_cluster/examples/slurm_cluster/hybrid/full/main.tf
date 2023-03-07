@@ -65,6 +65,7 @@ locals {
       region             = x.region
       subnetwork_project = null
       subnetwork         = module.slurm_network.network.network_name
+      zone_target_shape  = x.zone_target_shape
       zone_policy_allow  = x.zone_policy_allow
       zone_policy_deny   = x.zone_policy_deny
     }
