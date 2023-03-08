@@ -206,7 +206,7 @@ All notable changes to this project will be documented in this file.
 - Fix potential race condition in loading BQ job data.
 - Remove deployment manager support.
 - Update Nvidia to 470.82.01 and CUDA to 11.4.4
-- Reenable gcsfuse in ansible and workaround the repo gpg check problem
+- Re-enable gcsfuse in ansible and workaround the repo gpg check problem
 
 ## \[4.1.5\]
 
@@ -257,7 +257,7 @@ All notable changes to this project will be documented in this file.
 
 ## \[4.0.4\]
 
-- Configure sockets, cores, threads on compute nodes for better performace with
+- Configure sockets, cores, threads on compute nodes for better performance with
   `cons_tres`.
 
 ## \[4.0.3\]

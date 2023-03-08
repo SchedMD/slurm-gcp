@@ -73,7 +73,7 @@ variable "partition_nodes" {
   description = <<EOD
 Compute nodes contained with this partition.
 
-* node_count_static      : number of persistant nodes.
+* node_count_static      : number of persistent nodes.
 * node_count_dynamic_max : max number of burstable nodes.
 * group_name             : node group unique identifier.
 * node_conf              : map of Slurm node line configuration.
@@ -202,7 +202,7 @@ variable "subnetwork_project" {
 }
 
 variable "subnetwork" {
-  description = "The subnetwork to attach instances to. A self_link is prefered."
+  description = "The subnetwork to attach instances to. A self_link is preferred."
   type        = string
   default     = ""
 }

@@ -28,7 +28,7 @@ There are two deployment methods for cloud cluster management:
 
 This deployment method leverages
 [GCP Marketplace](./glossary.md#gcp-marketplace) to make setting up clusters a
-breeze without leaving your browser. While this method is simplier and less
+breeze without leaving your browser. While this method is simpler and less
 flexible, it is great for exploring what `slurm-gcp` is!
 
 See the [Marketplace Guide](./marketplace.md) for setup instructions and more

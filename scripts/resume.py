@@ -173,7 +173,7 @@ def create_instances_request(nodes, placement_group, exclusive_job=None):
     body.sourceInstanceTemplate = template
 
     labels = dict(slurm_job_id=exclusive_job) if exclusive_job is not None else None
-    # overwrites properties accross all instances
+    # overwrites properties across all instances
     body.instanceProperties = instance_properties(
         partition, model, placement_group, labels
     )
