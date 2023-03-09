@@ -1,6 +1,8 @@
 The tests are written with pytest, with terraform handled by the python library
 tftest. It is run from the `test` dirextory as
-`pytest -vs --project_id=<test project> --cluster_name=<test cluster> --image-project=<image project> --image-family=<image family> --image=<image name>`
+
+`pytest -vs --project_id=<test project> --cluster_name=<test cluster> --image-project=<image project> --image-family=<image family> --image=<imakIge name>`
+
 The Pipfile shows the dependencies. Only one of `--image-family` and `--image`
 need to be specified. The env var `GOOGLE_APPLICATION_CREDENTIALS` should be set
 to a json file containing service account credentials. A private key authorized
@@ -10,6 +12,8 @@ var `GCP_LOGIN_ID`.
 pytest will create a cluster and run the following tests on it.
 
 ## Tests
+
+Lines with \[ \] are not currently implemented but are planned.
 
 test_config.py
 
@@ -52,7 +56,7 @@ test_jobs.py
     1. stop an instance in the job allocation
     1. verify that the node goes down with reason set
     1. wait for the node to return to idle (slurmsync handles this)
-    # TODO check that the job was requeued?
+    ###### TODO check that the job was requeued?
     6. cancel the job
 - \[ \] test exclusive nodes
   - Since placement group nodes are also exclusive, this is being tested. But a
