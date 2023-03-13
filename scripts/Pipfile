@@ -12,6 +12,7 @@ google-cloud-bigquery = "3"
 google-cloud-pubsub = "2"
 ipython = "8.10.0"
 more-executors = "2"
+prometheus-client = "0.16"
 
 [dev-packages]
 
