@@ -275,8 +275,6 @@ EOD
 variable "enable_job_exclusive" {
   description = <<EOD
 Enables job exclusivity. A job will run exclusively on the scheduled nodes.
-
-If `enable_placement_groups=true`, then `enable_job_exclusive=true` will be forced.
 EOD
   type        = bool
   default     = false
@@ -285,13 +283,6 @@ EOD
 variable "enable_placement_groups" {
   description = <<EOD
 Enables job placement groups. Instances will be colocated for a job.
-
-If `enable_placement_groups=true`, then `enable_job_exclusive=true` will be forced.
-
-`enable_placement_groups=false` will be forced when all are not satisfied:
-- only compute optimized `machine_type` (C2 or C2D family).
-  - See https://cloud.google.com/compute/docs/machine-types
-- `node_count_static` == 0
 EOD
   type        = bool
   default     = false

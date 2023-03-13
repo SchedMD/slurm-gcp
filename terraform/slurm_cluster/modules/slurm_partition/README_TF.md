@@ -19,14 +19,16 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.2 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 3.53, < 5.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | 4.55.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.1 |
 
 ## Modules
 
@@ -42,6 +44,7 @@ limitations under the License.
 | Name | Type |
 |------|------|
 | [google_compute_project_metadata_item.partition_startup_scripts](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
+| [null_resource.partition](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [google_compute_instance_template.group_template](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_instance_template) | data source |
 | [google_compute_subnetwork.partition_subnetwork](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
 
@@ -49,8 +52,8 @@ limitations under the License.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_enable_job_exclusive"></a> [enable\_job\_exclusive](#input\_enable\_job\_exclusive) | Enables job exclusivity. A job will run exclusively on the scheduled nodes.<br><br>If `enable_placement_groups=true`, then `enable_job_exclusive=true` will be forced. | `bool` | `false` | no |
-| <a name="input_enable_placement_groups"></a> [enable\_placement\_groups](#input\_enable\_placement\_groups) | Enables job placement groups. Instances will be colocated for a job.<br><br>If `enable_placement_groups=true`, then `enable_job_exclusive=true` will be forced.<br><br>`enable_placement_groups=false` will be forced when all are not satisfied:<br>- only compute optimized `machine_type` (C2 or C2D family).<br>  - See https://cloud.google.com/compute/docs/machine-types<br>- `node_count_static` == 0 | `bool` | `false` | no |
+| <a name="input_enable_job_exclusive"></a> [enable\_job\_exclusive](#input\_enable\_job\_exclusive) | Enables job exclusivity. A job will run exclusively on the scheduled nodes. | `bool` | `false` | no |
+| <a name="input_enable_placement_groups"></a> [enable\_placement\_groups](#input\_enable\_placement\_groups) | Enables job placement groups. Instances will be colocated for a job. | `bool` | `false` | no |
 | <a name="input_enable_reconfigure"></a> [enable\_reconfigure](#input\_enable\_reconfigure) | Enables automatic Slurm reconfigure on when Slurm configuration changes (e.g.<br>slurm.conf.tpl, partition details). Compute instances and resource policies<br>(e.g. placement groups) will be destroyed to align with new configuration.<br><br>NOTE: Requires Python and Google Pub/Sub API.<br><br>*WARNING*: Toggling this will impact the running workload. Deployed compute nodes<br>will be destroyed and their jobs will be requeued. | `bool` | `false` | no |
 | <a name="input_network_storage"></a> [network\_storage](#input\_network\_storage) | Storage to mounted on all instances in this partition.<br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Raw options to pass to 'mount'. | <pre>list(object({<br>    server_ip     = string<br>    remote_mount  = string<br>    local_mount   = string<br>    fs_type       = string<br>    mount_options = string<br>  }))</pre> | `[]` | no |
 | <a name="input_partition_conf"></a> [partition\_conf](#input\_partition\_conf) | Slurm partition configuration as a map.<br>See https://slurm.schedmd.com/slurm.conf.html#SECTION_PARTITION-CONFIGURATION | `map(string)` | `{}` | no |

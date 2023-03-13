@@ -28,8 +28,8 @@ locals {
     zone_target_shape                 = var.zone_target_shape
     zone_policy_allow                 = setsubtract([for x in var.zone_policy_allow : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0], var.zone_policy_deny)
     zone_policy_deny                  = [for x in var.zone_policy_deny : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0]
-    enable_job_exclusive              = local.enable_placement_groups || var.enable_job_exclusive
-    enable_placement_groups           = local.enable_placement_groups
+    enable_job_exclusive              = var.enable_job_exclusive
+    enable_placement_groups           = var.enable_placement_groups
     network_storage                   = var.network_storage
   }
 
@@ -60,17 +60,31 @@ locals {
     }
   }
 
-  enable_placement_groups = var.enable_placement_groups && alltrue([
-    for x in data.google_compute_instance_template.group_template
-    : length(regexall("^(a2|c2d?|c3|n2d?)\\-\\w+\\-\\w+$", x.machine_type)) > 0
-  ]) && alltrue([for x in local.partition_nodes : x.node_count_static == 0])
-
   compute_list = flatten([for x in local.partition.partition_nodes : x.node_list])
 
   bandwidth_tier = "platform_default"
 
   spot_instance_config = {
     termination_action = "STOP"
+  }
+}
+
+resource "null_resource" "partition" {
+
+  triggers = {
+    partition = sha256(jsonencode(local.partition))
+  }
+
+  lifecycle {
+    precondition {
+      condition     = var.enable_placement_groups == var.enable_job_exclusive
+      error_message = "Inputs enable_placement_groups and enable_job_exclusive must be both true or false."
+    }
+
+    precondition {
+      condition     = !var.enable_placement_groups || (var.enable_placement_groups && alltrue([for x in local.partition_nodes : x.node_count_static == 0]))
+      error_message = "Static nodes are not supported with placement groups (e.g. node_count_static=0)."
+    }
   }
 }
 
