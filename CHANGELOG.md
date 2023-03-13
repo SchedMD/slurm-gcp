@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Job `admin_comment` contains last allocated node failure.
 - Resume failures now notify srun of the error.
 - startup-script - Add logging level prefixes for parsing.
+- Fix slurm and slurm-gcp logs not showing up in Cloud Logging.
 
 ## \[5.6.0\]
 
