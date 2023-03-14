@@ -663,7 +663,7 @@ def setup_network_storage():
         local_mount = Path(mount.local_mount)
         remote_mount = mount.remote_mount
         fs_type = mount.fs_type
-        server_ip = mount.server_ip
+        server_ip = mount.server_ip or ""
         local_mount.mkdirp()
 
         log.info(
@@ -754,7 +754,7 @@ def munge_mount_handler():
     mount = cfg.munge_mount
     server_ip = (
         mount.server_ip
-        if mount.server_ip is not None
+        if mount.server_ip
         else (cfg.slurm_control_addr or cfg.slurm_control_host)
     )
     remote_mount = mount.remote_mount
