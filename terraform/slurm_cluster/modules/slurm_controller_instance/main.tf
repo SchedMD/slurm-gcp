@@ -348,7 +348,7 @@ module "slurm_pubsub" {
 
   pull_subscriptions = [
     {
-      name                    = module.slurm_controller_instance.instances_details[0].name
+      name                    = module.slurm_controller_instance.names[0]
       ack_deadline_seconds    = 120
       enable_message_ordering = true
       maximum_backoff         = "300s"
@@ -365,7 +365,7 @@ resource "google_pubsub_subscription_iam_member" "controller_pull_subscription_s
   count = var.enable_reconfigure ? 1 : 0
 
   project      = var.project_id
-  subscription = module.slurm_controller_instance.instances_details[0].name
+  subscription = module.slurm_controller_instance.names[0]
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${local.service_account_email}"
 

@@ -28,6 +28,11 @@ output "slurm_controller_instances" {
   value       = module.slurm_controller_instance.slurm_instances
 }
 
+output "instances_self_links" {
+  description = "Controller instance resource."
+  value       = module.slurm_controller_instance.instances_self_links
+}
+
 #########
 # SLURM #
 #########

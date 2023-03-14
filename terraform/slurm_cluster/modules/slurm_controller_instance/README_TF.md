@@ -116,6 +116,7 @@ limitations under the License.
 | Name | Description |
 |------|-------------|
 | <a name="output_compute_list"></a> [compute\_list](#output\_compute\_list) | Cluster compute list. |
+| <a name="output_instances_self_links"></a> [instances\_self\_links](#output\_instances\_self\_links) | Controller instance resource. |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Cluster partitions. |
 | <a name="output_slurm_cluster_name"></a> [slurm\_cluster\_name](#output\_slurm\_cluster\_name) | Cluster name for resource naming and slurm accounting. |
 | <a name="output_slurm_controller_instance"></a> [slurm\_controller\_instance](#output\_slurm\_controller\_instance) | Controller instance module. |

@@ -42,7 +42,7 @@ output "slurm_controller_instance_self_links" {
   value = (
     var.enable_hybrid
     ? []
-    : module.slurm_controller_instance[0].slurm_controller_instance.instances_details[*].self_link
+    : module.slurm_controller_instance[0].instances_self_links
   )
 }
 
@@ -53,6 +53,7 @@ output "slurm_controller_instance_details" {
     ? []
     : module.slurm_controller_instance[0].slurm_controller_instance.instances_details[*]
   )
+  sensitive = true
 }
 
 output "slurm_login_instance_self_links" {
@@ -67,4 +68,5 @@ output "slurm_login_instance_details" {
   value = flatten(values({
     for k, v in module.slurm_login_instance : k => v.slurm_login_instance.instances_details[*]
   }))
+  sensitive = true
 }

@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Fix Terraform 1.4.0 incompatibilities.
+
 ## \[5.6.0\]
 
 - Add support for custom machine types.

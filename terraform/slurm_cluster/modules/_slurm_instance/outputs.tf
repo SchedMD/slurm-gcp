@@ -34,3 +34,8 @@ output "available_zones" {
   description = "List of available zones in region"
   value       = data.google_compute_zones.available.names
 }
+
+output "names" {
+  description = "List of available zones in region"
+  value       = google_compute_instance_from_template.slurm_instance[*].name
+}
