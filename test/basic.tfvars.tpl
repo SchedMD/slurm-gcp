@@ -342,7 +342,7 @@ partitions = [
   },
   {
     enable_job_exclusive    = true
-    enable_placement_groups = true
+    enable_placement_groups = false
     network_storage         = []
     partition_conf = {
       Default        = "YES"
