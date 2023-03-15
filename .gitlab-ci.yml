@@ -23,8 +23,6 @@ default:
   image:
     name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.4
 
-  retry: 2
-
   before_script:
   - set +o pipefail
   - packer --version
@@ -42,6 +40,7 @@ default:
 
 .build-image:
   stage: build-images
+  retry: 2
   rules:
   - changes:
       paths:
