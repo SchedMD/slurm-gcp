@@ -91,6 +91,7 @@ build-ubuntu-2004-lts:
   stage: test-clusters
   artifacts:
     name: $CI_COMMIT_REF_NAME-$CI_JOB_NAME-logs
+    when: always
     paths:
     - test/cluster_logs/
   script:
