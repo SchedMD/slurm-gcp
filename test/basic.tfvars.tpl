@@ -341,7 +341,7 @@ partitions = [
     zone_policy_deny   = []
   },
   {
-    enable_job_exclusive    = false
+    enable_job_exclusive    = true
     enable_placement_groups = true
     network_storage         = []
     partition_conf = {
