@@ -812,11 +812,8 @@ def setup_nfs_exports():
     # The controller only needs to set up exports for cluster-internal mounts
     # switch the key to remote mount path since that is what needs exporting
     mounts = resolve_network_storage()
-    # controller mounts
-    _, con_mounts = partition_mounts(mounts)
-    con_mounts = {m.remote_mount: m for m in con_mounts}
     # manually add munge_mount
-    con_mounts.update(
+    mounts.update(
         {
             dirs.munge: {
                 "server_ip": cfg.munge_mount.server_ip,
@@ -827,6 +824,9 @@ def setup_nfs_exports():
             }
         }
     )
+    # controller mounts
+    _, con_mounts = partition_mounts(mounts)
+    con_mounts = {m.remote_mount: m for m in con_mounts}
     for part in cfg.partitions:
         # get internal mounts for each partition by calling
         # prepare_network_mounts as from a node in each partition

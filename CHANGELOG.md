@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - resume.py - No longer validate machine_type with placement groups.
 - Raise error from incorrect settings with dependant inputs.
 - For gcsfuse network storage, server_ip can be null/None or "".
+- Fix munge mount export from controller.
 
 ## \[5.6.0\]
 
