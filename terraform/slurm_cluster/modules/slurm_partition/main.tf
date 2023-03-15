@@ -77,8 +77,8 @@ resource "null_resource" "partition" {
 
   lifecycle {
     precondition {
-      condition     = var.enable_placement_groups == var.enable_job_exclusive
-      error_message = "Inputs enable_placement_groups and enable_job_exclusive must be both true or false."
+      condition     = !var.enable_placement_groups || var.enable_job_exclusive
+      error_message = "Input enable_job_exclusive must be set if enable_placement_groups is set"
     }
 
     precondition {
