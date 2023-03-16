@@ -98,7 +98,6 @@ def find_node_status(nodename):
         find_node_status.static_nodeset = set(util.to_hostnames(lkp.static_nodelist()))
     state = lkp.slurm_node(nodename)
     inst = lkp.instance(nodename)
-    info = lkp.node_template_info(nodename)
     if inst is None:
         if state.base == "DOWN" and "POWERED_DOWN" in state.flags:
             return NodeStatus.restore
@@ -118,7 +117,7 @@ def find_node_status(nodename):
         and "POWERING_DOWN" not in state.flags
         and inst.status == "TERMINATED"
     ):
-        if info.scheduling.preemptible:
+        if inst.scheduling.preemptible:
             return NodeStatus.preempted
         if not state.base.startswith("DOWN"):
             return NodeStatus.terminated
