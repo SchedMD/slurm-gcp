@@ -55,6 +55,7 @@ AccountingStoreFlags=job_comment
 ClusterName={name}
 SlurmctldLogFile={slurmlog}/slurmctld.log
 SlurmdLogFile={slurmlog}/slurmd-%n.log
+DebugFlags=Power
 
 #
 #

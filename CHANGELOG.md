@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Raise error from incorrect settings with dependant inputs.
 - For gcsfuse network storage, server_ip can be null/None or "".
 - Fix munge mount export from controller.
+- Enable DebugFlags=Power by default
 
 ## \[5.6.0\]
 
