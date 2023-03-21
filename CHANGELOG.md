@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+## \[5.6.2\]
+
 - Fix Terraform 1.2 incompatibility introduced in 5.6.1.
 
 ## \[5.6.1\]
