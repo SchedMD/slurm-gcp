@@ -16,3 +16,5 @@
 cgroup_packages:
 - libcgroup
 - libcgroup-pam
+
+cgroup_grub_cmdline_linux: []

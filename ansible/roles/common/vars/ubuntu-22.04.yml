@@ -13,9 +13,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cgroup_packages:
-- libcgroup
-- libcgroup-devel
-- libcgroup-pam
-
-cgroup_grub_cmdline_linux: []
+common_packages:
+- autoconf
+- automake
+- bash-completion
+- build-essential
+- clang
+- curl
+- doxygen
+- emacs
+- g++
+- gcc
+- git
+- graphviz
+- htop
+- iputils-ping
+- jq
+- libssl-dev
+- libtool
+- lynx
+- make
+- pciutils
+- pdsh
+- pkg-config
+- python3
+- python3-gdbm
+- tmux
+- unzip
+- valgrind
+- vim

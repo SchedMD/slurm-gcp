@@ -17,3 +17,8 @@ cgroup_packages:
 - libcgroup1
 - libcgroup-dev
 - libpam-cgroup
+
+cgroup_grub_cmdline_linux:
+- systemd.unified_cgroup_hierarchy=0
+- cgroup_enable=memory
+- swapaccount=1

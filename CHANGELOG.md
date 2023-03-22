@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - Increase project metadata timeouts.
 - Add cluster cloud logging fiter output.
+- Add Ubuntu 22.04 LTS support.
 
 ## \[5.6.2\]
 

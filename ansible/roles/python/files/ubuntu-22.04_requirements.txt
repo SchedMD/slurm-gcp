@@ -1,0 +1,7 @@
+addict~=2.0
+google-api-python-client~=2.0
+google-cloud-bigquery~=2.0
+google-cloud-pubsub~=2.0
+google-cloud-secret-manager~=2.0
+google-cloud-storage~=2.0
+more-executors~=2.0

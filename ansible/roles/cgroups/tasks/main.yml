@@ -27,3 +27,10 @@
   package:
     name: '{{cgroup_packages}}'
     state: present
+
+- name: Update Grub Settings
+  ansible.builtin.include_role:
+    name: grub_cmdline
+  vars:
+    grub_cmdline_args: '{{ cgroup_grub_cmdline_linux }}'
+    grub_cmdline_replace: false

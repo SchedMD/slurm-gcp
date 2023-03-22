@@ -33,6 +33,7 @@ can be created and used instead.
 - `centos-7`
 - `debian-10`
 - `ubuntu-2004-lts`
+- `ubuntu-2204-lts`
 
 ### Installed Software for HPC
 
@@ -58,6 +59,7 @@ that are minimal viable images for deploying
 - `schedmd-v5-slurm-22-05-8-debian-10`
 - `schedmd-v5-slurm-22-05-8-hpc-centos-7`
 - `schedmd-v5-slurm-22-05-8-ubuntu-2004-lts`
+- `schedmd-v5-slurm-22-05-8-ubuntu-2204-lts`
 
 ## Custom Image
 

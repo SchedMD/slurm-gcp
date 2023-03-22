@@ -23,6 +23,11 @@ Vagrant.configure("2") do |config|
     ubuntu2004.vm.box = "generic/ubuntu2004"
   end
 
+  # Ubuntu 22.04 LTS
+  config.vm.define "ubuntu2204" do |ubuntu2204|
+    ubuntu2204.vm.box = "generic/ubuntu2204"
+  end
+
   # Debian 10
   config.vm.define "debian10" do |debian10|
     debian10.vm.box = "generic/debian10"

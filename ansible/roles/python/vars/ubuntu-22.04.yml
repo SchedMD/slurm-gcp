@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cgroup_packages:
-- libcgroup
-- libcgroup-devel
-- libcgroup-pam
-
-cgroup_grub_cmdline_linux: []
+python_packages:
+- python3
+- python3-pip
+- python3-setuptools
+- python3-virtualenv
