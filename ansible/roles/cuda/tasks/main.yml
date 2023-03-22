@@ -1,7 +1,7 @@
 ---
 # tasks file for ansible-role-cuda
 - name: Gather OS specific variables
-  include_vars: '{{ item }}'
+  ansible.builtin.include_vars: '{{ item }}'
   with_first_found:
   - '{{ ansible_distribution|lower }}-{{ ansible_distribution_version }}.yml'
   - '{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version }}.yml'

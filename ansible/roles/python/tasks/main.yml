@@ -14,7 +14,14 @@
 # limitations under the License.
 
 - name: Include OS Vars
-  include_vars: '{{ansible_os_family|lower}}-{{ansible_distribution_major_version}}.yml'
+  ansible.builtin.include_vars: '{{ item }}'
+  with_first_found:
+  - '{{ ansible_distribution|lower }}-{{ ansible_distribution_version }}.yml'
+  - '{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version }}.yml'
+  - '{{ ansible_distribution|lower }}.yml'
+  - '{{ ansible_os_family|lower }}-{{ ansible_distribution_version }}.yml'
+  - '{{ ansible_os_family|lower }}-{{ ansible_distribution_major_version }}.yml'
+  - '{{ ansible_os_family|lower }}.yml'
 
 - name: Install Packages
   package:
@@ -31,12 +38,20 @@
 
 - name: Copy Pip Requirements File
   copy:
-    src: '{{ansible_os_family|lower}}_{{ansible_distribution_major_version}}_requirements.txt'
-    dest: /tmp/{{ansible_os_family|lower}}_{{ansible_distribution_major_version}}_requirements.txt
+    src: '{{ item | basename }}'
+    dest: /tmp/{{ item | basename }}
+  with_first_found:
+  - '{{ ansible_distribution|lower }}-{{ ansible_distribution_version }}_requirements.txt'
+  - '{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version }}_requirements.txt'
+  - '{{ ansible_distribution|lower }}_requirements.txt'
+  - '{{ ansible_os_family|lower }}-{{ ansible_distribution_version }}_requirements.txt'
+  - '{{ ansible_os_family|lower }}-{{ ansible_distribution_major_version }}_requirements.txt'
+  - '{{ ansible_os_family|lower }}_requirements.txt'
+  register: requirements_file
 
 - name: Install Pip Packages
   pip:
-    requirements: /tmp/{{ansible_os_family|lower}}_{{ansible_distribution_major_version}}_requirements.txt
+    requirements: '{{ requirements_file.results[0].dest }}'
     extra_args: --upgrade
     executable: pip3
     state: present

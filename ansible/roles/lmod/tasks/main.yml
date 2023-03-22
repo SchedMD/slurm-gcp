@@ -14,8 +14,12 @@
 # limitations under the License.
 
 - name: Include OS Family Dependent Tasks
-  include_tasks: os/{{ansible_os_family}}.yml
-
+  include_tasks: '{{ item }}'
+  with_first_found:
+  - os/{{ ansible_distribution|lower }}-{{ ansible_distribution_version }}.yml
+  - os/{{ ansible_distribution|lower }}-{{ ansible_distribution_major_version }}.yml
+  - os/{{ ansible_distribution|lower }}.yml
+  - os/{{ ansible_os_family|lower }}.yml
 
 - name: Mkdir
   file:
