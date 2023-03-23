@@ -476,7 +476,7 @@ def config_from_metadata():
         return NSDict()
 
     metadata_key = f"{slurm_cluster_name}-slurm-config"
-    for retry, wait in enumerate(backoff_delay(0.25, count=4, timeout=12)):
+    for retry, wait in enumerate(backoff_delay(0.25, count=3, timeout=5)):
         config_yaml = project_metadata.__wrapped__(metadata_key)
         if config_yaml is None:
             log.warning(f"config not found in project metadata, retry {retry}")
@@ -485,7 +485,10 @@ def config_from_metadata():
         else:
             break
     else:
-        config_yaml = instance_metadata("attributes/slurm-config")
+        try:
+            config_yaml = instance_metadata("attributes/slurm-config")
+        except Exception as e:
+            log.warning(str(e))
     cfg = new_config(yaml.safe_load(config_yaml or ""))
     return cfg
 
@@ -789,8 +792,8 @@ def get_metadata(path, root=ROOT_URL):
         resp.raise_for_status()
         return resp.text
     except RequestException:
-        log.error(f"Error while getting metadata from {url}")
-        return None
+        log.debug(f"metadata not found ({url})")
+        raise Exception(f"failed to get_metadata from {url}")
 
 
 @lru_cache(maxsize=None)
@@ -1555,10 +1558,11 @@ class Lookup:
 # Define late globals
 cfg = load_config_file(CONFIG_FILE)
 if not cfg:
-    cfg = config_from_metadata()
+    try:
+        cfg = config_from_metadata()
+    except Exception:
+        log.warning("config not found in metadata")
     if cfg:
         save_config(cfg, CONFIG_FILE)
-    else:
-        log.error("config metadata unavailable")
 
 lkp = Lookup(cfg)
