@@ -462,7 +462,9 @@ def new_config(config):
         ),
     )
     for netstore in network_storage_iter:
-        if netstore.server_ip is None or netstore.server_ip == "$controller":
+        if netstore != "gcsfuse" and (
+            netstore.server_ip is None or netstore.server_ip == "$controller"
+        ):
             netstore.server_ip = cfg.slurm_control_host
     return cfg
 
