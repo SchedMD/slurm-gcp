@@ -21,7 +21,6 @@ common_packages:
 - clang
 - curl
 - doxygen
-- emacs
 - g++
 - gcc
 - git
@@ -31,7 +30,6 @@ common_packages:
 - jq
 - libssl-dev
 - libtool
-- lynx
 - make
 - pciutils
 - pdsh

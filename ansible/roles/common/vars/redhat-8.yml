@@ -23,7 +23,6 @@ common_packages:
 - dnf-utils
 - doxygen
 - drpm
-- emacs
 - epel-release
 - gcc
 - gcc-c++
@@ -32,7 +31,6 @@ common_packages:
 - htop
 - jq
 - libtool
-- lynx
 - make
 - openssl-devel
 - pciutils

@@ -22,7 +22,6 @@ common_packages:
 - curl
 - deltarpm
 - doxygen
-- emacs
 - epel-release
 - gcc
 - gcc-c++
@@ -32,7 +31,6 @@ common_packages:
 - iputils
 - jq
 - libtool
-- lynx
 - make
 - openssl-devel
 - pciutils
