@@ -1,0 +1,26 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Path to the Grub2 config file
+grub_cmdline_config_v2: /boot/grub2/grub.cfg
+
+# Path to the Grub2 file
+grub_cmdline_file: /etc/default/grub
+
+# Default list of Grub command line arguments
+grub_cmdline_args: []
+
+# Toggle replace (true) or append (false) mode
+grub_cmdline_replace: false

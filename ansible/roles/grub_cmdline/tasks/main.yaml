@@ -1,0 +1,40 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Handle append GRUB_CMDLINE_LINUX arguments
+  block:
+  - name: Get current GRUB_CMDLINE_LINUX arguments
+    ansible.builtin.shell:
+      cmd: |
+        grep -E "^GRUB_CMDLINE_LINUX=.*" {{ grub_cmdline_file }} |
+        sed -e "s/^GRUB_CMDLINE_LINUX=//" -e "s/^\"//" -e "s/\"$//"
+    register: grub_args
+
+  - name: Set facts
+    ansible.builtin.set_fact:
+      grub_cmdline_args: |
+        {{ (grub_args.stdout.split(' ') + grub_cmdline_args) | unique }}
+  when:
+  - not grub_cmdline_replace
+  - grub_cmdline_args | length > 0
+
+- name: Set GRUB_CMDLINE_LINUX arguments
+  ansible.builtin.lineinfile:
+    dest: '{{ grub_cmdline_file }}'
+    regexp: ^GRUB_CMDLINE_LINUX=.*$
+    line: GRUB_CMDLINE_LINUX="{{ grub_cmdline_args | join(' ') }}"
+    state: present
+    backup: true
+  notify: Update Grub2 ({{ ansible_os_family }} Family)
