@@ -176,6 +176,30 @@ builds = [
   {
     ### image ###
     source_image        = null
+    source_image_family = "ubuntu-2004-lts-arm64"
+    image_licenses      = null
+    labels              = null
+
+    ### ssh ###
+    ssh_username = "packer"
+    ssh_password = null
+
+    ### instance ###
+    machine_type = "t2a-standard-16"
+    preemptible  = false
+
+    ### root of trust ###
+    enable_secure_boot          = null
+    enable_vtpm                 = null
+    enable_integrity_monitoring = null
+
+    ### storage ###
+    disk_size = 32
+    disk_type = null
+  },
+  {
+    ### image ###
+    source_image        = null
     source_image_family = "ubuntu-2204-lts"
     image_licenses      = null
     labels              = null
@@ -186,6 +210,30 @@ builds = [
 
     ### instance ###
     machine_type = "n1-standard-16"
+    preemptible  = false
+
+    ### root of trust ###
+    enable_secure_boot          = null
+    enable_vtpm                 = null
+    enable_integrity_monitoring = null
+
+    ### storage ###
+    disk_size = 32
+    disk_type = null
+  },
+  {
+    ### image ###
+    source_image        = null
+    source_image_family = "ubuntu-2204-lts-arm64"
+    image_licenses      = null
+    labels              = null
+
+    ### ssh ###
+    ssh_username = "packer"
+    ssh_password = null
+
+    ### instance ###
+    machine_type = "t2a-standard-16"
     preemptible  = false
 
     ### root of trust ###

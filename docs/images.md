@@ -33,14 +33,18 @@ can be created and used instead.
 - `centos-7`
 - `debian-10`
 - `ubuntu-2004-lts`
+- `ubuntu-2004-lts-arm64`
 - `ubuntu-2204-lts`
+- `ubuntu-2204-lts-arm64`
 
 ### Installed Software for HPC
 
 - [lmod](https://lmod.readthedocs.io/en/latest/index.html)
 - [openmpi](https://www.open-mpi.org/)
 - [cuda](https://developer.nvidia.com/cuda-toolkit)
+  - Limited to x86_64 only
 - [lustre](https://www.lustre.org/)
+  - Only supports x86_64
 
 ## Public Image
 

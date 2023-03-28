@@ -70,7 +70,9 @@
       cuda_use_runfile: true
       cuda_runfile_disable_nvidia_drm: true
       cuda_runfile_url: https://developer.download.nvidia.com/compute/cuda/11.4.4/local_installers/cuda_11.4.4_470.82.01_linux.run
-    when: install_cuda
+    when:
+    - install_cuda
+    - ansible_architecture == "x86_64"
   - nfs
   - cgroups
   - munge
@@ -82,10 +84,16 @@
   - role: ompi
     when: install_ompi
   - role: lustre
-    when: install_lustre
+    when:
+    - install_lustre
+    - ansible_architecture == "x86_64"
   - role: gcsfuse
-    when: install_gcsfuse
-  - cloudagents
+    when:
+    - install_gcsfuse
+    - ansible_architecture == "x86_64"
+  - role: cloudagents
+    when:
+    - ansible_architecture == "x86_64"
   - logrotate
   - python
   - role: ldap
