@@ -175,6 +175,12 @@ resource "google_compute_project_metadata_item" "partition_startup_scripts" {
 
   key   = "${var.slurm_cluster_name}-slurm-partition-${var.partition_name}-script-${each.key}"
   value = each.value.content
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }
 
 ###########################

@@ -87,4 +87,10 @@ resource "google_compute_project_metadata_item" "login_startup_scripts" {
 
   key   = "${var.slurm_cluster_name}-slurm-login_${local.suffix}-script-${each.key}"
   value = each.value.content
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }

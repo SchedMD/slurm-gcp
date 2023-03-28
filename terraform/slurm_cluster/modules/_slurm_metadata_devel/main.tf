@@ -84,4 +84,10 @@ resource "google_compute_project_metadata_item" "devel" {
 
   key   = "${var.slurm_cluster_name}-slurm-devel"
   value = jsonencode(local.metadata_devel)
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }

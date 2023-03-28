@@ -188,6 +188,12 @@ resource "google_compute_project_metadata_item" "config" {
 
   key   = "${var.slurm_cluster_name}-slurm-config"
   value = jsonencode(local.metadata_config)
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }
 
 resource "google_compute_project_metadata_item" "slurm_conf" {
@@ -195,6 +201,12 @@ resource "google_compute_project_metadata_item" "slurm_conf" {
 
   key   = "${var.slurm_cluster_name}-slurm-tpl-slurm-conf"
   value = data.local_file.slurm_conf_tpl.content
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }
 
 resource "google_compute_project_metadata_item" "cgroup_conf" {
@@ -202,6 +214,12 @@ resource "google_compute_project_metadata_item" "cgroup_conf" {
 
   key   = "${var.slurm_cluster_name}-slurm-tpl-cgroup-conf"
   value = data.local_file.cgroup_conf_tpl.content
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }
 
 resource "google_compute_project_metadata_item" "slurmdbd_conf" {
@@ -209,6 +227,12 @@ resource "google_compute_project_metadata_item" "slurmdbd_conf" {
 
   key   = "${var.slurm_cluster_name}-slurm-tpl-slurmdbd-conf"
   value = data.local_file.slurmdbd_conf_tpl.content
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }
 
 ###################
@@ -238,6 +262,12 @@ resource "google_compute_project_metadata_item" "controller_startup_scripts" {
 
   key   = "${var.slurm_cluster_name}-slurm-controller-script-${each.key}"
   value = each.value.content
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }
 
 resource "google_compute_project_metadata_item" "compute_startup_scripts" {
@@ -250,6 +280,12 @@ resource "google_compute_project_metadata_item" "compute_startup_scripts" {
 
   key   = "${var.slurm_cluster_name}-slurm-compute-script-${each.key}"
   value = each.value.content
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }
 
 resource "google_compute_project_metadata_item" "prolog_scripts" {
@@ -262,6 +298,12 @@ resource "google_compute_project_metadata_item" "prolog_scripts" {
 
   key   = "${var.slurm_cluster_name}-slurm-prolog-script-${each.key}"
   value = each.value.content
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }
 
 resource "google_compute_project_metadata_item" "epilog_scripts" {
@@ -274,6 +316,12 @@ resource "google_compute_project_metadata_item" "epilog_scripts" {
 
   key   = "${var.slurm_cluster_name}-slurm-epilog-script-${each.key}"
   value = each.value.content
+
+  timeouts {
+    create = "10m"
+    update = "10m"
+    delete = "10m"
+  }
 }
 
 ##################
