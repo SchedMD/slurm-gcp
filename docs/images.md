@@ -40,6 +40,7 @@ can be created and used instead.
 - [lmod](https://lmod.readthedocs.io/en/latest/index.html)
 - [openmpi](https://www.open-mpi.org/)
 - [cuda](https://developer.nvidia.com/cuda-toolkit)
+- [lustre](https://www.lustre.org/)
 
 ## Public Image
 
