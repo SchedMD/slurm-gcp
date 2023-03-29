@@ -58,10 +58,18 @@ def pytest_runtest_makereport(item, call):
     setattr(item, "rep_" + rep.when, rep)
 
 
+# We need to discriminate between arch (arm64, x86_64) because a configuration
+# is mapped to a tfvars file that contains instances for an input image.
+# Image arch must match instance arch, otherwise instance boot failure.
+#
+# NOTE: config key should follow: pytest.param("${ARCH}-${TF_CONFIG}")
+#
+# Use the following to discriminate arch for testing.
+# $ pytest -k EXPR
 CONFIGS = {
-    pytest.param("basic"): dict(
+    pytest.param("x86_64-basic"): dict(
         moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/cloud/basic",
-        tfvars_file=test_path / "basic.tfvars.tpl",
+        tfvars_file=test_path / "x86_64-basic.tfvars.tpl",
         tfvars={},
     ),
 }

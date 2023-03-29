@@ -119,6 +119,7 @@ build-ubuntu-2204-lts:
     --image-project=$GCP_PROJECT_ID
     --image-family=$IMAGE_FAMILY
     --image=${IMAGE_NAME:-null}
+    -k "${ARCH}"
   after_script:
   - cd test
   - pipenv install
@@ -131,6 +132,7 @@ test-centos-7:
     optional: true
   variables:
     IMAGE_OS: centos-7
+    ARCH: x86_64
 
 test-hpc-centos-7:
   extends: .test-image
@@ -139,6 +141,7 @@ test-hpc-centos-7:
     optional: true
   variables:
     IMAGE_OS: hpc-centos-7
+    ARCH: x86_64
 
 test-debian-10:
   extends: .test-image
@@ -147,6 +150,7 @@ test-debian-10:
     optional: true
   variables:
     IMAGE_OS: debian-10
+    ARCH: x86_64
 
 test-ubuntu-2004-lts:
   extends: .test-image
@@ -155,6 +159,7 @@ test-ubuntu-2004-lts:
     optional: true
   variables:
     IMAGE_OS: ubuntu-2004-lts
+    ARCH: x86_64
 
 test-ubuntu-2204-lts:
   extends: .test-image
@@ -163,3 +168,4 @@ test-ubuntu-2204-lts:
     optional: true
   variables:
     IMAGE_OS: ubuntu-2204-lts
+    ARCH: x86_64
