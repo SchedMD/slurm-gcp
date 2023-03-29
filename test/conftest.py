@@ -72,6 +72,11 @@ CONFIGS = {
         tfvars_file=test_path / "x86_64-basic.tfvars.tpl",
         tfvars={},
     ),
+    pytest.param("arm64-basic"): dict(
+        moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/cloud/basic",
+        tfvars_file=test_path / "arm64-basic.tfvars.tpl",
+        tfvars={},
+    ),
 }
 
 

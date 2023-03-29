@@ -36,6 +36,9 @@ def test_ops_agent(cluster, lkp):
     def check_ops_agent(inst):
         log.info(f"checking if ops agent is active on {inst.name}")
         ssh = cluster.ssh(inst.selfLink)
+        result = cluster.exec_cmd(ssh, f"sudo systemctl status {ops_agent_service}")
+        if "could not be found" in result.stderr:
+            pytest.skip(f"Service {ops_agent_service} is not installed.")
         result = cluster.exec_cmd(ssh, f"sudo systemctl is-active {ops_agent_service}")
         assert result.exit_status == 0
 
