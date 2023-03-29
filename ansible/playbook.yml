@@ -25,6 +25,10 @@
       build: /tmp
       apps: /opt/apps
       modulefiles: /opt/apps/modulefiles
+    install_cuda: true
+    install_ompi: true
+    install_lustre: true
+    install_gcsfuse: true
 
   pre_tasks:
   - name: Supported OS Check
