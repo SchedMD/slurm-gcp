@@ -33,6 +33,11 @@ Vagrant.configure("2") do |config|
     debian10.vm.box = "generic/debian10"
   end
 
+  # Debian 11
+  config.vm.define "debian11" do |debian11|
+    debian11.vm.box = "generic/debian11"
+  end
+
   # CentOS 7
   config.vm.define "centos7" do |centos7|
     centos7.vm.box = "generic/centos7"
