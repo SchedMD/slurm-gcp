@@ -20,16 +20,8 @@
     update_cache: yes
 
 - name: Enable CentOS 8 PowerTools Repository
-  shell: dnf config-manager --set-enabled powertools
-  when: |
-    ansible_distribution == "CentOS"
-    and ansible_distribution_major_version is version('8', '>=')
-
-- name: Enable RedHat 8 CloudReady Repository
-  shell: subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
-  when: |
-    ansible_distribution == "RedHat"
-    and ansible_distribution_major_version is version('8', '>=')
+  command: dnf config-manager --set-enabled powertools
+  when: ansible_distribution_major_version is version('8', '>=')
 
 - name: Install epel-release Repository
   yum:

@@ -21,7 +21,6 @@ common_packages:
 - clang
 - curl
 - dnf-utils
-- doxygen
 - drpm
 - epel-release
 - gcc

@@ -27,6 +27,7 @@ zone       = "us-central1-a"
 source_image_project_id = [
   "rhel-cloud",
   "centos-cloud",
+  "rocky-linux-cloud",
   "cloud-hpc-image-public",
   "debian-cloud",
   "ubuntu-os-cloud",
@@ -105,6 +106,30 @@ builds = [
     ### image ###
     source_image        = null
     source_image_family = "hpc-centos-7"
+    image_licenses      = null
+    labels              = null
+
+    ### ssh ###
+    ssh_username = "packer"
+    ssh_password = null
+
+    ### instance ###
+    machine_type = "n1-standard-16"
+    preemptible  = false
+
+    ### root of trust ###
+    enable_secure_boot          = null
+    enable_vtpm                 = null
+    enable_integrity_monitoring = null
+
+    ### storage ###
+    disk_size = 32
+    disk_type = null
+  },
+  {
+    ### image ###
+    source_image        = null
+    source_image_family = "rocky-linux-8"
     image_licenses      = null
     labels              = null
 

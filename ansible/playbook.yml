@@ -37,6 +37,9 @@
         ( ansible_distribution == "CentOS" and
           ansible_distribution_major_version is version('7', '==')
         ) or
+        ( ansible_distribution == "Rocky" and
+          ansible_distribution_major_version is version('8', '==')
+        ) or
         ( ansible_distribution == "Debian" and
           (ansible_distribution_major_version is version('10', '==') or
           ansible_distribution_major_version is version('11', '=='))
@@ -50,6 +53,7 @@
         supported.
         Please use a suported OS in list:
           - CentOS 7
+          - Rocky 8
           - Debian 10, 11
           - Ubuntu 20.04, 22.04
   - name: Minimum Ansible Version Check

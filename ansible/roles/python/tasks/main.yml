@@ -52,6 +52,6 @@
 - name: Install Pip Packages
   pip:
     requirements: '{{ requirements_file.results[0].dest }}'
-    extra_args: --upgrade
+    extra_args: --upgrade --ignore-installed
     executable: pip3
     state: present
