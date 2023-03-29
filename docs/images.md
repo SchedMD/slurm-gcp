@@ -30,7 +30,6 @@ can be created and used instead.
 
 `slurm-gcp` supports images built on these OS families:
 
-- `rhel-7`
 - `centos-7`
 - `debian-10`
 - `ubuntu-2004-lts`
