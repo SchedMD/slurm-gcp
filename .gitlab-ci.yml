@@ -82,6 +82,16 @@ build-debian-10:
   variables:
     IMAGE_OS: debian-10
 
+build-debian-11:
+  extends: .build-image
+  variables:
+    IMAGE_OS: debian-11
+
+build-debian-11-arm64:
+  extends: .build-image
+  variables:
+    IMAGE_OS: debian-11-arm64
+
 build-ubuntu-2004-lts:
   extends: .build-image
   variables:
@@ -161,6 +171,24 @@ test-debian-10:
   variables:
     IMAGE_OS: debian-10
     ARCH: x86_64
+
+test-debian-11:
+  extends: .test-image
+  needs:
+  - job: build-debian-11
+    optional: true
+  variables:
+    IMAGE_OS: debian-11
+    ARCH: x86_64
+
+test-debian-11-arm64:
+  extends: .test-image
+  needs:
+  - job: build-debian-11-arm64
+    optional: true
+  variables:
+    IMAGE_OS: debian-11-arm64
+    ARCH: arm64
 
 test-ubuntu-2004-lts:
   extends: .test-image
