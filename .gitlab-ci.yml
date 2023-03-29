@@ -87,6 +87,11 @@ build-ubuntu-2004-lts:
   variables:
     IMAGE_OS: ubuntu-2004-lts
 
+build-ubuntu-2204-lts:
+  extends: .build-image
+  variables:
+    IMAGE_OS: ubuntu-2204-lts
+
 .test-image:
   stage: test-clusters
   artifacts:
@@ -150,3 +155,11 @@ test-ubuntu-2004-lts:
     optional: true
   variables:
     IMAGE_OS: ubuntu-2004-lts
+
+test-ubuntu-2204-lts:
+  extends: .test-image
+  needs:
+  - job: build-ubuntu-2204-lts
+    optional: true
+  variables:
+    IMAGE_OS: ubuntu-2204-lts
