@@ -33,3 +33,8 @@ output "slurm_login_instance_self_links" {
   description = "Slurm login instance self_link."
   value       = module.slurm_cluster.slurm_login_instance_self_links
 }
+
+output "cloud_logging_filter" {
+  description = "Cloud Logging filter to find startup errors."
+  value       = module.slurm_cluster.cloud_logging_filter
+}

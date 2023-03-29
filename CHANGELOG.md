@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[Next\]
 
 - Increase project metadata timeouts.
+- Add cluster cloud logging fiter output.
 
 ## \[5.6.2\]
 
