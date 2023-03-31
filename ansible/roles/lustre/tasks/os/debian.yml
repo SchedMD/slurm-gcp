@@ -13,25 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Get DEBs
-  shell: >
-    wget
-    --recursive
-    --level=1
-    --no-parent
-    --no-directories
-    --accept="{{lustre_files|join(',')}}"
-    --directory-prefix="{{lustre_artifacts_dir}}"
-    {{lustre_deb_url}}
-
-- name: Gather DEBs
-  find:
-    path: '{{lustre_artifacts_dir}}'
-    patterns: '*.deb'
-  register: lustre_debs
-
-- name: Install DEBs
-  apt:
-    deb: '{{item.path}}'
+- name: Install Lustre Repo
+  ansible.builtin.apt_repository:
+    filename: lustre-client
+    repo: deb [trusted=yes] {{ lustre_repo_url }} /
     state: present
-  with_items: '{{lustre_debs.files}}'

@@ -13,17 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Install Dependancies
-  package:
-    name:
-    - wget
-    state: present
-
-- name: Mkdir
-  file:
-    name: '{{lustre_artifacts_dir}}'
-    state: directory
-
 - name: Include OS Family Dependent Vars
   ansible.builtin.include_vars: '{{ item }}'
   with_first_found:
@@ -43,3 +32,18 @@
   - os/{{ ansible_os_family|lower }}-{{ ansible_distribution_version }}.yml
   - os/{{ ansible_os_family|lower }}-{{ ansible_distribution_major_version }}.yml
   - os/{{ ansible_os_family|lower }}.yml
+
+- name: Wait for DPKG Locks
+  ansible.builtin.shell: >
+    while fuser /var/lib/dpkg/{{ item }} >/dev/null 2>&1; do
+      sleep 5
+    done
+  with_items:
+  - lock
+  - lock-frontend
+  when: ansible_os_family == 'Debian'
+
+- name: Install Luster Client
+  ansible.builtin.package:
+    name: '{{ lustre_packages }}'
+    state: present
