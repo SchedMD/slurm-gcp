@@ -78,7 +78,6 @@ service_account_scopes = [
 
 builds = [
   {
-    name = "centos-7"
     ### image ###
     source_image        = null
     source_image_family = "centos-7"
@@ -103,7 +102,6 @@ builds = [
     disk_type = null
   },
   {
-    name = "hpc-centos-7"
     ### image ###
     source_image        = null
     source_image_family = "hpc-centos-7"
@@ -128,7 +126,6 @@ builds = [
     disk_type = null
   },
   {
-    name = "debian-10"
     ### image ###
     source_image        = null
     source_image_family = "debian-10"
@@ -153,7 +150,6 @@ builds = [
     disk_type = null
   },
   {
-    name = "ubuntu-2004-lts"
     ### image ###
     source_image        = null
     source_image_family = "ubuntu-2004-lts"
