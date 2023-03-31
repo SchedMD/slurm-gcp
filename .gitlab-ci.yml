@@ -77,6 +77,11 @@ build-hpc-centos-7:
   variables:
     IMAGE_OS: hpc-centos-7
 
+build-rocky-linux-8:
+  extends: .build-image
+  variables:
+    IMAGE_OS: rocky-linux-8
+
 build-debian-10:
   extends: .build-image
   variables:
@@ -161,6 +166,15 @@ test-hpc-centos-7:
     optional: true
   variables:
     IMAGE_OS: hpc-centos-7
+    ARCH: x86_64
+
+test-rocky-linux-8:
+  extends: .test-image
+  needs:
+  - job: build-rocky-linux-8
+    optional: true
+  variables:
+    IMAGE_OS: rocky-linux-8
     ARCH: x86_64
 
 test-debian-10:
