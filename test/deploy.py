@@ -223,7 +223,7 @@ class Cluster:
         node_state = re.compile(r"State=(\S+)\s")
         for wait in backoff_delay(2, count=20, timeout=240):
             try:
-                result = self.controller_exec("scontrol show -o nodes")
+                result = self.login_exec("scontrol show -o nodes")
                 if result.exit_status == 0 and all(
                     s[1].startswith("IDLE")
                     for s in node_state.finditer(result["stdout"])
