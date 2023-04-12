@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Add cluster cloud logging fiter output.
 - Add Ubuntu 22.04 LTS support.
 - Add preliminary ARM64 image support for T2A instances.
+- Add Debian 11 support.
 - Add Rocky Linux 8 support.
 - Adjust logging for config not found.
 
