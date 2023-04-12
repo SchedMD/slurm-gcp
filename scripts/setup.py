@@ -430,8 +430,11 @@ def install_gres_conf():
 def fetch_devel_scripts():
     """download scripts from project metadata if they are present"""
 
-    meta_json = project_metadata(f"{cfg.slurm_cluster_name}-slurm-devel")
-    if not meta_json:
+    meta_json = None
+    try:
+        meta_json = project_metadata(f"{cfg.slurm_cluster_name}-slurm-devel")
+    except Exception:
+        log.debug("scripts not found in project metadata, devel mode not enabled")
         return
     metadata_devel = json.loads(meta_json)
 
@@ -462,7 +465,10 @@ def install_custom_scripts(clean=False):
     script_pattern = re.compile(
         rf"{cfg.slurm_cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)"
     )
-    metadata_keys = project_metadata("/").splitlines()
+    try:
+        metadata_keys = project_metadata("/").splitlines()
+    except Exception:
+        log.error("No project metadata found, this is unexpected here")
 
     def match_name(meta_key):
         m = script_pattern.match(meta_key)

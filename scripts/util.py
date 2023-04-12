@@ -477,18 +477,20 @@ def config_from_metadata():
 
     metadata_key = f"{slurm_cluster_name}-slurm-config"
     for retry, wait in enumerate(backoff_delay(0.25, count=3, timeout=5)):
-        config_yaml = project_metadata.__wrapped__(metadata_key)
-        if config_yaml is None:
+        try:
+            config_yaml = project_metadata.__wrapped__(metadata_key)
+            break
+        except Exception:
             log.warning(f"config not found in project metadata, retry {retry}")
             sleep(wait)
             continue
-        else:
-            break
     else:
         try:
             config_yaml = instance_metadata("attributes/slurm-config")
-        except Exception as e:
-            log.warning(str(e))
+        except Exception:
+            log.warning(
+                "config also not found in instance metadata, proceeding anyway."
+            )
     cfg = new_config(yaml.safe_load(config_yaml or ""))
     return cfg
 
