@@ -45,12 +45,13 @@ resource "null_resource" "notify_cluster" {
       script_path = data.local_file.notify_cluster.filename
       topic       = var.topic
       type        = var.type
+      project_id  = var.project_id
     }
   )
 
   provisioner "local-exec" {
     working_dir = self.triggers.scripts_dir
-    command     = "${self.triggers.script_path} --type='${self.triggers.type}' '${self.triggers.topic}'"
+    command     = "${self.triggers.script_path} --type='${self.triggers.type}' --project_id='${self.triggers.project_id}' '${self.triggers.topic}'"
     when        = create
   }
 }

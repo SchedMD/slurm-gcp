@@ -35,6 +35,8 @@ module "slurm_notify_cluster" {
 
   topic = "<PUBSUB_TOPIC_ID>"
 
+  project_id = "<GCLOUD_PROJECT_ID>"
+
   type = "reconfig"
 }
 ```

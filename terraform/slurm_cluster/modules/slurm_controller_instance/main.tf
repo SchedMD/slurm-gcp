@@ -465,6 +465,7 @@ module "reconfigure_notify" {
   count = var.enable_reconfigure ? 1 : 0
 
   topic = google_pubsub_topic.this[0].name
+  project_id = var.project_id
   type  = "reconfig"
 
   triggers = {
@@ -493,6 +494,7 @@ module "devel_notify" {
   count = var.enable_devel && var.enable_reconfigure ? 1 : 0
 
   topic = google_pubsub_topic.this[0].name
+  project_id = var.project_id
   type  = "devel"
 
   triggers = {

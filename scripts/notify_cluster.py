@@ -24,6 +24,7 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("topic_id", help="Pubsub topic ID to publish to")
+    parser.add_argument("--project_id", help="The project ID to use")
     parser.add_argument(
         "--type",
         "-t",
@@ -39,7 +40,14 @@ def main():
             "timestamp": datetime.utcnow().isoformat(),
         }
     )
-    publish_message(lkp.project, args.topic_id, message_json)
+
+    p_id = args.project_id if args.project_id else lkp.project
+
+    if p_id:
+        publish_message(p_id, args.topic_id, message_json)
+    else:
+        print("Error: Project id cannot be determined")
+        exit(1)
 
 
 if __name__ == "__main__":
