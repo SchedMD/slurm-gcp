@@ -73,8 +73,9 @@ output "slurm_login_instance_details" {
 
 output "cloud_logging_filter" {
   description = "Cloud Logging filter to find startup errors."
-  value       = <<-EOT
-  resource.type="gce_instance"
-  logName=("projects/${var.project_id}/logs/slurm_resume" OR "projects/${var.project_id}/logs/slurm_suspend" OR "projects/${var.project_id}/logs/slurm_sync" OR "projects/${var.project_id}/logs/slurmctld" OR "projects/${var.project_id}/logs/slurmd" OR "projects/${var.project_id}/logs/slurmdbd" OR "projects/${var.project_id}/logs/slurmeventd") OR (logName=("projects/${var.project_id}/logs/syslog") AND jsonPayload.message=~"google_metadata_script_runner")
-  EOT
+  value = (
+    var.enable_hybrid
+    ? module.slurm_controller_hybrid[0].cloud_logging_filter
+    : module.slurm_controller_instance[0].cloud_logging_filter
+  )
 }

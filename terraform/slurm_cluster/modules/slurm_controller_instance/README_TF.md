@@ -28,9 +28,9 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_google"></a> [google](#provider\_google) | 4.55.0 |
-| <a name="provider_local"></a> [local](#provider\_local) | 2.3.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.4.3 |
+| <a name="provider_google"></a> [google](#provider\_google) | 4.61.0 |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.4.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.5.1 |
 
 ## Modules
 
@@ -115,6 +115,7 @@ limitations under the License.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_cloud_logging_filter"></a> [cloud\_logging\_filter](#output\_cloud\_logging\_filter) | Cloud Logging filter to find startup errors. |
 | <a name="output_compute_list"></a> [compute\_list](#output\_compute\_list) | Cluster compute list. |
 | <a name="output_instances_self_links"></a> [instances\_self\_links](#output\_instances\_self\_links) | Controller instance resource. |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Cluster partitions. |

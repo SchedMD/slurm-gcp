@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Expose `cloud_logging_filter` output from controller modules.
+
 ## \[5.6.3\]
 
 - Increase project metadata timeouts.
