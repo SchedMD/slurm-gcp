@@ -1,15 +1,79 @@
 ---
+- name: get nvidia driver version
+  set_fact:
+    nvidia_driver_version: '{{ nvidia_version }}'
+  when: nvidia_version != "latest"
+
+- name: lookup nvidia driver version
+  shell: |
+    sudo apt-cache search 'linux-modules-nvidia-[0-9]+-gcp$' | awk '{print $1}' | sort | tail -n 1 | head -n 1 | awk -F"-" '{print $4}'
+  register: nvidia_driver_version
+
+- name: set nvidia driver version
+  set_fact:
+    nvidia_driver_version: '{{ nvidia_driver_version.stdout }}'
+
+  when: nvidia_version == "latest"
+
+- name: Set nvidia packages
+  set_fact:
+    nvidia_packages:
+    - linux-modules-nvidia-{{ nvidia_driver_version }}-gcp
+    - nvidia-driver-{{ nvidia_driver_version }}
+
+- name: Install NVIDIA driver
+  apt:
+    name: '{{ nvidia_packages }}'
+    state: present
+    update_cache: true
+
 # tasks file for ansible-role-cuda
 - name: Trust packaging key for Nvidia repositories (apt)
-  apt_key:
-    data: "{{ lookup('file', 'files/nvidia_packaging_key.asc') }}"
-    id: '{{ cuda_packaging_key_id }}'
-    state: present
+  apt:
+    deb: '{{ cuda_repo_url }}/{{ cuda_repo_subfolder }}/x86_64/cuda-keyring_1.0-1_all.deb'
 
-- name: Configure Nvidia repository (apt)
-  apt_repository:
-    repo: deb {{ cuda_repo_url }}/{{ cuda_repo_subfolder }}/x86_64 /
-    filename: nvidia
-    state: present
+- name: Update apt cache and remove dkms
+  apt:
+    name: dkms
+    state: absent
+    update_cache: true
 
-# vim:ft=ansible:
+- name: Hold dkms
+  ansible.builtin.dpkg_selections:
+    name: dkms
+    selection: hold
+
+- name: lookup cuda driver version
+  shell: |
+    apt-cache madison cuda-drivers | awk '{print $3}' | sort -r | while read line; do
+      if dpkg --compare-versions $(apt-cache policy nvidia-driver-{{ nvidia_driver_version }} | grep Candidate | awk '{print $2}') ge $line ; then
+        echo "$line"
+        break
+      fi
+    done
+  register: cuda_driver_version
+
+- name: set cuda driver version
+  set_fact:
+    cuda_driver_version: '{{ cuda_driver_version.stdout }}'
+
+- name: lookup cuda version
+  shell: |
+    apt-cache showpkg cuda-drivers | grep -o 'cuda-runtime-[0-9][0-9]-[0-9],cuda-drivers [0-9\.]*' | while read line; do
+      if dpkg --compare-versions {{ cuda_driver_version }} ge $(echo $line | grep -Eo '[[:digit:]]+\.[[:digit:]]+') ; then
+        echo $(echo $line | grep -Eo '[[:digit:]]+-[[:digit:]]')
+        break
+      fi
+    done
+  register: cuda_version
+
+- name: set cuda version
+  set_fact:
+    cuda_version: '{{ cuda_version.stdout }}'
+
+- name: Set cuda packages
+  set_fact:
+    cuda_packages:
+    - cuda-drivers-{{ nvidia_driver_version }}={{ cuda_driver_version }}
+    - cuda-drivers={{ cuda_driver_version }}
+    - cuda-{{ cuda_version }}

@@ -9,9 +9,6 @@
   - '{{ ansible_os_family|lower }}.yml'
 
 - block:
-  - include_tasks: configure_yum.yml
-    when: ansible_pkg_mgr in ['yum', 'dnf'] and not cuda_use_runfile
-
   - include_tasks: configure_apt.yml
     when: ansible_pkg_mgr == 'apt' and not cuda_use_runfile
 
@@ -23,6 +20,7 @@
     package:
       name: '{{ item }}'
       state: present
+      update_cache: true
     with_items: '{{ cuda_packages }}'
     register: cuda_packages_installation
     when: not cuda_use_runfile

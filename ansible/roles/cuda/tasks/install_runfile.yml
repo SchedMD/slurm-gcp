@@ -1,4 +1,9 @@
 ---
+- name: Gather version vars
+  ansible.builtin.include_vars: '{{ item }}'
+  with_first_found:
+  - version/{{ nvidia_version }}.yml
+  - version/b{{ nvidia_version }}.yml
 
 - name: Determine running kernel
   command: uname -r
@@ -123,8 +128,15 @@
 - name: Install driver
   block:
 
+  - name: Download driver installer
+    get_url:
+      url: '{{ nvidia_runfile_url }}'
+      dest: /tmp/cuda_runfile/
+    when: nvidia_runfile_url | length > 0
+
   - name: Extract installer for driver installation
     command: bash /tmp/cuda_runfile/{{ cuda_runfile_sh }} --extract=/tmp/cuda_runfile
+    when: nvidia_runfile_url | length == 0
 
   - name: Find NVIDIA runtime
     find:

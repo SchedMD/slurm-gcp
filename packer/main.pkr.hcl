@@ -25,12 +25,17 @@ locals {
   scripts_dir = "../scripts"
 
   ansible_vars = {
-    slurm_version   = var.slurm_version
-    install_cuda    = var.install_cuda
-    install_ompi    = var.install_ompi
-    install_lustre  = var.install_lustre
-    install_gcsfuse = var.install_gcsfuse
+    slurm_version    = var.slurm_version
+    install_cuda     = var.install_cuda
+    nvidia_version   = var.nvidia_version
+    nvidia_from_repo = var.nvidia_from_repo
+    install_ompi     = var.install_ompi
+    install_lustre   = var.install_lustre
+    install_gcsfuse  = var.install_gcsfuse
   }
+
+  image_prefix = "${var.prefix}-v5-slurm-${local.slurm_semver}"
+  variant_str  = try(length(var.variant), 0) > 0 ? "-${var.variant}" : ""
 }
 
 ##########
@@ -86,14 +91,14 @@ build {
       "sources.googlecompute.image",
     ]
     content {
-      name = source.value.source_image_family
+      name = "${source.value.source_image_family}${local.variant_str}"
 
       ### image ###
       source_image        = source.value.source_image
       source_image_family = source.value.source_image_family
 
-      image_name        = "${var.prefix}-v5-slurm-${local.slurm_semver}-${source.value.source_image_family}-{{timestamp}}"
-      image_family      = "${var.prefix}-v5-slurm-${local.slurm_semver}-${source.value.source_image_family}"
+      image_name        = "${local.image_prefix}-${source.value.source_image_family}${local.variant_str}-{{timestamp}}"
+      image_family      = "${local.image_prefix}-${source.value.source_image_family}${local.variant_str}"
       image_description = "slurm-gcp-v5"
       image_licenses    = source.value.image_licenses
       image_labels      = source.value.labels
@@ -103,7 +108,7 @@ build {
       ssh_password = source.value.ssh_password
 
       ### instance ###
-      instance_name = "${var.prefix}-v5-slurm-${local.slurm_semver}-${source.value.source_image_family}-{{timestamp}}"
+      instance_name = "${local.image_prefix}-${source.value.source_image_family}${local.variant_str}-{{timestamp}}"
       machine_type  = source.value.machine_type
       preemptible   = source.value.preemptible
       labels        = source.value.labels

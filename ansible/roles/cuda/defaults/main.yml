@@ -3,12 +3,14 @@
 # By default gpu is False, set it to True on the gpu nodes in the hosts file
 
 gpu: false
-cuda_repo_url: http://developer.download.nvidia.com/compute/cuda/repos/
+cuda_repo_url: http://developer.download.nvidia.com/compute/cuda/repos
 cuda_rpm_key_path: /etc/rpm/nvidia_packaging_key.asc
 cuda_packages:
 - cuda
 cuda_use_runfile: false
-cuda_runfile_url: https://developer.download.nvidia.com/compute/cuda/11.2.2/local_installers/cuda_11.2.2_460.32.03_linux.run
+nvidia_version: latest
+cuda_runfile_url: https://developer.download.nvidia.com/compute/cuda/11.4.4/local_installers/cuda_11.4.4_470.82.01_linux.run
+nvidia_runfile_url: ''
 cuda_runfile_checksum: true
 cuda_runfile_checksum_url: ''
 cuda_runfile_driver: true

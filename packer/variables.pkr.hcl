@@ -129,10 +129,33 @@ variable "prefix" {
   }
 }
 
+variable "variant" {
+  description = "variant suffix to distinguish between variants on the same base image"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.variant == "" || can(regex("^[a-z](?:[a-z0-9]*)$", var.variant))
+    error_message = "Variable 'variant' must pass '^[a-z](?:[a-z0-9]*)$'."
+  }
+}
+
 variable "install_cuda" {
   description = "enable install of cuda and nvidia driver"
   type        = bool
   default     = true
+}
+
+variable "nvidia_version" {
+  description = "choose the major nvidia version to install via runfile"
+  type        = string
+  default     = "latest"
+}
+
+variable "nvidia_from_repo" {
+  description = "use gcp specific repo for nvidia driver install, currently only available on Ubuntu 20.04"
+  type        = bool
+  default     = false
 }
 
 variable "install_ompi" {
