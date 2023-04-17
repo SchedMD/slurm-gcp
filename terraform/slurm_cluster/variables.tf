@@ -264,7 +264,8 @@ EOD
       filename = string
       content  = string
     }))
-    partition_name = string
+    partition_feature = string
+    partition_name    = string
     partition_nodes = list(object({
       node_count_static      = number
       node_count_dynamic_max = number
@@ -344,6 +345,7 @@ EOD
       }
       partition_startup_scripts_timeout = 300
       partition_startup_scripts         = []
+      partition_feature                 = null
       partition_name                    = "debug"
       partition_nodes = [
         {

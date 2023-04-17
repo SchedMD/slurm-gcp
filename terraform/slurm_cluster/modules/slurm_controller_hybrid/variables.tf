@@ -209,8 +209,9 @@ variable "partitions" {
         fs_type       = string
         mount_options = string
       }))
-      partition_conf = map(string)
-      partition_name = string
+      partition_conf    = map(string)
+      partition_feature = string
+      partition_name    = string
       partition_nodes = map(object({
         node_count_dynamic_max = number
         node_count_static      = number

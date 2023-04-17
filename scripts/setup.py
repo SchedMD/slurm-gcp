@@ -257,33 +257,59 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
     def partitionlines(partition):
         """Make a partition line for the slurm.conf"""
         part_name = partition.partition_name
-        group_lines = [
-            node_group_lines(group, part_name)
-            for group in partition.partition_nodes.values()
-        ]
-        nodesets, nodelines = zip(*group_lines)
+        lines = []
 
-        def defmempercpu(template_link):
-            machine_conf = lkp.template_machine_conf(template_link)
-            return max(100, machine_conf.memory // machine_conf.cpus)
+        if len(partition.partition_nodes.values()) > 0:
+            group_lines = [
+                node_group_lines(group, part_name)
+                for group in partition.partition_nodes.values()
+            ]
+            nodesets, nodelines = zip(*group_lines)
 
-        defmem = min(
-            defmempercpu(node.instance_template)
-            for node in partition.partition_nodes.values()
-        )
-        line_elements = {
-            "PartitionName": part_name,
-            "Nodes": ",".join(nodesets),
-            "State": "UP",
-            "DefMemPerCPU": defmem,
-            "SuspendTime": 300,
-            "Oversubscribe": "Exclusive" if partition.enable_job_exclusive else None,
-            **partition.partition_conf,
-        }
-        lines = [
-            *nodelines,
-            dict_to_conf(line_elements),
-        ]
+            def defmempercpu(template_link):
+                machine_conf = lkp.template_machine_conf(template_link)
+                return max(100, machine_conf.memory // machine_conf.cpus)
+
+            defmem = min(
+                defmempercpu(node.instance_template)
+                for node in partition.partition_nodes.values()
+            )
+            line_elements = {
+                "PartitionName": part_name,
+                "Nodes": ",".join(nodesets),
+                "State": "UP",
+                "DefMemPerCPU": defmem,
+                "SuspendTime": 300,
+                "Oversubscribe": "Exclusive"
+                if partition.enable_job_exclusive
+                else None,
+                **partition.partition_conf,
+            }
+            lines = [
+                *nodelines,
+                dict_to_conf(line_elements),
+            ]
+        if partition.partition_feature is not None:
+            nodelines = [
+                dict_to_conf(
+                    {"NodeSet": part_name, "Feature": partition.partition_feature}
+                )
+            ]
+            line_elements = {
+                "PartitionName": part_name,
+                "Nodes": part_name,
+                "State": "UP",
+                "SuspendTime": 300,
+                "Oversubscribe": "Exclusive"
+                if partition.enable_job_exclusive
+                else None,
+                **partition.partition_conf,
+            }
+            lines = [
+                *nodelines,
+                dict_to_conf(line_elements),
+            ]
+
         return "\n".join(lines)
 
     static_nodes = ",".join(lkp.static_nodelist())
@@ -392,14 +418,15 @@ def gen_cloud_gres_conf(lkp=lkp):
 
     gpu_nodes = defaultdict(list)
     for part_name, partition in lkp.cfg.partitions.items():
-        for node in partition.partition_nodes.values():
-            template_info = lkp.template_info(node.instance_template)
-            gpu_count = template_info.gpu_count
-            if gpu_count == 0:
-                continue
-            gpu_nodes[gpu_count].extend(
-                filter(None, lkp.nodeset_lists(node, part_name))
-            )
+        if len(partition.partition_nodes.values()) > 0:
+            for node in partition.partition_nodes.values():
+                template_info = lkp.template_info(node.instance_template)
+                gpu_count = template_info.gpu_count
+                if gpu_count == 0:
+                    continue
+                gpu_nodes[gpu_count].extend(
+                    filter(None, lkp.nodeset_lists(node, part_name))
+                )
 
     lines = [
         dict_to_conf(
@@ -721,7 +748,6 @@ def mount_fstab(mounts):
     from more_executors import Executors, ExceptionRetryPolicy
 
     def mount_path(path):
-
         log.info(f"Waiting for '{path}' to be mounted...")
         try:
             run(f"mount {path}", timeout=120)
@@ -987,7 +1013,6 @@ innodb_lock_wait_timeout=900
 
 
 def configure_dirs():
-
     for p in dirs.values():
         p.mkdirp()
     util.chown_slurm(dirs.slurm)
@@ -1160,7 +1185,6 @@ def setup_compute():
 
 
 def main():
-
     start_motd()
     configure_dirs()
     fetch_devel_scripts()

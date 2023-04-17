@@ -45,6 +45,7 @@ module "slurm_partition" {
   network_storage                   = each.value.network_storage
   partition_name                    = each.value.partition_name
   partition_conf                    = each.value.partition_conf
+  partition_feature                 = each.value.partition_feature
   partition_startup_scripts_timeout = each.value.partition_startup_scripts_timeout
   partition_startup_scripts         = each.value.partition_startup_scripts
   project_id                        = var.project_id

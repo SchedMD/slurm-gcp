@@ -144,7 +144,8 @@ partitions = [
       #   EOF
       # },
     ]
-    partition_name = "debug"
+    partition_feature = null
+    partition_name    = "debug"
     partition_nodes = [
       {
         # Group Definition
@@ -211,6 +212,7 @@ partitions = [
     }
     partition_startup_scripts_timeout = 300
     partition_startup_scripts         = []
+    partition_feature                 = null
     partition_name                    = "debug2"
     partition_nodes = [
       {

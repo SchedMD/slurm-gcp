@@ -22,6 +22,7 @@ locals {
   partition = {
     partition_name                    = var.partition_name
     partition_conf                    = var.partition_conf
+    partition_feature                 = var.partition_feature
     partition_nodes                   = local.partition_nodes
     partition_startup_scripts_timeout = var.partition_startup_scripts_timeout
     subnetwork                        = data.google_compute_subnetwork.partition_subnetwork.self_link

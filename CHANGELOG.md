@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[Next\]
 
 - Expose `cloud_logging_filter` output from controller modules.
+- Add `partition_feature` for external dynamic nodes.
 
 ## \[5.6.3\]
 

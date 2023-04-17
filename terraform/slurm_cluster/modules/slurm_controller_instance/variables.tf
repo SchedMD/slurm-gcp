@@ -341,8 +341,9 @@ variable "partitions" {
         fs_type       = string
         mount_options = string
       }))
-      partition_conf = map(string)
-      partition_name = string
+      partition_conf    = map(string)
+      partition_feature = string
+      partition_name    = string
       partition_nodes = map(object({
         access_config = list(object({
           network_tier = string

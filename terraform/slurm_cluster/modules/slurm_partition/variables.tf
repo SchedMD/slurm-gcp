@@ -138,11 +138,6 @@ EOD
   }))
 
   validation {
-    condition     = length(var.partition_nodes) > 0
-    error_message = "Partition must contain nodes."
-  }
-
-  validation {
     condition = alltrue([
       for x in var.partition_nodes : can(regex("^[a-z](?:[a-z0-9]{0,5})$", x.group_name))
     ])
@@ -318,4 +313,13 @@ EOD
     mount_options = string
   }))
   default = []
+}
+
+variable "partition_feature" {
+  description = <<-EOD
+    Any nodes with these features will be automatically put into this partition.
+    NOTE: meant to be used for external dynamic nodes that register.
+  EOD
+  type        = string
+  default     = null
 }

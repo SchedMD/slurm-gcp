@@ -283,7 +283,8 @@ partitions = [
       #   EOF
       # },
     ]
-    partition_name = "debug"
+    partition_name    = "debug"
+    partition_feature = null
     partition_nodes = [
       {
         # Group Definition

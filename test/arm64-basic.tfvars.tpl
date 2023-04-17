@@ -116,7 +116,8 @@ partitions = [
       #
       #},
     ]
-    partition_name = "debug"
+    partition_feature = null
+    partition_name    = "debug"
     partition_nodes = [
       {
         # Group Definition
@@ -203,7 +204,8 @@ partitions = [
       #
       #},
     ]
-    partition_name = "spot"
+    partition_feature = null
+    partition_name    = "spot"
     partition_nodes = [
       {
         # Group Definition

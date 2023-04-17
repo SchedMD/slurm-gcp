@@ -103,6 +103,7 @@ locals {
       }
       partition_startup_scripts_timeout = 300
       partition_startup_scripts         = []
+      partition_feature                 = null
       partition_name                    = "debug"
       partition_nodes = [
         {
@@ -155,6 +156,7 @@ locals {
       partition_conf                    = {}
       partition_startup_scripts_timeout = 300
       partition_startup_scripts         = []
+      partition_feature                 = null
       partition_name                    = "debug2"
       partition_nodes = [
         {
