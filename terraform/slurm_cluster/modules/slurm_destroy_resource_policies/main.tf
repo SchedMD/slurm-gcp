@@ -45,6 +45,7 @@ resource "null_resource" "destroy_resource_policies_on_create" {
       scripts_dir        = local.scripts_dir
       script_path        = data.local_file.destroy_resource_policies.filename
       slurm_cluster_name = var.slurm_cluster_name
+      project_id         = var.project_id
       partition_name     = var.partition_name
     }
   )
@@ -53,6 +54,7 @@ resource "null_resource" "destroy_resource_policies_on_create" {
     working_dir = self.triggers.scripts_dir
     command     = <<EOF
 ${self.triggers.script_path} \
+"--project_id=${self.triggers.project_id}" \
 ${self.triggers.partition_name != "" ? "--partition=${self.triggers.partition_name}" : ""} \
 ${self.triggers.slurm_cluster_name}
 EOF
@@ -73,6 +75,7 @@ resource "null_resource" "destroy_resource_policies_on_destroy" {
       scripts_dir        = local.scripts_dir
       script_path        = data.local_file.destroy_resource_policies.filename
       slurm_cluster_name = var.slurm_cluster_name
+      project_id         = var.project_id
       partition_name     = var.partition_name
     }
   )
@@ -81,6 +84,7 @@ resource "null_resource" "destroy_resource_policies_on_destroy" {
     working_dir = self.triggers.scripts_dir
     command     = <<EOF
 ${self.triggers.script_path} \
+"--project_id=${self.triggers.project_id}" \
 ${self.triggers.partition_name != "" ? "--partition=${self.triggers.partition_name}" : ""} \
 ${self.triggers.slurm_cluster_name}
 EOF

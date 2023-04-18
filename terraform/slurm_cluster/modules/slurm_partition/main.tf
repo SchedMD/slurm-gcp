@@ -260,6 +260,7 @@ module "reconfigure_placement_groups" {
   count = var.enable_reconfigure ? 1 : 0
 
   slurm_cluster_name = var.slurm_cluster_name
+  project_id = var.project_id
   partition_name     = local.partition.partition_name
 
   triggers = {

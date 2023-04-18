@@ -34,6 +34,7 @@ module "slurm_destroy_resource_policies" {
 
   partition_name     = "<PARTITION_NAME>"
   slurm_cluster_name = "<SLURM_CLUSTER_NAME>"
+  project_id = "<GCLOUD_PROJECT_ID>"
 }
 ```
 

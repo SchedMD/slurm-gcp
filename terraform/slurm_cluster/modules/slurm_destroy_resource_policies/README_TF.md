@@ -48,6 +48,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_partition_name"></a> [partition\_name](#input\_partition\_name) | Partition name. | `string` | `""` | no |
 | <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, for resource filtering. | `string` | n/a | yes |
+| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Google Cloud Project ID. | `string` | n/a | yes |
 | <a name="input_triggers"></a> [triggers](#input\_triggers) | Additional Terraform triggers. | `map(string)` | `{}` | no |
 | <a name="input_when_destroy"></a> [when\_destroy](#input\_when\_destroy) | Run only on `terraform destroy`? | `bool` | `false` | no |
 

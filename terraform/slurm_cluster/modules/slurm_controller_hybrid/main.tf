@@ -501,5 +501,6 @@ module "cleanup_resource_policies" {
   count = var.enable_cleanup_compute ? 1 : 0
 
   slurm_cluster_name = var.slurm_cluster_name
+  project_id = var.project_id
   when_destroy       = true
 }
