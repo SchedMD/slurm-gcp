@@ -124,6 +124,7 @@ build-ubuntu-2204-lts-arm64:
 
 .test-image:
   stage: test-clusters
+  retry: 1
   artifacts:
     name: $CI_COMMIT_REF_NAME-$CI_JOB_NAME-logs
     when: always
