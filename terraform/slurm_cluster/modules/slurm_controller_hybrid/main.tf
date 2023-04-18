@@ -426,6 +426,7 @@ module "cleanup_compute_nodes" {
 
   count = var.enable_cleanup_compute ? 1 : 0
 
+  project_id = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
   when_destroy       = true
 }
@@ -445,6 +446,7 @@ module "reconfigure_critical" {
 
   count = var.enable_reconfigure ? 1 : 0
 
+  project_id = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
 
   triggers = merge(
@@ -474,6 +476,7 @@ module "reconfigure_partitions" {
 
   count = var.enable_reconfigure ? 1 : 0
 
+  project_id = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
   exclude_list       = local.compute_list
 

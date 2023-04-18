@@ -23,3 +23,13 @@ variable "slurm_cluster_name" {
     error_message = "The slurm_cluster_name must not be empty."
   }
 }
+
+variable "project_id" {
+  description = "The project ID"
+  type        = string
+
+  validation {
+    condition     = length(var.project_id) > 0
+    error_message = "The project_id must not be empty."
+  }
+}

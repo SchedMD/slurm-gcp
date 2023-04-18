@@ -45,6 +45,7 @@ resource "null_resource" "destroy_nodes_on_create" {
       scripts_dir        = local.scripts_dir
       script_path        = data.local_file.destroy_nodes.filename
       slurm_cluster_name = var.slurm_cluster_name
+      project_id         = var.project_id
     }
   )
 
@@ -52,6 +53,7 @@ resource "null_resource" "destroy_nodes_on_create" {
     working_dir = self.triggers.scripts_dir
     command     = <<EOF
 ${self.triggers.script_path} \
+"--project_id=${self.triggers.project_id}" \
 ${join(",", var.target_list) != "" ? "--target='${join(",", var.target_list)}'" : ""} \
 ${join(",", var.exclude_list) != "" ? "--exclude='${join(",", var.exclude_list)}'" : ""} \
 '${self.triggers.slurm_cluster_name}'
@@ -75,6 +77,7 @@ resource "null_resource" "destroy_nodes_on_destroy" {
       slurm_cluster_name = var.slurm_cluster_name
       target_list        = join(",", var.target_list)
       exclude_list       = join(",", var.exclude_list)
+      project_id         = var.project_id
     }
   )
 
@@ -82,6 +85,7 @@ resource "null_resource" "destroy_nodes_on_destroy" {
     working_dir = self.triggers.scripts_dir
     command     = <<EOF
 ${self.triggers.script_path} \
+"--project_id=${self.triggers.project_id}" \
 ${self.triggers.target_list != "" ? "--target='${self.triggers.target_list}'" : ""} \
 ${self.triggers.exclude_list != "" ? "--exclude='${self.triggers.exclude_list}'" : ""} \
 '${self.triggers.slurm_cluster_name}'

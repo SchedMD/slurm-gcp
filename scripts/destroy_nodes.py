@@ -77,8 +77,12 @@ def main(args):
 
     # NOTE: It is not technically possible to filter by metadata or other
     #       complex nested items
+    p_id = args.project_id if args.project_id else lkp.project
+    if (not p_id):
+        print("Error: Project id cannot be determined")
+        exit(1)
     result = (
-        compute.instances().aggregatedList(project=lkp.project, filter=filter).execute()
+        compute.instances().aggregatedList(project=p_id, filter=filter).execute()
     )
 
     compute_list = []
@@ -103,6 +107,9 @@ if __name__ == "__main__":
     parser.add_argument("slurm_cluster_name", help="Slurm cluster name label filter")
     parser.add_argument(
         "--target", help="NodeNames targeted for destruction", type=str, default=None
+    )
+    parser.add_argument(
+        "--project_id", help="Google cloud project ID", type=str, default=None
     )
     parser.add_argument(
         "--exclude", help="NodeNames excluded from destruction", type=str, default=None

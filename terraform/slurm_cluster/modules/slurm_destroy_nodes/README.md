@@ -34,6 +34,8 @@ module "slurm_destroy_nodes" {
   source = "git@github.com:SchedMD/slurm-gcp.git//terraform/slurm_cluster/modules/slurm_destroy_nodes?ref=v5.0.0"
 
   slurm_cluster_name = "<SLURM_CLUSTER_NAME>"
+
+  project_id = "<GCLOUD_PROJECT_ID>"
 }
 ```
 

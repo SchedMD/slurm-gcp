@@ -24,6 +24,16 @@ variable "slurm_cluster_name" {
   }
 }
 
+variable "project_id" {
+  description = "The project ID"
+  type        = string
+
+  validation {
+    condition     = length(var.project_id) > 0
+    error_message = "The project_id must not be empty."
+  }
+}
+
 variable "triggers" {
   description = "Additional Terraform triggers."
   type        = map(string)

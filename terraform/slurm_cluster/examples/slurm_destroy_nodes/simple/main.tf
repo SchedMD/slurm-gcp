@@ -18,4 +18,5 @@ module "slurm_destroy_nodes" {
   source = "../../../modules/slurm_destroy_nodes"
 
   slurm_cluster_name = var.slurm_cluster_name
+  project_id = var.project_id
 }

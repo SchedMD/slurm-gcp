@@ -195,6 +195,7 @@ module "reconfigure_critical" {
   count = var.enable_reconfigure ? 1 : 0
 
   slurm_cluster_name = var.slurm_cluster_name
+  project_id = var.project_id
   target_list        = local.compute_list
 
   triggers = merge(
@@ -226,6 +227,7 @@ module "reconfigure_node_groups" {
   for_each = var.enable_reconfigure ? local.partition.partition_nodes : {}
 
   slurm_cluster_name = var.slurm_cluster_name
+  project_id = var.project_id
   target_list = flatten([
     for offset in range(0, sum([each.value.node_count_static, each.value.node_count_dynamic_max]), 1024)
     : formatlist(

@@ -15,3 +15,4 @@
  */
 
 slurm_cluster_name = "<slurm_cluster_name>"
+project_id = "<GCLOUD_PROJECT_ID>"
