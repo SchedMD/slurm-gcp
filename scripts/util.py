@@ -1267,7 +1267,7 @@ class Lookup:
         nodes = {
             node: state
             for node, state in map(make_node_tuple, node_lines)
-            if "CLOUD" in state.flags
+            if "CLOUD" in state.flags or "DYNAMIC_NORM" in state.flags
         }
         return nodes
 

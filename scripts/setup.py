@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import json
 import logging
 import os
@@ -628,7 +629,11 @@ def resolve_network_storage(partition_name=None):
     """Combine appropriate network_storage fields to a single list"""
 
     if lkp.instance_role == "compute":
-        partition_name = lkp.node_partition_name()
+        try:
+            partition_name = lkp.node_partition_name()
+        except Exception:
+            # External nodename, skip partition lookup
+            partition_name = None
     partition = cfg.partitions[partition_name] if partition_name else None
 
     default_mounts = (
@@ -1038,7 +1043,7 @@ def configure_dirs():
     scripts_log.symlink_to(dirs.log)
 
 
-def setup_controller():
+def setup_controller(args):
     """Run controller setup"""
     log.info("Setting up controller")
     util.chown_slurm(dirs.scripts / "config.yaml", mode=0o600)
@@ -1112,7 +1117,7 @@ def setup_controller():
     pass
 
 
-def setup_login():
+def setup_login(args):
     """run login node setup"""
     log.info("Setting up login")
     slurmctld_host = f"{lkp.control_host}"
@@ -1143,7 +1148,7 @@ def setup_login():
     log.info("Done setting up login")
 
 
-def setup_compute():
+def setup_compute(args):
     """run compute node setup"""
     log.info("Setting up compute")
     util.chown_slurm(dirs.scripts / "config.yaml", mode=0o600)
@@ -1154,6 +1159,9 @@ def setup_compute():
         f"-N {lkp.hostname}",
         f'--conf-server="{slurmctld_host}:{lkp.control_host_port}"',
     ]
+    if args.slurmd_feature is not None:
+        slurmd_options.append(f'--conf="Feature={args.slurmd_feature}"')
+        slurmd_options.append("-Z")
     sysconf = f"""SLURMD_OPTIONS='{" ".join(slurmd_options)}'"""
     update_system_config("slurmd", sysconf)
     install_custom_scripts()
@@ -1184,7 +1192,7 @@ def setup_compute():
     log.info("Done setting up compute")
 
 
-def main():
+def main(args):
     start_motd()
     configure_dirs()
     fetch_devel_scripts()
@@ -1199,20 +1207,31 @@ def main():
         lkp.instance_role,
         lambda: log.fatal(f"Unknown node role: {lkp.instance_role}"),
     )
-    setup()
+    setup(args)
 
     end_motd()
 
 
 if __name__ == "__main__":
     util.chown_slurm(LOGFILE, mode=0o600)
+
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--slurmd-feature",
+        dest="slurmd_feature",
+        help="Feature for slurmd to register with. Controller ignores this option.",
+    )
+    args = parser.parse_args()
+
     util.config_root_logger(filename, logfile=LOGFILE)
     sys.excepthook = util.handle_exception
 
     lkp = util.Lookup(cfg)  # noqa F811
 
     try:
-        main()
+        main(args)
     except subprocess.TimeoutExpired as e:
         log.error(
             f"""TimeoutExpired:

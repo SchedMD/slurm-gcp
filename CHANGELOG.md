@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - Expose `cloud_logging_filter` output from controller modules.
 - Add `partition_feature` for external dynamic nodes.
+- Add setup.py --slurmd-feature option for external dynamic node startup.
 
 ## \[5.6.3\]
 

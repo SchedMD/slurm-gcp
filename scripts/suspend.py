@@ -161,7 +161,7 @@ def main(nodelist, job_id):
     cloud_nodes, local_nodes = lkp.filter_nodes(nodes)
     if len(local_nodes) > 0:
         log.debug(
-            f"Ignoring local nodes '{util.to_hostlist(local_nodes)}' from '{nodelist}'"
+            f"Ignoring slurm-gcp external nodes '{util.to_hostlist(local_nodes)}' from '{nodelist}'"
         )
     if len(cloud_nodes) > 0:
         log.debug(
