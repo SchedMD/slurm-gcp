@@ -59,12 +59,11 @@ default:
   - cd packer
   - packer init .
   - >
-    packer build -var-file=example.pkrvars.hcl
+    packer build -var-file builds/$IMAGE_OS.hcl
     -var "project_id=$GCP_PROJECT_ID"
     -var "slurm_version=$SLURM_VERSION"
     -var "prefix=$IMAGE_PREFIX"
     $EXTRA_VARS
-    -only "*.$IMAGE_OS"
     .
   - echo "packer build $IMAGE_OS completed"
 
@@ -82,9 +81,6 @@ build-hpc-centos-7-k80:
   extends: .build-image
   variables:
     IMAGE_OS: hpc-centos-7-k80
-    EXTRA_VARS: >
-      -var variant=k80
-      -var nvidia_version=470
 
 build-rocky-linux-8:
   extends: .build-image
@@ -110,7 +106,6 @@ build-ubuntu-2004-lts:
   extends: .build-image
   variables:
     IMAGE_OS: ubuntu-2004-lts
-    EXTRA_VARS: -var nvidia_from_repo=true
 
 build-ubuntu-2004-lts-arm64:
   extends: .build-image
@@ -176,6 +171,15 @@ test-hpc-centos-7:
     optional: true
   variables:
     IMAGE_OS: hpc-centos-7
+    ARCH: x86_64
+
+test-hpc-centos-7-k80:
+  extends: .test-image
+  needs:
+  - job: build-hpc-centos-7-k80
+    optional: true
+  variables:
+    IMAGE_OS: hpc-centos-7-k80
     ARCH: x86_64
 
 test-rocky-linux-8:

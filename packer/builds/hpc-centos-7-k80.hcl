@@ -30,48 +30,14 @@ source_image_project_id = "cloud-hpc-image-public"
 
 #source_image        = null
 source_image_family = "hpc-centos-7"
+variant = "k80"
+nvidia_version = "470"
 
 # *NOT* intended for production use
 # skip_create_image = true
-
-tags = [
-  # "tag0",
-  # "tag1",
-]
 
 #############
 # PROVISION #
 #############
 
 slurm_version = "22.05.8"
-
-# Disable some ansible roles here; they are enabled by default
-# install_cuda = false
-# install_ompi = false
-# install_lustre = false
-# install_gcsfuse = false
-
-### Service Account ###
-
-service_account_email = "default"
-
-service_account_scopes = [
-  "https://www.googleapis.com/auth/cloud-platform",
-]
-
-###########
-# NETWORK #
-###########
-
-# network_project_id = "<NETWORK_PROJECT_ID>"
-# subnetwork = "<SUBNETWORK_ID>"
-
-# add extra verbosity arguments to ensure stdout/stderr appear in output
-extra_ansible_provisioners = [
-  #  {
-  #    playbook_file = "/home/user/playbooks/custom.yaml"
-  #    galaxy_file = null
-  #    extra_arguments = ["-vv"]
-  #    user = null
-  #  },
-]

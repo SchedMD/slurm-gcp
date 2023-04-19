@@ -72,7 +72,6 @@
       cuda_bash_profile: true
       cuda_restart_node_on_install: false
       cuda_init_restart_service: false
-      cuda_use_runfile: not nvidia_from_repo
       cuda_runfile_disable_nvidia_drm: true
     when:
     - install_cuda

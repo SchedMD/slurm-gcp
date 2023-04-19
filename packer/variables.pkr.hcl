@@ -12,15 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-##########
-# LOCALS #
-##########
-
-local "ssh_passwords" {
-  expression = var.builds.*.ssh_password
-  sensitive  = true
-}
-
 ###########
 # GENERAL #
 ###########
@@ -31,6 +22,18 @@ variable "project_id" {
 
 variable "zone" {
   type = string
+}
+
+variable "image_family_alt" {
+  description = "When set, use in the generated image family in place of the source family."
+  type        = string
+  default     = null
+}
+
+variable "image_family_name" {
+  description = "When set, use for the image family instead of the auto-generated name."
+  type        = string
+  default     = null
 }
 
 ##################
@@ -52,16 +55,6 @@ variable "use_os_login" {
 #########
 # IMAGE #
 #########
-
-variable "source_image_project_id" {
-  description = <<EOD
-A list of project IDs to search for the source image. Packer will search the
-first project ID in the list first, and fall back to the next in the list,
-until it finds the source image.
-EOD
-  type        = list(string)
-  default     = []
-}
 
 variable "skip_create_image" {
   type    = bool
@@ -95,7 +88,7 @@ variable "tags" {
 #############
 
 variable "slurm_version" {
-  description = <<EOD
+  description = <<-EOD
 The Slurm version to be installed via archive or 'git checkout'.
 
 This value can be:
@@ -176,77 +169,120 @@ variable "install_gcsfuse" {
   default     = true
 }
 
-##########
-# BUILDS #
-##########
+######################
+# BUILD VM VARIABLES #
+######################
 
-variable "service_account_email" {
-  description = "The service account email to use. If 'null' or 'default', then the default email will be used."
+variable "source_image_project_id" {
+  description = "project id of the source image."
+  type        = string
+}
+
+variable "source_image" {
+  description = "Source disk image."
   type        = string
   default     = null
 }
 
+variable "source_image_family" {
+  description = "Source image family."
+  type        = string
+  default     = null
+}
+
+variable "service_account_email" {
+  description = "The service account email to use. If 'null' or 'default', then the default email will be used."
+  type        = string
+  default     = "default"
+}
+
 variable "service_account_scopes" {
-  description = <<EOD
+  description = <<-EOD
 Service account scopes to attach to the instance. See
 https://cloud.google.com/compute/docs/access/service-accounts.
 EOD
   type        = list(string)
+  default = [
+    "https://www.googleapis.com/auth/cloud-platform",
+  ]
+}
+
+variable "image_licenses" {
+  description = "Licenses to apply to the created image."
+  type        = list(string)
   default     = null
 }
 
-variable "builds" {
-  description = <<EOD
-Set of build configurations.
-* source_image : Source disk image.
-* source_image_family : Source image family.
-* image_licenses : Licenses to apply to the created image.
-* labels : Key/value pair labels to apply to the launched instance and image.
+variable "labels" {
+  description = "Key/value pair labels to apply to the launched instance and image."
+  type        = map(string)
+  default     = {}
+}
 
-* ssh_username : The username to connect to SSH with. Default: "packer"
-* ssh_password : A plaintext password to use to authenticate with SSH. (sensitive)
+variable "ssh_username" {
+  description = "The username to connect to SSH with."
+  type        = string
+  default     = "packer"
+}
 
-* machine_type : Machine type to create (e.g. n1-standard-1).
-* preemptible : If true, launch a preemptible instance.
+variable "ssh_password" {
+  description = "A plaintext password to use to authenticate with SSH."
+  type        = string
+  sensitive   = true
+  default     = null
+}
 
-* enable_secure_boot : Create a Shielded VM image with Secure Boot enabled. See
-  https://cloud.google.com/security/shielded-cloud/shielded-vm#secure-boot.
-* enable_vtpm : Create a Shielded VM image with virtual trusted platform module
-  Measured Boot enabled. See
-  https://cloud.google.com/security/shielded-cloud/shielded-vm#vtpm.
-* enable_integrity_monitoring : Integrity monitoring helps you understand and
-  make decisions about the state of your VM instances. Note: integrity
-  monitoring relies on having vTPM enabled. See
-  https://cloud.google.com/security/shielded-cloud/shielded-vm#integrity-monitoring.
+variable "machine_type" {
+  description = "Machine type to create (e.g. n1-standard-1)."
+  type        = string
+  default     = "n1-standard-16"
+}
 
-* disk_size : The size of the disk in GB. This defaults to 10, which is 10GB.
-* disk_type : Type of disk used to back your instance, like pd-ssd or
-  pd-standard. Defaults to pd-standard.
-EOD
-  type = list(object({
-    ### image ###
-    source_image        = string
-    source_image_family = string
-    image_licenses      = list(string)
-    labels              = map(string)
+variable "preemptible" {
+  description = "If true, launch a preemptible instance."
+  type        = bool
+  default     = false
+}
 
-    ### ssh ###
-    ssh_username = string
-    ssh_password = string
+variable "enable_secure_boot" {
+  description = <<-EOD
+    Create a Shielded VM image with Secure Boot enabled. See
+    https://cloud.google.com/security/shielded-cloud/shielded-vm#secure-boot."
+    EOD
+  type        = bool
+  default     = false
+}
 
-    ### instance ###
-    machine_type = string
-    preemptible  = bool
+variable "enable_vtpm" {
+  description = <<-EOD
+    Create a Shielded VM image with virtual trusted platform module
+    Measured Boot enabled. See
+    https://cloud.google.com/security/shielded-cloud/shielded-vm#vtpm.
+    EOD
+  type        = bool
+  default     = false
+}
 
-    ### root of trust ###
-    enable_secure_boot          = bool
-    enable_vtpm                 = bool
-    enable_integrity_monitoring = bool
+variable "enable_integrity_monitoring" {
+  description = <<-EOD
+    Integrity monitoring helps you understand and make decisions about the state of
+    your VM instances. Note: integrity monitoring relies on having vTPM enabled. See
+    https://cloud.google.com/security/shielded-cloud/shielded-vm#integrity-monitoring.
+    EOD
+  type        = bool
+  default     = false
+}
 
-    ### storage ###
-    disk_size = number
-    disk_type = string
-  }))
+variable "disk_size" {
+  description = "The size of the disk in GB. This defaults to 10 in GCP, which is 10GB."
+  type        = number
+  default     = 32
+}
+
+variable "disk_type" {
+  description = "Type of disk used to back your instance, like pd-ssd or pd-standard."
+  type        = string
+  default     = "pd-standard"
 }
 
 ###############################

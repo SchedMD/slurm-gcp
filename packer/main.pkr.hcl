@@ -35,7 +35,11 @@ locals {
   }
 
   image_prefix = "${var.prefix}-v5-slurm-${local.slurm_semver}"
-  variant_str  = try(length(var.variant), 0) > 0 ? "-${var.variant}" : ""
+  # if image_family_name is set, use it for image_family.
+  # If image_family_alt is set, use it instead of source_image_family
+  image_os_name = try(length(var.image_family_alt), 0) > 0 ? var.image_family_alt : var.source_image_family
+  image_family  = try(length(var.image_family_name), 0) > 0 ? var.image_family_name : "${local.image_prefix}-${local.image_os_name}${local.variant_str}"
+  variant_str   = try(length(var.variant), 0) > 0 ? "-${var.variant}" : ""
 }
 
 ##########
@@ -48,16 +52,8 @@ source "googlecompute" "image" {
   zone       = var.zone
 
   ### image ###
-  source_image_project_id = setunion(
-    [var.project_id],
-    var.source_image_project_id,
-  )
-  skip_create_image = var.skip_create_image
-
-  ### ssh ###
-  ssh_clear_authorized_keys = true
-  use_iap                   = var.use_iap
-  use_os_login              = var.use_os_login
+  source_image_project_id = [var.project_id, var.source_image_project_id]
+  skip_create_image       = var.skip_create_image
 
   ### network ###
   network_project_id = var.network_project_id
@@ -68,12 +64,39 @@ source "googlecompute" "image" {
   service_account_email = var.service_account_email
   scopes                = var.service_account_scopes
 
-  state_timeout = "10m"
+  ### image ###
+  source_image        = var.source_image
+  source_image_family = var.source_image_family
+
+  image_name        = "${local.image_family}-{{timestamp}}"
+  image_family      = local.image_family
+  image_description = "slurm-gcp-v5"
+  image_licenses    = var.image_licenses
+  image_labels      = var.labels
+
+  ### ssh ###
+  ssh_username              = var.ssh_username
+  ssh_password              = var.ssh_password
+  ssh_clear_authorized_keys = true
+  use_iap                   = var.use_iap
+  use_os_login              = var.use_os_login
+
+  ### instance ###
+  instance_name = "${local.image_family}-{{timestamp}}"
+  machine_type  = var.machine_type
+  preemptible   = var.preemptible
+  labels        = var.labels
+
+  ### disk ###
+  disk_size = var.disk_size
+  disk_type = var.disk_type
 
   ### metadata ###
   metadata = {
     block-project-ssh-keys = "TRUE"
   }
+
+  state_timeout = "10m"
 }
 
 #########
@@ -84,40 +107,7 @@ build {
   ### general ###
   name = "slurm-gcp"
 
-  ### builds ###
-  dynamic "source" {
-    for_each = var.builds
-    labels = [
-      "sources.googlecompute.image",
-    ]
-    content {
-      name = "${source.value.source_image_family}${local.variant_str}"
-
-      ### image ###
-      source_image        = source.value.source_image
-      source_image_family = source.value.source_image_family
-
-      image_name        = "${local.image_prefix}-${source.value.source_image_family}${local.variant_str}-{{timestamp}}"
-      image_family      = "${local.image_prefix}-${source.value.source_image_family}${local.variant_str}"
-      image_description = "slurm-gcp-v5"
-      image_licenses    = source.value.image_licenses
-      image_labels      = source.value.labels
-
-      ### ssh ###
-      ssh_username = source.value.ssh_username
-      ssh_password = source.value.ssh_password
-
-      ### instance ###
-      instance_name = "${local.image_prefix}-${source.value.source_image_family}${local.variant_str}-{{timestamp}}"
-      machine_type  = source.value.machine_type
-      preemptible   = source.value.preemptible
-      labels        = source.value.labels
-
-      ### disk ###
-      disk_size = source.value.disk_size
-      disk_type = source.value.disk_type
-    }
-  }
+  sources = ["sources.googlecompute.image"]
 
   ### provision Slurm ###
   provisioner "ansible" {
