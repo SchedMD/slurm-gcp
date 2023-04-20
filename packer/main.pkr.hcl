@@ -151,7 +151,7 @@ build {
   ### clean up /home/packer ###
   provisioner "shell" {
     inline = [
-      "sudo rm -rf /home/packer"
+      "sudo su root -c 'userdel -rf packer'"
     ]
   }
 }
