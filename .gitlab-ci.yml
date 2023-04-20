@@ -144,7 +144,7 @@ build-ubuntu-2204-lts-arm64:
     --image-project=$GCP_PROJECT_ID
     --image-family=$IMAGE_FAMILY
     --image=${IMAGE_NAME:-null}
-    -k "${ARCH}"
+    -m "${ARCH}"
   after_script:
   - cd test
   - pipenv install

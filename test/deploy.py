@@ -105,6 +105,7 @@ class Configuration:
     image_project: str
     image: str = None
     image_family: str = None
+    marks: list = field(default_factory=list)
 
     def __post_init__(self):
         self.tf = TerraformTest(self.moduledir)
