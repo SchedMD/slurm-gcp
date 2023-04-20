@@ -66,30 +66,41 @@ def pytest_runtest_makereport(item, call):
 #
 # Use the following to discriminate arch for testing.
 # $ pytest -k EXPR
-CONFIGS = {
-    pytest.param("x86_64-basic"): dict(
+CONFIGS = [
+    dict(
+        marks=("x86_64", "basic"),
         moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/cloud/basic",
         tfvars_file=test_path / "x86_64-basic.tfvars.tpl",
         tfvars={},
     ),
-    pytest.param("arm64-basic"): dict(
+    dict(
+        marks=("arm64", "basic"),
         moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/cloud/basic",
         tfvars_file=test_path / "arm64-basic.tfvars.tpl",
         tfvars={},
     ),
-}
+]
+CONFIGS = {"-".join(conf["marks"]): conf for conf in CONFIGS}
+
+params = (pytest.param(k, marks=[getattr(pytest.mark, mark) for mark in conf["marks"]]) for k, conf in CONFIGS.items())
 
 
-@pytest.fixture(params=CONFIGS.keys(), scope="session")
+@pytest.fixture(params=params, scope="session")
 def configuration(request):
     """fixture providing terraform cluster configuration"""
+    project_id = request.config.getoption("project_id")
+    cluster_name = request.config.getoption("cluster_name")
+    image_project = request.config.getoption("image_project")
+    image_family = request.config.getoption("image_family")
+    image = request.config.getoption("image")
+
     config = Configuration(
-        project_id=request.config.getoption("project_id"),
-        cluster_name=request.config.getoption("cluster_name"),
-        image_project=request.config.getoption("image_project"),
-        image_family=request.config.getoption("image_family"),
-        image=request.config.getoption("image"),
-        **CONFIGS[pytest.param(request.param)],
+        cluster_name=cluster_name,
+        project_id=project_id,
+        image_project=image_project,
+        image_family=image_family,
+        image=image,
+        **CONFIGS[request.param],
     )
     log.info(f"init cluster {str(config)}")
     config.setup()
