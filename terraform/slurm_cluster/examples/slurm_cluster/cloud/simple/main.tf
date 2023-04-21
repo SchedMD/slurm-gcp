@@ -80,7 +80,7 @@ locals {
       on_host_maintenance      = null
       preemptible              = false
       region                   = null
-      service_account          = module.slurm_sa_iam["login"].service_account
+      service_account          = try(module.slurm_sa_iam["login"].service_account, null)
       shielded_instance_config = null
       source_image_family      = null
       source_image_project     = null
@@ -237,6 +237,11 @@ module "slurm_cluster" {
   login_nodes                = local.login_nodes
   partitions                 = local.partitions
   project_id                 = var.project_id
+
+  depends_on = [
+    module.slurm_firewall_rules,
+    module.slurm_sa_iam,
+  ]
 }
 
 ##################

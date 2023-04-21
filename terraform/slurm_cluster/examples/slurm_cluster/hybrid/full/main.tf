@@ -195,5 +195,7 @@ module "slurm_cluster" {
     module.project_services,
     # Guarantee the network is created before slurm cluster
     module.slurm_network,
+    # Guarantee SA is created for instances to use
+    module.slurm_sa_iam,
   ]
 }

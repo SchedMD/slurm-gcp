@@ -263,6 +263,11 @@ module "slurm_cluster" {
   login_nodes                = local.login_nodes
   partitions                 = local.partitions
   project_id                 = var.project_id
+
+  depends_on = [
+    module.slurm_firewall_rules,
+    module.slurm_sa_iam,
+  ]
 }
 
 ##################

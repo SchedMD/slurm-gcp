@@ -182,6 +182,11 @@ module "slurm_cluster" {
   enable_hybrid            = true
   partitions               = local.partitions
   project_id               = var.project_id
+
+  depends_on = [
+    module.slurm_firewall_rules,
+    module.slurm_sa_iam,
+  ]
 }
 
 ##################
