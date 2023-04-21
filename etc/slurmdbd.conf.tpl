@@ -4,6 +4,8 @@
 DebugLevel=info
 PidFile=/var/run/slurm/slurmdbd.pid
 
+CommitDelay=1
+
 ################################################################################
 #              vvvvv  WARNING: DO NOT MODIFY SECTION BELOW  vvvvv              #
 ################################################################################
