@@ -6,6 +6,7 @@ ProctrackType=proctrack/cgroup
 SlurmctldPidFile=/var/run/slurm/slurmctld.pid
 SlurmdPidFile=/var/run/slurm/slurmd.pid
 TaskPlugin=task/affinity,task/cgroup
+MaxNodeCount=64000
 
 #
 #
@@ -17,10 +18,17 @@ SelectTypeParameters=CR_Core_Memory
 #
 #
 # LOGGING AND ACCOUNTING
+AccountingStoreFlags=job_comment
 JobAcctGatherFrequency=30
 JobAcctGatherType=jobacct_gather/cgroup
 SlurmctldDebug=info
 SlurmdDebug=info
+DebugFlags=Power
+
+#
+#
+# TIMERS
+MessageTimeout=60
 
 ################################################################################
 #              vvvvv  WARNING: DO NOT MODIFY SECTION BELOW  vvvvv              #
@@ -39,23 +47,15 @@ SlurmdPort=6818
 SlurmdSpoolDir=/var/spool/slurmd
 SlurmUser=slurm
 StateSaveLocation={state_save}
-MaxNodeCount=64000
-
-#
-#
-# TIMERS
-MessageTimeout=60
 
 #
 #
 # LOGGING AND ACCOUNTING
 AccountingStorageType=accounting_storage/slurmdbd
 AccountingStorageHost={control_host}
-AccountingStoreFlags=job_comment
 ClusterName={name}
 SlurmctldLogFile={slurmlog}/slurmctld.log
 SlurmdLogFile={slurmlog}/slurmd-%n.log
-DebugFlags=Power
 
 #
 #
