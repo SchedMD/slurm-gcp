@@ -82,7 +82,10 @@ CONFIGS = [
 ]
 CONFIGS = {"-".join(conf["marks"]): conf for conf in CONFIGS}
 
-params = (pytest.param(k, marks=[getattr(pytest.mark, mark) for mark in conf["marks"]]) for k, conf in CONFIGS.items())
+params = (
+    pytest.param(k, marks=[getattr(pytest.mark, mark) for mark in conf["marks"]])
+    for k, conf in CONFIGS.items()
+)
 
 
 @pytest.fixture(params=params, scope="session")
