@@ -36,6 +36,12 @@ test_jobs.py
 - test_gpu_job
   - On every partition with a GPU, run an sbatch `srun nvidia-smi` job and
     verify that the job completes successfully.
+- test_shielded
+  - On every partition with nodes configured for shielded VMs, run a simple job.
+  - If the partition has a GPU _and_ the image OS is Ubuntu 20.04, run a GPU job
+    instead.
+    - skip shielded GPU partitions otherwise to avoid spinning up a GPU instance
+      needlessly.
 - test_openmpi
   - Run a simple 3-node MPI job and verify that it completes successfully.
 - test_placement_groups

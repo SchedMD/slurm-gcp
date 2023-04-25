@@ -163,6 +163,7 @@ batch_id = re.compile(r"^Submitted batch job (\d+)$")
 
 
 def sbatch(cluster, cmd):
+    log.info(cmd)
     submit = cluster.login_exec(cmd)
     m = batch_id.match(submit.stdout)
     if submit.exit_status or m is None:

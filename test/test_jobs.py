@@ -53,7 +53,10 @@ def test_gpu_job(cluster, lkp):
     for part_name, partition in lkp.cfg.partitions.items():
         for group_name, group in partition.partition_nodes.items():
             template = lkp.template_info(group.instance_template)
-            if template.gpu_count > 0:
+            if (
+                template.gpu_count > 0
+                and not template.shieldedInstanceConfig.enableSecureBoot
+            ):
                 gpu_parts[part_name] = partition
     if not gpu_parts:
         pytest.skip("no gpu partitions found")
@@ -64,6 +67,46 @@ def test_gpu_job(cluster, lkp):
             cluster,
             f"sbatch --partition={part_name} --gpus=1 --wrap='srun nvidia-smi'",
         )
+        job = wait_job_state(cluster, job_id, "COMPLETED", "FAILED", "CANCELLED")
+        assert job["job_state"] == "COMPLETED"
+        log.info(cluster.login_exec_output(f"cat slurm-{job_id}.out"))
+
+
+def test_shielded(image_marker, cluster, lkp):
+    # only run test for ubuntu-2004
+    log.info(f"detected image_marker:{image_marker}")
+    if image_marker == "debian-11-arm64":
+        pytest.skip("shielded not supported on {image_marker}")
+    skip_gpus = "ubuntu-2004" not in image_marker
+
+    shielded_parts = {}
+    for part_name, partition in lkp.cfg.partitions.items():
+        has_gpus = any(
+            lkp.template_info(group.instance_template).gpu_count > 0
+            for group in partition.partition_nodes.values()
+        )
+        if skip_gpus and has_gpus:
+            continue
+        for group_name, group in partition.partition_nodes.items():
+            template = lkp.template_info(group.instance_template)
+            if template.shieldedInstanceConfig.enableSecureBoot:
+                shielded_parts[part_name] = partition
+                partition.has_gpus = has_gpus
+    if not shielded_parts:
+        pytest.skip("No viable partitions with shielded instances found")
+        return
+
+    for part_name, partition in shielded_parts.items():
+        if partition.has_gpus:
+            job_id = sbatch(
+                cluster,
+                f"sbatch --partition={part_name} --gpus=1 --wrap='srun nvidia-smi'",
+            )
+        else:
+            job_id = sbatch(
+                cluster,
+                f"sbatch --partition={part_name} --wrap='srun hostname'",
+            )
         job = wait_job_state(cluster, job_id, "COMPLETED", "FAILED", "CANCELLED")
         assert job["job_state"] == "COMPLETED"
         log.info(cluster.login_exec_output(f"cat slurm-{job_id}.out"))

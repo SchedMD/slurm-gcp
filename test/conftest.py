@@ -1,4 +1,5 @@
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -44,6 +45,9 @@ def pytest_addoption(parser):
     parser.addoption(
         "--image-project", action="store", help="image project to use for test cluster"
     )
+    parser.addoption(
+        "--image-marker", action="store", nargs="?", type=str, help="image marker label"
+    )
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -81,6 +85,9 @@ CONFIGS = [
     ),
 ]
 CONFIGS = {"-".join(conf["marks"]): conf for conf in CONFIGS}
+image_pattern = re.compile(
+    r"(?P<prefix>[\w\-]+)-(?P<slurm_gcp>\w+)-(?P<slurm>slurm-\d{2}-\d{2}-\d)-(?P<marker>[\w\-]+?)(-(?P<timestamp>\d{10}))?$"
+)
 
 params = (
     pytest.param(k, marks=[getattr(pytest.mark, mark) for mark in conf["marks"]])
@@ -88,14 +95,28 @@ params = (
 )
 
 
+@pytest.fixture(scope="session")
+def image_marker(request):
+    from_image = next(
+        m.group("marker")
+        for m in (
+            image_pattern.match(request.config.getoption("image") or ""),
+            image_pattern.match(request.config.getoption("image_family" or "")),
+        )
+        if m
+    )
+    return request.config.getoption("image_marker") or from_image
+
+
 @pytest.fixture(params=params, scope="session")
-def configuration(request):
+def configuration(request, image_marker):
     """fixture providing terraform cluster configuration"""
     project_id = request.config.getoption("project_id")
     cluster_name = request.config.getoption("cluster_name")
     image_project = request.config.getoption("image_project")
     image_family = request.config.getoption("image_family")
     image = request.config.getoption("image")
+    request.applymarker(image_marker)
 
     config = Configuration(
         cluster_name=cluster_name,
