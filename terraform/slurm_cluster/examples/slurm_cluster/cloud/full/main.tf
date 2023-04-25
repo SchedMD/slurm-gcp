@@ -102,6 +102,7 @@ locals {
       partition_startup_scripts_timeout = x.partition_startup_scripts_timeout
       partition_startup_scripts         = x.partition_startup_scripts
       partition_name                    = x.partition_name
+      partition_feature                 = x.partition_feature
       partition_nodes = [for n in x.partition_nodes : {
         access_config            = n.access_config
         additional_disks         = n.additional_disks
