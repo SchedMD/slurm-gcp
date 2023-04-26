@@ -20,6 +20,7 @@ import inspect
 import json
 import logging
 import logging.config
+import math
 import os
 import re
 import shelve
@@ -476,7 +477,7 @@ def config_from_metadata():
         return NSDict()
 
     metadata_key = f"{slurm_cluster_name}-slurm-config"
-    for retry, wait in enumerate(backoff_delay(0.25, count=3, timeout=5)):
+    for retry, wait in enumerate(backoff_delay(0.25, timeout=5, count=3)):
         try:
             config_yaml = project_metadata.__wrapped__(metadata_key)
             break
@@ -735,10 +736,10 @@ def find_ratio(a, n, s, r0=None):
         rn = r**n
         return (a * (rn * (n * rm1 - r) + r)) / (r * rm1**2)
 
-    MIN_DR = 0.001  # negligible change
+    MIN_DR = 0.0001  # negligible change
     r = r0
     # print(f"r(0)={r0}")
-    MAX_TRIES = 32
+    MAX_TRIES = 64
     for i in range(1, MAX_TRIES + 1):
         try:
             dr = f(r) / df(r)
@@ -756,7 +757,7 @@ def find_ratio(a, n, s, r0=None):
     return r
 
 
-def backoff_delay(start, count: int, timeout=None, ratio=None):
+def backoff_delay(start, timeout=None, ratio=None, count: int = 0):
     """generates `count` waits starting at `start`
     sum of waits is `timeout` or each one is `ratio` bigger than the last
     the last wait is always 0"""
@@ -764,8 +765,17 @@ def backoff_delay(start, count: int, timeout=None, ratio=None):
     assert (timeout is None) ^ (ratio is None)
     assert ratio is None or ratio > 0
     assert timeout is None or timeout >= start
-    assert count > 1 and isinstance(count, int)
+    assert (count > 1 or timeout is not None) and isinstance(count, int)
     assert start > 0
+
+    if count == 0:
+        # Equation for auto-count is tuned to have a max of
+        # ~int(timeout) counts with a start wait of <0.01.
+        # Increasing start wait decreases count eg.
+        # backoff_delay(10, timeout=60) -> count = 5
+        count = int(
+            (timeout / ((start + 0.05) ** (1 / 2)) + 2) // math.log(timeout + 2)
+        )
 
     yield start
     # if ratio is set:
@@ -853,7 +863,7 @@ def retry_exception(exc):
 def ensure_execute(request):
     """Handle rate limits and socket time outs"""
 
-    for retry, wait in enumerate(backoff_delay(0.5, count=20, timeout=10 * 60)):
+    for retry, wait in enumerate(backoff_delay(0.5, timeout=10 * 60, count=20)):
         try:
             return request.execute()
         except googleapiclient.errors.HttpError as e:
@@ -1486,7 +1496,7 @@ class Lookup:
     def template_cache(self, writeback=False):
         flag = "c" if writeback else "r"
         err = None
-        for wait in backoff_delay(0.125, count=20, timeout=60):
+        for wait in backoff_delay(0.125, timeout=60, count=20):
             try:
                 cache = shelve.open(
                     str(self.template_cache_path), flag=flag, writeback=writeback

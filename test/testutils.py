@@ -81,7 +81,7 @@ def spawn(cmd, quiet=False, shell=False, **kwargs):
 def wait_until(check, *args, max_wait=None):
     if max_wait is None:
         max_wait = 360
-    for wait in backoff_delay(1, count=20, timeout=max_wait):
+    for wait in backoff_delay(1, timeout=max_wait):
         if check(*args):
             return True
         time.sleep(wait)

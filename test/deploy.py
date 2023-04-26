@@ -177,7 +177,7 @@ class Tunnel:
             )
             stdout_sel = select.poll()
             stdout_sel.register(stdout, select.POLLIN)
-            for w in backoff_delay(0.5, count=30, timeout=30):
+            for w in backoff_delay(0.5, timeout=30):
                 time.sleep(w)
                 if proc.poll() is None:
                     if stdout_sel.poll(1):
@@ -222,7 +222,7 @@ class Cluster:
 
     def wait_on_active(self):
         node_state = re.compile(r"State=(\S+)\s")
-        for wait in backoff_delay(2, count=20, timeout=240):
+        for wait in backoff_delay(2, timeout=240):
             try:
                 result = self.login_exec("scontrol show -o nodes")
                 if result.exit_status == 0 and all(
@@ -253,7 +253,7 @@ class Cluster:
         ssh = paramiko.SSHClient()
         key = paramiko.RSAKey.from_private_key_file(self.keyfile)
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        for wait in backoff_delay(1, count=20, timeout=300):
+        for wait in backoff_delay(1, timeout=300):
             tun = self.tunnels[instance]
             log.info(
                 f"start ssh connection to {self.user}@{trim_self_link(instance)} port {tun.port}"
