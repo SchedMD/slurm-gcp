@@ -80,6 +80,8 @@ source "googlecompute" "image" {
   ssh_clear_authorized_keys = true
   use_iap                   = var.use_iap
   use_os_login              = var.use_os_login
+  temporary_key_pair_type   = "ed25519"
+  #temporary_key_pair_bits   = 0
 
   ### instance ###
   instance_name = "${local.image_family}-{{timestamp}}"
