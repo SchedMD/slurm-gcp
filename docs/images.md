@@ -72,6 +72,7 @@ that are minimal viable images for deploying
 | schedmd-slurm-public | schedmd-v5-slurm-22-05-8-debian-10             | x86_64 | Supported |
 | schedmd-slurm-public | schedmd-v5-slurm-22-05-8-debian-11             | x86_64 | Supported |
 | schedmd-slurm-public | schedmd-v5-slurm-22-05-8-hpc-centos-7          | x86_64 | Supported |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-hpc-centos-7-k80      | x86_64 | Supported |
 | schedmd-slurm-public | schedmd-v5-slurm-22-05-8-rocky-linux-8         | x86_64 | Supported |
 | schedmd-slurm-public | schedmd-v5-slurm-22-05-8-ubuntu-2004-lts       | x86_64 | Supported |
 | schedmd-slurm-public | schedmd-v5-slurm-22-05-8-ubuntu-2204-lts-arm64 | ARM64  | Supported |

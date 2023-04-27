@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 - Expose `cloud_logging_filter` output from controller modules.
 - Add `partition_feature` for external dynamic nodes.
 - Add setup.py --slurmd-feature option for external dynamic node startup.
+- Installing signed nvidia drivers from repo added to ansible for Ubuntu 20.04
+  only. This allows using GPUs on shielded VMs.
+- Added legacy k80 support to ansible and made installing the latest nvidia the
+  default. A k80-compatible image based on the hpc-centos-7 image family will
+  now also be built.
+- Packer module refactored to build only a single image at a time.
 
 ## \[5.6.3\]
 
