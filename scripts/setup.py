@@ -172,6 +172,7 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
                 "idle_on_node_suspend",
             ],
             "SchedulerParameters": [
+                "bf_continue",
                 "salloc_wait_nodes",
             ],
             "CommunicationParameters": [
