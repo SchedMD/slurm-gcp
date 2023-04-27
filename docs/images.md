@@ -33,10 +33,10 @@ can be created and used instead.
 | Project                | Image Family          | Arch   |
 | :--------------------- | :-------------------- | :----- |
 | centos-cloud           | centos-7              | x86_64 |
+| cloud-hpc-image-public | hpc-centos-7          | x86_64 |
 | debian-cloud           | debian-10             | x86_64 |
 | debian-cloud           | debian-11             | x86_64 |
 | debian-cloud           | debian-11-arm64       | ARM64  |
-| cloud-hpc-image-public | hpc-centos-7          | x86_64 |
 | rocky-linux-cloud      | rocky-linux-8         | x86_64 |
 | ubuntu-os-cloud        | ubuntu-2004-lts       | x86_64 |
 | ubuntu-os-cloud        | ubuntu-2004-lts-arm64 | ARM64  |
