@@ -238,7 +238,8 @@ module "slurm_cluster" {
   partitions                 = local.partitions
   project_id                 = var.project_id
 
-  slurm_conf_tpl = "./etc/slurm.conf.tpl"
+  slurm_conf_tpl    = "./etc/slurm.conf.tpl"
+  slurmdbd_conf_tpl = "./etc/slurmdbd.conf.tpl"
 
   depends_on = [
     module.slurm_firewall_rules,
