@@ -107,10 +107,10 @@ build-ubuntu-2004-lts:
   variables:
     IMAGE_OS: ubuntu-2004-lts
 
-build-ubuntu-2004-lts-arm64:
-  extends: .build-image
-  variables:
-    IMAGE_OS: ubuntu-2004-lts-arm64
+# build-ubuntu-2004-lts-arm64:
+#   extends: .build-image
+#   variables:
+#     IMAGE_OS: ubuntu-2004-lts-arm64
 
 build-ubuntu-2204-lts:
   extends: .build-image
@@ -228,14 +228,14 @@ test-ubuntu-2004-lts:
     IMAGE_OS: ubuntu-2004-lts
     ARCH: x86_64
 
-test-ubuntu-2004-lts-arm64:
-  extends: .test-image
-  needs:
-  - job: build-ubuntu-2004-lts-arm64
-    optional: true
-  variables:
-    IMAGE_OS: ubuntu-2004-lts-arm64
-    ARCH: arm64
+# test-ubuntu-2004-lts-arm64:
+#   extends: .test-image
+#   needs:
+#   - job: build-ubuntu-2004-lts-arm64
+#     optional: true
+#   variables:
+#     IMAGE_OS: ubuntu-2004-lts-arm64
+#     ARCH: arm64
 
 test-ubuntu-2204-lts:
   extends: .test-image
