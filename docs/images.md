@@ -15,6 +15,7 @@
     - [Requirements](#requirements)
     - [Creation](#creation)
     - [Customize](#customize)
+  - [Shielded VM Support](#shielded-vm-support)
 
 <!-- mdformat-toc end -->
 
@@ -127,3 +128,30 @@ combination, if desired.
   pkrvars file with `source_image` or `source_image_family` pointing to your
   image. This is intended for more complex configurations because of workflow or
   pipelines.
+
+## Shielded VM Support
+
+All recently published images in project `schedmd-slurm-public` support shielded
+VMs without GPUs or mounting a Lustre filesystem. Both of these features require
+kernel modules, which must be signed to be compatible with SecureBoot.
+
+If you need GPUs, our published image family based on
+`ubuntu-os-cloud/ubuntu-2004-lts` has signed Nvidia drivers installed and is
+therefore compatible with SecureBoot and Shielded VMs.
+
+If you need Lustre or GPUs on a different OS, it is possible to do this manually
+with a custom image. Doing this requires
+
+- generating a private/public key pair with openssl
+- signing the needed kernel modules
+- including the public key in the UEFI authorized keys `db` of the image
+  - `gcloud compute images create`
+  - option: `--signature-database-file`
+  - Default Microsoft keys should be included as well because this overwrites
+    the default key database.
+  - Unfortunately, it appears that packer does not support this image creation
+    option at this time, so the image creation step must be manual.
+
+More details on this process are beyond the scope of this documentation. See
+[link](https://cloud.google.com/compute/shielded-vm/docs/creating-shielded-images#adding-shielded-image)
+and/or contact Google for more information.
