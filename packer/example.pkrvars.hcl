@@ -31,13 +31,17 @@ source_image_project_id = "cloud-hpc-image-public"
 #source_image        = null
 source_image_family = "hpc-centos-7"
 
-# *NOT* intended for production use
-# skip_create_image = true
+# disk_type = "pd-standard"
+# disk_size = 32
+# machine_type = "n1-standard-16"
 
 tags = [
   # "tag0",
   # "tag1",
 ]
+
+# *NOT* intended for production use
+# skip_create_image = true
 
 #############
 # PROVISION #
@@ -75,3 +79,5 @@ extra_ansible_provisioners = [
   #    user = null
   #  },
 ]
+
+# More options are listed in the variables.pkr.hcl

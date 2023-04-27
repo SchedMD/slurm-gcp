@@ -140,7 +140,7 @@ variable "install_cuda" {
 }
 
 variable "nvidia_version" {
-  description = "choose the major nvidia version to install via runfile"
+  description = "choose the major nvidia version to install via runfile. Must match a version file in ansible cuda role."
   type        = string
   default     = "latest"
 }
