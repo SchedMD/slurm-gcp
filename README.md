@@ -32,7 +32,9 @@ manage and deploy [Slurm clusters](./docs/glossary.md#slurm) and other
 supporting infrastrucutre via
 [HPC Blueprints](https://cloud.google.com/hpc-toolkit/docs/setup/hpc-blueprint).
 
-See [supported Operating Systems](./docs/images.md#supported-operating-systems).
+See [supported Operating Systems](./docs/images.md#supported-operating-systems)
+and [published Image Family](./docs/images.md#published-image-family) for
+machine image support.
 
 ### SchedMD
 
