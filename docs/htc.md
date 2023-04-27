@@ -14,6 +14,7 @@
   - [Hardware Recommendations](#hardware-recommendations)
     - [Slurmctld](#slurmctld)
     - [Slurmdbd](#slurmdbd)
+  - [OS Customization](#os-customization)
 
 <!-- mdformat-toc end -->
 
@@ -112,3 +113,11 @@ Example minimum system requirements ~ 100k jobs a day / 500 node
   - RAM requirement will increase with size of job store/query.
 - CPU requirements are not a picky as slurmctld
 - Dedicated SSD or NVME for the database
+
+## OS Customization
+
+OS level settings may need to be adjusted to optimize for HTC workloads or
+general operation. This can be achieved though building
+[custom images](./images.md#custom-image) or minimally though
+[startup scripts](../terraform/slurm_cluster/README_TF.md#inputs) for the
+compute instances.
