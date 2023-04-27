@@ -11,6 +11,9 @@
   - [slurm-gcp Configurations](#slurm-gcp-configurations)
     - [cloud.conf](#cloudconf)
   - [Example](#example)
+  - [Hardware Recommendations](#hardware-recommendations)
+    - [Slurmctld](#slurmctld)
+    - [Slurmdbd](#slurmdbd)
 
 <!-- mdformat-toc end -->
 
@@ -81,3 +84,31 @@ See [setup.py](../scripts/setup.py#L147) for details.
 
 See
 [HTC example](../terraform/slurm_cluster/examples/slurm_cluster/cloud/htc/README.md).
+
+## Hardware Recommendations
+
+General Sizing Recommendations:
+
+- Fewer faster cores on the slurmctld host is preferred
+- Fast path to the StateSaveLocation
+  - IOPS this filesystem can sustain is a major bottleneck to job throughput
+- Use of array jobs instead of individual job records will help significantly as
+  only one job script and environment file is saved for the entire job array
+
+### Slurmctld
+
+Example minimum system requirements ~ 100k jobs a day / 500 nodes.
+
+- 16 GB RAM
+  - RAM required will increase with a larger workload / node count
+- Dual core CPU with high clock frequency
+- Dedicated SSD or NVME (statesave)
+
+### Slurmdbd
+
+Example minimum system requirements ~ 100k jobs a day / 500 node
+
+- 16-32 GB RAM
+  - RAM requirement will increase with size of job store/query.
+- CPU requirements are not a picky as slurmctld
+- Dedicated SSD or NVME for the database
