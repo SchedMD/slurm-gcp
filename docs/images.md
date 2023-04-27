@@ -28,7 +28,7 @@ can be created and used instead.
 
 ### Supported Operating Systems
 
-`slurm-gcp` supports images built on these OS families:
+`slurm-gcp` generally supports images built on these OS families:
 
 | Project                | Image Family          | Arch   |
 | :--------------------- | :-------------------- | :----- |
