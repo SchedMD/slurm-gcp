@@ -30,15 +30,18 @@ can be created and used instead.
 
 `slurm-gcp` supports images built on these OS families:
 
-- `centos-7`
-- `debian-10`
-- `debian-11`
-- `debian-11-arm64`
-- `rocky-linux-8`
-- `ubuntu-2004-lts`
-- `ubuntu-2004-lts-arm64`
-- `ubuntu-2204-lts`
-- `ubuntu-2204-lts-arm64`
+| Project                | Image Family          | Arch   |
+| :--------------------- | :-------------------- | :----- |
+| centos-cloud           | centos-7              | x86_64 |
+| debian-cloud           | debian-10             | x86_64 |
+| debian-cloud           | debian-11             | x86_64 |
+| debian-cloud           | debian-11-arm64       | ARM64  |
+| cloud-hpc-image-public | hpc-centos-7          | x86_64 |
+| rocky-linux-cloud      | rocky-linux-8         | x86_64 |
+| ubuntu-os-cloud        | ubuntu-2004-lts       | x86_64 |
+| ubuntu-os-cloud        | ubuntu-2004-lts-arm64 | ARM64  |
+| ubuntu-os-cloud        | ubuntu-2204-lts       | x86_64 |
+| ubuntu-os-cloud        | ubuntu-2204-lts-arm64 | ARM64  |
 
 ### Installed Software for HPC
 
@@ -62,13 +65,16 @@ that are minimal viable images for deploying
 
 ### Published Image Family
 
-- `schedmd-v5-slurm-22-05-8-centos-7`
-- `schedmd-v5-slurm-22-05-8-debian-10`
-- `schedmd-v5-slurm-22-05-8-debian-11`
-- `schedmd-v5-slurm-22-05-8-hpc-centos-7`
-- `schedmd-v5-slurm-22-05-8-rocky-linux-8`
-- `schedmd-v5-slurm-22-05-8-ubuntu-2004-lts`
-- `schedmd-v5-slurm-22-05-8-ubuntu-2204-lts`
+|       Project        | Image Family                                   | Arch   | Status    |
+| :------------------: | :--------------------------------------------- | :----- | :-------- |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-centos-7              | x86_64 | Supported |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-debian-10             | x86_64 | Supported |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-debian-11             | x86_64 | Supported |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-hpc-centos-7          | x86_64 | Supported |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-rocky-linux-8         | x86_64 | Supported |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-ubuntu-2004-lts       | x86_64 | Supported |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-ubuntu-2204-lts       | x86_64 | Supported |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-ubuntu-2204-lts-arm64 | ARM64  | Supported |
 
 ## Custom Image
 
