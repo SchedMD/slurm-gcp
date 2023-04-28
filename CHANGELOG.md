@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 - Fix regression in load_bq.py.
 - Fix slurmsync.py handling of pub/sub subscriptions when enable_reconfigure.
+- Add retries to munge mount to handle the case of attempted mount before the
+  controller is ready.
 
 ## \[5.7.0\]
 

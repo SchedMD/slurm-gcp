@@ -817,7 +817,6 @@ def munge_mount_handler():
             server_ip,
             str(local_mount),
         ]
-        run(cmd, timeout=120)
     else:
         if remote_mount is None:
             remote_mount = Path("/etc/munge")
@@ -828,7 +827,21 @@ def munge_mount_handler():
             f"{server_ip}:{remote_mount}",
             str(local_mount),
         ]
-        run(cmd, timeout=120)
+    # wait max 120s for munge mount
+    timeout = 120
+    for retry, wait in enumerate(util.backoff_delay(0.5, timeout), 1):
+        try:
+            run(cmd, timeout=timeout)
+            break
+        except Exception as e:
+            log.error(
+                f"munge mount failed: '{cmd}' {e}, try {retry}, waiting {wait:0.2f}s"
+            )
+            time.sleep(wait)
+            err = e
+            continue
+    else:
+        raise err
 
     log.info(f"Copy munge.key from: {local_mount}")
     shutil.copy2(Path(local_mount / "munge.key"), munge_key)
