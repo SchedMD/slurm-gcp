@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
   default. A k80-compatible image based on the hpc-centos-7 image family will
   now also be built.
 - Packer module refactored to build only a single image at a time.
+- Add HTC example terraform project.
 
 ## \[5.6.3\]
 
