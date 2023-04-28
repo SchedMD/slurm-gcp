@@ -7,6 +7,7 @@
 
 - [Slurm on Google Cloud Platform](#slurm-on-google-cloud-platform)
   - [Overview](#overview)
+  - [Image Support](#image-support)
     - [SchedMD](#schedmd)
   - [Cluster Configurations](#cluster-configurations)
     - [Cloud](#cloud)
@@ -31,6 +32,8 @@ on [github](https://github.com/GoogleCloudPlatform/hpc-toolkit), can be used to
 manage and deploy [Slurm clusters](./docs/glossary.md#slurm) and other
 supporting infrastrucutre via
 [HPC Blueprints](https://cloud.google.com/hpc-toolkit/docs/setup/hpc-blueprint).
+
+## Image Support
 
 See [supported Operating Systems](./docs/images.md#supported-operating-systems)
 and [published Image Family](./docs/images.md#published-image-family) for
