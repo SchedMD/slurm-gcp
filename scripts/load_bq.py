@@ -22,7 +22,7 @@ SACCT = "sacct"
 script = Path(__file__).resolve()
 
 DEFAULT_TIMESTAMP_FILE = script.parent / "bq_timestamp"
-timestamp_file = Path(os.environ.get("TIMESTAMP_FILE")) or DEFAULT_TIMESTAMP_FILE
+timestamp_file = Path(os.environ.get("TIMESTAMP_FILE", DEFAULT_TIMESTAMP_FILE))
 
 # cluster_id_file = script.parent / 'cluster_uuid'
 # try:

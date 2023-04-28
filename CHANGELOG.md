@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Fix regression in load_bq.py.
+
 ## \[5.7.0\]
 
 - Expose `cloud_logging_filter` output from controller modules.
