@@ -61,13 +61,11 @@ def main(args):
         filter = f"name={args.slurm_cluster_name}-*"
     log.debug(f'filter = "{filter}"')
     p_id = args.project_id if args.project_id else lkp.project
-    if (not p_id):
+    if not p_id:
         print("Error: Project id cannot be determined")
         exit(1)
     result = (
-        compute.resourcePolicies()
-        .aggregatedList(project=p_id, filter=filter)
-        .execute()
+        compute.resourcePolicies().aggregatedList(project=p_id, filter=filter).execute()
     )
 
     policy_list = []

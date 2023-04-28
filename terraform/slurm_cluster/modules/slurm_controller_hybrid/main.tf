@@ -376,9 +376,9 @@ module "reconfigure_notify" {
 
   count = var.enable_reconfigure ? 1 : 0
 
-  topic = google_pubsub_topic.this[0].name
+  topic      = google_pubsub_topic.this[0].name
   project_id = var.project_id
-  type  = "reconfig"
+  type       = "reconfig"
 
   triggers = {
     compute_list = join(",", local.compute_list)
@@ -402,9 +402,9 @@ module "devel_notify" {
 
   count = var.enable_devel && var.enable_reconfigure ? 1 : 0
 
-  topic = google_pubsub_topic.this[0].name
+  topic      = google_pubsub_topic.this[0].name
   project_id = var.project_id
-  type  = "devel"
+  type       = "devel"
 
   triggers = {
     devel = sha256(module.slurm_metadata_devel[0].metadata.value)
@@ -426,7 +426,7 @@ module "cleanup_compute_nodes" {
 
   count = var.enable_cleanup_compute ? 1 : 0
 
-  project_id = var.project_id
+  project_id         = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
   when_destroy       = true
 }
@@ -446,7 +446,7 @@ module "reconfigure_critical" {
 
   count = var.enable_reconfigure ? 1 : 0
 
-  project_id = var.project_id
+  project_id         = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
 
   triggers = merge(
@@ -476,7 +476,7 @@ module "reconfigure_partitions" {
 
   count = var.enable_reconfigure ? 1 : 0
 
-  project_id = var.project_id
+  project_id         = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
   exclude_list       = local.compute_list
 
@@ -501,6 +501,6 @@ module "cleanup_resource_policies" {
   count = var.enable_cleanup_compute ? 1 : 0
 
   slurm_cluster_name = var.slurm_cluster_name
-  project_id = var.project_id
+  project_id         = var.project_id
   when_destroy       = true
 }

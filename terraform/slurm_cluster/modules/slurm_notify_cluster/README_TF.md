@@ -45,8 +45,8 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The Google Cloud project ID. | `string` | n/a | yes |
 | <a name="input_topic"></a> [topic](#input\_topic) | Pubsub topic name or ID. | `string` | n/a | yes |
-| <a name="input_project_id"></a> [topic](#input\_project\_id) | Gcloud project ID. | `string` | n/a | yes |
 | <a name="input_triggers"></a> [triggers](#input\_triggers) | Additional Terraform triggers. | `map(string)` | `{}` | no |
 | <a name="input_type"></a> [type](#input\_type) | Notification type. | `string` | `"reconfig"` | no |
 

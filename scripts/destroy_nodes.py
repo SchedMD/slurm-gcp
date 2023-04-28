@@ -78,12 +78,10 @@ def main(args):
     # NOTE: It is not technically possible to filter by metadata or other
     #       complex nested items
     p_id = args.project_id if args.project_id else lkp.project
-    if (not p_id):
+    if not p_id:
         print("Error: Project id cannot be determined")
         exit(1)
-    result = (
-        compute.instances().aggregatedList(project=p_id, filter=filter).execute()
-    )
+    result = compute.instances().aggregatedList(project=p_id, filter=filter).execute()
 
     compute_list = []
     for item in result["items"].values():
