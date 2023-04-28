@@ -132,13 +132,13 @@ combination, if desired.
 
 ## Shielded VM Support
 
-All recently published images in project `schedmd-slurm-public` support shielded
-VMs without GPUs or mounting a Lustre filesystem. Both of these features require
+Recently published images in project `schedmd-slurm-public` support shielded VMs
+without GPUs or mounting a Lustre filesystem. Both of these features require
 kernel modules, which must be signed to be compatible with SecureBoot.
 
 If you need GPUs, our published image family based on
-`ubuntu-os-cloud/ubuntu-2004-lts` has signed Nvidia drivers installed and is
-therefore compatible with SecureBoot and Shielded VMs.
+`ubuntu-os-cloud/ubuntu-2004-lts` has signed Nvidia drivers installed and
+therefore supports GPUs with SecureBoot and Shielded VMs.
 
 If you need Lustre or GPUs on a different OS, it is possible to do this manually
 with a custom image. Doing this requires
