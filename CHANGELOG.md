@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[Next\]
 
 - Fix regression in load_bq.py.
+- Fix slurmsync.py handling of pub/sub subscriptions when enable_reconfigure.
 
 ## \[5.7.0\]
 

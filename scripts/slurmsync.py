@@ -195,7 +195,11 @@ def sync_slurm():
     compute_instances = [
         name for name, inst in lkp.instances().items() if inst.role == "compute"
     ]
-    slurm_nodes = list(lkp.slurm_nodes().keys())
+    slurm_nodes = list(
+        name
+        for name, state in lkp.slurm_nodes().items()
+        if "DYNAMIC_NORM" not in state.flags
+    )
     all_nodes = list(
         set(
             chain(
@@ -293,7 +297,11 @@ def sync_pubsub():
                     for name, inst in lkp.instances().items()
                     if inst.role == "compute"
                 ),
-                (name for name in lkp.slurm_nodes().keys()),
+                (
+                    name
+                    for name, state in lkp.slurm_nodes().items()
+                    if "DYNAMIC_NORM" not in state.flags
+                ),
             )
         )
     )
