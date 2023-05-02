@@ -55,8 +55,8 @@ logging:
       type: parse_regex
       field: message
       regex: "^\[(?<time>\S+)\] (?<message>((?<severity>(fatal|error|verbose|debug[0-9]?)):)?.*)$"
-      time_key: time
-      time_format: "%Y-%M-%dT%H:%M:%S.%L"
+      #time_key: time
+      #time_format: "%Y-%M-%dT%H:%M:%S.%L"
     parse_slurmlog2:
       type: parse_regex
       field: message
