@@ -258,6 +258,10 @@ def partitionlines(partition, lkp=lkp):
     """Make a partition line for the slurm.conf"""
     part_name = partition.partition_name
     lines = []
+    has_nodes: bool = False
+    has_feature: bool = False
+    defmem: int = None
+    nodesets: list = []
 
     if len(partition.partition_nodes.values()) > 0:
         group_lines = [
@@ -274,35 +278,30 @@ def partitionlines(partition, lkp=lkp):
             defmempercpu(node.instance_template)
             for node in partition.partition_nodes.values()
         )
-        line_elements = {
-            "PartitionName": part_name,
-            "Nodes": ",".join(nodesets),
-            "State": "UP",
-            "DefMemPerCPU": defmem,
-            "SuspendTime": 300,
-            "Oversubscribe": "Exclusive" if partition.enable_job_exclusive else None,
-            **partition.partition_conf,
-        }
-        lines = [
-            *nodelines,
-            dict_to_conf(line_elements),
-        ]
+        lines.extend(nodelines)
+        has_nodes = True
     if partition.partition_feature:
         nodelines = [
             dict_to_conf({"NodeSet": part_name, "Feature": partition.partition_feature})
         ]
+        lines.extend(nodelines)
+        has_feature = True
+    if has_nodes or has_feature:
+        nodes = []
+        if has_nodes:
+            nodes.extend(nodesets)
+        if has_feature:
+            nodes.append(part_name)
         line_elements = {
             "PartitionName": part_name,
-            "Nodes": part_name,
+            "Nodes": ",".join(nodes),
             "State": "UP",
+            "DefMemPerCPU": defmem if defmem > 0 else None,
             "SuspendTime": 300,
             "Oversubscribe": "Exclusive" if partition.enable_job_exclusive else None,
             **partition.partition_conf,
         }
-        lines = [
-            *nodelines,
-            dict_to_conf(line_elements),
-        ]
+        lines.extend([dict_to_conf(line_elements)])
 
     return "\n".join(lines)
 
