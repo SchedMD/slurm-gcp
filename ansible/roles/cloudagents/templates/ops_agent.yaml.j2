@@ -54,13 +54,13 @@ logging:
     parse_slurmlog:
       type: parse_regex
       field: message
-      regex: "^(?<time>\[[^ ]*\]) (?<message>.*)$"
+      regex: "^\[(?<time>\S+)\] (?<message>((?<severity>(fatal|error|verbose|debug[0-9]?)):)?.*)$"
       time_key: time
       time_format: "%Y-%M-%dT%H:%M:%S.%L"
     parse_slurmlog2:
       type: parse_regex
       field: message
-      regex: "^(?<time>\S+ \S+) (?<message>.*)$"
+      regex: "^(?<time>\S+ \S+) (?<message>(?<severity>(CRITICAL|ERROR|WARNING|INFO|DEBUG))(\(\S+\))?:.*)$"
       #time_key: time
       #time_format: "%Y-%M-%d %H:%M:%S,%L"
   service:

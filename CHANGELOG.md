@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Add retries to munge mount to handle the case of attempted mount before the
   controller is ready.
 - Fix partition generation with both nodes and feature.
+- Fix regex parser for ops agent ingestion of slurm logs.
 
 ## \[5.7.0\]
 
