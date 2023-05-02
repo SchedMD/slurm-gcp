@@ -287,7 +287,7 @@ def partitionlines(partition, lkp=lkp):
             *nodelines,
             dict_to_conf(line_elements),
         ]
-    if not partition.partition_feature:
+    if partition.partition_feature:
         nodelines = [
             dict_to_conf({"NodeSet": part_name, "Feature": partition.partition_feature})
         ]
