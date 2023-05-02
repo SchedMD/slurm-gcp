@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
   controller is ready.
 - Fix partition generation with both nodes and feature.
 - Fix regex parser for ops agent ingestion of slurm logs.
+- Add wait on placement group creation to avoid race condition in during resume.
 
 ## \[5.7.0\]
 

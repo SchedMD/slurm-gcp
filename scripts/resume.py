@@ -407,14 +407,31 @@ def create_placement_groups(job_id, node_list, partition_name):
         group: create_placement_request(group, region)
         for group, incl_nodes in groups.items()
     }
-    done, failed = batch_execute(requests)
+    submitted, failed = batch_execute(requests)
+    any_failures = False
     if failed:
         reqs = [f"{e}" for _, e in failed.values()]
+        log.fatal("failed to create placement policies: {}".format("; ".join(reqs)))
+        any_failures = True
+    operations = {group: wait_for_operation(op) for group, op in submitted.items()}
+    for group, op in operations.items():
+        if "error" in op:
+            msg = "; ".join(
+                f"{err['code']}: {err['message'] if 'message' in err else 'no message'}"
+                for err in op["error"]["errors"]
+            )
+            log.error(
+                f"placement group failed to create: '{group}' ({op['name']}): {msg}"
+            )
+            any_failures = True
+
+    if any_failures:
         # delete any placement groups that managed to be created.
         delete_placement_groups(job_id, region, partition_name)
-        log.fatal("failed to create placement policies: {}".format("; ".join(reqs)))
         exit(1)
-    log.info(f"created {len(done)} placement groups ({to_hostlist(done.keys())})")
+    log.info(
+        f"created {len(operations)} placement groups ({to_hostlist(operations.keys())})"
+    )
     return groups
 
 
