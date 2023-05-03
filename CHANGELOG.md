@@ -4,13 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+## \[5.7.1\]
+
 - Fix regression in load_bq.py.
 - Fix slurmsync.py handling of pub/sub subscriptions when enable_reconfigure.
 - Add retries to munge mount to handle the case of attempted mount before the
   controller is ready.
 - Fix partition generation with both nodes and feature.
 - Fix regex parser for ops agent ingestion of slurm logs.
-- Add wait on placement group creation to avoid race condition in during resume.
+- Add wait on placement group creation to avoid race condition during resume.
 
 ## \[5.7.0\]
 
