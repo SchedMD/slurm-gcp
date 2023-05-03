@@ -260,7 +260,7 @@ def partitionlines(partition, lkp=lkp):
     lines = []
     has_nodes: bool = False
     has_feature: bool = False
-    defmem: int = None
+    defmem: int = 0
     nodesets: list = []
 
     if len(partition.partition_nodes.values()) > 0:
@@ -296,7 +296,7 @@ def partitionlines(partition, lkp=lkp):
             "PartitionName": part_name,
             "Nodes": ",".join(nodes),
             "State": "UP",
-            "DefMemPerCPU": defmem if defmem > 0 else None,
+            "DefMemPerCPU": defmem,
             "SuspendTime": 300,
             "Oversubscribe": "Exclusive" if partition.enable_job_exclusive else None,
             **partition.partition_conf,

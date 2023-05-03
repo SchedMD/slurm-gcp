@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Fix DefMemPerCPU on partitions that only contain dynamic nodes.
+
 ## \[5.7.1\]
 
 - Fix regression in load_bq.py.
