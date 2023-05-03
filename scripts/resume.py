@@ -44,11 +44,14 @@ from util import (
 from util import cfg, lkp, NSDict, TPU
 
 # from util import cfg, lkp, NSDict
+import slurm_gcp_plugins
+
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 
 log = logging.getLogger(filename)
+
 
 global_resume_data = None
 
@@ -182,6 +185,14 @@ def create_instances_request(nodes, partition_name, placement_group, job_id=None
     body.locationPolicy.targetShape = cfg.zone_target_shape or "ANY_SINGLE_ZONE"
     if zones:
         body.locationPolicy.locations = zones
+
+    if lkp.cfg.enable_slurm_gcp_plugins:
+        slurm_gcp_plugins.pre_instance_bulk_insert(
+            lkp=lkp,
+            nodes=nodes,
+            placement_group=placement_group,
+            request_body=body,
+        )
 
     request = util.compute.regionInstances().bulkInsert(
         project=cfg.project, region=region, body=body.to_dict()
@@ -508,6 +519,10 @@ def create_placement_request(pg_name, region):
             "collocation": "COLLOCATED",
         },
     }
+    if lkp.cfg.enable_slurm_gcp_plugins:
+        slurm_gcp_plugins.pre_placement_group_insert(
+            lkp=lkp, pg_name=pg_name, region=region, request_body=config
+        )
     request = util.compute.resourcePolicies().insert(
         project=cfg.project, region=region, body=config
     )
@@ -639,6 +654,12 @@ def main(nodelist, force=False):
 
     log.info(f"resume {cloud_nodelist}")
     resume_nodes(cloud_nodes, global_resume_data)
+    # TODO only run below if resume_nodes succeeds but
+    # resume_nodes does not currently return any status.
+    if lkp.cfg.enable_slurm_gcp_plugins:
+        slurm_gcp_plugins.post_main_resume_nodes(
+            nodelist=nodelist, global_resume_data=global_resume_data
+        )
 
 
 parser = argparse.ArgumentParser(

@@ -32,6 +32,7 @@ from util import (
 )
 from util import lkp, cfg, compute, TPU
 
+import slurm_gcp_plugins
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
@@ -147,6 +148,8 @@ def main(nodelist):
 
     # suspend is allowed to delete exclusive nodes
     log.info(f"suspend {nodelist}")
+    if lkp.cfg.enable_slurm_gcp_plugins:
+        slurm_gcp_plugins.pre_main_suspend_nodes(lkp=lkp, nodelist=nodelist)
     suspend_nodes(nodes)
 
 

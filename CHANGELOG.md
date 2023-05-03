@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[6.2.0\]
 
 - Reverse logic in valid_placement_nodes
+- Add slurm_gcp_plugin support.
 
 ## \[6.1.2\]
 
