@@ -37,6 +37,7 @@ from util import (
 )
 from util import lkp, cfg, compute
 
+import slurm_gcp_plugins
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
@@ -144,6 +145,10 @@ def epilog_suspend_nodes(nodelist, job_id):
     model = next(iter(nodes))
     region = lkp.node_region(model)
     partition = lkp.node_partition(model)
+    if lkp.cfg.enable_slurm_gcp_plugins:
+        slurm_gcp_plugins.pre_epilog_suspend_nodes(
+            lkp=lkp, job_id=job_id, nodelist=nodelist
+        )
     suspend_nodes(nodelist)
     if partition.enable_placement_groups:
         delete_placement_groups(job_id, region, partition.partition_name)

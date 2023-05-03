@@ -46,6 +46,8 @@ from util import (
 )
 from util import cfg, lkp, NSDict
 
+import slurm_gcp_plugins
+
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
 
@@ -201,6 +203,15 @@ def create_instances_request(nodes, placement_group, exclusive_job=None):
     body.locationPolicy.targetShape = cfg.zone_target_shape or "ANY_SINGLE_ZONE"
     if zones:
         body.locationPolicy.locations = zones
+
+    if lkp.cfg.enable_slurm_gcp_plugins:
+        slurm_gcp_plugins.pre_instance_bulk_insert(
+            lkp=lkp,
+            nodes=nodes,
+            placement_group=placement_group,
+            exclusive_job=exclusive_job,
+            request_body=body,
+        )
 
     request = util.compute.regionInstances().bulkInsert(
         project=cfg.project, region=region, body=body.to_dict()
@@ -389,6 +400,10 @@ def create_placement_request(pg_name, region):
             "collocation": "COLLOCATED",
         },
     }
+    if lkp.cfg.enable_slurm_gcp_plugins:
+        slurm_gcp_plugins.pre_placement_group_insert(
+            lkp=lkp, pg_name=pg_name, region=region, request_body=config
+        )
     request = util.compute.resourcePolicies().insert(
         project=cfg.project, region=region, body=config
     )
@@ -480,6 +495,12 @@ def prolog_resume_nodes(job_id, nodelist):
         )
         valid_placement_nodes(job_id, nodelist)
     resume_nodes(nodes, placement_groups, exclusive_job=job_id)
+    # TODO only run below if resume_nodes succeeds but
+    # resume_nodes does not currently return any status.
+    if lkp.cfg.enable_slurm_gcp_plugins:
+        slurm_gcp_plugins.post_prolog_resume_nodes(
+            lkp=lkp, job_id=job_id, nodelist=nodelist, placement_groups=placement_groups
+        )
 
 
 def get_resume_file_data():

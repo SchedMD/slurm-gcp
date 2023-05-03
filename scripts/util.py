@@ -37,6 +37,8 @@ from itertools import chain, compress, islice
 from pathlib import Path
 from time import sleep, time
 
+import slurm_gcp_plugins
+
 required_modules = [
     ("googleapiclient", "google-api-python-client"),
     ("requests", "requests"),
@@ -1368,42 +1370,49 @@ class Lookup:
     def instances(self, project=None, slurm_cluster_name=None):
         slurm_cluster_name = slurm_cluster_name or self.cfg.slurm_cluster_name
         project = project or self.project
-        instance_fields = ",".join(
-            [
-                "advancedMachineFeatures",
-                "cpuPlatform",
-                "creationTimestamp",
-                "disks",
-                "disks",
-                "fingerprint",
-                "guestAccelerators",
-                "hostname",
-                "id",
-                "kind",
-                "labelFingerprint",
-                "labels",
-                "lastStartTimestamp",
-                "lastStopTimestamp",
-                "lastSuspendedTimestamp",
-                "machineType",
-                "metadata",
-                "name",
-                "networkInterfaces",
-                "resourceStatus",
-                "scheduling",
-                "selfLink",
-                "serviceAccounts",
-                "shieldedInstanceConfig",
-                "shieldedInstanceIntegrityPolicy",
-                "sourceMachineImage",
-                "status",
-                "statusMessage",
-                "tags",
-                "zone",
-                # "deletionProtection",
-                # "startRestricted",
-            ]
-        )
+        instance_information_fields = [
+            "advancedMachineFeatures",
+            "cpuPlatform",
+            "creationTimestamp",
+            "disks",
+            "disks",
+            "fingerprint",
+            "guestAccelerators",
+            "hostname",
+            "id",
+            "kind",
+            "labelFingerprint",
+            "labels",
+            "lastStartTimestamp",
+            "lastStopTimestamp",
+            "lastSuspendedTimestamp",
+            "machineType",
+            "metadata",
+            "name",
+            "networkInterfaces",
+            "resourceStatus",
+            "scheduling",
+            "selfLink",
+            "serviceAccounts",
+            "shieldedInstanceConfig",
+            "shieldedInstanceIntegrityPolicy",
+            "sourceMachineImage",
+            "status",
+            "statusMessage",
+            "tags",
+            "zone",
+            # "deletionProtection",
+            # "startRestricted",
+        ]
+        if lkp.cfg.enable_slurm_gcp_plugins:
+            slurm_gcp_plugins.register_instance_information_fields(
+                lkp=lkp,
+                project=project,
+                slurm_cluster_name=slurm_cluster_name,
+                instance_information_fields=instance_information_fields,
+            )
+        instance_information_fields = sorted(set(instance_information_fields))
+        instance_fields = ",".join(instance_information_fields)
         fields = f"items.zones.instances({instance_fields}),nextPageToken"
         flt = f"labels.slurm_cluster_name={slurm_cluster_name} AND name:{slurm_cluster_name}-*"
         act = self.compute.instances()
