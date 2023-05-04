@@ -87,6 +87,11 @@ build-rocky-linux-8:
   variables:
     IMAGE_OS: rocky-linux-8
 
+build-hpc-rocky-linux-8:
+  extends: .build-image
+  variables:
+    IMAGE_OS: hpc-rocky-linux-8
+
 build-debian-10:
   extends: .build-image
   variables:
@@ -190,6 +195,15 @@ test-rocky-linux-8:
     optional: true
   variables:
     IMAGE_OS: rocky-linux-8
+    ARCH: x86_64
+
+test-hpc-rocky-linux-8:
+  extends: .test-image
+  needs:
+  - job: build-hpc-rocky-linux-8
+    optional: true
+  variables:
+    IMAGE_OS: hpc-rocky-linux-8
     ARCH: x86_64
 
 test-debian-10:

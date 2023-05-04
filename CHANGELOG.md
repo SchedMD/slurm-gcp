@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## \[Next\]
 
 - Fix DefMemPerCPU on partitions that only contain dynamic nodes.
+- Add hpc-rocky-linux-8 image build using
+  cloud-hpc-image-public/hpc-rocky-linux-8 as a base.
 
 ## \[5.7.1\]
 
