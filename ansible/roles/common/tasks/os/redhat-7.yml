@@ -13,15 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Reboot
-  reboot:
-
-- name: Gather facts after reboot
-  setup:
-
-- name: Install {{ansible_os_family}} Family Kernel Packages
-  apt:
-    name:
-    - linux-headers-{{ansible_kernel}}
+- name: Upgrade {{ ansible_os_family }}-{{ ansible_distribution_major_version }} Family
+    System Software
+  yum:
+    name: '*'
     state: latest
     update_cache: yes
+
+- name: Install epel-release Repository
+  yum:
+    name: epel-release
+    state: present

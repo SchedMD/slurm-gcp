@@ -47,9 +47,3 @@
   template:
     src: ld.so.conf.d/usr-local.conf.j2
     dest: /etc/ld.so.conf.d/usr-local.conf
-
-- name: Reboot
-  reboot:
-
-- name: Gather facts after reboot
-  setup:

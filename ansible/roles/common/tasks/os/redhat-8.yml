@@ -13,15 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Install {{ansible_os_family}} Family Kernel Packages
-  yum:
-    name:
-    - kernel
-    - kernel-devel
-    - kernel-headers
-    - kernel-modules
-    - kernel-tools
-    - kernel-tools-libs
-    - kernel-tools-libs-devel
+- name: Upgrade {{ ansible_os_family }}-{{ ansible_distribution_major_version }} Family
+    System Software
+  dnf:
+    name: '*'
     state: latest
     update_cache: yes
+
+- name: Enable CentOS 8 PowerTools Repository
+  command: dnf config-manager --set-enabled powertools
+
+- name: Install epel-release Repository
+  dnf:
+    name: epel-release
+    state: present
