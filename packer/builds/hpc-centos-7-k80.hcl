@@ -40,4 +40,4 @@ nvidia_version = "470"
 # PROVISION #
 #############
 
-slurm_version = "22.05.8"
+# slurm_version = null

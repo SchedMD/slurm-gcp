@@ -38,4 +38,4 @@ source_image_family = "debian-10"
 # PROVISION #
 #############
 
-slurm_version = "22.05.8"
+# slurm_version = null

@@ -38,4 +38,4 @@ source_image_family = "rocky-linux-8"
 # PROVISION #
 #############
 
-slurm_version = "22.05.8"
+# slurm_version = null

@@ -68,15 +68,15 @@ that are minimal viable images for deploying
 
 |       Project        | Image Family                                   | Arch   | Status         |
 | :------------------: | :--------------------------------------------- | :----- | :------------- |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-centos-7              | x86_64 | EOL 2024-01-01 |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-debian-10             | x86_64 | EOL 2023-06-30 |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-debian-11             | x86_64 | Supported      |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-hpc-centos-7-k80      | x86_64 | Supported      |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-rocky-linux-8         | x86_64 | EOL 2023-06-30 |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-hpc-rocky-linux-8     | x86_64 | Supported      |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-ubuntu-2004-lts       | x86_64 | Supported      |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-8-ubuntu-2204-lts-arm64 | ARM64  | Supported      |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-centos-7              | x86_64 | EOL 2024-01-01 |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-debian-10             | x86_64 | EOL 2023-06-30 |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-debian-11             | x86_64 | Supported      |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-hpc-centos-7-k80      | x86_64 | Supported      |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-rocky-linux-8         | x86_64 | EOL 2023-06-30 |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-hpc-rocky-linux-8     | x86_64 | Supported      |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-ubuntu-2004-lts       | x86_64 | Supported      |
+| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-ubuntu-2204-lts-arm64 | ARM64  | Supported      |
 
 ## Custom Image
 

@@ -38,4 +38,4 @@ source_image_family = "ubuntu-2204-lts"
 # PROVISION #
 #############
 
-slurm_version = "22.05.8"
+# slurm_version = null
