@@ -59,7 +59,7 @@ SchedMD releases public images on [Google Cloud Platform](./glossary.md#gcp)
 that are minimal viable images for deploying
 [Slurm clusters](./glossary.md#slurm) through all method and configurations.
 
-> **NOTE:** SchedMD generated images using the same process as for
+> **NOTE:** SchedMD generates images using the same process as documented in
 > [custom images](#custom-image) but without any additional software and only
 > using clean minimal base images for the source image (e.g.
 > `centos-cloud/centos-7`).
