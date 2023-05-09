@@ -15,15 +15,15 @@
 
 - name: Upgrade {{ ansible_os_family }}-{{ ansible_distribution_major_version }} Family
     System Software
-  dnf:
-    name: '*'
-    state: latest
+  yum:
+    # name: '*'
+    # state: latest
     update_cache: yes
 
 - name: Enable CentOS 8 PowerTools Repository
   command: dnf config-manager --set-enabled powertools
 
 - name: Install epel-release Repository
-  dnf:
+  yum:
     name: epel-release
     state: present
