@@ -14,8 +14,8 @@
 # limitations under the License.
 
 lustre_repo_url: |
-  https://downloads.whamcloud.com/public/lustre/latest-2.12-release/el{{ ansible_distribution_major_version }}/client
+  https://downloads.whamcloud.com/public/lustre/latest-release/ubuntu2204/client
 
 lustre_packages:
-- lustre-client
-- lustre-client-dkms
+- lustre-client-modules
+- lustre-client-utils

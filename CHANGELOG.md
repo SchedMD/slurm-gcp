@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 - Fix detecting gpus on certain machine types.
 - Forward additional error information to node reason and salloc/srun.
 - Fix warning on missing python library httplib2.
+- Fix lustre support in images by installing the latest available client version
+  for each OS.
 
 ## \[5.7.2\]
 
