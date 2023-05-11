@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[Next\]
 
 - Fix detecting gpus on certain machine types.
+- Forward additional error information to node reason and salloc/srun.
 
 ## \[5.7.2\]
 

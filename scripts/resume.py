@@ -313,13 +313,13 @@ def resume_nodes(nodelist, placement_groups=None, exclusive_job=None):
             log.error(
                 f"{count} instances failed to start: {code} ({hostlist}) operationGroupId={group_id}"
             )
-            if code != "RESOURCE_ALREADY_EXISTS":
-                down_nodes(hostlist, code)
             failed_node, failed_op = next(iter(failed_nodes.items()))
             msg = "; ".join(
                 f"{err['code']}: {err['message'] if 'message' in err else 'no message'}"
                 for err in failed_op["error"]["errors"]
             )
+            if code != "RESOURCE_ALREADY_EXISTS":
+                down_nodes(hostlist, msg)
             log.error(
                 f"errors from insert for node '{failed_node}' ({failed_op['name']}): {msg}"
             )
