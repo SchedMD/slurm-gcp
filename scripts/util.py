@@ -1540,7 +1540,11 @@ class Lookup:
         # del template.metadata
 
         # translate gpus into an easier-to-read format
-        if template.guestAccelerators:
+        machine_info = self.machine_type(template.machineType, project=project)
+        if machine_info.accelerators:
+            template.gpu_type = machine_info.accelerators[0].guestAcceleratorType
+            template.gpu_count = machine_info.accelerators[0].guestAcceleratorCount
+        elif template.guestAccelerators:
             template.gpu_type = template.guestAccelerators[0].acceleratorType
             template.gpu_count = template.guestAccelerators[0].acceleratorCount
         else:

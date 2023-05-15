@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Fix detecting gpus on certain machine types.
+
 ## \[5.7.2\]
 
 - Fix DefMemPerCPU on partitions that only contain dynamic nodes.
