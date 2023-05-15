@@ -247,7 +247,7 @@ def gen_cloud_conf(lkp=lkp, cloud_parameters=None):
     util.chown_slurm(conf_file, mode=0o644)
 
 
-def install_slurm_conf(lkp):
+def install_slurm_conf(lkp=lkp):
     """install slurm.conf"""
     if lkp.cfg.ompi_version:
         mpi_default = "pmi2"
@@ -272,7 +272,7 @@ def install_slurm_conf(lkp):
     util.chown_slurm(conf_file, mode=0o644)
 
 
-def install_slurmdbd_conf(lkp):
+def install_slurmdbd_conf(lkp=lkp):
     """install slurmdbd.conf"""
     conf_options = NSDict(
         {
@@ -310,7 +310,7 @@ def install_slurmdbd_conf(lkp):
     util.chown_slurm(conf_file, 0o600)
 
 
-def install_cgroup_conf():
+def install_cgroup_conf(lkp=lkp):
     """install cgroup.conf"""
     conf = project_metadata(f"{cfg.slurm_cluster_name}-slurm-tpl-cgroup-conf")
 
@@ -352,7 +352,7 @@ def gen_cloud_gres_conf(lkp=lkp):
     util.chown_slurm(conf_file, mode=0o600)
 
 
-def install_gres_conf():
+def install_gres_conf(lkp=lkp):
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud_gres.conf"
     gres_conf = Path(lkp.cfg.output_dir or slurmdirs.etc) / "gres.conf"
     if not gres_conf.exists():

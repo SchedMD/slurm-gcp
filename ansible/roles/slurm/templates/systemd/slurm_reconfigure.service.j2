@@ -1,0 +1,9 @@
+[Unit]
+Description=Reconfigure Slurm cluster
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/slurm/scripts/reconfigure.py
+WorkingDirectory=/slurm/scripts

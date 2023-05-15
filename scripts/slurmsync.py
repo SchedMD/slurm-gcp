@@ -16,6 +16,7 @@
 
 import argparse
 import fcntl
+import hashlib
 import logging
 import sys
 from enum import Enum
@@ -30,10 +31,21 @@ from util import (
     batch_execute,
     to_hostlist,
     with_static,
+    config_from_metadata,
+    load_config_file,
+    save_config,
+    Lookup,
 )
-from util import lkp, cfg, compute
+from util import lkp, cfg, compute, CONFIG_FILE
 from suspend import delete_instances
-
+from conf import (
+    gen_cloud_conf,
+    gen_cloud_gres_conf,
+    install_slurm_conf,
+    install_slurmdbd_conf,
+    install_gres_conf,
+    install_cgroup_conf,
+)
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
@@ -178,6 +190,9 @@ def do_node_update(status, nodes):
 
 
 def sync_slurm():
+    if lkp.instance_role != "controller":
+        return
+
     compute_instances = [
         name for name, inst in lkp.instances().items() if inst.role == "compute"
     ]
@@ -210,7 +225,50 @@ def sync_slurm():
         do_node_update(status, nodes)
 
 
+def reconfigure_slurm():
+    CONFIG_FILE_TMP = Path("/tmp/config.yaml")
+    cfg_new = config_from_metadata()
+    # Save to file and read file to ensure Paths are marshalled the same
+    save_config(cfg_new, CONFIG_FILE_TMP)
+    cfg_new = load_config_file(CONFIG_FILE_TMP)
+    hash_new = hashlib.sha256(yaml.dump(cfg_new, encoding="utf-8"))
+
+    cfg_old = load_config_file(CONFIG_FILE)
+    hash_old = hashlib.sha256(yaml.dump(cfg_old, encoding="utf-8"))
+
+    if hash_new.hexdigest() != hash_old.hexdigest():
+        log.debug("Delta detected. Reconfiguring Slurm now.")
+        save_config(cfg_new, CONFIG_FILE)
+        lkp = Lookup(cfg_new)
+        util.lkp = lkp
+        if lkp.instance_role == "controller":
+            install_slurm_conf(lkp)
+            install_slurmdbd_conf(lkp)
+            gen_cloud_conf(lkp)
+            gen_cloud_gres_conf(lkp)
+            install_gres_conf(lkp)
+            install_cgroup_conf(lkp)
+            log.info("Restarting slurmctld to make changes take effect.")
+            try:
+                run("sudo systemctl restart slurmctld.service", check=False)
+                run(f"{lkp.scontrol} reconfigure", timeout=30)
+            except Exception as e:
+                log.error(e)
+            util.run("wall '*** slurm configuration been updated ***'", timeout=30)
+            log.debug("Done.")
+        elif lkp.instance_role in ["compute", "login"]:
+            log.info("Restarting slurmd to make changes take effect.")
+            run("systemctl restart slurmd")
+            util.run("wall '*** slurm configuration been updated ***'", timeout=30)
+            log.debug("Done.")
+
+
 def main():
+    try:
+        reconfigure_slurm()
+    except Exception:
+        log.exception("failed to reconfigure slurm")
+
     try:
         sync_slurm()
     except Exception:
@@ -235,6 +293,12 @@ parser.add_argument(
     action="store_true",
     help="Enable detailed api request output",
 )
+parser.add_argument(
+    "--force",
+    "-f",
+    action="store_true",
+    help="Force tasks to run, regardless of lock.",
+)
 
 if __name__ == "__main__":
 
@@ -256,6 +320,7 @@ if __name__ == "__main__":
         try:
             fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except IOError:
-            sys.exit(0)
+            if not args.force:
+                sys.exit(0)
 
     main()

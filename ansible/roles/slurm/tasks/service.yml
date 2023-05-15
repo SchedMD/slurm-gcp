@@ -20,6 +20,20 @@
     mode: 0o644
   notify: Handle Slurmrestd Service
 
+- name: Install slurm_reconfigure Service
+  template:
+    src: systemd/slurm_reconfigure.service.j2
+    dest: /usr/lib/systemd/system/slurm_reconfigure.service
+    mode: 0o644
+  notify: Handle slurm_reconfigure Service
+
+- name: Install slurm_reconfigure Timer
+  template:
+    src: systemd/slurm_reconfigure.timer.j2
+    dest: /usr/lib/systemd/system/slurm_reconfigure.timer
+    mode: 0o644
+  notify: Handle slurm_reconfigure Timer
+
 - name: Install slurm_load_bigquery Service
   template:
     src: systemd/slurm_load_bq.service.j2

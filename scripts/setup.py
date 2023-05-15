@@ -659,6 +659,17 @@ def setup_nss_slurm():
     run(r"sed -i 's/\(^\(passwd\|group\):\s\+\)/\1slurm /g' /etc/nsswitch.conf")
 
 
+def setup_sudoers():
+    content = """
+# Allow SlurmUser to manage the slurm daemons
+slurm ALL= NOPASSWD: /usr/bin/systemctl restart slurmd.service
+slurm ALL= NOPASSWD: /usr/bin/systemctl restart slurmctld.service
+"""
+    sudoers_file = Path("/etc/sudoers.d/slurm")
+    sudoers_file.write_text(content)
+    sudoers_file.chmod(0o0440)
+
+
 def update_system_config(file, content):
     """Add system defaults options for service files"""
     sysconfig = Path("/etc/sysconfig")
@@ -754,6 +765,7 @@ def setup_controller(args):
     setup_jwt_key()
     setup_munge_dir()
     setup_munge_key()
+    setup_sudoers()
 
     if cfg.controller_secondary_disk:
         setup_secondary_disks()
@@ -825,9 +837,11 @@ def setup_login(args):
     setup_network_storage()
     setup_munge_dir()
     setup_slurmd_cronjob()
+    setup_sudoers()
     run("systemctl restart munge")
     run("systemctl enable slurmd", timeout=30)
     run("systemctl restart slurmd", timeout=30)
+    run("systemctl enable --now slurmcmd.timer", timeout=30)
 
     run_custom_scripts()
 
@@ -867,9 +881,11 @@ def setup_compute(args):
 
     setup_munge_dir()
     setup_slurmd_cronjob()
+    setup_sudoers()
     run("systemctl restart munge", timeout=30)
     run("systemctl enable slurmd", timeout=30)
     run("systemctl restart slurmd", timeout=30)
+    run("systemctl enable --now slurmcmd.timer", timeout=30)
 
     log.info("Check status of cluster services")
     run("systemctl status munge", timeout=30)

@@ -37,6 +37,18 @@
     enabled: no
     state: stopped
 
+- name: Handle slurm_reconfigure Service
+  systemd:
+    name: slurm_reconfigure.service
+    enabled: no
+    state: stopped
+
+- name: Handle slurm_reconfigure Timer
+  systemd:
+    name: slurm_reconfigure.timer
+    enabled: no
+    state: stopped
+
 - name: Handle slurm_load_bigquery Service
   systemd:
     name: slurm_load_bq.service
