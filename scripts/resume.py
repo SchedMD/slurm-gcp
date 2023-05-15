@@ -344,6 +344,7 @@ def resume_nodes(nodelist, placement_groups=None, exclusive_job=None):
 def update_job_comment(nodelist, comment):
     resume_data = get_resume_file_data()
     if resume_data is None:
+        log.error("Cannot update and notify jobs with API failures.")
         return
     else:
         resume_data = NSDict(resume_data)
@@ -483,6 +484,10 @@ def get_resume_file_data():
     if SLURM_RESUME_FILE is not None:
         resume_data = open(SLURM_RESUME_FILE)
         obj = json.loads(resume_data.read())
+    else:
+        log.warning(
+            "SLURM_RESUME_FILE was not in environment. Cannot get detailed job, node, partition allocation data."
+        )
 
     return obj
 
