@@ -83,7 +83,6 @@
   - libjwt
   - lmod
   - slurm
-  - slurmeventd
   - slurmcmd
   - role: ompi
     when: install_ompi

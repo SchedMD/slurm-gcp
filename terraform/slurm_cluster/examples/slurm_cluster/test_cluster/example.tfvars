@@ -30,10 +30,8 @@ source_image         = null
 source_image_project = null
 source_image_family  = null
 
-enable_bigquery_load         = false
-enable_cleanup_compute       = true
-enable_cleanup_subscriptions = false
-enable_reconfigure           = false
+enable_bigquery_load   = false
+enable_cleanup_compute = true
 
 # *NOT* intended for production use
 # enable_devel = true

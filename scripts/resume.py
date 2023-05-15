@@ -32,12 +32,9 @@ from util import (
     get_insert_operations,
     log_api_request,
     map_with_futures,
-    parse_self_link,
     run,
     chunked,
     separate,
-    execute_with_futures,
-    subscription_create,
     to_hostlist,
     trim_self_link,
     wait_for_operation,
@@ -379,16 +376,6 @@ def resume_nodes(nodes, resume_data=None):
             ready_nodelist = to_hostlist(ready_nodes)
             log.info(f"created {len(ready_nodes)} instances: nodes={ready_nodelist}")
             all_successful_inserts.extend(successful_inserts)
-
-    # If reconfigure enabled, create subscriptions for successfully started instances
-    if lkp.cfg.enable_reconfigure and len(all_successful_inserts):
-        started_nodes = [
-            parse_self_link(op["targetLink"]).instance for op in all_successful_inserts
-        ]
-        count = len(started_nodes)
-        hostlist = util.to_hostlist(started_nodes)
-        log.info("create {} subscriptions ({})".format(count, hostlist))
-        execute_with_futures(subscription_create, nodes)
 
 
 def update_job_comment(nodelist, comment):

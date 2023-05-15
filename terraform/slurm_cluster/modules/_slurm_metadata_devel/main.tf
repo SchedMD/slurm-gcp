@@ -32,7 +32,6 @@ locals {
     setup-script   = data.local_file.setup.content
     slurm-resume   = data.local_file.resume.content
     slurm-suspend  = data.local_file.suspend.content
-    slurmeventd    = data.local_file.slurmeventd.content
     slurmsync      = data.local_file.slurmsync.content
     util-script    = data.local_file.util.content
     loadbq         = data.local_file.loadbq.content
@@ -61,10 +60,6 @@ data "local_file" "suspend" {
 
 data "local_file" "slurmsync" {
   filename = abspath("${local.scripts_dir}/slurmsync.py")
-}
-
-data "local_file" "slurmeventd" {
-  filename = abspath("${local.scripts_dir}/slurmeventd.py")
 }
 
 data "local_file" "util" {

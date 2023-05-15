@@ -34,9 +34,6 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_reconfigure_critical"></a> [reconfigure\_critical](#module\_reconfigure\_critical) | ../slurm_destroy_nodes | n/a |
-| <a name="module_reconfigure_node_groups"></a> [reconfigure\_node\_groups](#module\_reconfigure\_node\_groups) | ../slurm_destroy_nodes | n/a |
-| <a name="module_reconfigure_placement_groups"></a> [reconfigure\_placement\_groups](#module\_reconfigure\_placement\_groups) | ../slurm_destroy_resource_policies | n/a |
 | <a name="module_slurm_compute_template"></a> [slurm\_compute\_template](#module\_slurm\_compute\_template) | ../slurm_instance_template | n/a |
 
 ## Resources
@@ -54,7 +51,6 @@ limitations under the License.
 |------|-------------|------|---------|:--------:|
 | <a name="input_enable_job_exclusive"></a> [enable\_job\_exclusive](#input\_enable\_job\_exclusive) | Enables job exclusivity. A job will run exclusively on the scheduled nodes. | `bool` | `false` | no |
 | <a name="input_enable_placement_groups"></a> [enable\_placement\_groups](#input\_enable\_placement\_groups) | Enables job placement groups. Instances will be colocated for a job. | `bool` | `false` | no |
-| <a name="input_enable_reconfigure"></a> [enable\_reconfigure](#input\_enable\_reconfigure) | Enables automatic Slurm reconfigure on when Slurm configuration changes (e.g.<br>slurm.conf.tpl, partition details). Compute instances and resource policies<br>(e.g. placement groups) will be destroyed to align with new configuration.<br><br>NOTE: Requires Python and Google Pub/Sub API.<br><br>*WARNING*: Toggling this will impact the running workload. Deployed compute nodes<br>will be destroyed and their jobs will be requeued. | `bool` | `false` | no |
 | <a name="input_network_storage"></a> [network\_storage](#input\_network\_storage) | Storage to mounted on all instances in this partition.<br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Raw options to pass to 'mount'. | <pre>list(object({<br>    server_ip     = string<br>    remote_mount  = string<br>    local_mount   = string<br>    fs_type       = string<br>    mount_options = string<br>  }))</pre> | `[]` | no |
 | <a name="input_partition_conf"></a> [partition\_conf](#input\_partition\_conf) | Slurm partition configuration as a map.<br>See https://slurm.schedmd.com/slurm.conf.html#SECTION_PARTITION-CONFIGURATION | `map(string)` | `{}` | no |
 | <a name="input_partition_feature"></a> [partition\_feature](#input\_partition\_feature) | Any nodes with these features will be automatically put into this partition.<br>NOTE: meant to be used for external dynamic nodes that register. | `string` | `null` | no |
@@ -75,7 +71,6 @@ limitations under the License.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_compute_list"></a> [compute\_list](#output\_compute\_list) | List of compute node hostnames. |
 | <a name="output_partition"></a> [partition](#output\_partition) | Partition for slurm controller. |
 | <a name="output_partition_nodes"></a> [partition\_nodes](#output\_partition\_nodes) | Partition for slurm controller. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

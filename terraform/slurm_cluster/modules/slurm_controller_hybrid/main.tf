@@ -53,8 +53,7 @@ locals {
 ##################
 
 locals {
-  partitions   = { for p in var.partitions : p.partition.partition_name => p if lookup(p, "partition", null) != null }
-  compute_list = flatten([for p in var.partitions : lookup(p, "compute_list", [])])
+  partitions = { for p in var.partitions : p.partition.partition_name => p if lookup(p, "partition", null) != null }
 
   google_app_cred_path = (
     var.google_app_cred_path != null
@@ -76,9 +75,7 @@ locals {
 
   config = {
     enable_bigquery_load = var.enable_bigquery_load
-    enable_reconfigure   = var.enable_reconfigure
     project              = var.project_id
-    pubsub_topic_id      = var.enable_reconfigure ? google_pubsub_topic.this[0].name : null
     slurm_cluster_name   = var.slurm_cluster_name
 
     # storage
@@ -134,15 +131,6 @@ data "local_file" "slurmsync_py" {
 
 data "local_file" "startup_sh" {
   filename = abspath("${local.scripts_dir}/startup.sh")
-}
-
-##########
-# RANDOM #
-##########
-
-resource "random_string" "topic_suffix" {
-  length  = 8
-  special = false
 }
 
 ###########
@@ -357,100 +345,6 @@ resource "google_compute_project_metadata_item" "epilog_scripts" {
   }
 }
 
-##################
-# PUBSUB: SCHEMA #
-##################
-
-resource "google_pubsub_schema" "this" {
-  count = var.enable_reconfigure ? 1 : 0
-
-  name       = "${var.slurm_cluster_name}-slurm-events"
-  type       = "PROTOCOL_BUFFER"
-  definition = <<EOD
-syntax = "proto3";
-message Results {
-  string request = 1;
-  string timestamp = 2;
-}
-EOD
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-#################
-# PUBSUB: TOPIC #
-#################
-
-resource "google_pubsub_topic" "this" {
-  count = var.enable_reconfigure ? 1 : 0
-
-  name = "${var.slurm_cluster_name}-slurm-events-${random_string.topic_suffix.result}"
-
-  schema_settings {
-    schema   = google_pubsub_schema.this[0].id
-    encoding = "JSON"
-  }
-
-  labels = {
-    slurm_cluster_name = var.slurm_cluster_name
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-####################
-# NOTIFY: RECONFIG #
-####################
-
-module "reconfigure_notify" {
-  source = "../slurm_notify_cluster"
-
-  count = var.enable_reconfigure ? 1 : 0
-
-  topic      = google_pubsub_topic.this[0].name
-  project_id = var.project_id
-  type       = "reconfig"
-
-  triggers = {
-    compute_list = join(",", local.compute_list)
-    config       = sha256(google_compute_project_metadata_item.config.value)
-  }
-
-  depends_on = [
-    # Ensure topic is created
-    google_pubsub_topic.this,
-    # Ensure config.yaml is created
-    null_resource.setup_hybrid,
-  ]
-}
-
-#################
-# NOTIFY: DEVEL #
-#################
-
-module "devel_notify" {
-  source = "../slurm_notify_cluster"
-
-  count = var.enable_devel && var.enable_reconfigure ? 1 : 0
-
-  topic      = google_pubsub_topic.this[0].name
-  project_id = var.project_id
-  type       = "devel"
-
-  triggers = {
-    devel = sha256(module.slurm_metadata_devel[0].metadata.value)
-  }
-
-  depends_on = [
-    # Ensure topic is created
-    google_pubsub_topic.this,
-  ]
-}
-
 #################
 # DESTROY NODES #
 #################
@@ -464,65 +358,6 @@ module "cleanup_compute_nodes" {
   project_id         = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
   when_destroy       = true
-}
-
-module "cleanup_subscriptions" {
-  source = "../slurm_destroy_subscriptions"
-
-  count = var.enable_cleanup_subscriptions ? 1 : 0
-
-  slurm_cluster_name = var.slurm_cluster_name
-  when_destroy       = true
-}
-
-# Destroy all compute nodes when the compute node environment changes
-module "reconfigure_critical" {
-  source = "../slurm_destroy_nodes"
-
-  count = var.enable_reconfigure ? 1 : 0
-
-  project_id         = var.project_id
-  slurm_cluster_name = var.slurm_cluster_name
-
-  triggers = merge(
-    {
-      for x in var.compute_startup_scripts
-      : "compute_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}" => sha256(x.content)
-    },
-    {
-      for x in var.prolog_scripts
-      : "prolog_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
-      => sha256(x.content)
-    },
-    {
-      for x in var.epilog_scripts
-      : "epilog_d_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
-      => sha256(x.content)
-    },
-    {
-      controller_id = null_resource.setup_hybrid.id
-    },
-  )
-}
-
-# Destroy all removed compute nodes when partitions change
-module "reconfigure_partitions" {
-  source = "../slurm_destroy_nodes"
-
-  count = var.enable_reconfigure ? 1 : 0
-
-  project_id         = var.project_id
-  slurm_cluster_name = var.slurm_cluster_name
-  exclude_list       = local.compute_list
-
-  triggers = {
-    compute_list = join(",", local.compute_list)
-  }
-
-  depends_on = [
-    # Prevent race condition
-    module.reconfigure_critical,
-  ]
 }
 
 #############################

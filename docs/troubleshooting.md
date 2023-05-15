@@ -44,7 +44,6 @@ logs on each instance.
 - Slurm scripts
   - `/var/log/slurm/resume.log`
   - `/var/log/slurm/suspend.log`
-  - `/var/log/slurm/slurmeventd.log`
 
 Additionally, increasing Slurm log verbosity level and or adding DebugFlags may
 be useful for tracing any errors or warnings.

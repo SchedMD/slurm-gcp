@@ -71,12 +71,6 @@ function fetch_scripts {
 	else
 		echo "WARNING: slurmsync not found in project metadata, skipping update"
 	fi
-	if SLURMEVENTD_SCRIPT=$(jq -re '."slurmeventd"' <<< "$META_DEVEL"); then
-		echo "INFO: updating slurmeventd.py from project metadata"
-		printf '%s' "$SLURMEVENTD_SCRIPT" > $SLURMEVENTD_SCRIPT_FILE
-	else
-		echo "WARNING: slurmeventd not found in project metadata, skipping update"
-	fi
 }
 
 PING_METADATA="ping -q -w1 -c1 $METADATA_SERVER"
@@ -116,7 +110,6 @@ UTIL_SCRIPT_FILE=$SCRIPTS_DIR/util.py
 RESUME_SCRIPT_FILE=$SCRIPTS_DIR/resume.py
 SUSPEND_SCRIPT_FILE=$SCRIPTS_DIR/suspend.py
 SLURMSYNC_SCRIPT_FILE=$SCRIPTS_DIR/slurmsync.py
-SLURMEVENTD_SCRIPT_FILE=$SCRIPTS_DIR/slurmeventd.py
 fetch_scripts
 
 if [ -f $FLAGFILE ]; then

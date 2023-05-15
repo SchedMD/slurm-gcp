@@ -61,8 +61,6 @@ locals {
     }
   }
 
-  compute_list = flatten([for x in local.partition.partition_nodes : x.node_list])
-
   bandwidth_tier = "platform_default"
 
   spot_instance_config = {
@@ -181,89 +179,5 @@ resource "google_compute_project_metadata_item" "partition_startup_scripts" {
     create = "10m"
     update = "10m"
     delete = "10m"
-  }
-}
-
-###########################
-# DESTROY NODES: CRITICAL #
-###########################
-
-# Destroy all compute nodes when partition environment changes
-module "reconfigure_critical" {
-  source = "../slurm_destroy_nodes"
-
-  count = var.enable_reconfigure ? 1 : 0
-
-  slurm_cluster_name = var.slurm_cluster_name
-  project_id         = var.project_id
-  target_list        = local.compute_list
-
-  triggers = merge(
-    {
-      for x in var.partition_startup_scripts
-      : "partition_startup_scripts_${replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")}"
-      => sha256(x.content)
-    },
-    {
-      subnetwork              = local.partition.subnetwork
-      enable_placement_groups = local.partition.enable_placement_groups
-    }
-  )
-
-  depends_on = [
-    # Ensure partition_startup_scripts metadata is updated before destroying nodes
-    google_compute_project_metadata_item.partition_startup_scripts,
-  ]
-}
-
-##############################
-# DESTROY NODES: NODE GROUPS #
-##############################
-
-# Destroy compute group when node groups change
-module "reconfigure_node_groups" {
-  source = "../slurm_destroy_nodes"
-
-  for_each = var.enable_reconfigure ? local.partition.partition_nodes : {}
-
-  slurm_cluster_name = var.slurm_cluster_name
-  project_id         = var.project_id
-  target_list = flatten([
-    for offset in range(0, sum([each.value.node_count_static, each.value.node_count_dynamic_max]), 1024)
-    : formatlist(
-      "%s-%s-%s-%g",
-      var.slurm_cluster_name, each.value.partition_name, each.value.group_name,
-      range(offset, min(offset + 1024, sum([each.value.node_count_static, each.value.node_count_dynamic_max])))
-    )
-  ])
-
-  triggers = {
-    instance_template    = each.value.instance_template
-    bandwidth_tier       = each.value.bandwidth_tier
-    spot_instance_config = each.value.enable_spot_vm ? sha256(jsonencode(each.value.spot_instance_config)) : null
-  }
-
-  depends_on = [
-    # Prevent race condition
-    module.reconfigure_critical[0],
-  ]
-}
-
-#############################
-# DESTROY RESOURCE POLICIES #
-#############################
-
-# Destroy partition resource policies when they change
-module "reconfigure_placement_groups" {
-  source = "../slurm_destroy_resource_policies"
-
-  count = var.enable_reconfigure ? 1 : 0
-
-  slurm_cluster_name = var.slurm_cluster_name
-  project_id         = var.project_id
-  partition_name     = local.partition.partition_name
-
-  triggers = {
-    enable_placement_groups = local.partition.enable_placement_groups
   }
 }

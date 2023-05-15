@@ -1,9 +1,7 @@
 region = "us-central1"
 
-enable_bigquery_load         = true
-enable_cleanup_compute       = true
-enable_cleanup_subscriptions = false
-enable_reconfigure           = false
+enable_bigquery_load   = true
+enable_cleanup_compute = true
 
 controller_instance_config = {
   disk_size_gb = 32

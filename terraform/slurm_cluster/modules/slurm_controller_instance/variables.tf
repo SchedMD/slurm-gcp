@@ -120,34 +120,6 @@ EOD
   default     = false
 }
 
-variable "enable_cleanup_subscriptions" {
-  description = <<EOD
-Enables automatic cleanup of pub/sub subscriptions managed by this module, when
-cluster is destroyed.
-
-NOTE: Requires Python and script dependencies.
-
-*WARNING*: Toggling this may temporarily impact var.enable_reconfigure behavior.
-EOD
-  type        = bool
-  default     = false
-}
-
-variable "enable_reconfigure" {
-  description = <<EOD
-Enables automatic Slurm reconfigure on when Slurm configuration changes (e.g.
-slurm.conf.tpl, partition details). Compute instances and resource policies
-(e.g. placement groups) will be destroyed to align with new configuration.
-
-NOTE: Requires Python and Google Pub/Sub API.
-
-*WARNING*: Toggling this will impact the running workload. Deployed compute nodes
-will be destroyed and their jobs will be requeued.
-EOD
-  type        = bool
-  default     = false
-}
-
 variable "enable_bigquery_load" {
   description = <<EOD
 Enables loading of cluster job usage into big query.

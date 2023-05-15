@@ -67,7 +67,6 @@ import yaml  # noqa: E402
 from addict import Dict as NSDict  # noqa: E402
 
 optional_modules = [
-    ("google.cloud.pubsub", "google-cloud-pubsub"),
     ("google.cloud.secretmanager", "google-cloud-secret-manager"),
 ]
 for module, name in optional_modules:
@@ -180,41 +179,10 @@ logging_flags = [
     "trace_api",
     "subproc",
     "hostlists",
-    "subscriptions",
 ]
 log_trace_api = FlagLogAdapter(log, "trace_api")
 log_subproc = FlagLogAdapter(log, "subproc")
 log_hostlists = FlagLogAdapter(log, "hostlists")
-log_subscriptions = FlagLogAdapter(log, "subscriptions")
-
-
-def publish_message(project_id, topic_id, message) -> None:
-    """Publishes message to a Pub/Sub topic."""
-    from google.cloud import pubsub_v1
-    from google import api_core
-
-    publisher = pubsub_v1.PublisherClient()
-    topic_path = publisher.topic_path(project_id, topic_id)
-
-    retry_handler = api_core.retry.Retry(
-        predicate=api_core.retry.if_exception_type(
-            api_core.exceptions.Aborted,
-            api_core.exceptions.DeadlineExceeded,
-            api_core.exceptions.InternalServerError,
-            api_core.exceptions.ResourceExhausted,
-            api_core.exceptions.ServiceUnavailable,
-            api_core.exceptions.Unknown,
-            api_core.exceptions.Cancelled,
-        ),
-    )
-
-    message_bytes = message.encode("utf-8")
-    future = publisher.publish(topic_path, message_bytes, retry=retry_handler)
-    result = future.exception()
-    if result is not None:
-        raise result
-
-    print(f"Published message to '{topic_path}'.")
 
 
 def access_secret_version(project_id, secret_id, version_id="latest"):
@@ -257,96 +225,6 @@ def trim_self_link(link: str):
         return link[link.rindex("/") + 1 :]
     except ValueError:
         raise Exception(f"'/' not found, not a self link: '{link}' ")
-
-
-def subscription_list(project_id=None, page_size=None, slurm_cluster_name=None):
-    """List pub/sub subscription"""
-    from google.cloud import pubsub_v1
-
-    if project_id is None:
-        project_id = auth_project
-    if slurm_cluster_name is None:
-        slurm_cluster_name = lkp.cfg.slurm_cluster_name
-
-    subscriber = pubsub_v1.SubscriberClient()
-
-    subscriptions = []
-    # get first page
-    page = subscriber.list_subscriptions(
-        request={
-            "project": f"projects/{project_id}",
-            "page_size": page_size,
-        }
-    )
-    subscriptions.extend(page.subscriptions)
-    # walk the pages
-    while page.next_page_token:
-        page = subscriber.list_subscriptions(
-            request={
-                "project": f"projects/{project_id}",
-                "page_token": page.next_page_token,
-                "page_size": page_size,
-            }
-        )
-        subscriptions.extend(page.subscriptions)
-    # manual filter by label
-    subscriptions = [
-        s
-        for s in subscriptions
-        if s.labels.get("slurm_cluster_name") == slurm_cluster_name
-    ]
-
-    return subscriptions
-
-
-def subscription_create(subscription_id, project_id=None):
-    """Create pub/sub subscription"""
-    from google.cloud import pubsub_v1
-    from google.api_core import exceptions
-
-    if project_id is None:
-        project_id = lkp.project
-    topic_id = lkp.cfg.pubsub_topic_id
-
-    publisher = pubsub_v1.PublisherClient()
-    subscriber = pubsub_v1.SubscriberClient()
-    topic_path = publisher.topic_path(project_id, topic_id)
-    subscription_path = subscriber.subscription_path(project_id, subscription_id)
-
-    with subscriber:
-        request = {
-            "name": subscription_path,
-            "topic": topic_path,
-            "ack_deadline_seconds": 60,
-            "labels": {
-                "slurm_cluster_name": cfg.slurm_cluster_name,
-            },
-        }
-        try:
-            subscription = subscriber.create_subscription(request=request)
-            log.info(f"Subscription created: {subscription_path}")
-            log_subscriptions.debug(f"{subscription}")
-        except exceptions.AlreadyExists:
-            log.info(f"Subscription '{subscription_path}' already exists!")
-
-
-def subscription_delete(subscription_id, project_id=None):
-    """Delete pub/sub subscription"""
-    from google.cloud import pubsub_v1
-    from google.api_core import exceptions
-
-    if project_id is None:
-        project_id = lkp.project
-
-    subscriber = pubsub_v1.SubscriberClient()
-    subscription_path = subscriber.subscription_path(project_id, subscription_id)
-
-    with subscriber:
-        try:
-            subscriber.delete_subscription(request={"subscription": subscription_path})
-            log.info(f"Subscription deleted: {subscription_path}.")
-        except exceptions.NotFound:
-            log.info(f"Subscription '{subscription_path}' not found!")
 
 
 def execute_with_futures(func, seq):
@@ -1408,13 +1286,6 @@ class Lookup:
         info = ensure_execute(op)
         return NSDict(info)
 
-    def subscription(self, instance_name, project=None, slurm_cluster_name=None):
-        subscriptions = self.subscriptions(
-            project=project, slurm_cluster_name=slurm_cluster_name
-        )
-        subscriptions = [parse_self_link(s.name).subscription for s in subscriptions]
-        return instance_name in subscriptions
-
     @lru_cache(maxsize=1)
     def machine_types(self, project=None):
         project = project or self.project
@@ -1559,12 +1430,6 @@ class Lookup:
         chown_slurm(self.template_cache_path)
 
         return template
-
-    @lru_cache(maxsize=1)
-    def subscriptions(self, project=None, slurm_cluster_name=None):
-        return subscription_list(
-            project_id=project, slurm_cluster_name=slurm_cluster_name
-        )
 
     def clear_template_info_cache(self):
         with self.template_cache(writeback=True) as cache:

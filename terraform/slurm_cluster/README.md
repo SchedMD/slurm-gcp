@@ -94,24 +94,16 @@ module.
   - Required when any of:
     - `enable_hybrid=true`
     - `enable_cleanup_compute=true`
-    - `enable_cleanup_subscriptions=true`
-    - `enable_reconfigure=true`
 - [Pip](../../../docs/glossary.md#pip) packages are installed.
   - Required when any of:
     - `enable_hybrid=true`
     - `enable_cleanup_compute=true`
-    - `enable_cleanup_subscriptions=true`
-    - `enable_reconfigure=true`
   - `pip3 install -r ../../scripts/requirements.txt --user`
 - [Private Google Access](../../docs/glossary.md#private-google-access) is
   enabled.
   - Required when any instances only have internal IPs.
 - [Secret Manager API](../../docs/glossary.md#secret-manager) is enabled.
   - Required when `cloudsql != null`.
-- [Pub/Sub API](../../docs/glossary.md#pubsub) is enabled.
-  - Required when any of:
-    - `enable_cleanup_subscriptions=true`
-    - `enable_reconfigure=true`
 - [Bigquery API](../../docs/glossary.md#bigquery) is enabled.
   - Required when `enable_bigquery_load=true`.
 
@@ -129,8 +121,6 @@ can operate through a [service account](../../docs/glossary.md#service-account).
 
 #### Optional
 
-- Pub/Sub Admin (`roles/pubsub.admin`)
-  - Required when `enable_reconfigure=true`.
 - Secret Manager Admin (`roles/secretmanager.admin`)
   - Required when `cloudsql != null`.
 - Service Account User (`roles/iam.serviceAccountUser`)
@@ -163,8 +153,6 @@ associated with the controller
   - Recommended.
 - Monitoring Metric Writer (`roles/monitoring.metricWriter`)
   - Recommended.
-- Pub/Sub Admin (`roles/pubsub.admin`)
-  - Required when `enable_reconfigure=true`.
 
 ### Compute SA
 

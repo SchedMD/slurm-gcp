@@ -465,8 +465,6 @@ def fetch_devel_scripts():
     metadata_devel = json.loads(meta_json)
 
     meta_entries = [
-        ("slurmeventd.py", "slurmeventd"),
-        ("resume.py", "slurm-resume"),
         ("slurmsync.py", "slurmsync"),
         ("util.py", "util-script"),
         ("setup.py", "setup-script"),
@@ -1108,9 +1106,6 @@ def setup_controller(args):
     run("systemctl enable nfs-server", timeout=30)
     run("systemctl start nfs-server", timeout=30)
 
-    run("systemctl enable slurmeventd", timeout=30)
-    run("systemctl restart slurmeventd", timeout=30)
-
     setup_nfs_exports()
     run("systemctl enable --now slurmcmd.timer", timeout=30)
 
@@ -1119,7 +1114,6 @@ def setup_controller(args):
     run("systemctl status slurmdbd", timeout=30)
     run("systemctl status slurmctld", timeout=30)
     run("systemctl status slurmrestd", timeout=30)
-    run("systemctl status slurmeventd", timeout=30)
 
     slurmsync.sync_slurm()
     run("systemctl enable slurm_load_bq.timer", timeout=30)
@@ -1194,13 +1188,9 @@ def setup_compute(args):
     run("systemctl enable slurmd", timeout=30)
     run("systemctl restart slurmd", timeout=30)
 
-    run("systemctl enable slurmeventd", timeout=30)
-    run("systemctl restart slurmeventd", timeout=30)
-
     log.info("Check status of cluster services")
     run("systemctl status munge", timeout=30)
     run("systemctl status slurmd", timeout=30)
-    run("systemctl status slurmeventd", timeout=30)
 
     log.info("Done setting up compute")
 

@@ -25,12 +25,9 @@ import yaml
 
 import util
 from util import (
-    execute_with_futures,
     run,
     separate,
     batch_execute,
-    subscription_create,
-    subscription_delete,
     to_hostlist,
     with_static,
 )
@@ -56,18 +53,6 @@ NodeStatus = Enum(
         "resume",
         "orphan",
         "unknown",
-        "unchanged",
-    ),
-)
-
-
-SubscriptionStatus = Enum(
-    "SubscriptionStatus",
-    (
-        "deleted",
-        "missing",
-        "orphaned",
-        "unbacked",
         "unchanged",
     ),
 )
@@ -225,101 +210,9 @@ def sync_slurm():
         do_node_update(status, nodes)
 
 
-@with_static(static_nodeset=None)
-def find_subscription_status(nodename):
-    """Determine status of given subscription"""
-    if find_node_status.static_nodeset is None:
-        find_node_status.static_nodeset = set(util.to_hostnames(lkp.static_nodelist()))
-    state = lkp.slurm_node(nodename)
-    inst = lkp.instance(nodename)
-    subscription = lkp.subscription(nodename)
-    info = lkp.node_template_info(nodename)
-
-    if not info:
-        # NOTE: Node is not managed by slurm-gcp, ignore node
-        return SubscriptionStatus.unchanged
-    elif not subscription:
-        if nodename in find_node_status.static_nodeset:
-            return SubscriptionStatus.missing
-        elif (
-            inst
-            and state.base != "DOWN"
-            and not (
-                set(("POWER_DOWN", "POWERING_UP", "POWERING_DOWN", "POWERED_DOWN"))
-                & state.flags
-            )
-        ):
-            return SubscriptionStatus.deleted
-    else:
-        if state is None:
-            return SubscriptionStatus.orphaned
-        elif set(("POWERING_DOWN", "POWERED_DOWN")) & state.flags:
-            return SubscriptionStatus.unbacked
-
-    return SubscriptionStatus.unchanged
-
-
-def do_subscription_update(status, subscriptions):
-    """update node/instance based on node status"""
-    if status == SubscriptionStatus.unchanged:
-        return
-    count = len(subscriptions)
-    hostlist = util.to_hostlist(subscriptions)
-
-    def subscriptions_create():
-        """create subscriptions"""
-        log.info("Creating {} subcriptions ({})".format(count, hostlist))
-        execute_with_futures(subscription_create, subscriptions)
-
-    def subscriptions_delete():
-        """delete subscriptions"""
-        log.info("Deleting {} subcriptions ({})".format(count, hostlist))
-        execute_with_futures(subscription_delete, subscriptions)
-
-    update = dict.get(
-        {
-            SubscriptionStatus.deleted: subscriptions_create,
-            SubscriptionStatus.missing: subscriptions_create,
-            SubscriptionStatus.orphaned: subscriptions_delete,
-            SubscriptionStatus.unbacked: subscriptions_delete,
-            SubscriptionStatus.unchanged: lambda x: None,
-        },
-        status,
-    )
-    update()
-
-
-def sync_pubsub():
-    all_nodes = list(
-        set(
-            chain(
-                (
-                    name
-                    for name, inst in lkp.instances().items()
-                    if inst.role == "compute"
-                ),
-                (
-                    name
-                    for name, state in lkp.slurm_nodes().items()
-                    if "DYNAMIC_NORM" not in state.flags
-                ),
-            )
-        )
-    )
-    subscriptions_statuses = {
-        k: list(v)
-        for k, v in util.groupby_unsorted(all_nodes, find_subscription_status)
-    }
-
-    for status, subscriptions in subscriptions_statuses.items():
-        do_subscription_update(status, subscriptions)
-
-
 def main():
     try:
         sync_slurm()
-        if lkp.cfg.enable_reconfigure:
-            sync_pubsub()
     except Exception:
         log.exception("failed to sync instances")
 

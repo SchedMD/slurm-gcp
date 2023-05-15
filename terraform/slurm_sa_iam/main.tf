@@ -28,7 +28,6 @@ locals {
       "roles/iam.serviceAccountUser",
       "roles/logging.logWriter",
       "roles/monitoring.metricWriter",
-      "roles/pubsub.admin",
     ]
     compute = [
       "roles/logging.logWriter",

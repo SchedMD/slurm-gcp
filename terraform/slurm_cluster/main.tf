@@ -40,7 +40,6 @@ module "slurm_partition" {
 
   partition_nodes                   = each.value.partition_nodes
   enable_job_exclusive              = each.value.enable_job_exclusive
-  enable_reconfigure                = var.enable_reconfigure
   enable_placement_groups           = each.value.enable_placement_groups
   network_storage                   = each.value.network_storage
   partition_name                    = each.value.partition_name
@@ -127,8 +126,6 @@ module "slurm_controller_instance" {
   enable_devel                       = var.enable_devel
   enable_bigquery_load               = var.enable_bigquery_load
   enable_cleanup_compute             = var.enable_cleanup_compute
-  enable_cleanup_subscriptions       = var.enable_cleanup_subscriptions
-  enable_reconfigure                 = var.enable_reconfigure
   epilog_scripts                     = var.epilog_scripts
   login_network_storage              = var.login_network_storage
   login_startup_scripts_timeout      = var.login_startup_scripts_timeout
@@ -168,8 +165,6 @@ module "slurm_controller_hybrid" {
   enable_devel                    = var.enable_devel
   enable_bigquery_load            = var.enable_bigquery_load
   enable_cleanup_compute          = var.enable_cleanup_compute
-  enable_cleanup_subscriptions    = var.enable_cleanup_subscriptions
-  enable_reconfigure              = var.enable_reconfigure
   epilog_scripts                  = var.epilog_scripts
   partitions                      = values(module.slurm_partition)[*]
   prolog_scripts                  = var.prolog_scripts

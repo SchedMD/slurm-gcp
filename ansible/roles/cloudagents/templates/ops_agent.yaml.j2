@@ -30,10 +30,6 @@ logging:
       type: files
       include_paths:
       - /var/log/slurm/slurmd-*.log
-    slurmeventd:
-      type: files
-      include_paths:
-      - /var/log/slurm/slurmeventd.log
     slurm_resume:
       type: files
       include_paths:
@@ -75,7 +71,6 @@ logging:
         - parse_slurmlog
       slurmlog2_pipeline:
         receivers:
-        - slurmeventd
         - slurm_resume
         - slurm_suspend
         - slurm_sync
