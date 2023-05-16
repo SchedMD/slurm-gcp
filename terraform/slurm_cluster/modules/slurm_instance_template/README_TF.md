@@ -26,7 +26,7 @@ limitations under the License.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_local"></a> [local](#provider\_local) | 2.3.0 |
+| <a name="provider_local"></a> [local](#provider\_local) | ~> 2.0 |
 
 ## Modules
 
