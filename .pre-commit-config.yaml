@@ -51,6 +51,7 @@ repos:
   - id: terraform_tflint
   - id: terraform_docs
     args:
+    - --args=--config=.terraform-docs.yaml
     - --hook-config=--create-file-if-not-exist=true
     - --hook-config=--path-to-file=README_TF.md
 - repo: https://github.com/psf/black
