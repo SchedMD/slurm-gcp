@@ -29,6 +29,11 @@ variable "slurm_cluster_name" {
   }
 }
 
+variable "slurm_bucket_path" {
+  description = "GCS Bucket URI of Slurm cluster file storage."
+  type        = string
+}
+
 variable "partition_name" {
   description = "Name of Slurm partition."
   type        = string

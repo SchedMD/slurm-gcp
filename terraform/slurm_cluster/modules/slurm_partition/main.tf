@@ -24,6 +24,7 @@ locals {
     partition_conf                    = var.partition_conf
     partition_feature                 = var.partition_feature
     partition_nodes                   = local.partition_nodes
+    partition_startup_scripts         = var.partition_startup_scripts
     partition_startup_scripts_timeout = var.partition_startup_scripts_timeout
     subnetwork                        = data.google_compute_subnetwork.partition_subnetwork.self_link
     zone_target_shape                 = var.zone_target_shape
@@ -131,6 +132,7 @@ module "slurm_compute_template" {
   }
 
   additional_disks         = each.value.additional_disks
+  slurm_bucket_path        = var.slurm_bucket_path
   can_ip_forward           = each.value.can_ip_forward
   disable_smt              = each.value.disable_smt
   disk_auto_delete         = each.value.disk_auto_delete
@@ -158,26 +160,4 @@ module "slurm_compute_template" {
   source_image             = each.value.source_image
   subnetwork               = data.google_compute_subnetwork.partition_subnetwork.self_link
   tags                     = concat([var.slurm_cluster_name], each.value.tags)
-}
-
-############
-# METADATA #
-############
-
-resource "google_compute_project_metadata_item" "partition_startup_scripts" {
-  project = var.project_id
-
-  for_each = {
-    for x in var.partition_startup_scripts
-    : replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_") => x
-  }
-
-  key   = "${var.slurm_cluster_name}-slurm-partition-${var.partition_name}-script-${each.key}"
-  value = each.value.content
-
-  timeouts {
-    create = "10m"
-    update = "10m"
-    delete = "10m"
-  }
 }

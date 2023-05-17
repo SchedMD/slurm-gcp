@@ -3,6 +3,9 @@ region = "us-central1"
 enable_bigquery_load   = true
 enable_cleanup_compute = true
 
+create_bucket = false
+bucket_name   = "slurm-test"
+
 controller_instance_config = {
   disk_size_gb = 32
   disk_type    = "pd-ssd"

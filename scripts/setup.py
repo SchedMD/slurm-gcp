@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import argparse
-import json
 import logging
 import os
 import re
@@ -36,8 +35,9 @@ import util
 from util import (
     run,
     instance_metadata,
-    project_metadata,
     separate,
+    blob_download,
+    blob_list,
 )
 from util import lkp, cfg, dirs, slurmdirs
 from conf import (
@@ -135,49 +135,14 @@ def failed_motd():
     util.run(f"wall -n '{wall_msg}'", timeout=30)
 
 
-def fetch_devel_scripts():
-    """download scripts from project metadata if they are present"""
-
-    meta_json = None
-    try:
-        meta_json = project_metadata(f"{cfg.slurm_cluster_name}-slurm-devel")
-    except Exception:
-        log.debug("scripts not found in project metadata, devel mode not enabled")
-        return
-    metadata_devel = json.loads(meta_json)
-
-    meta_entries = [
-        ("conf.py", "conf-script"),
-        ("slurmsync.py", "slurmsync"),
-        ("util.py", "util-script"),
-        ("setup.py", "setup-script"),
-        ("startup.sh", "startup-script"),
-        ("load_bq.py", "loadbq"),
-    ]
-
-    for script, name in meta_entries:
-        if name not in metadata_devel:
-            log.debug(f"{name} not found in project metadata, not updating")
-            continue
-        log.info(f"updating {script} from metadata")
-        content = metadata_devel[name]
-        path = (dirs.scripts / script).resolve()
-        # make sure parent dir exists
-        path.write_text(content)
-        util.chown_slurm(path, mode=0o755)
-
-
 def install_custom_scripts(clean=False):
     """download custom scripts from project metadata"""
-    script_pattern = re.compile(
-        rf"{cfg.slurm_cluster_name}-slurm-(?P<path>\S+)-script-(?P<name>\S+)"
-    )
-    try:
-        metadata_keys = project_metadata("/").splitlines()
-    except Exception:
-        log.error("No project metadata found, this is unexpected here")
+    script_pattern = re.compile(r"slurm-(?P<path>\S+)-script-(?P<name>\S+)")
+    blobs = blob_list()
+    files = [b.name for b in blobs]
 
     def match_name(meta_key):
+        meta_key = os.path.basename(meta_key)
         m = script_pattern.match(meta_key)
         if not m:
             # key does not match, skip
@@ -201,8 +166,7 @@ def install_custom_scripts(clean=False):
 
         # login only needs their login scripts
         if lkp.instance_role == "login":
-            suffix = instance_metadata("attributes/slurm_login_suffix")
-            script_types = [f"login_{suffix}"]
+            script_types = ["login"]
             return role in script_types
         # compute needs compute, prolog, epilog, and the matching partition
         if lkp.instance_role == "compute":
@@ -218,7 +182,7 @@ def install_custom_scripts(clean=False):
         # controller downloads them all for good measure
         return True
 
-    custom_scripts = list(filter(filter_role, map(match_name, metadata_keys)))
+    custom_scripts = list(filter(filter_role, map(match_name, files)))
     log.info(
         "installing custom scripts: {}".format(
             ",".join(str(path) for key, path in custom_scripts)
@@ -238,7 +202,7 @@ def install_custom_scripts(clean=False):
         for par in path.parents:
             util.chown_slurm(dirs.custom_scripts / par)
         log.debug(path)
-        content = project_metadata(key)
+        content = blob_download(key)
         fullpath.write_text(content)
         util.chown_slurm(fullpath, mode=0o755)
 
@@ -773,7 +737,7 @@ def setup_controller(args):
 
     run_custom_scripts()
 
-    if not cfg.cloudsql:
+    if not cfg.cloudsql_secret:
         configure_mysql()
 
     run("systemctl enable slurmdbd", timeout=30)
@@ -897,7 +861,6 @@ def setup_compute(args):
 def main(args):
     start_motd()
     configure_dirs()
-    fetch_devel_scripts()
 
     # call the setup function for the instance type
     setup = dict.get(

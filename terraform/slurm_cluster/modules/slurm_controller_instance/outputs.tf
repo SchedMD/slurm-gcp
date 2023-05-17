@@ -42,9 +42,9 @@ output "slurm_cluster_name" {
   value       = var.slurm_cluster_name
 }
 
-output "partitions" {
-  description = "Cluster partitions."
-  value       = local.partitions
+output "cloudsql_secret" {
+  description = "Cloudsql secret by URI."
+  value       = one(google_secret_manager_secret_version.cloudsql_version[*].id)
 }
 
 ##########

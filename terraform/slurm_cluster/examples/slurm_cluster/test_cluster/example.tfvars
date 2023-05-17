@@ -57,6 +57,16 @@ mtu = 0
 
 create_service_accounts = true
 
+##########
+# BUCKET #
+##########
+
+create_bucket = false
+
+bucket_name = "<BUCKET_NAME>"
+
+bucket_dir = null
+
 #################
 # CONFIGURATION #
 #################

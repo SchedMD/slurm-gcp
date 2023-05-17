@@ -1,6 +1,7 @@
 ### General ###
 *.cache
 *.log
+*.zip
 
 ### Ansible ###
 *.retry

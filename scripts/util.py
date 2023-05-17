@@ -216,6 +216,15 @@ def parse_self_link(self_link: str):
     return NSDict(link_patt.findall(self_link))
 
 
+def parse_bucket_uri(uri: str):
+    """
+    Parse a bucket url
+    E.g. gs://<bucket_name>/<path>
+    """
+    pattern = re.compile(r"gs:\/\/(?P<name>[^\/\s]+)\/(?P<dir>[^\/\s]+)")
+    return NSDict(pattern.search(uri).groupdict())
+
+
 def trim_self_link(link: str):
     """get resource name from self link url, eg.
     https://.../v1/projects/<project>/regions/<region>
@@ -253,6 +262,33 @@ def map_with_futures(func, seq):
             except Exception as e:
                 res = e
             yield res
+
+
+def blob_download(file):
+    uri = instance_metadata("attributes/slurm_bucket_path")
+    matches = parse_bucket_uri(uri)
+    bucket_name = matches.name
+    blob_name = f"{matches.dir}/{file}"
+    blob = bucket_blob_download(bucket_name, blob_name)
+    return blob
+
+
+def blob_list(prefix="", delimiter=None):
+    from google.cloud import storage
+
+    uri = instance_metadata("attributes/slurm_bucket_path")
+    matches = parse_bucket_uri(uri)
+    bucket_name = matches.name
+    blob_prefix = f"{matches.dir}/{prefix}"
+    storage_client = storage.Client()
+    # Note: The call returns a response only when the iterator is consumed.
+    resp = storage_client.list_blobs(
+        bucket_name, prefix=blob_prefix, delimiter=delimiter
+    )
+    blobs = []
+    for blob in resp:
+        blobs.append(blob)
+    return blobs
 
 
 def is_exclusive_node(node):
@@ -349,29 +385,10 @@ def new_config(config):
     return cfg
 
 
-def config_from_metadata():
-    # get setup config from metadata
-    slurm_cluster_name = instance_metadata("attributes/slurm_cluster_name")
-    if not slurm_cluster_name:
-        return NSDict()
-
-    metadata_key = f"{slurm_cluster_name}-slurm-config"
-    for retry, wait in enumerate(backoff_delay(0.25, timeout=5, count=3)):
-        try:
-            config_yaml = project_metadata.__wrapped__(metadata_key)
-            break
-        except Exception:
-            log.warning(f"config not found in project metadata, retry {retry}")
-            sleep(wait)
-            continue
-    else:
-        try:
-            config_yaml = instance_metadata("attributes/slurm-config")
-        except Exception:
-            log.warning(
-                "config also not found in instance metadata, proceeding anyway."
-            )
-    cfg = new_config(yaml.safe_load(config_yaml or ""))
+def fetch_config_yaml():
+    """Fetch config.yaml from bucket"""
+    config_yaml = blob_download("config.yaml")
+    cfg = new_config(yaml.safe_load(config_yaml))
     return cfg
 
 
@@ -697,6 +714,28 @@ def instance_metadata(path):
 def project_metadata(key):
     """Get project metadata project/attributes/<slurm_cluster_name>-<path>"""
     return get_metadata(key, root=f"{ROOT_URL}/project/attributes")
+
+
+def bucket_blob_list(bucket_name):
+    from google.cloud import storage
+
+    storage_client = storage.Client()
+    blobs = storage_client.list_blobs(bucket_name)
+    return blobs
+
+
+def bucket_blob_download(bucket_name, blob_name):
+    from google.cloud import storage
+
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    contents = None
+    with tempfile.NamedTemporaryFile(mode="w+t") as tmp:
+        blob.download_to_filename(tmp.name)
+        with open(tmp.name, "r") as f:
+            contents = f.read()
+    return contents
 
 
 def natural_sort(text):
@@ -1441,9 +1480,9 @@ class Lookup:
 cfg = load_config_file(CONFIG_FILE)
 if not cfg:
     try:
-        cfg = config_from_metadata()
+        cfg = fetch_config_yaml()
     except Exception:
-        log.warning("config not found in metadata")
+        log.warning("config not found in bucket")
     if cfg:
         save_config(cfg, CONFIG_FILE)
 

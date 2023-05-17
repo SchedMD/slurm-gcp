@@ -23,3 +23,10 @@ variable "region" {
   type        = string
   description = "The region to place resources."
 }
+
+variable "bucket_name" {
+  description = <<-EOD
+    Name of GCS bucket to use.
+  EOD
+  type        = string
+}

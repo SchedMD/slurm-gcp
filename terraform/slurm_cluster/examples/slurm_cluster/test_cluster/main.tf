@@ -27,6 +27,7 @@ module "project_services" {
   activate_apis = [
     "compute.googleapis.com",
     "iam.googleapis.com",
+    "storage.googleapis.com",
   ]
 
   enable_apis                 = true
@@ -166,6 +167,10 @@ locals {
 module "slurm_cluster" {
   source = "../../../../slurm_cluster"
 
+  create_bucket                      = var.create_bucket
+  region                             = var.region
+  bucket_name                        = var.bucket_name
+  bucket_dir                         = var.bucket_dir
   cgroup_conf_tpl                    = var.cgroup_conf_tpl
   cloud_parameters                   = var.cloud_parameters
   cloudsql                           = var.cloudsql

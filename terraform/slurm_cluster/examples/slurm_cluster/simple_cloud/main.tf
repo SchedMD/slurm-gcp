@@ -104,6 +104,7 @@ data "google_compute_subnetwork" "default" {
 module "slurm_cluster" {
   source = "../../../../slurm_cluster"
 
+  region                     = var.region
   slurm_cluster_name         = var.slurm_cluster_name
   controller_instance_config = local.controller_instance_config
   login_nodes                = local.login_nodes

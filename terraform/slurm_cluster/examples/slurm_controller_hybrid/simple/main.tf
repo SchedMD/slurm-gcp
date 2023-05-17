@@ -33,6 +33,24 @@ resource "random_string" "slurm_cluster_name" {
   special = false
 }
 
+module "slurm_files" {
+  source = "../../../modules/slurm_files"
+
+  bucket_name   = var.bucket_name
+  enable_hybrid = true
+  partitions = [
+    module.slurm_partition0,
+    module.slurm_partition1,
+  ]
+  project_id         = var.project_id
+  slurm_cluster_name = local.slurm_cluster_name
+  # hybrid
+  slurm_control_host = "localhost"
+  slurm_bin_dir      = "/usr/local/bin"
+  slurm_log_dir      = "./log"
+  output_dir         = "./etc"
+}
+
 module "slurm_partition0" {
   source = "../../../modules/slurm_partition"
 
@@ -79,6 +97,7 @@ module "slurm_partition0" {
   ]
   project_id         = var.project_id
   slurm_cluster_name = local.slurm_cluster_name
+  slurm_bucket_path  = module.slurm_files.slurm_bucket_path
   subnetwork         = data.google_compute_subnetwork.default.self_link
 }
 
@@ -131,18 +150,14 @@ module "slurm_partition1" {
   ]
   project_id         = var.project_id
   slurm_cluster_name = local.slurm_cluster_name
+  slurm_bucket_path  = module.slurm_files.slurm_bucket_path
   subnetwork         = data.google_compute_subnetwork.default.self_link
 }
 
 module "slurm_controller_hybrid" {
   source = "../../../modules/slurm_controller_hybrid"
 
+  config             = module.slurm_files.config
   project_id         = var.project_id
   slurm_cluster_name = local.slurm_cluster_name
-  output_dir         = "./etc"
-  partitions = [
-    module.slurm_partition0,
-    module.slurm_partition1,
-  ]
-  slurm_control_host = "localhost"
 }

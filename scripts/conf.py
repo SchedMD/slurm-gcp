@@ -22,7 +22,7 @@ import util
 from util import lkp, dirs, cfg, slurmdirs
 from util import (
     access_secret_version,
-    project_metadata,
+    blob_download,
 )
 
 
@@ -264,7 +264,7 @@ def install_slurm_conf(lkp=lkp):
         "state_save": slurmdirs.state,
         "mpi_default": mpi_default,
     }
-    conf_resp = project_metadata(f"{cfg.slurm_cluster_name}-slurm-tpl-slurm-conf")
+    conf_resp = blob_download("slurm-tpl-slurm-conf")
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "slurm.conf"
@@ -302,7 +302,7 @@ def install_slurmdbd_conf(lkp=lkp):
             conf_options.db_host = db_host_str[0]
             conf_options.db_port = db_host_str[1] if len(db_host_str) >= 2 else "3306"
 
-    conf_resp = project_metadata(f"{cfg.slurm_cluster_name}-slurm-tpl-slurmdbd-conf")
+    conf_resp = blob_download("slurm-tpl-slurmdbd-conf")
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "slurmdbd.conf"
@@ -312,7 +312,7 @@ def install_slurmdbd_conf(lkp=lkp):
 
 def install_cgroup_conf(lkp=lkp):
     """install cgroup.conf"""
-    conf = project_metadata(f"{cfg.slurm_cluster_name}-slurm-tpl-cgroup-conf")
+    conf = blob_download("slurm-tpl-cgroup-conf")
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cgroup.conf"
     conf_file.write_text(conf)

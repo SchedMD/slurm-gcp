@@ -31,7 +31,7 @@ from util import (
     batch_execute,
     to_hostlist,
     with_static,
-    config_from_metadata,
+    fetch_config_yaml,
     load_config_file,
     save_config,
     Lookup,
@@ -227,7 +227,7 @@ def sync_slurm():
 
 def reconfigure_slurm():
     CONFIG_FILE_TMP = Path("/tmp/config.yaml")
-    cfg_new = config_from_metadata()
+    cfg_new = fetch_config_yaml()
     # Save to file and read file to ensure Paths are marshalled the same
     save_config(cfg_new, CONFIG_FILE_TMP)
     cfg_new = load_config_file(CONFIG_FILE_TMP)

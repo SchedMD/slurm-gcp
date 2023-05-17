@@ -32,6 +32,14 @@ resource "random_string" "slurm_cluster_name" {
   special = false
 }
 
+module "slurm_files" {
+  source = "../../../modules/slurm_files"
+
+  bucket_name        = var.bucket_name
+  project_id         = var.project_id
+  slurm_cluster_name = local.slurm_cluster_name
+}
+
 module "slurm_login_sa" {
   source = "../../../../slurm_sa_iam"
 
@@ -48,4 +56,5 @@ module "slurm_login_template" {
   service_account     = module.slurm_login_sa.service_account
   slurm_cluster_name  = local.slurm_cluster_name
   slurm_instance_role = "login"
+  slurm_bucket_path   = module.slurm_files.slurm_bucket_path
 }

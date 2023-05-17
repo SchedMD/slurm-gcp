@@ -99,6 +99,7 @@ data "google_compute_subnetwork" "default" {
 module "slurm_cluster" {
   source = "../../../../slurm_cluster"
 
+  region                   = var.region
   slurm_cluster_name       = var.slurm_cluster_name
   controller_hybrid_config = local.controller_hybrid_config
   disable_default_mounts   = var.disable_default_mounts

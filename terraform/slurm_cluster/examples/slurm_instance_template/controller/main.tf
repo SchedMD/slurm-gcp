@@ -32,6 +32,14 @@ resource "random_string" "slurm_cluster_name" {
   special = false
 }
 
+module "slurm_files" {
+  source = "../../../modules/slurm_files"
+
+  bucket_name        = var.bucket_name
+  project_id         = var.project_id
+  slurm_cluster_name = local.slurm_cluster_name
+}
+
 module "slurm_controller_template" {
   source = "../../../modules/slurm_instance_template"
 
@@ -39,4 +47,5 @@ module "slurm_controller_template" {
   project_id          = var.project_id
   slurm_cluster_name  = local.slurm_cluster_name
   slurm_instance_role = "controller"
+  slurm_bucket_path   = module.slurm_files.slurm_bucket_path
 }

@@ -300,3 +300,8 @@ variable "disable_smt" {
   description = "Disables Simultaneous Multi-Threading (SMT) on instance."
   default     = false
 }
+
+variable "slurm_bucket_path" {
+  description = "GCS Bucket URI of Slurm cluster file storage."
+  type        = string
+}

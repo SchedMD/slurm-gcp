@@ -21,11 +21,7 @@ output "slurm_cluster_name" {
 
 output "slurm_partition" {
   description = "Slurm partition details."
-  value = (
-    var.enable_hybrid
-    ? module.slurm_controller_hybrid[0].partitions
-    : module.slurm_controller_instance[0].partitions
-  )
+  value       = module.slurm_files.partitions
 }
 
 output "slurm_controller_instances" {
@@ -78,4 +74,9 @@ output "cloud_logging_filter" {
     ? module.slurm_controller_hybrid[0].cloud_logging_filter
     : module.slurm_controller_instance[0].cloud_logging_filter
   )
+}
+
+output "slurm_bucket_path" {
+  description = "Bucket path used by cluster."
+  value       = module.slurm_files.slurm_bucket_path
 }

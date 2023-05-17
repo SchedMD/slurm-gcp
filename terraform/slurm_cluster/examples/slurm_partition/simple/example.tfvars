@@ -19,3 +19,5 @@ project_id = "<PROJECT_ID>"
 slurm_cluster_name = "<CLUSTER_NAME>"
 
 region = "<REGION>"
+
+bucket_name = "<BUCKET_NAME>"

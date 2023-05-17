@@ -29,6 +29,77 @@ locals {
   )
 }
 
+##########
+# BUCKET #
+##########
+
+module "bucket" {
+  source  = "terraform-google-modules/cloud-storage/google"
+  version = "~> 3.0"
+
+  count = var.create_bucket ? 1 : 0
+
+  location   = var.region
+  names      = [var.slurm_cluster_name]
+  prefix     = "slurm"
+  project_id = var.project_id
+
+  force_destroy = {
+    (var.slurm_cluster_name) = true
+  }
+
+  labels = {
+    slurm_cluster_name = var.slurm_cluster_name
+  }
+}
+
+###############
+# SLURM FILES #
+###############
+
+module "slurm_files" {
+  source = "./modules/slurm_files"
+
+  bucket_dir                         = var.bucket_dir
+  bucket_name                        = var.create_bucket ? module.bucket[0].name : var.bucket_name
+  cgroup_conf_tpl                    = var.cgroup_conf_tpl
+  cloud_parameters                   = var.cloud_parameters
+  cloudsql_secret                    = try(module.slurm_controller_instance[0].cloudsql_secret, null)
+  controller_startup_scripts         = var.controller_startup_scripts
+  controller_startup_scripts_timeout = var.controller_startup_scripts_timeout
+  compute_startup_scripts            = var.compute_startup_scripts
+  compute_startup_scripts_timeout    = var.compute_startup_scripts_timeout
+  enable_devel                       = var.enable_devel
+  enable_hybrid                      = var.enable_hybrid
+  enable_bigquery_load               = var.enable_bigquery_load
+  epilog_scripts                     = var.epilog_scripts
+  login_network_storage              = var.login_network_storage
+  login_startup_scripts              = var.login_startup_scripts
+  login_startup_scripts_timeout      = var.login_startup_scripts_timeout
+  disable_default_mounts             = var.disable_default_mounts
+  network_storage                    = var.network_storage
+  partitions                         = values(module.slurm_partition)[*]
+  project_id                         = var.project_id
+  prolog_scripts                     = var.prolog_scripts
+  slurmdbd_conf_tpl                  = var.slurmdbd_conf_tpl
+  slurm_conf_tpl                     = var.slurm_conf_tpl
+  slurm_cluster_name                 = var.slurm_cluster_name
+  # hybrid
+  google_app_cred_path    = lookup(var.controller_hybrid_config, "google_app_cred_path", null)
+  slurm_control_host      = lookup(var.controller_hybrid_config, "slurm_control_host", null)
+  slurm_control_host_port = lookup(var.controller_hybrid_config, "slurm_control_host_port", null)
+  slurm_control_addr      = lookup(var.controller_hybrid_config, "slurm_control_addr", null)
+  slurm_bin_dir           = lookup(var.controller_hybrid_config, "slurm_bin_dir", null)
+  slurm_log_dir           = lookup(var.controller_hybrid_config, "slurm_log_dir", null)
+  output_dir              = lookup(var.controller_hybrid_config, "output_dir", null)
+  install_dir             = lookup(var.controller_hybrid_config, "install_dir", null)
+  munge_mount             = lookup(var.controller_hybrid_config, "munge_mount", null)
+
+  depends_on = [
+    module.bucket,
+  ]
+}
+
 ###################
 # SLURM PARTITION #
 ###################
@@ -38,6 +109,7 @@ module "slurm_partition" {
 
   for_each = local.partition_map
 
+  slurm_bucket_path                 = module.slurm_files.slurm_bucket_path
   partition_nodes                   = each.value.partition_nodes
   enable_job_exclusive              = each.value.enable_job_exclusive
   enable_placement_groups           = each.value.enable_placement_groups
@@ -67,6 +139,7 @@ module "slurm_controller_template" {
   count = var.enable_hybrid || local.have_template ? 0 : 1
 
   additional_disks         = var.controller_instance_config.additional_disks
+  slurm_bucket_path        = module.slurm_files.slurm_bucket_path
   can_ip_forward           = var.controller_instance_config.can_ip_forward
   disable_smt              = var.controller_instance_config.disable_smt
   disk_auto_delete         = var.controller_instance_config.disk_auto_delete
@@ -108,6 +181,7 @@ module "slurm_controller_instance" {
   count = var.enable_hybrid ? 0 : 1
 
   access_config      = var.controller_instance_config.access_config
+  cloudsql           = var.cloudsql
   instance_template  = local.have_template ? var.controller_instance_config.instance_template : module.slurm_controller_template[0].self_link
   project_id         = var.project_id
   region             = var.controller_instance_config.region
@@ -116,25 +190,11 @@ module "slurm_controller_instance" {
   subnetwork         = var.controller_instance_config.subnetwork
   zone               = var.controller_instance_config.zone
 
-  cgroup_conf_tpl                    = var.cgroup_conf_tpl
-  cloud_parameters                   = var.cloud_parameters
-  cloudsql                           = var.cloudsql
-  controller_startup_scripts         = var.controller_startup_scripts
-  controller_startup_scripts_timeout = var.controller_startup_scripts_timeout
-  compute_startup_scripts            = var.compute_startup_scripts
-  compute_startup_scripts_timeout    = var.compute_startup_scripts_timeout
-  enable_devel                       = var.enable_devel
-  enable_bigquery_load               = var.enable_bigquery_load
-  enable_cleanup_compute             = var.enable_cleanup_compute
-  epilog_scripts                     = var.epilog_scripts
-  login_network_storage              = var.login_network_storage
-  login_startup_scripts_timeout      = var.login_startup_scripts_timeout
-  disable_default_mounts             = var.disable_default_mounts
-  network_storage                    = var.network_storage
-  partitions                         = values(module.slurm_partition)[*]
-  prolog_scripts                     = var.prolog_scripts
-  slurmdbd_conf_tpl                  = var.slurmdbd_conf_tpl
-  slurm_conf_tpl                     = var.slurm_conf_tpl
+  enable_cleanup_compute = var.enable_cleanup_compute
+
+  depends_on = [
+    module.bucket,
+  ]
 }
 
 ######################
@@ -149,25 +209,12 @@ module "slurm_controller_hybrid" {
   project_id         = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
 
-  google_app_cred_path            = var.controller_hybrid_config.google_app_cred_path
-  slurm_control_host              = var.controller_hybrid_config.slurm_control_host
-  slurm_control_host_port         = var.controller_hybrid_config.slurm_control_host_port
-  slurm_control_addr              = var.controller_hybrid_config.slurm_control_addr
-  slurm_bin_dir                   = var.controller_hybrid_config.slurm_bin_dir
-  slurm_log_dir                   = var.controller_hybrid_config.slurm_log_dir
-  output_dir                      = var.controller_hybrid_config.output_dir
-  install_dir                     = var.controller_hybrid_config.install_dir
-  munge_mount                     = var.controller_hybrid_config.munge_mount
-  cloud_parameters                = var.cloud_parameters
-  compute_startup_scripts         = var.compute_startup_scripts
-  compute_startup_scripts_timeout = var.compute_startup_scripts_timeout
-  disable_default_mounts          = var.disable_default_mounts
-  enable_devel                    = var.enable_devel
-  enable_bigquery_load            = var.enable_bigquery_load
-  enable_cleanup_compute          = var.enable_cleanup_compute
-  epilog_scripts                  = var.epilog_scripts
-  partitions                      = values(module.slurm_partition)[*]
-  prolog_scripts                  = var.prolog_scripts
+  config                 = module.slurm_files.config
+  enable_cleanup_compute = var.enable_cleanup_compute
+
+  depends_on = [
+    module.bucket,
+  ]
 }
 
 ###################
@@ -183,6 +230,7 @@ module "slurm_login_template" {
   }
 
   additional_disks         = each.value.additional_disks
+  slurm_bucket_path        = module.slurm_files.slurm_bucket_path
   can_ip_forward           = each.value.can_ip_forward
   disable_smt              = each.value.disable_smt
   disk_auto_delete         = each.value.disk_auto_delete
@@ -228,17 +276,16 @@ module "slurm_login_instance" {
     ? each.value.instance_template
     : module.slurm_login_template[each.key].self_link
   )
-  login_startup_scripts = var.login_startup_scripts
-  num_instances         = each.value.num_instances
-  project_id            = var.project_id
-  region                = each.value.region
-  slurm_cluster_name    = var.slurm_cluster_name
-  static_ips            = each.value.static_ips
-  subnetwork            = each.value.subnetwork
-  zone                  = each.value.zone
+  num_instances      = each.value.num_instances
+  project_id         = var.project_id
+  region             = each.value.region
+  slurm_cluster_name = var.slurm_cluster_name
+  static_ips         = each.value.static_ips
+  subnetwork         = each.value.subnetwork
+  suffix             = each.key
+  zone               = each.value.zone
 
-  slurm_depends_on = flatten([
-    # Ensure Controller is up before attempting to mount file systems from it
-    module.slurm_controller_instance[0].slurm_controller_instances[*].instance_id,
-  ])
+  depends_on = [
+    module.slurm_controller_instance,
+  ]
 }

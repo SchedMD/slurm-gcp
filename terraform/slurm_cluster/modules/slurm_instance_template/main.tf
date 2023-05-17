@@ -39,14 +39,10 @@ locals {
     }
   ]
 
-  service_account = (
-    var.service_account != null
-    ? var.service_account
-    : {
-      email  = "default"
-      scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-    }
-  )
+  service_account = {
+    email  = coalesce(data.google_service_account.this.email, data.google_compute_default_service_account.this.email)
+    scopes = try(var.service_account.scopes, ["https://www.googleapis.com/auth/cloud-platform"])
+  }
 
   source_image_family = (
     var.source_image_family != "" && var.source_image_family != null
@@ -77,6 +73,15 @@ locals {
 ########
 # DATA #
 ########
+
+data "google_service_account" "this" {
+  account_id = coalesce(try(var.service_account.email, null), "NOT_SERVICE_ACCOUNT")
+  project    = var.project_id
+}
+
+data "google_compute_default_service_account" "this" {
+  project = var.project_id
+}
 
 data "local_file" "startup" {
   filename = abspath("${local.scripts_dir}/startup.sh")
@@ -127,6 +132,7 @@ module "instance_template" {
     var.metadata,
     {
       enable-oslogin      = upper(var.enable_oslogin)
+      slurm_bucket_path   = var.slurm_bucket_path
       slurm_cluster_name  = var.slurm_cluster_name
       slurm_instance_role = local.slurm_instance_role
       VmDnsSetting        = "GlobalOnly"

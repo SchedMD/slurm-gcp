@@ -24,6 +24,17 @@ data "google_compute_subnetwork" "default" {
   region = var.region
 }
 
+module "slurm_files" {
+  source = "../../../modules/slurm_files"
+
+  bucket_name = var.bucket_name
+  partitions = [
+    module.slurm_partition,
+  ]
+  project_id         = var.project_id
+  slurm_cluster_name = var.slurm_cluster_name
+}
+
 module "slurm_compute_sa" {
   source = "../../../../slurm_sa_iam"
 
@@ -78,5 +89,6 @@ module "slurm_partition" {
   ]
   project_id         = var.project_id
   slurm_cluster_name = var.slurm_cluster_name
+  slurm_bucket_path  = module.slurm_files.slurm_bucket_path
   subnetwork         = data.google_compute_subnetwork.default.self_link
 }

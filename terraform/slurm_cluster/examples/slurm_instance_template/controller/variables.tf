@@ -18,3 +18,8 @@ variable "project_id" {
   type        = string
   description = "Project ID to create resources in."
 }
+
+variable "bucket_name" {
+  description = "Name of GCS bucket to use."
+  type        = string
+}

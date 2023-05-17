@@ -15,3 +15,5 @@
  */
 
 project_id = "<PROJECT_ID>"
+
+bucket_name = "<BUCKET_NAME>"

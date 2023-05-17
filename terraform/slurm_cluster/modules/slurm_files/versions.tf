@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-###########
-# GENERAL #
-###########
-
-variable "project_id" {
-  description = "Project ID."
-  type        = string
-}
-
-#########
-# SLURM #
-#########
-
-variable "slurm_cluster_name" {
-  description = "Cluster name, used for resource naming."
-  type        = string
+terraform {
+  required_version = "~> 1.2"
+  required_providers {
+    archive = "~> 2.0"
+    google  = ">= 3.53, < 5.0"
+    random  = "~> 3.0"
+    local   = "~> 2.0"
+  }
 }

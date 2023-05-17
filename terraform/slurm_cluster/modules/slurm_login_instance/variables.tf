@@ -72,15 +72,6 @@ variable "access_config" {
   default = []
 }
 
-variable "login_startup_scripts" {
-  description = "List of scripts to be ran on login VM startup."
-  type = list(object({
-    filename = string
-    content  = string
-  }))
-  default = []
-}
-
 variable "num_instances" {
   type        = number
   description = "Number of instances to create. This value is ignored if static_ips is provided."
@@ -94,12 +85,6 @@ Zone where the instances should be created. If not specified, instances will be
 spread across available zones in the region.
 EOD
   default     = null
-}
-
-variable "metadata" {
-  type        = map(string)
-  description = "Metadata, provided as a map"
-  default     = {}
 }
 
 #########
@@ -116,13 +101,8 @@ variable "slurm_cluster_name" {
   }
 }
 
-variable "slurm_depends_on" {
-  description = <<EOD
-Custom terraform dependencies without replacement on delta. This is useful to
-ensure order of resource creation.
-
-NOTE: Also see terraform meta-argument 'depends_on'.
-EOD
-  type        = list(string)
-  default     = []
+variable "suffix" {
+  description = "Login name suffix."
+  type        = string
+  default     = "frontend"
 }

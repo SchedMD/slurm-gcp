@@ -35,6 +35,7 @@ limitations under the License.
 |------|--------|---------|
 | <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | ../../../modules/slurm_controller_instance | n/a |
 | <a name="module_slurm_controller_template"></a> [slurm\_controller\_template](#module\_slurm\_controller\_template) | ../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_files"></a> [slurm\_files](#module\_slurm\_files) | ../../../modules/slurm_files | n/a |
 | <a name="module_slurm_partition0"></a> [slurm\_partition0](#module\_slurm\_partition0) | ../../../modules/slurm_partition | n/a |
 | <a name="module_slurm_partition1"></a> [slurm\_partition1](#module\_slurm\_partition1) | ../../../modules/slurm_partition | n/a |
 
@@ -48,6 +49,7 @@ limitations under the License.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_bucket_name"></a> [bucket\_name](#input\_bucket\_name) | Name of GCS bucket to use. | `string` | n/a | yes |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The region to place resources. | `string` | n/a | yes |
 | <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"simple"` | no |

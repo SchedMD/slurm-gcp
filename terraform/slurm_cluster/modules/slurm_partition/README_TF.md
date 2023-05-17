@@ -40,7 +40,6 @@ limitations under the License.
 
 | Name | Type |
 |------|------|
-| [google_compute_project_metadata_item.partition_startup_scripts](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
 | [null_resource.partition](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [google_compute_instance_template.group_template](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_instance_template) | data source |
 | [google_compute_subnetwork.partition_subnetwork](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
@@ -60,6 +59,7 @@ limitations under the License.
 | <a name="input_partition_startup_scripts_timeout"></a> [partition\_startup\_scripts\_timeout](#input\_partition\_startup\_scripts\_timeout) | The timeout (seconds) applied to each script in partition\_startup\_scripts. If<br>any script exceeds this timeout, then the instance setup process is considered<br>failed and handled accordingly.<br><br>NOTE: When set to 0, the timeout is considered infinite and thus disabled. | `number` | `300` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The region of the subnetwork. | `string` | `""` | no |
+| <a name="input_slurm_bucket_path"></a> [slurm\_bucket\_path](#input\_slurm\_bucket\_path) | GCS Bucket URI of Slurm cluster file storage. | `string` | n/a | yes |
 | <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, used for resource naming and slurm accounting. | `string` | n/a | yes |
 | <a name="input_subnetwork"></a> [subnetwork](#input\_subnetwork) | The subnetwork to attach instances to. A self\_link is prefered. | `string` | `""` | no |
 | <a name="input_subnetwork_project"></a> [subnetwork\_project](#input\_subnetwork\_project) | The project the subnetwork belongs to. | `string` | `""` | no |

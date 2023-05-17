@@ -78,6 +78,7 @@ data "google_compute_subnetwork" "default" {
 module "slurm_cluster" {
   source = "../../../../slurm_cluster"
 
+  region                     = var.region
   slurm_cluster_name         = var.slurm_cluster_name
   controller_instance_config = local.controller_instance_config
   login_nodes                = local.login_nodes
@@ -103,6 +104,7 @@ module "dynamic_node_instance_template" {
   project_id          = var.project_id
   name_prefix         = "dynamic"
   region              = var.region
+  slurm_bucket_path   = module.slurm_cluster.slurm_bucket_path
   slurm_cluster_name  = var.slurm_cluster_name
   slurm_instance_role = "compute"
   subnetwork          = data.google_compute_subnetwork.default.self_link

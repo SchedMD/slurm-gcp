@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = "~> 1.0"
+output "slurm_bucket_path" {
+  description = "GCS Bucket URI of Slurm cluster file storage."
+  value       = local.bucket_path
+}
 
-  required_providers {
-    google = ">= 3.53, < 5.0"
-    local  = "~> 2.0"
+output "config" {
+  description = "Cluster configuration."
+  value       = local.config
+
+  precondition {
+    condition     = var.enable_hybrid ? can(coalesce(var.slurm_control_host)) : true
+    error_message = "Input slurm_control_host is required."
   }
+}
+
+output "partitions" {
+  description = "Cluster partitions."
+  value       = lookup(local.config, "partitions", null)
 }

@@ -19,11 +19,6 @@ output "slurm_cluster_name" {
   value       = var.slurm_cluster_name
 }
 
-output "partitions" {
-  description = "Cluster partitions."
-  value       = local.partitions
-}
-
 output "output_dir" {
   description = "Directory where configuration files are written to."
   value       = local.output_dir

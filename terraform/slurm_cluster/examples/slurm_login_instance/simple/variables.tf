@@ -23,3 +23,8 @@ variable "region" {
   type        = string
   description = "The region to place resources."
 }
+
+variable "bucket_name" {
+  description = "Name of GCS bucket to use."
+  type        = string
+}

@@ -29,11 +29,6 @@
  * limitations under the License.
  */
 
-variable "region" {
-  description = "The default region to place resources in."
-  type        = string
-}
-
 variable "source_image_project" {
   description = "Project where the source image comes from. If it is not provided, the provider project is used."
   type        = string
@@ -120,6 +115,38 @@ variable "slurm_cluster_name" {
     condition     = can(regex("^[a-z](?:[a-z0-9]{0,9})$", var.slurm_cluster_name))
     error_message = "Variable 'slurm_cluster_name' must be a match of regex '^[a-z](?:[a-z0-9]{0,9})$'."
   }
+}
+
+variable "region" {
+  type        = string
+  description = "The default region to place resources in."
+}
+
+##########
+# BUCKET #
+##########
+
+variable "create_bucket" {
+  description = <<-EOD
+    Create GCS bucket instead of using an existing one.
+  EOD
+  type        = bool
+  default     = true
+}
+
+variable "bucket_name" {
+  description = <<-EOD
+    Name of GCS bucket.
+    Ignored when 'create_bucket' is true.
+  EOD
+  type        = string
+  default     = null
+}
+
+variable "bucket_dir" {
+  description = "Bucket directory for cluster files to be put into. If not specified, then one will be chosen based on slurm_cluster_name."
+  type        = string
+  default     = null
 }
 
 #####################

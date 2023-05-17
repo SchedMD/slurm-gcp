@@ -18,65 +18,38 @@ set -e
 SLURM_DIR=/slurm
 FLAGFILE=$SLURM_DIR/slurm_configured_do_not_remove
 SCRIPTS_DIR=$SLURM_DIR/scripts
+if [[ -z "$HOME" ]]; then
+	# google-startup-scripts.service lacks environment variables
+	HOME="$(getent passwd "$(whoami)" | cut -d: -f6)"
+fi
 
 METADATA_SERVER="metadata.google.internal"
 URL="http://$METADATA_SERVER/computeMetadata/v1"
 HEADER="Metadata-Flavor:Google"
 CURL="curl -sS --fail --header $HEADER"
 
-function fetch_scripts {
-	# fetch project metadata
-	if ! CLUSTER=$($CURL $URL/instance/attributes/slurm_cluster_name); then
-		echo "ERROR: cluster name not found in instance metadata. Quitting!"
+function devel::zip() {
+	local BUCKET="$($CURL $URL/instance/attributes/slurm_bucket_path)"
+	if [[ -z $BUCKET ]]; then
+		echo "ERROR: No bucket path detected."
 		return 1
 	fi
-	if ! META_DEVEL=$($CURL $URL/project/attributes/$CLUSTER-slurm-devel); then
-		echo "WARNING: $CLUSTER-slurm-devel not found in project metadata, skipping script update"
-		return
+
+	local SLURM_ZIP_URL="$BUCKET/slurm-gcp-devel.zip"
+	local SLURM_ZIP_FILE="$HOME/slurm-gcp-devel.zip"
+	local SLURM_ZIP_DIR="$HOME/slurm-gcp-devel"
+	eval $(gsutil cp "$SLURM_ZIP_URL" "$SLURM_ZIP_FILE")
+	if ! [[ -f "$SLURM_ZIP_FILE" ]]; then
+		echo "INFO: No development files downloaded. Skipping."
+		return 0
 	fi
-	echo devel data found in project metadata, looking to update scripts
-	if CONF_SCRIPT=$(jq -re '."conf-script"' <<< "$META_DEVEL"); then
-		echo "INFO: updating conf.py from project metadata"
-		printf '%s' "$CONF_SCRIPT" > $CONF_SCRIPT_FILE
-	else
-		echo "WARNING: setup-script not found in project metadata, skipping update"
-	fi
-	if STARTUP_SCRIPT=$(jq -re '."startup-script"' <<< "$META_DEVEL"); then
-		echo "INFO: updating startup.sh from project metadata"
-		printf '%s' "$STARTUP_SCRIPT" > $STARTUP_SCRIPT_FILE
-	else
-		echo "WARNING: startup-script not found in project metadata, skipping update"
-	fi
-	if SETUP_SCRIPT=$(jq -re '."setup-script"' <<< "$META_DEVEL"); then
-		echo "INFO: updating setup.py from project metadata"
-		printf '%s' "$SETUP_SCRIPT" > $SETUP_SCRIPT_FILE
-	else
-		echo "WARNING: setup-script not found in project metadata, skipping update"
-	fi
-	if UTIL_SCRIPT=$(jq -re '."util-script"' <<< "$META_DEVEL"); then
-		echo "INFO: updating util.py from project metadata"
-		printf '%s' "$UTIL_SCRIPT" > $UTIL_SCRIPT_FILE
-	else
-		echo "WARNING: util-script not found in project metadata, skipping update"
-	fi
-	if RESUME_SCRIPT=$(jq -re '."slurm-resume"' <<< "$META_DEVEL"); then
-		echo "INFO: updating resume.py from project metadata"
-		printf '%s' "$RESUME_SCRIPT" > $RESUME_SCRIPT_FILE
-	else
-		echo "WARNING: slurm-resume not found in project metadata, skipping update"
-	fi
-	if SUSPEND_SCRIPT=$(jq -re '."slurm-suspend"' <<< "$META_DEVEL"); then
-		echo "INFO: updating suspend.py from project metadata"
-		printf '%s' "$SUSPEND_SCRIPT" > $SUSPEND_SCRIPT_FILE
-	else
-		echo "WARNING: slurm-suspend not found in project metadata, skipping update"
-	fi
-	if SLURMSYNC_SCRIPT=$(jq -re '."slurmsync"' <<< "$META_DEVEL"); then
-		echo "INFO: updating slurmsync.py from project metadata"
-		printf '%s' "$SLURMSYNC_SCRIPT" > $SLURMSYNC_SCRIPT_FILE
-	else
-		echo "WARNING: slurmsync not found in project metadata, skipping update"
-	fi
+	unzip -o "$SLURM_ZIP_FILE" -d "$SCRIPTS_DIR"
+	rm -rf "$SLURM_ZIP_FILE" "$SLURM_ZIP_DIR" # Clean up
+	echo "INFO: Finished inflating '$SLURM_ZIP_FILE'."
+
+	chown slurm:slurm -R "$SCRIPTS_DIR"
+	chmod 700 -R "$SCRIPTS_DIR"
+	echo "INFO: Updated permissions of files in '$SCRIPTS_DIR'."
 }
 
 PING_METADATA="ping -q -w1 -c1 $METADATA_SERVER"
@@ -110,14 +83,10 @@ fi
 
 mkdir -p $SCRIPTS_DIR
 
-CONF_SCRIPT_FILE=$SCRIPTS_DIR/conf.py
-STARTUP_SCRIPT_FILE=$SCRIPTS_DIR/startup.sh
 SETUP_SCRIPT_FILE=$SCRIPTS_DIR/setup.py
 UTIL_SCRIPT_FILE=$SCRIPTS_DIR/util.py
-RESUME_SCRIPT_FILE=$SCRIPTS_DIR/resume.py
-SUSPEND_SCRIPT_FILE=$SCRIPTS_DIR/suspend.py
-SLURMSYNC_SCRIPT_FILE=$SCRIPTS_DIR/slurmsync.py
-fetch_scripts
+
+devel::zip
 
 if [ -f $FLAGFILE ]; then
 	echo "WARNING: Slurm was previously configured, quitting"
