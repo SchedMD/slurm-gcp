@@ -86,7 +86,7 @@ CONFIGS = [
 ]
 CONFIGS = {"-".join(conf["marks"]): conf for conf in CONFIGS}
 image_pattern = re.compile(
-    r"(?P<prefix>[\w\-]+)-(?P<slurm_gcp>\w+)-(?P<slurm>slurm-\d{2}-\d{2}-\d)-(?P<marker>[\w\-]+?)(-(?P<timestamp>\d{10}))?$"
+    r"^(?:(?P<prefix>\w+)-)?slurm-gcp-(?:(?P<version>(?P<major>\d+)-(?P<minor>\d+)(?:-(?P<patch>\d+))?)|(?P<branch>\w+))-(?P<marker>[\w\-]+?)(?:-(?P<timestamp>\w{10}))?$"
 )
 
 params = (

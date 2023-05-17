@@ -234,11 +234,11 @@ accross all instances and allows easy user control with
 ### What Slurm image do I use for production?
 
 By default, the [slurm_cluster](../terraform/slurm_cluster/README.md) terraform
-module uses the latest Slurm image family (e.g.
-`schedmd-v5-slurm-22-05-9-hpc-centos-7`). As new Slurm image families are
-released, coenciding with periodic Slurm releases, the terraform module will be
-updated to track the newest image family by setting it as the new default. This
-update can be considered a breaking change.
+module uses the latest Slurm image family (e.g. `slurm-gcp-5-7-hpc-centos-7`).
+As new Slurm image families are released, coenciding with periodic Slurm
+releases, the terraform module will be updated to track the newest image family
+by setting it as the new default. This update can be considered a breaking
+change.
 
 In a production setting, it is recommended to explicitly set an image family.
 Doing so will prevent `slurm-gcp` changes to the default image family from

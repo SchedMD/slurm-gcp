@@ -24,6 +24,12 @@ variable "zone" {
   type = string
 }
 
+variable "slurmgcp_version" {
+  description = "slurm-gcp version used in the image family name."
+  type        = string
+  default     = "next"
+}
+
 variable "image_family_alt" {
   description = "When set, use in the generated image family in place of the source family."
   type        = string
@@ -114,10 +120,10 @@ EOD
 variable "prefix" {
   description = "Prefix for image and instance."
   type        = string
-  default     = "schedmd"
+  default     = null
 
   validation {
-    condition     = can(regex("^[a-z](?:[a-z0-9]*)$", var.prefix))
+    condition     = var.prefix == null || can(regex("^[a-z](?:[a-z0-9]*)$", var.prefix))
     error_message = "Variable 'prefix' must pass '^[a-z](?:[a-z0-9]*)$'."
   }
 }
@@ -125,10 +131,10 @@ variable "prefix" {
 variable "variant" {
   description = "variant suffix to distinguish between variants on the same base image"
   type        = string
-  default     = ""
+  default     = null
 
   validation {
-    condition     = var.variant == "" || can(regex("^[a-z](?:[a-z0-9]*)$", var.variant))
+    condition     = var.variant == null || can(regex("^[a-z](?:[a-z0-9]*)$", var.variant))
     error_message = "Variable 'variant' must pass '^[a-z](?:[a-z0-9]*)$'."
   }
 }

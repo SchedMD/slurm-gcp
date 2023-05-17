@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - Fix warning on missing python library httplib2.
 - Fix lustre support in images by installing the latest available client version
   for each OS.
+- Change image name format to use Slurm-GCP version instead of the Slurm
+  version. eg. slurm-gcp-5-7-hpc-centos-7
 
 ## \[5.7.2\]
 

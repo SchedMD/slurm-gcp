@@ -2,22 +2,22 @@
 #OS_NAME=hpc-centos-7
 #OS_NAME=centos-7
 #OS_NAME=debian-10
-# ./publish_image.sh <prefix> <slurm version> <os>
-# ./publish_image.sh dev 22-05-8 hpc-centos-7
-PREFIX=$1
-SLURM=$2
+# ./publish_image.sh <branch> <slurm-gcp version> <os>
+# ./publish_image.sh dev 5-7 hpc-centos-7
+PREFIX=""
+BRANCH=$1
+SLURMGCP=$2
 OS_NAME=$3
 SOURCE_PROJECT=schedmd-public-292016
 PUBLISH_PROJECT=schedmd-slurm-public
-PUBLISH_PREFIX=schedmd
 LICENSE=projects/$PUBLISH_PROJECT/global/licenses/schedmd-slurm-gcp-free-plan
-SOURCE_FAMILY=$PREFIX-v5-slurm-$SLURM-$OS_NAME
+SOURCE_FAMILY=${PREFIX:+$PREFIX-}slurm-gcp-$BRANCH-$OS_NAME
 
 family_info=$(gcloud compute images describe-from-family $SOURCE_FAMILY --project=$SOURCE_PROJECT --format=json)
 SOURCE_IMAGE=$(jq -r .name <<< $family_info)
 creation_time=$(jq -r .creationTimestamp <<< $family_info)
-publish_image=${SOURCE_IMAGE/#$PREFIX/$PUBLISH_PREFIX}
-publish_family=${SOURCE_FAMILY/$PREFIX/$PUBLISH_PREFIX}
+publish_image=${SOURCE_IMAGE/#$BRANCH/$SLURMGCP}
+publish_family=${SOURCE_FAMILY/$BRANCH/$SLURMGCP}
 
 echo source image: $SOURCE_PROJECT/$SOURCE_IMAGE
 echo created $creation_time

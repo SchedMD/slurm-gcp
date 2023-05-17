@@ -17,7 +17,7 @@ stages:
 variables:
   GOOGLE_APPLICATION_CREDENTIALS: $CI_PROJECT_DIR/sa.json
   SLURM_VERSION: 22.05.9
-  IMAGE_PREFIX: $CI_COMMIT_BRANCH
+  BRANCH: $CI_COMMIT_BRANCH
 
 default:
   image:
@@ -31,8 +31,9 @@ default:
   - GCP_SA_EMAIL=$(jq -r .client_email < $GOOGLE_APPLICATION_CREDENTIALS)
   - GCP_SA_ID=$(jq -r .client_id < $GOOGLE_APPLICATION_CREDENTIALS)
 
+  - 'echo Slurm version to build: $SLURM_VERSION'
   - SLURM_VERSION_ALT=$(tr \. - <<< $SLURM_VERSION)
-  - IMAGE_FAMILY_ROOT=$IMAGE_PREFIX-v5-slurm-$SLURM_VERSION_ALT
+  - IMAGE_FAMILY_ROOT=slurm-gcp-$BRANCH
 
   - gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
   - gcloud config set project $GCP_PROJECT_ID
@@ -51,18 +52,18 @@ default:
       - ansible/**/*
       - packer/**/*
   artifacts:
-    name: image-manifest-$IMAGE_PREFIX-$IMAGE_OS
+    name: image-manifest-$BRANCH-$IMAGE_OS
     paths:
     - packer/manifest.json
   script:
-  - echo "Building $IMAGE_OS image for $IMAGE_PREFIX"
+  - echo "Building $IMAGE_OS image for $BRANCH"
   - cd packer
   - packer init .
   - >
     packer build -var-file builds/$IMAGE_OS.hcl
     -var "project_id=$GCP_PROJECT_ID"
     -var "slurm_version=$SLURM_VERSION"
-    -var "prefix=$IMAGE_PREFIX"
+    -var "slurmgcp_version=$BRANCH"
     $EXTRA_VARS
     .
   - echo "packer build $IMAGE_OS completed"

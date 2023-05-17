@@ -46,6 +46,8 @@ can be created and used instead.
 
 ### Installed Software for HPC
 
+- [Slurm](https://www.schedmd.com/downloads.php)
+  - 22.05.9
 - [lmod](https://lmod.readthedocs.io/en/latest/index.html)
 - [openmpi](https://www.open-mpi.org/)
 - [cuda](https://developer.nvidia.com/cuda-toolkit)
@@ -66,17 +68,17 @@ that are minimal viable images for deploying
 
 ### Published Image Family
 
-|       Project        | Image Family                                   | Arch   | Status         |
-| :------------------: | :--------------------------------------------- | :----- | :------------- |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-centos-7              | x86_64 | EOL 2024-01-01 |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-debian-10             | x86_64 | EOL 2023-06-30 |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-debian-11             | x86_64 | Supported      |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-hpc-centos-7-k80      | x86_64 | Supported      |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-rocky-linux-8         | x86_64 | EOL 2023-06-30 |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-hpc-rocky-linux-8     | x86_64 | Supported      |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-ubuntu-2004-lts       | x86_64 | Supported      |
-| schedmd-slurm-public | schedmd-v5-slurm-22-05-9-ubuntu-2204-lts-arm64 | ARM64  | Supported      |
+|       Project        | Image Family                        | Arch   | Status         |
+| :------------------: | :---------------------------------- | :----- | :------------- |
+| schedmd-slurm-public | slurm-gcp-5-7-centos-7              | x86_64 | EOL 2024-01-01 |
+| schedmd-slurm-public | slurm-gcp-5-7-debian-10             | x86_64 | EOL 2023-06-30 |
+| schedmd-slurm-public | slurm-gcp-5-7-debian-11             | x86_64 | Supported      |
+| schedmd-slurm-public | slurm-gcp-5-7-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
+| schedmd-slurm-public | slurm-gcp-5-7-hpc-centos-7-k80      | x86_64 | Supported      |
+| schedmd-slurm-public | slurm-gcp-5-7-rocky-linux-8         | x86_64 | EOL 2023-06-30 |
+| schedmd-slurm-public | slurm-gcp-5-7-hpc-rocky-linux-8     | x86_64 | Supported      |
+| schedmd-slurm-public | slurm-gcp-5-7-ubuntu-2004-lts       | x86_64 | Supported      |
+| schedmd-slurm-public | slurm-gcp-5-7-ubuntu-2204-lts-arm64 | ARM64  | Supported      |
 
 ## Custom Image
 

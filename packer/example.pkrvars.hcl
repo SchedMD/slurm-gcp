@@ -19,7 +19,7 @@
 project_id = "<PROJECT_ID>"
 zone       = "us-central1-a"
 
-prefix = "schedmd"
+# prefix = null
 
 #########
 # IMAGE #

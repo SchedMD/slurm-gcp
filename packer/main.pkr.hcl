@@ -34,12 +34,20 @@ locals {
     install_gcsfuse  = var.install_gcsfuse
   }
 
-  image_prefix = "${var.prefix}-v5-slurm-${local.slurm_semver}"
-  # if image_family_name is set, use it for image_family.
+  parse_version = regex("^(?P<major>\\d+)(?:\\.(?P<minor>\\d+))?(?:\\.(?P<patch>\\d+))?|(?P<branch>\\w+)$", var.slurmgcp_version)
+  branch        = local.parse_version["branch"] != null ? replace(local.parse_version["branch"], ".", "-") : null
+  version       = join("-", compact([local.parse_version["major"], local.parse_version["minor"], local.parse_version["patch"], local.branch]))
+
+  prefix_str  = try(length(var.prefix), 0) > 0 ? "${var.prefix}-" : ""
+  root_str    = "slurm-gcp-${local.version}"
+  variant_str = try(length(var.variant), 0) > 0 ? "-${var.variant}" : ""
+
   # If image_family_alt is set, use it instead of source_image_family
-  image_os_name = try(length(var.image_family_alt), 0) > 0 ? var.image_family_alt : var.source_image_family
-  image_family  = try(length(var.image_family_name), 0) > 0 ? var.image_family_name : "${local.image_prefix}-${local.image_os_name}${local.variant_str}"
-  variant_str   = try(length(var.variant), 0) > 0 ? "-${var.variant}" : ""
+  image_os_name    = try(length(var.image_family_alt), 0) > 0 ? var.image_family_alt : var.source_image_family
+  generated_family = "${local.prefix_str}${local.root_str}-${local.image_os_name}${local.variant_str}"
+
+  # if image_family_name is set, use it for image_family instead of the generated one.
+  image_family = try(length(var.image_family_name), 0) > 0 ? var.image_family_name : local.generated_family
 }
 
 ##########
