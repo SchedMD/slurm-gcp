@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import httplib2
 import importlib.util
 import inspect
 import json
@@ -43,6 +42,7 @@ required_modules = [
     ("requests", "requests"),
     ("yaml", "yaml"),
     ("addict", "addict"),
+    ("httplib2", "httplib2"),
 ]
 missing_imports = False
 for module, name in required_modules:
@@ -58,6 +58,7 @@ from google.oauth2 import service_account  # noqa: E402
 import googleapiclient.discovery  # noqa: E402
 import google_auth_httplib2  # noqa: E402
 from googleapiclient.http import set_user_agent  # noqa: E402
+import httplib2  # noqa: E402
 
 from requests import get as get_url  # noqa: E402
 from requests.exceptions import RequestException  # noqa: E402
