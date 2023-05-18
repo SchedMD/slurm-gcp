@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Add slurm cluster management daemon
 - Update default Slurm version to 23.02.2.
 - Make `slurm_cluster` root module use terraform 1.3 and optional object fields.
+- Reconfigure now is a service on the instances.
 
 ## \[5.7.4\]
 
