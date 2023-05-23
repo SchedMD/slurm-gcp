@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "2"
+requests = "2.31.0"
 pyyaml = "6"
 addict = "2"
 google-api-python-client = "2"
