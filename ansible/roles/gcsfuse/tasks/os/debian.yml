@@ -18,11 +18,6 @@
     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
     state: present
 
-- name: Add Gcsfuse Repository Key 2
-  apt_key:
-    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg.asc
-    state: present
-
 - name: Add Gcsfuse Repository
   apt_repository:
     repo: deb https://packages.cloud.google.com/apt gcsfuse-{{ansible_distribution_release}}
