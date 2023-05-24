@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
   for each OS.
 - Change image name format to use Slurm-GCP version instead of the Slurm
   version. eg. slurm-gcp-5-7-hpc-centos-7
+- Disable Lustre install for Debian 11 because it is currently incompatible. It
+  wasn't working anyway.
 
 ## \[5.7.2\]
 
