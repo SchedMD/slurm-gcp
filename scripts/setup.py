@@ -911,11 +911,6 @@ def setup_secondary_disks():
         )
 
 
-def setup_sync_cronjob():
-    """Create cronjob for running slurmsync.py"""
-    run("crontab -u slurm -", input=(f"*/1 * * * * {dirs.scripts}/slurmsync.py\n"))
-
-
 def setup_jwt_key():
     jwt_key = Path(slurmdirs.state / "jwt_hs256.key")
 
@@ -1110,7 +1105,7 @@ def setup_controller(args):
     run("systemctl restart slurmeventd", timeout=30)
 
     setup_nfs_exports()
-    setup_sync_cronjob()
+    run("systemctl enable --now slurmcmd.timer", timeout=30)
 
     log.info("Check status of cluster services")
     run("systemctl status munge", timeout=30)

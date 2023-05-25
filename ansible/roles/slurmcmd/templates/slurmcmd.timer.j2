@@ -1,0 +1,10 @@
+[Unit]
+Description=Slurm cluster management daemon timer
+Requires=slurmcmd.service
+
+[Timer]
+Unit=slurmcmd.service
+OnUnitInactiveSec={{slurmcmd_timeout}}
+
+[Install]
+WantedBy=timers.target

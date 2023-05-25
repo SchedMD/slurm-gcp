@@ -247,11 +247,16 @@ controller to be able to burst into the cloud.
    # gres.conf
    include $install_dir/cloud_gres.conf
    ```
-1. Add a cronjob/crontab to call slurmsync.py as SlurmUser.
-   ```conf
-   */1 * * * * $install_dir/slurmsync.py
+1. Install the slurmcmd systemd files
+   ```sh
+   cp ${install_dir}/slurmcmd.* /etc/systemd/system/
+   systemctl daemon-reload
    ```
 1. Restart slurmctld and resolve include conflicts.
+1. Enable and start slurmcmd.
+   ```sh
+   systemctl enable --now slurmcmd.timer
+   ```
 1. Test cloud bursting.
    ```sh
    scontrol update nodename=$NODENAME state=power_up reason=test

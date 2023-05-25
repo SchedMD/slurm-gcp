@@ -19,7 +19,8 @@
 ##########
 
 locals {
-  scripts_dir = abspath("${path.module}/../../../../scripts")
+  scripts_dir           = abspath("${path.module}/../../../../scripts")
+  slurmcmd_template_dir = abspath("${path.module}/../../../../ansible/roles/slurmcmd/templates")
 
   output_dir = (
     var.output_dir == null || var.output_dir == ""
@@ -38,6 +39,12 @@ locals {
     remote_mount  = lookup(var.munge_mount, "remote_mount", "/etc/munge/")
     fs_type       = lookup(var.munge_mount, "fs_type", "nfs")
     mount_options = lookup(var.munge_mount, "mount_options", "")
+  }
+
+  template_context = {
+    service_user     = var.slurm_user
+    service_path     = local.install_dir
+    slurmcmd_timeout = var.slurmcmd_timeout
   }
 }
 
@@ -175,6 +182,34 @@ resource "local_file" "startup_sh" {
   filename = abspath("${var.output_dir}/startup.sh")
 
   file_permission = "0700"
+}
+
+data "jinja_template" "slurmcmd_service" {
+  template = abspath("${local.slurmcmd_template_dir}/slurmcmd.service.j2")
+  context {
+    type = "yaml"
+    data = yamlencode(local.template_context)
+  }
+}
+resource "local_file" "slurmcmd_service" {
+  content  = data.jinja_template.slurmcmd_service.result
+  filename = abspath("${var.output_dir}/slurmcmd.service")
+
+  file_permission = "0644"
+}
+
+data "jinja_template" "slurmcmd_timer" {
+  template = abspath("${local.slurmcmd_template_dir}/slurmcmd.timer.j2")
+  context {
+    type = "yaml"
+    data = yamlencode(local.template_context)
+  }
+}
+resource "local_file" "slurmcmd_timer" {
+  content  = data.jinja_template.slurmcmd_timer.result
+  filename = abspath("${var.output_dir}/slurmcmd.timer")
+
+  file_permission = "0644"
 }
 
 ##########

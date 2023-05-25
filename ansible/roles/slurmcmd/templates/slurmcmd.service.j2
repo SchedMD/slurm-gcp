@@ -1,0 +1,11 @@
+[Unit]
+Description=Slurm cluster management daemon
+Wants=slurmcmd.timer
+
+[Service]
+Type=oneshot
+User={{service_user}}
+ExecStart={{service_path}}/slurmsync.py
+
+[Install]
+WantedBy=multi-user.target
