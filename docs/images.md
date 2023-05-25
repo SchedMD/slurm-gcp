@@ -37,11 +37,8 @@ can be created and used instead.
 | cloud-hpc-image-public | hpc-centos-7          | x86_64 |
 | debian-cloud           | debian-10             | x86_64 |
 | debian-cloud           | debian-11             | x86_64 |
-| debian-cloud           | debian-11-arm64       | ARM64  |
 | rocky-linux-cloud      | rocky-linux-8         | x86_64 |
 | ubuntu-os-cloud        | ubuntu-2004-lts       | x86_64 |
-| ubuntu-os-cloud        | ubuntu-2004-lts-arm64 | ARM64  |
-| ubuntu-os-cloud        | ubuntu-2204-lts       | x86_64 |
 | ubuntu-os-cloud        | ubuntu-2204-lts-arm64 | ARM64  |
 
 ### Installed Software for HPC
@@ -50,10 +47,16 @@ can be created and used instead.
   - 22.05.9
 - [lmod](https://lmod.readthedocs.io/en/latest/index.html)
 - [openmpi](https://www.open-mpi.org/)
+  - v4.1.x
 - [cuda](https://developer.nvidia.com/cuda-toolkit)
   - Limited to x86_64 only
+  - Latest CUDA and NVIDIA
+  - NVIDIA 470 and CUDA 11.4.4 installed on hpc-centos-7-k80 variant image for
+    compatibility with K80 GPUs.
 - [lustre](https://www.lustre.org/)
   - Only supports x86_64
+  - Client version 2.12-2.15 depending on the package available for the image
+    OS.
 
 ## Public Image
 
