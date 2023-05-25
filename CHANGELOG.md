@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+## \[5.7.3\]
+
 - Fix detecting gpus on certain machine types.
 - Forward additional error information to node reason and salloc/srun.
 - Fix warning on missing python library httplib2.
