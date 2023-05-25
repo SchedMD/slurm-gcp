@@ -16,11 +16,13 @@ SOURCE_FAMILY=${PREFIX:+$PREFIX-}slurm-gcp-$BRANCH-$OS_NAME
 family_info=$(gcloud compute images describe-from-family $SOURCE_FAMILY --project=$SOURCE_PROJECT --format=json)
 SOURCE_IMAGE=$(jq -r .name <<< $family_info)
 creation_time=$(jq -r .creationTimestamp <<< $family_info)
-publish_image=${SOURCE_IMAGE/#$BRANCH/$SLURMGCP}
+publish_image=${SOURCE_IMAGE/$BRANCH/$SLURMGCP}
 publish_family=${SOURCE_FAMILY/$BRANCH/$SLURMGCP}
 
+echo source family: $SOURCE_FAMILY
 echo source image: $SOURCE_PROJECT/$SOURCE_IMAGE
 echo created $creation_time
+echo publish family: $publish_family
 echo publish image: $PUBLISH_PROJECT/$publish_image
 read -p "publish image?" -n 1 -r
 echo
