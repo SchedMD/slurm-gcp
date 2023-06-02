@@ -221,18 +221,16 @@ class Cluster:
             self.wait_on_active()
 
     def wait_on_active(self):
-        node_state = re.compile(r"State=(\S+)\s")
-        for wait in backoff_delay(2, timeout=240):
+        for wait in backoff_delay(5, timeout=600):
+            nodes = []
             try:
-                result = self.login_exec("scontrol show -o nodes")
-                if result.exit_status == 0 and all(
-                    s[1].startswith("IDLE")
-                    for s in node_state.finditer(result["stdout"])
-                    if s[1]
-                ):
+                nodes = self.get_nodes()
+                if all(node["state"][0] == "IDLE" for node in nodes):
                     break
             except Exception as e:
-                log.error(e)
+                log.error(
+                    f"Error getting node state {'+'.join(nodes[0]) if nodes else ''}: {e}"
+                )
             time.sleep(wait)
         else:
             raise Exception("Cluster never came up")
@@ -378,13 +376,23 @@ class Cluster:
         return trim_self_link(self.login_link)
 
     def get_jobs(self):
-        return json.loads(self.login_exec("squeue --json")["stdout"])["jobs"]
+        out = self.login_exec("scontrol show jobs --json")["stdout"]
+        try:
+            return json.loads(out)["jobs"]
+        except Exception as e:
+            log.error(f"failed to get jobs: {out}")
+            raise e
 
     def get_job(self, job_id):
         return next((j for j in self.get_jobs() if j["job_id"] == job_id), None)
 
     def get_nodes(self):
-        return json.loads(self.login_exec("sinfo --json")["stdout"])["nodes"]
+        out = self.login_exec("scontrol show nodes --json")["stdout"]
+        try:
+            return json.loads(out)["nodes"]
+        except Exception as e:
+            log.error(f"failed to get nodes: {out}")
+            raise e
 
     def get_node(self, nodename):
         return next((n for n in self.get_nodes() if n["name"] == nodename), None)

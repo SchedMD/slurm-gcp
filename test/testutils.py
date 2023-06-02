@@ -107,8 +107,9 @@ def wait_node_flags_subset(cluster, nodename, state, *flags, max_wait=None):
 
     def check_node_flags():
         info = cluster.get_node(nodename)
-        node_state = info["state"]
-        node_flags = set(info["state_flags"])
+        node_state, *node_flags = info["state"]
+        node_state = node_state.lower()
+        node_flags = set(node_flags)
         log.info(
             f"waiting for node {nodename} to be {flags_str}; state={node_state} flags={','.join(node_flags)}"
         )
@@ -124,10 +125,11 @@ def wait_node_flags_any(cluster, nodename, state, *flags, max_wait=None):
 
     def check_node_flags():
         info = cluster.get_node(nodename)
-        node_state = info["state"]
-        node_flags = set(info["state_flags"])
+        node_state, *node_flags = info["state"]
+        node_state = node_state.lower()
+        node_flags = set(node_flags)
         log.info(
-            f"waiting for node {nodename} to be {flags_str}; state={state} flags={','.join(node_flags)}"
+            f"waiting for node {nodename} to be {flags_str}; state={node_state} flags={','.join(node_flags)}"
         )
         return node_state == state and (flags & node_flags)
 
@@ -140,7 +142,8 @@ def wait_node_state(cluster, nodename, *states, max_wait=None):
     states_str = "{{ {} }}".format(", ".join(states))
 
     def is_node_state():
-        state = cluster.get_node(nodename)["state"]
+        state, *flags = cluster.get_node(nodename)["state"]
+        state = state.lower()
         log.info(f"node {nodename}: {state} waiting for {states_str}")
         return state in states
 

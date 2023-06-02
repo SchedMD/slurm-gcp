@@ -29,8 +29,9 @@ def test_static(cluster: Cluster, lkp: util.Lookup):
 
     def is_node_up(node):
         info = cluster.get_node(node)
-        state = info["state"]
-        flags = set(info["state_flags"])
+        state, *flags = info["state"]
+        state = state.lower()
+        flags = set(flags)
         log.info(
             f"waiting for static node {node} to be up; state={state} flags={','.join(flags)}"
         )
