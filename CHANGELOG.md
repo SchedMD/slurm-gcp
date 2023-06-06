@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
   Jan 2024.
 - Allow metadata key `slurmd_feature` to initiate dynamic node setup.
 - Fix dynamic nodes using cloud_dns instead of cloud_reg_addrs.
+- Disable TreeWidth when dynamic nodes are configured.
 
 ## \[5.7.3\]
 

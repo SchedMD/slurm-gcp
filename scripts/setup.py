@@ -197,6 +197,7 @@ def conflines(cloud_parameters, lkp=lkp):
         "ResumeTimeout": cloud_parameters.get("resume_timeout", 300),
         "SuspendRate": cloud_parameters.get("suspend_rate", 0),
         "SuspendTimeout": cloud_parameters.get("suspend_timeout", 300),
+        "TreeWidth": "65533" if any_dynamic else None,
     }
     return dict_to_conf(conf_options, delim="\n")
 
