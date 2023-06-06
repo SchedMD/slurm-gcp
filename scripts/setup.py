@@ -154,6 +154,7 @@ def conflines(cloud_parameters, lkp=lkp):
         for node in part.partition_nodes.values()
     )
 
+    any_dynamic = any(bool(p.partition_feature) for p in lkp.cfg.partitions.values())
     comma_params = {
         "PrivateData": [
             "cloud",
@@ -163,7 +164,7 @@ def conflines(cloud_parameters, lkp=lkp):
             "use_interactive_step",
         ],
         "SlurmctldParameters": [
-            "cloud_dns",
+            "cloud_reg_addrs" if any_dynamic else "cloud_dns",
             "enable_configless",
             "idle_on_node_suspend",
         ],

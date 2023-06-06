@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
   longer, consider switching to hpc-centos-7, which will have support through
   Jan 2024.
 - Allow metadata key `slurmd_feature` to initiate dynamic node setup.
+- Fix dynamic nodes using cloud_dns instead of cloud_reg_addrs.
 
 ## \[5.7.3\]
 
