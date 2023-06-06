@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## \[Next\]
 
+- Set EOL of published centos-7 image to Aug 2023. If you need this image for
+  longer, consider switching to hpc-centos-7, which will have support through
+  Jan 2024.
+
 ## \[5.7.3\]
 
 - Fix detecting gpus on certain machine types.
