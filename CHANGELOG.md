@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Allow metadata key `slurmd_feature` to initiate dynamic node setup.
 - Fix dynamic nodes using cloud_dns instead of cloud_reg_addrs.
 - Disable TreeWidth when dynamic nodes are configured.
+- Fix dynamic nodes failing to download custom scripts.
 
 ## \[5.7.3\]
 

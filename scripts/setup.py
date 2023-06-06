@@ -181,6 +181,8 @@ def conflines(cloud_parameters, lkp=lkp):
     }
     prolog_path = Path(dirs.custom_scripts / "prolog.d")
     epilog_path = Path(dirs.custom_scripts / "epilog.d")
+    prolog_path.mkdir(exist_ok=True)
+    epilog_path.mkdir(exist_ok=True)
     any_exclusive = any(
         bool(p.enable_job_exclusive) for p in lkp.cfg.partitions.values()
     )
@@ -528,7 +530,14 @@ def install_custom_scripts(clean=False):
         # compute needs compute, prolog, epilog, and the matching partition
         if lkp.instance_role == "compute":
             script_types = ["compute", "prolog", "epilog"]
-            return role in script_types or (part and part == lkp.node_partition_name())
+            try:
+                return role in script_types or (
+                    part and part == lkp.node_partition_name()
+                )
+            except Exception as e:
+                # If the node is dynamic, the nodename will throw an Exception
+                log.error(e)
+                return role in script_types
         # controller downloads them all for good measure
         return True
 
