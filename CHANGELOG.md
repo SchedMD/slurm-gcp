@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Fix dynamic nodes using cloud_dns instead of cloud_reg_addrs.
 - Disable TreeWidth when dynamic nodes are configured.
 - Fix dynamic nodes failing to download custom scripts.
+- Fix slurmsync with only dynamic nodes in system.
 
 ## \[5.7.3\]
 

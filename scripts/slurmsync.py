@@ -113,7 +113,8 @@ def find_node_status(nodename):
         if nodename in find_node_status.static_nodeset:
             return NodeStatus.resume
     elif (
-        "POWERED_DOWN" not in state.flags
+        state is not None
+        and "POWERED_DOWN" not in state.flags
         and "POWERING_DOWN" not in state.flags
         and inst.status == "TERMINATED"
     ):
