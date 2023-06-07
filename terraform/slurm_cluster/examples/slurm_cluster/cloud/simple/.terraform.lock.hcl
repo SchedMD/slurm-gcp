@@ -80,3 +80,26 @@ provider "registry.terraform.io/hashicorp/random" {
     "zh:eab0d0495e7e711cca367f7d4df6e322e6c562fc52151ec931176115b83ed014",
   ]
 }
+
+provider "registry.terraform.io/nikolalohinski/jinja" {
+  version     = "1.15.0"
+  constraints = "~> 1.15.0"
+  hashes = [
+    "h1:SdcWNGCkIskfT0Rg9fzhPl9HoU4nbyM4HVgjQKQLzoI=",
+    "zh:17b5d5943bc0a434d7886ee493402ee2fc8cf0e024eb056923fade7f0025b46a",
+    "zh:1c0e3c3740f2d749e1a15914b3923b30f811947c5b2fe66f76a4606e81ac5ed6",
+    "zh:2a0ef9b70f0554c4f0764d7588408dabf0d55b901e89890b01e419075e047f73",
+    "zh:53fed0426388b557dba2bf3ef7e2eaff15f3e0513324aad665b31cefe68554cf",
+    "zh:5c51926cfa85d9677f6bcb6b2ec2572902e2fe7e9ced34f103aa43691a74279d",
+    "zh:6e8edc7fde213fde5a8b24e949e67c30a496ab0913164119ca93d8a86e2f5414",
+    "zh:6eb4bfc34c3d24a1aef91162713ca26a2183e6224bedfc6435cd8bac30682e69",
+    "zh:78d5eefdd9e494defcb3c68d282b8f96630502cac21d1ea161f53cfe9bb483b3",
+    "zh:8e3312919ddd94b1cbcc5fc75b9478f38795de600929ce2a91a17e3a6320f58d",
+    "zh:8eeff581c661eff0412cd95be779e7f6816dba7321c42eb8385135d152b4f36e",
+    "zh:a2fb14a3c7d607289e9ca567576cc2b1e8a2a7e632085653f21c47b9bcaad96b",
+    "zh:a6c9f55f99eb31ec93613aa0fe6758cc95b80ae44f698fa3ca461330387887da",
+    "zh:b79a1adcae2a1274e0f6277a21aa7bfb3d83f86c2eae7c9d652494f5b8db4976",
+    "zh:c411b1a0cd25b85650f108cc364c5af80e0b3bcc41f51fa04001e7e13a1b9116",
+    "zh:eddfdf60bdd8e02f051a27c669b867f33e94304bd0cbaf7f5f70a73936f173c0",
+  ]
+}
