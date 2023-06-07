@@ -20,144 +20,46 @@
 
 locals {
   controller_instance_config = {
-    access_config            = []
-    additional_disks         = []
-    can_ip_forward           = false
-    disable_smt              = false
-    disk_auto_delete         = true
-    disk_labels              = {}
-    disk_size_gb             = 32
-    disk_type                = "pd-standard"
-    enable_confidential_vm   = false
-    enable_oslogin           = true
-    enable_shielded_vm       = false
-    gpu                      = null
-    instance_template        = null
-    labels                   = {}
-    machine_type             = "n1-standard-4"
-    metadata                 = {}
-    min_cpu_platform         = null
-    network_ip               = null
-    num_instances            = 1
-    on_host_maintenance      = null
-    preemptible              = false
-    region                   = null
-    service_account          = module.slurm_sa_iam["controller"].service_account
-    shielded_instance_config = null
-    source_image_family      = null
-    source_image_project     = null
-    source_image             = null
-    static_ip                = null
-    subnetwork_project       = null
-    subnetwork               = data.google_compute_subnetwork.default.self_link
-    tags                     = []
-    zone                     = null
+    disk_size_gb    = 32
+    disk_type       = "pd-standard"
+    machine_type    = "n1-standard-4"
+    service_account = module.slurm_sa_iam["controller"].service_account
+    subnetwork      = data.google_compute_subnetwork.default.self_link
   }
 
   login_nodes = [
     {
       group_name = "l0"
 
-      access_config            = []
-      additional_disks         = []
-      can_ip_forward           = false
-      disable_smt              = false
-      disk_auto_delete         = true
-      disk_labels              = {}
-      disk_size_gb             = 32
-      disk_type                = "pd-standard"
-      enable_confidential_vm   = false
-      enable_oslogin           = true
-      enable_shielded_vm       = false
-      gpu                      = null
-      instance_template        = null
-      labels                   = {}
-      machine_type             = "n1-standard-2"
-      metadata                 = {}
-      min_cpu_platform         = null
-      network_ips              = []
-      num_instances            = 1
-      on_host_maintenance      = null
-      preemptible              = false
-      region                   = null
-      service_account          = try(module.slurm_sa_iam["login"].service_account, null)
-      shielded_instance_config = null
-      source_image_family      = null
-      source_image_project     = null
-      source_image             = null
-      static_ips               = []
-      subnetwork_project       = null
-      subnetwork               = data.google_compute_subnetwork.default.self_link
-      tags                     = []
-      zone                     = null
+      disk_size_gb    = 32
+      disk_type       = "pd-standard"
+      machine_type    = "n1-standard-2"
+      service_account = module.slurm_sa_iam["login"].service_account
+      subnetwork      = data.google_compute_subnetwork.default.self_link
     }
   ]
 
   partitions = [
     {
-      enable_job_exclusive    = false
-      enable_placement_groups = false
-      network_storage         = []
       partition_conf = {
         Default = "YES"
       }
-      partition_startup_scripts_timeout = 300
-      partition_startup_scripts         = []
-      partition_feature                 = null
-      partition_name                    = "debug"
+      partition_name = "debug"
       partition_nodes = [
         {
           node_count_dynamic_max = 20
-          node_count_static      = 0
           group_name             = "test"
-          node_conf              = {}
 
-          additional_disks         = []
-          access_config            = []
-          bandwidth_tier           = "platform_default"
-          can_ip_forward           = false
-          disable_smt              = false
-          disk_auto_delete         = true
-          disk_labels              = {}
-          disk_size_gb             = 32
-          disk_type                = "pd-standard"
-          enable_confidential_vm   = false
-          enable_oslogin           = true
-          enable_shielded_vm       = false
-          enable_spot_vm           = false
-          gpu                      = null
-          instance_template        = null
-          labels                   = {}
-          machine_type             = "c2-standard-4"
-          metadata                 = {}
-          min_cpu_platform         = null
-          on_host_maintenance      = null
-          preemptible              = false
-          service_account          = module.slurm_sa_iam["compute"].service_account
-          shielded_instance_config = null
-          spot_instance_config     = null
-          source_image_family      = null
-          source_image_project     = null
-          source_image             = null
-          tags                     = []
+          disk_size_gb    = 32
+          disk_type       = "pd-standard"
+          machine_type    = "c2-standard-4"
+          service_account = module.slurm_sa_iam["compute"].service_account
         },
       ]
-      region             = null
-      subnetwork_project = null
-      subnetwork         = data.google_compute_subnetwork.default.self_link
-      zone_target_shape  = "ANY_SINGLE_ZONE"
-      zone_policy_allow  = []
-      zone_policy_deny   = []
+      subnetwork = data.google_compute_subnetwork.default.self_link
     },
     {
-      enable_job_exclusive              = false
-      enable_placement_groups           = false
-      network_storage                   = []
-      partition_conf                    = {}
-      partition_startup_scripts_timeout = 300
-      partition_startup_scripts         = []
-      partition_feature                 = null
-      partition_name                    = "debug2"
+      partition_name = "debug2"
       partition_nodes = [
         {
           node_count_dynamic_max = 10
@@ -165,45 +67,17 @@ locals {
           group_name             = "test"
           node_conf              = {}
 
-          additional_disks       = []
-          access_config          = []
-          bandwidth_tier         = "platform_default"
-          can_ip_forward         = false
-          disable_smt            = false
-          disk_auto_delete       = true
-          disk_labels            = {}
-          disk_size_gb           = 32
-          disk_type              = "pd-standard"
-          enable_confidential_vm = false
-          enable_oslogin         = true
-          enable_shielded_vm     = false
-          enable_spot_vm         = false
+          disk_size_gb = 32
+          disk_type    = "pd-standard"
           gpu = {
             count = 1
             type  = "nvidia-tesla-v100"
           }
-          instance_template        = null
-          labels                   = {}
-          machine_type             = "n1-standard-4"
-          metadata                 = {}
-          min_cpu_platform         = null
-          on_host_maintenance      = null
-          preemptible              = false
-          service_account          = module.slurm_sa_iam["compute"].service_account
-          shielded_instance_config = null
-          spot_instance_config     = null
-          source_image_family      = null
-          source_image_project     = null
-          source_image             = null
-          tags                     = []
+          machine_type    = "n1-standard-4"
+          service_account = module.slurm_sa_iam["compute"].service_account
         },
       ]
-      region             = null
-      subnetwork_project = null
-      subnetwork         = data.google_compute_subnetwork.default.self_link
-      zone_target_shape  = "ANY_SINGLE_ZONE"
-      zone_policy_allow  = []
-      zone_policy_deny   = []
+      subnetwork = data.google_compute_subnetwork.default.self_link
     },
   ]
 }
