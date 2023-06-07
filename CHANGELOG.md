@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file.
 - Fix slurmsync with only dynamic nodes in system.
 - Fix NVIDIA driver install after kernel upgrade for rocky-linux-8.
 
+- Add slurm cluster management daemon
+
 ## \[5.7.3\]
 
 - Fix detecting gpus on certain machine types.
