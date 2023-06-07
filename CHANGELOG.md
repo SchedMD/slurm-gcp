@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## \[Next\]
+## \[6.0.0\]
 
 - Add slurm cluster management daemon
 
