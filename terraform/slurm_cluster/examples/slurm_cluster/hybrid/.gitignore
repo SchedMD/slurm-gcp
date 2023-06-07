@@ -3,3 +3,5 @@
 *.py
 *.sh
 *.yaml
+*.service
+*.timer

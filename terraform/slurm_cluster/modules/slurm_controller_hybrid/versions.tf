@@ -22,5 +22,9 @@ terraform {
     local  = "~> 2.0"
     null   = "~> 3.0"
     random = "~> 3.0"
+    jinja = {
+      source  = "NikolaLohinski/jinja"
+      version = "~> 1.15.0"
+    }
   }
 }

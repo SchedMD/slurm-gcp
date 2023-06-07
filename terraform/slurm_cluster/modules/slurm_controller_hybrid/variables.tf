@@ -379,3 +379,21 @@ variable "munge_mount" {
     mount_options = ""
   }
 }
+
+variable "slurmcmd_timeout" {
+  description = <<-EOD
+  The wait time between slurmcmd service runs in seconds.
+  It default to 30.
+  EOD
+  type        = number
+  default     = 30
+}
+
+variable "slurm_user" {
+  description = <<-EOD
+  Name of the slurm user.
+  Defaults to "slurm".
+  EOD
+  type        = string
+  default     = "slurm"
+}
