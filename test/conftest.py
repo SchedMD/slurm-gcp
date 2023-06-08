@@ -16,6 +16,7 @@ log = logging.getLogger()
 root = Path(__file__).parent.parent
 tf_path = root / "terraform"
 test_path = root / "test"
+tfvars_path = test_path / "tfvars"
 
 
 def pytest_addoption(parser):
@@ -74,13 +75,13 @@ CONFIGS = [
     dict(
         marks=("x86_64", "basic"),
         moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/cloud/basic",
-        tfvars_file=test_path / "x86_64-basic.tfvars.tpl",
+        tfvars_file=tfvars_path / "x86_64-basic.tfvars.tpl",
         tfvars={},
     ),
     dict(
         marks=("arm64", "basic"),
         moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/cloud/basic",
-        tfvars_file=test_path / "arm64-basic.tfvars.tpl",
+        tfvars_file=tfvars_path / "arm64-basic.tfvars.tpl",
         tfvars={},
     ),
 ]
