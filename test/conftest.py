@@ -74,14 +74,14 @@ def pytest_runtest_makereport(item, call):
 CONFIGS = [
     dict(
         marks=("x86_64", "basic"),
-        moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/cloud/basic",
-        tfvars_file=tfvars_path / "x86_64-basic.tfvars.tpl",
+        moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/test_cluster",
+        tfvars_file=tfvars_path / "x86_64-basic.tfvars",
         tfvars={},
     ),
     dict(
         marks=("arm64", "basic"),
-        moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/cloud/basic",
-        tfvars_file=tfvars_path / "arm64-basic.tfvars.tpl",
+        moduledir=tf_path / "slurm_cluster/examples/slurm_cluster/test_cluster",
+        tfvars_file=tfvars_path / "arm64-basic.tfvars",
         tfvars={},
     ),
 ]

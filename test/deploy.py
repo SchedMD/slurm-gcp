@@ -12,7 +12,6 @@ from collections import defaultdict
 from contextlib import closing
 from dataclasses import dataclass, field
 from pathlib import Path
-from string import Template
 
 import paramiko
 from tftest import TerraformTest
@@ -110,22 +109,23 @@ class Configuration:
     def __post_init__(self):
         self.tf = TerraformTest(self.moduledir)
         tmp = self._template_tfvars = self.tfvars_file
-        # basic.tfvars.tpl -> <cluster_name>-basic.tfvars
+        # basic.tfvars -> <cluster_name>-basic.tfvars
         self.tfvars_file = self._template_tfvars.with_name(
             f"{self.cluster_name}-{tmp.stem}"
         )
-        self.tfvars_file.write_text(
-            Template(tmp.read_text()).substitute(
-                {
-                    k: f'"{str(v)}"' if v is not None else "null"
-                    for k, v in self.__dict__.items()
-                }
-            )
-        )
+        self.tfvars_file.write_text(tmp.read_text())
+
+        vars = {
+            "project_id": self.project_id,
+            "slurm_cluster_name": self.cluster_name,
+            "source_image_family": self.image_family,
+            "source_image_project": self.image_project,
+        }
+        self.tfvars = {**self.tfvars, **vars}
 
     def __str__(self):
         image = self.image or self.image_family
-        return f"{self.cluster_name}: project={self.project_id} image={self.image_project}/{image} tfmodule={self.moduledir} tfvars={self.tfvars_file}"
+        return f"{self.cluster_name}: project={self.project_id} image={self.image_project}/{image} tfmodule={self.moduledir} tfvars={self.tfvars_file} vars={self.tfvars}"
 
     def setup(self, **kwargs):
         all_args = dict(extra_files=[self.tfvars_file], cleanup_on_exit=False)
