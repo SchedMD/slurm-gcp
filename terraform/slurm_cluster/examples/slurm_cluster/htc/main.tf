@@ -41,16 +41,11 @@ locals {
 
   partitions = [
     {
-      enable_job_exclusive    = false
-      enable_placement_groups = false
-      network_storage         = []
+      network_storage = []
       partition_conf = {
         Default = "YES"
       }
-      partition_startup_scripts_timeout = 300
-      partition_startup_scripts         = []
-      partition_feature                 = null
-      partition_name                    = "debug"
+      partition_name = "debug"
       partition_nodes = [
         {
           node_count_dynamic_max = 20
@@ -62,12 +57,7 @@ locals {
           service_account = module.slurm_sa_iam["compute"].service_account
         },
       ]
-      region             = null
-      subnetwork_project = null
-      subnetwork         = data.google_compute_subnetwork.default.self_link
-      zone_target_shape  = "ANY_SINGLE_ZONE"
-      zone_policy_allow  = []
-      zone_policy_deny   = []
+      subnetwork = data.google_compute_subnetwork.default.self_link
     },
     {
       partition_name = "debug2"

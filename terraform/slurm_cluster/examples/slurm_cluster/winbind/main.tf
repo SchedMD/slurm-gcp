@@ -41,17 +41,14 @@ locals {
 
   partitions = [
     {
-      network_storage = []
       partition_conf = {
         Default = "YES"
       }
       partition_name = "debug"
       partition_nodes = [
         {
-          node_count_dynamic_max = 20
-          node_count_static      = 0
           group_name             = "test"
-          node_conf              = {}
+          node_count_dynamic_max = 20
 
           disk_size_gb    = 32
           disk_type       = "pd-standard"
@@ -59,12 +56,7 @@ locals {
           service_account = module.slurm_sa_iam["compute"].service_account
         },
       ]
-      region             = null
-      subnetwork_project = null
-      subnetwork         = data.google_compute_subnetwork.this.self_link
-      zone_target_shape  = "ANY_SINGLE_ZONE"
-      zone_policy_allow  = []
-      zone_policy_deny   = []
+      subnetwork = data.google_compute_subnetwork.this.self_link
     },
     {
       partition_name = "debug2"

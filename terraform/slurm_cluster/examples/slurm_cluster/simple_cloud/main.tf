@@ -62,10 +62,8 @@ locals {
       partition_name = "debug2"
       partition_nodes = [
         {
-          node_count_dynamic_max = 10
-          node_count_static      = 0
           group_name             = "test"
-          node_conf              = {}
+          node_count_dynamic_max = 10
 
           disk_size_gb = 32
           disk_type    = "pd-standard"
