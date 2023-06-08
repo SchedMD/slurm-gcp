@@ -1,0 +1,645 @@
+/**
+ * Copyright (C) SchedMD LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * Copyright (C) SchedMD LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+variable "region" {
+  description = "The default region to place resources in."
+  type        = string
+}
+
+variable "source_image_project" {
+  description = "Project where the source image comes from. If it is not provided, the provider project is used."
+  type        = string
+  default     = ""
+}
+
+variable "source_image_family" {
+  description = "Source image family."
+  type        = string
+  default     = ""
+}
+
+variable "source_image" {
+  description = "Source disk image."
+  type        = string
+  default     = ""
+}
+
+variable "subnetwork" {
+  description = "Default subnet to deploy to."
+  type        = string
+  default     = "default"
+}
+
+variable "subnetwork_project" {
+  description = "The project that subnetwork belongs to"
+  type        = string
+  default     = ""
+}
+
+###########
+# NETWORK #
+###########
+
+variable "create_network" {
+  description = "Toggle creation of network and subnetworks."
+  type        = bool
+  default     = false
+}
+
+variable "subnets" {
+  type        = list(map(string))
+  description = "The list of subnets being created."
+  default     = []
+}
+
+variable "mtu" {
+  type        = number
+  description = <<EOD
+The network MTU. Must be a value between 1460 and 1500 inclusive. If set to 0
+(meaning MTU is unset), the network will default to 1460 automatically.
+EOD
+  default     = 0
+}
+
+####################
+# SERVICE ACCOUNTS #
+####################
+
+variable "create_service_accounts" {
+  description = "Toggle creation of service accounts."
+  type        = bool
+  default     = false
+}
+
+################################################################################
+# Verbatim from terraform/slurm_cluster/variables.tf
+################################################################################
+
+###########
+# GENERAL #
+###########
+
+variable "project_id" {
+  type        = string
+  description = "Project ID to create resources in."
+}
+
+variable "slurm_cluster_name" {
+  type        = string
+  description = "Cluster name, used for resource naming and slurm accounting."
+
+  validation {
+    condition     = can(regex("^[a-z](?:[a-z0-9]{0,9})$", var.slurm_cluster_name))
+    error_message = "Variable 'slurm_cluster_name' must be a match of regex '^[a-z](?:[a-z0-9]{0,9})$'."
+  }
+}
+
+#####################
+# CONTROLLER: CLOUD #
+#####################
+
+variable "controller_instance_config" {
+  description = <<EOD
+Creates a controller instance with given configuration.
+EOD
+  type = object({
+    access_config = optional(list(object({
+      nat_ip       = optional(string)
+      network_tier = optional(string)
+    })), [])
+    additional_disks = optional(list(object({
+      disk_name    = optional(string)
+      device_name  = optional(string)
+      disk_size_gb = optional(number)
+      disk_type    = optional(string)
+      disk_labels  = optional(map(string), {})
+      auto_delete  = optional(bool, true)
+      boot         = optional(bool, false)
+    })), [])
+    can_ip_forward         = optional(bool, false)
+    disable_smt            = optional(bool, false)
+    disk_auto_delete       = optional(bool, true)
+    disk_labels            = optional(map(string), {})
+    disk_size_gb           = optional(number)
+    disk_type              = optional(string, "n1-standard-1")
+    enable_confidential_vm = optional(bool, false)
+    enable_oslogin         = optional(bool, true)
+    enable_shielded_vm     = optional(bool, false)
+    gpu = optional(object({
+      count = number
+      type  = string
+    }))
+    instance_template   = optional(string)
+    labels              = optional(map(string), {})
+    machine_type        = optional(string)
+    metadata            = optional(map(string), {})
+    min_cpu_platform    = optional(string)
+    network_ip          = optional(string)
+    on_host_maintenance = optional(string)
+    preemptible         = optional(bool, false)
+    region              = optional(string)
+    service_account = optional(object({
+      email  = optional(string)
+      scopes = optional(list(string), ["https://www.googleapis.com/auth/cloud-platform"])
+    }))
+    shielded_instance_config = optional(object({
+      enable_integrity_monitoring = optional(bool, true)
+      enable_secure_boot          = optional(bool, true)
+      enable_vtpm                 = optional(bool, true)
+    }))
+    source_image_family  = optional(string)
+    source_image_project = optional(string)
+    source_image         = optional(string)
+    static_ip            = optional(string)
+    subnetwork_project   = optional(string)
+    subnetwork           = optional(string)
+    tags                 = optional(list(string), [])
+    zone                 = optional(string)
+  })
+  default = {}
+}
+
+######################
+# CONTROLLER: HYBRID #
+######################
+
+variable "enable_hybrid" {
+  description = <<EOD
+Enables use of hybrid controller mode. When true, controller_hybrid_config will
+be used instead of controller_instance_config and will disable login instances.
+EOD
+  type        = bool
+  default     = false
+}
+
+variable "controller_hybrid_config" {
+  description = <<EOD
+Creates a hybrid controller with given configuration.
+See 'main.tf' for valid keys.
+EOD
+  type = object({
+    google_app_cred_path    = optional(string)
+    slurm_control_host      = optional(string)
+    slurm_control_host_port = optional(string)
+    slurm_control_addr      = optional(string)
+    slurm_bin_dir           = optional(string)
+    slurm_log_dir           = optional(string)
+    output_dir              = optional(string)
+    install_dir             = optional(string)
+    munge_mount = optional(object({
+      server_ip     = optional(string)
+      remote_mount  = optional(string, "/etc/munge")
+      fs_type       = optional(string, "nfs")
+      mount_options = optional(string)
+    }), {})
+  })
+  default = {}
+}
+
+#########
+# LOGIN #
+#########
+
+variable "login_nodes" {
+  description = "List of slurm login instance definitions."
+  type = list(object({
+    access_config = optional(list(object({
+      nat_ip       = optional(string)
+      network_tier = optional(string)
+    })), [])
+    additional_disks = optional(list(object({
+      disk_name    = optional(string)
+      device_name  = optional(string)
+      disk_size_gb = optional(number)
+      disk_type    = optional(string)
+      disk_labels  = optional(map(string), {})
+      auto_delete  = optional(bool, true)
+      boot         = optional(bool, false)
+    })), [])
+    can_ip_forward         = optional(bool, false)
+    disable_smt            = optional(bool, false)
+    disk_auto_delete       = optional(bool, true)
+    disk_labels            = optional(map(string), {})
+    disk_size_gb           = optional(number)
+    disk_type              = optional(string, "n1-standard-1")
+    enable_confidential_vm = optional(bool, false)
+    enable_oslogin         = optional(bool, true)
+    enable_shielded_vm     = optional(bool, false)
+    gpu = optional(object({
+      count = number
+      type  = string
+    }))
+    group_name          = string
+    instance_template   = optional(string)
+    labels              = optional(map(string), {})
+    machine_type        = optional(string)
+    metadata            = optional(map(string), {})
+    min_cpu_platform    = optional(string)
+    network_ip          = optional(string)
+    num_instances       = optional(number, 1)
+    on_host_maintenance = optional(string)
+    preemptible         = optional(bool, false)
+    region              = optional(string)
+    service_account = optional(object({
+      email  = optional(string)
+      scopes = optional(list(string), ["https://www.googleapis.com/auth/cloud-platform"])
+    }))
+    shielded_instance_config = optional(object({
+      enable_integrity_monitoring = optional(bool, true)
+      enable_secure_boot          = optional(bool, true)
+      enable_vtpm                 = optional(bool, true)
+    }))
+    source_image_family  = optional(string)
+    source_image_project = optional(string)
+    source_image         = optional(string)
+    static_ips           = optional(list(string), [])
+    subnetwork_project   = optional(string)
+    subnetwork           = optional(string)
+    tags                 = optional(list(string), [])
+    zone                 = optional(string)
+  }))
+  default = []
+}
+
+#############
+# PARTITION #
+#############
+
+variable "partitions" {
+  description = <<EOD
+Cluster partitions as a list. See module slurm_partition.
+EOD
+  type = list(object({
+    enable_job_exclusive              = optional(bool, false)
+    enable_placement_groups           = optional(bool, false)
+    partition_conf                    = optional(map(string), {})
+    partition_startup_scripts_timeout = optional(number, 300)
+    partition_startup_scripts = optional(list(object({
+      filename = string
+      content  = string
+    })), [])
+    partition_feature = optional(string)
+    partition_name    = string
+    partition_nodes = optional(list(object({
+      node_count_static      = optional(number, 0)
+      node_count_dynamic_max = optional(number, 1)
+      group_name             = string
+      node_conf              = optional(map(string), {})
+      additional_disks = optional(list(object({
+        disk_name    = optional(string)
+        device_name  = optional(string)
+        disk_size_gb = optional(number)
+        disk_type    = optional(string)
+        disk_labels  = optional(map(string), {})
+        auto_delete  = optional(bool, true)
+        boot         = optional(bool, false)
+      })), [])
+      access_config = optional(list(object({
+        network_tier = string
+      })), [])
+      bandwidth_tier         = optional(string, "platform_default")
+      can_ip_forward         = optional(bool, false)
+      disable_smt            = optional(bool, false)
+      disk_auto_delete       = optional(bool, true)
+      disk_labels            = optional(map(string), {})
+      disk_size_gb           = optional(number)
+      disk_type              = optional(string)
+      enable_confidential_vm = optional(bool, false)
+      enable_oslogin         = optional(bool, true)
+      enable_shielded_vm     = optional(bool, false)
+      enable_spot_vm         = optional(bool, false)
+      gpu = optional(object({
+        count = number
+        type  = string
+      }))
+      instance_template   = optional(string)
+      labels              = optional(map(string), {})
+      machine_type        = optional(string)
+      metadata            = optional(map(string), {})
+      min_cpu_platform    = optional(string)
+      on_host_maintenance = optional(string)
+      preemptible         = optional(bool, false)
+      service_account = optional(object({
+        email  = optional(string)
+        scopes = optional(list(string), ["https://www.googleapis.com/auth/cloud-platform"])
+      }))
+      shielded_instance_config = optional(object({
+        enable_integrity_monitoring = optional(bool, true)
+        enable_secure_boot          = optional(bool, true)
+        enable_vtpm                 = optional(bool, true)
+      }))
+      spot_instance_config = optional(object({
+        termination_action = optional(string, "STOP")
+      }))
+      source_image_family  = optional(string)
+      source_image_project = optional(string)
+      source_image         = optional(string)
+      tags                 = optional(list(string), [])
+    })), [])
+    network_storage = optional(list(object({
+      local_mount   = string
+      fs_type       = string
+      server_ip     = string
+      remote_mount  = string
+      mount_options = string
+    })), [])
+    region             = optional(string)
+    subnetwork_project = optional(string)
+    subnetwork         = optional(string)
+    zone_target_shape  = optional(string, "ANY_SINGLE_ZONE")
+    zone_policy_allow  = optional(list(string), [])
+    zone_policy_deny   = optional(list(string), [])
+  }))
+
+  validation {
+    condition     = length(var.partitions) > 0
+    error_message = "Partitions cannot be empty."
+  }
+
+  validation {
+    condition = alltrue([
+      for x in var.partitions : can(regex("^[a-z](?:[a-z0-9]{0,6})$", x.partition_name))
+    ])
+    error_message = "Items 'partition_name' must be a match of regex '^[a-z](?:[a-z0-9]{0,6})$'."
+  }
+}
+
+#########
+# SLURM #
+#########
+
+variable "enable_devel" {
+  type        = bool
+  description = "Enables development mode. Not for production use."
+  default     = false
+}
+
+variable "enable_cleanup_compute" {
+  description = <<EOD
+Enables automatic cleanup of compute nodes and resource policies (e.g.
+placement groups) managed by this module, when cluster is destroyed.
+
+NOTE: Requires Python and script dependencies.
+
+*WARNING*: Toggling this may impact the running workload. Deployed compute nodes
+may be destroyed and their jobs will be requeued.
+EOD
+  type        = bool
+  default     = false
+}
+
+variable "enable_cleanup_subscriptions" {
+  description = <<EOD
+Enables automatic cleanup of pub/sub subscriptions managed by this module, when
+cluster is destroyed.
+
+NOTE: Requires Python and script dependencies.
+
+*WARNING*: Toggling this may temporarily impact var.enable_reconfigure behavior.
+EOD
+  type        = bool
+  default     = false
+}
+
+variable "enable_reconfigure" {
+  description = <<EOD
+Enables automatic Slurm reconfigure on when Slurm configuration changes (e.g.
+slurm.conf.tpl, partition details). Compute instances and resource policies
+(e.g. placement groups) will be destroyed to align with new configuration.
+
+NOTE: Requires Python and Google Pub/Sub API.
+
+*WARNING*: Toggling this will impact the running workload. Deployed compute nodes
+will be destroyed and their jobs will be requeued.
+EOD
+  type        = bool
+  default     = false
+}
+
+variable "enable_bigquery_load" {
+  description = <<EOD
+Enables loading of cluster job usage into big query.
+
+NOTE: Requires Google Bigquery API.
+EOD
+  type        = bool
+  default     = false
+}
+
+variable "cloud_parameters" {
+  description = "cloud.conf options."
+  type = object({
+    no_comma_params = optional(bool, false)
+    resume_rate     = optional(number, 0)
+    resume_timeout  = optional(number, 300)
+    suspend_rate    = optional(number, 0)
+    suspend_timeout = optional(number, 300)
+  })
+  default = {}
+}
+
+variable "disable_default_mounts" {
+  description = <<-EOD
+    Disable default global network storage from the controller
+    * /usr/local/etc/slurm
+    * /etc/munge
+    * /home
+    * /apps
+    If these are disabled, the slurm etc and munge dirs must be added manually,
+    or some other mechanism must be used to synchronize the slurm conf files
+    and the munge key across the cluster.
+    EOD
+  type        = bool
+  default     = false
+}
+
+variable "network_storage" {
+  description = <<EOD
+Storage to mounted on all instances.
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Options to mount with.
+EOD
+  type = list(object({
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
+  default = []
+}
+
+variable "login_network_storage" {
+  description = <<EOD
+Storage to mounted on login and controller instances
+* server_ip     : Address of the storage server.
+* remote_mount  : The location in the remote instance filesystem to mount from.
+* local_mount   : The location on the instance filesystem to mount to.
+* fs_type       : Filesystem type (e.g. "nfs").
+* mount_options : Options to mount with.
+EOD
+  type = list(object({
+    server_ip     = string
+    remote_mount  = string
+    local_mount   = string
+    fs_type       = string
+    mount_options = string
+  }))
+  default = []
+}
+
+variable "slurmdbd_conf_tpl" {
+  description = "Slurm slurmdbd.conf template file path."
+  type        = string
+  default     = null
+}
+
+variable "slurm_conf_tpl" {
+  description = "Slurm slurm.conf template file path."
+  type        = string
+  default     = null
+}
+
+variable "cgroup_conf_tpl" {
+  description = "Slurm cgroup.conf template file path."
+  type        = string
+  default     = null
+}
+
+variable "controller_startup_scripts" {
+  description = "List of scripts to be ran on controller VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
+variable "controller_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in controller_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
+variable "login_startup_scripts" {
+  description = "List of scripts to be ran on login VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
+variable "login_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in login_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
+variable "compute_startup_scripts" {
+  description = "List of scripts to be ran on compute VM startup."
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
+variable "compute_startup_scripts_timeout" {
+  description = <<EOD
+The timeout (seconds) applied to each script in compute_startup_scripts. If
+any script exceeds this timeout, then the instance setup process is considered
+failed and handled accordingly.
+
+NOTE: When set to 0, the timeout is considered infinite and thus disabled.
+EOD
+  type        = number
+  default     = 300
+}
+
+variable "prolog_scripts" {
+  description = <<EOD
+List of scripts to be used for Prolog. Programs for the slurmd to execute
+whenever it is asked to run a job step from a new job allocation.
+See https://slurm.schedmd.com/slurm.conf.html#OPT_Prolog.
+EOD
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
+variable "epilog_scripts" {
+  description = <<EOD
+List of scripts to be used for Epilog. Programs for the slurmd to execute
+on every node when a user's job completes.
+See https://slurm.schedmd.com/slurm.conf.html#OPT_Epilog.
+EOD
+  type = list(object({
+    filename = string
+    content  = string
+  }))
+  default = []
+}
+
+variable "cloudsql" {
+  description = <<EOD
+Use this database instead of the one on the controller.
+* server_ip : Address of the database server.
+* user      : The user to access the database as.
+* password  : The password, given the user, to access the given database. (sensitive)
+* db_name   : The database to access.
+EOD
+  type = object({
+    server_ip = string
+    user      = string
+    password  = string # sensitive
+    db_name   = string
+  })
+  default   = null
+  sensitive = true
+}
