@@ -328,49 +328,13 @@ EOD
 }
 
 variable "partitions" {
-  description = "Cluster partitions as a list."
-  type = list(object({
-    compute_list = list(string)
-    partition = object({
-      enable_job_exclusive    = bool
-      enable_placement_groups = bool
-      network_storage = list(object({
-        server_ip     = string
-        remote_mount  = string
-        local_mount   = string
-        fs_type       = string
-        mount_options = string
-      }))
-      partition_conf    = map(string)
-      partition_feature = string
-      partition_name    = string
-      partition_nodes = map(object({
-        access_config = list(object({
-          network_tier = string
-        }))
-        bandwidth_tier         = string
-        node_count_dynamic_max = number
-        node_count_static      = number
-        enable_spot_vm         = bool
-        group_name             = string
-        instance_template      = string
-        node_conf              = map(string)
-        spot_instance_config = object({
-          termination_action = string
-        })
-      }))
-      partition_startup_scripts_timeout = number
-      subnetwork                        = string
-      zone_target_shape                 = string
-      zone_policy_allow                 = list(string)
-      zone_policy_deny                  = list(string)
-    })
-  }))
-  default = []
+  description = "Cluster partitions as a list. Pass list of module.slurm_partition (e.g. partitions = [module.slurm_partition, ])."
+  type        = list(any)
+  default     = []
 
   validation {
     condition = alltrue([
-      for x in var.partitions[*].partition : can(regex("^[a-z](?:[a-z0-9]*)$", x.partition_name))
+      for x in var.partitions : lookup(x, "partition", null) == null ? true : can(regex("^[a-z](?:[a-z0-9]*)$", x.partition.partition_name))
     ])
     error_message = "Items 'partition_name' must be a match of regex '^[a-z](?:[a-z0-9]*)$'."
   }

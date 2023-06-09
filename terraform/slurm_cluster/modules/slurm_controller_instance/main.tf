@@ -39,8 +39,8 @@ locals {
 ##################
 
 locals {
-  partitions   = { for p in var.partitions[*].partition : p.partition_name => p }
-  compute_list = flatten(var.partitions[*].compute_list)
+  partitions   = { for p in var.partitions : p.partition.partition_name => p.partition if lookup(p, "partition", null) != null }
+  compute_list = flatten([for p in var.partitions : lookup(p, "compute_list", [])])
 }
 
 ####################
