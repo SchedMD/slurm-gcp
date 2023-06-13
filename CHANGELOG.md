@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Disable TreeWidth when dynamic nodes are configured.
 - Fix dynamic nodes failing to download custom scripts.
 - Fix slurmsync with only dynamic nodes in system.
+- Fix NVIDIA driver install after kernel upgrade for rocky-linux-8.
 
 ## \[5.7.3\]
 

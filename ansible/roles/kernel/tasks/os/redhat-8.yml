@@ -17,16 +17,6 @@
   dnf:
     name:
     - kernel
-
-- name: Reboot
-  reboot:
-
-- name: Gather facts after reboot
-  setup:
-
-- name: Install {{ansible_os_family}} Family Kernel Packages
-  dnf:
-    name:
     - kernel-devel
     - kernel-headers
     - kernel-modules
@@ -35,3 +25,9 @@
     #- kernel-tools-libs-devel
     state: latest
     update_cache: yes
+
+- name: Reboot
+  reboot:
+
+- name: Gather facts after reboot
+  setup:
