@@ -64,6 +64,7 @@
     group: '{{slurm_user.group}}'
     mode: 0o755
   with_items:
+  - conf.py
   - resume.py
   - setup.py
   - startup.sh

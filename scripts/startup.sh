@@ -35,6 +35,12 @@ function fetch_scripts {
 		return
 	fi
 	echo devel data found in project metadata, looking to update scripts
+	if CONF_SCRIPT=$(jq -re '."conf-script"' <<< "$META_DEVEL"); then
+		echo "INFO: updating conf.py from project metadata"
+		printf '%s' "$CONF_SCRIPT" > $CONF_SCRIPT_FILE
+	else
+		echo "WARNING: setup-script not found in project metadata, skipping update"
+	fi
 	if STARTUP_SCRIPT=$(jq -re '."startup-script"' <<< "$META_DEVEL"); then
 		echo "INFO: updating startup.sh from project metadata"
 		printf '%s' "$STARTUP_SCRIPT" > $STARTUP_SCRIPT_FILE
@@ -104,6 +110,7 @@ fi
 
 mkdir -p $SCRIPTS_DIR
 
+CONF_SCRIPT_FILE=$SCRIPTS_DIR/conf.py
 STARTUP_SCRIPT_FILE=$SCRIPTS_DIR/startup.sh
 SETUP_SCRIPT_FILE=$SCRIPTS_DIR/setup.py
 UTIL_SCRIPT_FILE=$SCRIPTS_DIR/util.py

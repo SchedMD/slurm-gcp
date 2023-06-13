@@ -28,6 +28,7 @@ locals {
 
 locals {
   metadata_devel = {
+    conf-script    = data.local_file.conf.content
     startup-script = data.local_file.startup.content
     setup-script   = data.local_file.setup.content
     slurm-resume   = data.local_file.resume.content
@@ -41,6 +42,10 @@ locals {
 #################
 # DATA: SCRIPTS #
 #################
+
+data "local_file" "conf" {
+  filename = abspath("${local.scripts_dir}/conf.py")
+}
 
 data "local_file" "startup" {
   filename = abspath("${local.scripts_dir}/startup.sh")
