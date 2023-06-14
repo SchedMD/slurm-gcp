@@ -24,6 +24,8 @@ RUN apk add --update \
     which \
     xz-dev \
     zlib-dev
+RUN pip3 install pipenv
+
 RUN bash <(curl -sSL https://sdk.cloud.google.com) \
  --disable-prompts --install-dir=/opt
 ENV PATH $PATH:/opt/google-cloud-sdk/bin
