@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - Make `slurm_cluster` root module use terraform 1.3 and optional object fields.
 - Reconfigure now is a service on the instances.
 - Move from project metadata to GCS bucket to store cluster files.
+- Factored out nodeset modules (regular, dynamic) from partition module.
+- Replace `zone_policy_*` with `zones` in nodeset module.
 
 ## \[5.7.4\]
 

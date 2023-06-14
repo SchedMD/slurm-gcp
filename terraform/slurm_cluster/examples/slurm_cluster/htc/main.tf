@@ -39,44 +39,44 @@ locals {
     }
   ]
 
+  nodeset = [
+    {
+      nodeset_name           = "c2s4"
+      node_count_dynamic_max = 20
+
+      disk_size_gb    = 32
+      machine_type    = "c2-standard-4"
+      service_account = module.slurm_sa_iam["compute"].service_account
+      subnetwork      = data.google_compute_subnetwork.default.self_link
+    },
+    {
+      node_count_dynamic_max = 10
+      node_count_static      = 0
+      nodeset_name           = "v100"
+      node_conf              = {}
+
+      disk_size_gb = 32
+      gpu = {
+        count = 1
+        type  = "nvidia-tesla-v100"
+      }
+      machine_type    = "n1-standard-4"
+      service_account = module.slurm_sa_iam["compute"].service_account
+      subnetwork      = data.google_compute_subnetwork.default.self_link
+    },
+  ]
+
   partitions = [
     {
-      network_storage = []
       partition_conf = {
         Default = "YES"
       }
-      partition_name = "debug"
-      partition_nodes = [
-        {
-          node_count_dynamic_max = 20
-          group_name             = "test"
-
-          disk_size_gb    = 32
-          disk_type       = "pd-standard"
-          machine_type    = "c2-standard-4"
-          service_account = module.slurm_sa_iam["compute"].service_account
-        },
-      ]
-      subnetwork = data.google_compute_subnetwork.default.self_link
+      partition_name    = "debug"
+      partition_nodeset = [local.nodeset[0].nodeset_name]
     },
     {
-      partition_name = "debug2"
-      partition_nodes = [
-        {
-          node_count_dynamic_max = 10
-          group_name             = "test"
-
-          disk_size_gb = 32
-          disk_type    = "pd-standard"
-          gpu = {
-            count = 1
-            type  = "nvidia-tesla-v100"
-          }
-          machine_type    = "n1-standard-4"
-          service_account = module.slurm_sa_iam["compute"].service_account
-        },
-      ]
-      subnetwork = data.google_compute_subnetwork.default.self_link
+      partition_name    = "gpu"
+      partition_nodeset = [local.nodeset[1].nodeset_name]
     },
   ]
 }
@@ -110,6 +110,7 @@ module "slurm_cluster" {
   controller_instance_config = local.controller_instance_config
   login_nodes                = local.login_nodes
   partitions                 = local.partitions
+  nodeset                    = local.nodeset
   project_id                 = var.project_id
 
   slurm_conf_tpl    = "./etc/slurm.conf.tpl"

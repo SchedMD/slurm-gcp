@@ -63,6 +63,8 @@ locals {
     epilog_scripts   = [for k, v in google_storage_bucket_object.epilog_scripts : k]
     cloud_parameters = var.cloud_parameters
     partitions       = local.partitions
+    nodeset          = local.nodeset
+    nodeset_dyn      = local.nodeset_dyn
 
     # hybrid
     google_app_cred_path    = var.enable_hybrid ? local.google_app_cred_path : null
@@ -79,6 +81,13 @@ locals {
   config_yaml_bucket = format("%s/%s", local.bucket_dir, local.config_yaml)
 
   partitions = { for p in var.partitions[*].partition : p.partition_name => p }
+
+  nodeset     = { for n in var.nodeset[*].nodeset : n.nodeset_name => n }
+  nodeset_dyn = { for n in var.nodeset_dyn[*].nodeset : n.nodeset_name => n }
+
+  x_nodeset         = toset([for k, v in local.nodeset : v.nodeset_name])
+  x_nodeset_dyn     = toset([for k, v in local.nodeset_dyn : v.nodeset_name])
+  x_nodeset_overlap = setintersection([], local.x_nodeset, local.x_nodeset_dyn)
 
   partition_scripts = flatten([for p in var.partitions[*].partition : [
     for x in p.partition_startup_scripts : {

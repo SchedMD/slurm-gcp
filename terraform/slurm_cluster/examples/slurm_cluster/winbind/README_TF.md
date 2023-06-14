@@ -45,7 +45,7 @@ limitations under the License.
 | Name | Type |
 |------|------|
 | [template_dir.tpl_dir](https://registry.terraform.io/providers/hashicorp/template/latest/docs/resources/dir) | resource |
-| [google_compute_subnetwork.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
+| [google_compute_subnetwork.default](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_subnetwork) | data source |
 | [local_file.winbind_sh](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 
 ## Inputs

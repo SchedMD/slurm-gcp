@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = "~> 1.3"
+###########
+# NODESET #
+###########
 
-  required_providers {
-    google = ">= 3.53, < 5.0"
-    random = "~> 3.0"
+locals {
+  nodeset = {
+    nodeset_name    = var.nodeset_name
+    nodeset_feature = var.nodeset_feature
+  }
+}
+
+resource "null_resource" "nodeset" {
+  triggers = {
+    nodeset = sha256(jsonencode(local.nodeset))
   }
 }

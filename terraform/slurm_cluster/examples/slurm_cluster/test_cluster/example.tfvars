@@ -318,71 +318,46 @@ login_nodes = [
   },
 ]
 
-##############
-# PARTITIONS #
-##############
+############
+# NODESETS #
+############
 
-partitions = [
+nodeset = [
   {
-    partition_conf = {
-      Default        = "YES"
-      ResumeTimeout  = 300
-      SuspendTimeout = 300
-      SuspendTime    = 300
+    # Group Definition
+    nodeset_name           = "n1s1"
+    node_count_dynamic_max = 20
+    node_count_static      = 0
+    node_conf              = {}
+
+    # Template By Definition
+    additional_disks       = []
+    can_ip_forward         = false
+    disable_smt            = false
+    disk_auto_delete       = true
+    disk_labels            = {}
+    disk_size_gb           = 32
+    disk_type              = "pd-standard"
+    enable_confidential_vm = false
+    enable_oslogin         = true
+    enable_shielded_vm     = false
+    gpu                    = null
+    labels                 = {}
+    machine_type           = "n1-standard-1"
+    metadata               = {}
+    min_cpu_platform       = null
+    on_host_maintenance    = null
+    preemptible            = false
+    service_account = {
+      email  = null
+      scopes = ["https://www.googleapis.com/auth/cloud-platform"]
     }
-    partition_name = "debug"
-    partition_nodes = [
-      {
-        # Group Definition
-        group_name             = "n1s2"
-        node_count_dynamic_max = 20
-        node_count_static      = 0
-        node_conf              = {}
+    shielded_instance_config = null
+    source_image_family      = null
+    source_image_project     = null
+    source_image             = null
+    tags                     = []
 
-        # Template By Definition
-        additional_disks       = []
-        can_ip_forward         = false
-        disable_smt            = false
-        disk_auto_delete       = true
-        disk_labels            = {}
-        disk_size_gb           = 32
-        disk_type              = "pd-standard"
-        enable_confidential_vm = false
-        enable_oslogin         = true
-        enable_shielded_vm     = false
-        gpu                    = null
-        labels                 = {}
-        machine_type           = "n1-standard-2"
-        metadata               = {}
-        min_cpu_platform       = null
-        on_host_maintenance    = null
-        preemptible            = false
-        service_account = {
-          email  = null
-          scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-        }
-        shielded_instance_config = null
-        source_image_family      = null
-        source_image_project     = null
-        source_image             = null
-        tags                     = []
-
-        # Template By Source
-        instance_template = null
-
-        # Instance Definition
-        access_config = [
-          # {
-          #   network_tier = null
-          # },
-        ]
-        bandwidth_tier = "platform_default"
-        enable_spot_vm = false
-        spot_instance_config = {
-          termination_action = "STOP"
-        }
-      },
-    ]
     # Network
     region             = null
     subnetwork_project = null
@@ -390,6 +365,71 @@ partitions = [
     zone_target_shape  = "ANY_SINGLE_ZONE"
     zone_policy_allow  = []
     zone_policy_deny   = []
+
+    # Template By Source
+    instance_template = null
+
+    # Instance Definition
+    access_config = [
+      # {
+      #   network_tier = null
+      # },
+    ]
+    bandwidth_tier = "platform_default"
+    enable_spot_vm = false
+    spot_instance_config = {
+      termination_action = "STOP"
+    }
+  },
+  {
+    # Group Definition
+    nodeset_name           = "c2s4"
+    node_count_dynamic_max = 20
+
+    # Template By Definition
+    machine_type = "c2-standard-4"
+    service_account = {
+      email  = null
+      scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    }
+  },
+  {
+    # Group Definition
+    nodeset_name           = "v100"
+    node_count_dynamic_max = 10
+
+    # Template By Definition
+    gpu = {
+      count = 1
+      type  = "nvidia-tesla-v100"
+    }
+    machine_type = "n1-standard-4"
+    service_account = {
+      email  = null
+      scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    }
+
+    # Instance Definition
+    zones = ["us-central1-f", ]
+  },
+]
+
+nodeset_dyn = []
+
+##############
+# PARTITIONS #
+##############
+
+partitions = [
+  {
+    partition_name = "debug"
+    partition_conf = {
+      Default        = "YES"
+      ResumeTimeout  = 300
+      SuspendTimeout = 300
+      SuspendTime    = 300
+    }
+    partition_nodes = ["n1s1", "c2s4"]
     # Misc
     network_storage                   = []
     partition_startup_scripts_timeout = 300
@@ -408,61 +448,15 @@ partitions = [
     enable_placement_groups = false
   },
   {
+    partition_name = "gpu"
     partition_conf = {
       ResumeTimeout  = 300
       SuspendTimeout = 300
       SuspendTime    = 300
     }
-    partition_name = "compute"
-    partition_nodes = [
-      {
-        # Group Definition
-        group_name             = "c2s4"
-        node_count_dynamic_max = 10
-
-        # Template By Definition
-        disk_size_gb   = 100
-        enable_oslogin = true
-        machine_type   = "c2-standard-4"
-        service_account = {
-          email  = null
-          scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-        }
-      },
-    ]
+    partition_nodes = ["v100", ]
     # Options
     enable_job_exclusive    = true
     enable_placement_groups = true
-  },
-  {
-    partition_conf = {
-      ResumeTimeout  = 300
-      SuspendTimeout = 300
-      SuspendTime    = 300
-    }
-    partition_name = "gpu"
-    partition_nodes = [
-      {
-        # Group Definition
-        group_name             = "n1s2"
-        node_count_dynamic_max = 10
-
-        # Template By Definition
-        disk_size_gb   = 100
-        enable_oslogin = true
-        gpu = {
-          count = 1
-          type  = "nvidia-tesla-v100"
-        }
-        machine_type = "n1-standard-4"
-        service_account = {
-          email  = null
-          scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-        }
-      },
-    ]
-    # Options
-    enable_job_exclusive    = false
-    enable_placement_groups = false
   },
 ]

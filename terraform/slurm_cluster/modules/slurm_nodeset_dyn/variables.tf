@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = "~> 1.3"
+variable "nodeset_name" {
+  description = "Name of Slurm nodeset."
+  type        = string
 
-  required_providers {
-    google = ">= 3.53, < 5.0"
-    random = "~> 3.0"
+  validation {
+    condition     = can(regex("^[a-z](?:[a-z0-9]*)$", var.nodeset_name))
+    error_message = "Variable 'nodeset_name' must be a match of regex '^[a-z](?:[a-z0-9]*)$'."
   }
+}
+
+variable "nodeset_feature" {
+  description = "Nodeset feature for dynamic registration."
+  type        = string
 }

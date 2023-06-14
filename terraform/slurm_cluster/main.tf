@@ -19,6 +19,10 @@
 ##########
 
 locals {
+  nodeset_map = { for x in var.nodeset : x.nodeset_name => x }
+
+  nodeset_dyn_map = { for x in var.nodeset_dyn : x.nodeset_name => x }
+
   partition_map = { for x in var.partitions : x.partition_name => x }
 
   have_template = (
@@ -79,6 +83,8 @@ module "slurm_files" {
   disable_default_mounts             = var.disable_default_mounts
   network_storage                    = var.network_storage
   partitions                         = values(module.slurm_partition)[*]
+  nodeset                            = values(module.slurm_nodeset)[*]
+  nodeset_dyn                        = values(module.slurm_nodeset_dyn)[*]
   project_id                         = var.project_id
   prolog_scripts                     = var.prolog_scripts
   slurmdbd_conf_tpl                  = var.slurmdbd_conf_tpl
@@ -100,6 +106,84 @@ module "slurm_files" {
   ]
 }
 
+##################
+# SLURM NODESETS #
+##################
+
+data "google_compute_subnetwork" "nodeset_subnetwork" {
+  for_each = local.nodeset_map
+
+  project = each.value.subnetwork_project
+  region  = each.value.region
+  name    = each.value.subnetwork
+  self_link = (
+    length(regexall("/projects/([^/]*)", each.value.subnetwork)) > 0
+    && length(regexall("/regions/([^/]*)", each.value.subnetwork)) > 0
+    ? each.value.subnetwork
+    : null
+  )
+}
+
+module "slurm_nodeset_template" {
+  source = "./modules/slurm_instance_template"
+
+  for_each = local.nodeset_map
+
+  additional_disks         = each.value.additional_disks
+  slurm_bucket_path        = module.slurm_files.slurm_bucket_path
+  can_ip_forward           = each.value.can_ip_forward
+  disable_smt              = each.value.disable_smt
+  disk_auto_delete         = each.value.disk_auto_delete
+  disk_labels              = each.value.disk_labels
+  disk_size_gb             = each.value.disk_size_gb
+  disk_type                = each.value.disk_type
+  enable_confidential_vm   = each.value.enable_confidential_vm
+  enable_oslogin           = each.value.enable_oslogin
+  enable_shielded_vm       = each.value.enable_shielded_vm
+  gpu                      = each.value.gpu
+  labels                   = each.value.labels
+  machine_type             = each.value.machine_type
+  metadata                 = each.value.metadata
+  min_cpu_platform         = each.value.min_cpu_platform
+  name_prefix              = each.value.nodeset_name
+  on_host_maintenance      = each.value.on_host_maintenance
+  preemptible              = each.value.preemptible
+  project_id               = var.project_id
+  service_account          = each.value.service_account
+  shielded_instance_config = each.value.shielded_instance_config
+  slurm_cluster_name       = var.slurm_cluster_name
+  slurm_instance_role      = "compute"
+  source_image_family      = each.value.source_image_family
+  source_image_project     = each.value.source_image_project
+  source_image             = each.value.source_image
+  subnetwork               = data.google_compute_subnetwork.nodeset_subnetwork[each.key].self_link
+  tags                     = concat([var.slurm_cluster_name], each.value.tags)
+}
+
+module "slurm_nodeset" {
+  source = "./modules/slurm_nodeset"
+
+  for_each = local.nodeset_map
+
+  node_count_dynamic_max      = each.value.node_count_dynamic_max
+  node_count_static           = each.value.node_count_static
+  nodeset_name                = each.value.nodeset_name
+  node_conf                   = each.value.node_conf
+  instance_template_self_link = module.slurm_nodeset_template[each.key].self_link
+  subnetwork_self_link        = data.google_compute_subnetwork.nodeset_subnetwork[each.key].self_link
+  zones                       = each.value.zones
+  zone_target_shape           = each.value.zone_target_shape
+}
+
+module "slurm_nodeset_dyn" {
+  source = "./modules/slurm_nodeset_dyn"
+
+  for_each = local.nodeset_dyn_map
+
+  nodeset_name    = each.value.nodeset_name
+  nodeset_feature = each.value.nodeset_feature
+}
+
 ###################
 # SLURM PARTITION #
 ###################
@@ -109,24 +193,15 @@ module "slurm_partition" {
 
   for_each = local.partition_map
 
-  slurm_bucket_path                 = module.slurm_files.slurm_bucket_path
-  partition_nodes                   = each.value.partition_nodes
   enable_job_exclusive              = each.value.enable_job_exclusive
   enable_placement_groups           = each.value.enable_placement_groups
   network_storage                   = each.value.network_storage
   partition_name                    = each.value.partition_name
   partition_conf                    = each.value.partition_conf
-  partition_feature                 = each.value.partition_feature
+  partition_nodeset                 = [for x in each.value.partition_nodeset : module.slurm_nodeset[x].nodeset_name if try(module.slurm_nodeset[x], null) != null]
+  partition_nodeset_dyn             = [for x in each.value.partition_nodeset_dyn : module.slurm_nodeset_dyn[x].nodeset_name if try(module.slurm_nodeset_dyn[x], null) != null]
   partition_startup_scripts_timeout = each.value.partition_startup_scripts_timeout
   partition_startup_scripts         = each.value.partition_startup_scripts
-  project_id                        = var.project_id
-  region                            = each.value.region
-  slurm_cluster_name                = var.slurm_cluster_name
-  subnetwork_project                = each.value.subnetwork_project
-  subnetwork                        = each.value.subnetwork
-  zone_target_shape                 = each.value.zone_target_shape
-  zone_policy_allow                 = each.value.zone_policy_allow
-  zone_policy_deny                  = each.value.zone_policy_deny
 }
 
 ########################

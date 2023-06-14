@@ -22,50 +22,14 @@ locals {
   partition = {
     partition_name                    = var.partition_name
     partition_conf                    = var.partition_conf
-    partition_feature                 = var.partition_feature
-    partition_nodes                   = local.partition_nodes
+    partition_nodeset                 = var.partition_nodeset
+    partition_nodeset_dyn             = var.partition_nodeset_dyn
     partition_startup_scripts         = var.partition_startup_scripts
     partition_startup_scripts_timeout = var.partition_startup_scripts_timeout
-    subnetwork                        = data.google_compute_subnetwork.partition_subnetwork.self_link
-    zone_target_shape                 = var.zone_target_shape
-    zone_policy_allow                 = setsubtract([for x in var.zone_policy_allow : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0], var.zone_policy_deny)
-    zone_policy_deny                  = [for x in var.zone_policy_deny : x if length(regexall("${data.google_compute_subnetwork.partition_subnetwork.region}-[a-z]", x)) > 0]
-    enable_job_exclusive              = var.enable_job_exclusive
-    enable_placement_groups           = var.enable_placement_groups
     network_storage                   = var.network_storage
-  }
-
-  partition_nodes = {
-    for x in var.partition_nodes : x.group_name => {
-      group_name             = x.group_name
-      node_conf              = x.node_conf
-      partition_name         = var.partition_name
-      instance_template      = data.google_compute_instance_template.group_template[x.group_name].self_link
-      node_count_dynamic_max = x.node_count_dynamic_max
-      node_count_static      = x.node_count_static
-      node_list = flatten([
-        for offset in range(0, sum([x.node_count_dynamic_max, x.node_count_static]), 1024)
-        : formatlist(
-          "%s-%s-%s-%g",
-          var.slurm_cluster_name,
-          var.partition_name,
-          x.group_name,
-          range(offset, min(offset + 1024, sum([x.node_count_dynamic_max, x.node_count_static])))
-        )
-      ])
-      # Additional Features
-      access_config  = x.access_config
-      bandwidth_tier = x.bandwidth_tier != null ? x.bandwidth_tier : local.bandwidth_tier
-      # Beta Features
-      enable_spot_vm       = x.enable_spot_vm
-      spot_instance_config = x.spot_instance_config != null ? x.spot_instance_config : local.spot_instance_config
-    }
-  }
-
-  bandwidth_tier = "platform_default"
-
-  spot_instance_config = {
-    termination_action = "STOP"
+    # Options
+    enable_job_exclusive    = var.enable_job_exclusive
+    enable_placement_groups = var.enable_placement_groups
   }
 }
 
@@ -80,84 +44,5 @@ resource "null_resource" "partition" {
       condition     = !var.enable_placement_groups || var.enable_job_exclusive
       error_message = "Input enable_job_exclusive must be set if enable_placement_groups is set"
     }
-
-    precondition {
-      condition     = !var.enable_placement_groups || (var.enable_placement_groups && alltrue([for x in local.partition_nodes : x.node_count_static == 0]))
-      error_message = "Static nodes are not supported with placement groups (e.g. node_count_static=0)."
-    }
   }
-}
-
-####################
-# DATA: SUBNETWORK #
-####################
-
-data "google_compute_subnetwork" "partition_subnetwork" {
-  project = var.subnetwork_project
-  region  = var.region
-  name    = var.subnetwork
-  self_link = (
-    length(regexall("/projects/([^/]*)", var.subnetwork)) > 0
-    && length(regexall("/regions/([^/]*)", var.subnetwork)) > 0
-    ? var.subnetwork
-    : null
-  )
-}
-
-##################
-# DATA: TEMPLATE #
-##################
-
-data "google_compute_instance_template" "group_template" {
-  for_each = { for x in var.partition_nodes : x.group_name => x }
-
-  name = (
-    each.value.instance_template != null && each.value.instance_template != ""
-    ? each.value.instance_template
-    : module.slurm_compute_template[each.value.group_name].self_link
-  )
-  project = var.project_id
-}
-
-#####################
-# COMPUTE: TEMPLATE #
-#####################
-
-module "slurm_compute_template" {
-  source = "../slurm_instance_template"
-
-  for_each = {
-    for x in var.partition_nodes : x.group_name => x
-    if(x.instance_template == null || x.instance_template == "")
-  }
-
-  additional_disks         = each.value.additional_disks
-  slurm_bucket_path        = var.slurm_bucket_path
-  can_ip_forward           = each.value.can_ip_forward
-  disable_smt              = each.value.disable_smt
-  disk_auto_delete         = each.value.disk_auto_delete
-  disk_labels              = each.value.disk_labels
-  disk_size_gb             = each.value.disk_size_gb
-  disk_type                = each.value.disk_type
-  enable_confidential_vm   = each.value.enable_confidential_vm
-  enable_oslogin           = each.value.enable_oslogin
-  enable_shielded_vm       = each.value.enable_shielded_vm
-  gpu                      = each.value.gpu
-  labels                   = each.value.labels
-  machine_type             = each.value.machine_type
-  metadata                 = each.value.metadata
-  min_cpu_platform         = each.value.min_cpu_platform
-  name_prefix              = "${var.partition_name}-${each.value.group_name}"
-  on_host_maintenance      = each.value.on_host_maintenance
-  preemptible              = each.value.preemptible
-  project_id               = var.project_id
-  service_account          = each.value.service_account
-  shielded_instance_config = each.value.shielded_instance_config
-  slurm_cluster_name       = var.slurm_cluster_name
-  slurm_instance_role      = "compute"
-  source_image_family      = each.value.source_image_family
-  source_image_project     = each.value.source_image_project
-  source_image             = each.value.source_image
-  subnetwork               = data.google_compute_subnetwork.partition_subnetwork.self_link
-  tags                     = concat([var.slurm_cluster_name], each.value.tags)
 }

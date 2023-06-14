@@ -85,6 +85,8 @@ No modules.
 | <a name="input_login_startup_scripts_timeout"></a> [login\_startup\_scripts\_timeout](#input\_login\_startup\_scripts\_timeout) | The timeout (seconds) applied to each script in login\_startup\_scripts. If<br>any script exceeds this timeout, then the instance setup process is considered<br>failed and handled accordingly.<br><br>NOTE: When set to 0, the timeout is considered infinite and thus disabled. | `number` | `300` | no |
 | <a name="input_munge_mount"></a> [munge\_mount](#input\_munge\_mount) | Remote munge mount for compute and login nodes to acquire the munge.key.<br><br>By default, the munge mount server will be assumed to be the<br>`var.slurm_control_host` (or `var.slurm_control_addr` if non-null) when<br>`server_ip=null`. | <pre>object({<br>    server_ip     = string<br>    remote_mount  = string<br>    fs_type       = string<br>    mount_options = string<br>  })</pre> | <pre>{<br>  "fs_type": "nfs",<br>  "mount_options": "",<br>  "remote_mount": "/etc/munge/",<br>  "server_ip": null<br>}</pre> | no |
 | <a name="input_network_storage"></a> [network\_storage](#input\_network\_storage) | Storage to mounted on all instances.<br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Options to mount with. | <pre>list(object({<br>    server_ip     = string<br>    remote_mount  = string<br>    local_mount   = string<br>    fs_type       = string<br>    mount_options = string<br>  }))</pre> | `[]` | no |
+| <a name="input_nodeset"></a> [nodeset](#input\_nodeset) | Cluster nodenets, as a list. | `list(any)` | `[]` | no |
+| <a name="input_nodeset_dyn"></a> [nodeset\_dyn](#input\_nodeset\_dyn) | Cluster nodenets (dynamic), as a list. | `list(any)` | `[]` | no |
 | <a name="input_output_dir"></a> [output\_dir](#input\_output\_dir) | Directory where this module will write its files to. These files include:<br>cloud.conf; cloud\_gres.conf; config.yaml; resume.py; suspend.py; and util.py. | `string` | `null` | no |
 | <a name="input_partitions"></a> [partitions](#input\_partitions) | Cluster partitions as a list. | `list(any)` | `[]` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID. | `string` | n/a | yes |
@@ -103,6 +105,8 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_config"></a> [config](#output\_config) | Cluster configuration. |
+| <a name="output_nodeset"></a> [nodeset](#output\_nodeset) | Cluster nodesets. |
+| <a name="output_nodeset_dyn"></a> [nodeset\_dyn](#output\_nodeset\_dyn) | Cluster nodesets (dynamic). |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Cluster partitions. |
 | <a name="output_slurm_bucket_path"></a> [slurm\_bucket\_path](#output\_slurm\_bucket\_path) | GCS Bucket URI of Slurm cluster file storage. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

@@ -19,9 +19,9 @@ output "slurm_cluster_name" {
   value       = module.slurm_cluster.slurm_cluster_name
 }
 
-output "slurm_partitions" {
+output "cluster_config" {
   description = "Slurm partition details."
-  value       = module.slurm_cluster.slurm_partition
+  value       = module.slurm_cluster.cluster_config
 }
 
 output "slurm_controller_instance_self_links" {

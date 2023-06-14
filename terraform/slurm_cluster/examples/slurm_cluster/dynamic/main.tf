@@ -39,15 +39,21 @@ locals {
     }
   ]
 
+  nodeset_dyn = [
+    {
+      nodeset_name    = "dyn"
+      nodeset_feature = local.node_feature
+    },
+  ]
+
   partitions = [
     {
       partition_conf = {
         Default     = "YES"
         SuspendTime = "INFINITE"
       }
-      partition_feature = local.node_feature
-      partition_name    = "debug"
-      subnetwork        = data.google_compute_subnetwork.default.self_link
+      partition_name        = "debug"
+      partition_nodeset_dyn = [local.nodeset_dyn[0].nodeset_name]
     },
   ]
 
@@ -82,6 +88,7 @@ module "slurm_cluster" {
   slurm_cluster_name         = var.slurm_cluster_name
   controller_instance_config = local.controller_instance_config
   login_nodes                = local.login_nodes
+  nodeset_dyn                = local.nodeset_dyn
   partitions                 = local.partitions
   project_id                 = var.project_id
 

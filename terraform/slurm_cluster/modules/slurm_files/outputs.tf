@@ -27,9 +27,24 @@ output "config" {
     condition     = var.enable_hybrid ? can(coalesce(var.slurm_control_host)) : true
     error_message = "Input slurm_control_host is required."
   }
+
+  precondition {
+    condition     = length(local.x_nodeset_overlap) == 0
+    error_message = "All nodeset names must be unqiue among all nodeset types."
+  }
 }
 
 output "partitions" {
   description = "Cluster partitions."
   value       = lookup(local.config, "partitions", null)
+}
+
+output "nodeset" {
+  description = "Cluster nodesets."
+  value       = lookup(local.config, "nodeset", null)
+}
+
+output "nodeset_dyn" {
+  description = "Cluster nodesets (dynamic)."
+  value       = lookup(local.config, "nodeset_dyn", null)
 }

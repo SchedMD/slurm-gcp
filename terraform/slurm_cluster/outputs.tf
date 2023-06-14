@@ -19,9 +19,24 @@ output "slurm_cluster_name" {
   value       = var.slurm_cluster_name
 }
 
+output "cluster_config" {
+  description = "Slurm partition details."
+  value       = module.slurm_files.config
+}
+
 output "slurm_partition" {
   description = "Slurm partition details."
   value       = module.slurm_files.partitions
+}
+
+output "slurm_nodeset" {
+  description = "Slurm nodeset details."
+  value       = module.slurm_files.nodeset
+}
+
+output "slurm_nodeset_dyn" {
+  description = "Slurm partition details."
+  value       = module.slurm_files.nodeset_dyn
 }
 
 output "slurm_controller_instances" {

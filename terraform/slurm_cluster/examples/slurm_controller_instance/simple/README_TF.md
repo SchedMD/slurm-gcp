@@ -33,9 +33,13 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_slurm_compute0"></a> [slurm\_compute0](#module\_slurm\_compute0) | ../../../modules/slurm_instance_template | n/a |
+| <a name="module_slurm_compute1"></a> [slurm\_compute1](#module\_slurm\_compute1) | ../../../modules/slurm_instance_template | n/a |
 | <a name="module_slurm_controller_instance"></a> [slurm\_controller\_instance](#module\_slurm\_controller\_instance) | ../../../modules/slurm_controller_instance | n/a |
 | <a name="module_slurm_controller_template"></a> [slurm\_controller\_template](#module\_slurm\_controller\_template) | ../../../modules/slurm_instance_template | n/a |
 | <a name="module_slurm_files"></a> [slurm\_files](#module\_slurm\_files) | ../../../modules/slurm_files | n/a |
+| <a name="module_slurm_nodeset0"></a> [slurm\_nodeset0](#module\_slurm\_nodeset0) | ../../../modules/slurm_nodeset | n/a |
+| <a name="module_slurm_nodeset1"></a> [slurm\_nodeset1](#module\_slurm\_nodeset1) | ../../../modules/slurm_nodeset | n/a |
 | <a name="module_slurm_partition0"></a> [slurm\_partition0](#module\_slurm\_partition0) | ../../../modules/slurm_partition | n/a |
 | <a name="module_slurm_partition1"></a> [slurm\_partition1](#module\_slurm\_partition1) | ../../../modules/slurm_partition | n/a |
 

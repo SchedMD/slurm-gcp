@@ -125,25 +125,21 @@ locals {
     }
   )
 
-  partitions = [
-    for x in var.partitions : merge(x, {
-      partition_nodes = [for n in x.partition_nodes : merge(n, {
-        service_account = (
-          var.create_service_accounts
-          ? {
-            email  = lookup(n.service_account, "email", try(module.slurm_sa_iam["compute"].service_account, "default"))
-            scopes = lookup(n.service_account, "scopes", ["https://www.googleapis.com/auth/cloud-platform"])
-          }
-          : n.service_account
-        )
-        source_image         = can(coalesce(n.source_image)) ? n.source_image : var.source_image
-        source_image_family  = can(coalesce(n.source_image_family)) ? n.source_image_family : var.source_image_family
-        source_image_project = can(coalesce(n.source_image_project)) ? n.source_image_project : var.source_image_project
-      })]
-      subnetwork         = coalesce(try(module.slurm_network[0].network.network_name, null), x.subnetwork, var.subnetwork)
-      subnetwork_project = coalesce(x.subnetwork_project, var.subnetwork_project, var.project_id)
-    })
-  ]
+  nodeset = [for x in var.nodeset : merge(x, {
+    service_account = (
+      var.create_service_accounts
+      ? {
+        email  = lookup(x.service_account, "email", try(module.slurm_sa_iam["compute"].service_account, "default"))
+        scopes = lookup(x.service_account, "scopes", ["https://www.googleapis.com/auth/cloud-platform"])
+      }
+      : x.service_account
+    )
+    source_image         = can(coalesce(x.source_image)) ? x.source_image : var.source_image
+    source_image_family  = can(coalesce(x.source_image_family)) ? x.source_image_family : var.source_image_family
+    source_image_project = can(coalesce(x.source_image_project)) ? x.source_image_project : var.source_image_project
+    subnetwork           = coalesce(try(module.slurm_network[0].network.network_name, null), x.subnetwork, var.subnetwork)
+    subnetwork_project   = coalesce(x.subnetwork_project, var.subnetwork_project, var.project_id)
+  })]
 
   login_nodes = [
     for x in var.login_nodes : merge(x, {
@@ -192,7 +188,9 @@ module "slurm_cluster" {
   login_network_storage              = var.login_network_storage
   login_nodes                        = local.login_nodes
   network_storage                    = var.network_storage
-  partitions                         = local.partitions
+  nodeset                            = local.nodeset
+  nodeset_dyn                        = var.nodeset_dyn
+  partitions                         = var.partitions
   project_id                         = var.project_id
   prolog_scripts                     = var.prolog_scripts
   slurmdbd_conf_tpl                  = var.slurmdbd_conf_tpl

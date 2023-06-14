@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = "~> 1.3"
+output "nodeset_name" {
+  description = "Nodeset name."
+  value       = local.nodeset.nodeset_name
+}
 
-  required_providers {
-    google = ">= 3.53, < 5.0"
-    random = "~> 3.0"
-  }
+output "nodeset" {
+  description = "Nodeset details."
+  value       = local.nodeset
 }

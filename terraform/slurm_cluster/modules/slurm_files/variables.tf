@@ -228,6 +228,18 @@ EOD
   default = []
 }
 
+variable "nodeset" {
+  description = "Cluster nodenets, as a list."
+  type        = list(any)
+  default     = []
+}
+
+variable "nodeset_dyn" {
+  description = "Cluster nodenets (dynamic), as a list."
+  type        = list(any)
+  default     = []
+}
+
 variable "partitions" {
   description = "Cluster partitions as a list."
   type        = list(any)

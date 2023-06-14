@@ -34,8 +34,8 @@ variable "slurm_cluster_name" {
 }
 
 variable "region" {
-  description = "The default region to place resources in."
   type        = string
+  description = "The default region to place resources in."
 }
 
 ##########
@@ -232,6 +232,94 @@ variable "login_nodes" {
   default = []
 }
 
+############
+# NODESETS #
+############
+
+variable "nodeset" {
+  description = "Define nodesets, as a list."
+  type = list(object({
+    node_count_static      = optional(number, 0)
+    node_count_dynamic_max = optional(number, 1)
+    node_conf              = optional(map(string), {})
+    nodeset_name           = string
+    additional_disks = optional(list(object({
+      disk_name    = optional(string)
+      device_name  = optional(string)
+      disk_size_gb = optional(number)
+      disk_type    = optional(string)
+      disk_labels  = optional(map(string), {})
+      auto_delete  = optional(bool, true)
+      boot         = optional(bool, false)
+    })), [])
+    access_config = optional(list(object({
+      network_tier = string
+    })), [])
+    bandwidth_tier         = optional(string, "platform_default")
+    can_ip_forward         = optional(bool, false)
+    disable_smt            = optional(bool, false)
+    disk_auto_delete       = optional(bool, true)
+    disk_labels            = optional(map(string), {})
+    disk_size_gb           = optional(number)
+    disk_type              = optional(string)
+    enable_confidential_vm = optional(bool, false)
+    enable_oslogin         = optional(bool, true)
+    enable_shielded_vm     = optional(bool, false)
+    enable_spot_vm         = optional(bool, false)
+    gpu = optional(object({
+      count = number
+      type  = string
+    }))
+    instance_template   = optional(string)
+    labels              = optional(map(string), {})
+    machine_type        = optional(string)
+    metadata            = optional(map(string), {})
+    min_cpu_platform    = optional(string)
+    on_host_maintenance = optional(string)
+    preemptible         = optional(bool, false)
+    region              = optional(string)
+    service_account = optional(object({
+      email  = optional(string)
+      scopes = optional(list(string), ["https://www.googleapis.com/auth/cloud-platform"])
+    }))
+    shielded_instance_config = optional(object({
+      enable_integrity_monitoring = optional(bool, true)
+      enable_secure_boot          = optional(bool, true)
+      enable_vtpm                 = optional(bool, true)
+    }))
+    spot_instance_config = optional(object({
+      termination_action = optional(string, "STOP")
+    }))
+    source_image_family  = optional(string)
+    source_image_project = optional(string)
+    source_image         = optional(string)
+    subnetwork_project   = optional(string)
+    subnetwork           = optional(string)
+    tags                 = optional(list(string), [])
+    zones                = optional(list(string), [])
+    zone_target_shape    = optional(string, "ANY_SINGLE_ZONE")
+  }))
+  default = []
+  validation {
+    condition     = length(distinct([for x in var.nodeset : x.nodeset_name])) == length(var.nodeset)
+    error_message = "All nodesets must have a unique name."
+  }
+}
+
+variable "nodeset_dyn" {
+  description = "Defines nodesets (dynamic), as a list."
+  type = list(object({
+    nodeset_name    = string
+    nodeset_feature = string
+  }))
+  default = []
+
+  validation {
+    condition     = length(distinct([for x in var.nodeset_dyn : x.nodeset_name])) == length(var.nodeset_dyn)
+    error_message = "All nodesets must have a unique name."
+  }
+}
+
 #############
 # PARTITION #
 #############
@@ -241,85 +329,24 @@ variable "partitions" {
 Cluster partitions as a list. See module slurm_partition.
 EOD
   type = list(object({
-    enable_job_exclusive              = optional(bool, false)
-    enable_placement_groups           = optional(bool, false)
+    enable_job_exclusive    = optional(bool, false)
+    enable_placement_groups = optional(bool, false)
+    network_storage = optional(list(object({
+      server_ip     = string
+      remote_mount  = string
+      local_mount   = string
+      fs_type       = string
+      mount_options = string
+    })), [])
     partition_conf                    = optional(map(string), {})
     partition_startup_scripts_timeout = optional(number, 300)
     partition_startup_scripts = optional(list(object({
       filename = string
       content  = string
     })), [])
-    partition_feature = optional(string)
-    partition_name    = string
-    partition_nodes = optional(list(object({
-      node_count_static      = optional(number, 0)
-      node_count_dynamic_max = optional(number, 1)
-      group_name             = string
-      node_conf              = optional(map(string), {})
-      additional_disks = optional(list(object({
-        disk_name    = optional(string)
-        device_name  = optional(string)
-        disk_size_gb = optional(number)
-        disk_type    = optional(string)
-        disk_labels  = optional(map(string), {})
-        auto_delete  = optional(bool, true)
-        boot         = optional(bool, false)
-      })), [])
-      access_config = optional(list(object({
-        network_tier = string
-      })), [])
-      bandwidth_tier         = optional(string, "platform_default")
-      can_ip_forward         = optional(bool, false)
-      disable_smt            = optional(bool, false)
-      disk_auto_delete       = optional(bool, true)
-      disk_labels            = optional(map(string), {})
-      disk_size_gb           = optional(number)
-      disk_type              = optional(string)
-      enable_confidential_vm = optional(bool, false)
-      enable_oslogin         = optional(bool, true)
-      enable_shielded_vm     = optional(bool, false)
-      enable_spot_vm         = optional(bool, false)
-      gpu = optional(object({
-        count = number
-        type  = string
-      }))
-      instance_template   = optional(string)
-      labels              = optional(map(string), {})
-      machine_type        = optional(string)
-      metadata            = optional(map(string), {})
-      min_cpu_platform    = optional(string)
-      on_host_maintenance = optional(string)
-      preemptible         = optional(bool, false)
-      service_account = optional(object({
-        email  = optional(string)
-        scopes = optional(list(string), ["https://www.googleapis.com/auth/cloud-platform"])
-      }))
-      shielded_instance_config = optional(object({
-        enable_integrity_monitoring = optional(bool, true)
-        enable_secure_boot          = optional(bool, true)
-        enable_vtpm                 = optional(bool, true)
-      }))
-      spot_instance_config = optional(object({
-        termination_action = optional(string, "STOP")
-      }))
-      source_image_family  = optional(string)
-      source_image_project = optional(string)
-      source_image         = optional(string)
-      tags                 = optional(list(string), [])
-    })), [])
-    network_storage = optional(list(object({
-      local_mount   = string
-      fs_type       = string
-      server_ip     = string
-      remote_mount  = string
-      mount_options = string
-    })), [])
-    region             = optional(string)
-    subnetwork_project = optional(string)
-    subnetwork         = optional(string)
-    zone_target_shape  = optional(string, "ANY_SINGLE_ZONE")
-    zone_policy_allow  = optional(list(string), [])
-    zone_policy_deny   = optional(list(string), [])
+    partition_name        = string
+    partition_nodeset     = optional(list(string), [])
+    partition_nodeset_dyn = optional(list(string), [])
   }))
 
   validation {
