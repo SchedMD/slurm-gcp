@@ -74,10 +74,6 @@ variable "controller_instance_config" {
 Creates a controller instance with given configuration.
 EOD
   type = object({
-    access_config = optional(list(object({
-      nat_ip       = optional(string)
-      network_tier = optional(string)
-    })), [])
     additional_disks = optional(list(object({
       disk_name    = optional(string)
       device_name  = optional(string)
@@ -94,6 +90,7 @@ EOD
     disk_size_gb           = optional(number)
     disk_type              = optional(string, "n1-standard-1")
     enable_confidential_vm = optional(bool, false)
+    enable_public_ip       = optional(bool, false)
     enable_oslogin         = optional(bool, true)
     enable_shielded_vm     = optional(bool, false)
     gpu = optional(object({
@@ -106,6 +103,7 @@ EOD
     metadata            = optional(map(string), {})
     min_cpu_platform    = optional(string)
     network_ip          = optional(string)
+    network_tier        = optional(string, "STANDARD")
     on_host_maintenance = optional(string)
     preemptible         = optional(bool, false)
     region              = optional(string)
@@ -174,10 +172,6 @@ EOD
 variable "login_nodes" {
   description = "List of slurm login instance definitions."
   type = list(object({
-    access_config = optional(list(object({
-      nat_ip       = optional(string)
-      network_tier = optional(string)
-    })), [])
     additional_disks = optional(list(object({
       disk_name    = optional(string)
       device_name  = optional(string)
@@ -194,6 +188,7 @@ variable "login_nodes" {
     disk_size_gb           = optional(number)
     disk_type              = optional(string, "n1-standard-1")
     enable_confidential_vm = optional(bool, false)
+    enable_public_ip       = optional(bool, false)
     enable_oslogin         = optional(bool, true)
     enable_shielded_vm     = optional(bool, false)
     gpu = optional(object({
@@ -206,7 +201,7 @@ variable "login_nodes" {
     machine_type        = optional(string)
     metadata            = optional(map(string), {})
     min_cpu_platform    = optional(string)
-    network_ip          = optional(string)
+    network_tier        = optional(string, "STANDARD")
     num_instances       = optional(number, 1)
     on_host_maintenance = optional(string)
     preemptible         = optional(bool, false)
@@ -252,9 +247,6 @@ variable "nodeset" {
       auto_delete  = optional(bool, true)
       boot         = optional(bool, false)
     })), [])
-    access_config = optional(list(object({
-      network_tier = string
-    })), [])
     bandwidth_tier         = optional(string, "platform_default")
     can_ip_forward         = optional(bool, false)
     disable_smt            = optional(bool, false)
@@ -263,6 +255,7 @@ variable "nodeset" {
     disk_size_gb           = optional(number)
     disk_type              = optional(string)
     enable_confidential_vm = optional(bool, false)
+    enable_public_ip       = optional(bool, false)
     enable_oslogin         = optional(bool, true)
     enable_shielded_vm     = optional(bool, false)
     enable_spot_vm         = optional(bool, false)
@@ -275,6 +268,7 @@ variable "nodeset" {
     machine_type        = optional(string)
     metadata            = optional(map(string), {})
     min_cpu_platform    = optional(string)
+    network_tier        = optional(string, "STANDARD")
     on_host_maintenance = optional(string)
     preemptible         = optional(bool, false)
     region              = optional(string)
@@ -300,6 +294,7 @@ variable "nodeset" {
     zone_target_shape    = optional(string, "ANY_SINGLE_ZONE")
   }))
   default = []
+
   validation {
     condition     = length(distinct([for x in var.nodeset : x.nodeset_name])) == length(var.nodeset)
     error_message = "All nodesets must have a unique name."

@@ -24,6 +24,11 @@ locals {
     ? flatten(regexall("/regions/([^/]*)", var.subnetwork))[0]
     : var.region
   )
+
+  access_config = {
+    nat_ip       = null
+    network_tier = var.network_tier
+  }
 }
 
 ############
@@ -33,7 +38,7 @@ locals {
 module "slurm_login_instance" {
   source = "../_slurm_instance"
 
-  access_config       = var.access_config
+  access_config       = var.enable_public_ip ? [local.access_config] : []
   add_hostname_suffix = true
   hostname            = "${var.slurm_cluster_name}-login-${var.suffix}"
   instance_template   = var.instance_template

@@ -68,16 +68,14 @@ def instance_properties(partition, model, placement_group, labels=None):
         }
     ]
 
-    if len(node_group.access_config) > 0:
-        props.networkInterfaces[0]["accessConfigs"] = []
-        for ac in node_group.access_config:
-            props.networkInterfaces[0]["accessConfigs"].append(
-                {
-                    "type": "ONE_TO_ONE_NAT",
-                    "name": "External NAT",
-                    "networkTier": ac.get("network_tier", None),
-                }
-            )
+    if node_group.enable_public_ip:
+        props.networkInterfaces[0]["accessConfigs"] = [
+            {
+                "type": "ONE_TO_ONE_NAT",
+                "name": "External NAT",
+                "networkTier": node_group.get("network_tier", None),
+            }
+        ]
 
     if node_group.bandwidth_tier == "virtio_enabled":
         props.networkInterfaces[0]["nicType"] = "VirtioNet"

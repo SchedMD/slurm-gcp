@@ -30,6 +30,11 @@ locals {
     ? data.google_compute_instance_template.controller_template[0].service_account[0].email
     : null
   )
+
+  access_config = {
+    nat_ip       = null
+    network_tier = var.network_tier
+  }
 }
 
 ##################
@@ -49,7 +54,7 @@ data "google_compute_instance_template" "controller_template" {
 module "slurm_controller_instance" {
   source = "../_slurm_instance"
 
-  access_config       = var.access_config
+  access_config       = var.enable_public_ip ? [local.access_config] : []
   add_hostname_suffix = false
   hostname            = "${var.slurm_cluster_name}-controller"
   instance_template   = var.instance_template

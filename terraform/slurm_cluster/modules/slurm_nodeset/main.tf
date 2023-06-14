@@ -51,8 +51,9 @@ locals {
     zone_policy_allow      = length(local.zones) > 0 ? setintersection(toset(data.google_compute_zones.available.names), local.zones) : toset(data.google_compute_zones.available.names)
     zone_policy_deny       = length(local.zones) > 0 ? setsubtract(toset(data.google_compute_zones.available.names), local.zones) : toset([])
     # Additional Features
-    access_config  = var.access_config
-    bandwidth_tier = coalesce(var.bandwidth_tier, "platform_default")
+    enable_public_ip = var.enable_public_ip
+    network_tier     = var.network_tier
+    bandwidth_tier   = coalesce(var.bandwidth_tier, "platform_default")
     # Beta Features
     enable_spot_vm       = var.enable_spot_vm
     spot_instance_config = var.spot_instance_config != null ? var.spot_instance_config : local.spot_instance_config

@@ -255,9 +255,10 @@ module "slurm_controller_instance" {
 
   count = var.enable_hybrid ? 0 : 1
 
-  access_config      = var.controller_instance_config.access_config
   cloudsql           = var.cloudsql
+  enable_public_ip   = var.controller_instance_config.enable_public_ip
   instance_template  = local.have_template ? var.controller_instance_config.instance_template : module.slurm_controller_template[0].self_link
+  network_tier       = var.controller_instance_config.network_tier
   project_id         = var.project_id
   region             = var.controller_instance_config.region
   slurm_cluster_name = var.slurm_cluster_name
@@ -345,12 +346,13 @@ module "slurm_login_instance" {
 
   for_each = { for x in var.login_nodes : x.group_name => x }
 
-  access_config = lookup(each.value, "access_config", [])
+  enable_public_ip = each.value.enable_public_ip
   instance_template = (
     each.value.instance_template != null && each.value.instance_template != ""
     ? each.value.instance_template
     : module.slurm_login_template[each.key].self_link
   )
+  network_tier       = each.value.network_tier
   num_instances      = each.value.num_instances
   project_id         = var.project_id
   region             = each.value.region

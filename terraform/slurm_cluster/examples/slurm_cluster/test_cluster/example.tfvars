@@ -227,12 +227,8 @@ controller_instance_config = {
   instance_template = null
 
   # Instance Definition
-  access_config = [
-    # {
-    #   nat_ip       = null
-    #   network_tier = null
-    # },
-  ]
+  enable_public_ip   = false
+  network_ips        = "STANDARD"
   network_ip         = null
   region             = null
   static_ip          = null
@@ -307,8 +303,8 @@ login_nodes = [
     instance_template = null
 
     # Instance Definition
-    access_config      = []
-    network_ips        = []
+    enable_public_ip   = false
+    network_ips        = "STANDARD"
     num_instances      = 1
     region             = null
     static_ips         = []
@@ -370,13 +366,10 @@ nodeset = [
     instance_template = null
 
     # Instance Definition
-    access_config = [
-      # {
-      #   network_tier = null
-      # },
-    ]
-    bandwidth_tier = "platform_default"
-    enable_spot_vm = false
+    bandwidth_tier   = "platform_default"
+    enable_public_ip = false
+    network_ips      = "STANDARD"
+    enable_spot_vm   = false
     spot_instance_config = {
       termination_action = "STOP"
     }

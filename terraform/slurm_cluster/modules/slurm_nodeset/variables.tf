@@ -108,13 +108,24 @@ variable "node_count_dynamic_max" {
   }
 }
 
-variable "access_config" {
-  description = "Access configurations, i.e. IPs via which the VM instance can be accessed via the Internet."
-  type = list(object({
-    nat_ip       = string
-    network_tier = string
-  }))
-  default = []
+variable "enable_public_ip" {
+  description = "Enables IP address to access the Internet."
+  type        = bool
+  default     = false
+}
+
+variable "network_tier" {
+  type        = string
+  description = <<-EOD
+    The networking tier used for configuring this instance. This field can take the following values: PREMIUM, FIXED_STANDARD or STANDARD.
+    Ignored if enable_public_ip is false.
+  EOD
+  default     = "STANDARD"
+
+  validation {
+    condition     = var.network_tier == null ? true : contains(["PREMIUM", "FIXED_STANDARD", "STANDARD"], var.network_tier)
+    error_message = "Allow values are: 'PREMIUM', 'FIXED_STANDARD', 'STANDARD'."
+  }
 }
 
 variable "bandwidth_tier" {
