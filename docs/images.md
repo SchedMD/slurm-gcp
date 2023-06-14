@@ -79,7 +79,7 @@ that are minimal viable images for deploying
 | schedmd-slurm-public | slurm-gcp-5-7-ubuntu-2204-lts-arm64 | ARM64  | Supported      |
 | schedmd-slurm-public | slurm-gcp-5-7-hpc-centos-7-k80      | x86_64 | EOL 2024-05-01 |
 | schedmd-slurm-public | slurm-gcp-5-7-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
-| schedmd-slurm-public | slurm-gcp-5-7-centos-7              | x86_64 | EOL 2023-07-01 |
+| schedmd-slurm-public | slurm-gcp-5-7-centos-7              | x86_64 | EOL 2023-08-01 |
 | schedmd-slurm-public | slurm-gcp-5-7-rocky-linux-8         | x86_64 | EOL 2023-06-30 |
 | schedmd-slurm-public | slurm-gcp-5-7-debian-10             | x86_64 | EOL 2023-06-30 |
 
