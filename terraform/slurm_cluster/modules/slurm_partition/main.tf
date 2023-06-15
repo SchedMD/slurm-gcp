@@ -19,9 +19,16 @@
 ##########
 
 locals {
+  partition_conf = merge({
+    "Default"        = var.default ? "YES" : null
+    "ResumeTimeout"  = var.resume_timeout
+    "SuspendTime"    = var.suspend_time < 0 ? "INFINITE" : var.suspend_time
+    "SuspendTimeout" = var.suspend_timeout
+  }, var.partition_conf)
+
   partition = {
     partition_name                    = var.partition_name
-    partition_conf                    = var.partition_conf
+    partition_conf                    = local.partition_conf
     partition_nodeset                 = var.partition_nodeset
     partition_nodeset_dyn             = var.partition_nodeset_dyn
     partition_startup_scripts         = var.partition_startup_scripts

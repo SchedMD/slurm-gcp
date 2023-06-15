@@ -415,13 +415,8 @@ nodeset_dyn = []
 
 partitions = [
   {
-    partition_name = "debug"
-    partition_conf = {
-      Default        = "YES"
-      ResumeTimeout  = 300
-      SuspendTimeout = 300
-      SuspendTime    = 300
-    }
+    partition_name  = "debug"
+    partition_conf  = {}
     partition_nodes = ["n1s1", "c2s4"]
     # Misc
     network_storage                   = []
@@ -437,16 +432,15 @@ partitions = [
       # },
     ]
     # Options
+    default                 = true
     enable_job_exclusive    = false
     enable_placement_groups = false
+    resume_timeout          = 300
+    suspend_time            = 300
+    suspend_timeout         = 120
   },
   {
-    partition_name = "gpu"
-    partition_conf = {
-      ResumeTimeout  = 300
-      SuspendTimeout = 300
-      SuspendTime    = 300
-    }
+    partition_name  = "gpu"
     partition_nodes = ["v100", ]
     # Options
     enable_job_exclusive    = true

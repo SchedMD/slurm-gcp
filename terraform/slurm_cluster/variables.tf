@@ -324,6 +324,7 @@ variable "partitions" {
 Cluster partitions as a list. See module slurm_partition.
 EOD
   type = list(object({
+    default                 = optional(bool, false)
     enable_job_exclusive    = optional(bool, false)
     enable_placement_groups = optional(bool, false)
     network_storage = optional(list(object({
@@ -342,6 +343,9 @@ EOD
     partition_name        = string
     partition_nodeset     = optional(list(string), [])
     partition_nodeset_dyn = optional(list(string), [])
+    resume_timeout        = optional(number, 300)
+    suspend_time          = optional(number, 300)
+    suspend_timeout       = optional(number, 120)
   }))
 
   validation {

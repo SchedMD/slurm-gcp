@@ -43,6 +43,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_default"></a> [default](#input\_default) | If this is true, jobs submitted without a partition specification will utilize this partition.<br>This sets 'Default' in partition\_conf.<br>See https://slurm.schedmd.com/slurm.conf.html#OPT_Default for details. | `bool` | `false` | no |
 | <a name="input_enable_job_exclusive"></a> [enable\_job\_exclusive](#input\_enable\_job\_exclusive) | Enables job exclusivity. A job will run exclusively on the scheduled nodes. | `bool` | `false` | no |
 | <a name="input_enable_placement_groups"></a> [enable\_placement\_groups](#input\_enable\_placement\_groups) | Enables job placement groups. Instances will be colocated for a job. | `bool` | `false` | no |
 | <a name="input_network_storage"></a> [network\_storage](#input\_network\_storage) | Storage to mounted on all instances in this partition.<br>* server\_ip     : Address of the storage server.<br>* remote\_mount  : The location in the remote instance filesystem to mount from.<br>* local\_mount   : The location on the instance filesystem to mount to.<br>* fs\_type       : Filesystem type (e.g. "nfs").<br>* mount\_options : Raw options to pass to 'mount'. | <pre>list(object({<br>    server_ip     = string<br>    remote_mount  = string<br>    local_mount   = string<br>    fs_type       = string<br>    mount_options = string<br>  }))</pre> | `[]` | no |
@@ -52,6 +53,9 @@ No modules.
 | <a name="input_partition_nodeset_dyn"></a> [partition\_nodeset\_dyn](#input\_partition\_nodeset\_dyn) | Slurm nodesets (dynamic) by name, as a list of string. | `set(string)` | `[]` | no |
 | <a name="input_partition_startup_scripts"></a> [partition\_startup\_scripts](#input\_partition\_startup\_scripts) | List of scripts to be ran on compute VM startup. | <pre>list(object({<br>    filename = string<br>    content  = string<br>  }))</pre> | `[]` | no |
 | <a name="input_partition_startup_scripts_timeout"></a> [partition\_startup\_scripts\_timeout](#input\_partition\_startup\_scripts\_timeout) | The timeout (seconds) applied to each script in partition\_startup\_scripts. If<br>any script exceeds this timeout, then the instance setup process is considered<br>failed and handled accordingly.<br><br>NOTE: When set to 0, the timeout is considered infinite and thus disabled. | `number` | `300` | no |
+| <a name="input_resume_timeout"></a> [resume\_timeout](#input\_resume\_timeout) | Maximum time permitted (in seconds) between when a node resume request is issued and when the node is actually available for use.<br>This sets 'ResumeTimeout' in partition\_conf.<br>See https://slurm.schedmd.com/slurm.conf.html#OPT_ResumeTimeout_1 for details. | `number` | `300` | no |
+| <a name="input_suspend_time"></a> [suspend\_time](#input\_suspend\_time) | Nodes which remain idle or down for this number of seconds will be placed into power save mode by SuspendProgram.<br>This sets 'SuspendTime' in partition\_conf.<br>See https://slurm.schedmd.com/slurm.conf.html#OPT_SuspendTime_1 for details.<br>NOTE: use value -1 to exclude partition from suspend. | `number` | `300` | no |
+| <a name="input_suspend_timeout"></a> [suspend\_timeout](#input\_suspend\_timeout) | Maximum time permitted (in seconds) between when a node suspend request is issued and when the node is shutdown.<br>This sets 'SuspendTimeout' in partition\_conf.<br>See https://slurm.schedmd.com/slurm.conf.html#OPT_SuspendTimeout_1 for details. | `number` | `120` | no |
 
 ## Outputs
 

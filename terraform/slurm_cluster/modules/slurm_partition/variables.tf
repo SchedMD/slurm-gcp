@@ -66,6 +66,62 @@ variable "partition_nodeset_dyn" {
   default     = []
 }
 
+variable "default" {
+  description = <<-EOD
+    If this is true, jobs submitted without a partition specification will utilize this partition.
+    This sets 'Default' in partition_conf.
+    See https://slurm.schedmd.com/slurm.conf.html#OPT_Default for details.
+  EOD
+  type        = bool
+  default     = false
+}
+
+variable "resume_timeout" {
+  description = <<-EOD
+    Maximum time permitted (in seconds) between when a node resume request is issued and when the node is actually available for use.
+    This sets 'ResumeTimeout' in partition_conf.
+    See https://slurm.schedmd.com/slurm.conf.html#OPT_ResumeTimeout_1 for details.
+  EOD
+  type        = number
+  default     = 300
+
+  validation {
+    condition     = var.resume_timeout > 0
+    error_message = "Value must be > 0."
+  }
+}
+
+variable "suspend_time" {
+  description = <<-EOD
+    Nodes which remain idle or down for this number of seconds will be placed into power save mode by SuspendProgram.
+    This sets 'SuspendTime' in partition_conf.
+    See https://slurm.schedmd.com/slurm.conf.html#OPT_SuspendTime_1 for details.
+    NOTE: use value -1 to exclude partition from suspend.
+  EOD
+  type        = number
+  default     = 300
+
+  validation {
+    condition     = var.suspend_time >= -1
+    error_message = "Value must be >= -1."
+  }
+}
+
+variable "suspend_timeout" {
+  description = <<-EOD
+    Maximum time permitted (in seconds) between when a node suspend request is issued and when the node is shutdown.
+    This sets 'SuspendTimeout' in partition_conf.
+    See https://slurm.schedmd.com/slurm.conf.html#OPT_SuspendTimeout_1 for details.
+  EOD
+  type        = number
+  default     = 120
+
+  validation {
+    condition     = var.suspend_timeout > 0
+    error_message = "Value must be > 0."
+  }
+}
+
 variable "enable_job_exclusive" {
   description = <<EOD
 Enables job exclusivity. A job will run exclusively on the scheduled nodes.

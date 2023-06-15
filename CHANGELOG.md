@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - Factored out nodeset modules (regular, dynamic) from partition module.
 - Replace `zone_policy_*` with `zones` in nodeset module.
 - Replace `access_config` with `enable_public_ip` and `network_tier`.
+- Add partition options `default`, `resume_timeout`, `suspend_time`,
+  `suspend_timeout`.
 
 ## \[5.7.4\]
 

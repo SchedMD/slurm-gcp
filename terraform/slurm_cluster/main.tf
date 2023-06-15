@@ -193,6 +193,7 @@ module "slurm_partition" {
 
   for_each = local.partition_map
 
+  default                           = each.value.default
   enable_job_exclusive              = each.value.enable_job_exclusive
   enable_placement_groups           = each.value.enable_placement_groups
   network_storage                   = each.value.network_storage
@@ -202,6 +203,9 @@ module "slurm_partition" {
   partition_nodeset_dyn             = [for x in each.value.partition_nodeset_dyn : module.slurm_nodeset_dyn[x].nodeset_name if try(module.slurm_nodeset_dyn[x], null) != null]
   partition_startup_scripts_timeout = each.value.partition_startup_scripts_timeout
   partition_startup_scripts         = each.value.partition_startup_scripts
+  resume_timeout                    = each.value.resume_timeout
+  suspend_time                      = each.value.suspend_time
+  suspend_timeout                   = each.value.suspend_timeout
 }
 
 ########################
