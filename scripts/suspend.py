@@ -17,7 +17,6 @@
 
 import argparse
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -25,7 +24,6 @@ import util
 from util import (
     groupby_unsorted,
     log_api_request,
-    run,
     execute_with_futures,
     batch_execute,
     ensure_execute,
@@ -33,7 +31,6 @@ from util import (
     to_hostlist,
     wait_for_operations,
     separate,
-    is_exclusive_node,
 )
 from util import lkp, cfg, compute
 
@@ -67,7 +64,7 @@ def delete_instance_request(instance, project=None, zone=None):
 
 
 def delete_instances(instances):
-    """Call regionInstances.bulkInsert to create instances"""
+    """delete instances individually"""
     invalid, valid = separate(lambda inst: bool(lkp.instance(inst)), instances)
     if len(invalid) > 0:
         log.debug("instances do not exist: {}".format(",".join(invalid)))
@@ -98,7 +95,26 @@ def suspend_nodes(nodelist):
     nodes = nodelist
     if not isinstance(nodes, list):
         nodes = util.to_hostnames(nodes)
+
+    placement_nodes = [
+        node for node in nodes if lkp.node_partition(node).enable_placement_groups
+    ]
+    placement_groups = set()
+    for node in placement_nodes:
+        # TODO lkp.instances involves an aggregatedList, a heavy API request. Avoid?
+        instance = lkp.instance(node)
+        if instance is None:
+            continue
+        job_id = instance.labels.get("slurm_job_id", None)
+        if job_id is None:
+            continue
+        placement_groups.add(
+            (job_id, lkp.node_region(node), lkp.node_partition_name(node))
+        )
+
     delete_instances(nodes)
+    for pg in placement_groups:
+        delete_placement_groups(*pg)
 
 
 def delete_placement_groups(job_id, region, partition_name):
@@ -123,38 +139,9 @@ def delete_placement_groups(job_id, region, partition_name):
     log.info(f"deleted {len(done)} placement groups ({to_hostlist(done.keys())})")
 
 
-def epilog_suspend_nodes(nodelist, job_id):
-    """epilog suspend"""
-    nodes = nodelist
-    if not isinstance(nodes, list):
-        nodes = util.to_hostnames(nodes)
-    if any(not is_exclusive_node(node) for node in nodes):
-        log.fatal(f"nodelist includes non-exclusive nodes: {nodelist}")
-        exit(1)
-    # Mark nodes as off limits to new jobs while powering down.
-    # Have to use "down" because it's the only, current, way to remove the
-    # power_up flag from the node -- followed by a power_down -- if the
-    # PrologSlurmctld fails with a non-zero exit code.
-    run(
-        f"{lkp.scontrol} update node={','.join(nodelist)} state=down reason='{job_id} finishing'"
-    )
-    # Power down nodes in slurm, so that they will become available again.
-    run(f"{lkp.scontrol} update node={','.join(nodelist)} state=power_down")
-
-    model = next(iter(nodes))
-    region = lkp.node_region(model)
-    partition = lkp.node_partition(model)
-    suspend_nodes(nodelist)
-    if partition.enable_placement_groups:
-        delete_placement_groups(job_id, region, partition.partition_name)
-
-
-def main(nodelist, job_id):
+def main(nodelist):
     """main called when run as script"""
-    if job_id is None:
-        log.debug(f"SuspendProgram {nodelist}")
-    else:
-        log.debug(f"EpilogSlurmctld exclusive suspend {nodelist} {job_id}")
+    log.debug(f"SuspendProgram {nodelist}")
     nodes = util.to_hostnames(nodelist)
 
     # Filter out nodes not in config.yaml
@@ -170,32 +157,16 @@ def main(nodelist, job_id):
     else:
         log.debug("No cloud nodes to suspend")
         return
-    nodes = cloud_nodes
 
-    if job_id is not None:
-        _, exclusive = separate(is_exclusive_node, nodes)
-        if len(exclusive) > 0:
-            hostlist = util.to_hostlist(exclusive)
-            log.info(f"epilog suspend {hostlist} job_id={job_id}")
-            epilog_suspend_nodes(exclusive, job_id)
-        else:
-            log.debug("No exclusive nodes to suspend")
-    else:
-        # suspend is allowed to delete exclusive nodes
-        log.info(f"suspend {nodelist}")
-        suspend_nodes(nodes)
+    # suspend is allowed to delete exclusive nodes
+    log.info(f"suspend {nodelist}")
+    suspend_nodes(nodes)
 
 
 parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
 )
 parser.add_argument("nodelist", help="list of nodes to suspend")
-parser.add_argument(
-    "job_id",
-    nargs="?",
-    default=None,
-    help="Optional job id for node list. Implies that PrologSlurmctld called program",
-)
 parser.add_argument(
     "--debug",
     "-d",
@@ -214,25 +185,16 @@ parser.add_argument(
 
 
 if __name__ == "__main__":
-    if "SLURM_JOB_NODELIST" in os.environ:
-        argv = [
-            *sys.argv[1:],
-            os.environ["SLURM_JOB_NODELIST"],
-            os.environ["SLURM_JOB_ID"],
-        ]
-        args = parser.parse_args(argv)
-    else:
-        args = parser.parse_args()
-
-    util.chown_slurm(LOGFILE, mode=0o600)
+    args = parser.parse_args()
 
     if cfg.enable_debug_logging:
         args.loglevel = logging.DEBUG
     if args.trace_api:
         cfg.extra_logging_flags = list(cfg.extra_logging_flags)
         cfg.extra_logging_flags.append("trace_api")
+    util.chown_slurm(LOGFILE, mode=0o600)
     util.config_root_logger(filename, level=args.loglevel, logfile=LOGFILE)
     log = logging.getLogger(Path(__file__).name)
     sys.excepthook = util.handle_exception
 
-    main(args.nodelist, args.job_id)
+    main(args.nodelist)

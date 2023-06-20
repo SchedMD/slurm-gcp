@@ -183,15 +183,10 @@ def conflines(cloud_parameters, lkp=lkp):
     epilog_path = Path(dirs.custom_scripts / "epilog.d")
     prolog_path.mkdir(exist_ok=True)
     epilog_path.mkdir(exist_ok=True)
-    any_exclusive = any(
-        bool(p.enable_job_exclusive) for p in lkp.cfg.partitions.values()
-    )
     conf_options = {
         **(comma_params if not no_comma_params else {}),
         "Prolog": f"{prolog_path}/*" if lkp.cfg.prolog_scripts else None,
         "Epilog": f"{epilog_path}/*" if lkp.cfg.epilog_scripts else None,
-        "PrologSlurmctld": f"{scripts_dir}/resume.py" if any_exclusive else None,
-        "EpilogSlurmctld": f"{scripts_dir}/suspend.py" if any_exclusive else None,
         "SuspendProgram": f"{scripts_dir}/suspend.py",
         "ResumeProgram": f"{scripts_dir}/resume.py",
         "ResumeFailProgram": f"{scripts_dir}/suspend.py",
@@ -303,6 +298,7 @@ def partitionlines(partition, lkp=lkp):
             "DefMemPerCPU": defmem,
             "SuspendTime": 300,
             "Oversubscribe": "Exclusive" if partition.enable_job_exclusive else None,
+            "PowerDownOnIdle": "YES" if partition.enable_job_exclusive else None,
             **partition.partition_conf,
         }
         lines.extend([dict_to_conf(line_elements)])
