@@ -154,6 +154,7 @@ def conflines(cloud_parameters, lkp=lkp):
         for node in part.partition_nodes.values()
     )
 
+    any_dynamic = any(bool(p.partition_feature) for p in lkp.cfg.partitions.values())
     comma_params = {
         "PrivateData": [
             "cloud",
@@ -163,7 +164,7 @@ def conflines(cloud_parameters, lkp=lkp):
             "use_interactive_step",
         ],
         "SlurmctldParameters": [
-            "cloud_dns",
+            "cloud_reg_addrs" if any_dynamic else "cloud_dns",
             "enable_configless",
             "idle_on_node_suspend",
         ],
@@ -180,6 +181,8 @@ def conflines(cloud_parameters, lkp=lkp):
     }
     prolog_path = Path(dirs.custom_scripts / "prolog.d")
     epilog_path = Path(dirs.custom_scripts / "epilog.d")
+    prolog_path.mkdir(exist_ok=True)
+    epilog_path.mkdir(exist_ok=True)
     any_exclusive = any(
         bool(p.enable_job_exclusive) for p in lkp.cfg.partitions.values()
     )
@@ -196,6 +199,7 @@ def conflines(cloud_parameters, lkp=lkp):
         "ResumeTimeout": cloud_parameters.get("resume_timeout", 300),
         "SuspendRate": cloud_parameters.get("suspend_rate", 0),
         "SuspendTimeout": cloud_parameters.get("suspend_timeout", 300),
+        "TreeWidth": "65533" if any_dynamic else None,
     }
     return dict_to_conf(conf_options, delim="\n")
 
@@ -526,7 +530,14 @@ def install_custom_scripts(clean=False):
         # compute needs compute, prolog, epilog, and the matching partition
         if lkp.instance_role == "compute":
             script_types = ["compute", "prolog", "epilog"]
-            return role in script_types or (part and part == lkp.node_partition_name())
+            try:
+                return role in script_types or (
+                    part and part == lkp.node_partition_name()
+                )
+            except Exception as e:
+                # If the node is dynamic, the nodename will throw an Exception
+                log.error(e)
+                return role in script_types
         # controller downloads them all for good measure
         return True
 

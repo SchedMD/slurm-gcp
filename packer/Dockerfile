@@ -6,22 +6,26 @@ FROM cytopia/ansible as ansible
 COPY --from=packer /bin/packer /bin/
 COPY --from=terraform /bin/terraform /bin/
 RUN apk add --update \
- python3 \
- curl \
- which \
- bash \
- openssh-client \
- git \
- build-base \
- libffi-dev \
- openssl-dev \
- bzip2-dev \
- zlib-dev \
- xz-dev \
- readline-dev \
- sqlite-dev \
- tk-dev \
- jq
+    bash \
+    build-base \
+    bzip2-dev \
+    curl \
+    gcc \
+    git \
+    jq \
+    libffi-dev \
+    openssh-client \
+    openssl-dev \
+    python3 \
+    python3-dev \
+    readline-dev \
+    sqlite-dev \
+    tk-dev \
+    which \
+    xz-dev \
+    zlib-dev
+RUN pip3 install pipenv
+
 RUN bash <(curl -sSL https://sdk.cloud.google.com) \
  --disable-prompts --install-dir=/opt
 ENV PATH $PATH:/opt/google-cloud-sdk/bin

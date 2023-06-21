@@ -21,7 +21,7 @@ variables:
 
 default:
   image:
-    name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.4
+    name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.6
 
   before_script:
   - set +o pipefail
@@ -37,7 +37,6 @@ default:
 
   - gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
   - gcloud config set project $GCP_PROJECT_ID
-  - pip3 install pipenv
 
 .build-image:
   stage: build-images

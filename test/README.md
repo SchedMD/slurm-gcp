@@ -1,13 +1,13 @@
 The tests are written with pytest, with terraform handled by the python library
-tftest. It is run from the `test` dirextory as
+tftest. It is run from the `test` directory as
 
-`pytest -vs --project_id=<test project> --cluster_name=<test cluster> --image-project=<image project> --image-family=<image family> --image=<imakIge name>`
+`pytest -vs --project_id=<test project> --cluster_name=<test cluster> --image-project=<image project> --image-family=<image family> --image=<image name>`
 
 The Pipfile shows the dependencies. Only one of `--image-family` and `--image`
-need to be specified. The env var `GOOGLE_APPLICATION_CREDENTIALS` should be set
-to a json file containing service account credentials. A private key authorized
-to the GCP/service account should be in a file `test/gcp_login_id` or in an env
-var `GCP_LOGIN_ID`.
+needs to be specified. The env var `GOOGLE_APPLICATION_CREDENTIALS` should be
+set to a json file containing service account credentials. A private key
+authorized to the GCP/service account should be in a file `test/gcp_login_id` or
+in an env var `GCP_LOGIN_ID`.
 
 pytest will create a cluster and run the following tests on it.
 
