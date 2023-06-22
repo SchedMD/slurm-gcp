@@ -221,8 +221,9 @@ def parse_bucket_uri(uri: str):
     Parse a bucket url
     E.g. gs://<bucket_name>/<path>
     """
-    pattern = re.compile(r"gs:\/\/(?P<name>[^\/\s]+)\/(?P<dir>[^\/\s]+)")
-    return NSDict(pattern.search(uri).groupdict())
+    pattern = re.compile(r"gs://(?P<bucket>[^/\s]+)/(?P<path>([^/\s]+)(/[^/\s]+)*)")
+    matches = pattern.match(uri)
+    return matches.group("bucket"), matches.group("path")
 
 
 def trim_self_link(link: str):
@@ -264,31 +265,28 @@ def map_with_futures(func, seq):
             yield res
 
 
-def blob_download(file):
+def blob_get(file):
+    from google.cloud import storage
+
     uri = instance_metadata("attributes/slurm_bucket_path")
-    matches = parse_bucket_uri(uri)
-    bucket_name = matches.name
-    blob_name = f"{matches.dir}/{file}"
-    blob = bucket_blob_download(bucket_name, blob_name)
-    return blob
+    bucket_name, path = parse_bucket_uri(uri)
+    blob_name = f"{path}/{file}"
+    storage_client = storage.Client(lkp.project)
+    return storage_client.get_bucket(bucket_name).blob(blob_name)
 
 
 def blob_list(prefix="", delimiter=None):
     from google.cloud import storage
 
     uri = instance_metadata("attributes/slurm_bucket_path")
-    matches = parse_bucket_uri(uri)
-    bucket_name = matches.name
-    blob_prefix = f"{matches.dir}/{prefix}"
+    bucket_name, path = parse_bucket_uri(uri)
+    blob_prefix = f"{path}/{prefix}"
     storage_client = storage.Client()
     # Note: The call returns a response only when the iterator is consumed.
-    resp = storage_client.list_blobs(
+    blobs = storage_client.list_blobs(
         bucket_name, prefix=blob_prefix, delimiter=delimiter
     )
-    blobs = []
-    for blob in resp:
-        blobs.append(blob)
-    return blobs
+    return [blob for blob in blobs]
 
 
 def is_exclusive_node(node):
@@ -387,7 +385,7 @@ def new_config(config):
 
 def fetch_config_yaml():
     """Fetch config.yaml from bucket"""
-    config_yaml = blob_download("config.yaml")
+    config_yaml = blob_get("config.yaml").download_as_text()
     cfg = new_config(yaml.safe_load(config_yaml))
     return cfg
 
@@ -714,14 +712,6 @@ def instance_metadata(path):
 def project_metadata(key):
     """Get project metadata project/attributes/<slurm_cluster_name>-<path>"""
     return get_metadata(key, root=f"{ROOT_URL}/project/attributes")
-
-
-def bucket_blob_list(bucket_name):
-    from google.cloud import storage
-
-    storage_client = storage.Client()
-    blobs = storage_client.list_blobs(bucket_name)
-    return blobs
 
 
 def bucket_blob_download(bucket_name, blob_name):
@@ -1377,7 +1367,6 @@ class Lookup:
         return NSDict(machine_info)
 
     def template_machine_conf(self, template_link, project=None, zone=None):
-
         template = self.template_info(template_link)
         if not template.machineType:
             temp_name = trim_self_link(template_link)
@@ -1428,7 +1417,6 @@ class Lookup:
 
     @lru_cache(maxsize=None)
     def template_info(self, template_link, project=None):
-
         project = project or self.project
         template_name = trim_self_link(template_link)
         # split read and write access to minimize write-lock. This might be a
