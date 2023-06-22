@@ -36,7 +36,6 @@ from util import (
     run,
     instance_metadata,
     separate,
-    blob_download,
     blob_list,
 )
 from util import lkp, cfg, dirs, slurmdirs
@@ -137,57 +136,24 @@ def failed_motd():
 
 def install_custom_scripts(clean=False):
     """download custom scripts from project metadata"""
-    script_pattern = re.compile(r"slurm-(?P<path>\S+)-script-(?P<name>\S+)")
-    blobs = blob_list()
-    files = [b.name for b in blobs]
 
-    def match_name(meta_key):
-        meta_key = os.path.basename(meta_key)
-        m = script_pattern.match(meta_key)
-        if not m:
-            # key does not match, skip
-            return None
-        # returned path is `partition.d/<part_name>/<name>`
-        # or `<controller/compute>.d/<name>`
-        parts = m["path"].split("-")
-        parts[0] += ".d"
-        name, _, ext = m["name"].rpartition("_")
-        name = ".".join((name, ext))
-        return meta_key, Path(*parts, name)
+    compute_tokens = ["compute", "prolog", "epilog"]
+    try:
+        compute_tokens.append(f"partition-{lkp.node_partition_name()}")
+    except Exception as e:
+        log.error(f"Failed to lookup node partition: {e}")
 
-    def filter_role(meta_entry):
-        if not meta_entry:
-            return False
-        key, path = meta_entry
-        # path is <role>.d/script.sh or partition.d/<part>/script.sh
-        # role is <role> or 'partition', part is None or <part>
-        role, part, *_ = chain(path.parent.parts, (None,))
-        role = role[:-2]  # strip off added '.d'
-
-        # login only needs their login scripts
-        if lkp.instance_role == "login":
-            script_types = ["login"]
-            return role in script_types
-        # compute needs compute, prolog, epilog, and the matching partition
-        if lkp.instance_role == "compute":
-            script_types = ["compute", "prolog", "epilog"]
-            try:
-                return role in script_types or (
-                    part and part == lkp.node_partition_name()
-                )
-            except Exception as e:
-                # If the node is dynamic, the nodename will throw an Exception
-                log.error(e)
-                return role in script_types
-        # controller downloads them all for good measure
-        return True
-
-    custom_scripts = list(filter(filter_role, map(match_name, files)))
-    log.info(
-        "installing custom scripts: {}".format(
-            ",".join(str(path) for key, path in custom_scripts)
-        )
+    prefix_tokens = dict.get(
+        {
+            "login": ["login"],
+            "compute": compute_tokens,
+            "controller": ["controller"],
+        },
+        lkp.instance_role,
+        [],
     )
+    prefixes = [f"slurm-{tok}-script" for tok in prefix_tokens]
+    blobs = list(chain.from_iterable(blob_list(prefix=p) for p in prefixes))
 
     if clean:
         path = Path(dirs.custom_scripts)
@@ -195,16 +161,25 @@ def install_custom_scripts(clean=False):
             # rm -rf custom_scripts
             shutil.rmtree(path)
 
-    dirs.custom_scripts.mkdirp()
-    for key, path in custom_scripts:
+    script_pattern = re.compile(r"slurm-(?P<path>\S+)-script-(?P<name>\S+)")
+    for blob in blobs:
+        m = script_pattern.match(blob.name)
+        if not m:
+            log.warning(f"found blob that doesn't match expected pattern: {blob.name}")
+            continue
+        path_parts = m["path"].split("-")
+        path_parts[0] += ".d"
+        stem, _, ext = m["name"].rpartition("_")
+        filename = ".".join((stem, ext))
+
+        path = Path(*path_parts, filename)
         fullpath = (dirs.custom_scripts / path).resolve()
-        fullpath.parent.mkdirp()
+        log.info(f"installing custom script: {path} from {blob.name}")
+        path.parent.mkdirp()
         for par in path.parents:
             util.chown_slurm(dirs.custom_scripts / par)
-        log.debug(path)
-        content = blob_download(key)
-        fullpath.write_text(content)
-        util.chown_slurm(fullpath, mode=0o755)
+        blob.download_to_filename(str(fullpath))
+        util.chown_slurm(fullpath)
 
 
 def run_custom_scripts():
