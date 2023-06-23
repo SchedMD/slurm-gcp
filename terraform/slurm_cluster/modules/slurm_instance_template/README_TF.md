@@ -34,7 +34,7 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_instance_template"></a> [instance\_template](#module\_instance\_template) | terraform-google-modules/vm/google//modules/instance_template | ~> 7.1 |
+| <a name="module_instance_template"></a> [instance\_template](#module\_instance\_template) | ../_instance_template | n/a |
 
 ## Resources
 
