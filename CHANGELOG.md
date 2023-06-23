@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
   `suspend_timeout`.
 - Increase `nodeset_name` length to 15 characters (from 7).
 - Remove `partition_name` length limit.
+- Add `bandwidth_tier` support to instance templates.
 
 ## \[5.7.4\]
 

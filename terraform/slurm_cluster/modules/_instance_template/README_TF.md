@@ -72,6 +72,7 @@ No modules.
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Name prefix for the instance template | `string` | `"default-instance-template"` | no |
 | <a name="input_network"></a> [network](#input\_network) | The name or self\_link of the network to attach this interface to. Use network attribute for Legacy or Auto subnetted networks and subnetwork for custom subnetted networks. | `string` | `""` | no |
 | <a name="input_network_ip"></a> [network\_ip](#input\_network\_ip) | Private IP address to assign to the instance if desired. | `string` | `""` | no |
+| <a name="input_nic_type"></a> [nic\_type](#input\_nic\_type) | The type of vNIC to be used on this interface. Possible values: GVNIC, VIRTIO\_NET. | `string` | `null` | no |
 | <a name="input_on_host_maintenance"></a> [on\_host\_maintenance](#input\_on\_host\_maintenance) | Instance availability Policy | `string` | `"MIGRATE"` | no |
 | <a name="input_preemptible"></a> [preemptible](#input\_preemptible) | Allow the instance to be preempted | `bool` | `false` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The GCP project ID | `string` | `null` | no |
@@ -87,6 +88,7 @@ No modules.
 | <a name="input_subnetwork_project"></a> [subnetwork\_project](#input\_subnetwork\_project) | The ID of the project in which the subnetwork belongs. If it is not provided, the provider project is used. | `string` | `""` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Network tags, provided as a list | `list(string)` | `[]` | no |
 | <a name="input_threads_per_core"></a> [threads\_per\_core](#input\_threads\_per\_core) | The number of threads per physical core. To disable simultaneous multithreading (SMT) set this to 1. | `number` | `null` | no |
+| <a name="input_total_egress_bandwidth_tier"></a> [total\_egress\_bandwidth\_tier](#input\_total\_egress\_bandwidth\_tier) | Network bandwidth tier. Note: machine\_type must be a supported type. Values are 'TIER\_1' or 'DEFAULT'.<br>See https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration for details. | `string` | `"DEFAULT"` | no |
 
 ## Outputs
 

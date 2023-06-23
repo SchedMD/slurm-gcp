@@ -181,6 +181,7 @@ controller_instance_config = {
     #   boot         = false
     # },
   ]
+  bandwidth_tier   = "platform_default"
   can_ip_forward   = null
   disable_smt      = false
   disk_auto_delete = true
@@ -271,6 +272,7 @@ login_nodes = [
 
     # Template By Definition
     additional_disks       = []
+    bandwidth_tier         = "platform_default"
     can_ip_forward         = false
     disable_smt            = false
     disk_auto_delete       = true
@@ -328,6 +330,7 @@ nodeset = [
 
     # Template By Definition
     additional_disks       = []
+    bandwidth_tier         = "platform_default"
     can_ip_forward         = false
     disable_smt            = false
     disk_auto_delete       = true
@@ -366,7 +369,6 @@ nodeset = [
     instance_template = null
 
     # Instance Definition
-    bandwidth_tier   = "platform_default"
     enable_public_ip = false
     network_ips      = "STANDARD"
     enable_spot_vm   = false

@@ -68,6 +68,16 @@ locals {
     ? "${var.slurm_cluster_name}-${local.slurm_instance_role}-${var.name_prefix}"
     : "${var.slurm_cluster_name}-${var.name_prefix}"
   )
+
+  total_egress_bandwidth_tier = var.bandwidth_tier == "tier_1_enabled" ? "TIER_1" : "DEFAULT"
+
+  nic_type_map = {
+    platform_default = null
+    virtio_enabled   = "VIRTIO_NET"
+    gvnic_enabled    = "GVNIC"
+    tier_1_enabled   = "GVNIC"
+  }
+  nic_type = lookup(local.nic_type_map, var.bandwidth_tier, null)
 }
 
 ########
@@ -97,13 +107,15 @@ module "instance_template" {
   project_id = var.project_id
 
   # Network
-  can_ip_forward     = var.can_ip_forward
-  network_ip         = var.network_ip
-  network            = var.network
-  region             = var.region
-  subnetwork_project = var.subnetwork_project
-  subnetwork         = var.subnetwork
-  tags               = var.tags
+  can_ip_forward              = var.can_ip_forward
+  network_ip                  = var.network_ip
+  network                     = var.network
+  nic_type                    = local.nic_type
+  region                      = var.region
+  subnetwork_project          = var.subnetwork_project
+  subnetwork                  = var.subnetwork
+  tags                        = var.tags
+  total_egress_bandwidth_tier = local.total_egress_bandwidth_tier
 
   # Instance
   machine_type             = var.machine_type

@@ -54,6 +54,8 @@ locals {
     # must be false when preemptible is true
     var.preemptible ? false : var.automatic_restart
   )
+
+  nic_type = var.total_egress_bandwidth_tier == "TIER_1" ? "GVNIC" : var.nic_type
 }
 
 ####################
@@ -108,6 +110,7 @@ resource "google_compute_instance_template" "tpl" {
     subnetwork         = var.subnetwork
     subnetwork_project = var.subnetwork_project
     network_ip         = length(var.network_ip) > 0 ? var.network_ip : null
+    nic_type           = local.nic_type
     stack_type         = var.stack_type
     dynamic "access_config" {
       for_each = var.access_config
@@ -152,6 +155,10 @@ resource "google_compute_instance_template" "tpl" {
         }
       }
     }
+  }
+
+  network_performance_config {
+    total_egress_bandwidth_tier = coalesce(var.total_egress_bandwidth_tier, "DEFAULT")
   }
 
   lifecycle {

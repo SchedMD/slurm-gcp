@@ -130,6 +130,7 @@ module "slurm_nodeset_template" {
   for_each = local.nodeset_map
 
   additional_disks         = each.value.additional_disks
+  bandwidth_tier           = each.value.bandwidth_tier
   slurm_bucket_path        = module.slurm_files.slurm_bucket_path
   can_ip_forward           = each.value.can_ip_forward
   disable_smt              = each.value.disable_smt
@@ -218,6 +219,7 @@ module "slurm_controller_template" {
   count = var.enable_hybrid || local.have_template ? 0 : 1
 
   additional_disks         = var.controller_instance_config.additional_disks
+  bandwidth_tier           = var.controller_instance_config.bandwidth_tier
   slurm_bucket_path        = module.slurm_files.slurm_bucket_path
   can_ip_forward           = var.controller_instance_config.can_ip_forward
   disable_smt              = var.controller_instance_config.disable_smt
@@ -310,6 +312,7 @@ module "slurm_login_template" {
   }
 
   additional_disks         = each.value.additional_disks
+  bandwidth_tier           = each.value.bandwidth_tier
   slurm_bucket_path        = module.slurm_files.slurm_bucket_path
   can_ip_forward           = each.value.can_ip_forward
   disable_smt              = each.value.disable_smt

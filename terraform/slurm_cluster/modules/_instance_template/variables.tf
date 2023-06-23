@@ -167,6 +167,12 @@ variable "network" {
   default     = ""
 }
 
+variable "nic_type" {
+  description = "The type of vNIC to be used on this interface. Possible values: GVNIC, VIRTIO_NET."
+  type        = string
+  default     = null
+}
+
 variable "subnetwork" {
   description = "The name of the subnetwork to attach this interface to. The subnetwork must exist in the same region this instance will be created in. Either network or subnetwork must be provided."
   type        = string
@@ -207,6 +213,15 @@ variable "additional_networks" {
       network_tier = string
     }))
   }))
+}
+
+variable "total_egress_bandwidth_tier" {
+  description = <<EOF
+Network bandwidth tier. Note: machine_type must be a supported type. Values are 'TIER_1' or 'DEFAULT'.
+See https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration for details.
+EOF
+  type        = string
+  default     = "DEFAULT"
 }
 
 ###########

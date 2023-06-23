@@ -53,7 +53,6 @@ locals {
     # Additional Features
     enable_public_ip = var.enable_public_ip
     network_tier     = var.network_tier
-    bandwidth_tier   = coalesce(var.bandwidth_tier, "platform_default")
     # Beta Features
     enable_spot_vm       = var.enable_spot_vm
     spot_instance_config = var.spot_instance_config != null ? var.spot_instance_config : local.spot_instance_config
