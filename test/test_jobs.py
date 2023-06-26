@@ -161,7 +161,8 @@ def test_preemption(cluster, lkp):
     partitions = []
     for part_name, partition in lkp.cfg.partitions.items():
         for group_name, group in partition.partition_nodes.items():
-            if group.enable_spot_vm:
+            template = lkp.template_info(group.instance_template)
+            if template.scheduling.preemptible:
                 partitions.append(part_name)
                 break
 

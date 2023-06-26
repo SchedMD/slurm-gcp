@@ -113,20 +113,6 @@ def instance_properties(nodeset, model, placement_group, labels=None):
             placement_group,
         ]
 
-    # provisioningModel=SPOT not supported by perInstanceProperties?
-    if nodeset.enable_spot_vm:
-        util.compute = util.compute_service(version="beta")
-
-        props.scheduling = {
-            "automaticRestart": False,
-            "instanceTerminationAction": nodeset.spot_instance_config.get(
-                "termination_action", "STOP"
-            ),
-            "onHostMaintenance": "TERMINATE",
-            "preemptible": True,
-            "provisioningModel": "SPOT",
-        }
-
     return props
 
 

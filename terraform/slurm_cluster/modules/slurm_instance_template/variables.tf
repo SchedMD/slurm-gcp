@@ -210,6 +210,29 @@ variable "preemptible" {
   default     = false
 }
 
+variable "spot" {
+  description = <<-EOD
+    Provision as a SPOT preemptible instance.
+    See https://cloud.google.com/compute/docs/instances/spot for more details.
+  EOD
+  type        = bool
+  default     = false
+}
+
+variable "termination_action" {
+  description = <<-EOD
+    Which action to take when Compute Engine preempts the VM. Value can be: 'STOP', 'DELETE'. The default value is 'STOP'.
+    See https://cloud.google.com/compute/docs/instances/spot for more details.
+  EOD
+  type        = string
+  default     = "STOP"
+
+  validation {
+    condition     = var.termination_action == null ? true : contains(["STOP", "DELETE"], var.termination_action)
+    error_message = "Allowed values are: 'STOP', 'DELETE'."
+  }
+}
+
 ############
 # METADATA #
 ############

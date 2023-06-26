@@ -63,6 +63,24 @@ variable "preemptible" {
   default     = false
 }
 
+variable "spot" {
+  description = <<-EOD
+    Provision as a SPOT preemptible instance.
+    See https://cloud.google.com/compute/docs/instances/spot for more details.
+  EOD
+  type        = bool
+  default     = false
+}
+
+variable "instance_termination_action" {
+  description = <<-EOD
+    Which action to take when Compute Engine preempts the VM. Value can be: 'STOP', 'DELETE'. The default value is 'STOP'.
+    See https://cloud.google.com/compute/docs/instances/spot for more details.
+  EOD
+  type        = string
+  default     = "STOP"
+}
+
 variable "automatic_restart" {
   type        = bool
   description = "(Optional) Specifies whether the instance should be automatically restarted if it is terminated by Compute Engine (not terminated by a user)."

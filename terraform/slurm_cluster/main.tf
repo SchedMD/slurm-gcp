@@ -247,9 +247,11 @@ module "slurm_controller_template" {
   source_image_family      = var.controller_instance_config.source_image_family
   source_image_project     = var.controller_instance_config.source_image_project
   source_image             = var.controller_instance_config.source_image
+  spot                     = var.controller_instance_config.spot
   subnetwork_project       = var.controller_instance_config.subnetwork_project
   subnetwork               = var.controller_instance_config.subnetwork
   tags                     = concat([var.slurm_cluster_name], var.controller_instance_config.tags)
+  termination_action       = var.controller_instance_config.termination_action
 }
 
 ########################
@@ -339,9 +341,11 @@ module "slurm_login_template" {
   source_image_family      = each.value.source_image_family
   source_image_project     = each.value.source_image_project
   source_image             = each.value.source_image
+  spot                     = each.value.spot
   subnetwork_project       = each.value.subnetwork_project
   subnetwork               = each.value.subnetwork
   tags                     = concat([var.slurm_cluster_name], each.value.tags)
+  termination_action       = each.value.termination_action
 }
 
 ###################

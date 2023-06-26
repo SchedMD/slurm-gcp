@@ -120,10 +120,12 @@ EOD
     source_image_family  = optional(string)
     source_image_project = optional(string)
     source_image         = optional(string)
+    spot                 = optional(bool, false)
     static_ip            = optional(string)
     subnetwork_project   = optional(string)
     subnetwork           = optional(string)
     tags                 = optional(list(string), [])
+    termination_action   = optional(string)
     zone                 = optional(string)
   })
   default = {}
@@ -223,8 +225,10 @@ variable "login_nodes" {
     static_ips           = optional(list(string), [])
     subnetwork_project   = optional(string)
     subnetwork           = optional(string)
+    spot                 = optional(bool, false)
     tags                 = optional(list(string), [])
     zone                 = optional(string)
+    termination_action   = optional(string)
   }))
   default = []
 }
@@ -260,7 +264,6 @@ variable "nodeset" {
     enable_public_ip       = optional(bool, false)
     enable_oslogin         = optional(bool, true)
     enable_shielded_vm     = optional(bool, false)
-    enable_spot_vm         = optional(bool, false)
     gpu = optional(object({
       count = number
       type  = string
@@ -283,15 +286,14 @@ variable "nodeset" {
       enable_secure_boot          = optional(bool, true)
       enable_vtpm                 = optional(bool, true)
     }))
-    spot_instance_config = optional(object({
-      termination_action = optional(string, "STOP")
-    }))
     source_image_family  = optional(string)
     source_image_project = optional(string)
     source_image         = optional(string)
     subnetwork_project   = optional(string)
     subnetwork           = optional(string)
+    spot                 = optional(bool, false)
     tags                 = optional(list(string), [])
+    termination_action   = optional(string)
     zones                = optional(list(string), [])
     zone_target_shape    = optional(string, "ANY_SINGLE_ZONE")
   }))

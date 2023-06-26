@@ -19,10 +19,6 @@
 ##########
 
 locals {
-  spot_instance_config = {
-    termination_action = "STOP"
-  }
-
   zones = setintersection(toset(data.google_compute_zones.available.names), var.zones)
 }
 
@@ -53,9 +49,6 @@ locals {
     # Additional Features
     enable_public_ip = var.enable_public_ip
     network_tier     = var.network_tier
-    # Beta Features
-    enable_spot_vm       = var.enable_spot_vm
-    spot_instance_config = var.spot_instance_config != null ? var.spot_instance_config : local.spot_instance_config
   }
 }
 

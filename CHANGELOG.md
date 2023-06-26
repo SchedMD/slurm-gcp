@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Increase `nodeset_name` length to 15 characters (from 7).
 - Remove `partition_name` length limit.
 - Add `bandwidth_tier` support to instance templates.
+- Move `spot` preemptible support to instance template.
 
 ## \[5.7.4\]
 

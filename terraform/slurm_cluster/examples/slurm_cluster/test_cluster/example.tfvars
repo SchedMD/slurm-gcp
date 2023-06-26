@@ -219,10 +219,12 @@ controller_instance_config = {
   source_image_family  = null
   source_image_project = null
   source_image         = null
+  spot                 = false
   tags = [
     # "tag0",
     # "tag1",
   ]
+  termination_action = null
 
   # Template By Source
   instance_template = null
@@ -299,7 +301,9 @@ login_nodes = [
     source_image_family      = null
     source_image_project     = null
     source_image             = null
+    spot                     = false
     tags                     = []
+    termination_action       = null
 
     # Template By Source
     instance_template = null
@@ -355,7 +359,9 @@ nodeset = [
     source_image_family      = null
     source_image_project     = null
     source_image             = null
+    spot                     = false
     tags                     = []
+    termination_action       = null
 
     # Network
     region             = null
@@ -371,10 +377,6 @@ nodeset = [
     # Instance Definition
     enable_public_ip = false
     network_ips      = "STANDARD"
-    enable_spot_vm   = false
-    spot_instance_config = {
-      termination_action = "STOP"
-    }
   },
   {
     # Group Definition

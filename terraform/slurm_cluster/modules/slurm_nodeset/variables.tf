@@ -144,22 +144,3 @@ variable "bandwidth_tier" {
     error_message = "Allowed values for bandwidth_tier are 'platform_default', 'virtio_enabled', 'gvnic_enabled', or 'tier_1_enabled'."
   }
 }
-
-variable "enable_spot_vm" {
-  description = "Enable SPOT type preemptible VM."
-  type        = bool
-  default     = false
-}
-
-variable "spot_instance_config" {
-  description = "Configure spot VM."
-  type = object({
-    termination_action = string
-  })
-  default = null
-
-  validation {
-    condition     = var.spot_instance_config == null ? true : contains(["STOP", "DELETE"], lookup(var.spot_instance_config, "termination_action", null))
-    error_message = "Key 'termination_action' allowed values: \"STOP\", \"DELETE\"."
-  }
-}

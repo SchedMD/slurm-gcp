@@ -128,6 +128,7 @@ module "instance_template" {
   enable_confidential_vm   = var.enable_confidential_vm
   enable_shielded_vm       = var.enable_shielded_vm
   preemptible              = var.preemptible
+  spot                     = var.spot
   on_host_maintenance      = var.on_host_maintenance
   labels = merge(
     var.labels,
@@ -136,6 +137,7 @@ module "instance_template" {
       slurm_instance_role = local.slurm_instance_role
     },
   )
+  instance_termination_action = var.termination_action
 
   # Metadata
   startup_script = data.local_file.startup.content
