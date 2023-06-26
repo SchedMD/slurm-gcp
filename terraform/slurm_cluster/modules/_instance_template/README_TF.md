@@ -8,6 +8,7 @@ unmanaged instance groups submodules.
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 Copyright 2019 Google LLC
+Copyright (C) SchedMD LLC.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
