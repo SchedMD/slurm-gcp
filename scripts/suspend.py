@@ -25,7 +25,6 @@ from util import (
     groupby_unsorted,
     log_api_request,
     batch_execute,
-    ensure_execute,
     to_hostlist,
     wait_for_operations,
     separate,
@@ -89,47 +88,7 @@ def suspend_nodes(nodelist):
     if not isinstance(nodes, list):
         nodes = util.to_hostnames(nodes)
 
-    placement_nodes = [
-        node for node in nodes if lkp.node_partition(node).enable_placement_groups
-    ]
-    placement_groups = set()
-    for node in placement_nodes:
-        # TODO lkp.instances involves an aggregatedList, a heavy API request. Avoid?
-        instance = lkp.instance(node)
-        if instance is None:
-            continue
-        job_id = instance.labels.get("slurm_job_id", None)
-        if job_id is None:
-            continue
-        placement_groups.add(
-            (job_id, lkp.node_region(node), lkp.node_partition_name(node))
-        )
-
     delete_instances(nodes)
-    for pg in placement_groups:
-        delete_placement_groups(*pg)
-
-
-def delete_placement_groups(job_id, region, partition_name):
-    def delete_placement_request(pg_name):
-        return compute.resourcePolicies().delete(
-            project=cfg.project, region=region, resourcePolicy=pg_name
-        )
-
-    flt = f"name={cfg.slurm_cluster_name}-{partition_name}-{job_id}-*"
-    req = compute.resourcePolicies().list(
-        project=cfg.project, region=region, filter=flt
-    )
-    result = ensure_execute(req).get("items")
-    if not result:
-        log.debug(f"No placement groups found to delete for job id {job_id}")
-        return
-    requests = {pg["name"]: delete_placement_request(pg["name"]) for pg in result}
-    done, failed = batch_execute(requests)
-    if failed:
-        failed_pg = [f"{n}: {e}" for n, (_, e) in failed.items()]
-        log.error(f"some nodes failed to delete: {failed_pg}")
-    log.info(f"deleted {len(done)} placement groups ({to_hostlist(done.keys())})")
 
 
 def main(nodelist):

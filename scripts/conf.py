@@ -14,15 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from itertools import chain
 from addict import Dict as NSDict
 from collections import defaultdict
 import json
 from pathlib import Path
 import util
-from util import lkp, dirs, cfg, slurmdirs
+from util import Lookup, lkp, dirs, cfg, slurmdirs
 from util import (
     access_secret_version,
-    blob_download,
+    blob_get,
 )
 
 
@@ -47,8 +48,8 @@ def dict_to_conf(conf, delim=" "):
 
 
 def conflines(cloud_parameters, lkp=lkp):
-    scripts_dir = lkp.cfg.get("install_dir", dirs.scripts)
-    no_comma_params = cloud_parameters.get("no_comma_params", False)
+    scripts_dir = lkp.cfg.install_dir or dirs.scripts
+    no_comma_params = cloud_parameters.no_comma_params or False
 
     any_gpus = any(
         lkp.template_info(node.instance_template).gpu_count > 0
@@ -85,15 +86,10 @@ def conflines(cloud_parameters, lkp=lkp):
     epilog_path = Path(dirs.custom_scripts / "epilog.d")
     prolog_path.mkdir(exist_ok=True)
     epilog_path.mkdir(exist_ok=True)
-    any_exclusive = any(
-        bool(p.enable_job_exclusive) for p in lkp.cfg.partitions.values()
-    )
     conf_options = {
         **(comma_params if not no_comma_params else {}),
         "Prolog": f"{prolog_path}/*" if lkp.cfg.prolog_scripts else None,
         "Epilog": f"{epilog_path}/*" if lkp.cfg.epilog_scripts else None,
-        "PrologSlurmctld": f"{scripts_dir}/resume.py" if any_exclusive else None,
-        "EpilogSlurmctld": f"{scripts_dir}/suspend.py" if any_exclusive else None,
         "SuspendProgram": f"{scripts_dir}/suspend.py",
         "ResumeProgram": f"{scripts_dir}/resume.py",
         "ResumeFailProgram": f"{scripts_dir}/suspend.py",
@@ -106,9 +102,9 @@ def conflines(cloud_parameters, lkp=lkp):
     return dict_to_conf(conf_options, delim="\n")
 
 
-def node_group_lines(node_group, part_name, lkp=lkp):
-    template_info = lkp.template_info(node_group.instance_template)
-    machine_conf = lkp.template_machine_conf(node_group.instance_template)
+def nodeset_lines(nodeset, lkp=lkp):
+    template_info = lkp.template_info(nodeset.instance_template)
+    machine_conf = lkp.template_machine_conf(nodeset.instance_template)
 
     node_def = dict_to_conf(
         {
@@ -120,7 +116,7 @@ def node_group_lines(node_group, part_name, lkp=lkp):
             "CoresPerSocket": machine_conf.cores_per_socket,
             "ThreadsPerCore": machine_conf.threads_per_core,
             "CPUs": machine_conf.cpus,
-            **node_group.node_conf,
+            **nodeset.node_conf,
         }
     )
 
@@ -129,86 +125,66 @@ def node_group_lines(node_group, part_name, lkp=lkp):
         gres = f"gpu:{template_info.gpu_count}"
 
     lines = [node_def]
-    static, dynamic = lkp.nodeset_lists(node_group, part_name)
-    nodeset = lkp.nodeset_prefix(node_group.group_name, part_name)
-    if static:
-        lines.append(
-            dict_to_conf(
-                {
-                    "NodeName": static,
-                    "State": "CLOUD",
-                    "Gres": gres,
-                }
-            )
+    static, dynamic = lkp.nodeset_lists(nodeset)
+    # static or dynamic could be None, but Nones are filtered out of the lines
+    lines.extend(
+        dict_to_conf(
+            {
+                "NodeName": nodelist,
+                "State": "CLOUD",
+                "Gres": gres,
+            }
         )
-    if dynamic:
-        lines.append(
-            dict_to_conf(
-                {
-                    "NodeName": dynamic,
-                    "State": "CLOUD",
-                    "Gres": gres,
-                }
-            )
-        )
+        if nodelist is not None
+        else None
+        for nodelist in [static, dynamic]
+    )
     lines.append(
         dict_to_conf(
-            {"NodeSet": nodeset, "Nodes": ",".join(filter(None, (static, dynamic)))}
+            {
+                "NodeSet": nodeset.nodeset_name,
+                "Nodes": ",".join(filter(None, (static, dynamic))),
+            }
         )
     )
+    return "\n".join(filter(None, lines))
 
-    return (nodeset, "\n".join(filter(None, lines)))
+
+def nodeset_dyn_lines(nodeset, lkp: Lookup = lkp):
+    """generate slurm NodeSet definition for dynamic nodeset"""
+    return dict_to_conf(
+        {"NodeSet": nodeset.nodeset_name, "Feature": nodeset.nodeset_feature}
+    )
 
 
 def partitionlines(partition, lkp=lkp):
     """Make a partition line for the slurm.conf"""
     part_name = partition.partition_name
     lines = []
-    has_nodes: bool = False
-    has_feature: bool = False
-    defmem: int = 0
-    nodesets: list = []
+    MIN_MEM_PER_CPU = 100
+    defmem: int = MIN_MEM_PER_CPU
+
+    def defmempercpu(template_link):
+        machine_conf = lkp.template_machine_conf(template_link)
+        return max(MIN_MEM_PER_CPU, machine_conf.memory // machine_conf.cpus)
 
     if len(partition.partition_nodes.values()) > 0:
-        group_lines = [
-            node_group_lines(group, part_name, lkp)
-            for group in partition.partition_nodes.values()
-        ]
-        nodesets, nodelines = zip(*group_lines)
-
-        def defmempercpu(template_link):
-            machine_conf = lkp.template_machine_conf(template_link)
-            return max(100, machine_conf.memory // machine_conf.cpus)
-
         defmem = min(
-            defmempercpu(node.instance_template)
-            for node in partition.partition_nodes.values()
+            defmempercpu(nodeset.instance_template)
+            for nodeset in partition.partition_nodeset
         )
-        lines.extend(nodelines)
-        has_nodes = True
-    if partition.partition_feature:
-        nodelines = [
-            dict_to_conf({"NodeSet": part_name, "Feature": partition.partition_feature})
-        ]
-        lines.extend(nodelines)
-        has_feature = True
-    if has_nodes or has_feature:
-        nodes = []
-        if has_nodes:
-            nodes.extend(nodesets)
-        if has_feature:
-            nodes.append(part_name)
-        line_elements = {
-            "PartitionName": part_name,
-            "Nodes": ",".join(nodes),
-            "State": "UP",
-            "DefMemPerCPU": defmem,
-            "SuspendTime": 300,
-            "Oversubscribe": "Exclusive" if partition.enable_job_exclusive else None,
-            "PowerDownOnIdle": "YES" if partition.enable_job_exclusive else None,
-            **partition.partition_conf,
-        }
-        lines.extend([dict_to_conf(line_elements)])
+    nodesets = list(chain(partition.partition_nodeset, partition.partition_nodeset_dyn))
+    line_elements = {
+        "PartitionName": part_name,
+        "Nodes": ",".join(nodesets),
+        "State": "UP",
+        "DefMemPerCPU": defmem,
+        "SuspendTime": 300,
+        "Oversubscribe": "Exclusive" if partition.enable_job_exclusive else None,
+        "PowerDownOnIdle": "YES" if partition.enable_job_exclusive else None,
+        **partition.partition_conf,
+    }
+    lines.extend([dict_to_conf(line_elements)])
 
     return "\n".join(lines)
 
@@ -232,9 +208,10 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
     lines = [
         FILE_PREAMBLE,
         conflines(cloud_parameters),
+        *(nodeset_lines(n, lkp) for n in lkp.cfg.nodeset.values()),
+        *(nodeset_dyn_lines(n, lkp) for n in lkp.cfg.nodeset_dyn.values()),
         *(partitionlines(p, lkp) for p in lkp.cfg.partitions.values()),
         suspend_exc,
-        "\n",
     ]
     return "\n\n".join(filter(None, lines))
 
@@ -264,7 +241,7 @@ def install_slurm_conf(lkp=lkp):
         "state_save": slurmdirs.state,
         "mpi_default": mpi_default,
     }
-    conf_resp = blob_download("slurm-tpl-slurm-conf")
+    conf_resp = blob_get("slurm-tpl-slurm-conf").download_as_text()
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "slurm.conf"
@@ -302,7 +279,7 @@ def install_slurmdbd_conf(lkp=lkp):
             conf_options.db_host = db_host_str[0]
             conf_options.db_port = db_host_str[1] if len(db_host_str) >= 2 else "3306"
 
-    conf_resp = blob_download("slurm-tpl-slurmdbd-conf")
+    conf_resp = blob_get("slurm-tpl-slurmdbd-conf").download_as_text()
     conf = conf_resp.format(**conf_options)
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "slurmdbd.conf"
@@ -312,7 +289,7 @@ def install_slurmdbd_conf(lkp=lkp):
 
 def install_cgroup_conf(lkp=lkp):
     """install cgroup.conf"""
-    conf = blob_download("slurm-tpl-cgroup-conf")
+    conf = blob_get("slurm-tpl-cgroup-conf").download_as_text()
 
     conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cgroup.conf"
     conf_file.write_text(conf)

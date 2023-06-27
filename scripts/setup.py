@@ -138,16 +138,17 @@ def install_custom_scripts(clean=False):
     """download custom scripts from project metadata"""
 
     compute_tokens = ["compute", "prolog", "epilog"]
-    try:
-        compute_tokens.append(f"partition-{lkp.node_partition_name()}")
-    except Exception as e:
-        log.error(f"Failed to lookup node partition: {e}")
+    if lkp.instance_role == "compute":
+        try:
+            compute_tokens.append(f"partition-{lkp.node_partition_name()}")
+        except Exception as e:
+            log.error(f"Failed to lookup node partition: {e}")
 
     prefix_tokens = dict.get(
         {
             "login": ["login"],
             "compute": compute_tokens,
-            "controller": ["controller"],
+            "controller": ["controller", "prolog", "epilog"],
         },
         lkp.instance_role,
         [],
@@ -163,7 +164,7 @@ def install_custom_scripts(clean=False):
 
     script_pattern = re.compile(r"slurm-(?P<path>\S+)-script-(?P<name>\S+)")
     for blob in blobs:
-        m = script_pattern.match(blob.name)
+        m = script_pattern.match(Path(blob.name).name)
         if not m:
             log.warning(f"found blob that doesn't match expected pattern: {blob.name}")
             continue
@@ -175,11 +176,12 @@ def install_custom_scripts(clean=False):
         path = Path(*path_parts, filename)
         fullpath = (dirs.custom_scripts / path).resolve()
         log.info(f"installing custom script: {path} from {blob.name}")
-        path.parent.mkdirp()
+        fullpath.parent.mkdirp()
         for par in path.parents:
             util.chown_slurm(dirs.custom_scripts / par)
-        blob.download_to_filename(str(fullpath))
-        util.chown_slurm(fullpath)
+        with fullpath.open("wb") as f:
+            blob.download_to_file(f)
+        util.chown_slurm(fullpath, mode=0o755)
 
 
 def run_custom_scripts():

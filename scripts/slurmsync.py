@@ -17,7 +17,9 @@
 import argparse
 import fcntl
 import hashlib
+import json
 import logging
+import re
 import sys
 from enum import Enum
 from itertools import chain
@@ -26,15 +28,17 @@ import yaml
 
 import util
 from util import (
-    run,
-    separate,
     batch_execute,
-    to_hostlist,
-    with_static,
+    ensure_execute,
     fetch_config_yaml,
     load_config_file,
+    run,
     save_config,
+    separate,
+    to_hostlist,
+    with_static,
     Lookup,
+    NSDict,
 )
 from util import lkp, cfg, compute, CONFIG_FILE
 from suspend import delete_instances
@@ -189,6 +193,67 @@ def do_node_update(status, nodes):
     update()
 
 
+def delete_placement_groups(placement_groups):
+    def delete_placement_request(pg_name, region):
+        return compute.resourcePolicies().delete(
+            project=lkp.project, region=region, resourcePolicy=pg_name
+        )
+
+    requests = {
+        pg.name: delete_placement_request(pg["name"], pg["region"])
+        for pg in placement_groups
+    }
+    done, failed = batch_execute(requests)
+    if failed:
+        failed_pg = [f"{n}: {e}" for n, (_, e) in failed.items()]
+        log.error(f"some placement groups failed to delete: {failed_pg}")
+    log.info(f"deleted {len(done)} placement groups ({to_hostlist(done.keys())})")
+
+
+def sync_placement_groups():
+    """Delete placement policies that are for jobs that have completed/terminated"""
+    keep_states = frozenset(
+        [
+            "RUNNING",
+            "CONFIGURING",
+            "STOPPED",
+            "SUSPENDED",
+            "COMPLETING",
+        ]
+    )
+    keep_jobs = {
+        job["job_id"]
+        for job in json.loads(run(f"{lkp.scontrol} show jobs --json").stdout)["jobs"]
+        if job["job_state"] in keep_states
+    }
+
+    fields = "items.regions.resourcePolicies,nextPageToken"
+    flt = f"name={lkp.slurm_cluster_name}-*"
+    act = compute.resourcePolicies()
+    op = act.aggregatedList(project=lkp.project, fields=fields, filter=flt)
+    placement_groups = {}
+    pg_regex = re.compile(
+        rf"{lkp.slurm_cluster_name}-(?<partition>[^\s\-]+)-(?P<job_id>\d+)-(?P<index>\d+)"
+    )
+    while op is not None:
+        result = ensure_execute(op)
+        # merge placement group info from API and job_id,partition,index parsed from the name
+        placement_groups.update(
+            {
+                pg["name"]: NSDict({**pg, **pg_regex.match(pg["name"]).groupdict()})
+                for pg in chain.from_iterable(
+                    item["resourcePolicies"]
+                    for item in result.get("items", {}).values()
+                )
+                if pg_regex.match(pg["name"]) is not None
+                and pg["job_id"] not in keep_jobs
+            }
+        )
+        op = act.aggregatedList_next(op, result)
+
+    delete_placement_groups(list(placement_groups.values()))
+
+
 def sync_slurm():
     if lkp.instance_role != "controller":
         return
@@ -274,6 +339,11 @@ def main():
     except Exception:
         log.exception("failed to sync instances")
 
+    try:
+        sync_placement_groups()
+    except Exception:
+        log.exception("failed to sync placement groups")
+
 
 parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -301,7 +371,6 @@ parser.add_argument(
 )
 
 if __name__ == "__main__":
-
     args = parser.parse_args()
     util.chown_slurm(LOGFILE, mode=0o600)
 

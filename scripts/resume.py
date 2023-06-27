@@ -16,24 +16,24 @@
 # limitations under the License.
 
 import argparse
+import collections
 import json
 import logging
 import os
 import sys
+import yaml
 from itertools import chain
 from pathlib import Path
-from suspend import delete_placement_groups
-import yaml
-import collections
 
 import util
 from util import (
+    chunked,
+    dirs,
     ensure_execute,
     get_insert_operations,
     log_api_request,
     map_with_futures,
     run,
-    chunked,
     separate,
     to_hostlist,
     trim_self_link,
@@ -55,8 +55,7 @@ PLACEMENT_MAX_CNT = 150
 BULK_INSERT_LIMIT = 1000
 
 
-def instance_properties(partition, model, placement_group, labels=None):
-    node_group = lkp.node_group(model)
+def instance_properties(nodeset, model, placement_group, labels=None):
     template = lkp.node_template(model)
     template_info = lkp.template_info(template)
 
@@ -64,25 +63,25 @@ def instance_properties(partition, model, placement_group, labels=None):
 
     props.networkInterfaces = [
         {
-            "subnetwork": partition.subnetwork,
+            "subnetwork": nodeset.subnetwork,
         }
     ]
 
-    if node_group.enable_public_ip:
+    if nodeset.enable_public_ip:
         props.networkInterfaces[0]["accessConfigs"] = [
             {
                 "type": "ONE_TO_ONE_NAT",
                 "name": "External NAT",
-                "networkTier": node_group.get("network_tier", None),
+                "networkTier": nodeset.network_tier or None,
             }
         ]
 
-    if node_group.bandwidth_tier == "virtio_enabled":
+    if nodeset.bandwidth_tier == "virtio_enabled":
         props.networkInterfaces[0]["nicType"] = "VirtioNet"
-    elif node_group.bandwidth_tier in ["tier_1_enabled", "gvnic_enabled"]:
+    elif nodeset.bandwidth_tier in ["tier_1_enabled", "gvnic_enabled"]:
         props.networkInterfaces[0]["nicType"] = "gVNIC"
 
-    if node_group.bandwidth_tier == "tier_1_enabled":
+    if nodeset.bandwidth_tier == "tier_1_enabled":
         props.networkPerformanceConfig = {"totalEgressBandwidthTier": "TIER_1"}
 
     slurm_metadata = {
@@ -123,12 +122,12 @@ def instance_properties(partition, model, placement_group, labels=None):
         ]
 
     # provisioningModel=SPOT not supported by perInstanceProperties?
-    if node_group.enable_spot_vm:
+    if nodeset.enable_spot_vm:
         util.compute = util.compute_service(version="beta")
 
         props.scheduling = {
             "automaticRestart": False,
-            "instanceTerminationAction": node_group.spot_instance_config.get(
+            "instanceTerminationAction": nodeset.spot_instance_config.get(
                 "termination_action", "STOP"
             ),
             "onHostMaintenance": "TERMINATE",
@@ -146,7 +145,7 @@ def per_instance_properties(node):
     return props
 
 
-def create_instances_request(nodes, placement_group, job_id=None):
+def create_instances_request(nodes, partition, placement_group, job_id=None):
     """Call regionInstances.bulkInsert to create instances"""
     assert len(nodes) > 0
     if placement_group:
@@ -156,9 +155,10 @@ def create_instances_request(nodes, placement_group, job_id=None):
 
     # model here indicates any node that can be used to describe the rest
     model = next(iter(nodes))
-    partition = lkp.node_partition(model)
+    nodeset = lkp.node_nodeset(model)
     template = lkp.node_template(model)
     region = lkp.node_region(model)
+    log.debug(f"create_instances_request: {model} placement: {placement_group}")
 
     body = NSDict()
     body.count = len(nodes)
@@ -174,7 +174,7 @@ def create_instances_request(nodes, placement_group, job_id=None):
     )
     # overwrites properties accross all instances
     body.instanceProperties = instance_properties(
-        partition, model, placement_group, labels
+        nodeset, model, placement_group, labels
     )
 
     # key is instance name, value overwrites properties
@@ -183,11 +183,11 @@ def create_instances_request(nodes, placement_group, job_id=None):
     zones = {
         **{
             f"zones/{zone}": {"preference": "ALLOW"}
-            for zone in partition.zone_policy_allow or []
+            for zone in nodeset.zone_policy_allow or []
         },
         **{
             f"zones/{zone}": {"preference": "DENY"}
-            for zone in partition.zone_policy_deny or []
+            for zone in nodeset.zone_policy_deny or []
         },
     }
     body.locationPolicy.targetShape = cfg.zone_target_shape or "ANY_SINGLE_ZONE"
@@ -218,9 +218,6 @@ def expand_nodelist(nodelist):
 
 def group_nodes_bulk(nodes, resume_data=None):
     """group nodes by job_id, placement_group, node_group, and max bulkInsert size"""
-
-    if resume_data is None and global_resume_data is not None:
-        resume_data = global_resume_data.deepcopy()
     if resume_data is None:
         # all nodes will be considered jobless
         jobs = {}
@@ -234,7 +231,9 @@ def group_nodes_bulk(nodes, resume_data=None):
         job.nodelist_resume = job.nodes_resume
         job.nodes_resume = expand_nodelist(job.nodelist_resume)
         # create placement groups if nodes for job need it
-        job.placement_groups = create_placement_groups(job.job_id, job.nodes_alloc)
+        job.placement_groups = create_placement_groups(
+            job.job_id, job.nodes_alloc, job.partition
+        )
         # placement group assignment is based on all allocated nodes, but we only want to
         # handle nodes in nodes_resume in this run.
         for pg, pg_nodes in job.placement_groups.items():
@@ -252,13 +251,16 @@ def group_nodes_bulk(nodes, resume_data=None):
         nodes_resume=jobless_nodes,
         nodes_alloc=jobless_nodes,
         placement_groups={None: jobless_nodes},
+        partition=None,
     )
 
     BulkChunk = collections.namedtuple(
-        "BulkChunk", ["prefix", "job_id", "placement_group", "nodes", "i"]
+        "BulkChunk", ["prefix", "job_id", "partition", "placement_group", "nodes", "i"]
     )
     grouped_nodes = [
-        BulkChunk(prefix, job_id, placement_group, chunk_nodes, i)
+        BulkChunk(
+            prefix, job_id, job[job_id].partition, placement_group, chunk_nodes, i
+        )
         for job_id, job in jobs.items()
         for placement_group, pg_nodes in job.placement_groups.items()
         for prefix, nodes in util.groupby_unsorted(pg_nodes, lkp.node_prefix)
@@ -285,8 +287,11 @@ def resume_nodes(nodes, resume_data=None):
     if len(nodes) == 0:
         log.info("No nodes to resume")
         return
-    nodes = sorted(nodes, key=lkp.node_prefix)
 
+    if resume_data is None and global_resume_data is not None:
+        resume_data = global_resume_data.deepcopy()
+
+    nodes = sorted(nodes, key=lkp.node_prefix)
     grouped_nodes = group_nodes_bulk(nodes, resume_data)
 
     if log.isEnabledFor(logging.DEBUG):
@@ -301,7 +306,7 @@ def resume_nodes(nodes, resume_data=None):
     # make all bulkInsert requests and execute with batch
     inserts = {
         group: create_instances_request(
-            chunk.nodes, chunk.placement_group, chunk.job_id
+            chunk.nodes, chunk.partition, chunk.placement_group, chunk.job_id
         )
         for group, chunk in grouped_nodes.items()
     }
@@ -423,13 +428,12 @@ def create_placement_request(pg_name, region):
     return request
 
 
-def create_placement_groups(job_id, node_list):
+def create_placement_groups(job_id, node_list, partition_name):
     model = next(iter(node_list))
-    partition = lkp.node_partition(model)
     # allow calling this method on non-placement group nodes
+    partition = lkp.cfg.partitions[partition_name]
     if not partition.enable_placement_groups:
         return {None: node_list}
-    partition_name = partition.partition_name
     region = lkp.node_region(model)
 
     groups = {
@@ -466,11 +470,9 @@ def create_placement_groups(job_id, node_list):
         log.warning(
             "placement policies already exist: {}".format(",".join(redundant.keys()))
         )
-    any_failures = False
     if failed:
         reqs = [f"{e}" for _, e in failed.values()]
         log.fatal("failed to create placement policies: {}".format("; ".join(reqs)))
-        any_failures = True
     operations = {group: wait_for_operation(op) for group, op in submitted.items()}
     for group, op in operations.items():
         if "error" in op:
@@ -481,12 +483,7 @@ def create_placement_groups(job_id, node_list):
             log.error(
                 f"placement group failed to create: '{group}' ({op['name']}): {msg}"
             )
-            any_failures = True
 
-    if any_failures:
-        # delete any placement groups that managed to be created.
-        delete_placement_groups(job_id, region, partition_name)
-        exit(1)
     log.info(
         f"created {len(operations)} placement groups ({to_hostlist(operations.keys())})"
     )
@@ -520,7 +517,10 @@ def get_resume_file_data():
         )
         return None
     resume_file = Path(SLURM_RESUME_FILE)
-    return NSDict(json.loads(resume_file.read_text()))
+    resume_json = resume_file.read_text()
+    if args.loglevel == logging.DEBUG:
+        (dirs.scripts / "resume_data.json").write_text(resume_json)
+    return NSDict(json.loads(resume_json))
 
 
 def main(nodelist, force=False):
@@ -585,5 +585,5 @@ if __name__ == "__main__":
     util.config_root_logger(filename, level=args.loglevel, logfile=LOGFILE)
     sys.excepthook = util.handle_exception
 
-    global_resume_data = NSDict(get_resume_file_data())
+    global_resume_data = get_resume_file_data()
     main(args.nodelist, args.force)

@@ -265,35 +265,32 @@ def map_with_futures(func, seq):
             yield res
 
 
-def blob_get(file):
+def blob_get(file, project=None):
     from google.cloud import storage
 
+    if project is None:
+        project = lkp.project
     uri = instance_metadata("attributes/slurm_bucket_path")
     bucket_name, path = parse_bucket_uri(uri)
     blob_name = f"{path}/{file}"
-    storage_client = storage.Client(lkp.project)
+    storage_client = storage.Client(project=project)
     return storage_client.get_bucket(bucket_name).blob(blob_name)
 
 
-def blob_list(prefix="", delimiter=None):
+def blob_list(prefix="", delimiter=None, project=None):
     from google.cloud import storage
 
+    if project is None:
+        project = lkp.project
     uri = instance_metadata("attributes/slurm_bucket_path")
     bucket_name, path = parse_bucket_uri(uri)
     blob_prefix = f"{path}/{prefix}"
-    storage_client = storage.Client()
+    storage_client = storage.Client(project=project)
     # Note: The call returns a response only when the iterator is consumed.
     blobs = storage_client.list_blobs(
         bucket_name, prefix=blob_prefix, delimiter=delimiter
     )
     return [blob for blob in blobs]
-
-
-def is_exclusive_node(node):
-    partition = lkp.node_partition(node)
-    return not lkp.node_is_static(node) and (
-        partition.enable_job_exclusive or partition.enable_placement_groups
-    )
 
 
 def compute_service(credentials=None, user_agent=USER_AGENT, version="v1"):
@@ -993,9 +990,8 @@ class Lookup:
 
     regex = (
         r"^(?P<prefix>"
-        r"(?P<name>[^\s\-]+)"
-        r"-(?P<partition>[^\s\-]+)"
-        r"-(?P<group>\S+)"
+        r"(?P<cluster>[^\s\-]+)"
+        r"-(?P<nodeset>\S+)"
         r")"
         r"-(?P<node>"
         r"(?P<index>\d+)|"
@@ -1096,40 +1092,34 @@ class Lookup:
     def node_prefix(self, node_name=None):
         return self._node_desc(node_name).prefix
 
-    def node_partition_name(self, node_name=None):
-        return self._node_desc(node_name).partition
-
-    def node_group_name(self, node_name=None):
-        return self._node_desc(node_name).group
+    def node_nodeset_name(self, node_name=None):
+        return self._node_desc(node_name).nodeset
 
     def node_index(self, node_name=None):
         return int(self._node_desc(node_name).index)
 
-    def node_partition(self, node_name=None):
-        return self.cfg.partitions[self.node_partition_name(node_name)]
-
-    def node_group(self, node_name=None):
-        group_name = self.node_group_name(node_name)
-        return self.node_partition(node_name).partition_nodes[group_name]
+    def node_nodeset(self, node_name=None):
+        nodeset_name = self.node_nodeset_name(node_name)
+        return self.cfg.nodeset.get(nodeset_name)
 
     def node_template(self, node_name=None):
-        return self.node_group(node_name).instance_template
+        return self.node_nodeset(node_name).instance_template
 
     def node_template_info(self, node_name=None):
         return self.template_info(self.node_template(node_name))
 
     def node_region(self, node_name=None):
-        partition = self.node_partition(node_name)
-        return parse_self_link(partition.subnetwork).region
+        nodeset = self.node_nodeset(node_name)
+        return parse_self_link(nodeset.subnetwork).region
 
     def node_is_static(self, node_name=None):
-        node_group = self.node_group(node_name)
-        return self.node_index(node_name) < node_group.node_count_static
+        nodeset = self.node_nodeset(node_name)
+        return self.node_index(node_name) < nodeset.node_count_static
 
-    def nodeset_prefix(self, group_name, part_name):
-        return f"{self.cfg.slurm_cluster_name}-{part_name}-{group_name}"
+    def nodeset_prefix(self, nodeset_name):
+        return f"{self.cfg.slurm_cluster_name}-{nodeset_name}"
 
-    def nodeset_lists(self, node_group, part_name):
+    def nodeset_lists(self, nodeset):
         """Return static and dynamic nodenames given a partition node type
         definition
         """
@@ -1138,12 +1128,12 @@ class Lookup:
             end = start + count - 1
             return f"{start}" if count == 1 else f"[{start}-{end}]", end + 1
 
-        prefix = self.nodeset_prefix(node_group.group_name, part_name)
-        static_count = node_group.node_count_static
-        dynamic_count = node_group.node_count_dynamic_max
+        prefix = self.nodeset_prefix(nodeset.nodeset_name)
+        static_count = nodeset.node_count_static
+        dynamic_count = nodeset.node_count_dynamic_max
         static_range, end = node_range(static_count) if static_count else (None, 0)
         dynamic_range, _ = (
-            node_range(dynamic_count, end) if dynamic_count else (None, 0)
+            node_range(dynamic_count, start=end) if dynamic_count else (None, 0)
         )
 
         static_nodelist = f"{prefix}-{static_range}" if static_count else None
@@ -1152,16 +1142,10 @@ class Lookup:
 
     @lru_cache(maxsize=1)
     def static_nodelist(self):
-        return list(
-            filter(
-                None,
-                (
-                    self.nodeset_lists(node, part.partition_name)[0]
-                    for part in self.cfg.partitions.values()
-                    for node in part.partition_nodes.values()
-                ),
-            )
+        static_nodesets = (
+            self.nodeset_lists(ns)[0] for ns in self.cfg.nodeset.values()
         )
+        return [static for static in static_nodesets if static is not None]
 
     @lru_cache(maxsize=None)
     def slurm_nodes(self):
@@ -1196,15 +1180,12 @@ class Lookup:
         static_nodes = []
         dynamic_nodes = []
 
-        for partition in lkp.cfg.partitions.values():
-            part_name = partition.partition_name
-            for node_group in partition.partition_nodes.values():
-                static, dynamic = self.nodeset_lists(node_group, part_name)
-                if static is not None:
-                    static_nodes.extend(to_hostnames(static))
-                if dynamic is not None:
-                    dynamic_nodes.extend(to_hostnames(dynamic))
-
+        for nodeset in self.cfg.nodeset.values():
+            static, dynamic = self.nodeset_lists(nodeset)
+            if static is not None:
+                static_nodes.extend(to_hostnames(static))
+            if dynamic is not None:
+                dynamic_nodes.extend(to_hostnames(dynamic))
         return static_nodes, dynamic_nodes
 
     def filter_nodes(self, nodes):
@@ -1465,12 +1446,13 @@ class Lookup:
 
 
 # Define late globals
+lkp = Lookup()
 cfg = load_config_file(CONFIG_FILE)
 if not cfg:
     try:
         cfg = fetch_config_yaml()
-    except Exception:
-        log.warning("config not found in bucket")
+    except Exception as e:
+        log.warning(f"config not found in bucket: {e}")
     if cfg:
         save_config(cfg, CONFIG_FILE)
 
