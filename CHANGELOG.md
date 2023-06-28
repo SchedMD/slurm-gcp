@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Replace `access_config` with `enable_public_ip` and `network_tier`.
 - Add partition options `default`, `resume_timeout`, `suspend_time`,
   `suspend_timeout`.
+- Increase `nodeset_name` length to 15 characters (from 7).
 
 ## \[5.7.4\]
 

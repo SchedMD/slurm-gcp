@@ -19,8 +19,8 @@ variable "nodeset_name" {
   type        = string
 
   validation {
-    condition     = can(regex("^[a-z](?:[a-z0-9]*)$", var.nodeset_name))
-    error_message = "Variable 'nodeset_name' must be a match of regex '^[a-z](?:[a-z0-9]*)$'."
+    condition     = can(regex("^[a-z](?:[a-z0-9]{0,14})$", var.nodeset_name))
+    error_message = "Variable 'nodeset_name' must be a match of regex '^[a-z](?:[a-z0-9]{0,14})$'."
   }
 }
 
