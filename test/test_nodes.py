@@ -19,7 +19,6 @@ log = logging.getLogger()
 
 
 def test_static(cluster: Cluster, lkp: util.Lookup):
-
     power_states = set(
         (
             "POWERING_DOWN",
@@ -45,7 +44,6 @@ def test_static(cluster: Cluster, lkp: util.Lookup):
 
 
 def test_exclusive_labels(cluster: Cluster, lkp: util.Lookup):
-
     partitions = []
     for part_name, partition in lkp.cfg.partitions.items():
         if partition.enable_job_exclusive:
