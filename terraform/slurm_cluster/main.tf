@@ -330,6 +330,7 @@ module "slurm_login_template" {
   machine_type             = each.value.machine_type
   metadata                 = each.value.metadata
   min_cpu_platform         = each.value.min_cpu_platform
+  name_prefix              = each.value.group_name
   on_host_maintenance      = each.value.on_host_maintenance
   preemptible              = each.value.preemptible
   project_id               = var.project_id

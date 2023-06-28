@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Remove `partition_name` length limit.
 - Add `bandwidth_tier` support to instance templates.
 - Move `spot` preemptible support to instance template.
+- Fix login template name not using `group_name` in name schema.
 
 ## \[5.7.4\]
 
