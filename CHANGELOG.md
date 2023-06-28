@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Add partition options `default`, `resume_timeout`, `suspend_time`,
   `suspend_timeout`.
 - Increase `nodeset_name` length to 15 characters (from 7).
+- Remove `partition_name` length limit.
 
 ## \[5.7.4\]
 
