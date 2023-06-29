@@ -123,7 +123,7 @@ def per_instance_properties(node):
     return props
 
 
-def create_instances_request(nodes, partition, placement_group, job_id=None):
+def create_instances_request(nodes, partition_name, placement_group, job_id=None):
     """Call regionInstances.bulkInsert to create instances"""
     assert len(nodes) > 0
     if placement_group:
@@ -136,6 +136,7 @@ def create_instances_request(nodes, partition, placement_group, job_id=None):
     nodeset = lkp.node_nodeset(model)
     template = lkp.node_template(model)
     region = lkp.node_region(model)
+    partition = cfg.partitions[partition_name]
     log.debug(f"create_instances_request: {model} placement: {placement_group}")
 
     body = NSDict()
@@ -233,11 +234,12 @@ def group_nodes_bulk(nodes, resume_data=None):
     )
 
     BulkChunk = collections.namedtuple(
-        "BulkChunk", ["prefix", "job_id", "partition", "placement_group", "nodes", "i"]
+        "BulkChunk",
+        ["prefix", "job_id", "partition_name", "placement_group", "nodes", "i"],
     )
     grouped_nodes = [
         BulkChunk(
-            prefix, job_id, job[job_id].partition, placement_group, chunk_nodes, i
+            prefix, job_id, jobs[job_id].partition, placement_group, chunk_nodes, i
         )
         for job_id, job in jobs.items()
         for placement_group, pg_nodes in job.placement_groups.items()
@@ -284,7 +286,7 @@ def resume_nodes(nodes, resume_data=None):
     # make all bulkInsert requests and execute with batch
     inserts = {
         group: create_instances_request(
-            chunk.nodes, chunk.partition, chunk.placement_group, chunk.job_id
+            chunk.nodes, chunk.partition_name, chunk.placement_group, chunk.job_id
         )
         for group, chunk in grouped_nodes.items()
     }
