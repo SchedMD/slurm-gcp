@@ -115,6 +115,12 @@ def instance_properties(partition, model, placement_group, labels=None):
     props.labels = {**template_info.labels, **labels}
 
     for disk in template_info.disks:
+        # do not label local ssd
+        if (
+            "diskType" not in disk.initializeParams
+            or disk.initializeParams.diskType == "local-ssd"
+        ):
+            continue
         disk.initializeParams.labels.update(labels)
     props.disks = template_info.disks
 
