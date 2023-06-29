@@ -162,12 +162,7 @@ partitions = [
     suspend_time            = 300
   },
   {
-    partition_name = "gpu"
-    partition_conf = {
-      ResumeTimeout  = 300
-      SuspendTimeout = 300
-      SuspendTime    = 300
-    }
+    partition_name    = "gpu"
     partition_nodeset = ["v100", ]
     # Options
     enable_job_exclusive    = false
