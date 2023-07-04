@@ -267,6 +267,8 @@ controller_hybrid_config = {
 # LOGIN #
 #########
 
+enable_login = true
+
 login_nodes = [
   {
     # Group Definition

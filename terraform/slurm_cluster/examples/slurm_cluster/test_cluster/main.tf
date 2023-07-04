@@ -172,6 +172,7 @@ module "slurm_cluster" {
   cloudsql                           = var.cloudsql
   disable_default_mounts             = var.disable_default_mounts
   enable_hybrid                      = var.enable_hybrid
+  enable_login                       = var.enable_login
   slurm_cluster_name                 = var.slurm_cluster_name
   compute_startup_scripts_timeout    = var.compute_startup_scripts_timeout
   compute_startup_scripts            = var.compute_startup_scripts

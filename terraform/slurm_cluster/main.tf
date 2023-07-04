@@ -308,10 +308,10 @@ module "slurm_controller_hybrid" {
 module "slurm_login_template" {
   source = "./modules/slurm_instance_template"
 
-  for_each = {
+  for_each = var.enable_login ? {
     for x in var.login_nodes : x.group_name => x
     if(x.instance_template == null || x.instance_template == "")
-  }
+  } : {}
 
   additional_disks         = each.value.additional_disks
   bandwidth_tier           = each.value.bandwidth_tier
@@ -356,7 +356,7 @@ module "slurm_login_template" {
 module "slurm_login_instance" {
   source = "./modules/slurm_login_instance"
 
-  for_each = { for x in var.login_nodes : x.group_name => x }
+  for_each = var.enable_login ? { for x in var.login_nodes : x.group_name => x } : {}
 
   enable_public_ip = each.value.enable_public_ip
   instance_template = (

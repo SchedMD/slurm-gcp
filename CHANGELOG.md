@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Add `bandwidth_tier` support to instance templates.
 - Move `spot` preemptible support to instance template.
 - Fix login template name not using `group_name` in name schema.
+- Add `enable_login` to toggle creation of login node resources.
 
 ## \[5.7.4\]
 
