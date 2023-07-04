@@ -84,8 +84,6 @@ def conflines(cloud_parameters, lkp=lkp):
     }
     prolog_path = Path(dirs.custom_scripts / "prolog.d")
     epilog_path = Path(dirs.custom_scripts / "epilog.d")
-    prolog_path.mkdir(exist_ok=True)
-    epilog_path.mkdir(exist_ok=True)
     conf_options = {
         **(comma_params if not no_comma_params else {}),
         "Prolog": f"{prolog_path}/*" if lkp.cfg.prolog_scripts else None,
