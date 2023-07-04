@@ -237,7 +237,7 @@ def sync_placement_groups():
     op = act.aggregatedList(project=lkp.project, fields=fields, filter=flt)
     placement_groups = {}
     pg_regex = re.compile(
-        rf"{lkp.cfg.slurm_cluster_name}-(?<partition>[^\s\-]+)-(?P<job_id>\d+)-(?P<index>\d+)"
+        rf"{lkp.cfg.slurm_cluster_name}-(?P<partition>[^\s\-]+)-(?P<job_id>\d+)-(?P<index>\d+)"
     )
     while op is not None:
         result = ensure_execute(op)
