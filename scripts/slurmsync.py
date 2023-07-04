@@ -255,7 +255,7 @@ def sync_placement_groups():
 
 
 def sync_slurm():
-    if lkp.instance_role != "controller":
+    if lkp.instance_role_safe != "controller":
         return
 
     compute_instances = [
@@ -292,21 +292,26 @@ def sync_slurm():
 
 def reconfigure_slurm():
     CONFIG_FILE_TMP = Path("/tmp/config.yaml")
+
+    cfg_old = load_config_file(CONFIG_FILE)
+    hash_old = hashlib.sha256(yaml.dump(cfg_old, encoding="utf-8"))
+
+    if cfg_old.hybrid:
+        # terraform handles generating the config.yaml, don't do it here
+        return
+
     cfg_new = fetch_config_yaml()
     # Save to file and read file to ensure Paths are marshalled the same
     save_config(cfg_new, CONFIG_FILE_TMP)
     cfg_new = load_config_file(CONFIG_FILE_TMP)
     hash_new = hashlib.sha256(yaml.dump(cfg_new, encoding="utf-8"))
 
-    cfg_old = load_config_file(CONFIG_FILE)
-    hash_old = hashlib.sha256(yaml.dump(cfg_old, encoding="utf-8"))
-
     if hash_new.hexdigest() != hash_old.hexdigest():
         log.debug("Delta detected. Reconfiguring Slurm now.")
         save_config(cfg_new, CONFIG_FILE)
         lkp = Lookup(cfg_new)
         util.lkp = lkp
-        if lkp.instance_role == "controller":
+        if lkp.instance_role_safe == "controller":
             install_slurm_conf(lkp)
             install_slurmdbd_conf(lkp)
             gen_cloud_conf(lkp)
@@ -321,7 +326,7 @@ def reconfigure_slurm():
                 log.error(e)
             util.run("wall '*** slurm configuration been updated ***'", timeout=30)
             log.debug("Done.")
-        elif lkp.instance_role in ["compute", "login"]:
+        elif lkp.instance_role_safe in ["compute", "login"]:
             log.info("Restarting slurmd to make changes take effect.")
             run("systemctl restart slurmd")
             util.run("wall '*** slurm configuration been updated ***'", timeout=30)

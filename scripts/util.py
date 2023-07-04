@@ -1057,6 +1057,15 @@ class Lookup:
         return instance_metadata("attributes/slurm_instance_role")
 
     @cached_property
+    def instance_role_safe(self):
+        try:
+            role = self.instance_role
+        except Exception as e:
+            log.error(e)
+            role = None
+        return role
+
+    @cached_property
     def compute(self):
         # TODO evaluate when we need to use google_app_cred_path
         if self.cfg.google_app_cred_path:

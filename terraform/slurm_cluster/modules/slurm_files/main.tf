@@ -67,6 +67,7 @@ locals {
     nodeset_dyn      = local.nodeset_dyn
 
     # hybrid
+    hybrid                  = var.enable_hybrid
     google_app_cred_path    = var.enable_hybrid ? local.google_app_cred_path : null
     output_dir              = var.enable_hybrid ? local.output_dir : null
     install_dir             = var.enable_hybrid ? local.install_dir : null
