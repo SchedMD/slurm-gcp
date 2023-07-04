@@ -52,6 +52,10 @@ data "local_file" "util_py" {
   filename = abspath("${local.scripts_dir}/util.py")
 }
 
+data "local_file" "conf_py" {
+  filename = abspath("${local.scripts_dir}/conf.py")
+}
+
 data "local_file" "slurmsync_py" {
   filename = abspath("${local.scripts_dir}/slurmsync.py")
 }
@@ -81,6 +85,13 @@ resource "local_file" "suspend_py" {
 resource "local_file" "util_py" {
   content  = data.local_file.util_py.content
   filename = abspath("${local.output_dir}/util.py")
+
+  file_permission = "0700"
+}
+
+resource "local_file" "conf_py" {
+  content  = data.local_file.conf_py.content
+  filename = abspath("${local.output_dir}/conf.py")
 
   file_permission = "0700"
 }

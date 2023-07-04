@@ -45,6 +45,7 @@ limitations under the License.
 
 | Name | Type |
 |------|------|
+| [local_file.conf_py](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.config_yaml](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.resume_py](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.slurmcmd_service](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
@@ -56,6 +57,7 @@ limitations under the License.
 | [null_resource.setup_hybrid](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [jinja_template.slurmcmd_service](https://registry.terraform.io/providers/NikolaLohinski/jinja/latest/docs/data-sources/template) | data source |
 | [jinja_template.slurmcmd_timer](https://registry.terraform.io/providers/NikolaLohinski/jinja/latest/docs/data-sources/template) | data source |
+| [local_file.conf_py](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.resume_py](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.setup_hybrid_py](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.slurmsync_py](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
