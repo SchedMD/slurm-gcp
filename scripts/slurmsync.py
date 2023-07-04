@@ -232,12 +232,12 @@ def sync_placement_groups():
     }
 
     fields = "items.regions.resourcePolicies,nextPageToken"
-    flt = f"name={lkp.slurm_cluster_name}-*"
+    flt = f"name={lkp.cfg.slurm_cluster_name}-*"
     act = compute.resourcePolicies()
     op = act.aggregatedList(project=lkp.project, fields=fields, filter=flt)
     placement_groups = {}
     pg_regex = re.compile(
-        rf"{lkp.slurm_cluster_name}-(?<partition>[^\s\-]+)-(?P<job_id>\d+)-(?P<index>\d+)"
+        rf"{lkp.cfg.slurm_cluster_name}-(?<partition>[^\s\-]+)-(?P<job_id>\d+)-(?P<index>\d+)"
     )
     while op is not None:
         result = ensure_execute(op)
