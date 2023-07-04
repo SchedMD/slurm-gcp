@@ -221,6 +221,10 @@ def sync_placement_groups():
             "COMPLETING",
         ]
     )
+
+    if lkp.instance_role_safe != "controller":
+        return
+
     keep_jobs = {
         job["job_id"]
         for job in json.loads(run(f"{lkp.scontrol} show jobs --json").stdout)["jobs"]
