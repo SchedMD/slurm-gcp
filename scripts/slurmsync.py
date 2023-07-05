@@ -297,6 +297,7 @@ def sync_slurm():
 def reconfigure_slurm():
     CONFIG_FILE_TMP = Path("/tmp/config.yaml")
 
+    update_msg = "*** slurm configuration was updated ***"
     cfg_old = load_config_file(CONFIG_FILE)
     hash_old = hashlib.sha256(yaml.dump(cfg_old, encoding="utf-8"))
 
@@ -328,12 +329,12 @@ def reconfigure_slurm():
                 run(f"{lkp.scontrol} reconfigure", timeout=30)
             except Exception as e:
                 log.error(e)
-            util.run("wall '*** slurm configuration been updated ***'", timeout=30)
+            util.run(f"wall '{update_msg}'", timeout=30)
             log.debug("Done.")
         elif lkp.instance_role_safe in ["compute", "login"]:
             log.info("Restarting slurmd to make changes take effect.")
             run("systemctl restart slurmd")
-            util.run("wall '*** slurm configuration been updated ***'", timeout=30)
+            util.run(f"wall '{update_msg}'", timeout=30)
             log.debug("Done.")
 
 
