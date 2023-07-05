@@ -36,6 +36,7 @@ from util import (
     run,
     separate,
     to_hostlist,
+    to_hostnames,
     trim_self_link,
     wait_for_operation,
 )
@@ -361,18 +362,18 @@ def resume_nodes(nodes, resume_data=None):
             all_successful_inserts.extend(successful_inserts)
 
 
-def update_job_comment(nodelist, comment):
+def update_job_comment(nodelist: list, comment: str):
     resume_data = global_resume_data
     if resume_data is None:
         log.error("Cannot update and notify jobs with API failures.")
         return
-    if isinstance(nodelist, list):
-        nodelist = util.to_hostlist(nodelist)
+    if isinstance(nodelist, str):
+        nodelist: list = util.to_hostnames(nodelist)
 
     job_list = (
         job
         for job in resume_data.jobs
-        if any(map(lambda each: each in nodelist, to_hostlist(job.nodelist_resume)))
+        if any(map(lambda each: each in nodelist, to_hostnames(job.nodelist_resume)))
     )
     for job in job_list:
         run(f"{lkp.scontrol} update jobid={job.job_id} admincomment='{comment}'")
