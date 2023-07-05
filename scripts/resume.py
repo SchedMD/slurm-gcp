@@ -372,7 +372,7 @@ def update_job_comment(nodelist, comment):
     job_list = (
         job
         for job in resume_data.jobs
-        if any(map(lambda each: each in nodelist, to_hostlist(job.nodes)))
+        if any(map(lambda each: each in nodelist, to_hostlist(job.nodelist_resume)))
     )
     for job in job_list:
         run(f"{lkp.scontrol} update jobid={job.job_id} admincomment='{comment}'")
