@@ -166,6 +166,8 @@ module "slurm_nodeset" {
 
   for_each = local.nodeset_map
 
+  enable_public_ip            = each.value.enable_public_ip
+  network_tier                = each.value.network_tier
   node_count_dynamic_max      = each.value.node_count_dynamic_max
   node_count_static           = each.value.node_count_static
   nodeset_name                = each.value.nodeset_name
