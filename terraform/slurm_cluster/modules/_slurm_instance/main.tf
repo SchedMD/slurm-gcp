@@ -103,8 +103,4 @@ resource "google_compute_instance_from_template" "slurm_instance" {
       VmDnsSetting        = "GlobalOnly"
     },
   )
-
-  depends_on = [
-    var.slurm_depends_on,
-  ]
 }
