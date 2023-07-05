@@ -217,10 +217,6 @@ def run_custom_scripts():
                 timeout = lkp.cfg.get("compute_startup_scripts_timeout", 300)
             elif "/login.d/" in str(script):
                 timeout = lkp.cfg.get("login_startup_scripts_timeout", 300)
-            elif "/partition.d/" in str(script):
-                partition_name = lkp.node_partition_name()
-                partition = cfg.partitions[partition_name] if partition_name else None
-                timeout = partition.get("partition_startup_scripts_timeout", 300)
             else:
                 timeout = 300
             timeout = None if not timeout or timeout < 0 else timeout

@@ -90,13 +90,6 @@ locals {
   x_nodeset_dyn     = toset([for k, v in local.nodeset_dyn : v.nodeset_name])
   x_nodeset_overlap = setintersection([], local.x_nodeset, local.x_nodeset_dyn)
 
-  partition_scripts = flatten([for p in var.partitions[*].partition : [
-    for x in p.partition_startup_scripts : {
-      partition_name = p.partition_name
-      filename       = replace(basename(x.filename), "/[^a-zA-Z0-9-_]/", "_")
-      content        = x.content
-  }]])
-
   etc_dir = abspath("${path.module}/../../../../etc")
 
   bucket_path = format("%s/%s", data.google_storage_bucket.this.url, local.bucket_dir)
@@ -250,13 +243,5 @@ resource "google_storage_bucket_object" "epilog_scripts" {
 
   bucket  = var.bucket_name
   name    = format("%s/slurm-epilog-script-%s", local.bucket_dir, each.key)
-  content = each.value.content
-}
-
-resource "google_storage_bucket_object" "partition_startup_scripts" {
-  for_each = { for x in local.partition_scripts : x.filename => x }
-
-  bucket  = var.bucket_name
-  name    = format("%s/slurm-partition-%s-script-%s", local.bucket_dir, each.value.partition_name, each.key)
   content = each.value.content
 }

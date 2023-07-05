@@ -430,12 +430,7 @@ EOD
       fs_type       = string
       mount_options = string
     })), [])
-    partition_conf                    = optional(map(string), {})
-    partition_startup_scripts_timeout = optional(number, 300)
-    partition_startup_scripts = optional(list(object({
-      filename = string
-      content  = string
-    })), [])
+    partition_conf        = optional(map(string), {})
     partition_name        = string
     partition_nodeset     = optional(list(string), [])
     partition_nodeset_dyn = optional(list(string), [])

@@ -424,19 +424,6 @@ partitions = [
     partition_name  = "debug"
     partition_conf  = {}
     partition_nodes = ["n1s1", "c2s4"]
-    # Misc
-    network_storage                   = []
-    partition_startup_scripts_timeout = 300
-    partition_startup_scripts = [
-      # {
-      #   filename = "hello_part_debug.sh"
-      #   content  = <<EOF
-      # #!/bin/bash
-      # set -ex
-      # echo "Hello, $(hostname) from $(dirname $0) !"
-      #   EOF
-      # },
-    ]
     # Options
     default                 = true
     enable_job_exclusive    = false

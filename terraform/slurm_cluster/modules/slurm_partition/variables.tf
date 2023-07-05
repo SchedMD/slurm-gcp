@@ -33,27 +33,6 @@ EOD
   default     = {}
 }
 
-variable "partition_startup_scripts" {
-  description = "List of scripts to be ran on compute VM startup."
-  type = list(object({
-    filename = string
-    content  = string
-  }))
-  default = []
-}
-
-variable "partition_startup_scripts_timeout" {
-  description = <<EOD
-The timeout (seconds) applied to each script in partition_startup_scripts. If
-any script exceeds this timeout, then the instance setup process is considered
-failed and handled accordingly.
-
-NOTE: When set to 0, the timeout is considered infinite and thus disabled.
-EOD
-  type        = number
-  default     = 300
-}
-
 variable "partition_nodeset" {
   description = "Slurm nodesets by name, as a list of string."
   type        = set(string)

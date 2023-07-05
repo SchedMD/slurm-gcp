@@ -27,13 +27,11 @@ locals {
   }, var.partition_conf)
 
   partition = {
-    partition_name                    = var.partition_name
-    partition_conf                    = local.partition_conf
-    partition_nodeset                 = var.partition_nodeset
-    partition_nodeset_dyn             = var.partition_nodeset_dyn
-    partition_startup_scripts         = var.partition_startup_scripts
-    partition_startup_scripts_timeout = var.partition_startup_scripts_timeout
-    network_storage                   = var.network_storage
+    partition_name        = var.partition_name
+    partition_conf        = local.partition_conf
+    partition_nodeset     = var.partition_nodeset
+    partition_nodeset_dyn = var.partition_nodeset_dyn
+    network_storage       = var.network_storage
     # Options
     enable_job_exclusive    = var.enable_job_exclusive
     enable_placement_groups = var.enable_placement_groups

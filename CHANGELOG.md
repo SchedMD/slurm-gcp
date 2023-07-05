@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Move `spot` preemptible support to instance template.
 - Fix login template name not using `group_name` in name schema.
 - Add `enable_login` to toggle creation of login node resources.
+- Remove partition level startup-scripts and network mounts.
 
 ## \[5.7.4\]
 
