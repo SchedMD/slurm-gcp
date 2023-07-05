@@ -200,7 +200,7 @@ def delete_placement_groups(placement_groups):
         )
 
     requests = {
-        pg.name: delete_placement_request(pg["name"], pg["region"])
+        pg.name: delete_placement_request(pg["name"], util.trim_self_link(pg["region"]))
         for pg in placement_groups
     }
     done, failed = batch_execute(requests)
@@ -242,20 +242,22 @@ def sync_placement_groups():
     while op is not None:
         result = ensure_execute(op)
         # merge placement group info from API and job_id,partition,index parsed from the name
+        pgs = (
+            NSDict({**pg, **pg_regex.match(pg["name"]).groupdict()})
+            for pg in chain.from_iterable(
+                item["resourcePolicies"]
+                for item in result.get("items", {}).values()
+                if item
+            )
+            if pg_regex.match(pg["name"]) is not None
+        )
         placement_groups.update(
-            {
-                pg["name"]: NSDict({**pg, **pg_regex.match(pg["name"]).groupdict()})
-                for pg in chain.from_iterable(
-                    item["resourcePolicies"]
-                    for item in result.get("items", {}).values()
-                )
-                if pg_regex.match(pg["name"]) is not None
-                and pg["job_id"] not in keep_jobs
-            }
+            {pg["name"]: pg for pg in pgs if pg.get("job_id") not in keep_jobs}
         )
         op = act.aggregatedList_next(op, result)
 
-    delete_placement_groups(list(placement_groups.values()))
+    if len(placement_groups) > 0:
+        delete_placement_groups(list(placement_groups.values()))
 
 
 def sync_slurm():
