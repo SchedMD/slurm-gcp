@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Add on_host_maintenance to packer module to support instances with GPUs.
 - Fix retry of powering up static nodes on failure.
 - Update lustre repo URLs and add fallback url.
+- Fix Ubuntu 20.04 NVIDIA install.
 
 ## \[5.7.4\]
 

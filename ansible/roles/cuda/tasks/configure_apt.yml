@@ -4,6 +4,10 @@
     nvidia_driver_version: '{{ nvidia_version }}'
   when: nvidia_version != "latest"
 
+- name: Update apt cache
+  apt:
+    update_cache: true
+
 - name: lookup nvidia driver version
   shell: |
     sudo apt-cache search 'linux-modules-nvidia-[0-9]+-gcp$' | awk '{print $1}' | sort | tail -n 1 | head -n 1 | awk -F"-" '{print $4}'
@@ -46,7 +50,7 @@
 - name: lookup cuda driver version
   shell: |
     apt-cache madison cuda-drivers | awk '{print $3}' | sort -r | while read line; do
-      if dpkg --compare-versions $(apt-cache policy nvidia-driver-{{ nvidia_driver_version }} | grep Candidate | awk '{print $2}') ge $line ; then
+      if dpkg --compare-versions $(apt-cache policy nvidia-driver-{{ nvidia_driver_version }} | grep Candidate | awk '{print $2}' | cut -d'-' -f1) ge $(echo $line | cut -d'-' -f1) ; then
         echo "$line"
         break
       fi
