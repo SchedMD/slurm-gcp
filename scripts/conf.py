@@ -24,8 +24,9 @@ from util import Lookup, lkp, dirs, cfg, slurmdirs
 from util import (
     access_secret_version,
     blob_get,
+    to_hostlist,
 )
-
+from resume import PLACEMENT_MAX_CNT
 
 FILE_PREAMBLE = """
 # Warning:
@@ -333,3 +334,50 @@ def install_gres_conf(lkp=lkp):
     if not gres_conf.exists():
         gres_conf.symlink_to(conf_file)
     util.chown_slurm(gres_conf, mode=0o600)
+
+
+def nodeset_switch_lines(nodeset, lkp=lkp):
+    lines = []
+
+    for nodeset in lkp.cfg.nodeset.values():
+        static, dynamic = lkp.nodeset_lists(nodeset)
+        line = {
+            "SwitchName": nodeset.nodeset_name,
+            "Nodes": ",".join(filter(None, (static, dynamic))),
+            # NOTE: LinkSpeed not used in Slurm.
+            #       Used here to denote enable_placement=true.
+            "LinkSpeed": PLACEMENT_MAX_CNT if nodeset.enable_placement else None,
+        }
+        lines.extend([dict_to_conf(line)])
+
+    # Make top level switch for all normal nodesets
+    switches = [n.nodeset_name for n in lkp.cfg.nodeset.values()]
+    if len(switches) > 0:
+        line = {
+            "SwitchName": "nodeset-root",
+            "Switches": to_hostlist(switches),
+        }
+        lines.extend([dict_to_conf(line)])
+
+    return "\n".join(filter(None, lines))
+
+
+def gen_topology_conf(lkp=lkp):
+    """generate slurm topology.conf from config.yaml"""
+    lines = [
+        nodeset_switch_lines(lkp),
+    ]
+    lines.append("\n")
+    content = FILE_PREAMBLE + "\n".join(lines)
+
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud_topology.conf"
+    conf_file.write_text(content)
+    util.chown_slurm(conf_file, mode=0o600)
+
+
+def install_topology_conf(lkp=lkp):
+    conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "cloud_topology.conf"
+    topo_conf = Path(lkp.cfg.output_dir or slurmdirs.etc) / "topology.conf"
+    if not topo_conf.exists():
+        topo_conf.symlink_to(conf_file)
+    util.chown_slurm(conf_file, mode=0o600)

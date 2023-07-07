@@ -44,8 +44,10 @@ from conf import (
     install_slurmdbd_conf,
     gen_cloud_conf,
     gen_cloud_gres_conf,
+    gen_topology_conf,
     install_gres_conf,
     install_cgroup_conf,
+    install_topology_conf,
 )
 import slurmsync
 
@@ -696,8 +698,10 @@ def setup_controller(args):
 
     gen_cloud_conf()
     gen_cloud_gres_conf()
+    gen_topology_conf()
     install_gres_conf()
     install_cgroup_conf()
+    install_topology_conf()
 
     setup_jwt_key()
     setup_munge_dir()

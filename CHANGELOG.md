@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Remove partition level startup-scripts and network mounts.
 - Fix Ubuntu 20.04 NVIDIA install.
 - Change partition level placement policy to nodeset level.
+- Use `topology.conf` to prioritize nodes within nodesets.
 
 ## \[5.7.4\]
 

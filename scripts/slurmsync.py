@@ -45,10 +45,12 @@ from suspend import delete_instances
 from conf import (
     gen_cloud_conf,
     gen_cloud_gres_conf,
+    gen_topology_conf,
     install_slurm_conf,
     install_slurmdbd_conf,
     install_gres_conf,
     install_cgroup_conf,
+    install_topology_conf,
 )
 
 filename = Path(__file__).name
@@ -323,8 +325,10 @@ def reconfigure_slurm():
             install_slurmdbd_conf(lkp)
             gen_cloud_conf(lkp)
             gen_cloud_gres_conf(lkp)
+            gen_topology_conf(lkp)
             install_gres_conf(lkp)
             install_cgroup_conf(lkp)
+            install_topology_conf(lkp)
             log.info("Restarting slurmctld to make changes take effect.")
             try:
                 run("sudo systemctl restart slurmctld.service", check=False)

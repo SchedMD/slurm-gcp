@@ -38,6 +38,9 @@ def main(args):
     log.info("Generating new cloud_gres.conf for gres.conf")
     setup.gen_cloud_gres_conf(lkp)
 
+    log.info("Generating new cloud_topology.conf for topology.conf")
+    setup.gen_topology_conf(lkp)
+
     log.info("Done.")
 
 
