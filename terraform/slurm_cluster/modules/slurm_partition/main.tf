@@ -33,8 +33,7 @@ locals {
     partition_nodeset_dyn = var.partition_nodeset_dyn
     network_storage       = var.network_storage
     # Options
-    enable_job_exclusive    = var.enable_job_exclusive
-    enable_placement_groups = var.enable_placement_groups
+    enable_job_exclusive = var.enable_job_exclusive
   }
 }
 
@@ -42,12 +41,5 @@ resource "null_resource" "partition" {
 
   triggers = {
     partition = sha256(jsonencode(local.partition))
-  }
-
-  lifecycle {
-    precondition {
-      condition     = !var.enable_placement_groups || var.enable_job_exclusive
-      error_message = "Input enable_job_exclusive must be set if enable_placement_groups is set"
-    }
   }
 }

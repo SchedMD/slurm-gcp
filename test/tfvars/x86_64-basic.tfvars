@@ -78,6 +78,9 @@ nodeset = [
       email  = "default"
       scopes = ["https://www.googleapis.com/auth/cloud-platform"]
     }
+
+    # Instance Definition
+    enable_placement = true
   },
   {
     # Group Definition
@@ -154,61 +157,55 @@ partitions = [
     partition_name    = "debug"
     partition_nodeset = ["n1s2", ]
     # Options
-    default                 = true
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    resume_timeout          = 300
-    suspend_timeout         = 300
-    suspend_time            = 300
+    default              = true
+    enable_job_exclusive = false
+    resume_timeout       = 300
+    suspend_timeout      = 300
+    suspend_time         = 300
   },
   {
     partition_name    = "gpu"
     partition_nodeset = ["v100", ]
     # Options
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    resume_timeout          = 300
-    suspend_timeout         = 300
-    suspend_time            = 300
+    enable_job_exclusive = false
+    resume_timeout       = 300
+    suspend_timeout      = 300
+    suspend_time         = 300
   },
   {
     partition_name    = "c2"
     partition_nodeset = ["c2s4", ]
     # Options
-    enable_job_exclusive    = true
-    enable_placement_groups = true
-    resume_timeout          = 300
-    suspend_timeout         = 300
-    suspend_time            = 300
+    enable_job_exclusive = true
+    resume_timeout       = 300
+    suspend_timeout      = 300
+    suspend_time         = 300
   },
   {
     partition_name  = "spot"
     partition_nodes = ["n1s2spot", ]
     # Options
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    resume_timeout          = 300
-    suspend_timeout         = 300
-    suspend_time            = 300
+    enable_job_exclusive = false
+    resume_timeout       = 300
+    suspend_timeout      = 300
+    suspend_time         = 300
   },
   {
     partition_name    = "shgpu"
     partition_nodeset = ["v100shield", ]
     # Options
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    resume_timeout          = 300
-    suspend_timeout         = 300
-    suspend_time            = 300
+    enable_job_exclusive = false
+    resume_timeout       = 300
+    suspend_timeout      = 300
+    suspend_time         = 300
   },
   {
     partition_name    = "shield"
     partition_nodeset = ["n1s4shield", ]
     # Options
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    resume_timeout          = 300
-    suspend_timeout         = 300
-    suspend_time            = 300
+    enable_job_exclusive = false
+    resume_timeout       = 300
+    suspend_timeout      = 300
+    suspend_time         = 300
   },
 ]

@@ -109,14 +109,6 @@ EOD
   default     = false
 }
 
-variable "enable_placement_groups" {
-  description = <<EOD
-Enables job placement groups. Instances will be colocated for a job.
-EOD
-  type        = bool
-  default     = false
-}
-
 variable "network_storage" {
   description = <<EOD
 Storage to mounted on all instances in this partition.

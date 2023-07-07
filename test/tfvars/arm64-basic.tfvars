@@ -98,31 +98,28 @@ partitions = [
     partition_name    = "debug"
     partition_nodeset = ["t2a2", ]
     # Options
-    default                 = true
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    resume_timeout          = 300
-    suspend_timeout         = 300
-    suspend_time            = 300
+    default              = true
+    enable_job_exclusive = false
+    resume_timeout       = 300
+    suspend_timeout      = 300
+    suspend_time         = 300
   },
   {
     partition_name    = "spot"
     partition_nodeset = ["t2s2spot", ]
     # Options
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    resume_timeout          = 300
-    suspend_timeout         = 300
-    suspend_time            = 300
+    enable_job_exclusive = false
+    resume_timeout       = 300
+    suspend_timeout      = 300
+    suspend_time         = 300
   },
   {
     partition_name    = "shield"
     partition_nodeset = ["t2shield", ]
     # Options
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    resume_timeout          = 300
-    suspend_timeout         = 300
-    suspend_time            = 300
+    enable_job_exclusive = false
+    resume_timeout       = 300
+    suspend_timeout      = 300
+    suspend_time         = 300
   },
 ]

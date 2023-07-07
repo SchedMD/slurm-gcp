@@ -166,6 +166,7 @@ module "slurm_nodeset" {
 
   for_each = local.nodeset_map
 
+  enable_placement            = each.value.enable_placement
   enable_public_ip            = each.value.enable_public_ip
   network_tier                = each.value.network_tier
   node_count_dynamic_max      = each.value.node_count_dynamic_max
@@ -196,17 +197,16 @@ module "slurm_partition" {
 
   for_each = local.partition_map
 
-  default                 = each.value.default
-  enable_job_exclusive    = each.value.enable_job_exclusive
-  enable_placement_groups = each.value.enable_placement_groups
-  network_storage         = each.value.network_storage
-  partition_name          = each.value.partition_name
-  partition_conf          = each.value.partition_conf
-  partition_nodeset       = [for x in each.value.partition_nodeset : module.slurm_nodeset[x].nodeset_name if try(module.slurm_nodeset[x], null) != null]
-  partition_nodeset_dyn   = [for x in each.value.partition_nodeset_dyn : module.slurm_nodeset_dyn[x].nodeset_name if try(module.slurm_nodeset_dyn[x], null) != null]
-  resume_timeout          = each.value.resume_timeout
-  suspend_time            = each.value.suspend_time
-  suspend_timeout         = each.value.suspend_timeout
+  default               = each.value.default
+  enable_job_exclusive  = each.value.enable_job_exclusive
+  network_storage       = each.value.network_storage
+  partition_name        = each.value.partition_name
+  partition_conf        = each.value.partition_conf
+  partition_nodeset     = [for x in each.value.partition_nodeset : module.slurm_nodeset[x].nodeset_name if try(module.slurm_nodeset[x], null) != null]
+  partition_nodeset_dyn = [for x in each.value.partition_nodeset_dyn : module.slurm_nodeset_dyn[x].nodeset_name if try(module.slurm_nodeset_dyn[x], null) != null]
+  resume_timeout        = each.value.resume_timeout
+  suspend_time          = each.value.suspend_time
+  suspend_timeout       = each.value.suspend_timeout
 }
 
 ########################

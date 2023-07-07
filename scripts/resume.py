@@ -212,7 +212,8 @@ def group_nodes_bulk(nodes, resume_data=None):
         job.nodes_resume = expand_nodelist(job.nodelist_resume)
         # create placement groups if nodes for job need it
         job.placement_groups = create_placement_groups(
-            job.job_id, job.nodes_alloc, job.partition
+            node_list=job.nodes_alloc,
+            job_id=job.job_id,
         )
         # placement group assignment is based on all allocated nodes, but we only want to
         # handle nodes in nodes_resume in this run.
@@ -230,7 +231,7 @@ def group_nodes_bulk(nodes, resume_data=None):
         job_id=None,
         nodes_resume=jobless_nodes,
         nodes_alloc=jobless_nodes,
-        placement_groups={None: jobless_nodes},
+        placement_groups=create_placement_groups(node_list=jobless_nodes),
         partition=None,
     )
 
@@ -409,16 +410,23 @@ def create_placement_request(pg_name, region):
     return request
 
 
-def create_placement_groups(job_id, node_list, partition_name):
+def create_placement_groups(node_list: list, job_id=0):
+    pgs = {}
+    node_map = lkp.nodeset_map(node_list)
+    for _, nodes in node_map.items():
+        pgs.update(create_nodeset_placement_groups(nodes, job_id=job_id))
+    return pgs
+
+
+def create_nodeset_placement_groups(node_list: list, job_id=0):
     model = next(iter(node_list))
-    # allow calling this method on non-placement group nodes
-    partition = lkp.cfg.partitions[partition_name]
-    if not partition.enable_placement_groups:
+    nodeset = lkp.node_nodeset(model)
+    if not nodeset.enable_placement:
         return {None: node_list}
     region = lkp.node_region(model)
 
     groups = {
-        f"{cfg.slurm_cluster_name}-{partition_name}-{job_id}-{i}": nodes
+        f"{cfg.slurm_cluster_name}-{nodeset.nodeset_name}-{job_id}-{i}": nodes
         for i, nodes in enumerate(chunked(node_list, n=PLACEMENT_MAX_CNT))
     }
 

@@ -353,6 +353,7 @@ variable "nodeset" {
     disk_size_gb           = optional(number)
     disk_type              = optional(string)
     enable_confidential_vm = optional(bool, false)
+    enable_placement       = optional(bool, false)
     enable_public_ip       = optional(bool, false)
     enable_oslogin         = optional(bool, true)
     enable_shielded_vm     = optional(bool, false)
@@ -420,9 +421,8 @@ variable "partitions" {
 Cluster partitions as a list. See module slurm_partition.
 EOD
   type = list(object({
-    default                 = optional(bool, false)
-    enable_job_exclusive    = optional(bool, false)
-    enable_placement_groups = optional(bool, false)
+    default              = optional(bool, false)
+    enable_job_exclusive = optional(bool, false)
     network_storage = optional(list(object({
       server_ip     = string
       remote_mount  = string

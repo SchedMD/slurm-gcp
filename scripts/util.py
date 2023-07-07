@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
 import importlib.util
 import inspect
 import json
@@ -1452,6 +1453,13 @@ class Lookup:
         with self.template_cache(writeback=True) as cache:
             cache.clear()
         self.template_info.cache_clear()
+
+    def nodeset_map(self, hostnames: list):
+        """Convert a list of nodes into a map of nodeset_name to hostnames"""
+        nodeset_map = collections.defaultdict(list)
+        for node in hostnames:
+            nodeset_map[self.node_nodeset_name(node)].append(node)
+        return nodeset_map
 
 
 # Define late globals

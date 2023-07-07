@@ -108,6 +108,16 @@ variable "node_count_dynamic_max" {
   }
 }
 
+variable "enable_placement" {
+  description = <<-EOD
+    Enables compact placement policy for instances.
+    Use compact policies when you want VMs to be located close to each other for low network latency between the VMs.
+    See https://cloud.google.com/compute/docs/instances/define-instance-placement for details.
+  EOD
+  type        = bool
+  default     = false
+}
+
 variable "enable_public_ip" {
   description = "Enables IP address to access the Internet."
   type        = bool

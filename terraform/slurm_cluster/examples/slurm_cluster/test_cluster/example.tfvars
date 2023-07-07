@@ -378,6 +378,7 @@ nodeset = [
 
     # Instance Definition
     enable_public_ip = false
+    enable_placement = false
     network_ips      = "STANDARD"
   },
   {
@@ -391,6 +392,9 @@ nodeset = [
       email  = null
       scopes = ["https://www.googleapis.com/auth/cloud-platform"]
     }
+
+    # Instance Definition
+    enable_placement = true
   },
   {
     # Group Definition
@@ -425,18 +429,16 @@ partitions = [
     partition_conf  = {}
     partition_nodes = ["n1s1", "c2s4"]
     # Options
-    default                 = true
-    enable_job_exclusive    = false
-    enable_placement_groups = false
-    resume_timeout          = 300
-    suspend_time            = 300
-    suspend_timeout         = 120
+    default              = true
+    enable_job_exclusive = false
+    resume_timeout       = 300
+    suspend_time         = 300
+    suspend_timeout      = 120
   },
   {
     partition_name  = "gpu"
     partition_nodes = ["v100", ]
     # Options
-    enable_job_exclusive    = true
-    enable_placement_groups = true
+    enable_job_exclusive = true
   },
 ]

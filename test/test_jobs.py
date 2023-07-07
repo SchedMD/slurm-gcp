@@ -113,9 +113,13 @@ def test_shielded(image_marker, cluster, lkp):
 
 
 def test_placement_groups(cluster, lkp):
+    nodesets = []
+    for nodeset_name, nodeset in lkp.cfg.nodeset.items():
+        if nodeset.enable_placement:
+            nodesets.append(nodeset_name)
     partitions = []
     for part_name, partition in lkp.cfg.partitions.items():
-        if partition.enable_placement_groups:
+        if any(item in nodesets for item in partition.partition_nodeset):
             partitions.append(part_name)
     if not partitions:
         pytest.skip("no partitions with placement groups enabled")

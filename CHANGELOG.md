@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Add `enable_login` to toggle creation of login node resources.
 - Remove partition level startup-scripts and network mounts.
 - Fix Ubuntu 20.04 NVIDIA install.
+- Change partition level placement policy to nodeset level.
 
 ## \[5.7.4\]
 
