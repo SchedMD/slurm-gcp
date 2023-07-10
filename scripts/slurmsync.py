@@ -228,7 +228,7 @@ def sync_placement_groups():
         return
 
     keep_jobs = {
-        job["job_id"]
+        str(job["job_id"])
         for job in json.loads(run(f"{lkp.scontrol} show jobs --json").stdout)["jobs"]
         if job["job_state"] in keep_states
     }
