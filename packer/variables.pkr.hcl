@@ -291,6 +291,11 @@ variable "disk_type" {
   default     = "pd-standard"
 }
 
+variable "on_host_maintenance" {
+  type    = string
+  default = "TERMINATE"
+}
+
 ###############################
 # CUSTOM ANSIBLE PROVISIONERS #
 ###############################

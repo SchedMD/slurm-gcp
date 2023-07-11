@@ -101,6 +101,8 @@ source "googlecompute" "image" {
   disk_size = var.disk_size
   disk_type = var.disk_type
 
+  on_host_maintenance = var.on_host_maintenance
+
   ### metadata ###
   metadata = {
     block-project-ssh-keys = "TRUE"

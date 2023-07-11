@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[5.7.5\]
 
+- Add on_host_maintenance to packer module to support instances with GPUs.
+
 ## \[5.7.4\]
 
 - Set EOL of published centos-7 image to Aug 2023. If you need this image for
