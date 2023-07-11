@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[6-next\]
+
+- Add on_host_maintenance to packer module to support instances with GPUs.
+
 ## \[6.0.0\]
 
 - Add slurm cluster management daemon
