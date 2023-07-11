@@ -35,9 +35,8 @@ can be created and used instead.
 | :--------------------- | :-------------------- | :----- |
 | centos-cloud           | centos-7              | x86_64 |
 | cloud-hpc-image-public | hpc-centos-7          | x86_64 |
-| debian-cloud           | debian-10             | x86_64 |
+| cloud-hpc-image-public | hpc-rocky-linux-8     | x86_64 |
 | debian-cloud           | debian-11             | x86_64 |
-| rocky-linux-cloud      | rocky-linux-8         | x86_64 |
 | ubuntu-os-cloud        | ubuntu-2004-lts       | x86_64 |
 | ubuntu-os-cloud        | ubuntu-2204-lts-arm64 | ARM64  |
 
@@ -67,7 +66,7 @@ that are minimal viable images for deploying
 > **NOTE:** SchedMD generates images using the same process as documented in
 > [custom images](#custom-image) but without any additional software and only
 > using clean minimal base images for the source image (e.g.
-> `centos-cloud/centos-7`).
+> `ubuntu-os-cloud/ubuntu-2004-lts`).
 
 ### Published Image Family
 
@@ -80,8 +79,6 @@ that are minimal viable images for deploying
 | schedmd-slurm-public | slurm-gcp-5-7-hpc-centos-7-k80      | x86_64 | EOL 2024-05-01 |
 | schedmd-slurm-public | slurm-gcp-5-7-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
 | schedmd-slurm-public | slurm-gcp-5-7-centos-7              | x86_64 | EOL 2023-08-01 |
-| schedmd-slurm-public | slurm-gcp-5-7-rocky-linux-8         | x86_64 | EOL 2023-06-30 |
-| schedmd-slurm-public | slurm-gcp-5-7-debian-10             | x86_64 | EOL 2023-06-30 |
 
 ## Custom Image
 
