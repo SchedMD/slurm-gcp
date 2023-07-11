@@ -41,15 +41,6 @@ default:
 .build-image:
   stage: build-images
   retry: 2
-  rules:
-  - changes:
-      paths:
-      - .gitlab-ci.yml
-      - scripts/*.{py,sh}
-      - scripts/Pipfile
-      - scripts/requirements.txt
-      - ansible/**/*
-      - packer/**/*
   artifacts:
     name: image-manifest-$BRANCH-$IMAGE_OS
     paths:
@@ -67,53 +58,81 @@ default:
     .
   - echo "packer build $IMAGE_OS completed"
 
-build-centos-7:
+.build-core-image:
   extends: .build-image
+  rules:
+  - changes:
+      paths:
+      - .gitlab-ci.yml
+      - scripts/*.{py,sh}
+      - scripts/Pipfile
+      - scripts/requirements.txt
+      - ansible/**/*
+      - packer/**/*
+
+# skip image build and test for all except a couple images on push
+# build and test all on manual/scheduled pipelines
+.build-extra-image:
+  extends: .build-image
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "push"
+    when: never
+  - changes:
+      paths:
+      - .gitlab-ci.yml
+      - scripts/*.{py,sh}
+      - scripts/Pipfile
+      - scripts/requirements.txt
+      - ansible/**/*
+      - packer/**/*
+
+build-centos-7:
+  extends: .build-extra-image
   variables:
     IMAGE_OS: centos-7
 
 build-hpc-centos-7:
-  extends: .build-image
+  extends: .build-extra-image
   variables:
     IMAGE_OS: hpc-centos-7
 
 build-hpc-centos-7-k80:
-  extends: .build-image
+  extends: .build-extra-image
   variables:
     IMAGE_OS: hpc-centos-7-k80
 
 build-hpc-rocky-linux-8:
-  extends: .build-image
+  extends: .build-core-image
   variables:
     IMAGE_OS: hpc-rocky-linux-8
 
 build-debian-11:
-  extends: .build-image
+  extends: .build-extra-image
   variables:
     IMAGE_OS: debian-11
 
 # build-debian-11-arm64:
-#   extends: .build-image
+#   extends: .build-extra-image
 #   variables:
 #     IMAGE_OS: debian-11-arm64
 
 build-ubuntu-2004-lts:
-  extends: .build-image
+  extends: .build-extra-image
   variables:
     IMAGE_OS: ubuntu-2004-lts
 
 # build-ubuntu-2004-lts-arm64:
-#   extends: .build-image
+#   extends: .build-extra-image
 #   variables:
 #     IMAGE_OS: ubuntu-2004-lts-arm64
 
 # build-ubuntu-2204-lts:
-#   extends: .build-image
+#   extends: .build-extra-image
 #   variables:
 #     IMAGE_OS: ubuntu-2204-lts
 
 build-ubuntu-2204-lts-arm64:
-  extends: .build-image
+  extends: .build-extra-image
   variables:
     IMAGE_OS: ubuntu-2204-lts-arm64
 
@@ -151,8 +170,15 @@ build-ubuntu-2204-lts-arm64:
   - pipenv install
   - pipenv run ./cleanup.py $(cat cluster_name)
 
-test-centos-7:
+.test-extra-image:
   extends: .test-image
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "push"
+    when: never
+  - when: always
+
+test-centos-7:
+  extends: .test-extra-image
   needs:
   - job: build-centos-7
     optional: true
@@ -161,7 +187,7 @@ test-centos-7:
     ARCH: x86_64
 
 test-hpc-centos-7:
-  extends: .test-image
+  extends: .test-extra-image
   needs:
   - job: build-hpc-centos-7
     optional: true
@@ -170,7 +196,7 @@ test-hpc-centos-7:
     ARCH: x86_64
 
 test-hpc-centos-7-k80:
-  extends: .test-image
+  extends: .test-extra-image
   needs:
   - job: build-hpc-centos-7-k80
     optional: true
@@ -188,7 +214,7 @@ test-hpc-rocky-linux-8:
     ARCH: x86_64
 
 test-debian-11:
-  extends: .test-image
+  extends: .test-extra-image
   needs:
   - job: build-debian-11
     optional: true
@@ -197,7 +223,7 @@ test-debian-11:
     ARCH: x86_64
 
 # test-debian-11-arm64:
-#   extends: .test-image
+#   extends: .test-extra-image
 #   needs:
 #   - job: build-debian-11-arm64
 #     optional: true
@@ -206,7 +232,7 @@ test-debian-11:
 #     ARCH: arm64
 
 test-ubuntu-2004-lts:
-  extends: .test-image
+  extends: .test-extra-image
   needs:
   - job: build-ubuntu-2004-lts
     optional: true
@@ -215,7 +241,7 @@ test-ubuntu-2004-lts:
     ARCH: x86_64
 
 # test-ubuntu-2004-lts-arm64:
-#   extends: .test-image
+#   extends: .test-extra-image
 #   needs:
 #   - job: build-ubuntu-2004-lts-arm64
 #     optional: true
@@ -224,7 +250,7 @@ test-ubuntu-2004-lts:
 #     ARCH: arm64
 
 # test-ubuntu-2204-lts:
-#   extends: .test-image
+#   extends: .test-extra-image
 #   needs:
 #   - job: build-ubuntu-2204-lts
 #     optional: true
@@ -233,7 +259,7 @@ test-ubuntu-2004-lts:
 #     ARCH: x86_64
 
 test-ubuntu-2204-lts-arm64:
-  extends: .test-image
+  extends: .test-extra-image
   needs:
   - job: build-ubuntu-2204-lts-arm64
     optional: true
