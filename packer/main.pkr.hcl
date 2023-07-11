@@ -106,6 +106,11 @@ source "googlecompute" "image" {
   ### metadata ###
   metadata = {
     block-project-ssh-keys = "TRUE"
+    shutdown-script        = <<-EOT
+      #!/bin/bash
+      userdel -r ${var.ssh_username}
+      sed -i '/${var.ssh_username}/d' /var/lib/google/google_users
+    EOT
   }
 
   state_timeout = "10m"
@@ -161,9 +166,9 @@ build {
   }
 
   ### clean up /home/packer ###
-  provisioner "shell" {
-    inline = [
-      "sudo su root -c 'userdel -rf packer'"
-    ]
-  }
+  #provisioner "shell" {
+  #  inline = [
+  #    "sudo su root -c 'userdel -rf packer'"
+  #  ]
+  #}
 }
