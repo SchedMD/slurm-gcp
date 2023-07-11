@@ -50,7 +50,7 @@
 - name: lookup cuda driver version
   shell: |
     apt-cache madison cuda-drivers | awk '{print $3}' | sort -r | while read line; do
-      if dpkg --compare-versions $(apt-cache policy nvidia-driver-{{ nvidia_driver_version }} | grep Candidate | awk '{print $2}' | cut -d'-' -f1) ge $(cut -d'-' -f1 - <<< $line) ; then
+      if dpkg --compare-versions $(apt-cache policy nvidia-driver-{{ nvidia_driver_version }} | grep Candidate | awk '{print $2}' | cut -d'-' -f1) ge $(echo $line | cut -d'-' -f1) ; then
         echo "$line"
         break
       fi
