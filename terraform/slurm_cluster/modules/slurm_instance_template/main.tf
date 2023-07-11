@@ -108,7 +108,7 @@ module "instance_template" {
   gpu                      = var.gpu
   service_account          = local.service_account
   shielded_instance_config = var.shielded_instance_config
-  threads_per_core         = var.disable_smt && length(regexall("^(t2[ad]-\\w+-\\w+|\\w+-\\w+(-1)?)$", var.machine_type)) == 0 ? 1 : null
+  threads_per_core         = var.disable_smt ? 1 : null
   enable_confidential_vm   = var.enable_confidential_vm
   enable_shielded_vm       = var.enable_shielded_vm
   preemptible              = var.preemptible

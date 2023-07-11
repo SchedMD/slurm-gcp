@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fix retry of powering up static nodes on failure.
 - Update lustre repo URLs and add fallback url.
 - Fix Ubuntu 20.04 NVIDIA install.
+- Fix threads per core inference.
 
 ## \[5.7.4\]
 
