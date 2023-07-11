@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - Add support for H3 machines and enumerated multi-socket processors.
 - Fix munge failing after manual reboot of node.
 - Add `ignore_prefer_validation` to SchedulerParameters in generated cloud.conf.
+- Remove debian-10 and vanilla rocky-linux-8 images from build process and
+  support.
 
 ## \[5.7.4\]
 
