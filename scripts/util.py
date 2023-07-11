@@ -969,6 +969,37 @@ def get_insert_operations(group_ids, flt=None, project=None, compute=compute):
     return get_filtered_operations(" AND ".join(f"({f})" for f in filters if f))
 
 
+def isSmt(template):
+    machineType: str = template.machineType
+
+    pattern = re.compile("^(?P<family>[^-]+)-(?P<type>[^-]+)-(?P<core>[^-]+)$")
+    matches = pattern.match(machineType)
+    machineTypeFamily: str = matches["family"]
+    machineTypeCore: int = int(matches["core"])
+
+    # https://cloud.google.com/compute/docs/cpu-platforms
+    noSmtFamily = [
+        "t2a",
+        "t2d",
+    ]
+    if machineTypeFamily in noSmtFamily:
+        return False
+    elif machineTypeCore == 1:
+        return False
+    return True
+
+
+def getThreadsPerCore(template):
+    threadsPerCore: int = template.advancedMachineFeatures.threadsPerCore
+
+    if not isSmt(template):
+        return 1
+    elif threadsPerCore:
+        return threadsPerCore
+    else:
+        return 2
+
+
 class Dumper(yaml.SafeDumper):
     """Add representers for pathlib.Path and NSDict for yaml serialization"""
 
@@ -1368,12 +1399,11 @@ class Lookup:
         machine_conf = NSDict()
         machine_conf.boards = 1  # No information, assume 1
         machine_conf.sockets = 1  # No information, assume 1
-        # Each physical core is assumed to have two threads unless disabled or incapable
-        _threads = template.advancedMachineFeatures.threadsPerCore
-        _threads_per_core = _threads if _threads else 2
-        _threads_per_core_div = 2 if _threads_per_core == 1 else 1
         machine_conf.threads_per_core = 1
-        machine_conf.cpus = int(machine.guestCpus / _threads_per_core_div)
+        _div = 2 if getThreadsPerCore(template) == 1 else 1
+        machine_conf.cpus = (
+            int(machine.guestCpus / _div) if isSmt(template) else machine.guestCpus
+        )
         machine_conf.cores_per_socket = int(machine_conf.cpus / machine_conf.sockets)
         # Because the actual memory on the host will be different than
         # what is configured (e.g. kernel will take it). From

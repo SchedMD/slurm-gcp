@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Use `topology.conf` to prioritize nodes within nodesets.
 - Remove debian-10 and vanilla rocky-linux-8 images from build process and
   support.
+- Fix threads per core inference.
 
 ## \[5.7.4\]
 
