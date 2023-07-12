@@ -17,6 +17,9 @@ import paramiko
 from tftest import TerraformTest
 from testutils import backoff_delay, spawn, term_proc, NSDict
 
+sys.path.append("../scripts")
+import util  # noqa: E402
+
 
 log = logging.getLogger()
 log.setLevel("INFO")
@@ -178,7 +181,6 @@ class Tunnel:
             stdout_sel = select.poll()
             stdout_sel.register(stdout, select.POLLIN)
             for w in backoff_delay(0.5, timeout=30):
-                time.sleep(w)
                 if proc.poll() is None:
                     if stdout_sel.poll(1):
                         out = stdout.readline()
@@ -192,6 +194,7 @@ class Tunnel:
                         f"gcloud iap-tunnel failed on port {port}, rc: {proc.returncode}, stderr: {stderr}"
                     )
                     return None
+                time.sleep(w)
             log.error(f"gcloud iap-tunnel timed out on port {port}")
             proc.kill()
             return None
@@ -374,6 +377,16 @@ class Cluster:
     @property
     def login_name(self):
         return trim_self_link(self.login_link)
+
+    @util.cached_property
+    def cfg(self):
+        # download the config.yaml from the controller and load it locally
+        cluster_name = self.tf.output()["slurm_cluster_name"]
+        cfgfile = Path(f"{cluster_name}-config.yaml")
+        cfgfile.write_text(
+            self.controller_exec_output("sudo cat /slurm/scripts/config.yaml")
+        )
+        return util.load_config_file(cfgfile)
 
     def get_jobs(self):
         out = self.login_exec("scontrol show jobs --json")["stdout"]

@@ -12,6 +12,81 @@ controller_instance_config = {
   machine_type = "n1-standard-8"
 }
 
+controller_startup_scripts = [
+  {
+    filename = "hello_controller.sh"
+    content  = <<-EOF
+        #!/bin/bash
+        set -ex
+        echo "Hello, $(hostname) from $(dirname $0) !"
+        mkdir -p /slurm/out
+        touch /slurm/out/controller
+        EOF
+  },
+]
+
+login_startup_scripts = [
+  {
+    filename = "hello_login.sh"
+    content  = <<-EOF
+        #!/bin/bash
+        set -ex
+        echo "Hello, $(hostname) from $(dirname $0) !"
+        mkdir -p /slurm/out
+        touch /slurm/out/login
+        EOF
+  },
+  {
+    filename = "login2.sh"
+    content  = <<-EOF
+        #!/bin/bash
+        set -ex
+        echo "Hello, $(hostname) from $(dirname $0) !"
+        mkdir -p /slurm/out
+        touch /slurm/out/login2
+        EOF
+  },
+]
+
+compute_startup_scripts = [
+  {
+    filename = "hello_compute.sh"
+    content  = <<-EOF
+        #!/bin/bash
+        set -ex
+        echo "Hello, $(hostname) from $(dirname $0) !"
+        mkdir -p /slurm/out
+        touch /slurm/out/compute
+        EOF
+  },
+]
+
+prolog_scripts = [
+  {
+    filename = "hello_prolog.sh"
+    content  = <<-EOF
+        #!/bin/bash
+        set -ex
+        echo "Hello, $(hostname) from $(dirname $0) !"
+        mkdir -p /slurm/out
+        touch /slurm/out/prolog_$SLURM_JOBID
+        EOF
+  },
+]
+
+epilog_scripts = [
+  {
+    filename = "hello_epilog.sh"
+    content  = <<-EOF
+        #!/bin/bash
+        set -ex
+        echo "Hello, $(hostname) from $(dirname $0) !"
+        mkdir -p /slurm/out
+        touch /slurm/out/epilog_$SLURM_JOBID
+        EOF
+  },
+]
+
 login_nodes = [
   {
     # Group Definition

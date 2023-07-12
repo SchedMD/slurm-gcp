@@ -46,6 +46,21 @@ def test_ops_agent(cluster, lkp):
     util.execute_with_futures(check_ops_agent, lkp.instances().values())
 
 
+def test_controller_custom_scripts(cluster):
+    check = cluster.controller_exec("ls /slurm/out/controller")
+    log.debug(f"{check.command}: {check.stdout or check.stderr}")
+    assert check.exit_status == 0
+
+
+def test_login_custom_scripts(cluster):
+    check = cluster.login_exec("ls /slurm/out/login")
+    log.debug(f"{check.command}: {check.stdout or check.stderr}")
+    assert check.exit_status == 0
+    check = cluster.login_exec("ls /slurm/out/login2")
+    log.debug(f"{check.command}: {check.stdout or check.stderr}")
+    assert check.exit_status == 0
+
+
 # def test_network_mounts(cluster):
 #    """test cluster-wide and login network storage
 #    Ignores partition-only network storage for now

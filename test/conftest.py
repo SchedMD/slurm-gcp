@@ -172,13 +172,7 @@ def cluster(request, applied):
 @pytest.fixture(scope="session")
 def cfg(cluster: Cluster):
     """fixture providing util config for the cluster"""
-    # download the config.yaml from the controller and load it locally
-    cluster_name = cluster.tf.output()["slurm_cluster_name"]
-    cfgfile = Path(f"{cluster_name}-config.yaml")
-    cfgfile.write_text(
-        cluster.controller_exec_output("sudo cat /slurm/scripts/config.yaml")
-    )
-    return util.load_config_file(cfgfile)
+    return cluster.cfg
 
 
 @pytest.fixture(scope="session")

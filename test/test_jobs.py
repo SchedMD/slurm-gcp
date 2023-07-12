@@ -3,6 +3,7 @@ import logging
 import pytest
 
 from hostlist import expand_hostlist as expand
+from deploy import Cluster
 from testutils import (
     wait_job_state,
     wait_node_state,
@@ -191,3 +192,24 @@ def test_preemption(cluster, lkp):
         wait_job_state(cluster, job_id, "CANCELLED")
 
     util.execute_with_futures(preemptible_job, partitions)
+
+
+def test_prolog_scripts(cluster: Cluster, lkp: Lookup):
+    """check that the prolog and epilog scripts ran"""
+    # The partition this runs on must not be job exclusive so the VM stays
+    # after job completion
+    job_id = sbatch(cluster, "sbatch -N1 --wrap='srun sleep 999'")
+    job = wait_job_state(cluster, job_id, "RUNNING", max_wait=300)
+    node = next(iter(expand(job["nodes"])))
+
+    node_ssh = cluster.ssh(lkp.instance(node).selfLink)
+    check = cluster.exec_cmd(node_ssh, f"ls /slurm/out/prolog_{job_id}")
+    log.debug(f"{check.command}: {check.stdout or check.stderr}")
+    assert check.exit_status == 0
+
+    cluster.login_exec(f"scancel {job_id}")
+    wait_job_state(cluster, job_id, "CANCELLED", max_wait=300)
+
+    check = cluster.exec_cmd(node_ssh, f"ls /slurm/out/epilog_{job_id}")
+    log.debug(f"{check.command}: {check.stdout or check.stderr}")
+    assert check.exit_status == 0

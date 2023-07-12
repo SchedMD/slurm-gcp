@@ -23,6 +23,10 @@ test_config.py
 - test_ops_agent
   - Check all running instances in the cluster for active ops agent fluentd
     service.
+- test_controller_custom_scripts
+  - check that the configured startup script ran
+- test_login_custom_scripts
+  - check that the configured login startup script ran
 - \[ \] Network Storage Testing
   - Test that Lustre, NFS, and GCSFuse install and can mount storage correctly
     on the latest OS image, and/or the HPC image as available.
@@ -64,6 +68,8 @@ test_jobs.py
     1. wait for the node to return to idle (slurmsync handles this)
     ###### TODO check that the job was requeued?
     6. cancel the job
+- test_prolog_scripts
+  - run a job and check that prolog and epilog scripts ran
 - \[ \] test exclusive nodes
   - Since placement group nodes are also exclusive, this is being tested. But a
     test just for exclusive nodes would be good.
@@ -79,6 +85,8 @@ test_nodes.py
 - test_static
   - get the list of static nodes in the cluster and wait for them all to be
     powered up and idle
+- test_compute_startup_scripts
+  - Check that the custom compute startup script ran on the static nodes
 - test_exclusive_labels
   - run job on exclusive nodes and check the instances for the correct job ID
     label
