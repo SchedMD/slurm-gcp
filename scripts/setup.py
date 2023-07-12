@@ -34,7 +34,6 @@ from addict import Dict as NSDict
 import util
 from util import (
     run,
-    instance_metadata,
     separate,
     blob_list,
 )
@@ -137,7 +136,7 @@ def failed_motd():
 
 
 def install_custom_scripts(clean=False):
-    """download custom scripts from project metadata"""
+    """download custom scripts from gcs bucket"""
 
     compute_tokens = ["compute", "prolog", "epilog"]
     if lkp.instance_role == "compute":
@@ -196,9 +195,8 @@ def run_custom_scripts():
         # compute setup with compute.d and partition.d
         custom_dirs = [custom_dir / "compute.d", custom_dir / "partition.d"]
     elif lkp.instance_role == "login":
-        # login setup with only login_{suffix}.d
-        suffix = instance_metadata("attributes/slurm_login_suffix")
-        custom_dirs = [custom_dir / f"login_{suffix}.d"]
+        # login setup with only login.d
+        custom_dirs = [custom_dir / "login.d"]
     else:
         # Unknown role: run nothing
         custom_dirs = []
