@@ -970,6 +970,8 @@ def wait_request(operation, project=None, compute=compute):
 
 def wait_for_operation(operation, project=None, compute=compute):
     """wait for given operation"""
+    if project is None:
+        project = parse_self_link(operation["selfLink"]).project
     wait_req = wait_request(operation, project=project, compute=compute)
 
     while True:
