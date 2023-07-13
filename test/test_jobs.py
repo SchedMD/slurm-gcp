@@ -12,6 +12,7 @@ from testutils import (
     run,
     util,
 )
+from util import Lookup
 
 log = logging.getLogger()
 
@@ -52,8 +53,9 @@ int main(int argc, char **argv)
 def test_gpu_job(cluster, lkp):
     gpu_parts = {}
     for part_name, partition in lkp.cfg.partitions.items():
-        for group_name, group in partition.partition_nodes.items():
-            template = lkp.template_info(group.instance_template)
+        for nodeset_name in partition.partition_nodeset:
+            nodeset = lkp.cfg.nodeset.get(nodeset_name)
+            template = lkp.template_info(nodeset.instance_template)
             if (
                 template.gpu_count > 0
                 and not template.shieldedInstanceConfig.enableSecureBoot
@@ -73,7 +75,7 @@ def test_gpu_job(cluster, lkp):
         log.info(cluster.login_exec_output(f"cat slurm-{job_id}.out"))
 
 
-def test_shielded(image_marker, cluster, lkp):
+def test_shielded(image_marker, cluster: Cluster, lkp: Lookup):
     # only run test for ubuntu-2004
     log.info(f"detected image_marker:{image_marker}")
     if image_marker == "debian-11-arm64":
@@ -83,13 +85,17 @@ def test_shielded(image_marker, cluster, lkp):
     shielded_parts = {}
     for part_name, partition in lkp.cfg.partitions.items():
         has_gpus = any(
-            lkp.template_info(group.instance_template).gpu_count > 0
-            for group in partition.partition_nodes.values()
+            lkp.template_info(
+                lkp.cfg.nodeset.get(nodeset_name).instance_template
+            ).gpu_count
+            > 0
+            for nodeset_name in partition.partition_nodeset
         )
         if skip_gpus and has_gpus:
             continue
-        for group_name, group in partition.partition_nodes.items():
-            template = lkp.template_info(group.instance_template)
+        for nodeset_name in partition.partition_nodeset:
+            nodeset = lkp.cfg.nodeset.get(nodeset_name)
+            template = lkp.template_info(nodeset.instance_template)
             if template.shieldedInstanceConfig.enableSecureBoot:
                 shielded_parts[part_name] = partition
                 partition.has_gpus = has_gpus
