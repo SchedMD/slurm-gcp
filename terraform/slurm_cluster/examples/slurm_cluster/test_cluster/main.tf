@@ -109,14 +109,7 @@ locals {
   controller_instance_config = merge(
     var.controller_instance_config,
     {
-      service_account = (
-        var.create_service_accounts
-        ? {
-          email  = lookup(var.controller_instance_config.service_account, "email", try(module.slurm_sa_iam["controller"].service_account, "default"))
-          scopes = lookup(var.controller_instance_config.service_account, "scopes", ["https://www.googleapis.com/auth/cloud-platform"])
-        }
-        : var.controller_instance_config.service_account
-      )
+      service_account      = var.create_service_accounts ? module.slurm_sa_iam["controller"].service_account : var.controller_instance_config.service_account
       source_image         = can(coalesce(var.controller_instance_config.source_image)) ? var.controller_instance_config.source_image : var.source_image
       source_image_family  = can(coalesce(var.controller_instance_config.source_image_family)) ? var.controller_instance_config.source_image_family : var.source_image_family
       source_image_project = can(coalesce(var.controller_instance_config.source_image_project)) ? var.controller_instance_config.source_image_project : var.source_image_project
@@ -126,14 +119,7 @@ locals {
   )
 
   nodeset = [for x in var.nodeset : merge(x, {
-    service_account = (
-      var.create_service_accounts
-      ? {
-        email  = lookup(x.service_account, "email", try(module.slurm_sa_iam["compute"].service_account, "default"))
-        scopes = lookup(x.service_account, "scopes", ["https://www.googleapis.com/auth/cloud-platform"])
-      }
-      : x.service_account
-    )
+    service_account      = var.create_service_accounts ? module.slurm_sa_iam["compute"].service_account : x.service_account
     source_image         = can(coalesce(x.source_image)) ? x.source_image : var.source_image
     source_image_family  = can(coalesce(x.source_image_family)) ? x.source_image_family : var.source_image_family
     source_image_project = can(coalesce(x.source_image_project)) ? x.source_image_project : var.source_image_project
@@ -143,14 +129,7 @@ locals {
 
   login_nodes = [
     for x in var.login_nodes : merge(x, {
-      service_account = (
-        var.create_service_accounts
-        ? {
-          email  = lookup(x.service_account, "email", try(module.slurm_sa_iam["login"].service_account, "default"))
-          scopes = lookup(x.service_account, "scopes", ["https://www.googleapis.com/auth/cloud-platform"])
-        }
-        : x.service_account
-      )
+      service_account      = var.create_service_accounts ? module.slurm_sa_iam["login"].service_account : x.service_account
       source_image         = can(coalesce(x.source_image)) ? x.source_image : var.source_image
       source_image_family  = can(coalesce(x.source_image_family)) ? x.source_image_family : var.source_image_family
       source_image_project = can(coalesce(x.source_image_project)) ? x.source_image_project : var.source_image_project
