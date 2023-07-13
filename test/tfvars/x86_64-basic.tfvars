@@ -257,8 +257,8 @@ partitions = [
     suspend_time         = 300
   },
   {
-    partition_name  = "spot"
-    partition_nodes = ["n1s2spot", ]
+    partition_name    = "spot"
+    partition_nodeset = ["n1s2spot", ]
     # Options
     enable_job_exclusive = false
     resume_timeout       = 300
