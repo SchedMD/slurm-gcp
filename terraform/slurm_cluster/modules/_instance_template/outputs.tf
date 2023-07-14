@@ -29,3 +29,8 @@ output "tags" {
   description = "Tags that will be associated with instance(s)"
   value       = google_compute_instance_template.tpl.tags
 }
+
+output "service_account" {
+  description = "value"
+  value       = google_compute_instance_template.tpl.service_account[0]
+}

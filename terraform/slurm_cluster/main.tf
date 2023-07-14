@@ -37,6 +37,18 @@ locals {
 # BUCKET #
 ##########
 
+locals {
+  controller_sa = toset(flatten([for x in module.slurm_controller_template : x.service_account]))
+  compute_sa    = toset(flatten([for x in module.slurm_nodeset_template : x.service_account]))
+  login_sa      = toset(flatten([for x in module.slurm_login_template : x.service_account]))
+
+  viewers = toset(flatten([
+    formatlist("serviceAccount:%s", [for x in local.controller_sa : x.email]),
+    formatlist("serviceAccount:%s", [for x in local.compute_sa : x.email]),
+    formatlist("serviceAccount:%s", [for x in local.login_sa : x.email]),
+  ]))
+}
+
 module "bucket" {
   source  = "terraform-google-modules/cloud-storage/google"
   version = "~> 3.0"
@@ -55,6 +67,18 @@ module "bucket" {
   labels = {
     slurm_cluster_name = var.slurm_cluster_name
   }
+}
+
+resource "google_storage_bucket_iam_binding" "viewers" {
+  bucket  = var.create_bucket ? module.bucket[0].name : var.bucket_name
+  role    = "roles/storage.objectViewer"
+  members = compact(local.viewers)
+}
+
+resource "google_storage_bucket_iam_binding" "legacyReaders" {
+  bucket  = var.create_bucket ? module.bucket[0].name : var.bucket_name
+  role    = "roles/storage.legacyBucketReader"
+  members = compact(local.viewers)
 }
 
 ###############

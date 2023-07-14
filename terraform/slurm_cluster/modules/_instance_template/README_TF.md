@@ -98,5 +98,6 @@ No modules.
 |------|-------------|
 | <a name="output_name"></a> [name](#output\_name) | Name of instance template |
 | <a name="output_self_link"></a> [self\_link](#output\_self\_link) | Self-link of instance template |
+| <a name="output_service_account"></a> [service\_account](#output\_service\_account) | value |
 | <a name="output_tags"></a> [tags](#output\_tags) | Tags that will be associated with instance(s) |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
