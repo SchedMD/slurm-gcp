@@ -53,9 +53,8 @@ def conflines(cloud_parameters, lkp=lkp):
     no_comma_params = cloud_parameters.no_comma_params or False
 
     any_gpus = any(
-        lkp.template_info(node.instance_template).gpu_count > 0
-        for part in cfg.partitions.values()
-        for node in part.partition_nodes.values()
+        lkp.template_info(nodeset.instance_template).gpu_count > 0
+        for nodeset in cfg.nodeset.values()
     )
 
     any_dynamic = any(bool(p.partition_feature) for p in lkp.cfg.partitions.values())
@@ -167,10 +166,10 @@ def partitionlines(partition, lkp=lkp):
         machine_conf = lkp.template_machine_conf(template_link)
         return max(MIN_MEM_PER_CPU, machine_conf.memory // machine_conf.cpus)
 
-    if len(partition.partition_nodes.values()) > 0:
+    if len(partition.partition_nodeset) > 0:
         defmem = min(
-            defmempercpu(nodeset.instance_template)
-            for nodeset in partition.partition_nodeset
+            defmempercpu(lkp.cfg.nodeset.get(nodeset_name).instance_template)
+            for nodeset_name in partition.partition_nodeset
         )
     nodesets = list(chain(partition.partition_nodeset, partition.partition_nodeset_dyn))
     line_elements = {
@@ -299,16 +298,12 @@ def gen_cloud_gres_conf(lkp=lkp):
     """generate cloud_gres.conf"""
 
     gpu_nodes = defaultdict(list)
-    for part_name, partition in lkp.cfg.partitions.items():
-        if len(partition.partition_nodes.values()) > 0:
-            for node in partition.partition_nodes.values():
-                template_info = lkp.template_info(node.instance_template)
-                gpu_count = template_info.gpu_count
-                if gpu_count == 0:
-                    continue
-                gpu_nodes[gpu_count].extend(
-                    filter(None, lkp.nodeset_lists(node, part_name))
-                )
+    for nodeset in cfg.nodeset.values():
+        template_info = lkp.template_info(nodeset.instance_template)
+        gpu_count = template_info.gpu_count
+        if gpu_count == 0:
+            continue
+        gpu_nodes[gpu_count].extend(filter(None, lkp.nodeset_lists(nodeset)))
 
     lines = [
         dict_to_conf(
