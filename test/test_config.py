@@ -13,11 +13,10 @@ log = logging.getLogger()
 
 def test_gpu_config(cluster, lkp):
     gpu_groups = {}
-    for part_name, partition in lkp.cfg.partitions.items():
-        for group_name, group in partition.partition_nodes.items():
-            template = lkp.template_info(group.instance_template)
-            if template.gpu_count > 0:
-                gpu_groups[lkp.nodeset_prefix(group_name, part_name)] = template
+    for nodeset_name, nodeset in lkp.cfg.nodeset.items():
+        template = lkp.template_info(nodeset.instance_template)
+        if template.gpu_count > 0:
+            gpu_groups[lkp.nodeset_prefix(nodeset_name)] = template
     if not gpu_groups:
         pytest.skip("no gpu partitions found")
         return
