@@ -168,11 +168,12 @@ def test_placement_groups(cluster, lkp):
 #        assert job["job_state"] == "COMPLETED"
 
 
-def test_preemption(cluster, lkp):
+def test_preemption(cluster: Cluster, lkp: Lookup):
     partitions = []
     for part_name, partition in lkp.cfg.partitions.items():
-        for group_name, group in partition.partition_nodes.items():
-            template = lkp.template_info(group.instance_template)
+        for nodeset_name in partition.partition_nodeset:
+            nodeset = lkp.cfg.nodeset.get(nodeset_name)
+            template = lkp.template_info(nodeset.instance_template)
             if template.scheduling.preemptible:
                 partitions.append(part_name)
                 break
