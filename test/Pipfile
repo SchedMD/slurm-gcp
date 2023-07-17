@@ -4,23 +4,25 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+addict = "*"
+cython = "<3.0"
+google-api-python-client = "*"
+ipdb = "*"
 ipython = "*"
-pyaml = "*"
-pytest = "*"
+more-executors = "*"
 paramiko = "*"
 psutil = "*"
-ipdb = "*"
+pyaml = "*"
+pytest = "*"
 pytest-benchmark = "*"
-python-hostlist = "*"
 pytest-xdist = {extras = ["psutil"], version = "*"}
-tftest = "*"
-requests = "*"
+python-hostlist = "*"
 pyyaml = "*"
-addict = "*"
-google-api-python-client = "*"
-more-executors = "*"
+requests = "*"
+tftest = "*"
+wheel = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.10"
+python_version = "3.8"

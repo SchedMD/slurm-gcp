@@ -21,7 +21,7 @@ variables:
 
 default:
   image:
-    name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.6
+    name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.7
 
   before_script:
   - set +o pipefail
@@ -147,19 +147,20 @@ build-ubuntu-2204-lts-arm64:
   - cd test
   - CLUSTER_NAME="test$(tr -dc a-z </dev/urandom | head -c2)"
   - echo $CLUSTER_NAME | tee cluster_name
-  - pipenv install
+  - export PATH=/venv/bin:$PATH
+  - pip3 install -r requirements.txt
   - >
-    pipenv run pytest -vs
+    pytest -vs
     --project-id=$GCP_PROJECT_ID
     --cluster-name=$CLUSTER_NAME
     --image-project=$GCP_PROJECT_ID
     --image-family=$IMAGE_FAMILY
     --image=${IMAGE_NAME:-null}
     -m "${ARCH}"
-  after_script:
-  - cd test
-  - pipenv install
-  - pipenv run ./cleanup.py $(cat cluster_name)
+  # after_script:
+  # - cd test
+  # - pipenv install
+  # - pipenv run ./cleanup.py $(cat cluster_name)
 
 test-centos-7:
   extends: .test-image

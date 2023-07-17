@@ -18,6 +18,7 @@ RUN apk add --update \
     openssl-dev \
     python3 \
     python3-dev \
+    py3-wheel \
     readline-dev \
     sqlite-dev \
     tk-dev \
@@ -33,4 +34,8 @@ ENV PATH $PATH:/opt/google-cloud-sdk/bin
 RUN bash <(curl https://pyenv.run)
 ENV PYENV_ROOT=/root/.pyenv
 ENV PATH $PYENV_ROOT/bin:$PATH
-RUN pyenv install 3.8.16
+
+RUN python3 -m venv /venv --system-site-packages
+ENV PATH=/venv/bin:$PATH
+RUN pip3 install --upgrade pip
+RUN pip3 install "Cython<3.0" pyyaml --no-build-isolation
