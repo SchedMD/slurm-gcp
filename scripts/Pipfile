@@ -4,15 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "2"
-pyyaml = "6"
-addict = "2"
-google-api-python-client = "2"
-google-cloud-bigquery = "3"
-google-cloud-pubsub = "2"
-ipython = "8.10.0"
-more-executors = "2"
-prometheus-client = "0.16"
+requests = "*"
+pyyaml = "*"
+addict = "*"
+google-api-python-client = "*"
+google-cloud-bigquery = "*"
+google-cloud-storage = "*"
+ipython = "<7.17"
+more-executors = "*"
+prometheus-client = "*"
 
 [dev-packages]
 

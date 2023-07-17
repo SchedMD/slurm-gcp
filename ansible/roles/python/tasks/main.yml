@@ -49,6 +49,10 @@
   - '{{ ansible_os_family|lower }}_requirements.txt'
   register: requirements_file
 
+- name: Install pyyaml workaround
+  shell:
+    cmd: pip3 install "Cython<3.0" pyyaml --no-build-isolation
+
 - name: Install Pip Packages
   pip:
     requirements: '{{ requirements_file.results[0].dest }}'
