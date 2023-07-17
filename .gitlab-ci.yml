@@ -77,6 +77,8 @@ default:
   rules:
   - if: $CI_PIPELINE_SOURCE == "push"
     when: never
+  - if: $ONLY_CORE
+    when: never
   - changes:
       paths:
       - .gitlab-ci.yml
@@ -185,6 +187,8 @@ build-ubuntu-2204-lts-arm64:
   extends: .test-image
   rules:
   - if: $CI_PIPELINE_SOURCE == "push"
+    when: never
+  - if: $ONLY_CORE
     when: never
   - when: always
 
