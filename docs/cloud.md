@@ -51,22 +51,10 @@ to get you familiar.
 
 ### Quickstart Examples
 
-See the
-[full cluster example](../terraform/slurm_cluster/examples/slurm_cluster/cloud/full/README.md)
-for a great example to get started with. It will create all the infrastructure,
-service accounts and IAM to minimally support a Slurm cluster. The
-[TerraformUser](./glossary.md#terraformuser) will require more
-[roles](./glossary.md#iam-roles) to create the other supporting resources. You
-can configure certain elements of the example cluster, which is useful for
-testing.
-
-See the
-[basic cluster example](../terraform/slurm_cluster/examples/slurm_cluster/cloud/basic/README.md)
-for a great example to base a production configuration off of. It provides the
-bare minimum and leaves the rest to you. This allows for fine grain control over
-the cluster environment and removes [role](./glossary.md#iam-roles) requirements
-from the [TerraformUser](./glossary.md#terraformuser). You can configure certain
-elements of the example cluster, which is useful for testing.
+See the [test cluster][test-cluster] example for an extensible and robust
+example. It can be configured to handle creation of all supporting resources
+(e.g. network, service accounts) or leave that to you. Slurm can be configured
+with partitions and nodesets as desired.
 
 > **NOTE:** It is recommended to use the
 > [slurm_cluster module](../terraform/slurm_cluster/README.md) in your own
@@ -78,3 +66,7 @@ Alternatively, see
 for
 [HPC Toolkit](https://cloud.google.com/blog/products/compute/new-google-cloud-hpc-toolkit)
 examples.
+
+<!-- Links -->
+
+[test-cluster]: ../terraform/slurm_cluster/examples/slurm_cluster/test_cluster/README.md
