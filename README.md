@@ -23,7 +23,7 @@ published images.
   - [Cloud](#cloud)
   - [Hybrid](#hybrid)
   - [Multi-Cluster/Federation](#multi-clusterfederation)
-- [Upgrade to v5](#upgrade-to-v5)
+- [Upgrade to v6](#upgrade-to-v6)
 - [Help and Support](#help-and-support)
 
 <!-- mdformat-toc end -->
@@ -93,9 +93,9 @@ ran on different clusters. This can be a mix between onprem and cloud clusters.
 
 See the [Federated Cluster Guide](./docs/federation.md) for details.
 
-## Upgrade to v5
+## Upgrade to v6
 
-See the [Upgrade to v5 Guide](./docs/upgrade_to_v5.md) for details.
+See the [Upgrade to v6 Guide](./docs/upgrade_to_v6.md) for details.
 
 ## Help and Support
 
