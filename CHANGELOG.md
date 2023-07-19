@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Remove debian-10 and vanilla rocky-linux-8 images from build process and
   support.
 - Fix threads per core inference.
+- Upgrade Slurm to 23.02.3
 
 ## \[5.7.4\]
 
