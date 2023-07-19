@@ -55,7 +55,7 @@ repos:
     - --hook-config=--create-file-if-not-exist=true
     - --hook-config=--path-to-file=README_TF.md
 - repo: https://github.com/psf/black
-  rev: 23.3.0
+  rev: 23.7.0
   hooks:
   - id: black
     exclude: ^dm/
