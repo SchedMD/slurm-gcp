@@ -14,7 +14,7 @@ tf-init: ## Run terraform init
 
 .PHONY: tf-init-recursive
 tf-init-recursive: ## Run terraform init recursively
-	find . -type d -name '\.terraform' -prune -o -type f -name '*.tf' -printf '%h\n' | sort -u | xargs -I{} echo $(TF) -chdir={} init
+	find . -type d -name '\.terraform' -prune -o -type f -name '*.tf' -printf '%h\n' | sort -u | xargs -I{} $(TF) -chdir={} init
 
 .PHONY: tf-init-upgrade
 tf-init-upgrade: ## Run terraform init -upgrade
