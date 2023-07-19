@@ -14,7 +14,7 @@ tf-init: ## Run terraform init
 
 .PHONY: tf-init-recursive
 tf-init-recursive: ## Run terraform init recursively
-	find . -not -path '*/\.*' -type d \( ! -iname ".*" \) -exec $(TF) -chdir={} init \;
+	find . -type d -name '\.terraform' -prune -o -type f -name '*.tf' -printf '%h\n' | sort -u | xargs -I{} echo $(TF) -chdir={} init
 
 .PHONY: tf-init-upgrade
 tf-init-upgrade: ## Run terraform init -upgrade
@@ -22,7 +22,7 @@ tf-init-upgrade: ## Run terraform init -upgrade
 
 .PHONY: tf-init-upgrade-recursive
 tf-init-upgrade-recursive: ## Run terraform init recursively
-	find . -not -path '*/\.*' -type d \( ! -iname ".*" \) -exec $(TF) -chdir={} init -upgrade \;
+	find . -type d -name '\.terraform' -prune -o -type f -name '*.tf' -printf '%h\n' | sort -u | xargs -I{} $(TF) -chdir={} init -upgrade
 
 .PHONY: tf-validate
 tf-validate: ## Run terraform validate
