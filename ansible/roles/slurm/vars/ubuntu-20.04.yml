@@ -41,3 +41,5 @@ slurm_packages:
 - man2html
 - numactl
 - rrdtool
+- systemd
+- systemd-sysv

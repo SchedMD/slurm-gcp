@@ -13,29 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Install {{ansible_os_family}} Family Dependencies
-  apt:
-    name:
-    - libmariadb-dev
-    state: present
-
-
-- name: Install {{ansible_os_family}} Family Server
-  apt:
-    name:
-    - mariadb-server
-    state: present
-  when: install_server
-
-- name: Create Conf
-  template:
-    src: mysql_slurm.cnf.j2
-    dest: /etc/mysql/conf.d/mysql_slurm.cnf
-  when: not install_server
-
-- name: Update Conf
-  template:
-    src: mysql_slurm.cnf.j2
-    dest: /etc/mysql/conf.d/mysql_slurm.cnf
-  notify: Handle Mariadb Service
-  when: install_server
+dependencies:
+- role: python

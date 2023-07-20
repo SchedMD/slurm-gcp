@@ -3,6 +3,7 @@ google-api-python-client~=2.0
 google-cloud-bigquery~=2.0
 google-cloud-secret-manager~=2.0
 google-cloud-storage~=2.0
+google-cloud-tpu~=1.10.0
 more-executors~=2.0
 prometheus-client~=0.16
 pyyaml~=6.0

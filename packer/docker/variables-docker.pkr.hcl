@@ -1,4 +1,3 @@
----
 # Copyright (C) SchedMD LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,29 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Install {{ansible_os_family}} Family Dependencies
-  apt:
-    name:
-    - libmariadb-dev
-    state: present
+#################
+# TPU VARIABLES #
+#################
 
+variable "tf_version" {
+  description = "The tensoflow version to install in the docker image for the TPU, if set to unset the docker image will not be generated."
+  type        = string
+}
 
-- name: Install {{ansible_os_family}} Family Server
-  apt:
-    name:
-    - mariadb-server
-    state: present
-  when: install_server
-
-- name: Create Conf
-  template:
-    src: mysql_slurm.cnf.j2
-    dest: /etc/mysql/conf.d/mysql_slurm.cnf
-  when: not install_server
-
-- name: Update Conf
-  template:
-    src: mysql_slurm.cnf.j2
-    dest: /etc/mysql/conf.d/mysql_slurm.cnf
-  notify: Handle Mariadb Service
-  when: install_server
+variable "docker_image" {
+  description = "The docker image to use for the TPU."
+  type        = string
+  default     = "ubuntu:20.04"
+}

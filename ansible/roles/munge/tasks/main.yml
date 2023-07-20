@@ -47,3 +47,10 @@
     src: munge.service.j2
     dest: /usr/lib/systemd/system/munge.service
   notify: Handle Munge Service
+  when: not install_only
+
+- name: Create Systemd Service
+  template:
+    src: munge.service.j2
+    dest: /usr/lib/systemd/system/munge.service
+  when: install_only

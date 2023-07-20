@@ -1,4 +1,3 @@
----
 # Copyright (C) SchedMD LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,29 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Install {{ansible_os_family}} Family Dependencies
-  apt:
-    name:
-    - libmariadb-dev
-    state: present
+##############
+# VERSIONING #
+##############
 
+packer {
+  required_plugins {
+    docker = {
+      source  = "github.com/hashicorp/docker"
+      version = "~> 0.0.7"
+    }
+    ansible = {
+      source  = "github.com/hashicorp/ansible"
+      version = "~> 1"
+    }
+  }
 
-- name: Install {{ansible_os_family}} Family Server
-  apt:
-    name:
-    - mariadb-server
-    state: present
-  when: install_server
-
-- name: Create Conf
-  template:
-    src: mysql_slurm.cnf.j2
-    dest: /etc/mysql/conf.d/mysql_slurm.cnf
-  when: not install_server
-
-- name: Update Conf
-  template:
-    src: mysql_slurm.cnf.j2
-    dest: /etc/mysql/conf.d/mysql_slurm.cnf
-  notify: Handle Mariadb Service
-  when: install_server
+  required_version = "~> 1.7"
+}
