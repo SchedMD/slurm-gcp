@@ -425,9 +425,9 @@ nodeset_dyn = []
 
 partitions = [
   {
-    partition_name  = "debug"
-    partition_conf  = {}
-    partition_nodes = ["n1s1", "c2s4"]
+    partition_name    = "debug"
+    partition_conf    = {}
+    partition_nodeset = ["n1s1", "c2s4"]
     # Options
     default              = true
     enable_job_exclusive = false
