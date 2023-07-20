@@ -46,6 +46,7 @@ locals {
     cluster_id           = random_uuid.cluster_id.result
     project              = var.project_id
     slurm_cluster_name   = var.slurm_cluster_name
+    bucket_path          = local.bucket_path
 
     # storage
     disable_default_mounts = var.disable_default_mounts
@@ -65,6 +66,7 @@ locals {
     partitions       = local.partitions
     nodeset          = local.nodeset
     nodeset_dyn      = local.nodeset_dyn
+    nodeset_tpu      = local.nodeset_tpu
 
     # hybrid
     hybrid                  = var.enable_hybrid
@@ -85,10 +87,12 @@ locals {
 
   nodeset     = { for n in var.nodeset[*].nodeset : n.nodeset_name => n }
   nodeset_dyn = { for n in var.nodeset_dyn[*].nodeset : n.nodeset_name => n }
+  nodeset_tpu = { for n in var.nodeset_tpu[*].nodeset : n.nodeset_name => n }
 
   x_nodeset         = toset([for k, v in local.nodeset : v.nodeset_name])
   x_nodeset_dyn     = toset([for k, v in local.nodeset_dyn : v.nodeset_name])
-  x_nodeset_overlap = setintersection([], local.x_nodeset, local.x_nodeset_dyn)
+  x_nodeset_tpu     = toset([for k, v in local.nodeset_tpu : v.nodeset_name])
+  x_nodeset_overlap = setintersection([], local.x_nodeset, local.x_nodeset_dyn, local.x_nodeset_tpu)
 
   etc_dir = abspath("${path.module}/../../../../etc")
 

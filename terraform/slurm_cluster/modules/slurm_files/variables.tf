@@ -240,6 +240,12 @@ variable "nodeset_dyn" {
   default     = []
 }
 
+variable "nodeset_tpu" {
+  description = "Cluster nodenets (TPU), as a list."
+  type        = list(any)
+  default     = []
+}
+
 variable "partitions" {
   description = "Cluster partitions as a list."
   type        = list(any)

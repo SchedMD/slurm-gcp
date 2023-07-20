@@ -45,6 +45,12 @@ variable "partition_nodeset_dyn" {
   default     = []
 }
 
+variable "partition_nodeset_tpu" {
+  description = "Slurm nodesets (tpu) by name, as a list of string."
+  type        = set(string)
+  default     = []
+}
+
 variable "default" {
   description = <<-EOD
     If this is true, jobs submitted without a partition specification will utilize this partition.
