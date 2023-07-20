@@ -10,7 +10,7 @@ addict = "*"
 google-api-python-client = "*"
 google-cloud-bigquery = "*"
 google-cloud-storage = "*"
-ipython = "<7.17"
+ipython = "<8.11"
 more-executors = "*"
 prometheus-client = "*"
 
