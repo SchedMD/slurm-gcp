@@ -44,6 +44,7 @@ required_modules = [
     ("yaml", "yaml"),
     ("addict", "addict"),
     ("httplib2", "httplib2"),
+    ("google.cloud", "google-cloud-tpu"),
 ]
 missing_imports = False
 for module, name in required_modules:
@@ -60,6 +61,8 @@ import googleapiclient.discovery  # noqa: E402
 import google_auth_httplib2  # noqa: E402
 from googleapiclient.http import set_user_agent  # noqa: E402
 import httplib2  # noqa: E402
+from google.cloud import tpu_v2 as tpu  # noqa: E402
+import google.api_core.exceptions as gExceptions  # noqa: E402
 
 from requests import get as get_url  # noqa: E402
 from requests.exceptions import RequestException  # noqa: E402
@@ -746,6 +749,11 @@ def to_hostlist(nodenames):
     return hostlist
 
 
+def part_is_tpu(part, lkp):
+    """check if partition with name part contains a nodeset of type tpu"""
+    return len(lkp.cfg.partitions[part].partition_nodeset_tpu) > 0
+
+
 def to_hostnames(nodelist):
     """make list of hostnames from hostlist expression"""
     if isinstance(nodelist, str):
@@ -1037,6 +1045,157 @@ class Dumper(yaml.SafeDumper):
         return dumper.represent_scalar("tag:yaml.org,2002:str", str(path))
 
 
+class TPU:
+    """Class for handling the TPU-vm nodes"""
+
+    State = tpu.types.cloud_tpu.Node.State
+    TPUS_PER_VM = 4
+    __expected_states = {
+        "create": State.READY,
+        "start": State.READY,
+        "stop": State.STOPPED,
+        "delete": State.TERMINATED,
+    }
+
+    def __init__(self, nodeset, project_id) -> None:
+        self._nodeset = nodeset
+        self._parent = f"projects/{project_id}/locations/{nodeset.zone}"
+        self.project_id = project_id
+        self._client = tpu.TpuClient()
+        self.vmcount = self.__get_vm_count()
+
+    @property
+    def nodeset(self):
+        return self._nodeset
+
+    @property
+    def accelerator_type(self):
+        return self._nodeset.accelerator_type
+
+    @property
+    def tf_version(self):
+        return self._nodeset.tf_version
+
+    @property
+    def enable_public_ip(self):
+        return self._nodeset.enable_public_ip
+
+    @property
+    def preemptible(self):
+        return self._nodeset.preemptible
+
+    @property
+    def service_account(self):
+        return self._nodeset.service_account
+
+    @property
+    def zone(self):
+        return self._nodeset.zone
+
+    def check_accelerator_type(self):
+        try:
+            request = tpu.GetAcceleratorTypeRequest(
+                name=f"{self._parent}/acceleratorTypes/{self.accelerator_type}"
+            )
+            return self._client.get_accelerator_type(request=request) is not None
+        except Exception:
+            return False
+
+    def check_tf_version(self):
+        try:
+            request = tpu.GetRuntimeVersionRequest(
+                name=f"{self._parent}/runtimeVersions/{self.tf_version}"
+            )
+            return self._client.get_runtime_version(request=request) is not None
+        except Exception:
+            return False
+
+    def __get_vm_count(self):
+        request = tpu.GetAcceleratorTypeRequest(
+            name=f"{self._parent}/acceleratorTypes/{self.accelerator_type}"
+        )
+        topo = (
+            self._client.get_accelerator_type(request=request)
+            .accelerator_configs[0]
+            .topology.split("x")
+        )
+        tot = 1
+        for num in topo:
+            tot = tot * int(num)
+        return tot // self.TPUS_PER_VM
+
+    def __check_resp(self, response, op_name):
+        des_state = self.__expected_states.get(op_name)
+        # If the state is not in the table just print the response
+        if des_state is None:
+            return False
+        if response.state == des_state:
+            return True
+        return False
+
+    def start_node(self, nodename):
+        request = tpu.StartNodeRequest(name=f"{self._parent}/nodes/{nodename}")
+        resp = self._client.start_node(request=request).result()
+        print(resp)
+        return self.__check_resp(resp, "start")
+
+    def stop_node(self, nodename):
+        request = tpu.StopNodeRequest(name=f"{self._parent}/nodes/{nodename}")
+        resp = self._client.stop_node(request=request).result()
+        print(resp)
+        return self.__check_resp(resp, "stop")
+
+    def get_node(self, nodename):
+        try:
+            request = tpu.GetNodeRequest(name=f"{self._parent}/nodes/{nodename}")
+            res = self._client.get_node(request=request)
+        except gExceptions.NotFound:
+            res = None
+        return res
+
+    def create_node(self, nodename):
+        node = tpu.Node()
+        node.accelerator_type = self.accelerator_type
+        node.runtime_version = f"tpu-vm-tf-{self.tf_version}"
+        startup_script = """
+        #!/bin/bash
+        echo "startup script not found > /var/log/startup_error.log"
+        """
+        with open(
+            Path(cfg.slurm_scripts_dir or dirs.scripts) / "startup.sh", "r"
+        ) as script:
+            startup_script = script.read()
+        node.metadata = {
+            "slurm_docker_image": f"gcr.io/{self.project_id}/tpu:tf_{self.tf_version}",
+            "startup-script": startup_script,
+            "slurm_instance_role": "compute",
+            "slurm_cluster_name": lkp.cfg.slurm_cluster_name,
+            "slurm_bucket_path": lkp.cfg.bucket_path,
+        }
+        node.scheduling_config.preemptible = self.preemptible
+        node.network_config.enable_external_ips = self.enable_public_ip
+        # If no node_id is passed it creates one randomly, that it can later be seen in the response of the request
+        request = tpu.CreateNodeRequest(
+            parent=self._parent, node=node, node_id=nodename
+        )
+        resp = self._client.create_node(request=request).result()
+        ip_add = resp.network_endpoints[0].ip_address
+        dns_name = socket.getnameinfo((ip_add, 0), 0)[0]
+        run(
+            f"{lkp.scontrol} update nodename={nodename} nodeaddr={ip_add} nodehostname={dns_name}"
+        )
+        return self.__check_resp(resp, "create")
+
+    def delete_node(self, nodename):
+        request = tpu.DeleteNodeRequest(name=f"{self._parent}/nodes/{nodename}")
+        resp = self._client.delete_node(request=request).result()
+        if resp:
+            print(f"resp: '{resp}'")
+            return self.__check_resp(resp, "delete")
+        print("resp is empty")
+        return False
+
+
 class Lookup:
     """Wrapper class for cached data access"""
 
@@ -1153,6 +1312,9 @@ class Lookup:
     def node_prefix(self, node_name=None):
         return self._node_desc(node_name).prefix
 
+    def node_cluster_name(self, node_name=None):
+        return self._node_desc(node_name).cluster
+
     def node_nodeset_name(self, node_name=None):
         return self._node_desc(node_name).nodeset
 
@@ -1161,7 +1323,14 @@ class Lookup:
 
     def node_nodeset(self, node_name=None):
         nodeset_name = self.node_nodeset_name(node_name)
-        return self.cfg.nodeset.get(nodeset_name)
+        ns = self.cfg.nodeset.get(nodeset_name)
+        if ns:
+            return ns
+        return self.cfg.nodeset_tpu.get(nodeset_name)
+
+    def node_is_tpu(self, node_name=None):
+        nodeset_name = self.node_nodeset_name(node_name)
+        return self.cfg.nodeset_tpu.get(nodeset_name) is not None
 
     def node_template(self, node_name=None):
         return self.node_nodeset(node_name).instance_template
@@ -1242,6 +1411,12 @@ class Lookup:
         dynamic_nodes = []
 
         for nodeset in self.cfg.nodeset.values():
+            static, dynamic = self.nodeset_lists(nodeset)
+            if static is not None:
+                static_nodes.extend(to_hostnames(static))
+            if dynamic is not None:
+                dynamic_nodes.extend(to_hostnames(dynamic))
+        for nodeset in self.cfg.nodeset_tpu.values():
             static, dynamic = self.nodeset_lists(nodeset)
             if static is not None:
                 static_nodes.extend(to_hostnames(static))

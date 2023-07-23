@@ -20,7 +20,7 @@ from collections import defaultdict
 import json
 from pathlib import Path
 import util
-from util import Lookup, lkp, dirs, cfg, slurmdirs
+from util import Lookup, TPU, lkp, dirs, cfg, slurmdirs
 from util import (
     access_secret_version,
     blob_get,
@@ -31,6 +31,18 @@ from resume import PLACEMENT_MAX_CNT
 FILE_PREAMBLE = """
 # Warning:
 # This file is managed by a script. Manual modifications will be overwritten.
+"""
+
+SUBMIT_LUA = """
+function slurm_job_submit(job_desc, part_list, submit_uid)
+    return slurm.SUCCESS
+end
+
+function slurm_job_modify(job_desc, job_rec, part_list, modify_uid)
+   return slurm.SUCCESS
+end
+
+return slurm.SUCCESS
 """
 
 
@@ -48,6 +60,11 @@ def dict_to_conf(conf, delim=" "):
     )
 
 
+def check_nodeset(nodeset, lkp=lkp):
+    tpu = TPU(nodeset, lkp.project)
+    return tpu.check_accelerator_type() and tpu.check_tf_version()
+
+
 def conflines(cloud_parameters, lkp=lkp):
     scripts_dir = lkp.cfg.install_dir or dirs.scripts
     no_comma_params = cloud_parameters.no_comma_params or False
@@ -55,6 +72,12 @@ def conflines(cloud_parameters, lkp=lkp):
     any_gpus = any(
         lkp.template_info(nodeset.instance_template).gpu_count > 0
         for nodeset in cfg.nodeset.values()
+    )
+
+    any_tpu = any(
+        tpu_nodeset is not None
+        for part in cfg.partitions.values()
+        for tpu_nodeset in part.partition_nodeset_tpu
     )
 
     any_dynamic = any(bool(p.partition_feature) for p in lkp.cfg.partitions.values())
@@ -96,6 +119,7 @@ def conflines(cloud_parameters, lkp=lkp):
         "SuspendRate": cloud_parameters.get("suspend_rate", 0),
         "SuspendTimeout": cloud_parameters.get("suspend_timeout", 300),
         "TreeWidth": "65533" if any_dynamic else None,
+        "JobSubmitPlugins": "lua" if any_tpu else None,
     }
     return dict_to_conf(conf_options, delim="\n")
 
@@ -148,6 +172,43 @@ def nodeset_lines(nodeset, lkp=lkp):
     return "\n".join(filter(None, lines))
 
 
+def nodeset_tpu_lines(nodeset, lkp=lkp):
+    if not nodeset.node_conf:
+        return "INVALID, nodeset needs to contain a node_conf"
+
+    node_def = dict_to_conf(
+        {
+            "NodeName": "DEFAULT",
+            "State": "UNKNOWN",
+            **nodeset.node_conf,
+        }
+    )
+
+    lines = [node_def]
+    static, dynamic = lkp.nodeset_lists(nodeset)
+    # static or dynamic could be None, but Nones are filtered out of the lines
+    lines.extend(
+        dict_to_conf(
+            {
+                "NodeName": nodelist,
+                "State": "CLOUD",
+            }
+        )
+        if nodelist is not None
+        else None
+        for nodelist in [static, dynamic]
+    )
+    lines.append(
+        dict_to_conf(
+            {
+                "NodeSet": nodeset.nodeset_name,
+                "Nodes": ",".join(filter(None, (static, dynamic))),
+            }
+        )
+    )
+    return "\n".join(filter(None, lines))
+
+
 def nodeset_dyn_lines(nodeset, lkp: Lookup = lkp):
     """generate slurm NodeSet definition for dynamic nodeset"""
     return dict_to_conf(
@@ -171,7 +232,13 @@ def partitionlines(partition, lkp=lkp):
             defmempercpu(lkp.cfg.nodeset.get(nodeset_name).instance_template)
             for nodeset_name in partition.partition_nodeset
         )
-    nodesets = list(chain(partition.partition_nodeset, partition.partition_nodeset_dyn))
+    nodesets = list(
+        chain(
+            partition.partition_nodeset,
+            partition.partition_nodeset_dyn,
+            partition.partition_nodeset_tpu,
+        )
+    )
     line_elements = {
         "PartitionName": part_name,
         "Nodes": ",".join(nodesets),
@@ -208,6 +275,7 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
         conflines(cloud_parameters),
         *(nodeset_lines(n, lkp) for n in lkp.cfg.nodeset.values()),
         *(nodeset_dyn_lines(n, lkp) for n in lkp.cfg.nodeset_dyn.values()),
+        *(nodeset_tpu_lines(n, lkp) for n in lkp.cfg.nodeset_tpu.values()),
         *(partitionlines(p, lkp) for p in lkp.cfg.partitions.values()),
         suspend_exc,
     ]
@@ -376,3 +444,18 @@ def install_topology_conf(lkp=lkp):
     if not topo_conf.exists():
         topo_conf.symlink_to(conf_file)
     util.chown_slurm(conf_file, mode=0o600)
+
+
+def gen_submit_lua(lkp=lkp):
+    """generate job_submit.lua"""
+    any_tpu = any(
+        tpu_nodeset is not None
+        for part in cfg.partitions.values()
+        for tpu_nodeset in part.partition_nodeset_tpu
+    )
+    if any_tpu:
+        content = SUBMIT_LUA
+
+        conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "job_submit.lua"
+        conf_file.write_text(content)
+        util.chown_slurm(conf_file, mode=0o600)
