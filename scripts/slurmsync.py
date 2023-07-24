@@ -113,6 +113,8 @@ def find_node_status(nodename):
             & state.flags
         ):
             return NodeStatus.unbacked
+        if "POWERING_UP" in state.flags:
+            return NodeStatus.unchanged
         if nodename in find_node_status.static_nodeset:
             return NodeStatus.resume
     elif (
