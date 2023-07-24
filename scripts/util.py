@@ -1063,6 +1063,12 @@ class TPU:
         self.project_id = project_id
         self._client = tpu.TpuClient()
         self.vmcount = self.__get_vm_count()
+        self.data_disks = []
+        for data_disk in nodeset.data_disks:
+            ad = tpu.AttachedDisk()
+            ad.source_disk = data_disk
+            ad.mode = tpu.AttachedDisk.DiskMode.DISK_MODE_UNSPECIFIED
+            self.data_disks.append(ad)
 
     @property
     def nodeset(self):
@@ -1174,7 +1180,9 @@ class TPU:
         }
         node.scheduling_config.preemptible = self.preemptible
         node.network_config.enable_external_ips = self.enable_public_ip
-        # If no node_id is passed it creates one randomly, that it can later be seen in the response of the request
+        if self.data_disks:
+            node.data_disks = self.data_disks
+
         request = tpu.CreateNodeRequest(
             parent=self._parent, node=node, node_id=nodename
         )

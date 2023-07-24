@@ -32,6 +32,7 @@ locals {
     zone                   = var.zone
     service_account        = var.service_account
     preserve_tpu           = var.preserve_tpu
+    data_disks             = var.data_disks
     # subnetwork             = var.subnetwork_self_link
 
   }

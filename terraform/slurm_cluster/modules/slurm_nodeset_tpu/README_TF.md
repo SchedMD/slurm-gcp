@@ -44,6 +44,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_accelerator_type"></a> [accelerator\_type](#input\_accelerator\_type) | Nodeset accelerator type, see https://cloud.google.com/tpu/docs/supported-tpu-configurations for details. | `string` | n/a | yes |
+| <a name="input_data_disks"></a> [data\_disks](#input\_data\_disks) | The data disks to include in the TPU node | `list(string)` | `[]` | no |
 | <a name="input_enable_public_ip"></a> [enable\_public\_ip](#input\_enable\_public\_ip) | Enables IP address to access the Internet. | `bool` | `false` | no |
 | <a name="input_node_conf"></a> [node\_conf](#input\_node\_conf) | Slurm node configuration, as a map.<br>See https://slurm.schedmd.com/slurm.conf.html#SECTION_NODE-CONFIGURATION for details. | `map(string)` | n/a | yes |
 | <a name="input_node_count_dynamic_max"></a> [node\_count\_dynamic\_max](#input\_node\_count\_dynamic\_max) | Maximum number of nodes allowed in this partition to be created dynamically. | `number` | `0` | no |

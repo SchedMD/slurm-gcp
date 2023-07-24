@@ -92,6 +92,12 @@ variable "enable_public_ip" {
   default     = false
 }
 
+variable "data_disks" {
+  type        = list(string)
+  description = "The data disks to include in the TPU node"
+  default     = []
+}
+
 ##pending
 #data disks
 #accel config topology
