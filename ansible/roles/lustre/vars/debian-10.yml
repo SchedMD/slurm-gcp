@@ -16,6 +16,10 @@
 lustre_repo_url: |
   https://downloads.whamcloud.com/public/lustre/latest-2.12-release/ubuntu1804/client
 
+lustre_repo_url_fallback: |
+  https://downloads.whamcloud.com/public/lustre/lustre-2.12.9/ubuntu1804/client
+
+
 lustre_packages:
 - lustre-client-modules
 - lustre-client-utils

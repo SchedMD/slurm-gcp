@@ -17,6 +17,6 @@
   ansible.builtin.yum_repository:
     name: lustre-client
     description: Lustre Client
-    baseurl: '{{ lustre_repo_url }}'
+    baseurl: '{{ lustre_repo_url }} {{ lustre_repo_url_fallback or "" }}'
     enabled: true
     gpgcheck: false

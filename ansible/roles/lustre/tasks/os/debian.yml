@@ -18,3 +18,10 @@
     filename: lustre-client
     repo: deb [trusted=yes] {{ lustre_repo_url }} /
     state: present
+
+- name: Install Fallback Lustre Repo
+  ansible.builtin.apt_repository:
+    filename: lustre-client-fallback
+    repo: deb [trusted=yes] {{ lustre_repo_url_fallback }} /
+    state: present
+  when: lustre_repo_url_fallback is defined
