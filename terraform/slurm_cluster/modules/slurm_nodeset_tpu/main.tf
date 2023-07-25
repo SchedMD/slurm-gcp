@@ -22,7 +22,7 @@ locals {
   nodeset_tpu = {
     nodeset_name           = var.nodeset_name
     node_conf              = var.node_conf
-    accelerator_type       = var.accelerator_type
+    accelerator_config     = var.accelerator_config
     tf_version             = var.tf_version
     preemptible            = var.preemptible
     project_id             = var.project_id

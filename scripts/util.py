@@ -1057,18 +1057,39 @@ class TPU:
         "delete": State.TERMINATED,
     }
 
+    __tpu_version_mapping = {
+        "V2": tpu.AcceleratorConfig().Type.V2,
+        "V3": tpu.AcceleratorConfig().Type.V3,
+        "V4": tpu.AcceleratorConfig().Type.V4,
+    }
+
     def __init__(self, nodeset, project_id) -> None:
         self._nodeset = nodeset
         self._parent = f"projects/{project_id}/locations/{nodeset.zone}"
         self.project_id = project_id
         self._client = tpu.TpuClient()
-        self.vmcount = self.__get_vm_count()
         self.data_disks = []
         for data_disk in nodeset.data_disks:
             ad = tpu.AttachedDisk()
             ad.source_disk = data_disk
             ad.mode = tpu.AttachedDisk.DiskMode.DISK_MODE_UNSPECIFIED
             self.data_disks.append(ad)
+        ns_ac = nodeset.accelerator_config
+        if ns_ac.topology != "" and ns_ac.version != "":
+            ac = tpu.AcceleratorConfig()
+            ac.topology = ns_ac.topology
+            ac.type_ = self.__tpu_version_mapping[ns_ac.version]
+            self.ac = ac
+        elif ns_ac.type != "":
+            req = tpu.GetAcceleratorTypeRequest(
+                name=f"{self._parent}/acceleratorTypes/{ns_ac.type}"
+            )
+            self.ac = self._client.get_accelerator_type(req).accelerator_configs[0]
+        else:  # If there is no accelerator config information, this should never happen, but assume it is a v2-8
+            self.ac = tpu.AcceleratorConfig()
+            self.ac.topology = "2x2"
+            self.ac.type_ = tpu.AcceleratorConfig.Type.V2
+        self.vmcount = self.__calc_vm_from_topology(self.ac.topology)
 
     @property
     def nodeset(self):
@@ -1116,15 +1137,8 @@ class TPU:
         except Exception:
             return False
 
-    def __get_vm_count(self):
-        request = tpu.GetAcceleratorTypeRequest(
-            name=f"{self._parent}/acceleratorTypes/{self.accelerator_type}"
-        )
-        topo = (
-            self._client.get_accelerator_type(request=request)
-            .accelerator_configs[0]
-            .topology.split("x")
-        )
+    def __calc_vm_from_topology(self, topology):
+        topo = topology.split("x")
         tot = 1
         for num in topo:
             tot = tot * int(num)
@@ -1161,7 +1175,7 @@ class TPU:
 
     def create_node(self, nodename):
         node = tpu.Node()
-        node.accelerator_type = self.accelerator_type
+        node.accelerator_config = self.ac
         node.runtime_version = f"tpu-vm-tf-{self.tf_version}"
         startup_script = """
         #!/bin/bash

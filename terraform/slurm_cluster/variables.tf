@@ -336,12 +336,16 @@ variable "nodeset_tpu" {
     node_conf              = map(string)
     nodeset_name           = string
     enable_public_ip       = optional(bool, false)
-    accelerator_type       = string
-    tf_version             = string
-    preemptible            = optional(bool, false)
-    preserve_tpu           = optional(bool, true)
-    zone                   = string
-    data_disks             = optional(list(string), [])
+    accelerator_config = object({
+      type     = optional(string, "")
+      topology = optional(string, "")
+      version  = optional(string, "")
+    })
+    tf_version   = string
+    preemptible  = optional(bool, false)
+    preserve_tpu = optional(bool, true)
+    zone         = string
+    data_disks   = optional(list(string), [])
     service_account = optional(object({
       email  = optional(string)
       scopes = optional(list(string), ["https://www.googleapis.com/auth/cloud-platform"])

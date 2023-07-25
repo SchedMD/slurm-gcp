@@ -33,9 +33,21 @@ EOD
   type        = map(string)
 }
 
-variable "accelerator_type" {
-  description = "Nodeset accelerator type, see https://cloud.google.com/tpu/docs/supported-tpu-configurations for details."
-  type        = string
+variable "accelerator_config" {
+  description = "Nodeset accelerator config, see https://cloud.google.com/tpu/docs/supported-tpu-configurations for details."
+  type = object({
+    type     = optional(string, "")
+    topology = optional(string, "")
+    version  = optional(string, "")
+  })
+  validation {
+    condition     = var.accelerator_config.version == "" ? true : contains(["V2", "V3", "V4"], var.accelerator_config.version)
+    error_message = "accelerator_config.version must be one of [\"V2\", \"V3\", \"V4\"]"
+  }
+  validation {
+    condition     = var.accelerator_config.type == "" ? var.accelerator_config.version != "" && var.accelerator_config.topology != "" : var.accelerator_config.version == "" && var.accelerator_config.topology == ""
+    error_message = "type or topology + version needs to be specified for accelerator_config"
+  }
 }
 
 variable "tf_version" {

@@ -225,7 +225,7 @@ module "slurm_nodeset_tpu" {
   nodeset_name           = each.value.nodeset_name
   node_conf              = each.value.node_conf
   zone                   = each.value.zone
-  accelerator_type       = each.value.accelerator_type
+  accelerator_config     = each.value.accelerator_config
   tf_version             = each.value.tf_version
   preemptible            = each.value.preemptible
   preserve_tpu           = each.value.preserve_tpu
