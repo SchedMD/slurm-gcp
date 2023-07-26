@@ -1182,7 +1182,7 @@ class TPU:
         ) as script:
             startup_script = script.read()
         node.metadata = {
-            "slurm_docker_image": f"gcr.io/{self.project_id}/tpu:tf_{self.tf_version}",
+            "slurm_docker_image": self.nodeset.docker_image,
             "startup-script": startup_script,
             "slurm_instance_role": "compute",
             "slurm_cluster_name": lkp.cfg.slurm_cluster_name,

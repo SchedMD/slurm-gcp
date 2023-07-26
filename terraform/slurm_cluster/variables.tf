@@ -348,6 +348,7 @@ variable "nodeset_tpu" {
     preserve_tpu = optional(bool, true)
     zone         = string
     data_disks   = optional(list(string), [])
+    docker_image = optional(string, "")
     service_account = optional(object({
       email  = optional(string)
       scopes = optional(list(string), ["https://www.googleapis.com/auth/cloud-platform"])
