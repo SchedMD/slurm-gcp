@@ -67,12 +67,12 @@ def stop_tpu(data):
     tpu = data["tpu"]
     if tpu_nodeset.preserve_tpu:
         log.info(f"stopping node {node}")
-        if not tpu.stop_node(node):
-            log.error("Error stopping node {node}")
-    else:
-        log.info(f"deleting node {node}")
-        if not tpu.delete_node(node):
-            log.error("Error deleting node {node}")
+        if tpu.stop_node(node):
+            return
+        log.error("Error stopping node {node} will delete instead")
+    log.info(f"deleting node {node}")
+    if not tpu.delete_node(node):
+        log.error("Error deleting node {node}")
 
 
 def delete_tpu_instances(instances):

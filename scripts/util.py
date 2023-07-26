@@ -1152,13 +1152,11 @@ class TPU:
     def start_node(self, nodename):
         request = tpu.StartNodeRequest(name=f"{self._parent}/nodes/{nodename}")
         resp = self._client.start_node(request=request).result()
-        print(resp)
         return self.__check_resp(resp, "start")
 
     def stop_node(self, nodename):
         request = tpu.StopNodeRequest(name=f"{self._parent}/nodes/{nodename}")
         resp = self._client.stop_node(request=request).result()
-        print(resp)
         return self.__check_resp(resp, "stop")
 
     def get_node(self, nodename):
@@ -1208,9 +1206,7 @@ class TPU:
         request = tpu.DeleteNodeRequest(name=f"{self._parent}/nodes/{nodename}")
         resp = self._client.delete_node(request=request).result()
         if resp:
-            print(f"resp: '{resp}'")
             return self.__check_resp(resp, "delete")
-        print("resp is empty")
         return False
 
 
