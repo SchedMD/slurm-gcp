@@ -19,9 +19,29 @@
 ###########
 
 locals {
+  node_conf_hw = {
+    single = {
+      CPUs           = 96
+      Boards         = 1
+      Sockets        = 2
+      CoresPerSocket = 24
+      ThreadsPerCore = 2
+      RealMemory     = 307200
+    }
+  }
+  node_conf_mappings = {
+    "v2-8" = local.node_conf_hw.single
+    "v3-8" = local.node_conf_hw.single
+  }
+
+}
+
+locals {
+
   nodeset_tpu = {
     nodeset_name           = var.nodeset_name
-    node_conf              = var.node_conf
+    node_conf              = local.node_conf_mappings[var.node_type]
+    node_type              = var.node_type
     accelerator_config     = var.accelerator_config
     tf_version             = var.tf_version
     preemptible            = var.preemptible

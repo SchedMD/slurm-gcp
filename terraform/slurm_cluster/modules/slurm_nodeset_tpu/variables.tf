@@ -24,29 +24,32 @@ variable "nodeset_name" {
   }
 }
 
-#TODO ask if force this, until better solution
-variable "node_conf" {
-  description = <<EOD
-Slurm node configuration, as a map.
-See https://slurm.schedmd.com/slurm.conf.html#SECTION_NODE-CONFIGURATION for details.
-EOD
-  type        = map(string)
+variable "node_type" {
+  description = "Specify a node type to base the vm configuration upon it."
+  type        = string
+  validation {
+    condition     = contains(["v2-8", "v3-8"], var.node_type)
+    error_message = "node_type \"${var.node_type}\" is not supported yet"
+  }
 }
 
 variable "accelerator_config" {
   description = "Nodeset accelerator config, see https://cloud.google.com/tpu/docs/supported-tpu-configurations for details."
   type = object({
-    type     = optional(string, "")
-    topology = optional(string, "")
-    version  = optional(string, "")
+    topology = string
+    version  = string
   })
+  default = {
+    topology = ""
+    version  = ""
+  }
   validation {
     condition     = var.accelerator_config.version == "" ? true : contains(["V2", "V3", "V4"], var.accelerator_config.version)
     error_message = "accelerator_config.version must be one of [\"V2\", \"V3\", \"V4\"]"
   }
   validation {
-    condition     = var.accelerator_config.type == "" ? var.accelerator_config.version != "" && var.accelerator_config.topology != "" : var.accelerator_config.version == "" && var.accelerator_config.topology == ""
-    error_message = "type or topology + version needs to be specified for accelerator_config"
+    condition     = var.accelerator_config.topology == "" ? true : can(regex("^[1-9]x[1-9](x[1-9])?$", var.accelerator_config.topology))
+    error_message = "accelerator_config.topology must be a valid topology, like 2x2 4x4x4 4x2x4 etc..."
   }
 }
 

@@ -333,13 +333,15 @@ variable "nodeset_tpu" {
   type = list(object({
     node_count_static      = optional(number, 0)
     node_count_dynamic_max = optional(number, 1)
-    node_conf              = map(string)
     nodeset_name           = string
     enable_public_ip       = optional(bool, false)
-    accelerator_config = object({
-      type     = optional(string, "")
-      topology = optional(string, "")
-      version  = optional(string, "")
+    node_type              = string
+    accelerator_config = optional(object({
+      topology = string
+      version  = string
+      }), {
+      topology = ""
+      version  = ""
     })
     tf_version   = string
     preemptible  = optional(bool, false)

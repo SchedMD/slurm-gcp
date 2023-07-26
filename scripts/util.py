@@ -1080,15 +1080,11 @@ class TPU:
             ac.topology = ns_ac.topology
             ac.type_ = self.__tpu_version_mapping[ns_ac.version]
             self.ac = ac
-        elif ns_ac.type != "":
+        else:
             req = tpu.GetAcceleratorTypeRequest(
-                name=f"{self._parent}/acceleratorTypes/{ns_ac.type}"
+                name=f"{self._parent}/acceleratorTypes/{nodeset.node_type}"
             )
             self.ac = self._client.get_accelerator_type(req).accelerator_configs[0]
-        else:  # If there is no accelerator config information, this should never happen, but assume it is a v2-8
-            self.ac = tpu.AcceleratorConfig()
-            self.ac.topology = "2x2"
-            self.ac.type_ = tpu.AcceleratorConfig.Type.V2
         self.vmcount = self.__calc_vm_from_topology(self.ac.topology)
 
     @property

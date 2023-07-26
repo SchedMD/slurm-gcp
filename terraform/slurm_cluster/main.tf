@@ -223,8 +223,8 @@ module "slurm_nodeset_tpu" {
   node_count_dynamic_max = each.value.node_count_dynamic_max
   node_count_static      = each.value.node_count_static
   nodeset_name           = each.value.nodeset_name
-  node_conf              = each.value.node_conf
   zone                   = each.value.zone
+  node_type              = each.value.node_type
   accelerator_config     = each.value.accelerator_config
   tf_version             = each.value.tf_version
   preemptible            = each.value.preemptible
