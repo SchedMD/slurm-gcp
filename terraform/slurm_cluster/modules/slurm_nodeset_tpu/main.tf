@@ -33,7 +33,7 @@ locals {
     "v2-8" = local.node_conf_hw.single
     "v3-8" = local.node_conf_hw.single
   }
-
+  simple_nodes = ["v2-8", "v3-8"]
 }
 
 locals {
@@ -44,14 +44,14 @@ locals {
     node_type              = var.node_type
     accelerator_config     = var.accelerator_config
     tf_version             = var.tf_version
-    preemptible            = var.preemptible
+    preemptible            = contains(local.simple_nodes, var.node_type) ? var.preemptible : false
     project_id             = var.project_id
     node_count_dynamic_max = var.node_count_dynamic_max
     node_count_static      = var.node_count_static
     enable_public_ip       = var.enable_public_ip
     zone                   = var.zone
     service_account        = var.service_account
-    preserve_tpu           = var.preserve_tpu
+    preserve_tpu           = contains(local.simple_nodes, var.node_type) ? var.preserve_tpu : false
     data_disks             = var.data_disks
     docker_image           = var.docker_image != "" ? var.docker_image : "gcr.io/schedmd-slurm-public/tpu:tf_${var.tf_version}"
     # subnetwork             = var.subnetwork_self_link
