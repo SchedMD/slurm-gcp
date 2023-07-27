@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Add on_host_maintenance to packer module to support instances with GPUs.
 - Fix retry of powering up static nodes on failure.
 - Add support for H3 machines and enumerated multi-socket processors.
+- Fix munge failing after manual reboot of node.
 
 ## \[6.0.0\]
 
