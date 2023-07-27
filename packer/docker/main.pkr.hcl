@@ -30,8 +30,12 @@ locals {
     install_gcsfuse  = var.install_gcsfuse
     tf_version       = var.tf_version
   }
-
-  gcr_repo = "${var.project_id}/tpu"
+  parse_version  = regex("^(?P<major>\\d+)(?:\\.(?P<minor>\\d+))?(?:\\.(?P<patch>\\d+))?|(?P<branch>\\w+)$", var.slurmgcp_version)
+  branch         = local.parse_version["branch"] != null ? replace(local.parse_version["branch"], ".", "-") : null
+  version        = join("-", compact([local.parse_version["major"], local.parse_version["minor"]]))
+  docker_version = "${replace(var.docker_image, ":", "-")}-tf-${var.tf_version}"
+  gcr_repo       = "${var.project_id}/tpu"
+  gcr_tag        = "slurm-gcp-${local.version}-${local.docker_version}"
 }
 
 ##########
@@ -83,7 +87,7 @@ build {
   post-processors {
     post-processor "docker-tag" {
       repository = "gcr.io/${local.gcr_repo}"
-      tags       = ["gcp_${var.slurmgcp_version}_tf_${var.tf_version}"]
+      tags       = [local.gcr_tag]
       only       = ["docker.gcp"]
     }
   }

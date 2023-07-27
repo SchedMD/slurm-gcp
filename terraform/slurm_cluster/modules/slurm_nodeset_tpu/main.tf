@@ -53,7 +53,7 @@ locals {
     service_account        = var.service_account
     preserve_tpu           = contains(local.simple_nodes, var.node_type) ? var.preserve_tpu : false
     data_disks             = var.data_disks
-    docker_image           = var.docker_image != "" ? var.docker_image : "gcr.io/schedmd-slurm-public/tpu:tf_${var.tf_version}"
+    docker_image           = var.docker_image != "" ? var.docker_image : "gcr.io/schedmd-slurm-public/tpu:slurm-gcp-6-0-ubuntu-20.04-tf-${var.tf_version}"
     # subnetwork             = var.subnetwork_self_link
 
   }
