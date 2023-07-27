@@ -971,6 +971,23 @@ def get_insert_operations(group_ids, flt=None, project=None, compute=compute):
     return get_filtered_operations(" AND ".join(f"({f})" for f in filters if f))
 
 
+def machine_type_sockets(template):
+    pattern = re.compile("^(?P<family>[^-]+)-(?P<type>[^-]+)-(?P<core>[^-]+)$")
+    m = pattern.match(template.machineType)
+    if not m:
+        raise Exception(f"template {template} does not match expected regex")
+    family = m.group("family")
+    socket_count = dict.get(
+        {
+            "h3": 2,
+            "c2d": 2,
+        },
+        family,
+        1,  # assume 1 socket for all other families
+    )
+    return socket_count
+
+
 def isSmt(template):
     machineType: str = template.machineType
 
@@ -983,6 +1000,7 @@ def isSmt(template):
     noSmtFamily = [
         "t2a",
         "t2d",
+        "h3",
     ]
     if machineTypeFamily in noSmtFamily:
         return False
@@ -1400,7 +1418,7 @@ class Lookup:
 
         machine_conf = NSDict()
         machine_conf.boards = 1  # No information, assume 1
-        machine_conf.sockets = 1  # No information, assume 1
+        machine_conf.sockets = machine_type_sockets(template)
         machine_conf.threads_per_core = 1
         _div = 2 if getThreadsPerCore(template) == 1 else 1
         machine_conf.cpus = (
