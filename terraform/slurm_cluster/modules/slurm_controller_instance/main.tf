@@ -142,12 +142,17 @@ resource "random_uuid" "cluster_id" {
 # INSTANCE #
 ############
 
+locals {
+  # Ensure/assume this will be the hostname
+  hostname = "${var.slurm_cluster_name}-controller"
+}
+
 module "slurm_controller_instance" {
   source = "../_slurm_instance"
 
   access_config       = var.access_config
   add_hostname_suffix = false
-  hostname            = "${var.slurm_cluster_name}-controller"
+  hostname            = local.hostname
   instance_template   = var.instance_template
   network             = var.network
   project_id          = var.project_id
@@ -176,6 +181,8 @@ module "slurm_controller_instance" {
     google_compute_project_metadata_item.controller_startup_scripts,
     # Ensure nodes are destroyed before controller is
     module.cleanup_compute_nodes[0],
+    #
+    google_pubsub_subscription_iam_member.controller_pull_subscription_sa_binding_subscriber,
   ]
 }
 
@@ -396,7 +403,7 @@ module "slurm_pubsub" {
 
   pull_subscriptions = [
     {
-      name                    = module.slurm_controller_instance.names[0]
+      name                    = local.hostname
       ack_deadline_seconds    = 120
       enable_message_ordering = true
       maximum_backoff         = "300s"
@@ -413,7 +420,7 @@ resource "google_pubsub_subscription_iam_member" "controller_pull_subscription_s
   count = var.enable_reconfigure ? 1 : 0
 
   project      = var.project_id
-  subscription = module.slurm_controller_instance.names[0]
+  subscription = local.hostname
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${local.service_account_email}"
 
