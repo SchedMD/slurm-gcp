@@ -13,6 +13,7 @@ google-cloud-storage = "*"
 ipython = "<7.17"
 more-executors = "*"
 prometheus-client = "*"
+google-cloud-pubsub = "*"
 
 [dev-packages]
 
