@@ -21,6 +21,7 @@ After=syslog.target
 [Service]
 Type=forking
 ExecStart=/usr/sbin/munged --num-threads={{munge_threads}}
+RuntimeDirectory=munge
 PIDFile=/var/run/munge/munged.pid
 User=munge
 Group=munge

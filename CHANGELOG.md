@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Fix Ubuntu 20.04 NVIDIA install.
 - Fix threads per core inference.
 - Add support for H3 machines and enumerated multi-socket processors.
+- Fix munge failing after manual reboot of node.
 
 ## \[5.7.4\]
 

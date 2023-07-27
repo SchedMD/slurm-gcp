@@ -954,13 +954,6 @@ def setup_slurmd_cronjob():
     )
 
 
-def setup_munge_dir():
-    # Ubuntu 22.04 LTS now assumes this directory for it's run file
-    run_dir = Path("/run/munge")
-    run_dir.mkdir(exist_ok=True)
-    shutil.chown(run_dir, user="munge", group="munge")
-
-
 def setup_munge_key():
     munge_key = Path(dirs.munge / "munge.key")
 
@@ -1080,7 +1073,6 @@ def setup_controller(args):
     install_cgroup_conf()
 
     setup_jwt_key()
-    setup_munge_dir()
     setup_munge_key()
 
     if cfg.controller_secondary_disk:
@@ -1155,7 +1147,6 @@ def setup_login(args):
     install_custom_scripts()
 
     setup_network_storage()
-    setup_munge_dir()
     setup_slurmd_cronjob()
     run("systemctl restart munge")
     run("systemctl enable slurmd", timeout=30)
@@ -1197,7 +1188,6 @@ def setup_compute(args):
 
     run_custom_scripts()
 
-    setup_munge_dir()
     setup_slurmd_cronjob()
     run("systemctl restart munge", timeout=30)
     run("systemctl enable slurmd", timeout=30)
