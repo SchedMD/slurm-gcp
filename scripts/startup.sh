@@ -104,7 +104,18 @@ function tpu_setup {
 	if [ "$OS_ENV" == "slurm_container" ]; then #Already inside the slurm container, we should continue starting
 		return
 	fi
-	real_name=$($CURL $URL/instance/attributes/tpu-env | awk '/NODE_ID/ {print $2}' | tr -d \')
+
+	#given a input_string like "WORKER_0:Joseph;WORKER_1:richard;WORKER_2:edward;WORKER_3:john" and a number 1, this function will print richard
+	parse_metadata() {
+		local number=$1
+		local input_string=$2
+		local word=$(echo "$input_string" | awk -v n="$number" -F ':|;' '{ for (i = 1; i <= NF; i+=2) if ($(i) == "WORKER_"n) print $(i+1) }')
+		echo "$word"
+	}
+
+	input_string=$($CURL $URL/instance/attributes/slurm_names)
+	worker_id=$($CURL $URL/instance/attributes/tpu-env | awk '/WORKER_ID/ {print $2}' | tr -d \')
+	real_name=$(parse_metadata $worker_id $input_string)
 
 	#Prepare to docker pull with gcloud
 	mkdir -p /root/.docker

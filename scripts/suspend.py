@@ -65,7 +65,7 @@ def stop_tpu(data):
     tpu_nodeset = data["nodeset"]
     node = data["node"]
     tpu = data["tpu"]
-    if tpu_nodeset.preserve_tpu:
+    if tpu_nodeset.preserve_tpu and tpu.vmcount == 1:
         log.info(f"stopping node {node}")
         if tpu.stop_node(node):
             return
@@ -81,7 +81,7 @@ def delete_tpu_instances(instances):
         log.info(f"Deleting TPU nodes from prefix {prefix}")
         lnodes = list(nodes)
         tpu_nodeset = lkp.node_nodeset(lnodes[0])
-        tpu = TPU(tpu_nodeset, lkp.project)
+        tpu = TPU(tpu_nodeset)
         stop_data.extend(
             [{"tpu": tpu, "node": node, "nodeset": tpu_nodeset} for node in lnodes]
         )
@@ -95,7 +95,6 @@ def delete_instances(instances):
         if lkp.node_is_tpu(instance):
             tpu_instances.append(instance)
             instances.remove(instance)
-    delete_tpu_instances(tpu_instances)
 
     invalid, valid = separate(lambda inst: bool(lkp.instance(inst)), instances)
     if len(invalid) > 0:
@@ -113,6 +112,7 @@ def delete_instances(instances):
         for err, nodes in groupby_unsorted(lambda n: failed[n][1], failed.keys()):
             log.error(f"instances failed to delete: {err} ({to_hostlist(nodes)})")
     wait_for_operations(done.values())
+    delete_tpu_instances(tpu_instances)
     # TODO do we need to check each operation for success? That is a lot more API calls
     log.info(f"deleted {len(done)} instances {to_hostlist(done.keys())}")
 

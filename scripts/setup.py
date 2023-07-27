@@ -44,10 +44,10 @@ from conf import (
     gen_cloud_conf,
     gen_cloud_gres_conf,
     gen_topology_conf,
-    gen_submit_lua,
     install_gres_conf,
     install_cgroup_conf,
     install_topology_conf,
+    install_jobsubmit_lua,
 )
 import slurmsync
 
@@ -691,10 +691,10 @@ def setup_controller(args):
     gen_cloud_conf()
     gen_cloud_gres_conf()
     gen_topology_conf()
-    gen_submit_lua()
     install_gres_conf()
     install_cgroup_conf()
     install_topology_conf()
+    install_jobsubmit_lua()
 
     setup_jwt_key()
     setup_munge_key()

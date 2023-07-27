@@ -191,6 +191,16 @@ resource "google_storage_bucket_object" "cgroup_conf_tpl" {
   content = data.local_file.cgroup_conf_tpl.content
 }
 
+data "local_file" "jobsubmit_lua_tpl" {
+  filename = abspath(coalesce(var.job_submit_lua_tpl, "${local.etc_dir}/job_submit.lua.tpl"))
+}
+
+resource "google_storage_bucket_object" "jobsubmit_lua_tpl" {
+  bucket  = var.bucket_name
+  name    = format("%s/slurm-tpl-job-submit-lua", local.bucket_dir)
+  content = data.local_file.jobsubmit_lua_tpl.content
+}
+
 ###########
 # SCRIPTS #
 ###########

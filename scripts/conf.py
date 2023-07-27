@@ -25,24 +25,14 @@ from util import (
     access_secret_version,
     blob_get,
     to_hostlist,
+    to_hostnames,
+    chunked,
 )
 from resume import PLACEMENT_MAX_CNT
 
 FILE_PREAMBLE = """
 # Warning:
 # This file is managed by a script. Manual modifications will be overwritten.
-"""
-
-SUBMIT_LUA = """
-function slurm_job_submit(job_desc, part_list, submit_uid)
-    return slurm.SUCCESS
-end
-
-function slurm_job_modify(job_desc, job_rec, part_list, modify_uid)
-   return slurm.SUCCESS
-end
-
-return slurm.SUCCESS
 """
 
 
@@ -61,8 +51,8 @@ def dict_to_conf(conf, delim=" "):
 
 
 def check_nodeset(nodeset, lkp=lkp):
-    tpu = TPU(nodeset, lkp.project)
-    return tpu.check_accelerator_type() and tpu.check_tf_version()
+    tpu = TPU(nodeset)
+    return tpu.check_node_type() and tpu.check_tf_version()
 
 
 def conflines(cloud_parameters, lkp=lkp):
@@ -90,7 +80,7 @@ def conflines(cloud_parameters, lkp=lkp):
             "use_interactive_step",
         ],
         "SlurmctldParameters": [
-            "cloud_reg_addrs" if any_dynamic else "cloud_dns",
+            "cloud_reg_addrs" if any_dynamic or any_tpu else "cloud_dns",
             "enable_configless",
             "idle_on_node_suspend",
         ],
@@ -120,6 +110,7 @@ def conflines(cloud_parameters, lkp=lkp):
         "SuspendTimeout": cloud_parameters.get("suspend_timeout", 300),
         "TreeWidth": "65533" if any_dynamic else None,
         "JobSubmitPlugins": "lua" if any_tpu else None,
+        "TopologyPlugin": "topology/tree",
     }
     return dict_to_conf(conf_options, delim="\n")
 
@@ -222,6 +213,7 @@ def partitionlines(partition, lkp=lkp):
     lines = []
     MIN_MEM_PER_CPU = 100
     defmem: int = MIN_MEM_PER_CPU
+    part_is_tpu = len(partition.partition_nodeset_tpu) > 0
 
     def defmempercpu(template_link):
         machine_conf = lkp.template_machine_conf(template_link)
@@ -245,7 +237,9 @@ def partitionlines(partition, lkp=lkp):
         "State": "UP",
         "DefMemPerCPU": defmem,
         "SuspendTime": 300,
-        "Oversubscribe": "Exclusive" if partition.enable_job_exclusive else None,
+        "Oversubscribe": "Exclusive"
+        if partition.enable_job_exclusive or part_is_tpu
+        else None,
         "PowerDownOnIdle": "YES" if partition.enable_job_exclusive else None,
         **partition.partition_conf,
     }
@@ -362,6 +356,26 @@ def install_cgroup_conf(lkp=lkp):
     util.chown_slurm(conf_file, mode=0o600)
 
 
+def install_jobsubmit_lua(lkp=lkp):
+    """install job_submit.lua if there are tpu nodes in the cluster"""
+    if any(
+        tpu_nodeset is not None
+        for part in lkp.cfg.partitions.values()
+        for tpu_nodeset in part.partition_nodeset_tpu
+    ):
+        conf_options = NSDict(
+            {
+                "scripts_dir": cfg.slurm_scripts_dir or dirs.scripts,
+            }
+        )
+        conf_resp = blob_get("slurm-tpl-job-submit-lua").download_as_text()
+        conf = conf_resp.format(**conf_options)
+
+        conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "job_submit.lua"
+        conf_file.write_text(conf)
+        util.chown_slurm(conf_file, 0o600)
+
+
 def gen_cloud_gres_conf(lkp=lkp):
     """generate cloud_gres.conf"""
 
@@ -399,6 +413,57 @@ def install_gres_conf(lkp=lkp):
     util.chown_slurm(gres_conf, mode=0o600)
 
 
+def tpu_nodeset_switch_lines(lkp=lkp):
+    lines = []
+    g_switches = []
+    for nodeset in lkp.cfg.nodeset_tpu.values():
+        tpuobj = TPU(nodeset)
+        static, dynamic = lkp.nodeset_lists(nodeset)
+        if tpuobj.vmcount == 1:
+            line = {
+                "SwitchName": nodeset.nodeset_name,
+                "Nodes": ",".join(filter(None, (static, dynamic))),
+            }
+            lines.extend([dict_to_conf(line)])
+            g_switches.append(nodeset.nodeset_name)
+        else:
+            ns_switches = []
+            id = 0
+            if static:
+                for nodes in chunked(to_hostnames(static), n=tpuobj.vmcount):
+                    line = {
+                        "SwitchName": f"{nodeset.nodeset_name}-{id}",
+                        "Nodes": to_hostlist(nodes),
+                    }
+                    lines.extend([dict_to_conf(line)])
+                    ns_switches.append(f"{nodeset.nodeset_name}-{id}")
+                    id += 1
+                lines.extend([dict_to_conf(line)])
+            if dynamic:
+                for nodes in chunked(to_hostnames(dynamic), n=tpuobj.vmcount):
+                    line = {
+                        "SwitchName": f"{nodeset.nodeset_name}-{id}",
+                        "Nodes": to_hostlist(nodes),
+                    }
+                    lines.extend([dict_to_conf(line)])
+                    ns_switches.append(f"{nodeset.nodeset_name}-{id}")
+                    id += 1
+            if id > 0:
+                line = {
+                    "SwitchName": nodeset.nodeset_name,
+                    "Switches": to_hostlist(ns_switches),
+                }
+                lines.extend([dict_to_conf(line)])
+                g_switches.append(nodeset.nodeset_name)
+    if g_switches:
+        line = {
+            "SwitchName": "nodeset_tpu-root",
+            "Switches": to_hostlist(g_switches),
+        }
+        lines.extend([dict_to_conf(line)])
+    return "\n".join(filter(None, lines))
+
+
 def nodeset_switch_lines(nodeset, lkp=lkp):
     lines = []
 
@@ -429,6 +494,7 @@ def gen_topology_conf(lkp=lkp):
     """generate slurm topology.conf from config.yaml"""
     lines = [
         nodeset_switch_lines(lkp),
+        tpu_nodeset_switch_lines(lkp),
     ]
     lines.append("\n")
     content = FILE_PREAMBLE + "\n".join(lines)
@@ -444,18 +510,3 @@ def install_topology_conf(lkp=lkp):
     if not topo_conf.exists():
         topo_conf.symlink_to(conf_file)
     util.chown_slurm(conf_file, mode=0o600)
-
-
-def gen_submit_lua(lkp=lkp):
-    """generate job_submit.lua"""
-    any_tpu = any(
-        tpu_nodeset is not None
-        for part in cfg.partitions.values()
-        for tpu_nodeset in part.partition_nodeset_tpu
-    )
-    if any_tpu:
-        content = SUBMIT_LUA
-
-        conf_file = Path(lkp.cfg.output_dir or slurmdirs.etc) / "job_submit.lua"
-        conf_file.write_text(content)
-        util.chown_slurm(conf_file, mode=0o600)

@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import collections
 import importlib.util
 import inspect
@@ -267,6 +268,31 @@ def map_with_futures(func, seq):
             except Exception as e:
                 res = e
             yield res
+
+
+def combined_execute_map_with_futures(func_exe, func_map, seq_exe, seq_map):
+    with ThreadPoolExecutor() as exe:
+        futures_exe = []
+        futures_map = []
+        res = []
+        for i in seq_exe:
+            future = exe.submit(func_exe, i)
+            futures_exe.append(future)
+        for i in seq_map:
+            future = exe.submit(func_map, i)
+            futures_map.append(future)
+        for future in as_completed(futures_exe + futures_map):
+            if future in futures_exe:
+                result = future.exception()
+                if result is not None:
+                    raise result
+            else:
+                res = None
+                try:
+                    res = future.result()
+                except Exception as e:
+                    res = e
+                yield res
 
 
 def blob_get(file, project=None):
@@ -749,9 +775,22 @@ def to_hostlist(nodenames):
     return hostlist
 
 
-def part_is_tpu(part, lkp):
+def part_is_tpu(part):
     """check if partition with name part contains a nodeset of type tpu"""
     return len(lkp.cfg.partitions[part].partition_nodeset_tpu) > 0
+
+
+def get_vmcount_of_tpu_part(part):
+    res = 0
+    for ns in lkp.cfg.partitions[part].partition_nodeset_tpu:
+        tpu_obj = TPU(lkp.cfg.nodeset_tpu[ns])
+        if res == 0:
+            res = tpu_obj.vmcount
+        else:
+            if res != tpu_obj.vmcount:
+                # this should not happen, that in the same partition there are different vmcount nodesets
+                return -1
+    return res
 
 
 def to_hostnames(nodelist):
@@ -1063,10 +1102,9 @@ class TPU:
         "V4": tpu.AcceleratorConfig().Type.V4,
     }
 
-    def __init__(self, nodeset, project_id) -> None:
+    def __init__(self, nodeset):
         self._nodeset = nodeset
-        self._parent = f"projects/{project_id}/locations/{nodeset.zone}"
-        self.project_id = project_id
+        self._parent = f"projects/{lkp.project}/locations/{nodeset.zone}"
         self._client = tpu.TpuClient()
         self.data_disks = []
         for data_disk in nodeset.data_disks:
@@ -1092,8 +1130,12 @@ class TPU:
         return self._nodeset
 
     @property
-    def accelerator_type(self):
-        return self._nodeset.accelerator_type
+    def preserve_tpu(self):
+        return self._nodeset.preserve_tpu
+
+    @property
+    def node_type(self):
+        return self._nodeset.node_type
 
     @property
     def tf_version(self):
@@ -1115,10 +1157,10 @@ class TPU:
     def zone(self):
         return self._nodeset.zone
 
-    def check_accelerator_type(self):
+    def check_node_type(self):
         try:
             request = tpu.GetAcceleratorTypeRequest(
-                name=f"{self._parent}/acceleratorTypes/{self.accelerator_type}"
+                name=f"{self._parent}/acceleratorTypes/{self.node_type}"
             )
             return self._client.get_accelerator_type(request=request) is not None
         except Exception:
@@ -1149,6 +1191,17 @@ class TPU:
             return True
         return False
 
+    def list_nodes(self):
+        try:
+            request = tpu.ListNodesRequest(parent=self._parent)
+            res = self._client.list_nodes(request=request)
+        except gExceptions.NotFound:
+            res = None
+        return res
+
+    def list_node_names(self):
+        return [node.name.split("/")[-1] for node in self.list_nodes()]
+
     def start_node(self, nodename):
         request = tpu.StartNodeRequest(name=f"{self._parent}/nodes/{nodename}")
         resp = self._client.start_node(request=request).result()
@@ -1167,6 +1220,12 @@ class TPU:
             res = None
         return res
 
+    def _register_node(self, nodename, ip_addr):
+        dns_name = socket.getnameinfo((ip_addr, 0), 0)[0]
+        run(
+            f"{lkp.scontrol} update nodename={nodename} nodeaddr={ip_addr} nodehostname={dns_name}"
+        )
+
     def create_node(self, nodename):
         node = tpu.Node()
         node.accelerator_config = self.ac
@@ -1179,35 +1238,66 @@ class TPU:
             Path(cfg.slurm_scripts_dir or dirs.scripts) / "startup.sh", "r"
         ) as script:
             startup_script = script.read()
+        if isinstance(nodename, list):
+            node_id = nodename[0]
+            slurm_names = []
+            wid = 0
+            for node_wid in nodename:
+                slurm_names.append(f"WORKER_{wid}:{node_wid}")
+                wid += 1
+        else:
+            node_id = nodename
+            slurm_names = [f"WORKER_0:{nodename}"]
         node.metadata = {
             "slurm_docker_image": self.nodeset.docker_image,
             "startup-script": startup_script,
             "slurm_instance_role": "compute",
             "slurm_cluster_name": lkp.cfg.slurm_cluster_name,
             "slurm_bucket_path": lkp.cfg.bucket_path,
+            "slurm_names": ";".join(slurm_names),
         }
         node.scheduling_config.preemptible = self.preemptible
         node.network_config.enable_external_ips = self.enable_public_ip
         if self.data_disks:
             node.data_disks = self.data_disks
 
-        request = tpu.CreateNodeRequest(
-            parent=self._parent, node=node, node_id=nodename
-        )
+        request = tpu.CreateNodeRequest(parent=self._parent, node=node, node_id=node_id)
         resp = self._client.create_node(request=request).result()
-        ip_add = resp.network_endpoints[0].ip_address
-        dns_name = socket.getnameinfo((ip_add, 0), 0)[0]
-        run(
-            f"{lkp.scontrol} update nodename={nodename} nodeaddr={ip_add} nodehostname={dns_name}"
-        )
-        return self.__check_resp(resp, "create")
+        if not self.__check_resp(resp, "create"):
+            return False
+        if isinstance(nodename, list):
+            for node_id, net_endpoint in zip(nodename, resp.network_endpoints):
+                self._register_node(node_id, net_endpoint.ip_address)
+        else:
+            ip_add = resp.network_endpoints[0].ip_address
+            self._register_node(nodename, ip_add)
+        return True
 
     def delete_node(self, nodename):
         request = tpu.DeleteNodeRequest(name=f"{self._parent}/nodes/{nodename}")
-        resp = self._client.delete_node(request=request).result()
-        if resp:
-            return self.__check_resp(resp, "delete")
-        return False
+        try:
+            resp = self._client.delete_node(request=request).result()
+            if resp:
+                return self.__check_resp(resp, "delete")
+            return False
+        except gExceptions.NotFound:
+            # log only error if vmcount is 1 as for other tpu vm count, this could be "phantom" nodes
+            if self.vmcount == 1:
+                log.error(f"Tpu single node {nodename} not found")
+            else:
+                # for the TPU nodes that consist in more than one vm, only the first node of the TPU a.k.a. the master node will
+                # exist as real TPU nodes, so the other ones are expected to not be found, check the hostname of the node that has
+                # not been found, and if it ends in 0, it means that is the master node and it should have been found, and in consequence
+                # log an error
+                nodehostname = yaml.safe_load(
+                    run(f"{lkp.scontrol} --yaml show node {nodename}").stdout.rstrip()
+                )["nodes"][0]["hostname"]
+                if nodehostname.split("-")[-1] == "0":
+                    log.error(f"TPU master node {nodename} not found")
+                else:
+                    log.info(f"Deleted TPU 'phantom' node {nodename}")
+            # If the node is not found it is tecnichally deleted, so return success.
+            return True
 
 
 class Lookup:
@@ -1346,6 +1436,11 @@ class Lookup:
         nodeset_name = self.node_nodeset_name(node_name)
         return self.cfg.nodeset_tpu.get(nodeset_name) is not None
 
+    def chunk_tpu_nodes(self, tpu_nodes):
+        model = tpu_nodes[0]
+        tpu = TPU(self.node_nodeset(model))
+        return chunked(tpu_nodes, n=tpu.vmcount)
+
     def node_template(self, node_name=None):
         return self.node_nodeset(node_name).instance_template
 
@@ -1387,7 +1482,8 @@ class Lookup:
     @lru_cache(maxsize=1)
     def static_nodelist(self):
         static_nodesets = (
-            self.nodeset_lists(ns)[0] for ns in self.cfg.nodeset.values()
+            self.nodeset_lists(ns)[0]
+            for ns in chain(self.cfg.nodeset.values(), self.cfg.nodeset_tpu.values())
         )
         return [static for static in static_nodesets if static is not None]
 
@@ -1449,6 +1545,13 @@ class Lookup:
         local_nodes = list(set(nodes).difference(all_cloud_nodes))
 
         return cloud_nodes, local_nodes
+
+    def tpu_instances(self):
+        res = []
+        for ns in self.cfg.nodeset_tpu:
+            tpuobj = TPU(ns)
+            res.extend(tpuobj.list_node_names())
+        return res
 
     @lru_cache(maxsize=1)
     def instances(self, project=None, slurm_cluster_name=None):
@@ -1713,3 +1816,45 @@ if not cfg:
         save_config(cfg, CONFIG_FILE)
 
 lkp = Lookup(cfg)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--partitions",
+        "-p",
+        help="The partition(s) to retrieve the TPU vmcount value for.",
+    )
+    args = parser.parse_args()
+    if args.partitions:
+        # useful exit code
+        # partition does not exists in config.yaml, thus do not exist in slurm
+        PART_INVALID = -1
+        # in the same partition there are nodesets with different vmcounts
+        DIFF_VMCOUNTS_SAME_PART = -2
+        # partition is a list of partitions in which at least two of them have different vmcount
+        DIFF_PART_DIFFERENT_VMCOUNTS = -3
+        vmcounts = []
+        # valid equals to 0 means that we are ok, otherwise it will be set to one of the previously defined exit codes
+        valid = 0
+        for part in args.partitions.split(","):
+            if part not in lkp.cfg.partitions:
+                valid = PART_INVALID
+                break
+            else:
+                if part_is_tpu(part):
+                    vmcount = get_vmcount_of_tpu_part(part)
+                    if vmcount == -1:
+                        valid = DIFF_VMCOUNTS_SAME_PART
+                        break
+                    vmcounts.append(vmcount)
+                else:
+                    vmcounts.append(0)
+        # this means that there are different vmcounts for these partitions
+        if valid == 0 and len(set(vmcounts)) != 1:
+            valid = DIFF_PART_DIFFERENT_VMCOUNTS
+        if valid != 0:
+            print(f"VMCOUNT:{valid}")
+        else:
+            print(f"VMCOUNT:{vmcounts[0]}")

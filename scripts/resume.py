@@ -30,7 +30,7 @@ from util import (
     chunked,
     dirs,
     ensure_execute,
-    execute_with_futures,
+    combined_execute_map_with_futures,
     get_insert_operations,
     log_api_request,
     map_with_futures,
@@ -219,7 +219,7 @@ def group_nodes_bulk(nodes, resume_data=None):
         job.nodes_alloc = expand_nodelist(job.nodelist_alloc)
         job.nodelist_resume = job.nodes_resume
         job.nodes_resume = expand_nodelist(job.nodelist_resume)
-        job.tpu = util.part_is_tpu(job.partition, lkp)
+        job.tpu = util.part_is_tpu(job.partition)
         if not job.tpu:
             # create placement groups if nodes for job need it
             job.placement_groups = create_placement_groups(
@@ -294,10 +294,8 @@ def group_nodes_bulk(nodes, resume_data=None):
         for job_id, job in jobs.items()
         if job.tpu
         for prefix, nodes in util.groupby_unsorted(job.nodes_resume, lkp.node_prefix)
-        for i, chunk_nodes in enumerate(chunked(nodes, n=BULK_INSERT_LIMIT))
+        for i, chunk_nodes in enumerate(lkp.chunk_tpu_nodes(list(nodes)))
     ]
-    print(len(grouped_nodes_tpu))
-    print(grouped_nodes_tpu)
 
     def group_name(chunk: BulkChunk):
         if chunk.placement_group is not None:
@@ -319,16 +317,29 @@ def group_nodes_bulk(nodes, resume_data=None):
 def start_tpu(data):
     tpu = data["tpu"]
     node = data["node"]
-    log.debug(
-        f"Will create a TPU of type {tpu.accelerator_type} tf_version {tpu.tf_version} in zone {tpu.zone} with name {node}"
-    )
-    tpunode = tpu.get_node(node)
-    if tpunode is None:
+    if len(node) == 1:
+        node = node[0]
+        log.debug(
+            f"Will create a TPU of type {tpu.node_type} tf_version {tpu.tf_version} in zone {tpu.zone} with name {node}"
+        )
+        tpunode = tpu.get_node(node)
+        if tpunode is None:
+            if not tpu.create_node(nodename=node):
+                log.error("Error creating tpu node {node}")
+        else:
+            if tpu.preserve_tpu:
+                if not tpu.start_node(nodename=node):
+                    log.error("Error starting tpu node {node}")
+            else:
+                log.info(
+                    f"Tpu node {node} is already created, but will not start it because nodeset does not have preserve_tpu option active."
+                )
+    else:
+        log.debug(
+            f"Will create a multi-vm TPU of type {tpu.node_type} tf_version {tpu.tf_version} in zone {tpu.zone} with name {node[0]}"
+        )
         if not tpu.create_node(nodename=node):
             log.error("Error creating tpu node {node}")
-    else:
-        if not tpu.start_node(nodename=node):
-            log.error("Error starting tpu node {node}")
 
 
 def resume_nodes(nodes, resume_data=None):
@@ -364,12 +375,15 @@ def resume_nodes(nodes, resume_data=None):
                 yaml.safe_dump(grouped_tpu_nodelists).rstrip()
             )
         )
-
+    tpu_start_data = []
+    tpu_objs = {}
     for group, chunk in grouped_tpu_nodes.items():
-        model = chunk.nodes[0]
-        tpu = TPU(lkp.node_nodeset(model), lkp.project)
-        start_data = [{"tpu": tpu, "node": node} for node in chunk.nodes]
-        execute_with_futures(start_tpu, start_data)
+        # do not create multiple tpu_objs if nodes with the same prefix are used
+        if chunk.prefix not in tpu_objs.keys():
+            model = chunk.nodes[0]
+            tpu_objs[chunk.prefix] = TPU(lkp.node_nodeset(model))
+
+        tpu_start_data.append({"tpu": tpu_objs[chunk.prefix], "node": chunk.nodes})
 
     # make all bulkInsert requests and execute with batch
     inserts = {
@@ -378,10 +392,10 @@ def resume_nodes(nodes, resume_data=None):
         )
         for group, chunk in grouped_nodes.items()
     }
-
-    bulk_ops = dict(
-        zip(inserts.keys(), map_with_futures(ensure_execute, inserts.values()))
+    norm_data = combined_execute_map_with_futures(
+        start_tpu, ensure_execute, tpu_start_data, inserts.values()
     )
+    bulk_ops = dict(zip(inserts.keys(), norm_data))
     log.debug(f"bulk_ops={yaml.safe_dump(bulk_ops)}")
     started = {
         group: op for group, op in bulk_ops.items() if not isinstance(op, Exception)
