@@ -229,7 +229,6 @@ module "slurm_nodeset_tpu" {
   tf_version             = each.value.tf_version
   preemptible            = each.value.preemptible
   preserve_tpu           = each.value.preserve_tpu
-  project_id             = var.project_id
   enable_public_ip       = each.value.enable_public_ip
   service_account        = each.value.service_account
   data_disks             = each.value.data_disks

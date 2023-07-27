@@ -28,7 +28,7 @@ variable "node_type" {
   description = "Specify a node type to base the vm configuration upon it."
   type        = string
   validation {
-    condition     = contains(["v2-8", "v3-8"], var.node_type)
+    condition     = contains(["v2-8", "v3-8", "v2-32"], var.node_type)
     error_message = "node_type \"${var.node_type}\" is not supported yet"
   }
 }
@@ -72,17 +72,13 @@ variable "zone" {
 variable "preemptible" {
   description = "Specify whether TPU-vms in this nodeset are preemtible, see https://cloud.google.com/tpu/docs/preemptible for details."
   type        = bool
+  default     = false
 }
 
 variable "preserve_tpu" {
   description = "Specify whether TPU-vms will get preserve on suspend, if set to true, on suspend vm is stopped, on false it gets deleted"
   type        = bool
   default     = true
-}
-
-variable "project_id" {
-  type        = string
-  description = "Project ID to create resources in."
 }
 
 variable "node_count_static" {
@@ -120,9 +116,6 @@ variable "data_disks" {
 }
 
 ##pending
-#data disks
-#accel config topology
-#region zone or something
 #cidr block for static IP
 #more network config
 
@@ -153,37 +146,4 @@ EOD
 #     error_message = "Must be a self link."
 #   }
 #   default = null
-# }
-
-##previous
-
-# variable "network_tier" {
-#   type        = string
-#   description = <<-EOD
-#     The networking tier used for configuring this instance. This field can take the following values: PREMIUM, FIXED_STANDARD or STANDARD.
-#     Ignored if enable_public_ip is false.
-#   EOD
-#   default     = "STANDARD"
-
-#   validation {
-#     condition     = var.network_tier == null ? true : contains(["PREMIUM", "FIXED_STANDARD", "STANDARD"], var.network_tier)
-#     error_message = "Allow values are: 'PREMIUM', 'FIXED_STANDARD', 'STANDARD'."
-#   }
-# }
-
-# variable "bandwidth_tier" {
-#   description = <<-EOD
-#     Tier 1 bandwidth increases the maximum egress bandwidth for VMs.
-#     Using the `virtio_enabled` setting will only enable VirtioNet and will not enable TIER_1.
-#     Using the `tier_1_enabled` setting will enable both gVNIC and TIER_1 higher bandwidth networking.
-#     Using the `gvnic_enabled` setting will only enable gVNIC and will not enable TIER_1.
-#     Note that TIER_1 only works with specific machine families & shapes and must be using an image that supports gVNIC. See [official docs](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration) for more details.
-#   EOD
-#   type        = string
-#   default     = "platform_default"
-
-#   validation {
-#     condition     = contains(["platform_default", "virtio_enabled", "gvnic_enabled", "tier_1_enabled"], var.bandwidth_tier)
-#     error_message = "Allowed values for bandwidth_tier are 'platform_default', 'virtio_enabled', 'gvnic_enabled', or 'tier_1_enabled'."
-#   }
 # }

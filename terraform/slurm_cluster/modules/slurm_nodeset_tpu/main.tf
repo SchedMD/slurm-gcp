@@ -20,7 +20,7 @@
 
 locals {
   node_conf_hw = {
-    single = {
+    Mem334CPU96 = {
       CPUs           = 96
       Boards         = 1
       Sockets        = 2
@@ -30,8 +30,9 @@ locals {
     }
   }
   node_conf_mappings = {
-    "v2-8" = local.node_conf_hw.single
-    "v3-8" = local.node_conf_hw.single
+    "v2-8"  = local.node_conf_hw.Mem334CPU96
+    "v3-8"  = local.node_conf_hw.Mem334CPU96
+    "v2-32" = local.node_conf_hw.Mem334CPU96
   }
   simple_nodes = ["v2-8", "v3-8"]
 }
@@ -45,7 +46,6 @@ locals {
     accelerator_config     = var.accelerator_config
     tf_version             = var.tf_version
     preemptible            = contains(local.simple_nodes, var.node_type) ? var.preemptible : false
-    project_id             = var.project_id
     node_count_dynamic_max = var.node_count_dynamic_max
     node_count_static      = var.node_count_static
     enable_public_ip       = var.enable_public_ip
