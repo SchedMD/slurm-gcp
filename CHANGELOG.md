@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Add support for H3 machines and enumerated multi-socket processors.
 - Fix munge failing after manual reboot of node.
 - \[Beta feature\] Added support for TPU-vm nodes
+- Add `ignore_prefer_validation` to SchedulerParameters in generated cloud.conf.
 
 ## \[6.0.0\]
 
