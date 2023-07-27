@@ -171,6 +171,7 @@ def conflines(cloud_parameters, lkp=lkp):
         "SchedulerParameters": [
             "bf_continue",
             "salloc_wait_nodes",
+            "ignore_prefer_validation",
         ],
         "CommunicationParameters": [
             "NoAddrCache",

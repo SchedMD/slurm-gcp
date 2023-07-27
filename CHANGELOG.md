@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Fix threads per core inference.
 - Add support for H3 machines and enumerated multi-socket processors.
 - Fix munge failing after manual reboot of node.
+- Add `ignore_prefer_validation` to SchedulerParameters in generated cloud.conf.
 
 ## \[5.7.4\]
 
