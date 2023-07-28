@@ -19,3 +19,4 @@ munge_user:
   uid: 980
   group: munge
   gid: 980
+install_only: false

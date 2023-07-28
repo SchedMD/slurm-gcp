@@ -34,3 +34,4 @@
   vars:
     grub_cmdline_args: '{{ cgroup_grub_cmdline_linux }}'
     grub_cmdline_replace: false
+  when: change_grub

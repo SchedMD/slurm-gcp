@@ -18,8 +18,14 @@
     name:
     - mariadb
     - mariadb-devel
+    state: present
+
+- name: Install {{ansible_os_family}} Family Server
+  yum:
+    name:
     - mariadb-server
     state: present
+  when: install_server
 
 - name: Update Conf
   template:

@@ -1,0 +1,13 @@
+[Unit]
+Description=Run once
+After=local-fs.target
+After=network.target
+
+[Service]
+Environment="OS_ENV=slurm_container"
+ExecStart=/slurm/scripts/startup.sh
+RemainAfterExit=true
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target

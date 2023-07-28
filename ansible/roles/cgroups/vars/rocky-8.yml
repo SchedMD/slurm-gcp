@@ -16,5 +16,6 @@
 cgroup_packages:
 - libcgroup
 - libcgroup-pam
+- dbus-devel
 
 cgroup_grub_cmdline_linux: []

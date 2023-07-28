@@ -23,6 +23,8 @@ locals {
 
   nodeset_dyn_map = { for x in var.nodeset_dyn : x.nodeset_name => x }
 
+  nodeset_tpu_map = { for x in var.nodeset_tpu : x.nodeset_name => x }
+
   partition_map = { for x in var.partitions : x.partition_name => x }
 
   have_template = (
@@ -109,6 +111,7 @@ module "slurm_files" {
   partitions                         = values(module.slurm_partition)[*]
   nodeset                            = values(module.slurm_nodeset)[*]
   nodeset_dyn                        = values(module.slurm_nodeset_dyn)[*]
+  nodeset_tpu                        = values(module.slurm_nodeset_tpu)[*]
   project_id                         = var.project_id
   prolog_scripts                     = var.prolog_scripts
   slurmdbd_conf_tpl                  = var.slurmdbd_conf_tpl
@@ -212,6 +215,26 @@ module "slurm_nodeset_dyn" {
   nodeset_feature = each.value.nodeset_feature
 }
 
+module "slurm_nodeset_tpu" {
+  source = "./modules/slurm_nodeset_tpu"
+
+  for_each = local.nodeset_tpu_map
+
+  node_count_dynamic_max = each.value.node_count_dynamic_max
+  node_count_static      = each.value.node_count_static
+  nodeset_name           = each.value.nodeset_name
+  zone                   = each.value.zone
+  node_type              = each.value.node_type
+  accelerator_config     = each.value.accelerator_config
+  tf_version             = each.value.tf_version
+  preemptible            = each.value.preemptible
+  preserve_tpu           = each.value.preserve_tpu
+  enable_public_ip       = each.value.enable_public_ip
+  service_account        = each.value.service_account
+  data_disks             = each.value.data_disks
+  docker_image           = each.value.docker_image
+}
+
 ###################
 # SLURM PARTITION #
 ###################
@@ -228,6 +251,7 @@ module "slurm_partition" {
   partition_conf        = each.value.partition_conf
   partition_nodeset     = [for x in each.value.partition_nodeset : module.slurm_nodeset[x].nodeset_name if try(module.slurm_nodeset[x], null) != null]
   partition_nodeset_dyn = [for x in each.value.partition_nodeset_dyn : module.slurm_nodeset_dyn[x].nodeset_name if try(module.slurm_nodeset_dyn[x], null) != null]
+  partition_nodeset_tpu = [for x in each.value.partition_nodeset_tpu : module.slurm_nodeset_tpu[x].nodeset_name if try(module.slurm_nodeset_tpu[x], null) != null]
   resume_timeout        = each.value.resume_timeout
   suspend_time          = each.value.suspend_time
   suspend_timeout       = each.value.suspend_timeout

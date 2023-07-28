@@ -17,6 +17,7 @@ cgroup_packages:
 - libcgroup1
 - libcgroup-dev
 - libpam-cgroup
+- libdbus-1-dev
 
 cgroup_grub_cmdline_linux:
 - systemd.unified_cgroup_hierarchy=0

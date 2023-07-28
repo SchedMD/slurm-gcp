@@ -54,6 +54,7 @@ default:
     -var "project_id=$GCP_PROJECT_ID"
     -var "slurm_version=$SLURM_VERSION"
     -var "slurmgcp_version=$BRANCH"
+    -except=slurm-gcp-docker.*
     $EXTRA_VARS
     .
   - echo "packer build $IMAGE_OS completed"

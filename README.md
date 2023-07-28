@@ -24,6 +24,7 @@ published images.
   - [Hybrid](#hybrid)
   - [Multi-Cluster/Federation](#multi-clusterfederation)
 - [Upgrade to v6](#upgrade-to-v6)
+- [TPU support](#tpu-support)
 - [Help and Support](#help-and-support)
 
 <!-- mdformat-toc end -->
@@ -96,6 +97,11 @@ See the [Federated Cluster Guide](./docs/federation.md) for details.
 ## Upgrade to v6
 
 See the [Upgrade to v6 Guide](./docs/upgrade_to_v6.md) for details.
+
+## TPU support
+
+slurm-gcp supports using TPU-vm nodes. See [TPU guide](./docs/tpu.md) for
+details.
 
 ## Help and Support
 

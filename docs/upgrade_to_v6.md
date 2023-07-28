@@ -29,6 +29,7 @@ Please review [CHANGELOG](../CHANGELOG.md) for documented changes.
 - [slurm_files](../terraform/slurm_cluster/modules/slurm_files/README_TF.md)
 - [slurm_nodeset](../terraform/slurm_cluster/modules/slurm_nodeset/README_TF.md)
 - [slurm_nodeset_dyn](../terraform/slurm_cluster/modules/slurm_nodeset_dyn/README_TF.md)
+- [slurm_nodeset_tpu](../terraform/slurm_cluster/modules/slurm_nodeset_tpu/README_TF.md)
 
 ### Changed Modules
 

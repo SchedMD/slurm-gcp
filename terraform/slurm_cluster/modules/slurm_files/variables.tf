@@ -80,6 +80,12 @@ variable "cgroup_conf_tpl" {
   default     = null
 }
 
+variable "job_submit_lua_tpl" {
+  type        = string
+  description = "Slurm job_submit.lua template file path."
+  default     = null
+}
+
 variable "cloudsql_secret" {
   description = "Secret URI to cloudsql secret."
   type        = string
@@ -236,6 +242,12 @@ variable "nodeset" {
 
 variable "nodeset_dyn" {
   description = "Cluster nodenets (dynamic), as a list."
+  type        = list(any)
+  default     = []
+}
+
+variable "nodeset_tpu" {
+  description = "Cluster nodenets (TPU), as a list."
   type        = list(any)
   default     = []
 }

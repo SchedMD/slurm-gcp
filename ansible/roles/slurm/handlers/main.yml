@@ -18,45 +18,53 @@
     name: slurmdbd
     enabled: no
     state: stopped
+  when: handle_services
 
 - name: Handle Slurmctld Service
   systemd:
     name: slurmctld
     enabled: no
     state: stopped
+  when: handle_services
 
 - name: Handle Slurmrestd Service
   systemd:
     name: slurmrestd
     enabled: no
     state: stopped
+  when: handle_services
 
 - name: Handle Slurmd Service
   systemd:
     name: slurmd
     enabled: no
     state: stopped
+  when: handle_services
 
 - name: Handle slurm_reconfigure Service
   systemd:
     name: slurm_reconfigure.service
     enabled: no
     state: stopped
+  when: handle_services
 
 - name: Handle slurm_reconfigure Timer
   systemd:
     name: slurm_reconfigure.timer
     enabled: no
     state: stopped
+  when: handle_services
 
 - name: Handle slurm_load_bigquery Service
   systemd:
     name: slurm_load_bq.service
     enabled: no
     state: stopped
+  when: handle_services
 
 - name: Handle slurm_load_bigquery Timer
   systemd:
     name: slurm_load_bq.timer
     enabled: no
     state: stopped
+  when: handle_services

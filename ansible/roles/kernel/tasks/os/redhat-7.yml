@@ -13,11 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Reboot
-  reboot:
+- block:
+  - name: Reboot
+    reboot:
 
-- name: Gather facts after reboot
-  setup:
+  - name: Gather facts after reboot
+    setup:
+
+  when: reboot
 
 - name: Install {{ansible_os_family}} Family Kernel Packages
   yum:

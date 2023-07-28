@@ -46,6 +46,7 @@ locals {
     cluster_id           = random_uuid.cluster_id.result
     project              = var.project_id
     slurm_cluster_name   = var.slurm_cluster_name
+    bucket_path          = local.bucket_path
 
     # storage
     disable_default_mounts = var.disable_default_mounts
@@ -65,6 +66,7 @@ locals {
     partitions       = local.partitions
     nodeset          = local.nodeset
     nodeset_dyn      = local.nodeset_dyn
+    nodeset_tpu      = local.nodeset_tpu
 
     # hybrid
     hybrid                  = var.enable_hybrid
@@ -85,10 +87,12 @@ locals {
 
   nodeset     = { for n in var.nodeset[*].nodeset : n.nodeset_name => n }
   nodeset_dyn = { for n in var.nodeset_dyn[*].nodeset : n.nodeset_name => n }
+  nodeset_tpu = { for n in var.nodeset_tpu[*].nodeset : n.nodeset_name => n }
 
   x_nodeset         = toset([for k, v in local.nodeset : v.nodeset_name])
   x_nodeset_dyn     = toset([for k, v in local.nodeset_dyn : v.nodeset_name])
-  x_nodeset_overlap = setintersection([], local.x_nodeset, local.x_nodeset_dyn)
+  x_nodeset_tpu     = toset([for k, v in local.nodeset_tpu : v.nodeset_name])
+  x_nodeset_overlap = setintersection([], local.x_nodeset, local.x_nodeset_dyn, local.x_nodeset_tpu)
 
   etc_dir = abspath("${path.module}/../../../../etc")
 
@@ -185,6 +189,16 @@ resource "google_storage_bucket_object" "cgroup_conf_tpl" {
   bucket  = var.bucket_name
   name    = format("%s/slurm-tpl-cgroup-conf", local.bucket_dir)
   content = data.local_file.cgroup_conf_tpl.content
+}
+
+data "local_file" "jobsubmit_lua_tpl" {
+  filename = abspath(coalesce(var.job_submit_lua_tpl, "${local.etc_dir}/job_submit.lua.tpl"))
+}
+
+resource "google_storage_bucket_object" "jobsubmit_lua_tpl" {
+  bucket  = var.bucket_name
+  name    = format("%s/slurm-tpl-job-submit-lua", local.bucket_dir)
+  content = data.local_file.jobsubmit_lua_tpl.content
 }
 
 ###########

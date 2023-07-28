@@ -26,8 +26,11 @@
     state: latest
     update_cache: yes
 
-- name: Reboot
-  reboot:
+- block:
+  - name: Reboot
+    reboot:
 
-- name: Gather facts after reboot
-  setup:
+  - name: Gather facts after reboot
+    setup:
+
+  when: reboot

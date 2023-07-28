@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fix retry of powering up static nodes on failure.
 - Add support for H3 machines and enumerated multi-socket processors.
 - Fix munge failing after manual reboot of node.
+- \[Beta feature\] Added support for TPU-vm nodes
 
 ## \[6.0.0\]
 

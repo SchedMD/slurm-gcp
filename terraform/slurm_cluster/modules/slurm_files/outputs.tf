@@ -48,3 +48,8 @@ output "nodeset_dyn" {
   description = "Cluster nodesets (dynamic)."
   value       = lookup(local.config, "nodeset_dyn", null)
 }
+
+output "nodeset_tpu" {
+  description = "Cluster nodesets (TPU)."
+  value       = lookup(local.config, "nodeset_tpu", null)
+}

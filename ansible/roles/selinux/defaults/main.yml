@@ -14,3 +14,4 @@
 # limitations under the License.
 
 selinux_conf: /etc/selinux/config
+reboot: true

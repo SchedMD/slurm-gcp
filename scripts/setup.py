@@ -47,6 +47,7 @@ from conf import (
     install_gres_conf,
     install_cgroup_conf,
     install_topology_conf,
+    install_jobsubmit_lua,
 )
 import slurmsync
 
@@ -693,6 +694,7 @@ def setup_controller(args):
     install_gres_conf()
     install_cgroup_conf()
     install_topology_conf()
+    install_jobsubmit_lua()
 
     setup_jwt_key()
     setup_munge_key()

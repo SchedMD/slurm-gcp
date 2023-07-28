@@ -40,3 +40,4 @@ slurmrestd_user:
   gid: 982
 
 slurmcmd_timeout: 30
+handle_services: true

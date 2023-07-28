@@ -45,6 +45,12 @@ variable "partition_nodeset_dyn" {
   default     = []
 }
 
+variable "partition_nodeset_tpu" {
+  description = "Slurm nodesets (tpu) by name, as a list of string."
+  type        = set(string)
+  default     = []
+}
+
 variable "default" {
   description = <<-EOD
     If this is true, jobs submitted without a partition specification will utilize this partition.
@@ -58,16 +64,11 @@ variable "default" {
 variable "resume_timeout" {
   description = <<-EOD
     Maximum time permitted (in seconds) between when a node resume request is issued and when the node is actually available for use.
-    This sets 'ResumeTimeout' in partition_conf.
+    This sets 'ResumeTimeout' in partition_conf. Defaults to 0 in order to be calculated in the main.tf based on whether this partition contains TPU nodesets.
     See https://slurm.schedmd.com/slurm.conf.html#OPT_ResumeTimeout_1 for details.
   EOD
   type        = number
-  default     = 300
-
-  validation {
-    condition     = var.resume_timeout > 0
-    error_message = "Value must be > 0."
-  }
+  default     = 0
 }
 
 variable "suspend_time" {
@@ -89,16 +90,11 @@ variable "suspend_time" {
 variable "suspend_timeout" {
   description = <<-EOD
     Maximum time permitted (in seconds) between when a node suspend request is issued and when the node is shutdown.
-    This sets 'SuspendTimeout' in partition_conf.
+    This sets 'SuspendTimeout' in partition_conf. Defaults to 0 in order to be calculated in the main.tf based on whether this partition contains TPU nodesets.
     See https://slurm.schedmd.com/slurm.conf.html#OPT_SuspendTimeout_1 for details.
   EOD
   type        = number
-  default     = 120
-
-  validation {
-    condition     = var.suspend_timeout > 0
-    error_message = "Value must be > 0."
-  }
+  default     = 0
 }
 
 variable "enable_job_exclusive" {

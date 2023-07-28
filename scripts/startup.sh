@@ -47,7 +47,8 @@ function devel::zip() {
 	rm -rf "$SLURM_ZIP_FILE" "$SLURM_ZIP_DIR" # Clean up
 	echo "INFO: Finished inflating '$SLURM_ZIP_FILE'."
 
-	chown slurm:slurm -R "$SCRIPTS_DIR"
+	#temporary hack to not make the script fail on TPU vm
+	chown slurm:slurm -R "$SCRIPTS_DIR" || true
 	chmod 700 -R "$SCRIPTS_DIR"
 	echo "INFO: Updated permissions of files in '$SCRIPTS_DIR'."
 }
@@ -93,6 +94,63 @@ if [ -f $FLAGFILE ]; then
 	exit 0
 fi
 touch $FLAGFILE
+
+function tpu_setup {
+	#allow the following command to fail, as this attibute does not exist for regular nodes
+	docker_image=$($CURL $URL/instance/attributes/slurm_docker_image 2> /dev/null || true)
+	if [ -z $docker_image ]; then #Not a tpu node, do not do anything
+		return
+	fi
+	if [ "$OS_ENV" == "slurm_container" ]; then #Already inside the slurm container, we should continue starting
+		return
+	fi
+
+	#given a input_string like "WORKER_0:Joseph;WORKER_1:richard;WORKER_2:edward;WORKER_3:john" and a number 1, this function will print richard
+	parse_metadata() {
+		local number=$1
+		local input_string=$2
+		local word=$(echo "$input_string" | awk -v n="$number" -F ':|;' '{ for (i = 1; i <= NF; i+=2) if ($(i) == "WORKER_"n) print $(i+1) }')
+		echo "$word"
+	}
+
+	input_string=$($CURL $URL/instance/attributes/slurm_names)
+	worker_id=$($CURL $URL/instance/attributes/tpu-env | awk '/WORKER_ID/ {print $2}' | tr -d \')
+	real_name=$(parse_metadata $worker_id $input_string)
+
+	#Prepare to docker pull with gcloud
+	mkdir -p /root/.docker
+	cat << EOF > /root/.docker/config.json
+{
+  "credHelpers": {
+    "gcr.io": "gcloud"
+  }
+}
+EOF
+	#cgroup detection
+	CGV=1
+	CGROUP_FLAGS="-v /sys/fs/cgroup:/sys/fs/cgroup:rw"
+	if [ -f /sys/fs/cgroup/cgroup.controllers ]; then #CGV2
+		CGV=2
+	fi
+	if [ $CGV == 2 ]; then
+		CGROUP_FLAGS="--cgroup-parent=docker.slice --cgroupns=private --tmpfs /run --tmpfs /run/lock --tmpfs /tmp"
+		if [ ! -f /etc/systemd/system/docker.slice ]; then #In case that there is no slice prepared for hosting the containers create it
+			printf "[Unit]\nDescription=docker slice\nBefore=slices.target\n[Slice]\nCPUAccounting=true\nMemoryAccounting=true" > /etc/systemd/system/docker.slice
+			systemctl start docker.slice
+		fi
+	fi
+	#for the moment always use --privileged, as systemd might not work properly otherwise
+	TPU_FLAGS="--privileged"
+	# TPU_FLAGS="--cap-add SYS_RESOURCE --device /dev/accel0 --device /dev/accel1 --device /dev/accel2 --device /dev/accel3"
+	# if [ $CGV == 2 ]; then #In case that we are in CGV2 for systemd to work correctly for the moment we go with privileged
+	# 	TPU_FLAGS="--privileged"
+	# fi
+
+	docker run -d $CGROUP_FLAGS $TPU_FLAGS --net=host --name=slurmd --hostname=$real_name --entrypoint=/usr/bin/systemd --restart unless-stopped $docker_image
+	exit 0
+}
+
+tpu_setup #will do nothing for normal nodes or the container spawned inside TPU
 
 function fetch_feature {
 	if slurmd_feature="$($CURL $URL/instance/attributes/slurmd_feature)"; then

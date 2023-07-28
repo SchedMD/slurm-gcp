@@ -39,6 +39,7 @@
   - [TerraformUser](#terraformuser)
   - [Terraform Project](#terraform-project)
   - [Terraform Registry](#terraform-registry)
+  - [TPU](#tpu)
   - [VM](#vm)
 
 <!-- mdformat-toc end -->
@@ -374,6 +375,21 @@ https://registry.terraform.io
 
 > Discover Terraform providers that power all of Terraform’s resource types, or
 > find modules for quickly deploying common infrastructure configurations.
+
+## TPU
+
+https://cloud.google.com/tpu
+
+> TPUs or Tensor Processing Units are machine learning accelerators optimized to
+> accelerate the training and inference of machine learning models, making them
+> ideal for a variety of applications, including natural language processing,
+> computer vision, and speech recognition. TPUs are specialized hardware that
+> accelerate ML workloads at scale. Features, such as the matrix multiply unit
+> (MXU) optimize large matrix operations, while optical circuit switch (OCS)
+> technology enables high-bandwidth memory (HBM). They can be connected into
+> groups called Pods that scale up and accelerate ML training and inference.
+> Cloud TPUs offer high performance, ease of development, and cost efficiency in
+> terms of ML development and productionization.
 
 ## VM
 

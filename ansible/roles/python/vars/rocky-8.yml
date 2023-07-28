@@ -18,3 +18,5 @@ python_packages:
 - python3-pip
 - python3-setuptools
 - python3-virtualenv
+- python38
+python38_installed: true

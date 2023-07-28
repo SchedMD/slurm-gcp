@@ -1,0 +1,106 @@
+---
+# Copyright (C) SchedMD LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- hosts: all
+  become: no
+
+  vars:
+    min_ansible_version: 2.7
+    paths:
+      install: /usr/local
+      src: /usr/local/src
+      etc: /usr/local/etc
+      build: /tmp
+      apps: /opt/apps
+      modulefiles: /opt/apps/modulefiles
+    install_ompi: true
+    install_lustre: true
+    install_gcsfuse: true
+    tf_version: 2.12.0
+
+  pre_tasks:
+  - name: Supported OS Check
+    assert:
+      that: >
+        ( ansible_distribution == "CentOS" and
+          ansible_distribution_major_version is version('7', '==')
+        ) or
+        ( ansible_distribution == "Rocky" and
+          ansible_distribution_major_version is version('8', '==')
+        ) or
+        ( ansible_distribution == "Debian" and
+          (ansible_distribution_major_version is version('10', '==') or
+          ansible_distribution_major_version is version('11', '=='))
+        ) or
+        ( ansible_distribution == "Ubuntu" and
+          (ansible_distribution_version is version('20.04', '==') or
+          ansible_distribution_version is version('22.04', '=='))
+        )
+      msg: >
+        OS ansible_distribution version ansible_distribution_major_version is not
+        supported.
+        Please use a suported OS in list:
+          - CentOS 7
+          - Rocky 8
+          - Debian 10, 11
+          - Ubuntu 20.04, 22.04
+  - name: Minimum Ansible Version Check
+    assert:
+      that: ansible_version.full is version_compare({{min_ansible_version}}, '>=')
+      msg: Update Ansible to at least {{min_ansible_version}} to use this playbook.
+
+  roles:
+  - motd
+  - common
+  - role: kernel
+    vars:
+      reboot: false
+  - role: selinux
+    vars:
+      reboot: false
+  - role: cgroups
+    vars:
+      change_grub: false
+  - role: munge
+    vars:
+      install_only: true
+  - role: mariadb
+    vars:
+      install_server: false
+  - libjwt
+  - lmod
+  - role: slurm
+    vars:
+      handle_services: false
+  - slurmcmd
+  - role: ompi
+    when: install_ompi
+  - role: lustre
+    when:
+    - install_lustre
+    - ansible_architecture == "x86_64"
+  - role: gcsfuse
+    when:
+    - install_gcsfuse
+    - ansible_architecture == "x86_64"
+  - logrotate
+  - python
+  - role: ldap
+    when: ansible_os_family != 'Debian'
+  - scripts
+  - role: tpu
+    vars:
+      tf_version: tf_version
+    when: tf_version != "unset"

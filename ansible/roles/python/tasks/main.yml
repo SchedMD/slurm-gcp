@@ -28,6 +28,11 @@
     name: '{{python_packages}}'
     state: present
 
+- name: update alternatives to python38
+  shell:
+    cmd: alternatives --set python3 /usr/bin/python3.8
+  when: python38_installed
+
 - name: Upgrade Pip
   pip:
     name:

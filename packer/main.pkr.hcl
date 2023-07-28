@@ -48,6 +48,7 @@ locals {
 
   # if image_family_name is set, use it for image_family instead of the generated one.
   image_family = try(length(var.image_family_name), 0) > 0 ? var.image_family_name : local.generated_family
+
 }
 
 ##########

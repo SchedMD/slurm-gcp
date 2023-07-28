@@ -30,6 +30,7 @@ from util import (
     chunked,
     dirs,
     ensure_execute,
+    combined_execute_map_with_futures,
     get_insert_operations,
     log_api_request,
     map_with_futures,
@@ -40,7 +41,9 @@ from util import (
     trim_self_link,
     wait_for_operation,
 )
-from util import cfg, lkp, NSDict
+from util import cfg, lkp, NSDict, TPU
+
+# from util import cfg, lkp, NSDict
 
 filename = Path(__file__).name
 LOGFILE = (Path(cfg.slurm_log_dir if cfg else ".") / filename).with_suffix(".log")
@@ -216,43 +219,82 @@ def group_nodes_bulk(nodes, resume_data=None):
         job.nodes_alloc = expand_nodelist(job.nodelist_alloc)
         job.nodelist_resume = job.nodes_resume
         job.nodes_resume = expand_nodelist(job.nodelist_resume)
-        # create placement groups if nodes for job need it
-        job.placement_groups = create_placement_groups(
-            node_list=job.nodes_alloc,
-            job_id=job.job_id,
-        )
-        # placement group assignment is based on all allocated nodes, but we only want to
-        # handle nodes in nodes_resume in this run.
-        for pg, pg_nodes in job.placement_groups.items():
-            job.placement_groups[pg] = list(
-                set(pg_nodes).intersection(job.nodes_resume)
+        job.tpu = util.part_is_tpu(job.partition)
+        if not job.tpu:
+            # create placement groups if nodes for job need it
+            job.placement_groups = create_placement_groups(
+                node_list=job.nodes_alloc,
+                job_id=job.job_id,
             )
+            # placement group assignment is based on all allocated nodes, but we only want to
+            # handle nodes in nodes_resume in this run.
+            for pg, pg_nodes in job.placement_groups.items():
+                job.placement_groups[pg] = list(
+                    set(pg_nodes).intersection(job.nodes_resume)
+                )
     # a bit of a hack, but nodes resumed using scontrol instead of through job scheduling do not have a job
     jobless_nodes = list(
         set(nodes).difference(
             chain.from_iterable(job.nodes_resume for job in jobs.values())
         )
     )
-    jobs[None] = NSDict(
+    jobless_nodes_tpu = []
+    for jobless_node in jobless_nodes[:]:
+        if lkp.node_is_tpu(jobless_node):
+            jobless_nodes.remove(jobless_node)
+            jobless_nodes_tpu.append(jobless_node)
+
+    jobs["Normal_None"] = NSDict(
         job_id=None,
         nodes_resume=jobless_nodes,
         nodes_alloc=jobless_nodes,
         placement_groups=create_placement_groups(node_list=jobless_nodes),
         partition=None,
+        tpu=False,
+    )
+    jobs["TPU_None"] = NSDict(
+        job_id=None,
+        nodes_resume=jobless_nodes_tpu,
+        nodes_alloc=jobless_nodes_tpu,
+        partition=None,
+        tpu=True,
     )
 
     BulkChunk = collections.namedtuple(
         "BulkChunk",
         ["prefix", "job_id", "partition_name", "placement_group", "nodes", "i"],
     )
+    BulkChunkTPU = collections.namedtuple(
+        "BulkChunkTPU",
+        ["prefix", "job_id", "partition_name", "nodes", "i"],
+    )
     grouped_nodes = [
         BulkChunk(
-            prefix, job_id, jobs[job_id].partition, placement_group, chunk_nodes, i
+            prefix,
+            job_id if job_id != "Normal_None" else None,
+            jobs[job_id].partition,
+            placement_group,
+            chunk_nodes,
+            i,
         )
         for job_id, job in jobs.items()
+        if not job.tpu
         for placement_group, pg_nodes in job.placement_groups.items()
         for prefix, nodes in util.groupby_unsorted(pg_nodes, lkp.node_prefix)
         for i, chunk_nodes in enumerate(chunked(nodes, n=BULK_INSERT_LIMIT))
+    ]
+    grouped_nodes_tpu = [
+        BulkChunkTPU(
+            prefix,
+            job_id if job_id != "TPU_None" else None,
+            jobs[job_id].partition,
+            chunk_nodes,
+            i,
+        )
+        for job_id, job in jobs.items()
+        if job.tpu
+        for prefix, nodes in util.groupby_unsorted(job.nodes_resume, lkp.node_prefix)
+        for i, chunk_nodes in enumerate(lkp.chunk_tpu_nodes(list(nodes)))
     ]
 
     def group_name(chunk: BulkChunk):
@@ -262,8 +304,42 @@ def group_nodes_bulk(nodes, resume_data=None):
             return f"{chunk.prefix}:job{chunk.job_id}:{chunk.i}"
         return f"{chunk.prefix}:{chunk.i}"
 
+    def group_name_tpu(chunk: BulkChunkTPU):
+        if chunk.job_id is not None:
+            return f"{chunk.prefix}:job{chunk.job_id}:{chunk.i}"
+        return f"{chunk.prefix}:{chunk.i}"
+
     grouped_nodes = {group_name(chunk): chunk for chunk in grouped_nodes}
-    return grouped_nodes
+    grouped_nodes_tpu = {group_name_tpu(chunk): chunk for chunk in grouped_nodes_tpu}
+    return grouped_nodes, grouped_nodes_tpu
+
+
+def start_tpu(data):
+    tpu = data["tpu"]
+    node = data["node"]
+    if len(node) == 1:
+        node = node[0]
+        log.debug(
+            f"Will create a TPU of type {tpu.node_type} tf_version {tpu.tf_version} in zone {tpu.zone} with name {node}"
+        )
+        tpunode = tpu.get_node(node)
+        if tpunode is None:
+            if not tpu.create_node(nodename=node):
+                log.error("Error creating tpu node {node}")
+        else:
+            if tpu.preserve_tpu:
+                if not tpu.start_node(nodename=node):
+                    log.error("Error starting tpu node {node}")
+            else:
+                log.info(
+                    f"Tpu node {node} is already created, but will not start it because nodeset does not have preserve_tpu option active."
+                )
+    else:
+        log.debug(
+            f"Will create a multi-vm TPU of type {tpu.node_type} tf_version {tpu.tf_version} in zone {tpu.zone} with name {node[0]}"
+        )
+        if not tpu.create_node(nodename=node):
+            log.error("Error creating tpu node {node}")
 
 
 def resume_nodes(nodes, resume_data=None):
@@ -280,16 +356,34 @@ def resume_nodes(nodes, resume_data=None):
         resume_data = global_resume_data.deepcopy()
 
     nodes = sorted(nodes, key=lkp.node_prefix)
-    grouped_nodes = group_nodes_bulk(nodes, resume_data)
+    grouped_nodes, grouped_tpu_nodes = group_nodes_bulk(nodes, resume_data)
 
     if log.isEnabledFor(logging.DEBUG):
         # grouped_nodelists is used in later debug logs too
         grouped_nodelists = {
             group: to_hostlist(chunk.nodes) for group, chunk in grouped_nodes.items()
         }
+        grouped_tpu_nodelists = {
+            group: to_hostlist(chunk.nodes)
+            for group, chunk in grouped_tpu_nodes.items()
+        }
         log.debug(
             "node bulk groups: \n{}".format(yaml.safe_dump(grouped_nodelists).rstrip())
         )
+        log.debug(
+            "TPU node bulk groups: \n{}".format(
+                yaml.safe_dump(grouped_tpu_nodelists).rstrip()
+            )
+        )
+    tpu_start_data = []
+    tpu_objs = {}
+    for group, chunk in grouped_tpu_nodes.items():
+        # do not create multiple tpu_objs if nodes with the same prefix are used
+        if chunk.prefix not in tpu_objs.keys():
+            model = chunk.nodes[0]
+            tpu_objs[chunk.prefix] = TPU(lkp.node_nodeset(model))
+
+        tpu_start_data.append({"tpu": tpu_objs[chunk.prefix], "node": chunk.nodes})
 
     # make all bulkInsert requests and execute with batch
     inserts = {
@@ -298,10 +392,10 @@ def resume_nodes(nodes, resume_data=None):
         )
         for group, chunk in grouped_nodes.items()
     }
-
-    bulk_ops = dict(
-        zip(inserts.keys(), map_with_futures(ensure_execute, inserts.values()))
+    norm_data = combined_execute_map_with_futures(
+        start_tpu, ensure_execute, tpu_start_data, inserts.values()
     )
+    bulk_ops = dict(zip(inserts.keys(), norm_data))
     log.debug(f"bulk_ops={yaml.safe_dump(bulk_ops)}")
     started = {
         group: op for group, op in bulk_ops.items() if not isinstance(op, Exception)

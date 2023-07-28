@@ -28,8 +28,9 @@ from util import (
     to_hostlist,
     wait_for_operations,
     separate,
+    execute_with_futures,
 )
-from util import lkp, cfg, compute
+from util import lkp, cfg, compute, TPU
 
 
 filename = Path(__file__).name
@@ -60,8 +61,41 @@ def delete_instance_request(instance, project=None, zone=None):
     return request
 
 
+def stop_tpu(data):
+    tpu_nodeset = data["nodeset"]
+    node = data["node"]
+    tpu = data["tpu"]
+    if tpu_nodeset.preserve_tpu and tpu.vmcount == 1:
+        log.info(f"stopping node {node}")
+        if tpu.stop_node(node):
+            return
+        log.error("Error stopping node {node} will delete instead")
+    log.info(f"deleting node {node}")
+    if not tpu.delete_node(node):
+        log.error("Error deleting node {node}")
+
+
+def delete_tpu_instances(instances):
+    stop_data = []
+    for prefix, nodes in util.groupby_unsorted(instances, lkp.node_prefix):
+        log.info(f"Deleting TPU nodes from prefix {prefix}")
+        lnodes = list(nodes)
+        tpu_nodeset = lkp.node_nodeset(lnodes[0])
+        tpu = TPU(tpu_nodeset)
+        stop_data.extend(
+            [{"tpu": tpu, "node": node, "nodeset": tpu_nodeset} for node in lnodes]
+        )
+    execute_with_futures(stop_tpu, stop_data)
+
+
 def delete_instances(instances):
     """delete instances individually"""
+    tpu_instances = []
+    for instance in instances[:]:
+        if lkp.node_is_tpu(instance):
+            tpu_instances.append(instance)
+            instances.remove(instance)
+
     invalid, valid = separate(lambda inst: bool(lkp.instance(inst)), instances)
     if len(invalid) > 0:
         log.debug("instances do not exist: {}".format(",".join(invalid)))
@@ -78,6 +112,7 @@ def delete_instances(instances):
         for err, nodes in groupby_unsorted(lambda n: failed[n][1], failed.keys()):
             log.error(f"instances failed to delete: {err} ({to_hostlist(nodes)})")
     wait_for_operations(done.values())
+    delete_tpu_instances(tpu_instances)
     # TODO do we need to check each operation for success? That is a lot more API calls
     log.info(f"deleted {len(done)} instances {to_hostlist(done.keys())}")
 

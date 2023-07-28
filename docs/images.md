@@ -11,6 +11,7 @@
     - [Installed Software for HPC](#installed-software-for-hpc)
   - [Public Image](#public-image)
     - [Published Image Family](#published-image-family)
+    - [Published Docker Image Family](#published-docker-image-family)
   - [Custom Image](#custom-image)
     - [Requirements](#requirements)
     - [Creation](#creation)
@@ -68,6 +69,8 @@ that are minimal viable images for deploying
 > using clean minimal base images for the source image (e.g.
 > `ubuntu-os-cloud/ubuntu-2004-lts`).
 
+For the [TPU](./glossary.md#tpu) nodes docker images are also released.
+
 ### Published Image Family
 
 |       Project        | Image Family                        | Arch   | Status         |
@@ -79,6 +82,12 @@ that are minimal viable images for deploying
 | schedmd-slurm-public | slurm-gcp-6-0-hpc-centos-7-k80      | x86_64 | EOL 2024-05-01 |
 | schedmd-slurm-public | slurm-gcp-6-0-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
 | schedmd-slurm-public | slurm-gcp-6-0-centos-7              | x86_64 | EOL 2023-08-01 |
+
+### Published Docker Image Family
+
+|       Project        | Image Family                             | Status    |
+| :------------------: | :--------------------------------------- | :-------- |
+| schedmd-slurm-public | tpu:slurm-gcp-6-0-ubuntu-20.04-tf-2.12.0 | Supported |
 
 ## Custom Image
 
