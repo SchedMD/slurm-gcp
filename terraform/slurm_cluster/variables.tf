@@ -385,9 +385,9 @@ EOD
     partition_nodeset     = optional(list(string), [])
     partition_nodeset_dyn = optional(list(string), [])
     partition_nodeset_tpu = optional(list(string), [])
-    resume_timeout        = optional(number, 300)
+    resume_timeout        = optional(number)
     suspend_time          = optional(number, 300)
-    suspend_timeout       = optional(number, 120)
+    suspend_timeout       = optional(number)
   }))
 
   validation {

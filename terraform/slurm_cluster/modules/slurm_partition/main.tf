@@ -19,11 +19,15 @@
 ##########
 
 locals {
+  has_tpu = length(var.partition_nodeset_tpu) > 0
+}
+
+locals {
   partition_conf = merge({
     "Default"        = var.default ? "YES" : null
-    "ResumeTimeout"  = var.resume_timeout
+    "ResumeTimeout"  = var.resume_timeout != null ? var.resume_timeout : (local.has_tpu ? 600 : 300)
     "SuspendTime"    = var.suspend_time < 0 ? "INFINITE" : var.suspend_time
-    "SuspendTimeout" = var.suspend_timeout
+    "SuspendTimeout" = var.suspend_timeout != null ? var.suspend_timeout : (local.has_tpu ? 240 : 120)
   }, var.partition_conf)
 
   partition = {
