@@ -34,7 +34,6 @@ can be created and used instead.
 
 | Project                | Image Family          | Arch   |
 | :--------------------- | :-------------------- | :----- |
-| centos-cloud           | centos-7              | x86_64 |
 | cloud-hpc-image-public | hpc-centos-7          | x86_64 |
 | cloud-hpc-image-public | hpc-rocky-linux-8     | x86_64 |
 | debian-cloud           | debian-11             | x86_64 |
@@ -81,7 +80,6 @@ For the [TPU](./glossary.md#tpu) nodes docker images are also released.
 | schedmd-slurm-public | slurm-gcp-6-0-ubuntu-2204-lts-arm64 | ARM64  | Supported      |
 | schedmd-slurm-public | slurm-gcp-6-0-hpc-centos-7-k80      | x86_64 | EOL 2024-05-01 |
 | schedmd-slurm-public | slurm-gcp-6-0-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
-| schedmd-slurm-public | slurm-gcp-6-0-centos-7              | x86_64 | EOL 2023-08-01 |
 
 ### Published Docker Image Family
 

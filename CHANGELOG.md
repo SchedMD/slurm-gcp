@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Fix munge failing after manual reboot of node.
 - \[Beta feature\] Added support for TPU-vm nodes
 - Add `ignore_prefer_validation` to SchedulerParameters in generated cloud.conf.
+- Remove unaltered centos-7 image from actively published and supported images.
 
 ## \[6.0.0\]
 
