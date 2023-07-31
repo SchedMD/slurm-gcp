@@ -88,11 +88,6 @@ default:
       - ansible/**/*
       - packer/**/*
 
-build-centos-7:
-  extends: .build-extra-image
-  variables:
-    IMAGE_OS: centos-7
-
 build-hpc-centos-7:
   extends: .build-extra-image
   variables:
@@ -181,15 +176,6 @@ build-ubuntu-2204-lts-arm64:
   - if: $ONLY_CORE
     when: never
   - when: always
-
-test-centos-7:
-  extends: .test-extra-image
-  needs:
-  - job: build-centos-7
-    optional: true
-  variables:
-    IMAGE_OS: centos-7
-    ARCH: x86_64
 
 test-hpc-centos-7:
   extends: .test-extra-image

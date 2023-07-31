@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Add `ignore_prefer_validation` to SchedulerParameters in generated cloud.conf.
 - Remove debian-10 and vanilla rocky-linux-8 images from build process and
   support.
+- Remove unaltered centos-7 image from actively published and supported images.
 
 ## \[5.7.4\]
 
