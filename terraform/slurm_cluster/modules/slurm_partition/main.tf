@@ -19,7 +19,9 @@
 ##########
 
 locals {
-  has_tpu = length(var.partition_nodeset_tpu) > 0
+  has_node = length(var.partition_nodeset) > 0
+  has_dyn  = length(var.partition_nodeset_dyn) > 0
+  has_tpu  = length(var.partition_nodeset_tpu) > 0
 }
 
 locals {
@@ -43,19 +45,17 @@ locals {
 }
 
 resource "null_resource" "partition" {
-
   triggers = {
     partition = sha256(jsonencode(local.partition))
   }
-
   lifecycle {
     precondition {
-      condition     = !(length(var.partition_nodeset) == 0 && length(var.partition_nodeset_dyn) == 0 && length(var.partition_nodeset_tpu) == 0)
+      condition     = local.has_node || local.has_dyn || local.has_tpu
       error_message = "Partition must contain at least one type of nodeset."
     }
     precondition {
-      condition     = ((length(var.partition_nodeset) > 0 || length(var.partition_nodeset_dyn) > 0) && length(var.partition_nodeset_tpu) == 0) || (length(var.partition_nodeset) == 0 && length(var.partition_nodeset_dyn) == 0 && length(var.partition_nodeset_tpu) > 0)
-      error_message = "Partition cannot contain TPU and non-TPU nodesets"
+      condition     = ((!local.has_node || !local.has_dyn) && local.has_tpu) || ((local.has_node || local.has_dyn) && !local.has_tpu)
+      error_message = "Partition cannot contain TPU and non-TPU nodesets."
     }
   }
 }
