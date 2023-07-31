@@ -1,4 +1,4 @@
-# slurm_partition
+# slurm_nodeset
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 Copyright (C) SchedMD LLC.
