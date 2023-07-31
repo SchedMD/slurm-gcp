@@ -419,6 +419,8 @@ nodeset = [
 
 nodeset_dyn = []
 
+nodeset_tpu = []
+
 ##############
 # PARTITIONS #
 ##############

@@ -127,6 +127,10 @@ locals {
     subnetwork_project   = coalesce(x.subnetwork_project, var.subnetwork_project, var.project_id)
   })]
 
+  nodeset_tpu = [for x in var.nodeset_tpu : merge(x, {
+    service_account = var.create_service_accounts ? module.slurm_sa_iam["compute"].service_account : x.service_account
+  })]
+
   login_nodes = [
     for x in var.login_nodes : merge(x, {
       service_account      = var.create_service_accounts ? module.slurm_sa_iam["login"].service_account : x.service_account
@@ -170,6 +174,7 @@ module "slurm_cluster" {
   network_storage                    = var.network_storage
   nodeset                            = local.nodeset
   nodeset_dyn                        = var.nodeset_dyn
+  nodeset_tpu                        = local.nodeset_tpu
   partitions                         = var.partitions
   project_id                         = var.project_id
   prolog_scripts                     = var.prolog_scripts
