@@ -46,6 +46,10 @@ resource "null_resource" "partition" {
 
   lifecycle {
     precondition {
+      condition     = !(length(var.partition_nodeset) == 0 && length(var.partition_nodeset_dyn) == 0 && length(var.partition_nodeset_tpu) == 0)
+      error_message = "Partition must contain at least one type of nodeset."
+    }
+    precondition {
       condition     = ((length(var.partition_nodeset) > 0 || length(var.partition_nodeset_dyn) > 0) && length(var.partition_nodeset_tpu) == 0) || (length(var.partition_nodeset) == 0 && length(var.partition_nodeset_dyn) == 0 && length(var.partition_nodeset_tpu) > 0)
       error_message = "Partition cannot contain TPU and non-TPU nodesets"
     }
