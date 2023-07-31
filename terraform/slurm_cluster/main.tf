@@ -233,6 +233,7 @@ module "slurm_nodeset_tpu" {
   service_account        = each.value.service_account
   data_disks             = each.value.data_disks
   docker_image           = each.value.docker_image
+  project_id             = var.project_id
 }
 
 ###################

@@ -38,7 +38,6 @@ locals {
 }
 
 locals {
-
   nodeset_tpu = {
     nodeset_name           = var.nodeset_name
     node_conf              = local.node_conf_mappings[var.node_type]
@@ -50,13 +49,25 @@ locals {
     node_count_static      = var.node_count_static
     enable_public_ip       = var.enable_public_ip
     zone                   = var.zone
-    service_account        = var.service_account
+    service_account        = var.service_account != null ? var.service_account : local.service_account
     preserve_tpu           = contains(local.simple_nodes, var.node_type) ? var.preserve_tpu : false
     data_disks             = var.data_disks
     docker_image           = var.docker_image != "" ? var.docker_image : "gcr.io/schedmd-slurm-public/tpu:slurm-gcp-6-0-ubuntu-20.04-tf-${var.tf_version}"
-    # subnetwork             = var.subnetwork_self_link
-
   }
+
+  service_account = {
+    email  = coalesce(data.google_service_account.this.email, data.google_compute_default_service_account.this.email)
+    scopes = try(var.service_account.scopes, ["https://www.googleapis.com/auth/cloud-platform"])
+  }
+}
+
+data "google_service_account" "this" {
+  account_id = coalesce(try(var.service_account.email, null), "NOT_SERVICE_ACCOUNT")
+  project    = var.project_id
+}
+
+data "google_compute_default_service_account" "this" {
+  project = var.project_id
 }
 
 resource "null_resource" "nodeset_tpu" {

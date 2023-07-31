@@ -67,6 +67,11 @@ variable "tf_version" {
 variable "zone" {
   description = "Nodes will only be created in this zone. Check https://cloud.google.com/tpu/docs/regions-zones to get zones with TPU-vm in it."
   type        = string
+
+  validation {
+    condition     = can(coalesce(var.zone))
+    error_message = "Zone cannot be null or empty."
+  }
 }
 
 variable "preemptible" {
@@ -115,35 +120,19 @@ variable "data_disks" {
   default     = []
 }
 
-##pending
-#cidr block for static IP
-#more network config
-
-##not for the moment
-#shielded
-#reservation
-
-##to review
-
 variable "service_account" {
   type = object({
     email  = string
     scopes = set(string)
   })
   description = <<EOD
-Service account to attach to the TPU-vm. See
-'main.tf:local.service_account' for the default.
+Service account to attach to the TPU-vm.
+If none is given, the default service account and scopes will be used.
 EOD
   default     = null
 }
 
-# variable "subnetwork_self_link" {
-#   description = "The subnetwork self_link to attach instances to."
-#   type        = string
-
-#   validation {
-#     condition     = length(regexall("projects/([^/]*)", var.subnetwork_self_link)) > 0 && length(regexall("/regions/([^/]*)", var.subnetwork_self_link)) > 0
-#     error_message = "Must be a self link."
-#   }
-#   default = null
-# }
+variable "project_id" {
+  type        = string
+  description = "Project ID to create resources in."
+}
