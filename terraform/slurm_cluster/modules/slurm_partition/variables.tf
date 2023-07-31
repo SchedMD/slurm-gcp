@@ -119,6 +119,7 @@ EOD
     min_cpu_platform    = string
     on_host_maintenance = string
     preemptible         = bool
+    reservation_name    = string
     service_account = object({
       email  = string
       scopes = list(string)

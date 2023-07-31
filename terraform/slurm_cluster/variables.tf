@@ -305,6 +305,7 @@ EOD
       min_cpu_platform    = string
       on_host_maintenance = string
       preemptible         = bool
+      reservation_name    = string
       service_account = object({
         email  = string
         scopes = list(string)
@@ -374,6 +375,7 @@ EOD
           min_cpu_platform         = null
           on_host_maintenance      = null
           preemptible              = false
+          reservation_name         = null
           service_account          = null
           shielded_instance_config = null
           spot_instance_config     = null

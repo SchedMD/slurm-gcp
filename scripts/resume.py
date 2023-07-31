@@ -149,6 +149,14 @@ def instance_properties(partition, model, placement_group, labels=None):
             "provisioningModel": "SPOT",
         }
 
+    if node_group.reservation_name:
+        props.reservationAffinity = {
+            "consumeReservationType": "SPECIFIC_RESERVATION",
+            "key": "compute.googleapis.com/reservation-name",
+            "values": [node_group.reservation_name],
+        }
+
+    log.error(f"Reservation name: {node_group.reservation_name}")
     return props
 
 

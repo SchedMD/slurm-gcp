@@ -57,6 +57,7 @@ locals {
       bandwidth_tier = x.bandwidth_tier != null ? x.bandwidth_tier : local.bandwidth_tier
       # Beta Features
       enable_spot_vm       = x.enable_spot_vm
+      reservation_name     = x.reservation_name
       spot_instance_config = x.spot_instance_config != null ? x.spot_instance_config : local.spot_instance_config
     }
   }
