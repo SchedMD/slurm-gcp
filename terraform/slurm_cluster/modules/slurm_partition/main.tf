@@ -21,9 +21,9 @@
 locals {
   partition_conf = merge({
     "Default"        = var.default ? "YES" : null
-    "ResumeTimeout"  = var.resume_timeout != 0 ? var.resume_timeout : length(var.partition_nodeset_tpu) > 0 ? 600 : 300
+    "ResumeTimeout"  = var.resume_timeout
     "SuspendTime"    = var.suspend_time < 0 ? "INFINITE" : var.suspend_time
-    "SuspendTimeout" = var.suspend_timeout != 0 ? var.suspend_timeout : length(var.partition_nodeset_tpu) > 0 ? 240 : 120
+    "SuspendTimeout" = var.suspend_timeout
   }, var.partition_conf)
 
   partition = {

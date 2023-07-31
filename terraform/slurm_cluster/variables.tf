@@ -385,9 +385,9 @@ EOD
     partition_nodeset     = optional(list(string), [])
     partition_nodeset_dyn = optional(list(string), [])
     partition_nodeset_tpu = optional(list(string), [])
-    resume_timeout        = optional(number, 0) #let slurm_partition module decide based on if it contains a tpu nodeset or no
+    resume_timeout        = optional(number, 300)
     suspend_time          = optional(number, 300)
-    suspend_timeout       = optional(number, 0) #let slurm_partition module decide based on if it contains a tpu nodeset or no
+    suspend_timeout       = optional(number, 120)
   }))
 
   validation {
