@@ -33,4 +33,5 @@ variable "region" {
 variable "zone" {
   type        = string
   description = "The zone to place TPU resources in."
+  default     = "us-central1-b"
 }

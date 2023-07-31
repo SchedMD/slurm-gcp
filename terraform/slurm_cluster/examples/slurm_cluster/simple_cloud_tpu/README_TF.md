@@ -49,7 +49,7 @@ limitations under the License.
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |
 | <a name="input_region"></a> [region](#input\_region) | The default region to place resources in. | `string` | n/a | yes |
 | <a name="input_slurm_cluster_name"></a> [slurm\_cluster\_name](#input\_slurm\_cluster\_name) | Cluster name, used for resource naming. | `string` | `"simpletpu"` | no |
-| <a name="input_zone"></a> [zone](#input\_zone) | The zone to place TPU resources in. | `string` | n/a | yes |
+| <a name="input_zone"></a> [zone](#input\_zone) | The zone to place TPU resources in. | `string` | `"us-central1-b"` | no |
 
 ## Outputs
 

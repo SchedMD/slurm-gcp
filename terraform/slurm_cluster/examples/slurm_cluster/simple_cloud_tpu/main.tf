@@ -40,7 +40,7 @@ locals {
   ]
   nodeset_tpu = [
     {
-      nodeset_name           = "v2-8"
+      nodeset_name           = "v2x8"
       node_type              = "v2-8"
       tf_version             = "2.12.0"
       zone                   = var.zone
@@ -57,8 +57,8 @@ locals {
       partition_conf = {
         Default = "YES"
       }
-      partition_name    = "debug"
-      partition_nodeset = [local.nodeset_tpu[0].nodeset_name]
+      partition_name        = "debug"
+      partition_nodeset_tpu = [local.nodeset_tpu[0].nodeset_name]
     },
   ]
 }
