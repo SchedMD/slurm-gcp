@@ -9,6 +9,7 @@
   - [Overview](#overview)
   - [Supported TPU types](#supported-tpu-types)
   - [Supported Tensorflow versions](#supported-tensorflow-versions)
+  - [Slurm-gcp compatiblity matrix](#slurm-gcp-compatiblity-matrix)
   - [Terraform](#terraform)
     - [Quickstart Examples](#quickstart-examples)
   - [Multi-rank TPU nodes](#multi-rank-tpu-nodes)
@@ -36,7 +37,8 @@ first it is important to take into account the following considerations.
 - TPU nodes in Slurm will have different name that the one seen in GCP, that is
   because TPU names cannot be choosen or known before starting them up.
 - python 3.7 or above is needed for the TPU API module to work. In consequence
-  TPU nodes will not work with all the OS, like for example CentOS 7.
+  TPU nodes will not work with all the OS, like for example CentOS 7, see more
+  in the [compatibility matrix](#slurm-gcp-compatiblity-matrix).
 
 TPUs are configured in Slurm with what is called a nodeset_tpu, this is like a
 regular nodeset but for TPU nodes, and it takes into account the differences
@@ -56,6 +58,22 @@ At this moment the following tpu types are supported:
 At this moment the following tensorflow versions are supported:
 
 - 2.12.0
+
+## Slurm-gcp compatiblity matrix
+
+Due to the fact that the TPU support has some requirements as having python >=
+3.7 installed not all the OS support it, this table can be used to see the
+compatibility between TPU and slurm-gcp images, while TPU support is in beta
+state we will also include if it is tested or not.
+
+|       Project        | Image Family                        | Arch   | TPU Status  |
+| :------------------: | :---------------------------------- | :----- | :---------- |
+| schedmd-slurm-public | slurm-gcp-6-0-debian-11             | x86_64 | Untested    |
+| schedmd-slurm-public | slurm-gcp-6-0-hpc-rocky-linux-8     | x86_64 | Tested      |
+| schedmd-slurm-public | slurm-gcp-6-0-ubuntu-2004-lts       | x86_64 | Untested    |
+| schedmd-slurm-public | slurm-gcp-6-0-ubuntu-2204-lts-arm64 | ARM64  | Untested    |
+| schedmd-slurm-public | slurm-gcp-6-0-hpc-centos-7-k80      | x86_64 | Unsupported |
+| schedmd-slurm-public | slurm-gcp-6-0-hpc-centos-7          | x86_64 | Unsupported |
 
 ## Terraform
 
