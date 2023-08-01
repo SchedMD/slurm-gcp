@@ -70,4 +70,5 @@ No modules.
 |------|-------------|
 | <a name="output_nodeset"></a> [nodeset](#output\_nodeset) | Nodeset details. |
 | <a name="output_nodeset_name"></a> [nodeset\_name](#output\_nodeset\_name) | Nodeset name. |
+| <a name="output_service_account"></a> [service\_account](#output\_service\_account) | Service account object, includes email and scopes. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

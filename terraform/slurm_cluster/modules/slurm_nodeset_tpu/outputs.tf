@@ -23,3 +23,8 @@ output "nodeset" {
   description = "Nodeset details."
   value       = local.nodeset_tpu
 }
+
+output "service_account" {
+  description = "Service account object, includes email and scopes."
+  value       = local.service_account
+}
