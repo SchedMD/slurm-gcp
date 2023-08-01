@@ -114,7 +114,7 @@ build-debian-11:
 #     IMAGE_OS: debian-11-arm64
 
 build-ubuntu-2004-lts:
-  extends: .build-extra-image
+  extends: .build-core-image
   variables:
     IMAGE_OS: ubuntu-2004-lts
 
@@ -223,7 +223,7 @@ test-debian-11:
 #     ARCH: arm64
 
 test-ubuntu-2004-lts:
-  extends: .test-extra-image
+  extends: .test-image
   needs:
   - job: build-ubuntu-2004-lts
     optional: true
