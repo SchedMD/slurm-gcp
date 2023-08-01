@@ -45,13 +45,20 @@ required_modules = [
     ("yaml", "yaml"),
     ("addict", "addict"),
     ("httplib2", "httplib2"),
-    ("google.cloud", "google-cloud-tpu"),
+    ("google.cloud.tpu_v2", "google-cloud-tpu"),
 ]
 missing_imports = False
+can_tpu = True
 for module, name in required_modules:
     if importlib.util.find_spec(module) is None:
-        missing_imports = True
-        print(f"ERROR: Missing Python module '{module} (pip:{name})'")
+        if module == "google.cloud.tpu_v2":
+            can_tpu = False
+            print(
+                f"WARNING: Missing Python module '{module} (pip:{name})', TPU support will not work."
+            )
+        else:
+            missing_imports = True
+            print(f"ERROR: Missing Python module '{module} (pip:{name})'")
 if missing_imports:
     print("Aborting due to missing Python modules")
     exit(1)
@@ -62,7 +69,9 @@ import googleapiclient.discovery  # noqa: E402
 import google_auth_httplib2  # noqa: E402
 from googleapiclient.http import set_user_agent  # noqa: E402
 import httplib2  # noqa: E402
-from google.cloud import tpu_v2 as tpu  # noqa: E402
+
+if can_tpu:
+    from google.cloud import tpu_v2 as tpu  # noqa: E402
 import google.api_core.exceptions as gExceptions  # noqa: E402
 
 from requests import get as get_url  # noqa: E402
@@ -1062,22 +1071,25 @@ class Dumper(yaml.SafeDumper):
 class TPU:
     """Class for handling the TPU-vm nodes"""
 
-    State = tpu.types.cloud_tpu.Node.State
-    TPUS_PER_VM = 4
-    __expected_states = {
-        "create": State.READY,
-        "start": State.READY,
-        "stop": State.STOPPED,
-        "delete": State.TERMINATED,
-    }
+    if can_tpu:
+        State = tpu.types.cloud_tpu.Node.State
+        TPUS_PER_VM = 4
+        __expected_states = {
+            "create": State.READY,
+            "start": State.READY,
+            "stop": State.STOPPED,
+            "delete": State.TERMINATED,
+        }
 
-    __tpu_version_mapping = {
-        "V2": tpu.AcceleratorConfig().Type.V2,
-        "V3": tpu.AcceleratorConfig().Type.V3,
-        "V4": tpu.AcceleratorConfig().Type.V4,
-    }
+        __tpu_version_mapping = {
+            "V2": tpu.AcceleratorConfig().Type.V2,
+            "V3": tpu.AcceleratorConfig().Type.V3,
+            "V4": tpu.AcceleratorConfig().Type.V4,
+        }
 
     def __init__(self, nodeset):
+        if not can_tpu:
+            raise Exception("TPU pip package not installed")
         self._nodeset = nodeset
         self._parent = f"projects/{lkp.project}/locations/{nodeset.zone}"
         self._client = tpu.TpuClient()
@@ -1231,15 +1243,7 @@ class TPU:
             "slurm_bucket_path": lkp.cfg.bucket_path,
             "slurm_names": ";".join(slurm_names),
         }
-        node.tags = [lkp.cfg.slurm_cluster_name]
-        if self.nodeset.service_account:
-            node.service_account.email = self.nodeset.service_account.email
-            node.service_account.scope = self.nodeset.service_account.scopes
         node.scheduling_config.preemptible = self.preemptible
-        if self.nodeset.network:
-            node.network_config.network = self.nodeset.network
-        if self.nodeset.subnetwork:
-            node.network_config.subnetwork = self.nodeset.subnetwork
         node.network_config.enable_external_ips = self.enable_public_ip
         if self.data_disks:
             node.data_disks = self.data_disks
