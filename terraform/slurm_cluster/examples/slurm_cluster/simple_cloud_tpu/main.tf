@@ -46,8 +46,10 @@ locals {
       zone                   = var.zone
       preemptible            = true
       preserve_tpu           = true
+      enable_public_ip       = true
       node_count_dynamic_max = 20
       node_count_static      = 0
+      subnetwork             = data.google_compute_subnetwork.default.self_link
       service_account        = module.slurm_sa_iam["compute"].service_account
     },
   ]

@@ -129,6 +129,7 @@ locals {
 
   nodeset_tpu = [for x in var.nodeset_tpu : merge(x, {
     service_account = var.create_service_accounts ? module.slurm_sa_iam["compute"].service_account : x.service_account
+    subnetwork      = coalesce(try(module.slurm_network[0].network.network_name, null), x.subnetwork, var.subnetwork)
   })]
 
   login_nodes = [

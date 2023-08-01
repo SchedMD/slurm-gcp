@@ -1232,6 +1232,10 @@ class TPU:
             "slurm_names": ";".join(slurm_names),
         }
         node.scheduling_config.preemptible = self.preemptible
+        if self.nodeset.network:
+            node.network_config.network = self.nodeset.network
+        if self.nodeset.subnetwork:
+            node.network_config.subnetwork = self.nodeset.subnetwork
         node.network_config.enable_external_ips = self.enable_public_ip
         if self.data_disks:
             node.data_disks = self.data_disks

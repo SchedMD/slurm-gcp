@@ -234,6 +234,7 @@ module "slurm_nodeset_tpu" {
   data_disks             = each.value.data_disks
   docker_image           = each.value.docker_image
   project_id             = var.project_id
+  subnetwork             = each.value.subnetwork
 }
 
 ###################

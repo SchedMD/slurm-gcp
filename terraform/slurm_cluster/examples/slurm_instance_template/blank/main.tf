@@ -29,7 +29,7 @@ data "google_compute_network" "default" {
 resource "random_string" "slurm_cluster_name" {
   length  = 8
   upper   = false
-  number  = false
+  numeric = false
   special = false
 }
 
