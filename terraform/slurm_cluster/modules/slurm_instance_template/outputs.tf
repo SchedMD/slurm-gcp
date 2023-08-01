@@ -35,6 +35,6 @@ output "tags" {
 }
 
 output "service_account" {
-  description = "value"
+  description = "Service account object, includes email and scopes."
   value       = module.instance_template.service_account
 }
