@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## \[6-next\]
+## \[6.1.0\]
 
 - Add on_host_maintenance to packer module to support instances with GPUs.
 - Fix retry of powering up static nodes on failure.
