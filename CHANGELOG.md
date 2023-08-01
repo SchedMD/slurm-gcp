@@ -8,7 +8,8 @@ All notable changes to this project will be documented in this file.
 - Fix retry of powering up static nodes on failure.
 - Add support for H3 machines and enumerated multi-socket processors.
 - Fix munge failing after manual reboot of node.
-- \[Beta feature\] Added support for TPU-vm nodes
+- \[Beta feature\] Added support for TPU-vm nodes.
+- \[Beta feature\] Added support for TPU-vm multi-rank nodes.
 - Add `ignore_prefer_validation` to SchedulerParameters in generated cloud.conf.
 - Remove unaltered centos-7 image from actively published and supported images.
 - Upgrade installed Slurm to 23.02.4.
