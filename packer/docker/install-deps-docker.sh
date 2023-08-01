@@ -5,5 +5,5 @@ apt install -y curl nfs-common cron sudo
 python3 -m pip install --upgrade pip wheel setuptools
 python3 -m pip install ansible
 bash <(curl -sSL https://sdk.cloud.google.com) --disable-prompts --install-dir=/opt
-ln -s /opt/google-cloud-sdk/bin/gsutil /usr/local/bin/
+ln -s /opt/google-cloud-sdk.staging/bin/gsutil /usr/local/bin/
 ln -s /opt/google-cloud-sdk/bin/gcloud /usr/local/bin/
