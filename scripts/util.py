@@ -1231,6 +1231,10 @@ class TPU:
             "slurm_bucket_path": lkp.cfg.bucket_path,
             "slurm_names": ";".join(slurm_names),
         }
+        node.tags = [lkp.cfg.slurm_cluster_name]
+        if self.nodeset.service_account:
+            node.service_account.email = self.nodeset.service_account.email
+            node.service_account.scope = self.nodeset.service_account.scopes
         node.scheduling_config.preemptible = self.preemptible
         if self.nodeset.network:
             node.network_config.network = self.nodeset.network
