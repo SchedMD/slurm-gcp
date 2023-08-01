@@ -270,31 +270,6 @@ def map_with_futures(func, seq):
             yield res
 
 
-def combined_execute_map_with_futures(func_exe, func_map, seq_exe, seq_map):
-    with ThreadPoolExecutor() as exe:
-        futures_exe = []
-        futures_map = []
-        res = []
-        for i in seq_exe:
-            future = exe.submit(func_exe, i)
-            futures_exe.append(future)
-        for i in seq_map:
-            future = exe.submit(func_map, i)
-            futures_map.append(future)
-        for future in as_completed(futures_exe + futures_map):
-            if future in futures_exe:
-                result = future.exception()
-                if result is not None:
-                    raise result
-            else:
-                res = None
-                try:
-                    res = future.result()
-                except Exception as e:
-                    res = e
-                yield res
-
-
 def blob_get(file, project=None):
     from google.cloud import storage
 

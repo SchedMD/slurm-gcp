@@ -30,7 +30,7 @@ from util import (
     chunked,
     dirs,
     ensure_execute,
-    combined_execute_map_with_futures,
+    execute_with_futures,
     get_insert_operations,
     log_api_request,
     map_with_futures,
@@ -392,10 +392,10 @@ def resume_nodes(nodes, resume_data=None):
         )
         for group, chunk in grouped_nodes.items()
     }
-    norm_data = combined_execute_map_with_futures(
-        start_tpu, ensure_execute, tpu_start_data, inserts.values()
+
+    bulk_ops = dict(
+        zip(inserts.keys(), map_with_futures(ensure_execute, inserts.values()))
     )
-    bulk_ops = dict(zip(inserts.keys(), norm_data))
     log.debug(f"bulk_ops={yaml.safe_dump(bulk_ops)}")
     started = {
         group: op for group, op in bulk_ops.items() if not isinstance(op, Exception)
@@ -419,6 +419,11 @@ def resume_nodes(nodes, resume_data=None):
             )
     # wait for all bulkInserts to complete and log any errors
     bulk_operations = {group: wait_for_operation(op) for group, op in started.items()}
+
+    # Start TPU after regular nodes so that regular nodes are not affected by the slower TPU nodes
+    log.debug(f"tpu_start_data={yaml.safe_dump(tpu_start_data)}")
+    execute_with_futures(start_tpu, tpu_start_data)
+
     all_successful_inserts = []
 
     for group, bulk_op in bulk_operations.items():
