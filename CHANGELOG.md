@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Add `ignore_prefer_validation` to SchedulerParameters in generated cloud.conf.
 - Remove unaltered centos-7 image from actively published and supported images.
 - Upgrade installed Slurm to 23.02.4.
+- Fix CUDA install on Ubuntu 20.04.
 
 ## \[6.0.0\]
 

@@ -19,7 +19,7 @@
       is set to True)
     package:
       name: '{{ item }}'
-      state: present
+      state: fixed
       update_cache: true
     with_items: '{{ cuda_packages }}'
     register: cuda_packages_installation
