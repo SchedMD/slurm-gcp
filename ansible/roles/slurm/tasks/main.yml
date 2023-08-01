@@ -72,6 +72,15 @@
   - util.py
   - load_bq.py
 
+- name: Copy slurm_gcp_plugins
+  copy:
+    src: scripts/slurm_gcp_plugins
+    dest: '{{ slurm_paths.scripts }}/'
+    owner: '{{slurm_user.user}}'
+    group: '{{slurm_user.group}}'
+    mode: '0644'
+    directory_mode: '0755'
+
 - name: Copy Jobs
   copy:
     src: jobs/
