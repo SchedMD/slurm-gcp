@@ -90,12 +90,6 @@ def delete_tpu_instances(instances):
 
 def delete_instances(instances):
     """delete instances individually"""
-    tpu_instances = []
-    for instance in instances[:]:
-        if lkp.node_is_tpu(instance):
-            tpu_instances.append(instance)
-            instances.remove(instance)
-
     invalid, valid = separate(lambda inst: bool(lkp.instance(inst)), instances)
     if len(invalid) > 0:
         log.debug("instances do not exist: {}".format(",".join(invalid)))
@@ -112,7 +106,6 @@ def delete_instances(instances):
         for err, nodes in groupby_unsorted(lambda n: failed[n][1], failed.keys()):
             log.error(f"instances failed to delete: {err} ({to_hostlist(nodes)})")
     wait_for_operations(done.values())
-    delete_tpu_instances(tpu_instances)
     # TODO do we need to check each operation for success? That is a lot more API calls
     log.info(f"deleted {len(done)} instances {to_hostlist(done.keys())}")
 
@@ -123,7 +116,14 @@ def suspend_nodes(nodelist):
     if not isinstance(nodes, list):
         nodes = util.to_hostnames(nodes)
 
+    tpu_nodes = []
+    for node in nodes[:]:
+        if lkp.node_is_tpu(node):
+            tpu_nodes.append(node)
+            nodes.remove(node)
+
     delete_instances(nodes)
+    delete_tpu_instances(tpu_nodes)
 
 
 def main(nodelist):
