@@ -30,35 +30,36 @@ locals {
     install_gcsfuse  = var.install_gcsfuse
     tf_version       = var.tf_version
   }
-  parse_version  = regex("^(?P<major>\\d+)(?:\\.(?P<minor>\\d+))?(?:\\.(?P<patch>\\d+))?|(?P<branch>\\w+)$", var.slurmgcp_version)
-  branch         = local.parse_version["branch"] != null ? replace(local.parse_version["branch"], ".", "-") : null
-  version        = join("-", compact([local.parse_version["major"], local.parse_version["minor"]]))
-  docker_version = "${replace(var.docker_image, ":", "-")}-tf-${var.tf_version}"
-  gcr_repo       = "${var.project_id}/tpu"
-  gcr_tag        = "slurm-gcp-${local.version}-${local.docker_version}"
+  parse_version     = regex("^(?P<major>\\d+)(?:\\.(?P<minor>\\d+))?(?:\\.(?P<patch>\\d+))?|(?P<branch>\\w+)$", var.slurmgcp_version)
+  branch            = local.parse_version["branch"] != null ? replace(local.parse_version["branch"], ".", "-") : null
+  version           = join("-", compact([local.parse_version["major"], local.parse_version["minor"]]))
+  docker_version    = "${replace(var.docker_image, ":", "-")}"
+  docker_tf_version = "tf-${var.tf_version}"
+  gcr_repo          = "${var.project_id}/tpu"
+  base_tag          = "slurm-gcp-${local.version}-${local.docker_version}"
+  gcr_tf_tag        = "slurm-gcp-${local.version}-${local.docker_tf_version}"
 }
 
 ##########
 # SOURCE #
 ##########
 
-source "docker" "gcp" {
-  image  = var.docker_image
+source "docker" "base" {
   commit = true
-  changes = [
-    "ENV OS_ENV=slurm_container",
-    "ENTRYPOINT [\"/usr/bin/systemd\"]"
-  ]
 }
 #########
 # BUILD #
 #########
 
 build {
-  name = "slurm-gcp-docker"
-  sources = [
-    "source.docker.gcp"
-  ]
+  name = "base"
+  source "source.docker.base" {
+    image = var.docker_image
+    changes = [
+      "ENV OS_ENV=slurm_container",
+      "ENTRYPOINT [\"/usr/bin/systemd\"]"
+    ]
+  }
   provisioner "shell" {
     script = "./install-deps-docker.sh"
   }
@@ -86,9 +87,38 @@ build {
   }
   post-processors {
     post-processor "docker-tag" {
+      repository = "local/${local.gcr_repo}"
+      tags       = [local.base_tag]
+    }
+  }
+}
+
+build {
+  name = "tensorflow"
+  source "source.docker.base" {
+    image = "local/${local.gcr_repo}:${local.base_tag}"
+    pull  = false
+  }
+  provisioner "ansible" {
+    playbook_file = "${local.ansible_dir}/tf-playbook.yml"
+    ansible_env_vars = [
+      "ANSIBLE_CONFIG=${local.ansible_dir}/ansible.cfg",
+    ]
+    extra_arguments = [
+      "--extra-vars",
+      "${jsonencode(local.ansible_vars)}",
+    ]
+  }
+  post-processors {
+    post-processor "docker-tag" {
       repository = "gcr.io/${local.gcr_repo}"
-      tags       = [local.gcr_tag]
-      only       = ["docker.gcp"]
+      tags       = [local.gcr_tf_tag]
+    }
+    post-processor "manifest" {
+      output = "docker-manifest.json"
+
+      strip_path = false
+      strip_time = false
     }
   }
   #Remember to make docker push of the image to push it to gcr

@@ -17,7 +17,7 @@
 #################
 
 variable "tf_version" {
-  description = "The tensoflow version to install in the docker image for the TPU, if set to unset the docker image will not be generated."
+  description = "The tensoflow version to install in the docker image for the TPU."
   type        = string
 }
 

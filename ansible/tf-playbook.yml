@@ -25,9 +25,7 @@
       build: /tmp
       apps: /opt/apps
       modulefiles: /opt/apps/modulefiles
-    install_ompi: true
-    install_lustre: true
-    install_gcsfuse: true
+    tf_version: 2.12.0
 
   pre_tasks:
   - name: Supported OS Check
@@ -61,41 +59,8 @@
       msg: Update Ansible to at least {{min_ansible_version}} to use this playbook.
 
   roles:
-  - motd
   - common
-  - role: kernel
-    vars:
-      reboot: false
-  - role: selinux
-    vars:
-      reboot: false
-  - role: cgroups
-    vars:
-      change_grub: false
-  - role: munge
-    vars:
-      install_only: true
-  - role: mariadb
-    vars:
-      install_server: false
-  - libjwt
-  - lmod
-  - role: slurm
-    vars:
-      handle_services: false
-  - slurmcmd
-  - role: ompi
-    when: install_ompi
-  - role: lustre
-    when:
-    - install_lustre
-    - ansible_architecture == "x86_64"
-  - role: gcsfuse
-    when:
-    - install_gcsfuse
-    - ansible_architecture == "x86_64"
-  - logrotate
   - python
-  - role: ldap
-    when: ansible_os_family != 'Debian'
-  - scripts
+  - role: tpu
+    vars:
+      tf_version: tf_version

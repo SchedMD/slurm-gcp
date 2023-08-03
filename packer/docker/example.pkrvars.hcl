@@ -20,6 +20,8 @@ project_id = "<PROJECT_ID>"
 zone       = "us-central1-a"
 
 tf_version = "2.12.0"
+#Lustre does not get built correctly on a container
+install_lustre = false
 #docker_image = ubuntu:20.04
 
 # prefix = null

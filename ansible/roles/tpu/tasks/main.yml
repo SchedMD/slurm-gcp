@@ -13,9 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+- name: Ensure the version is in variables
+  assert:
+    that:
+    - tf_version in tf_versions_to_tpu_mapping.keys()
+    fail_msg: The tf_version {{tf_version}} is not supported
+
+- name: Calculate python310 variable
+  set_fact:
+    python310: "{{ tf_version.split('.')[1] | int >= 13 or (tf_version.split('.')[1]\
+      \ | int == 12 and tf_version.split('.')[2] | int >= 1) }}"
+
+- name: Generate wheel variable
+  set_fact:
+    wheel: >-
+      https://storage.googleapis.com/cloud-tpu-tpuvm-artifacts/tensorflow/tf-{{ tf_version
+      }}/tensorflow-{{ tf_version }}-{% if python310 %}cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64{%
+      else %}cp38-cp38-linux_x86_64{% endif %}.whl
+
+- name: Generate tpu_so variable
+  set_fact:
+    tpu_so: >-
+      https://storage.googleapis.com/cloud-tpu-tpuvm-artifacts/libtpu/{{ tf_versions_to_tpu_mapping[tf_version]
+      }}/libtpu.so
+
 - name: Install Tensorflow package
   pip:
-    name: "{{ tf_versions[tf_version]['tf_wheel'] }}"
+    name: '{{ wheel }}'
     extra_args: --upgrade --ignore-installed
     executable: pip3
     state: present
@@ -23,7 +47,7 @@
 
 - name: Download libtpu.so
   ansible.builtin.get_url:
-    url: "{{ tf_versions[tf_version]['tpu_so'] }}"
+    url: '{{ tpu_so }}'
     dest: /lib/libtpu.so
     mode: '0555'
     owner: root
