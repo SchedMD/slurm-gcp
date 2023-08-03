@@ -54,7 +54,7 @@ variable "accelerator_config" {
 }
 
 variable "docker_image" {
-  description = "The gcp container registry id docker image to use in the TPU vms, it defaults to gcr.io/schedmd-slurm-public/tpu:tf_<tf_version variable>"
+  description = "The gcp container registry id docker image to use in the TPU vms, it defaults to gcr.io/schedmd-slurm-public/tpu:slurm-gcp-6-1-tf-<var.tf_version>"
   type        = string
   default     = ""
 }

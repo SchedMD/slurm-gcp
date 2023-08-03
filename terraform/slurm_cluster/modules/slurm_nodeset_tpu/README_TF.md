@@ -49,7 +49,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_accelerator_config"></a> [accelerator\_config](#input\_accelerator\_config) | Nodeset accelerator config, see https://cloud.google.com/tpu/docs/supported-tpu-configurations for details. | <pre>object({<br>    topology = string<br>    version  = string<br>  })</pre> | <pre>{<br>  "topology": "",<br>  "version": ""<br>}</pre> | no |
 | <a name="input_data_disks"></a> [data\_disks](#input\_data\_disks) | The data disks to include in the TPU node | `list(string)` | `[]` | no |
-| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | The gcp container registry id docker image to use in the TPU vms, it defaults to gcr.io/schedmd-slurm-public/tpu:tf\_<tf\_version variable> | `string` | `""` | no |
+| <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | The gcp container registry id docker image to use in the TPU vms, it defaults to gcr.io/schedmd-slurm-public/tpu:slurm-gcp-6-1-tf-<var.tf\_version> | `string` | `""` | no |
 | <a name="input_enable_public_ip"></a> [enable\_public\_ip](#input\_enable\_public\_ip) | Enables IP address to access the Internet. | `bool` | `false` | no |
 | <a name="input_network"></a> [network](#input\_network) | The name of the network to attach the TPU-vm of this nodeset to. | `string` | `""` | no |
 | <a name="input_node_count_dynamic_max"></a> [node\_count\_dynamic\_max](#input\_node\_count\_dynamic\_max) | Maximum number of nodes allowed in this partition to be created dynamically. | `number` | `0` | no |
