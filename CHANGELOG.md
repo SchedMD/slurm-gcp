@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[6.1.1\]
+
+- Fix suspend issue with TPU nodes
+- Add TPU job example
+- Changed slurm dependency from man2html to man2html-base and man2html-core to
+  reduce image size
+- Changed default docker image name to remove the OS reference
+
 ## \[6.1.0\]
 
 - Add on_host_maintenance to packer module to support instances with GPUs.
