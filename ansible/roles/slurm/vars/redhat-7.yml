@@ -30,7 +30,7 @@ slurm_packages:
 - lua
 - lua-devel
 - lz4-devel
-- man2html
+- man2html-core
 - ncurses-devel
 - numactl
 - numactl-devel
