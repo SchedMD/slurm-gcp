@@ -1072,10 +1072,17 @@ def machine_type_sockets(template):
     if not m:
         raise Exception(f"template {template} does not match expected regex")
     family = m.group("family")
+    try:
+        core_count = int(m.group("core"))
+    except ValueError:
+        log.warning(
+            f"core count in machine type {template.machineType} is not an integer. Default to 1 socket."
+        )
+        return 1
     socket_count = dict.get(
         {
             "h3": 2,
-            "c2d": 2,
+            "c2d": 2 if core_count > 56 else 1,
         },
         family,
         1,  # assume 1 socket for all other families
