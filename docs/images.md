@@ -83,9 +83,19 @@ For the [TPU](./glossary.md#tpu) nodes docker images are also released.
 
 ### Published Docker Image Family
 
-|       Project        | Image Family                             | Status    |
-| :------------------: | :--------------------------------------- | :-------- |
-| schedmd-slurm-public | tpu:slurm-gcp-6-0-ubuntu-20.04-tf-2.12.0 | Supported |
+|       Project        | Image Family                | Status    |
+| :------------------: | :-------------------------- | :-------- |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.8.0  | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.8.3  | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.9.1  | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.9.3  | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.10.0 | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.10.1 | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.11.0 | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.11.1 | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.12.0 | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.12.1 | Supported |
+| schedmd-slurm-public | tpu:slurm-gcp-6-1-tf-2.13.0 | Supported |
 
 ## Custom Image
 
