@@ -32,6 +32,7 @@ from util import (
     ensure_execute,
     execute_with_futures,
     fetch_config_yaml,
+    fetch_config_yaml_md5,
     load_config_file,
     run,
     save_config,
@@ -377,26 +378,37 @@ def sync_slurm():
         do_node_update(status, nodes)
 
 
-def reconfigure_slurm():
-    CONFIG_FILE_TMP = Path("/tmp/config.yaml")
+def read_hash(filename):
+    filename = Path(filename)
+    if not filename.exists():
+        return None
+    with open(filename, "r", encoding="utf-8") as file:
+        return file.readline()
 
+
+def save_hash(filename, hash):
+    with open(filename, "w+", encoding="utf-8") as file:
+        file.write(hash)
+
+
+def reconfigure_slurm():
+    CONFIG_HASH = Path("/slurm/scripts/.config.hash")
     update_msg = "*** slurm configuration was updated ***"
     cfg_old = load_config_file(CONFIG_FILE)
-    hash_old = hashlib.sha256(yaml.dump(cfg_old, encoding="utf-8"))
 
     if cfg_old.hybrid:
         # terraform handles generating the config.yaml, don't do it here
         return
 
-    cfg_new = fetch_config_yaml()
-    # Save to file and read file to ensure Paths are marshalled the same
-    save_config(cfg_new, CONFIG_FILE_TMP)
-    cfg_new = load_config_file(CONFIG_FILE_TMP)
-    hash_new = hashlib.sha256(yaml.dump(cfg_new, encoding="utf-8"))
+    hash_new: hashlib.md5 = fetch_config_yaml_md5()
+    hash_old: str = read_hash(CONFIG_HASH)
 
-    if hash_new.hexdigest() != hash_old.hexdigest():
+    if hash_new.hexdigest() != hash_old:
         log.debug("Delta detected. Reconfiguring Slurm now.")
+        cfg_new = fetch_config_yaml()
+        save_hash(CONFIG_HASH, hash_new.hexdigest())
         save_config(cfg_new, CONFIG_FILE)
+        cfg_new = load_config_file(CONFIG_FILE)
         lkp = Lookup(cfg_new)
         util.lkp = lkp
         if lkp.instance_role_safe == "controller":

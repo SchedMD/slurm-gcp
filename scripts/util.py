@@ -401,6 +401,16 @@ def fetch_config_yaml():
     return cfg
 
 
+def fetch_config_yaml_md5():
+    """Fetch config.yaml blob md5 from bucket"""
+    import hashlib
+
+    blob = blob_get("config.yaml")
+    blob.reload()  # Populate blob with metadata
+    hash_str = str(blob.md5_hash).encode(encoding="utf-8")
+    return hashlib.md5(hash_str)
+
+
 def load_config_file(path):
     """load config from file"""
     content = None

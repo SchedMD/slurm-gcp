@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Fix accelerator optimized machine type SMT handling.
 - Prefix user visible errors with its source.
 - Fix accelerator optimized machine type socket handling.
+- Only compare config.yaml blob to cache file.
 
 ## \[6.1.1\]
 
