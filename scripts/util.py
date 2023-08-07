@@ -1003,22 +1003,19 @@ def get_insert_operations(group_ids, flt=None, project=None, compute=compute):
 
 
 def machine_type_sockets(template):
-    pattern = re.compile("^(?P<family>[^-]+)-(?P<type>[^-]+)-(?P<core>[^-]+)$")
+    pattern = re.compile("^(?P<family>[^-]+)")
     m = pattern.match(template.machineType)
     if not m:
         raise Exception(f"template {template} does not match expected regex")
     family = m.group("family")
-    try:
-        core_count = int(m.group("core"))
-    except ValueError:
-        log.warning(
-            f"core count in machine type {template.machineType} is not an integer. Default to 1 socket."
-        )
-        return 1
+    machineInfo = template.machine_info
+    if not machineInfo:
+        machineInfo = lkp.template_info(template)
+    guestCpus: int = int(machineInfo.guestCpus)
     socket_count = dict.get(
         {
             "h3": 2,
-            "c2d": 2 if core_count > 56 else 1,
+            "c2d": 2 if guestCpus > 56 else 1,
         },
         family,
         1,  # assume 1 socket for all other families
