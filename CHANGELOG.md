@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## \[6.1.2\]
 
+- Fix accelerator optimized machine type SMT handling.
+
 ## \[6.1.1\]
 
 - Fix suspend issue with TPU nodes

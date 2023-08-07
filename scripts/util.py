@@ -1028,11 +1028,14 @@ def machine_type_sockets(template):
 
 def isSmt(template):
     machineType: str = template.machineType
+    machineInfo = template.machine_info
+    if not machineInfo:
+        machineInfo = lkp.template_info(template)
+    guestCpus: int = int(machineInfo.guestCpus)
 
-    pattern = re.compile("^(?P<family>[^-]+)-(?P<type>[^-]+)-(?P<core>[^-]+)$")
+    pattern = re.compile("^(?P<family>[^-]+)")
     matches = pattern.match(machineType)
     machineTypeFamily: str = matches["family"]
-    machineTypeCore: int = int(matches["core"])
 
     # https://cloud.google.com/compute/docs/cpu-platforms
     noSmtFamily = [
@@ -1042,7 +1045,7 @@ def isSmt(template):
     ]
     if machineTypeFamily in noSmtFamily:
         return False
-    elif machineTypeCore == 1:
+    elif guestCpus == 1:
         return False
     return True
 
