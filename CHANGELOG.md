@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## \[5.7.6\]
 
 - Prefix user visible errors with its source.
+- Fix accelerator optimized machine type SMT handling.
+- Fix accelerator optimized machine type socket handling.
 
 ## \[5.7.5\]
 
