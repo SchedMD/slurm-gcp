@@ -407,7 +407,7 @@ def resume_nodes(nodes, resume_data=None):
         failed_reqs = [str(e) for e in failed.items()]
         log.error("bulkInsert API failures: {}".format("; ".join(failed_reqs)))
         for ident, exc in failed.items():
-            down_nodes(grouped_nodes[ident].nodes, exc._get_reason())
+            down_nodes(grouped_nodes[ident].nodes, f"GCP Error: {exc._get_reason()}")
 
     if log.isEnabledFor(logging.DEBUG):
         for group, op in started.items():
@@ -456,7 +456,7 @@ def resume_nodes(nodes, resume_data=None):
                 for err in failed_op["error"]["errors"]
             )
             if code != "RESOURCE_ALREADY_EXISTS":
-                down_nodes(hostlist, msg)
+                down_nodes(hostlist, f"GCP Error: {msg}")
             log.error(
                 f"errors from insert for node '{failed_node}' ({failed_op['name']}): {msg}"
             )
