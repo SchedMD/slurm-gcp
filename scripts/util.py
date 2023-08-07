@@ -1008,10 +1008,7 @@ def machine_type_sockets(template):
     if not m:
         raise Exception(f"template {template} does not match expected regex")
     family = m.group("family")
-    machineInfo = template.machine_info
-    if not machineInfo:
-        machineInfo = lkp.template_info(template)
-    guestCpus: int = int(machineInfo.guestCpus)
+    guestCpus: int = int(template.machine_info.guestCpus)
     socket_count = dict.get(
         {
             "h3": 2,
@@ -1025,10 +1022,7 @@ def machine_type_sockets(template):
 
 def isSmt(template):
     machineType: str = template.machineType
-    machineInfo = template.machine_info
-    if not machineInfo:
-        machineInfo = lkp.template_info(template)
-    guestCpus: int = int(machineInfo.guestCpus)
+    guestCpus: int = int(template.machine_info.guestCpus)
 
     pattern = re.compile("^(?P<family>[^-]+)")
     matches = pattern.match(machineType)
