@@ -1225,6 +1225,19 @@ class TPU:
         )
 
     def create_node(self, nodename):
+        if self.vmcount > 1 and not isinstance(nodename, list):
+            log.error(
+                f"Tried to create a {self.vmcount} node TPU on nodeset {self._nodeset.nodeset_name} but only received one nodename {nodename}"
+            )
+            return False
+        if self.vmcount > 1 and (
+            isinstance(nodename, list) and len(nodename) != self.vmcount
+        ):
+            log.error(
+                f"Expected to receive a list of {self.vmcount} nodenames for TPU node creation in nodeset {self._nodeset.nodeset_name}, but received this list {nodename}"
+            )
+            return False
+
         node = tpu.Node()
         node.accelerator_config = self.ac
         node.runtime_version = f"tpu-vm-tf-{self.tf_version}"
