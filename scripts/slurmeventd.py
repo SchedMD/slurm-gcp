@@ -125,10 +125,6 @@ def callback(message: pubsub_v1.subscriber.message.Message) -> None:
         lkp.clear_template_info_cache()
 
         if lkp.instance_role == "controller":
-            # Inactive all partitions to prevent further scheduling
-            partitions = get_partitions()
-            update_partitions(partitions, "INACTIVE")
-
             # Fetch and write new config.yaml
             util.cfg = util.config_from_metadata()
             if not util.cfg.pubsub_topic_id:

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[5.7.7\]
 
 - Fix login nodes not reconfiguring when `enable_reconfigure=true`.
+- Do not temporarily disable partitions during reconfigure process.
 
 ## \[5.7.6\]
 
