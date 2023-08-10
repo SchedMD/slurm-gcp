@@ -52,6 +52,11 @@ output "compute_list" {
   value       = local.compute_list
 }
 
+output "pubsub_topic" {
+  description = "Cluster Pub/Sub topic."
+  value       = one(google_pubsub_topic.this[*].name)
+}
+
 ##########
 # GOOGLE #
 ##########

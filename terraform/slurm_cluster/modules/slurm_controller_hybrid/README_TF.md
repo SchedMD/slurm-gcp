@@ -110,5 +110,6 @@ limitations under the License.
 | <a name="output_compute_list"></a> [compute\_list](#output\_compute\_list) | Cluster compute node list. |
 | <a name="output_output_dir"></a> [output\_dir](#output\_output\_dir) | Directory where configuration files are written to. |
 | <a name="output_partitions"></a> [partitions](#output\_partitions) | Cluster partitions. |
+| <a name="output_pubsub_topic"></a> [pubsub\_topic](#output\_pubsub\_topic) | Cluster Pub/Sub topic. |
 | <a name="output_slurm_cluster_name"></a> [slurm\_cluster\_name](#output\_slurm\_cluster\_name) | Cluster name for resource naming and slurm accounting. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

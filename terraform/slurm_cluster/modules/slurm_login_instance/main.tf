@@ -26,6 +26,12 @@ locals {
   )
 
   suffix = random_string.suffix.result
+
+  service_account_email = (
+    var.enable_reconfigure
+    ? data.google_compute_instance_template.login_template[0].service_account[0].email
+    : null
+  )
 }
 
 ##########
@@ -36,6 +42,16 @@ resource "random_string" "suffix" {
   length  = 8
   upper   = false
   special = false
+}
+
+##################
+# DATA: TEMPLATE #
+##################
+
+data "google_compute_instance_template" "login_template" {
+  count = var.enable_reconfigure ? 1 : 0
+
+  name = var.instance_template
 }
 
 ############
@@ -93,4 +109,48 @@ resource "google_compute_project_metadata_item" "login_startup_scripts" {
     update = "10m"
     delete = "10m"
   }
+}
+
+##########
+# PUBSUB #
+##########
+
+module "slurm_pubsub" {
+  source  = "terraform-google-modules/pubsub/google"
+  version = "~> 3.0"
+
+  count = var.enable_reconfigure ? 1 : 0
+
+  project_id = var.project_id
+  topic      = var.pubsub_topic
+
+  create_topic        = false
+  grant_token_creator = false
+
+  pull_subscriptions = [
+    for hostname in module.slurm_login_instance.names : {
+      name                    = hostname
+      ack_deadline_seconds    = 120
+      enable_message_ordering = true
+      maximum_backoff         = "300s"
+      minimum_backoff         = "30s"
+    }
+  ]
+
+  subscription_labels = {
+    slurm_cluster_name = var.slurm_cluster_name
+  }
+}
+
+resource "google_pubsub_subscription_iam_member" "controller_pull_subscription_sa_binding_subscriber" {
+  for_each = var.enable_reconfigure ? toset(module.slurm_login_instance.names) : []
+
+  project      = var.project_id
+  subscription = each.value
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${local.service_account_email}"
+
+  depends_on = [
+    module.slurm_pubsub,
+  ]
 }

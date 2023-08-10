@@ -227,7 +227,8 @@ module "slurm_login_instance" {
 
   for_each = { for x in var.login_nodes : x.group_name => x }
 
-  access_config = lookup(each.value, "access_config", [])
+  access_config      = lookup(each.value, "access_config", [])
+  enable_reconfigure = var.enable_reconfigure
   instance_template = (
     each.value.instance_template != null && each.value.instance_template != ""
     ? each.value.instance_template
@@ -236,6 +237,7 @@ module "slurm_login_instance" {
   login_startup_scripts = var.login_startup_scripts
   num_instances         = each.value.num_instances
   project_id            = var.project_id
+  pubsub_topic          = var.enable_hybrid ? module.slurm_controller_hybrid[0].pubsub_topic : module.slurm_controller_instance[0].pubsub_topic
   region                = each.value.region
   slurm_cluster_name    = var.slurm_cluster_name
   static_ips            = each.value.static_ips

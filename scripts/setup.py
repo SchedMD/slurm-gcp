@@ -1153,6 +1153,9 @@ def setup_login(args):
     run("systemctl enable slurmd", timeout=30)
     run("systemctl restart slurmd", timeout=30)
 
+    run("systemctl enable slurmeventd", timeout=30)
+    run("systemctl restart slurmeventd", timeout=30)
+
     run_custom_scripts()
 
     log.info("Check status of cluster services")

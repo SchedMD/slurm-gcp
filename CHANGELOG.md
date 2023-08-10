@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[5.7.7\]
+
+- Fix login nodes not reconfiguring when `enable_reconfigure=true`.
+
 ## \[5.7.6\]
 
 - Prefix user visible errors with its source.

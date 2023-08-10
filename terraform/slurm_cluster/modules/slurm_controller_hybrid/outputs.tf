@@ -34,6 +34,11 @@ output "output_dir" {
   value       = local.output_dir
 }
 
+output "pubsub_topic" {
+  description = "Cluster Pub/Sub topic."
+  value       = one(google_pubsub_topic.this[*].name)
+}
+
 ##########
 # GOOGLE #
 ##########
