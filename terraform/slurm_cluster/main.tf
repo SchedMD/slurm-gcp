@@ -126,6 +126,7 @@ module "slurm_controller_instance" {
   compute_startup_scripts_timeout    = var.compute_startup_scripts_timeout
   enable_devel                       = var.enable_devel
   enable_bigquery_load               = var.enable_bigquery_load
+  enable_slurm_gcp_plugins           = var.enable_slurm_gcp_plugins
   enable_cleanup_compute             = var.enable_cleanup_compute
   enable_cleanup_subscriptions       = var.enable_cleanup_subscriptions
   enable_reconfigure                 = var.enable_reconfigure
@@ -167,6 +168,7 @@ module "slurm_controller_hybrid" {
   disable_default_mounts          = var.disable_default_mounts
   enable_devel                    = var.enable_devel
   enable_bigquery_load            = var.enable_bigquery_load
+  enable_slurm_gcp_plugins        = var.enable_slurm_gcp_plugins
   enable_cleanup_compute          = var.enable_cleanup_compute
   enable_cleanup_subscriptions    = var.enable_cleanup_subscriptions
   enable_reconfigure              = var.enable_reconfigure

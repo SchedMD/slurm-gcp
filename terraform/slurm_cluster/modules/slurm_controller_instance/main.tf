@@ -49,13 +49,14 @@ locals {
 
 locals {
   metadata_config = {
-    enable_bigquery_load = var.enable_bigquery_load
-    enable_reconfigure   = var.enable_reconfigure
-    cloudsql             = var.cloudsql != null ? true : false
-    cluster_id           = random_uuid.cluster_id.result
-    project              = var.project_id
-    pubsub_topic_id      = var.enable_reconfigure ? google_pubsub_topic.this[0].name : null
-    slurm_cluster_name   = var.slurm_cluster_name
+    enable_bigquery_load     = var.enable_bigquery_load
+    enable_slurm_gcp_plugins = var.enable_slurm_gcp_plugins
+    enable_reconfigure       = var.enable_reconfigure
+    cloudsql                 = var.cloudsql != null ? true : false
+    cluster_id               = random_uuid.cluster_id.result
+    project                  = var.project_id
+    pubsub_topic_id          = var.enable_reconfigure ? google_pubsub_topic.this[0].name : null
+    slurm_cluster_name       = var.slurm_cluster_name
 
     # storage
     disable_default_mounts = var.disable_default_mounts

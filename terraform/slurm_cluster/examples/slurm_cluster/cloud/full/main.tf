@@ -263,6 +263,7 @@ module "slurm_cluster" {
   enable_cleanup_compute             = var.enable_cleanup_compute
   enable_cleanup_subscriptions       = var.enable_cleanup_subscriptions
   enable_bigquery_load               = var.enable_bigquery_load
+  enable_slurm_gcp_plugins           = var.enable_slurm_gcp_plugins
   enable_reconfigure                 = var.enable_reconfigure
   epilog_scripts                     = var.epilog_scripts
   login_startup_scripts_timeout      = var.login_startup_scripts_timeout

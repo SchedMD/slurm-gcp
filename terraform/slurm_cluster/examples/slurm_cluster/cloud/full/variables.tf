@@ -91,6 +91,14 @@ EOD
   default     = false
 }
 
+variable "enable_slurm_gcp_plugins" {
+  description = <<EOD
+Enables calling hooks in scripts/slurm_gcp_plugins during cluster resume and suspend.
+EOD
+  type        = bool
+  default     = false
+}
+
 variable "region" {
   type        = string
   description = "The default region to place resources in."

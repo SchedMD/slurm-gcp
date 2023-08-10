@@ -27,6 +27,7 @@ region = "us-central1"
 # *NOT* intended for production use
 # enable_devel = true
 
+enable_slurm_gcp_plugins     = false
 enable_bigquery_load         = false
 enable_cleanup_compute       = true
 enable_cleanup_subscriptions = false
