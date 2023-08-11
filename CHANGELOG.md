@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Prefix user visible errors with its source.
 - Fix accelerator optimized machine type socket handling.
 - Only compare config.yaml blob to cache file.
+- Fix login nodes appearing as compute nodes in Slurm output.
 
 ## \[6.1.1\]
 

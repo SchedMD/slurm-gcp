@@ -48,6 +48,7 @@ from conf import (
     install_cgroup_conf,
     install_topology_conf,
     install_jobsubmit_lua,
+    login_nodeset,
 )
 import slurmsync
 
@@ -761,6 +762,7 @@ def setup_login(args):
     slurmd_options = [
         f"-N {lkp.hostname}",
         f'--conf-server="{slurmctld_host}:{lkp.control_host_port}"',
+        f'--conf="Feature={login_nodeset}"',
         "-Z",
     ]
     sysconf = f"""SLURMD_OPTIONS='{" ".join(slurmd_options)}'"""
