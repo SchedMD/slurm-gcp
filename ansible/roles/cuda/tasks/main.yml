@@ -9,8 +9,18 @@
   - '{{ ansible_os_family|lower }}.yml'
 
 - block:
-  - include_tasks: configure_apt.yml
-    when: ansible_pkg_mgr == 'apt' and not cuda_use_runfile
+  - include_tasks: configure_apt_nvidia.yml
+    when: ansible_pkg_mgr == 'apt' and (not cuda_runfile_driver or not cuda_runfile_toolkit)
+
+  - name: Install NVIDIA driver
+    apt:
+      name: '{{ nvidia_packages }}'
+      state: present
+      update_cache: true
+    when: ansible_pkg_mgr == 'apt' and not cuda_runfile_driver
+
+  - include_tasks: configure_apt_cuda.yml
+    when: ansible_pkg_mgr == 'apt' and not cuda_runfile_toolkit
 
   - include_tasks: install_runfile.yml
     when: cuda_use_runfile
@@ -23,7 +33,7 @@
       update_cache: true
     with_items: '{{ cuda_packages }}'
     register: cuda_packages_installation
-    when: not cuda_use_runfile
+    when: not cuda_runfile_toolkit
     notify:
     - ZZ CUDA Restart server
     - ZZ CUDA Wait for server to restart

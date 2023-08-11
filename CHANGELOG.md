@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - Do not temporarily disable partitions during reconfigure process.
 - Fix login nodes appearing as compute nodes in Slurm output.
 - Only attempt static node resume when node is powered down.
+- Fix CUDA on Ubuntu by installing CUDA via runfile alongside NVIDIA driver from
+  signed repo.
 
 ## \[5.7.6\]
 

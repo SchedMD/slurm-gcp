@@ -1,6 +1,8 @@
 ---
 cuda_repo_subfolder: ubuntu2004
 
-cuda_use_runfile: false
+cuda_use_runfile: true
+cuda_runfile_driver: false
+cuda_runfile_toolkit: true
 
 # vim:ft=ansible:

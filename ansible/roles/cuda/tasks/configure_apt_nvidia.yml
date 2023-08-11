@@ -1,0 +1,30 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+
+- name: get nvidia driver version
+  set_fact:
+    nvidia_driver_version: '{{ nvidia_version }}'
+  when: nvidia_version != "latest"
+
+- name: Update apt cache
+  apt:
+    update_cache: true
+
+- name: lookup nvidia driver version
+  shell: |
+    sudo apt-cache search 'linux-modules-nvidia-[0-9]+-gcp$' | awk '{print $1}' | sort | tail -n 1 | head -n 1 | awk -F"-" '{print $4}'
+  register: nvidia_driver_version
+
+- name: set nvidia driver version
+  set_fact:
+    nvidia_driver_version: '{{ nvidia_driver_version.stdout }}'
+
+  when: nvidia_version == "latest"
+
+- name: Set nvidia packages
+  set_fact:
+    nvidia_packages:
+    - linux-modules-nvidia-{{ nvidia_driver_version }}-gcp
+    - nvidia-driver-{{ nvidia_driver_version }}
