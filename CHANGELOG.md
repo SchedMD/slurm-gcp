@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - Fix login nodes not reconfiguring when `enable_reconfigure=true`.
 - Do not temporarily disable partitions during reconfigure process.
+- Fix login nodes appearing as compute nodes in Slurm output.
 
 ## \[5.7.6\]
 

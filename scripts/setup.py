@@ -311,6 +311,26 @@ def partitionlines(partition, lkp=lkp):
     return "\n".join(lines)
 
 
+def loginlines():
+    nodeset = {
+        "NodeSet": login_nodeset,
+        "Feature": login_nodeset,
+    }
+    partition = {
+        "PartitionName": login_nodeset,
+        "Nodes": login_nodeset,
+        "State": "UP",
+        "DefMemPerCPU": 1,
+        "Hidden": "YES",
+        "RootOnly": "YES",
+    }
+    lines = [
+        dict_to_conf(nodeset),
+        dict_to_conf(partition),
+    ]
+    return "\n".join(lines)
+
+
 def make_cloud_conf(lkp=lkp, cloud_parameters=None):
     """generate cloud.conf snippet"""
     if cloud_parameters is None:
@@ -330,6 +350,7 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
     lines = [
         FILE_PREAMBLE,
         conflines(cloud_parameters),
+        loginlines(),
         *(partitionlines(p, lkp) for p in lkp.cfg.partitions.values()),
         suspend_exc,
         "\n",
@@ -1132,6 +1153,9 @@ def setup_controller(args):
     pass
 
 
+login_nodeset = "x-login"
+
+
 def setup_login(args):
     """run login node setup"""
     log.info("Setting up login")
@@ -1141,6 +1165,7 @@ def setup_login(args):
     slurmd_options = [
         f"-N {lkp.hostname}",
         f'--conf-server="{slurmctld_host}:{lkp.control_host_port}"',
+        f'--conf="Feature={login_nodeset}"',
         "-Z",
     ]
     sysconf = f"""SLURMD_OPTIONS='{" ".join(slurmd_options)}'"""
