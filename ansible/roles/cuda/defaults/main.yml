@@ -9,7 +9,8 @@ cuda_packages:
 - cuda
 cuda_use_runfile: true
 nvidia_version: latest
-cuda_runfile_url: https://developer.download.nvidia.com/compute/cuda/11.4.4/local_installers/cuda_11.4.4_470.82.01_linux.run
+cuda_runfile_url: 
+  https://developer.download.nvidia.com/compute/cuda/11.4.4/local_installers/cuda_11.4.4_470.82.01_linux.run
 nvidia_runfile_url: ''
 cuda_runfile_checksum: true
 cuda_runfile_checksum_url: ''
@@ -17,7 +18,7 @@ cuda_runfile_driver: true
 cuda_runfile_toolkit: true
 cuda_runfile_download: true
 cuda_runfile_remove: true
-cuda_runfile_disable_nvidia_drm: false
+cuda_runfile_disable_nvidia_drm: true
 cuda_restart_node_on_install: true
 cuda_init: true
 cuda_init_restart_service: true

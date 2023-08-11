@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 - Fix login nodes appearing as compute nodes in Slurm output.
 - Add enable_debug_logging and extra_logging_flags to terraform.
 - Only attempt static node resume when node is powered down.
+- Fix CUDA on Ubuntu by installing CUDA via runfile alongside NVIDIA driver from
+  signed repo.
 
 ## \[6.1.1\]
 
