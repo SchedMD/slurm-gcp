@@ -49,6 +49,7 @@ locals {
           enable_oslogin           = true
           enable_shielded_vm       = false
           enable_spot_vm           = false
+          reservation_name         = null
           gpu                      = null
           instance_template        = null
           labels                   = {}
@@ -104,6 +105,7 @@ locals {
           enable_oslogin         = true
           enable_shielded_vm     = false
           enable_spot_vm         = false
+          reservation_name       = null
           gpu = {
             count = 1
             type  = "nvidia-tesla-v100"

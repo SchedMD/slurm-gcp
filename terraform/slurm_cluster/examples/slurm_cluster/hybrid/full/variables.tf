@@ -319,6 +319,7 @@ EOD
       enable_oslogin         = bool
       enable_shielded_vm     = bool
       enable_spot_vm         = bool
+      reservation_name       = string
       gpu = object({
         count = number
         type  = string

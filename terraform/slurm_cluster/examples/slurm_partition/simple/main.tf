@@ -59,6 +59,7 @@ module "slurm_partition" {
       enable_oslogin           = true
       enable_shielded_vm       = false
       enable_spot_vm           = false
+      reservation_name         = null
       gpu                      = null
       instance_template        = null
       labels                   = {}

@@ -119,6 +119,7 @@ locals {
         enable_oslogin           = n.enable_oslogin
         enable_shielded_vm       = n.enable_shielded_vm
         enable_spot_vm           = n.enable_spot_vm
+        reservation_name         = n.reservation_name
         gpu                      = n.gpu
         group_name               = n.group_name
         instance_template        = n.instance_template

@@ -170,6 +170,7 @@ partitions = [
         ]
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
+        reservation_name = null
         spot_instance_config = {
           termination_action = "STOP"
         }
@@ -258,6 +259,7 @@ partitions = [
         ]
         bandwidth_tier = "platform_default"
         enable_spot_vm = true
+        reservation_name = null
         spot_instance_config = {
           termination_action = "STOP"
         }
@@ -332,6 +334,7 @@ partitions = [
         access_config  = []
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
+        reservation_name = null
         spot_instance_config = {
           termination_action = "STOP"
         }
