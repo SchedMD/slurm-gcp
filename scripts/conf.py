@@ -255,15 +255,12 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
         cloud_parameters = lkp.cfg.cloud_parameters
 
     static_nodes = ",".join(lkp.static_nodelist())
-    suspend_exc = (
-        dict_to_conf(
-            {
-                "SuspendExcNodes": static_nodes,
-            }
-        )
-        if static_nodes
-        else None
-    )
+    suspend_exc_nodes = {
+        "SuspendExcNodes": static_nodes,
+    }
+    suspend_exc = [
+        dict_to_conf(suspend_exc_nodes) if static_nodes else None,
+    ]
 
     lines = [
         FILE_PREAMBLE,
@@ -272,7 +269,7 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
         *(nodeset_dyn_lines(n, lkp) for n in lkp.cfg.nodeset_dyn.values()),
         *(nodeset_tpu_lines(n, lkp) for n in lkp.cfg.nodeset_tpu.values()),
         *(partitionlines(p, lkp) for p in lkp.cfg.partitions.values()),
-        suspend_exc,
+        *(suspend_exc),
     ]
     return "\n\n".join(filter(None, lines))
 
