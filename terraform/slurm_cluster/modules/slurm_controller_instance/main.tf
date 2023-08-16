@@ -153,9 +153,11 @@ module "slurm_controller_instance" {
 
   access_config       = var.access_config
   add_hostname_suffix = false
+  enable_reconfigure  = var.enable_reconfigure
   hostname            = local.hostname
   instance_template   = var.instance_template
   network             = var.network
+  pubsub_topic        = one(google_pubsub_topic.this[*].id)
   project_id          = var.project_id
   region              = local.region
   slurm_cluster_name  = var.slurm_cluster_name
@@ -182,8 +184,6 @@ module "slurm_controller_instance" {
     google_compute_project_metadata_item.controller_startup_scripts,
     # Ensure nodes are destroyed before controller is
     module.cleanup_compute_nodes[0],
-    #
-    google_pubsub_subscription_iam_member.controller_pull_subscription_sa_binding_subscriber,
   ]
 }
 
@@ -386,50 +386,6 @@ resource "google_pubsub_topic_iam_member" "topic_publisher" {
   member  = "serviceAccount:${local.service_account_email}"
 }
 
-##########
-# PUBSUB #
-##########
-
-module "slurm_pubsub" {
-  source  = "terraform-google-modules/pubsub/google"
-  version = "~> 3.0"
-
-  count = var.enable_reconfigure ? 1 : 0
-
-  project_id = var.project_id
-  topic      = google_pubsub_topic.this[0].id
-
-  create_topic        = false
-  grant_token_creator = false
-
-  pull_subscriptions = [
-    {
-      name                    = local.hostname
-      ack_deadline_seconds    = 120
-      enable_message_ordering = true
-      maximum_backoff         = "300s"
-      minimum_backoff         = "30s"
-    },
-  ]
-
-  subscription_labels = {
-    slurm_cluster_name = var.slurm_cluster_name
-  }
-}
-
-resource "google_pubsub_subscription_iam_member" "controller_pull_subscription_sa_binding_subscriber" {
-  count = var.enable_reconfigure ? 1 : 0
-
-  project      = var.project_id
-  subscription = local.hostname
-  role         = "roles/pubsub.subscriber"
-  member       = "serviceAccount:${local.service_account_email}"
-
-  depends_on = [
-    module.slurm_pubsub,
-  ]
-}
-
 #####################
 # SECRETS: CLOUDSQL #
 #####################
@@ -485,8 +441,6 @@ module "reconfigure_notify" {
   }
 
   depends_on = [
-    # Ensure subscriptions are created
-    module.slurm_pubsub,
     # Ensure controller is created
     module.slurm_controller_instance.slurm_instances,
   ]
@@ -510,8 +464,6 @@ module "devel_notify" {
   }
 
   depends_on = [
-    # Ensure subscriptions are created
-    module.slurm_pubsub,
     # Ensure controller is created
     module.slurm_controller_instance,
   ]

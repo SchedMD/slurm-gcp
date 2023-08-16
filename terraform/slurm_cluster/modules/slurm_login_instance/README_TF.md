@@ -35,16 +35,13 @@ limitations under the License.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_slurm_login_instance"></a> [slurm\_login\_instance](#module\_slurm\_login\_instance) | ../_slurm_instance | n/a |
-| <a name="module_slurm_pubsub"></a> [slurm\_pubsub](#module\_slurm\_pubsub) | terraform-google-modules/pubsub/google | ~> 3.0 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
 | [google_compute_project_metadata_item.login_startup_scripts](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_project_metadata_item) | resource |
-| [google_pubsub_subscription_iam_member.controller_pull_subscription_sa_binding_subscriber](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription_iam_member) | resource |
 | [random_string.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
-| [google_compute_instance_template.login_template](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_instance_template) | data source |
 
 ## Inputs
 

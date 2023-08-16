@@ -105,6 +105,48 @@ resource "google_compute_instance_from_template" "slurm_instance" {
   )
 
   depends_on = [
+    google_pubsub_subscription.pull_subscriptions,
     var.slurm_depends_on,
+  ]
+}
+
+##########
+# PUBSUB #
+##########
+
+locals {
+  service_account = one(data.google_compute_instance_template.base.service_account[*].email)
+}
+
+resource "google_pubsub_subscription" "pull_subscriptions" {
+  count = var.enable_reconfigure ? local.num_instances : 0
+
+  name    = var.add_hostname_suffix ? format("%s%s%s", local.hostname, var.hostname_suffix_separator, format("%03d", count.index + 1)) : local.hostname
+  topic   = var.pubsub_topic
+  project = var.project_id
+
+  ack_deadline_seconds    = 120
+  enable_message_ordering = true
+
+  retry_policy {
+    maximum_backoff = "300s"
+    minimum_backoff = "30s"
+  }
+
+  labels = {
+    slurm_cluster_name = var.slurm_cluster_name
+  }
+}
+
+resource "google_pubsub_subscription_iam_member" "pull_subscription_binding" {
+  count = var.enable_reconfigure ? local.num_instances : 0
+
+  project      = var.project_id
+  subscription = var.add_hostname_suffix ? format("%s%s%s", local.hostname, var.hostname_suffix_separator, format("%03d", count.index + 1)) : local.hostname
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${local.service_account}"
+
+  depends_on = [
+    google_pubsub_subscription.pull_subscriptions,
   ]
 }
