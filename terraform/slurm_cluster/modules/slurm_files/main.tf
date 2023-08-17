@@ -47,6 +47,8 @@ locals {
     project              = var.project_id
     slurm_cluster_name   = var.slurm_cluster_name
     bucket_path          = local.bucket_path
+    enable_debug_logging = var.enable_debug_logging
+    extra_logging_flags  = var.extra_logging_flags
 
     # storage
     disable_default_mounts = var.disable_default_mounts

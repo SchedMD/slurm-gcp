@@ -407,6 +407,18 @@ variable "enable_devel" {
   default     = false
 }
 
+variable "enable_debug_logging" {
+  type        = bool
+  description = "Enables debug logging mode. Not for production use."
+  default     = false
+}
+
+variable "extra_logging_flags" {
+  type        = map(bool)
+  description = "The list of extra flags for the logging system to use. See the logging_flags variable in scripts/util.py to get the list of supported log flags."
+  default     = {}
+}
+
 variable "enable_cleanup_compute" {
   description = <<EOD
 Enables automatic cleanup of compute nodes and resource policies (e.g.

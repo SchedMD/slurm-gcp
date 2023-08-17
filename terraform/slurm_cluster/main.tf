@@ -102,6 +102,8 @@ module "slurm_files" {
   compute_startup_scripts            = var.compute_startup_scripts
   compute_startup_scripts_timeout    = var.compute_startup_scripts_timeout
   enable_devel                       = var.enable_devel
+  enable_debug_logging               = var.enable_debug_logging
+  extra_logging_flags                = var.extra_logging_flags
   enable_hybrid                      = var.enable_hybrid
   enable_bigquery_load               = var.enable_bigquery_load
   epilog_scripts                     = var.epilog_scripts

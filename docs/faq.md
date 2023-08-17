@@ -71,22 +71,14 @@ out. Tickets can be submitted via
 
 ### How do I enable additional logging for Slurm-GCP?
 
-1. Enable debug logging in cluster `config.yaml`
+1. Enable debug logging using terraform enable_debug_logging variable.
 1. If you need more, such as verbose GCP API request information, enable the
-   appropriate logging flag in `config.yaml`.
+   appropriate logging flag using terrafor extra_logging_flags variable (See the
+   logging_flags variable in scripts/util.py to get the list of supported log
+   flags).
    - For verbose API request information, use the `trace_api` logging flag.
 1. These increase the logging to Slurm-GCP script logs only, such as
    `resume.log` and `suspend.log`.
-
-```yaml
-# /slurm/scripts/config.yaml
-enable_debug_logging: false
-extra_logging_flags:
-  trace_api: false
-  subproc: false
-  hostlists: false
-  subscriptions: false
-```
 
 ### How do I move data for a job?
 
