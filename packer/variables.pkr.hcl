@@ -151,12 +151,6 @@ variable "nvidia_version" {
   default     = "latest"
 }
 
-variable "nvidia_from_repo" {
-  description = "use gcp specific repo for nvidia driver install, currently only available on Ubuntu 20.04"
-  type        = bool
-  default     = false
-}
-
 variable "install_ompi" {
   description = "enable install of OpenMPI"
   type        = bool
