@@ -1,0 +1,112 @@
+---
+- name: Validate agent_type
+  assert:
+    that: agent_type in ['logging',  'ops-agent']
+    msg: "Received invalid agent type: '{{ agent_type }}'. The Cloud Ops Ansible role supports the following agents for Windows: 'logging' and 'ops-agent'."
+
+- name: Create temp directory
+  win_tempfile:
+    path: "/Users/{{ ansible_user }}/AppData/Local/Temp"
+    state: directory
+    suffix: _cloud_ops_shell_scripts
+  register: tempfolder
+  check_mode: false
+  changed_when: false
+
+- when: agent_type == 'ops-agent'
+  block:
+    - name: Download script
+      win_get_url:
+        url: "https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.ps1"
+        dest: "{{ tempfolder.path }}/add-google-cloud-ops-agent-repo.ps1"
+      check_mode: false
+      changed_when: false
+
+    - name: Add repo and install agent or remove repo and uninstall agent
+      win_shell: >
+        .\\add-google-cloud-ops-agent-repo.ps1 {{ '-AlsoInstall' if package_state == 'present' else '-Uninstall -RemoveRepo' }} -Version {{ version }}
+        {{ '-WhatIf' if ansible_check_mode else ''}}
+      args:
+        chdir: "{{ tempfolder.path }}"
+      register: result
+      retries: 5
+      delay: 10
+      until: result.rc == 0
+      check_mode: false
+      changed_when: "'No changes made.' not in result.stdout_lines"
+      notify: "restart windows {{ agent_type }} agent"
+
+    - when: package_state == 'present'
+      block:
+        - name: Copy main config file onto the remote machine
+          win_copy:
+            src: "{{ main_config_file }}"
+            dest: "{{ vars['windows_' + agent_type + '_config_path'] }}"
+            force: true
+          when: main_config_file | length > 0
+          notify: "restart windows {{ agent_type }} agent"
+
+- when: agent_type == 'logging'
+  block:
+    - name: Validate version
+      assert:
+        that: version == 'latest'
+        msg: "Received invalid version: '{{ version }}'. The Cloud Ops Ansible role supports the following version for the Windows logging agent: 'latest'."
+
+    - when: package_state == 'present'
+      block:
+        - name: Download executable
+          win_get_url:
+            url: "https://dl.google.com/cloudagents/windows/StackdriverLogging-v1-14.exe"
+            dest: "{{ tempfolder.path }}/StackdriverLogging-v1-14.exe"
+          check_mode: false
+          changed_when: false
+
+        - name: Install agent
+          win_package:
+            product_id: GoogleStackdriverLoggingAgent
+            path: "{{ tempfolder.path }}/StackdriverLogging-v1-14.exe"
+            arguments: /S
+          notify: "restart windows {{ agent_type }} agent"
+
+        - name: Copy main config file onto the remote machine
+          win_copy:
+            src: "{{ main_config_file }}"
+            dest: "{{ vars['windows_' + agent_type + '_config_path'] }}"
+            force: true
+          when: main_config_file | length > 0
+          notify: "restart windows {{ agent_type }} agent"
+
+        - name: Copy additional configs onto the remote machine
+          win_copy:
+            src: "{{ item }}"
+            dest: "{{ vars['windows_' + agent_type + '_plugins_path'] }}"
+            force: true
+          with_fileglob:
+            - "{{ additional_config_dir }}/*.conf"
+          when: additional_config_dir | length > 0
+          notify: "restart windows {{ agent_type }} agent"
+
+    - when: package_state == 'absent'
+      block:
+        - name: Check if package is present
+          win_shell: >
+            Get-ItemPropertyValue -Path HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\GoogleStackdriverLoggingAgent
+            -Name UninstallString
+          register: result
+          check_mode: false
+          changed_when: result.rc == 0
+          failed_when: false
+
+        - name: Uninstall agent
+          win_shell: >
+            & "$(Get-ItemPropertyValue -Path HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\GoogleStackdriverLoggingAgent
+            -Name UninstallString)" /S; Start-Sleep -s 10
+          when: result.rc == 0
+
+- name: Remove temp directory
+  win_file:
+    path: "{{ tempfolder.path }}"
+    state: absent
+  check_mode: false
+  changed_when: false

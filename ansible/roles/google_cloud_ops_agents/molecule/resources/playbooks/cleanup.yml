@@ -1,0 +1,13 @@
+---
+# Remove the agent in case the test failed in between installation and uninstallation steps.
+- name: Converge
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Uninstall agent
+      include_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+      vars:
+        agent_type: "{{ lookup('env', 'AGENT_TYPE') | default('monitoring', True) }}"
+        package_state: absent

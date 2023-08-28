@@ -1,0 +1,88 @@
+---
+- name: Include vars
+  include_vars:
+    file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/vars/main.yml"
+
+- when: agent_type == 'ops-agent'
+  block:
+    - name: Ensure the agent is present
+      win_shell: googet installed google-cloud-ops-agent
+      register: result
+      failed_when: false
+
+    - name: Assert the agent was already present
+      assert:
+        that: result.rc == 0
+
+- when: agent_type == 'logging'
+  block:
+    - name: Ensure the agent is present
+      win_shell: >
+        Get-ItemPropertyValue -Path HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\GoogleStackdriverLoggingAgent
+        -Name UninstallString
+      register: result
+      failed_when: false
+
+    - name: Assert the agent was already present
+      assert:
+        that: result.rc == 0
+
+- name: Ensure the agent is running
+  win_service:
+    name: "{{ vars['windows_' + agent_type + '_service_name'] }}"
+    state: started
+  register: result
+
+- name: Assert the agent was already running
+  assert:
+    that: result.changed == false
+
+- when: main_config_file | length > 0
+  block:
+    - name: Read config file
+      win_shell:  "cat '{{ vars['windows_' + agent_type + '_config_path'] }}'"
+      register: result
+
+    - name: Assert the custom config was copied properly
+      assert:
+        that: "'# Sample custom config.' in result.stdout"
+
+- when: additional_config_dir | length > 0 and agent_type != 'ops-agent'
+  block:
+    - name: List contents of the plugin directory
+      win_shell: "ls '{{ vars['windows_' + agent_type + '_plugins_path'] }}'"
+      register: result
+
+    - name: Assert the plugin config was copied properly
+      assert:
+        that: "'custom_config.conf' in result.stdout"
+
+- name: Uninstall agent
+  include_role:
+    name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+  vars:
+    package_state: absent
+
+- when: agent_type == 'ops-agent'
+  block:
+    - name: Ensure the agent is absent
+      win_shell: googet installed google-cloud-ops-agent
+      register: result
+      failed_when: false
+
+    - name: Assert the agent was already absent
+      assert:
+        that: result.rc == 1
+
+- when: agent_type == 'logging'
+  block:
+    - name: Ensure the agent is absent
+      win_shell: >
+        Start-Sleep -s 10; Get-ItemPropertyValue -Path HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\GoogleStackdriverLoggingAgent
+        -Name UninstallString
+      register: result
+      failed_when: false
+
+    - name: Assert the agent was already absent
+      assert:
+        that: result.rc == 1

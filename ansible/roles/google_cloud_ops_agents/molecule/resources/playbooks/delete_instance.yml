@@ -1,0 +1,12 @@
+---
+- name: "Delete instance {{ item.name }}"
+  gcp_compute_instance:
+    name: "{{ item.name }}"
+    zone: "{{ molecule_yml.driver.zone }}"
+    state: absent
+    project: "{{ molecule_yml.driver.gcp_project_id }}"
+    auth_kind: serviceaccount
+    service_account_file: "{{ molecule_yml.driver.gcp_service_account_key }}"
+  register: instance
+  # Don't tear down windows instances since they require manual setup.
+  when: item.name | regex_search('windows') == None

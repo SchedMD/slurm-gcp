@@ -1,0 +1,10 @@
+---
+- name: "restart {{ agent_type }} agent"
+  service:
+    name: "{{ vars[agent_type + '_service_name'] }}{{ '.target' if agent_type == 'ops-agent' and version.split('.')[0] == '1' else '' }}"
+    state: restarted
+  when: package_state == 'present' and not ansible_check_mode
+
+- name: "restart windows {{ agent_type }} agent"
+  win_shell: "Restart-Service -Name {{ vars['windows_' + agent_type + '_service_name'] }} -Force"
+  when: package_state == 'present' and not ansible_check_mode

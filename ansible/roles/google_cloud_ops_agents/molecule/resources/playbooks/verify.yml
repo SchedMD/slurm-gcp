@@ -1,0 +1,23 @@
+---
+# Verify the state of the VM after the role has finished executing.
+- name: Verify
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Call Linux specific playbook
+      include_tasks: verify_linux.yml
+      vars:
+        agent_type: "{{ lookup('env', 'AGENT_TYPE') | default('monitoring', True) }}"
+        package_name: "{{ 'stackdriver-agent' if agent_type=='monitoring' else 'google-fluentd' if agent_type == 'logging' else 'google-cloud-ops-agent' }}"
+        main_config_file: "{{ lookup('env', 'MAIN_CONFIG_FILE') | default('', True) }}"
+        additional_config_dir: "{{ '' if agent_type == 'ops-agent' else lookup('env', 'ADDITIONAL_CONFIG_DIR') | default('', True) }}"
+      when: ansible_os_family in ['Debian', 'RedHat', 'Suse']
+
+    - name: Call Windows specific playbook
+      include_tasks: verify_windows.yml
+      vars:
+        agent_type: "{{ lookup('env', 'AGENT_TYPE') | default('monitoring', True) }}"
+        main_config_file: "{{ lookup('env', 'MAIN_CONFIG_FILE') | default('', True) }}"
+        additional_config_dir: "{{ '' if agent_type == 'ops-agent' else lookup('env', 'ADDITIONAL_CONFIG_DIR') | default('', True) }}"
+      when: ansible_os_family == 'Windows'
