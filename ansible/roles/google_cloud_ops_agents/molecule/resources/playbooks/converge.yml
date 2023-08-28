@@ -1,0 +1,16 @@
+---
+# This playbook calls the role. Molecule will invoke this playbook with ansible-playbook and run it against an instance created by the driver.
+- name: Converge
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install agent
+      include_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+      vars:
+        agent_type: "{{ lookup('env', 'AGENT_TYPE') | default('monitoring', True) }}"
+        package_state: present
+        version: "{{ lookup('env', 'VERSION') | default('latest', True) }}"
+        main_config_file: "{{ lookup('env', 'MAIN_CONFIG_FILE') | default('', True) }}"
+        additional_config_dir: "{{ '' if agent_type == 'ops-agent' else lookup('env', 'ADDITIONAL_CONFIG_DIR') | default('', True) }}"

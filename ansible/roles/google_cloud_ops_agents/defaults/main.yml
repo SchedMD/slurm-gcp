@@ -1,0 +1,8 @@
+---
+agent_type: ''
+package_state: present
+version: latest
+# Local path to the config file to copy onto the remote server. Can be absolute or relative.
+main_config_file: ''
+# Local path to the additonal config directory whose contents will be copied onto the remote server. Can be absolute or relative.
+additional_config_dir: ''

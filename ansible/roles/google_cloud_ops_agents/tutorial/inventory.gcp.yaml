@@ -1,0 +1,17 @@
+---
+plugin: gcp_compute
+auth_kind: serviceaccount
+projects:
+  # This value will be subsituted by sed command
+  - ENTER_PROJECT_NAME
+keyed_groups:
+  # Create groups from GCE labels
+  - key: labels
+    prefix: gcp
+hostnames:
+  # List host by name instead of the default public ip
+  - name
+compose:
+  # Set an inventory parameter to use the Public IP address to connect to the host
+  # For Private ip use "networkInterfaces[0].networkIP"
+  ansible_host: networkInterfaces[0].accessConfigs[0].natIP

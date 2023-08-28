@@ -15,7 +15,7 @@
 
 dependencies:
 - role: common
-- role: googlecloudplatform.google_cloud_ops_agents
+- role: google_cloud_ops_agents
   vars:
     agent_type: ops-agent
     package_state: present

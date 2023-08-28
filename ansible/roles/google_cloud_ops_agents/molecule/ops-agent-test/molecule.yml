@@ -1,0 +1,127 @@
+---
+# This file is the central configuration entrypoint for Molecule. With this file, you can configure each tool that Molecule will employ when testing the role.
+dependency:
+  name: galaxy
+driver:
+  name: delegated
+  gcp_service_account_key: ${GOOGLE_APPLICATION_CREDENTIALS}
+  gcp_project_id: ${PROJECT}
+  zone: ${ZONE}
+  region: ${REGION}
+  ssh_user: ${SSH_USER}
+  ssh_pub_key_file: "${SSH_KEY_FILE}.pub"
+  ssh_key_file: ${SSH_KEY_FILE}
+lint: |
+  set -e
+  yamllint .
+  # TODO(rmoriar1): add back the ansible-lint routine once a version >4.2.0 is available on the GCP_UBUNTU VM.
+platforms:
+  - name: "ansible-centos-7-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/centos-cloud/global/images/family/centos-7
+    machine_type: e2-medium
+    size_gb: 40
+    groups:
+      - linux
+      - centos
+  - name: "ansible-rocky-8-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/rocky-linux-cloud/global/images/family/rocky-linux-8
+    machine_type: e2-medium
+    size_gb: 40
+    groups:
+      - linux
+      - centos
+  - name: "ansible-rhel-7-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/rhel-cloud/global/images/family/rhel-7
+    machine_type: e2-medium
+    size_gb: 40
+    groups:
+      - linux
+      - rhel
+  - name: "ansible-rhel-8-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/rhel-cloud/global/images/family/rhel-8
+    machine_type: e2-medium
+    size_gb: 40
+    groups:
+      - linux
+      - rhel
+  - name: "ansible-ubuntu-1804-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/ubuntu-os-cloud/global/images/family/ubuntu-1804-lts
+    machine_type: e2-medium
+    size_gb: 40
+    groups:
+      - linux
+      - ubuntu
+  - name: "ansible-ubuntu-2004-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts
+    machine_type: e2-medium
+    size_gb: 40
+    groups:
+      - linux
+      - ubuntu
+  - name: "ansible-debian-10-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/debian-cloud/global/images/family/debian-10
+    machine_type: e2-medium
+    size_gb: 40
+    groups:
+      - linux
+      - debian
+  - name: "ansible-sles-12-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/suse-cloud/global/images/family/sles-12
+    machine_type: e2-medium
+    size_gb: 40
+    groups:
+      - linux
+      - sles
+  - name: "ansible-sles-15-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/suse-cloud/global/images/family/sles-15
+    machine_type: e2-medium
+    size_gb: 40
+    groups:
+      - linux
+      - sles
+  - name: "ansible-windows-2016-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/windows-cloud/global/images/family/windows-2016
+    machine_type: e2-medium
+    size_gb: 80
+    groups:
+      - windows
+      - windows-2016
+  - name: "ansible-windows-2019-${MOLECULE_SCENARIO_NAME}"
+    image_family: projects/windows-cloud/global/images/family/windows-2019
+    machine_type: e2-medium
+    size_gb: 80
+    groups:
+      - windows
+      - windows-2019
+scenario:
+  test_sequence:
+    - lint
+    - destroy
+    - syntax
+    - create
+    - converge
+    - idempotence
+    - verify
+    - cleanup
+    - destroy
+provisioner:
+  name: ansible
+  inventory:
+    group_vars:
+      linux:
+        ansible_ssh_private_key_file: ${SSH_KEY_FILE}
+      windows:
+        ansible_become: false
+        ansible_winrm_server_cert_validation: ignore
+      windows-2016:
+        ansible_password: '"${WIN_2016_PW}"'
+      windows-2019:
+        ansible_password: '"${WIN_2019_PW}"'
+  playbooks:
+    create: ../resources/playbooks/create.yml
+    converge: ../resources/playbooks/converge.yml
+    verify: ../resources/playbooks/verify.yml
+    cleanup: ../resources/playbooks/cleanup.yml
+    destroy: ../resources/playbooks/destroy.yml
+verifier:
+  name: ansible

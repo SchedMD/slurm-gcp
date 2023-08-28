@@ -1,0 +1,33 @@
+---
+- name: Validate Operating System
+  assert:
+    that: >
+      ansible_os_family == 'Windows' or ansible_distribution in ['Debian', 'Ubuntu', 'RedHat', 'CentOS', 'Rocky', 'Amazon', 'SLES', 'openSUSE', 'openSUSE Leap', 'SuSE',
+      'SLES_SAP', 'Windows']
+    msg: >
+      Received invalid Operating System: '{{ ansible_distribution }}'. The Cloud Ops Ansible role supports the following OSs: 'Debian', 'Ubuntu', 'RedHat',
+      'CentOS', 'Rocky', 'Amazon', 'SLES', 'openSUSE', 'openSUSE Leap', 'SuSE', 'SLES_SAP' and 'Windows'.
+
+- name: Validate agent_type
+  assert:
+    that: agent_type in ['monitoring', 'logging', 'ops-agent']
+    msg: "Received invalid agent type: '{{ agent_type }}'. The Cloud Ops Ansible role supports the following agents: 'monitoring', 'logging' and 'ops-agent'."
+
+- name: Validate package_state
+  assert:
+    that: package_state in ['present', 'absent']
+    msg: "Received invalid package state: '{{ package_state }}'. The Cloud Ops Ansible role supports the following package states: 'present' and 'absent'."
+
+- name: Ensure no additional config directory was specified when configuring the ops-agent
+  assert:
+    that: additional_config_dir | length == 0
+    msg: "The ops agent does not support additional configurations. additional_config_dir must be empty when the agent_type is 'ops-agent'."
+  when: agent_type == 'ops-agent'
+
+- name: Call Linux specific playbook
+  include_tasks: linux.yml
+  when: ansible_os_family in ['Debian', 'RedHat', 'Suse']
+
+- name: Call Windows specific playbook
+  include_tasks: windows.yml
+  when: ansible_os_family == 'Windows'

@@ -1,0 +1,48 @@
+---
+galaxy_info:
+  role_name: google_cloud_ops_agents
+  namespace: google_cloud_platform
+  author: Ryan Moriarty
+  description: Install the Google Cloud Ops Agents
+  company: Google
+  license: Apache-2.0
+  min_ansible_version: 2.9
+  platforms:
+    - name: Debian
+      versions:
+        - stretch
+        - buster
+    - name: Ubuntu
+      versions:
+        - xenial
+        - bionic
+        - focal
+        - groovy
+    - name: EL
+      versions:
+        - 7
+        - 8
+    - name: Amazon
+      versions:
+        - AMI
+    - name: SLES
+      versions:
+        - 12
+        - 15
+    - name: Windows
+      versions:
+        - 2012
+        - 2016
+        - 2019
+  galaxy_tags:
+    - monitoring
+    - logging
+    - ops
+    - agent
+    - google
+    - cloud
+    - collectd
+    - fluentd
+    - fluentbit
+    - opentelemetry
+dependencies: []

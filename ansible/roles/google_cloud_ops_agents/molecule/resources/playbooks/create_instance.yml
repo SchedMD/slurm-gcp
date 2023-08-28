@@ -1,0 +1,65 @@
+---
+# Create the ip address and disk for the instance and the instance itself.
+- name: Initialize instance facts
+  set_fact:
+    instance_created:
+      instances: []
+  when: instance_created is not defined
+
+- name: Register the default network
+  gcp_compute_network:
+    name: default
+    state: present
+    project: "{{ molecule_yml.driver.gcp_project_id }}"
+    auth_kind: serviceaccount
+    service_account_file: "{{ molecule_yml.driver.gcp_service_account_key }}"
+  register: network
+
+- name: Create disk
+  gcp_compute_disk:
+    name: "{{ item.name }}"
+    size_gb: "{{ item.size_gb }}"
+    source_image: "{{ item.image_family }}"
+    zone: "{{ molecule_yml.driver.zone }}"
+    state: present
+    project: "{{ molecule_yml.driver.gcp_project_id }}"
+    auth_kind: serviceaccount
+    service_account_file: "{{ molecule_yml.driver.gcp_service_account_key }}"
+  register: disk
+
+- name: "Create instance {{ item.name }}"
+  gcp_compute_instance:
+    state: present
+    name: "{{ item.name }}"
+    machine_type: "{{ item.machine_type }}"
+    disks:
+      - auto_delete: true
+        boot: true
+        source: "{{ disk }}"
+    network_interfaces:
+      - network: "{{ network }}"
+        access_configs:
+          - name: External NAT
+            type: ONE_TO_ONE_NAT
+    zone: "{{ molecule_yml.driver.zone }}"
+    project: "{{ molecule_yml.driver.gcp_project_id }}"
+    auth_kind: serviceaccount
+    service_account_file: "{{ molecule_yml.driver.gcp_service_account_key }}"
+    service_accounts:
+      - scopes:
+          - https://www.googleapis.com/auth/logging.write
+          - https://www.googleapis.com/auth/logging.admin
+          - https://www.googleapis.com/auth/cloud-platform
+    metadata:
+      enable-oslogin: false
+      ssh-keys: "{{ molecule_yml.driver.ssh_user }}:{{ lookup('file', molecule_yml.driver.ssh_pub_key_file) }}\n"
+    tags:
+      items:
+        - ansibleinventory
+  register: instance
+
+- name: Update instance facts
+  set_fact:
+    instance_created:
+      changed: instance.changed | bool
+      instances: "{{ instance_created.instances + [ instance ] }}"

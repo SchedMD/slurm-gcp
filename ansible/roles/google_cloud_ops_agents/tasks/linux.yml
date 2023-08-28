@@ -1,0 +1,74 @@
+---
+- name: Create temp directory
+  tempfile:
+    path: /tmp
+    state: directory
+    suffix: _cloud_ops_shell_scripts
+  register: tempfolder
+  check_mode: false
+  changed_when: false
+
+- name: Download script
+  get_url:
+    url: "https://dl.google.com/cloudagents/add-{{ 'google-cloud-ops' if agent_type == 'ops-agent' else agent_type }}-agent-repo.sh"
+    dest: "{{ tempfolder.path }}/add-{{ 'google-cloud-ops' if agent_type == 'ops-agent' else agent_type }}-agent-repo.sh"
+    mode: 0755
+  check_mode: false
+  changed_when: false
+
+- name: Add repo and install agent or remove repo and uninstall agent
+  command:
+    chdir: "{{ tempfolder.path }}"
+    cmd: >
+      bash add-{{ 'google-cloud-ops' if agent_type == 'ops-agent' else agent_type }}-agent-repo.sh {{ '--also-install' if package_state == 'present' else
+      '--uninstall --remove-repo' }} --version={{ version }} {{ '--dry-run' if ansible_check_mode else '' }}
+  become: yes
+  # environment:
+  #   REPO_CODENAME: "{{ ansible_distribution_release }}"
+  register: result
+  retries: 5
+  delay: 10
+  until: result.rc == 0
+  check_mode: false
+  changed_when: "'No changes made.' not in result.stdout_lines"
+  notify: "restart {{ agent_type }} agent"
+
+- when: package_state == 'present'
+  block:
+    - name: Copy main config file onto the remote machine
+      copy:
+        src: "{{ main_config_file }}"
+        dest: "{{ vars[agent_type + '_config_path'] }}"
+        force: true
+        mode: 0644
+        validate: "{{ vars[agent_type + '_validation_cmd'] }}"
+      when: (main_config_file | length > 0) and agent_type != 'ops-agent'
+      notify: "restart {{ agent_type }} agent"
+
+    - name: Copy main config file onto the remote machine
+      copy:
+        src: "{{ main_config_file }}"
+        dest: "{{ vars[agent_type + '_config_path'] }}"
+        force: true
+        mode: 0644
+      when: (main_config_file | length > 0) and agent_type == 'ops-agent'
+      notify: "restart {{ agent_type }} agent"
+
+    - name: Copy additional configs onto the remote machine
+      copy:
+        src: "{{ item }}"
+        dest: "{{ vars[agent_type + '_plugins_path'] }}"
+        force: true
+        mode: 0644
+        validate: "{{ vars[agent_type + '_validation_cmd'] }}"
+      with_fileglob:
+        - "{{ additional_config_dir }}/*.conf"
+      when: (additional_config_dir | length > 0)
+      notify: "restart {{ agent_type }} agent"
+
+- name: Remove temp directory
+  file:
+    path: "{{ tempfolder.path }}"
+    state: absent
+  check_mode: false
+  changed_when: false
