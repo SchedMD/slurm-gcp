@@ -12,6 +12,7 @@
   - [Slurm-gcp compatiblity matrix](#slurm-gcp-compatiblity-matrix)
   - [Terraform](#terraform)
     - [Quickstart Examples](#quickstart-examples)
+  - [TPU example job](#tpu-example-job)
   - [Multi-rank TPU nodes](#multi-rank-tpu-nodes)
   - [Usage information](#usage-information)
     - [Heterogeneous jobs](#heterogeneous-jobs)
@@ -106,6 +107,15 @@ Alternatively, see
 for
 [HPC Toolkit](https://cloud.google.com/blog/products/compute/new-google-cloud-hpc-toolkit)
 examples.
+
+## TPU example job
+
+A TPU example job can be found in the jobs folder in this repository, called
+tpu.sh, this will execute the python script tpu.py, with the corresponding
+flags, by default it will print the tensorflow version and the number of working
+TPU chips in the system, in case that you are testing a multi-rank TPU (more on
+them in the next chapter) you can call the script with the parameter "multi",
+this will also show the worker_id of the vm you are currently testing on.
 
 ## Multi-rank TPU nodes
 
