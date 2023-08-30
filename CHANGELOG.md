@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[6.1.2\]
+
 ## \[6.1.1\]
 
 - Fix suspend issue with TPU nodes
