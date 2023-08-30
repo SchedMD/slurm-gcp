@@ -70,14 +70,15 @@ TOT_REQ_CNT = 1000
 NodeStatus = Enum(
     "NodeStatus",
     (
-        "terminated",
+        "orphan",
+        "power_down",
         "preempted",
-        "unbacked",
         "restore",
         "resume",
-        "orphan",
-        "unknown",
+        "terminated",
+        "unbacked",
         "unchanged",
+        "unknown",
     ),
 )
 
@@ -170,6 +171,18 @@ def _find_tpu_node_status(nodename, state):
     return NodeStatus.unchanged
 
 
+def allow_power_down(state):
+    config = run(f"{lkp.scontrol} show config").stdout.rstrip()
+    m = re.search(r"SuspendExcStates\s+=\s+(?P<states>[\w\(\)]+)", config)
+    if not m:
+        log.warning("SuspendExcStates not found in Slurm config")
+        return True
+    states = set(m.group("states").split(","))
+    if "(null)" in states or bool(state & state.flags.union(state.base)):
+        return False
+    return True
+
+
 @with_static(static_nodeset=None)
 def find_node_status(nodename):
     """Determine node/instance status that requires action"""
@@ -179,21 +192,26 @@ def find_node_status(nodename):
     if lkp.node_is_tpu(nodename):
         return _find_tpu_node_status(nodename, state)
     inst = lkp.instance(nodename)
+    power_flags = state.flags & frozenset(
+        ("POWER_DOWN", "POWERING_UP", "POWERING_DOWN", "POWERED_DOWN")
+    )
     if inst is None:
+        if "POWERING_UP" in state.flags:
+            return NodeStatus.unchanged
         if state.base == "DOWN" and "POWERED_DOWN" in state.flags:
             return NodeStatus.restore
         if "POWERING_DOWN" in state.flags:
             return NodeStatus.restore
         if "COMPLETING" in state.flags:
             return NodeStatus.unbacked
-        if state.base != "DOWN" and not (
-            set(("POWER_DOWN", "POWERING_UP", "POWERING_DOWN", "POWERED_DOWN"))
-            & state.flags
-        ):
+        if state.base != "DOWN" and not power_flags:
             return NodeStatus.unbacked
-        if "POWERING_UP" in state.flags:
-            return NodeStatus.unchanged
-        if nodename in find_node_status.static_nodeset:
+        if state.base == "DOWN" and not power_flags and allow_power_down(state):
+            return NodeStatus.power_down
+        if (
+            "POWERED_DOWN" in state.flags
+            and nodename in find_node_status.static_nodeset
+        ):
             return NodeStatus.resume
     elif (
         state is not None
@@ -250,6 +268,11 @@ def do_node_update(status, nodes):
         log.info(f"{count} instances to delete ({hostlist})")
         delete_instances(nodes)
 
+    def nodes_power_down():
+        """power_down node in slurm"""
+        log.info(f"{count} instances to power down ({hostlist})")
+        run(f"{lkp.scontrol} update nodename={hostlist} state=power_down")
+
     def nodes_unknown():
         """Error status, nodes shouldn't get in this status"""
         log.error(f"{count} nodes have unexpected status: ({hostlist})")
@@ -261,14 +284,15 @@ def do_node_update(status, nodes):
 
     update = dict.get(
         {
-            NodeStatus.terminated: nodes_down,
-            NodeStatus.preempted: lambda: (nodes_down(), nodes_restart()),
-            NodeStatus.unbacked: nodes_down,
-            NodeStatus.resume: nodes_resume,
-            NodeStatus.restore: nodes_idle,
             NodeStatus.orphan: nodes_delete,
-            NodeStatus.unknown: nodes_unknown,
+            NodeStatus.power_down: nodes_power_down,
+            NodeStatus.preempted: lambda: (nodes_down(), nodes_restart()),
+            NodeStatus.restore: nodes_idle,
+            NodeStatus.resume: nodes_resume,
+            NodeStatus.terminated: nodes_down,
+            NodeStatus.unbacked: nodes_down,
             NodeStatus.unchanged: lambda: None,
+            NodeStatus.unknown: nodes_unknown,
         },
         status,
     )

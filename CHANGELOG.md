@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Only compare config.yaml blob to cache file.
 - Fix login nodes appearing as compute nodes in Slurm output.
 - Add enable_debug_logging and extra_logging_flags to terraform.
+- Only attempt static node resume when node is powered down.
 
 ## \[6.1.1\]
 
