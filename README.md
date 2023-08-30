@@ -2,13 +2,6 @@
 
 #### NOTICE
 
-##### 5.7.4
-
-The image family `slurm-gcp-5-7-ubuntu-2004-lts` does not have a new image for
-this release. NVIDIA/CUDA installation is currently not working on this OS.
-Because of this, script and other image-centric bug fixes will not be available
-on this image family until this problem is resolved.
-
 ##### 5.7.3
 
 The naming scheme for SchedMD published images has changed with release 5.7.3.
