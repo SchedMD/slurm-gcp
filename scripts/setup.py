@@ -349,7 +349,7 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
 
     lines = [
         FILE_PREAMBLE,
-        conflines(cloud_parameters),
+        conflines(cloud_parameters, lkp),
         loginlines(),
         *(partitionlines(p, lkp) for p in lkp.cfg.partitions.values()),
         suspend_exc,
