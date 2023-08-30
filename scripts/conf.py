@@ -290,7 +290,7 @@ def make_cloud_conf(lkp=lkp, cloud_parameters=None):
 
     lines = [
         FILE_PREAMBLE,
-        conflines(cloud_parameters),
+        conflines(cloud_parameters, lkp),
         loginlines(),
         *(nodeset_lines(n, lkp) for n in lkp.cfg.nodeset.values()),
         *(nodeset_dyn_lines(n, lkp) for n in lkp.cfg.nodeset_dyn.values()),

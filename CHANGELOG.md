@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Only attempt static node resume when node is powered down.
 - Fix CUDA on Ubuntu by installing CUDA via runfile alongside NVIDIA driver from
   signed repo.
+- Fix conf generation issue on reconfiguration.
 
 ## \[6.1.1\]
 
