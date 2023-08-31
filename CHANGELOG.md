@@ -120,7 +120,7 @@ All notable changes to this project will be documented in this file.
 ## \[5.6.3\]
 
 - Increase project metadata timeouts.
-- Add cluster cloud logging fiter output.
+- Add cluster cloud logging filter output.
 - Add Ubuntu 22.04 LTS support.
 - Add preliminary ARM64 image support for T2A instances.
 - Add Debian 11 support.
