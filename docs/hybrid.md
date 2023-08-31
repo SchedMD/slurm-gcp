@@ -26,7 +26,7 @@ This guide focuses on setting up a hybrid [Slurm cluster](./glossary.md#slurm).
 With hybrid, there are different challenges and considerations that need to be
 taken into account. This guide will cover them and their recommended solutions.
 
-There is a clear seperation of how on-prem and cloud resources are managed
+There is a clear separation of how on-prem and cloud resources are managed
 within your hybrid cluster. This means that you can modify either side of the
 hybrid cluster without disrupting the other side! You manage your on-prem and
 our [Slurm cluster module](../terraform/slurm_cluster/README.md) will manage the
@@ -71,7 +71,7 @@ and terminating nodes in the cloud:
   - Creates compute node resources based upon Slurm job allocation and
     configured compute resources.
 - `slurmsync.py`
-  - Synchronizes the Slurm state and the GCP state, reducing discrepencies from
+  - Synchronizes the Slurm state and the GCP state, reducing discrepancies from
     manual admin activity or other edge cases.
   - May update Slurm node states, create or destroy GCP compute resources or
     other script managed GCP resources.
@@ -253,7 +253,7 @@ controller to be able to burst into the cloud.
 
 ### Manage Secrets
 
-Additionally, [MUNGE](./glossary.md#munge) secrets must be consistant across the
+Additionally, [MUNGE](./glossary.md#munge) secrets must be consistent across the
 cluster. There are a few safe ways to deal with munge.key distribution:
 
 - Use NFS to mount `/etc/munge` from the controller (default behavior).
@@ -270,7 +270,7 @@ connections to the munge NFS is critical.
 
 - Isolate the cloud compute nodes of the cluster into their own project, VPC,
   and subnetworks. Use project or network peering to enable access to other
-  cloud infrastructure in a controlled mannor.
+  cloud infrastructure in a controlled manner.
 - Setup firewall rules to control ingress and egress to the controller such that
   only trusted machines or networks use its NFS.
 - Only allow trusted private address (ranges) for communication to the

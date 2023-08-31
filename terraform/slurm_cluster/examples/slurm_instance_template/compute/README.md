@@ -14,7 +14,7 @@
 
 ## Overview
 
-This exmaple creates a
+This example creates a
 [slurm_instance_template](../../../modules/slurm_instance_template/README.md)
 intended to be used by the
 [slurm_partition](../../../modules/slurm_partition/README.md).

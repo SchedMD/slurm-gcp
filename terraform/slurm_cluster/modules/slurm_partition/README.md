@@ -25,7 +25,7 @@ creates a Slurm partition for
 Conceptutally, a Slurm partition is a queue that is associated with compute
 resources, limits, and access controls. Users submit jobs to one or more
 partitions to have their jobs be completed against requested resources within
-their alloted limits and access.
+their allotted limits and access.
 
 This module defines a partition and its resources -- most notably, compute
 nodes. Sets of compute nodes reside within a partition. Each set of compute
@@ -34,7 +34,7 @@ nodes must resolve to an
 [instance template](../../../../docs/glossary.md#instance-template) is: created
 by definition -- module creates an
 [instance template](../../../../docs/glossary.md#instance-template) using subset
-of input paramters; or by the
+of input parameters; or by the
 [self link](../../../../docs/glossary.md#self-link) of an
 [instance template](../../../../docs/glossary.md#instance-template) that is
 managed outside of this module. Additionally, there are compute node parameters

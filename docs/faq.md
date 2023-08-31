@@ -82,7 +82,7 @@ out. Tickets can be submitted via
 
 ### How do I move data for a job?
 
-Data can be migrated to and from external sources using a worflow of dependant
+Data can be migrated to and from external sources using a workflow of dependent
 jobs. A [workflow submission script](../jobs/submit_workflow.py.py) and
 [helper jobs](../jobs/data_migrate/) are provided. See
 [README](../jobs/README.md) for more information.
@@ -197,8 +197,8 @@ it may be allocated jobs again.
 ### How do I limit user access to only using login nodes?
 
 By default, all instances are configured with
-[OS Login](./glossary.md#os-login). This keeps UID and GID of users consistant
-accross all instances and allows easy user control with
+[OS Login](./glossary.md#os-login). This keeps UID and GID of users consistent
+across all instances and allows easy user control with
 [IAM Roles](./glossary.md#iam-roles).
 
 1. Create a group for all users in `admin.google.com`.
@@ -221,7 +221,7 @@ accross all instances and allows easy user control with
 1. Select boxes for login nodes
 1. Add group as a member with the **IAP-secured Tunnel User** role. Please see
    [Enabling IAP for Compute Engine](https://cloud.google.com/iap/docs/enabling-compute-howto)
-   for mor information.
+   for more information.
 
 ### What Slurm image do I use for production?
 

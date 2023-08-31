@@ -61,7 +61,7 @@ to help you get up and running and stay running.
 Issues and/or enhancement requests can be submitted to
 [SchedMD's Bugzilla](https://bugs.schedmd.com).
 
-Also, join comunity discussions on either the
+Also, join community discussions on either the
 [Slurm User mailing list](https://slurm.schedmd.com/mail.html) or the
 [Google Cloud & Slurm Community Discussion Group](https://groups.google.com/forum/#!forum/google-cloud-slurm-discuss).
 

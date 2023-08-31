@@ -116,7 +116,7 @@ custom Slurm image.
 
 ### Creation
 
-Install software dependencies and build images from configation.
+Install software dependencies and build images from configuration.
 
 See [slurm-gcp packer project](../packer/README.md) for details.
 

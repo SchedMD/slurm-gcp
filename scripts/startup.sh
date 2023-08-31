@@ -96,7 +96,7 @@ fi
 touch $FLAGFILE
 
 function tpu_setup {
-	#allow the following command to fail, as this attibute does not exist for regular nodes
+	#allow the following command to fail, as this attribute does not exist for regular nodes
 	docker_image=$($CURL $URL/instance/attributes/slurm_docker_image 2> /dev/null || true)
 	if [ -z $docker_image ]; then #Not a tpu node, do not do anything
 		return

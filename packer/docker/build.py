@@ -150,7 +150,7 @@ file_params = {
     "install_lustre": "false",
     "source_image_project_id": "irrelevant",
     "zone": "irrelevant",
-    "tf_version": "overriden",
+    "tf_version": "overridden",
 }
 file_params["project_id"] = args.project_id
 file_params["slurm_version"] = args.slurm_version

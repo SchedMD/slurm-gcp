@@ -51,7 +51,7 @@
       msg: >
         OS ansible_distribution version ansible_distribution_major_version is not
         supported.
-        Please use a suported OS in list:
+        Please use a supported OS in list:
           - CentOS 7
           - Rocky 8
           - Debian 10, 11

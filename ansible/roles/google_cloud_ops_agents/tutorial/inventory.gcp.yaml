@@ -2,7 +2,7 @@
 plugin: gcp_compute
 auth_kind: serviceaccount
 projects:
-  # This value will be subsituted by sed command
+  # This value will be substituted by sed command
   - ENTER_PROJECT_NAME
 keyed_groups:
   # Create groups from GCE labels
