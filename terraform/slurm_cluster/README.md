@@ -38,7 +38,7 @@ use.
 Partitions define what compute resources are available to the controller so it
 may allocate jobs. Slurm will resume/create compute instances as needed to run
 allocated jobs and will suspend/terminate the instances after they are no longer
-needed (e.g. IDLE for SuspendTimeout duration). Static nodes are persistant;
+needed (e.g. IDLE for SuspendTimeout duration). Static nodes are persistent;
 they are exempt from being suspended/terminated under normal conditions. Dynamic
 nodes are burstable; they will scale up and down with workload.
 

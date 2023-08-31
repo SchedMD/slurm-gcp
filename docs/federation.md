@@ -115,7 +115,7 @@ please refer to [multiple-slurmdbd](#multiple-slurmdbd) section.
 
 ### Additional Requirements
 
-- User UID and GID are consistant accross all federated clusters.
+- User UID and GID are consistent across all federated clusters.
 
 ## Multiple Slurmdbd
 

@@ -14,7 +14,7 @@
 
 ## Overview
 
-This exmaple creates a
+This example creates a
 [Slurm partition](../../../modules/slurm_partition/README.md).
 
 ## Usage

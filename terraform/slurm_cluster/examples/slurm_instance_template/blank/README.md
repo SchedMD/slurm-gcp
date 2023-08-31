@@ -14,7 +14,7 @@
 
 ## Overview
 
-This exmaple creates a
+This example creates a
 [slurm_instance_template](../../../modules/slurm_instance_template/README.md).
 It is compatible with:
 

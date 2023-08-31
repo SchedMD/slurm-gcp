@@ -124,7 +124,7 @@ All notable changes to this project will be documented in this file.
 ## \[5.6.3\]
 
 - Increase project metadata timeouts.
-- Add cluster cloud logging fiter output.
+- Add cluster cloud logging filter output.
 - Add Ubuntu 22.04 LTS support.
 - Add preliminary ARM64 image support for T2A instances.
 - Add Debian 11 support.
@@ -144,7 +144,7 @@ All notable changes to this project will be documented in this file.
 - startup-script - Add logging level prefixes for parsing.
 - Fix slurm and slurm-gcp logs not showing up in Cloud Logging.
 - resume.py - No longer validate machine_type with placement groups.
-- Raise error from incorrect settings with dependant inputs.
+- Raise error from incorrect settings with dependent inputs.
 - For gcsfuse network storage, server_ip can be null/None or "".
 - Fix munge mount export from controller.
 - Enable DebugFlags=Power by default
@@ -353,7 +353,7 @@ All notable changes to this project will be documented in this file.
 - Fix potential race condition in loading BQ job data.
 - Remove deployment manager support.
 - Update Nvidia to 470.82.01 and CUDA to 11.4.4
-- Reenable gcsfuse in ansible and workaround the repo gpg check problem
+- Re-enable gcsfuse in ansible and workaround the repo gpg check problem
 
 ## \[4.1.5\]
 
@@ -404,7 +404,7 @@ All notable changes to this project will be documented in this file.
 
 ## \[4.0.4\]
 
-- Configure sockets, cores, threads on compute nodes for better performace with
+- Configure sockets, cores, threads on compute nodes for better performance with
   `cons_tres`.
 
 ## \[4.0.3\]
