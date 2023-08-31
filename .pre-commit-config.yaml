@@ -70,3 +70,7 @@ repos:
   rev: v2.2.5
   hooks:
   - id: codespell
+  - id: codespell
+    alias: codespell-apply
+    args: [-w]
+    stages: [manual]
