@@ -9,7 +9,7 @@
   - [Overview](#overview)
   - [Supported TPU types](#supported-tpu-types)
   - [Supported Tensorflow versions](#supported-tensorflow-versions)
-  - [Slurm-gcp compatiblity matrix](#slurm-gcp-compatiblity-matrix)
+  - [Slurm-gcp compatibility matrix](#slurm-gcp-compatibility-matrix)
   - [Terraform](#terraform)
     - [Quickstart Examples](#quickstart-examples)
   - [TPU example job](#tpu-example-job)
@@ -36,7 +36,7 @@ first it is important to take into account the following considerations.
   the partition ResumeTimeout and SuspendTimeout that contains TPU nodes.
 - Slurm is executed in TPU nodes using a docker container.
 - TPU nodes in Slurm will have different name that the one seen in GCP, that is
-  because TPU names cannot be choosen or known before starting them up.
+  because TPU names cannot be chosen or known before starting them up.
 - python 3.7 or above is needed for the TPU API module to work. In consequence
   TPU nodes will not work with all the OS, like for example CentOS 7, see more
   in the [compatibility matrix](#slurm-gcp-compatiblity-matrix).
@@ -60,7 +60,7 @@ At this moment the following tensorflow versions are supported:
 
 - 2.12.0
 
-## Slurm-gcp compatiblity matrix
+## Slurm-gcp compatibility matrix
 
 Due to the fact that the TPU support has some requirements as having python >=
 3.7 installed not all the OS support it, this table can be used to see the
@@ -165,7 +165,7 @@ would be like this:
 > sbatch -p normal -N 1 : -p tpu -N 1 sbatch_script.sh
 
 This will allocate a node in the normal partition and a node in the tpu
-partition, both in the same heterogenous job.
+partition, both in the same heterogeneous job.
 
 ### Static TPU nodes
 

@@ -65,3 +65,8 @@ repos:
   hooks:
   - id: flake8
     exclude: ^dm/
+
+- repo: https://github.com/codespell-project/codespell
+  rev: v2.2.5
+  hooks:
+  - id: codespell

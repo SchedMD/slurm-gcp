@@ -30,7 +30,7 @@ output "config" {
 
   precondition {
     condition     = length(local.x_nodeset_overlap) == 0
-    error_message = "All nodeset names must be unqiue among all nodeset types."
+    error_message = "All nodeset names must be unique among all nodeset types."
   }
 }
 

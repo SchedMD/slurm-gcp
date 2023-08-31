@@ -161,7 +161,7 @@ def create_instances_request(nodes, partition_name, placement_group, job_id=None
         if job_id is not None and partition.enable_job_exclusive
         else None
     )
-    # overwrites properties accross all instances
+    # overwrites properties across all instances
     body.instanceProperties = instance_properties(
         nodeset, model, placement_group, labels
     )
