@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Migrate from network overrides in bulkInsert to honoring instance templates.
 - Add additional_networks support to instance template and partition_nodes.
 - Support Tier 1 networking in instance templates.
+- Reverse logic in valid_placement_nodes
 
 ## \[5.8.0\]
 
