@@ -54,7 +54,7 @@ locals {
       ])
       # Additional Features
       access_config  = x.access_config
-      bandwidth_tier = x.bandwidth_tier != null ? x.bandwidth_tier : local.bandwidth_tier
+      bandwidth_tier = x.bandwidth_tier != null ? x.bandwidth_tier : "platform_default"
       # Beta Features
       enable_spot_vm       = x.enable_spot_vm
       reservation_name     = x.reservation_name
@@ -64,8 +64,11 @@ locals {
 
   compute_list = flatten([for x in local.partition.partition_nodes : x.node_list])
 
-  bandwidth_tier = "platform_default"
-
+  bandwidth_tier_api_values = {
+    tier_1_enabled = "GVNIC"
+    gvnic_enabled  = "GVNIC"
+    virtio_enabled = "VIRTIO_NET"
+  }
   spot_instance_config = {
     termination_action = "STOP"
   }
@@ -133,34 +136,38 @@ module "slurm_compute_template" {
     if(x.instance_template == null || x.instance_template == "")
   }
 
-  additional_disks         = each.value.additional_disks
-  can_ip_forward           = each.value.can_ip_forward
-  disable_smt              = each.value.disable_smt
-  disk_auto_delete         = each.value.disk_auto_delete
-  disk_labels              = each.value.disk_labels
-  disk_size_gb             = each.value.disk_size_gb
-  disk_type                = each.value.disk_type
-  enable_confidential_vm   = each.value.enable_confidential_vm
-  enable_oslogin           = each.value.enable_oslogin
-  enable_shielded_vm       = each.value.enable_shielded_vm
-  gpu                      = each.value.gpu
-  labels                   = each.value.labels
-  machine_type             = each.value.machine_type
-  metadata                 = each.value.metadata
-  min_cpu_platform         = each.value.min_cpu_platform
-  name_prefix              = "${var.partition_name}-${each.value.group_name}"
-  on_host_maintenance      = each.value.on_host_maintenance
-  preemptible              = each.value.preemptible
-  project_id               = var.project_id
-  service_account          = each.value.service_account
-  shielded_instance_config = each.value.shielded_instance_config
-  slurm_cluster_name       = var.slurm_cluster_name
-  slurm_instance_role      = "compute"
-  source_image_family      = each.value.source_image_family
-  source_image_project     = each.value.source_image_project
-  source_image             = each.value.source_image
-  subnetwork               = data.google_compute_subnetwork.partition_subnetwork.self_link
-  tags                     = concat([var.slurm_cluster_name], each.value.tags)
+  access_config               = each.value.access_config
+  additional_disks            = each.value.additional_disks
+  additional_networks         = each.value.additional_networks
+  can_ip_forward              = each.value.can_ip_forward
+  disable_smt                 = each.value.disable_smt
+  disk_auto_delete            = each.value.disk_auto_delete
+  disk_labels                 = each.value.disk_labels
+  disk_size_gb                = each.value.disk_size_gb
+  disk_type                   = each.value.disk_type
+  enable_confidential_vm      = each.value.enable_confidential_vm
+  enable_oslogin              = each.value.enable_oslogin
+  enable_shielded_vm          = each.value.enable_shielded_vm
+  gpu                         = each.value.gpu
+  labels                      = each.value.labels
+  machine_type                = each.value.machine_type
+  metadata                    = each.value.metadata
+  min_cpu_platform            = each.value.min_cpu_platform
+  name_prefix                 = "${var.partition_name}-${each.value.group_name}"
+  nic_type                    = try(local.bandwidth_tier_api_values[each.value.bandwidth_tier], null)
+  on_host_maintenance         = each.value.on_host_maintenance
+  preemptible                 = each.value.preemptible
+  project_id                  = var.project_id
+  service_account             = each.value.service_account
+  shielded_instance_config    = each.value.shielded_instance_config
+  slurm_cluster_name          = var.slurm_cluster_name
+  slurm_instance_role         = "compute"
+  source_image_family         = each.value.source_image_family
+  source_image_project        = each.value.source_image_project
+  source_image                = each.value.source_image
+  subnetwork                  = data.google_compute_subnetwork.partition_subnetwork.self_link
+  tags                        = concat([var.slurm_cluster_name], each.value.tags)
+  total_egress_bandwidth_tier = each.value.bandwidth_tier == "tier_1_enabled" ? "TIER_1" : "DEFAULT"
 }
 
 ############

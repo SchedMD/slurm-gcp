@@ -32,7 +32,7 @@ limitations under the License.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_instance_template"></a> [instance\_template](#module\_instance\_template) | terraform-google-modules/vm/google//modules/instance_template | ~> 7.1 |
+| <a name="module_instance_template"></a> [instance\_template](#module\_instance\_template) | github.com/terraform-google-modules/terraform-google-vm//modules/instance_template | 84fbd1f |
 
 ## Resources
 
@@ -44,6 +44,7 @@ limitations under the License.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_access_config"></a> [access\_config](#input\_access\_config) | Access configurations, i.e. IPs via which the VM instance can be accessed via the Internet. | <pre>list(object({<br>    nat_ip       = string<br>    network_tier = string<br>  }))</pre> | `[]` | no |
 | <a name="input_additional_disks"></a> [additional\_disks](#input\_additional\_disks) | List of maps of disks. | <pre>list(object({<br>    disk_name    = string<br>    device_name  = string<br>    disk_type    = string<br>    disk_size_gb = number<br>    disk_labels  = map(string)<br>    auto_delete  = bool<br>    boot         = bool<br>  }))</pre> | `[]` | no |
 | <a name="input_can_ip_forward"></a> [can\_ip\_forward](#input\_can\_ip\_forward) | Enable IP forwarding, for NAT instances for example. | `bool` | `false` | no |
 | <a name="input_disable_smt"></a> [disable\_smt](#input\_disable\_smt) | Disables Simultaneous Multi-Threading (SMT) on instance. | `bool` | `false` | no |
@@ -62,6 +63,7 @@ limitations under the License.
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix for template resource. | `string` | `"default"` | no |
 | <a name="input_network"></a> [network](#input\_network) | The name or self\_link of the network to attach this interface to. Use network<br>attribute for Legacy or Auto subnetted networks and subnetwork for custom<br>subnetted networks. | `string` | `null` | no |
 | <a name="input_network_ip"></a> [network\_ip](#input\_network\_ip) | Private IP address to assign to the instance if desired. | `string` | `""` | no |
+| <a name="input_nic_type"></a> [nic\_type](#input\_nic\_type) | Valid values are "VIRTIO\_NET", "GVNIC" or set to null to accept API default behavior. | `string` | `null` | no |
 | <a name="input_on_host_maintenance"></a> [on\_host\_maintenance](#input\_on\_host\_maintenance) | Instance availability Policy | `string` | `"MIGRATE"` | no |
 | <a name="input_preemptible"></a> [preemptible](#input\_preemptible) | Allow the instance to be preempted. | `bool` | `false` | no |
 | <a name="input_project_id"></a> [project\_id](#input\_project\_id) | Project ID to create resources in. | `string` | n/a | yes |

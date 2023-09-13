@@ -87,8 +87,7 @@ data "local_file" "startup" {
 ############
 
 module "instance_template" {
-  source  = "terraform-google-modules/vm/google//modules/instance_template"
-  version = "~> 7.1"
+  source = "github.com/terraform-google-modules/terraform-google-vm//modules/instance_template?ref=84fbd1f"
 
   project_id = var.project_id
 
@@ -99,6 +98,8 @@ module "instance_template" {
   region             = var.region
   subnetwork_project = var.subnetwork_project
   subnetwork         = var.subnetwork
+  nic_type           = var.nic_type
+  access_config      = var.access_config
   tags               = var.tags
 
   # Instance
