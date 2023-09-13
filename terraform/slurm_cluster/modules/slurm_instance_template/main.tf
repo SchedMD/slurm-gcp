@@ -92,16 +92,17 @@ module "instance_template" {
   project_id = var.project_id
 
   # Network
-  can_ip_forward      = var.can_ip_forward
-  network_ip          = var.network_ip
-  network             = var.network
-  region              = var.region
-  subnetwork_project  = var.subnetwork_project
-  subnetwork          = var.subnetwork
-  nic_type            = var.nic_type
-  access_config       = var.access_config
-  additional_networks = var.additional_networks
-  tags                = var.tags
+  can_ip_forward              = var.can_ip_forward
+  network_ip                  = var.network_ip
+  network                     = var.network
+  region                      = var.region
+  subnetwork_project          = var.subnetwork_project
+  subnetwork                  = var.subnetwork
+  nic_type                    = var.nic_type
+  access_config               = var.access_config
+  additional_networks         = var.additional_networks
+  total_egress_bandwidth_tier = var.total_egress_bandwidth_tier
+  tags                        = var.tags
 
   # Instance
   machine_type             = var.machine_type

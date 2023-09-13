@@ -138,6 +138,12 @@ variable "additional_networks" {
   }))
 }
 
+variable "total_egress_bandwidth_tier" {
+  description = "Egress bandwidth tier setting for supported VM families"
+  type        = string
+  default     = "DEFAULT"
+}
+
 variable "name_prefix" {
   type        = string
   description = "Prefix for template resource."

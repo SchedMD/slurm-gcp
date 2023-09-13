@@ -67,9 +67,6 @@ def instance_properties(partition, model, placement_group, labels=None):
 
     props = NSDict()
 
-    if node_group.bandwidth_tier == "tier_1_enabled":
-        props.networkPerformanceConfig = {"totalEgressBandwidthTier": "TIER_1"}
-
     slurm_metadata = {
         "slurm_cluster_name": cfg.slurm_cluster_name,
         "slurm_instance_role": "compute",
