@@ -514,6 +514,10 @@ EOD
       node_count_dynamic_max = number
       group_name             = string
       node_conf              = map(string)
+      access_config = list(object({
+        nat_ip       = string
+        network_tier = string
+      }))
       additional_disks = list(object({
         disk_name    = string
         device_name  = string
@@ -523,8 +527,25 @@ EOD
         auto_delete  = bool
         boot         = bool
       }))
-      access_config = list(object({
-        network_tier = string
+      additional_networks = list(object({
+        network            = string
+        subnetwork         = string
+        subnetwork_project = string
+        network_ip         = string
+        nic_type           = string
+        stack_type         = string
+        queue_count        = number
+        access_config = list(object({
+          nat_ip       = string
+          network_tier = string
+        }))
+        ipv6_access_config = list(object({
+          network_tier = string
+        }))
+        alias_ip_range = list(object({
+          ip_cidr_range         = string
+          subnetwork_range_name = string
+        }))
       }))
       bandwidth_tier         = string
       can_ip_forward         = bool

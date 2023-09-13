@@ -32,6 +32,7 @@ locals {
       partition_nodes = [for n in x.partition_nodes : {
         access_config            = n.access_config
         additional_disks         = n.additional_disks
+        additional_networks      = n.additional_networks
         bandwidth_tier           = n.bandwidth_tier
         can_ip_forward           = n.can_ip_forward
         node_count_dynamic_max   = n.node_count_dynamic_max

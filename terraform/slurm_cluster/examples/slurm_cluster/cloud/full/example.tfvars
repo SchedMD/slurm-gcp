@@ -326,6 +326,7 @@ partitions = [
         # Instance Definition
         access_config = [
           # {
+          #   nat_ip       = null
           #   network_tier = null
           # },
         ]

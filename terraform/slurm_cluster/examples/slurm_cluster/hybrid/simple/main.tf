@@ -36,8 +36,9 @@ locals {
           group_name             = "test"
           node_conf              = {}
 
-          additional_disks         = []
           access_config            = []
+          additional_disks         = []
+          additional_networks      = []
           bandwidth_tier           = "platform_default"
           can_ip_forward           = false
           disable_smt              = false
@@ -92,8 +93,9 @@ locals {
           group_name             = "test"
           node_conf              = {}
 
-          additional_disks       = []
           access_config          = []
+          additional_disks       = []
+          additional_networks    = []
           bandwidth_tier         = "platform_default"
           can_ip_forward         = false
           disable_smt            = false

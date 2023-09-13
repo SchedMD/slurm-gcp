@@ -224,6 +224,7 @@ variable "partitions" {
         node_count_dynamic_max = number
         node_count_static      = number
         access_config = list(object({
+          nat_ip       = string
           network_tier = string
         }))
         bandwidth_tier    = string
