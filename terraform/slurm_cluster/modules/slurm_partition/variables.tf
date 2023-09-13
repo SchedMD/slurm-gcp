@@ -98,6 +98,26 @@ EOD
       auto_delete  = bool
       boot         = bool
     }))
+    additional_networks = list(object({
+      network            = string
+      subnetwork         = string
+      subnetwork_project = string
+      network_ip         = string
+      nic_type           = string
+      stack_type         = string
+      queue_count        = number
+      access_config = list(object({
+        nat_ip       = string
+        network_tier = string
+      }))
+      ipv6_access_config = list(object({
+        network_tier = string
+      }))
+      alias_ip_range = list(object({
+        ip_cidr_range         = string
+        subnetwork_range_name = string
+      }))
+    }))
     bandwidth_tier         = string
     can_ip_forward         = bool
     disable_smt            = bool

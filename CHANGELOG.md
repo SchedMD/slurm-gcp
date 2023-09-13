@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Remove spurious log message on resume, referring to "Reservation name".
 - Support A3 VMs in compact placement policies.
 - Migrate from network overrides in bulkInsert to honoring instance templates.
+- Add additional_networks support to instance template and partition_nodes.
 
 ## \[5.8.0\]
 
