@@ -590,14 +590,14 @@ def valid_placement_nodes(job_id, nodelist):
         for node in nodelist
     }
     fail = False
-    valid_types = ["a2", "c2", "c2d", "c3", "n2", "n2d"]
+    invalid_types = ["e2", "t2d", "n1", "t2a", "m1", "m2", "m3"]
     for prefix, machine_type in machine_types.items():
-        if machine_type.split("-")[0] not in valid_types:
+        if machine_type.split("-")[0] in invalid_types:
             log.warn(f"Unsupported machine type for placement policy: {machine_type}.")
             fail = True
     if fail:
         log.warn(
-            f"Please use a valid machine type with placement policy: ({','.join(valid_types)})"
+            f"Please do not use any the following machine types with placement policy: ({','.join(invalid_types)})"
         )
         return False
     return True

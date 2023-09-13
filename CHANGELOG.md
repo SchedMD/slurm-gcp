@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Fix CUDA on Ubuntu by installing CUDA via runfile alongside NVIDIA driver from
   signed repo.
 - Fix conf generation issue on reconfiguration.
+- Reverse logic in valid_placement_nodes
 
 ## \[6.1.1\]
 
