@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## \[5.9.0\]
 
 - Remove spurious log message on resume, referring to "Reservation name".
+- Support A3 VMs in compact placement policies.
 
 ## \[5.8.0\]
 
