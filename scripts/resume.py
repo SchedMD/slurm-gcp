@@ -156,7 +156,6 @@ def instance_properties(partition, model, placement_group, labels=None):
             "values": [node_group.reservation_name],
         }
 
-    log.error(f"Reservation name: {node_group.reservation_name}")
     return props
 
 

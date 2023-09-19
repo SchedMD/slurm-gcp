@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[5.9.0\]
+
+- Remove spurious log message on resume, referring to "Reservation name".
+
 ## \[5.8.0\]
 
 - Fix login nodes not reconfiguring when `enable_reconfigure=true`.
