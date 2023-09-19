@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[5.9.1\]
+
+- Use reservation placement policy if placement is enabled, and a reservation is
+  specified.
+
 ## \[5.9.0\]
 
 - Remove spurious log message on resume, referring to "Reservation name".

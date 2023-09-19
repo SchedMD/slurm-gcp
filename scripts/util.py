@@ -386,6 +386,16 @@ def is_exclusive_node(node):
     )
 
 
+def reservation_placement(reservation):
+    """
+    Inspects reservation object, returns placement policy name if one is found.
+    """
+    url = reservation.get("resourcePolicies", {}).get("placement")
+    if url:
+        return trim_self_link(url)
+    return None
+
+
 def compute_service(credentials=None, user_agent=USER_AGENT, version="v1"):
     """Make thread-safe compute service handle
     creates a new Http for each request
@@ -1628,6 +1638,29 @@ class Lookup:
         with self.template_cache(writeback=True) as cache:
             cache.clear()
         self.template_info.cache_clear()
+
+    @lru_cache()
+    def reservation(self, name):
+        """
+        See https://cloud.google.com/compute/docs/reference/rest/v1/reservations
+        """
+        resp = ensure_execute(
+            self.compute.reservations().aggregatedList(
+                project=self.project, filter=f"name={name}"
+            )
+        )
+        reservation = None
+        for _, e in resp["items"].items():
+            for r in e.get("reservations", []):
+                assert (
+                    reservation is None
+                ), f"multiple reservations '{name}' found in '{self.project}'."
+                reservation = r
+
+        assert (
+            reservation is not None
+        ), f"reservation '{name}' not found in '{self.project}'."
+        return reservation
 
 
 # Define late globals

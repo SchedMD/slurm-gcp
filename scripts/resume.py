@@ -125,11 +125,21 @@ def instance_properties(partition, model, placement_group, labels=None):
         }
 
     if node_group.reservation_name:
+        reservation_name = node_group.reservation_name
+        reservation = lkp.reservation(reservation_name)
         props.reservationAffinity = {
             "consumeReservationType": "SPECIFIC_RESERVATION",
             "key": "compute.googleapis.com/reservation-name",
-            "values": [node_group.reservation_name],
+            "values": [reservation_name],
         }
+        
+        placement = util.reservation_placement(reservation)
+        if placement:
+            props.resourcePolicies = [placement]
+            log.info(f"reservation {reservation_name} is being used with placement policy {placement}")
+        else:
+            props.resourcePolicies = []
+            log.info(f"reservation {reservation_name} is being used without a placement policy")
 
     return props
 
