@@ -168,6 +168,7 @@ partitions = [
           #
           #},
         ]
+        additional_networks = []
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
         reservation_name = null
@@ -257,6 +258,7 @@ partitions = [
           #
           #},
         ]
+        additional_networks = []
         bandwidth_tier = "platform_default"
         enable_spot_vm = true
         reservation_name = null
@@ -332,6 +334,7 @@ partitions = [
 
         # Instance Definition
         access_config  = []
+        additional_networks = []
         bandwidth_tier = "platform_default"
         enable_spot_vm = false
         reservation_name = null
