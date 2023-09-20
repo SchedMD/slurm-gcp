@@ -188,9 +188,10 @@ partitions = [
           #   network_tier = null
           # },
         ]
-        bandwidth_tier   = "platform_default"
-        enable_spot_vm   = false
-        reservation_name = null
+        additional_networks = []
+        bandwidth_tier      = "platform_default"
+        enable_spot_vm      = false
+        reservation_name    = null
         spot_instance_config = {
           termination_action = "STOP"
         }
