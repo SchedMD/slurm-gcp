@@ -7,7 +7,7 @@ cachetools==5.3.1; python_version >= '3.7'
 certifi==2023.5.7; python_version >= '3.6'
 cffi==1.15.1
 charset-normalizer==3.2.0; python_full_version >= '3.7.0'
-cryptography==41.0.2; python_version >= '3.7'
+cryptography==41.0.4; python_version >= '3.7'
 decorator==5.1.1; python_version >= '3.11'
 execnet==2.0.2; python_version >= '3.7'
 executing==1.2.0
