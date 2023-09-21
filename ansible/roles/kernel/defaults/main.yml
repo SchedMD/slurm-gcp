@@ -13,24 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Install {{ansible_os_family}} Family Kernel Packages
-  dnf:
-    name:
-    - kernel
-    - kernel-devel
-    - kernel-headers
-    - kernel-modules
-    - kernel-tools
-    - kernel-tools-libs
-    #- kernel-tools-libs-devel
-    state: latest
-    update_cache: yes
-
-- block:
-  - name: Reboot
-    reboot:
-
-  - name: Gather facts after reboot
-    setup:
-
-  when: reboot
+reboot: true

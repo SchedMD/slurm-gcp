@@ -12,12 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+- block:
+  - name: Reboot
+    reboot:
 
-- name: Reboot
-  reboot:
+  - name: Gather facts after reboot
+    setup:
 
-- name: Gather facts after reboot
-  setup:
+  when: reboot
 
 - name: Install {{ansible_os_family}} Family Kernel Packages
   apt:
@@ -25,3 +27,12 @@
     - linux-headers-{{ansible_kernel}}
     state: latest
     update_cache: yes
+  when: reboot
+
+- name: Install {{ansible_os_family}} Family Kernel Packages
+  apt:
+    name:
+    - linux-headers-generic
+    state: latest
+    update_cache: yes
+  when: not reboot
