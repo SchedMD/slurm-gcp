@@ -56,7 +56,7 @@ PLACEMENT_MAX_CNT = 150
 # Placement group needs to be the same for an entire bulk_insert hence
 # if placement is used the actual BULK_INSERT_LIMIT will be
 # max([1000, PLACEMENT_MAX_CNT])
-BULK_INSERT_LIMIT = 1000
+BULK_INSERT_LIMIT = 5000
 
 
 def instance_properties(nodeset, model, placement_group, labels=None):
