@@ -16,7 +16,7 @@ repos:
   - id: trailing-whitespace
   - id: detect-private-key
 - repo: https://github.com/executablebooks/mdformat
-  rev: 0.7.16
+  rev: 0.7.17
   hooks:
   - id: mdformat
     args:
@@ -44,7 +44,7 @@ repos:
     types: [file, text]
     pass_filenames: false
 - repo: https://github.com/antonbabenko/pre-commit-terraform
-  rev: v1.81.0
+  rev: v1.83.4
   hooks:
   - id: terraform_fmt
   - id: terraform_validate
@@ -55,13 +55,13 @@ repos:
     - --hook-config=--create-file-if-not-exist=true
     - --hook-config=--path-to-file=README_TF.md
 - repo: https://github.com/psf/black
-  rev: 23.7.0
+  rev: 23.9.1
   hooks:
   - id: black
     exclude: ^dm/
     language_version: python3
 - repo: https://github.com/pycqa/flake8
-  rev: 6.0.0
+  rev: 6.1.0
   hooks:
   - id: flake8
     exclude: ^dm/
