@@ -1528,7 +1528,6 @@ class Lookup:
         return NSDict(machine_info)
 
     def template_machine_conf(self, template_link, project=None, zone=None):
-
         template = self.template_info(template_link)
         if not template.machineType:
             temp_name = trim_self_link(template_link)
@@ -1578,7 +1577,6 @@ class Lookup:
 
     @lru_cache(maxsize=None)
     def template_info(self, template_link, project=None):
-
         project = project or self.project
         template_name = trim_self_link(template_link)
         # split read and write access to minimize write-lock. This might be a

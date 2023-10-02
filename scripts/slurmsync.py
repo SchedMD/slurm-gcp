@@ -371,7 +371,6 @@ parser.add_argument(
 )
 
 if __name__ == "__main__":
-
     args = parser.parse_args()
     util.chown_slurm(LOGFILE, mode=0o600)
 

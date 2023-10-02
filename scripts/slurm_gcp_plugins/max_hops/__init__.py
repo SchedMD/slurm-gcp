@@ -19,20 +19,32 @@ import slurm_gcp_plugins.utils as sgp_utils
 
 
 def pre_placement_group_insert(*pos_args, **keyword_args):
-    logging.info('Trying to enable max hop')
+    logging.info("Trying to enable max hop")
     # Avoid circular import (util imports the plugins)
-    if 'util' in sys.modules:
-        logging.info('Setting compute service version to beta')
-        sys.modules['util'].compute = sys.modules['util'].compute_service(version='beta')
-        max_distance = sgp_utils.get_plugin_setting(plugin='max_hops', setting='max_hops',
-                                                    job=get_job_from_placement_group_name(keyword_args['pg_name']),
-                                                    lkp=keyword_args['lkp'],
-                                                    default=3)
-        logging.debug(f'Setting max hop for placement policy to {max_distance}')
-        keyword_args['request_body']['groupPlacementPolicy']['collocation='] = 'COLLOCATED'
-        keyword_args['request_body']['groupPlacementPolicy']['maxDistance'] = max_distance
+    if "util" in sys.modules:
+        logging.info("Setting compute service version to beta")
+        sys.modules["util"].compute = sys.modules["util"].compute_service(
+            version="beta"
+        )
+        max_distance = sgp_utils.get_plugin_setting(
+            plugin="max_hops",
+            setting="max_hops",
+            job=get_job_from_placement_group_name(keyword_args["pg_name"]),
+            lkp=keyword_args["lkp"],
+            default=3,
+        )
+        logging.debug(f"Setting max hop for placement policy to {max_distance}")
+        keyword_args["request_body"]["groupPlacementPolicy"][
+            "collocation="
+        ] = "COLLOCATED"
+        keyword_args["request_body"]["groupPlacementPolicy"][
+            "maxDistance"
+        ] = max_distance
     else:
-        logging.error('max_hops can not be set (slurm_gcp util.py must be imported by the caller of the plugin callback)')
+        logging.error(
+            "max_hops can not be set (slurm_gcp util.py must be imported by the caller of the plugin callback)"
+        )
+
 
 __all__ = [
     "pre_placement_group_insert",
@@ -41,6 +53,6 @@ __all__ = [
 
 # This should be replaced if the job id becomes available in the context of this plugin hook
 def get_job_from_placement_group_name(pg_name):
-    #f"{cfg.slurm_cluster_name}-{partition_name}-{job_id}-{i}"
+    # f"{cfg.slurm_cluster_name}-{partition_name}-{job_id}-{i}"
 
-    return pg_name.split('-')[2]
+    return pg_name.split("-")[2]
