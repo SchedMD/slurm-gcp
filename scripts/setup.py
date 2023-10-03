@@ -182,8 +182,8 @@ def conflines(cloud_parameters, lkp=lkp):
     }
     prolog_path = Path(dirs.custom_scripts / "prolog.d")
     epilog_path = Path(dirs.custom_scripts / "epilog.d")
-    prolog_path.mkdir(exist_ok=True)
-    epilog_path.mkdir(exist_ok=True)
+    prolog_path.mkdirp(exist_ok=True)
+    epilog_path.mkdirp(exist_ok=True)
     any_exclusive = any(
         bool(p.enable_job_exclusive) for p in lkp.cfg.partitions.values()
     )
