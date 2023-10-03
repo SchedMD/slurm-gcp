@@ -380,6 +380,7 @@ nodeset = [
     # Instance Definition
     enable_public_ip = false
     enable_placement = false
+    reservation_name = null
     network_ips      = "STANDARD"
   },
   {
@@ -414,7 +415,8 @@ nodeset = [
     }
 
     # Instance Definition
-    zones = ["us-central1-f", ]
+    zones            = ["us-central1-f", ]
+    reservation_name = null
   },
 ]
 

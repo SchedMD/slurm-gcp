@@ -126,6 +126,13 @@ def instance_properties(nodeset, model, placement_group, labels=None):
             placement_group,
         ]
 
+    if nodeset.reservation_name:
+        props.reservationAffinity = {
+            "consumeReservationType": "SPECIFIC_RESERVATION",
+            "key": "compute.googleapis.com/reservation-name",
+            "values": [nodeset.reservation_name],
+        }
+
     return props
 
 

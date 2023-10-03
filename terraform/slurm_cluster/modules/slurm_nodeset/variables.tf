@@ -108,6 +108,14 @@ variable "node_count_dynamic_max" {
   }
 }
 
+variable "reservation_name" {
+  description = <<-EOD
+    Sets reservation affinity for instances created from this nodeset.
+  EOD
+  type        = string
+  default     = null
+}
+
 variable "enable_placement" {
   description = <<-EOD
     Enables compact placement policy for instances.

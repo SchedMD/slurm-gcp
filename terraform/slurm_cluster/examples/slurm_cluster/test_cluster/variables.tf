@@ -370,6 +370,7 @@ variable "nodeset" {
     on_host_maintenance = optional(string)
     preemptible         = optional(bool, false)
     region              = optional(string)
+    reservation_name    = optional(string)
     service_account = optional(object({
       email  = optional(string)
       scopes = optional(list(string), ["https://www.googleapis.com/auth/cloud-platform"])
