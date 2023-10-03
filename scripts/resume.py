@@ -528,6 +528,8 @@ def create_nodeset_placement_groups(node_list: list, job_id=0):
     nodeset = lkp.node_nodeset(model)
     if not nodeset.enable_placement:
         return {None: node_list}
+    if not valid_placement_nodes(job_id, node_list):
+        return {None: node_list}
     region = lkp.node_region(model)
 
     groups = {
