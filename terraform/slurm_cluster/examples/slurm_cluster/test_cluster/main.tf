@@ -165,6 +165,7 @@ module "slurm_cluster" {
   controller_startup_scripts_timeout = var.controller_startup_scripts_timeout
   controller_startup_scripts         = var.controller_startup_scripts
   enable_devel                       = var.enable_devel
+  enable_slurm_gcp_plugins           = var.enable_slurm_gcp_plugins
   enable_bigquery_load               = var.enable_bigquery_load
   enable_cleanup_compute             = var.enable_cleanup_compute
   epilog_scripts                     = var.epilog_scripts

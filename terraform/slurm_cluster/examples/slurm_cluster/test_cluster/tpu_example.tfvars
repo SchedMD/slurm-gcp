@@ -30,8 +30,9 @@ source_image         = null
 source_image_project = null
 source_image_family  = null
 
-enable_bigquery_load   = false
-enable_cleanup_compute = true
+enable_slurm_gcp_plugins = false
+enable_bigquery_load     = false
+enable_cleanup_compute   = true
 
 # *NOT* intended for production use
 # enable_devel = true

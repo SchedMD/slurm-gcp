@@ -105,6 +105,7 @@ module "slurm_files" {
   enable_debug_logging               = var.enable_debug_logging
   extra_logging_flags                = var.extra_logging_flags
   enable_hybrid                      = var.enable_hybrid
+  enable_slurm_gcp_plugins           = var.enable_slurm_gcp_plugins
   enable_bigquery_load               = var.enable_bigquery_load
   epilog_scripts                     = var.epilog_scripts
   login_network_storage              = var.login_network_storage
