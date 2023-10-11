@@ -30,9 +30,9 @@ locals {
     }
   }
   node_conf_mappings = {
-    "v2-8"  = local.node_conf_hw.Mem334CPU96
-    "v3-8"  = local.node_conf_hw.Mem334CPU96
-    "v2-32" = local.node_conf_hw.Mem334CPU96
+    "v2" = local.node_conf_hw.Mem334CPU96
+    "v3" = local.node_conf_hw.Mem334CPU96
+    "v4" = local.node_conf_hw.Mem334CPU96
   }
   simple_nodes = ["v2-8", "v3-8"]
 }
@@ -41,12 +41,13 @@ locals {
   snetwork_valid = var.subnetwork != null
   snetwork       = local.snetwork_valid ? data.google_compute_subnetwork.nodeset_subnetwork[0].name : null
   region         = join("-", slice(split("-", var.zone), 0, 2))
+  tpu_fam        = split("-", var.node_type)[0]
   #If subnetwork is specified and it does not have private_ip_google_access, we need to have public IPs on the TPU
   #if no subnetwork is specified, the default one will be used, this does not have private_ip_google_access so we need public IPs too
   pub_need = local.snetwork_valid ? !data.google_compute_subnetwork.nodeset_subnetwork[0].private_ip_google_access : true
   nodeset_tpu = {
     nodeset_name           = var.nodeset_name
-    node_conf              = local.node_conf_mappings[var.node_type]
+    node_conf              = local.node_conf_mappings[local.tpu_fam]
     node_type              = var.node_type
     accelerator_config     = var.accelerator_config
     tf_version             = var.tf_version
