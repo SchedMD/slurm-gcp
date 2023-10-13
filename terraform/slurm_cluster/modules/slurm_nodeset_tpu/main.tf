@@ -28,13 +28,21 @@ locals {
       ThreadsPerCore = 2
       RealMemory     = 307200
     }
+    Mem400CPU240 = {
+      CPUs           = 240
+      Boards         = 1
+      Sockets        = 2
+      CoresPerSocket = 60
+      ThreadsPerCore = 2
+      RealMemory     = 400000
+    }
   }
   node_conf_mappings = {
     "v2" = local.node_conf_hw.Mem334CPU96
     "v3" = local.node_conf_hw.Mem334CPU96
-    "v4" = local.node_conf_hw.Mem334CPU96
+    "v4" = local.node_conf_hw.Mem400CPU240
   }
-  simple_nodes = ["v2-8", "v3-8"]
+  simple_nodes = ["v2-8", "v3-8", "v4-8"]
 }
 
 locals {
@@ -109,6 +117,10 @@ resource "null_resource" "nodeset_tpu" {
     precondition {
       condition     = !(var.subnetwork != null && (local.pub_need && !var.enable_public_ip))
       error_message = "The subnetwork specified does not have Private Google Access enabled. This is required when enable_public_ip is set to false."
+    }
+    precondition {
+      condition     = !(var.node_type == null && (var.accelerator_config.topology == "" && var.accelerator_config.version == ""))
+      error_message = "Either a node type or an accelerator_config must be provided."
     }
   }
 }

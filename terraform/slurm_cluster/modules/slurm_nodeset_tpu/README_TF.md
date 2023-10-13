@@ -54,7 +54,7 @@ No modules.
 | <a name="input_network"></a> [network](#input\_network) | The name of the network to attach the TPU-vm of this nodeset to. | `string` | `""` | no |
 | <a name="input_node_count_dynamic_max"></a> [node\_count\_dynamic\_max](#input\_node\_count\_dynamic\_max) | Maximum number of nodes allowed in this partition to be created dynamically. | `number` | `0` | no |
 | <a name="input_node_count_static"></a> [node\_count\_static](#input\_node\_count\_static) | Number of nodes to be statically created. | `number` | `0` | no |
-| <a name="input_node_type"></a> [node\_type](#input\_node\_type) | Specify a node type to base the vm configuration upon it. | `string` | n/a | yes |
+| <a name="input_node_type"></a> [node\_type](#input\_node\_type) | Specify a node type to base the vm configuration upon it. Not needed if you use accelerator\_config | `string` | `null` | no |
 | <a name="input_nodeset_name"></a> [nodeset\_name](#input\_nodeset\_name) | Name of Slurm nodeset. | `string` | n/a | yes |
 | <a name="input_preemptible"></a> [preemptible](#input\_preemptible) | Specify whether TPU-vms in this nodeset are preemtible, see https://cloud.google.com/tpu/docs/preemptible for details. | `bool` | `false` | no |
 | <a name="input_preserve_tpu"></a> [preserve\_tpu](#input\_preserve\_tpu) | Specify whether TPU-vms will get preserve on suspend, if set to true, on suspend vm is stopped, on false it gets deleted | `bool` | `true` | no |

@@ -25,12 +25,9 @@ variable "nodeset_name" {
 }
 
 variable "node_type" {
-  description = "Specify a node type to base the vm configuration upon it."
+  description = "Specify a node type to base the vm configuration upon it. Not needed if you use accelerator_config"
   type        = string
-  validation {
-    condition     = contains(["v2-8", "v3-8", "v2-32"], var.node_type)
-    error_message = "node_type \"${var.node_type}\" is not supported yet"
-  }
+  default     = null
 }
 
 variable "accelerator_config" {

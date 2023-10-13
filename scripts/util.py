@@ -1158,6 +1158,8 @@ class TPU:
         return self._nodeset.zone
 
     def check_node_type(self):
+        if self.node_type is None:
+            return False
         try:
             request = tpu.GetAcceleratorTypeRequest(
                 name=f"{self._parent}/acceleratorTypes/{self.node_type}"
