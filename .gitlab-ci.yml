@@ -21,7 +21,7 @@ variables:
 
 default:
   image:
-    name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.7
+    name: registry.gitlab.com/schedmd/slurm-gcp/ci-image:0.0.9
 
   before_script:
   - set +o pipefail
