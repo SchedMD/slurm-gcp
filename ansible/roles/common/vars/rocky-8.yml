@@ -14,28 +14,53 @@
 # limitations under the License.
 
 common_packages:
-- '@Development tools'
+- asciidoc
 - autoconf
 - automake
 - bash-completion
+- binutils
+- bison
+- byacc
+- ctags
 - clang
 - curl
+- diffstat
 - dnf-utils
 - drpm
+- elfutils-libelf-devel
 - epel-release
+- flex
 - gcc
 - gcc-c++
+- gdb
 - git
+- glibc-devel
 - graphviz
 - htop
+- intltool
+- jna
 - jq
 - libtool
+- ltrace
 - make
 - openssl-devel
+- patchutils
 - pciutils
 - pdsh
+- perl-Fedora-VSP
+- perl-Sys-Syslog
+- perl-generators
+- pesign
 - pkgconfig
+- pkgconf-m4
+- pkgconf-pkg-config
 - python3
+- redhat-rpm-config
+- rpm-build
+- rpm-sign
+- source-highlight
+- strace
+- systemtap
 - tmux
 - unzip
 - valgrind
