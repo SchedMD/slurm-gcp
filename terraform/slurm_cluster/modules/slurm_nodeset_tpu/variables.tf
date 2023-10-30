@@ -41,7 +41,7 @@ variable "accelerator_config" {
     version  = ""
   }
   validation {
-    condition     = var.accelerator_config.version == "" ? true : contains(["V2", "V3", "V4"], var.accelerator_config.version)
+    condition     = var.accelerator_config.version == "" ? true : contains(["V2", "V3", "V4"], upper(var.accelerator_config.version))
     error_message = "accelerator_config.version must be one of [\"V2\", \"V3\", \"V4\"]"
   }
   validation {

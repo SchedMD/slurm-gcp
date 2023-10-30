@@ -420,7 +420,7 @@ variable "nodeset_tpu" {
     node_count_dynamic_max = optional(number, 1)
     nodeset_name           = string
     enable_public_ip       = optional(bool, false)
-    node_type              = string
+    node_type              = optional(string)
     accelerator_config = optional(object({
       topology = string
       version  = string
