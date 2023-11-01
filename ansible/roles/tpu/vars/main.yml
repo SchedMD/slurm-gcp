@@ -16,6 +16,8 @@
 #To see the .whl files, this can be done: gsutil ls -r gs://cloud-tpu-tpuvm-artifacts/tensorflow/**
 
 tf_versions_to_tpu_mapping:
+  2.14.0: 1.8.0
+  2.13.1: 1.7.1
   2.13.0: 1.7.0
   2.12.1: 1.6.1
   2.12.0: 1.6.0
@@ -25,5 +27,3 @@ tf_versions_to_tpu_mapping:
   2.10.0: 1.4.0
   2.9.3: 1.3.2
   2.9.1: 1.3.0
-  2.8.3: 1.2.3
-  2.8.0: 1.2.0
