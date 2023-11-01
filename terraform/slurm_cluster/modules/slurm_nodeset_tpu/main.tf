@@ -68,7 +68,7 @@ locals {
     service_account        = var.service_account != null ? var.service_account : local.service_account
     preserve_tpu           = local.can_preempt ? var.preserve_tpu : false
     data_disks             = var.data_disks
-    docker_image           = var.docker_image != "" ? var.docker_image : "gcr.io/schedmd-slurm-public/tpu:slurm-gcp-6-1-tf-${var.tf_version}"
+    docker_image           = var.docker_image != "" ? var.docker_image : "gcr.io/schedmd-slurm-public/tpu:slurm-gcp-6-2-tf-${var.tf_version}"
     network                = var.network
     subnetwork             = local.snetwork
   }
