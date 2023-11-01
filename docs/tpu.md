@@ -48,11 +48,14 @@ configured in terraform modules slurm_cluster and slurm_nodeset_tpu.
 
 ## Supported TPU types
 
-At this moment the following tpu types are supported:
+At this moment the following TPU types are supported:
 
-- v2-8
-- v2-32
-- v3-8
+- v2
+- v3
+
+These TPU types are not fully supported, they are in BETA state:
+
+- v4
 
 ## Supported Tensorflow versions
 

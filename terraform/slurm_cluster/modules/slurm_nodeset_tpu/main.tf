@@ -28,35 +28,45 @@ locals {
       ThreadsPerCore = 2
       RealMemory     = 307200
     }
+    Mem400CPU240 = {
+      CPUs           = 240
+      Boards         = 1
+      Sockets        = 2
+      CoresPerSocket = 60
+      ThreadsPerCore = 2
+      RealMemory     = 400000
+    }
   }
   node_conf_mappings = {
-    "v2-8"  = local.node_conf_hw.Mem334CPU96
-    "v3-8"  = local.node_conf_hw.Mem334CPU96
-    "v2-32" = local.node_conf_hw.Mem334CPU96
+    "v2" = local.node_conf_hw.Mem334CPU96
+    "v3" = local.node_conf_hw.Mem334CPU96
+    "v4" = local.node_conf_hw.Mem400CPU240
   }
-  simple_nodes = ["v2-8", "v3-8"]
+  simple_nodes = ["v2-8", "v3-8", "v4-8"]
 }
 
 locals {
   snetwork_valid = var.subnetwork != null
   snetwork       = local.snetwork_valid ? data.google_compute_subnetwork.nodeset_subnetwork[0].name : null
   region         = join("-", slice(split("-", var.zone), 0, 2))
+  tpu_fam        = var.accelerator_config.version != "" ? lower(var.accelerator_config.version) : split("-", var.node_type)[0]
   #If subnetwork is specified and it does not have private_ip_google_access, we need to have public IPs on the TPU
   #if no subnetwork is specified, the default one will be used, this does not have private_ip_google_access so we need public IPs too
-  pub_need = local.snetwork_valid ? !data.google_compute_subnetwork.nodeset_subnetwork[0].private_ip_google_access : true
+  pub_need    = local.snetwork_valid ? !data.google_compute_subnetwork.nodeset_subnetwork[0].private_ip_google_access : true
+  can_preempt = var.node_type != null ? contains(local.simple_nodes, var.node_type) : false
   nodeset_tpu = {
     nodeset_name           = var.nodeset_name
-    node_conf              = local.node_conf_mappings[var.node_type]
+    node_conf              = local.node_conf_mappings[local.tpu_fam]
     node_type              = var.node_type
     accelerator_config     = var.accelerator_config
     tf_version             = var.tf_version
-    preemptible            = contains(local.simple_nodes, var.node_type) ? var.preemptible : false
+    preemptible            = local.can_preempt ? var.preemptible : false
     node_count_dynamic_max = var.node_count_dynamic_max
     node_count_static      = var.node_count_static
     enable_public_ip       = var.enable_public_ip
     zone                   = var.zone
     service_account        = var.service_account != null ? var.service_account : local.service_account
-    preserve_tpu           = contains(local.simple_nodes, var.node_type) ? var.preserve_tpu : false
+    preserve_tpu           = local.can_preempt ? var.preserve_tpu : false
     data_disks             = var.data_disks
     docker_image           = var.docker_image != "" ? var.docker_image : "gcr.io/schedmd-slurm-public/tpu:slurm-gcp-6-1-tf-${var.tf_version}"
     network                = var.network
@@ -108,6 +118,10 @@ resource "null_resource" "nodeset_tpu" {
     precondition {
       condition     = !(var.subnetwork != null && (local.pub_need && !var.enable_public_ip))
       error_message = "The subnetwork specified does not have Private Google Access enabled. This is required when enable_public_ip is set to false."
+    }
+    precondition {
+      condition     = !(var.node_type == null && (var.accelerator_config.topology == "" && var.accelerator_config.version == ""))
+      error_message = "Either a node type or an accelerator_config must be provided."
     }
   }
 }

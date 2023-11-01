@@ -107,17 +107,16 @@ parser.add_argument(
     "--slurm_version",
     "-s",
     dest="slurm_version",
-    default="23.02.4",
+    default="23.02.5",
     help="The Slurm version to use for the image.",
 )
 parser.add_argument(
     "--gcp_version",
     "-g",
     dest="slurmgcp_version",
-    default="6.1.0",
+    default="6.2.0",
     help="The slurm_gcp version to use for the image.",
 )
-# TODO Get the default from ansible tpu role
 parser.add_argument(
     "-t",
     "--tf_versions",

@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 - Reverse logic in valid_placement_nodes
 - Add slurm_gcp_plugin support.
 - Add reservation affinity to nodesets via reservation_name option.
+- Change TPU node conf based on tpu version instead of TPU model.
+- Add support for TPUv4
+- Upgrade installed Slurm to 23.02.5
 
 ## \[6.1.2\]
 
