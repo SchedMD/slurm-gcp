@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[6.2.1\]
+
+- Upgrade installed Slurm to 23.02.6
+
 ## \[6.2.0\]
 
 - Reverse logic in valid_placement_nodes
