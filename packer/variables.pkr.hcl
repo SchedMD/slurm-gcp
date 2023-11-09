@@ -109,7 +109,7 @@ This value can be:
 > NOTE: Use prefix 'b:' to install via 'git checkout' instead of archive.
 EOD
   type        = string
-  default     = "22.05.11"
+  default     = "23.02.6"
 
   validation {
     condition     = can(regex("^(?P<major>\\d{2})\\.(?P<minor>\\d{2})(?P<end>\\.(?P<patch>\\d+)(?P<sub>-(?P<rev>\\d+\\w*))?|\\-(?P<meta>latest))$|^b:(?P<branch>.+)$", var.slurm_version))
