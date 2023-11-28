@@ -86,7 +86,7 @@ resource "google_secret_manager_secret" "cloudsql" {
   secret_id = "${var.slurm_cluster_name}-slurm-secret-cloudsql"
 
   replication {
-    automatic = true
+    auto {}
   }
 
   labels = {
