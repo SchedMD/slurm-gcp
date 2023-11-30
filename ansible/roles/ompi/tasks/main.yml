@@ -61,6 +61,11 @@
     cmd: make --jobs install > /dev/null
     chdir: '{{ompi_paths.build}}'
 
+- name: Clean build dir
+  ansible.builtin.file:
+    state: absent
+    path: '{{ ompi_paths.build }}'
+
 - name: Create Modulefile
   template:
     src: ompi.lua.j2

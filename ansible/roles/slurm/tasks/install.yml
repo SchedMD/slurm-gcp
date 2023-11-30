@@ -65,6 +65,11 @@
     cmd: make --jobs install > /dev/null
     chdir: '{{slurm_paths.build}}/contribs'
 
+- name: Clean build dir
+  ansible.builtin.file:
+    state: absent
+    path: '{{ slurm_paths.build }}'
+
 - name: Add Conf to 'ld.so.conf.d/'
   template:
     src: ld.so.conf.d/slurm.conf.j2
