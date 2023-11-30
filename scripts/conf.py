@@ -62,7 +62,7 @@ def conflines(cloud_parameters, lkp=lkp):
     no_comma_params = cloud_parameters.no_comma_params or False
 
     any_gpus = any(
-        lkp.template_info(nodeset.instance_template).gpu_count > 0
+        lkp.nodeset_template_info(nodeset).gpu_count > 0
         for nodeset in cfg.nodeset.values()
     )
 
@@ -157,8 +157,8 @@ def split_node_groups(nodeset):
 
 
 def nodeset_lines(nodeset, lkp=lkp):
-    template_info = lkp.template_info(nodeset.instance_template)
-    machine_conf = lkp.template_machine_conf(nodeset.instance_template)
+    template_info = lkp.nodeset_template_info(nodeset)
+    machine_conf = template_info.machine_conf
 
     gres = None
     if template_info.gpu_count:
@@ -260,13 +260,13 @@ def partitionlines(partition, lkp=lkp):
     defmem: int = MIN_MEM_PER_CPU
     part_is_tpu = len(partition.partition_nodeset_tpu) > 0
 
-    def defmempercpu(template_link):
-        machine_conf = lkp.template_machine_conf(template_link)
+    def defmempercpu(nodeset):
+        machine_conf = lkp.nodeset_template_info(nodeset).machine_conf
         return max(MIN_MEM_PER_CPU, machine_conf.memory // machine_conf.cpus)
 
     if len(partition.partition_nodeset) > 0:
         defmem = min(
-            defmempercpu(lkp.cfg.nodeset.get(nodeset_name).instance_template)
+            defmempercpu(lkp.cfg.nodeset.get(nodeset_name))
             for nodeset_name in partition.partition_nodeset
         )
     nodesets = list(
@@ -428,7 +428,7 @@ def gen_cloud_gres_conf(lkp=lkp):
 
     gpu_nodes = defaultdict(list)
     for nodeset in cfg.nodeset.values():
-        template_info = lkp.template_info(nodeset.instance_template)
+        template_info = lkp.nodeset_template_info(nodeset)
         gpu_count = template_info.gpu_count
         if gpu_count == 0:
             continue

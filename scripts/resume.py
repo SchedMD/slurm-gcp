@@ -62,9 +62,8 @@ PLACEMENT_MAX_CNT = 150
 BULK_INSERT_LIMIT = 5000
 
 
-def instance_properties(nodeset, model, placement_group, labels=None):
-    template = lkp.node_template(model)
-    template_info = lkp.template_info(template)
+def instance_properties(nodeset, placement_group, labels=None):
+    template_info = lkp.nodeset_template_info(nodeset)
 
     props = NSDict()
 

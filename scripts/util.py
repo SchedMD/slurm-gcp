@@ -232,6 +232,11 @@ def parse_self_link(self_link: str):
     return NSDict(link_patt.findall(self_link))
 
 
+def escape_regex_link(substr):
+    escaped = re.sub(r"[.*+?^$\-{}()|[\]\\]", lambda m: f"\\{m.group()}", substr)
+    return f".*\\b{escaped}\\b.*"
+
+
 def parse_bucket_uri(uri: str):
     """
     Parse a bucket url
@@ -1022,13 +1027,15 @@ def get_insert_operations(group_ids, flt=None, project=None, compute=compute):
     return get_filtered_operations(" AND ".join(f"({f})" for f in filters if f))
 
 
-def machine_type_sockets(template):
+def machine_type_sockets(machine_conf):
     pattern = re.compile("^(?P<family>[^-]+)")
-    m = pattern.match(template.machineType)
+    m = pattern.match(machine_conf.name)
     if not m:
-        raise Exception(f"template {template} does not match expected regex")
+        raise Exception(
+            f"machineType {machine_conf.name} does not match expected regex"
+        )
     family = m.group("family")
-    guestCpus: int = int(template.machine_info.guestCpus)
+    guestCpus: int = int(machine_conf.guestCpus)
     socket_count = dict.get(
         {
             "h3": 2,
@@ -1042,7 +1049,7 @@ def machine_type_sockets(template):
 
 def isSmt(template):
     machineType: str = template.machineType
-    guestCpus: int = int(template.machine_info.guestCpus)
+    guestCpus: int = int(template.machine_conf.guestCpus)
 
     pattern = re.compile("^(?P<family>[^-]+)")
     matches = pattern.match(machineType)
@@ -1475,8 +1482,8 @@ class Lookup:
     def node_template(self, node_name=None):
         return self.node_nodeset(node_name).instance_template
 
-    def node_template_info(self, node_name=None):
-        return self.template_info(self.node_template(node_name))
+    def node_nodeset_template_info(self, node_name=None):
+        return self.nodeset_template_info(self.node_nodeset(node_name))
 
     def node_region(self, node_name=None):
         nodeset = self.node_nodeset(node_name)
@@ -1692,31 +1699,46 @@ class Lookup:
         info = ensure_execute(op)
         return NSDict(info)
 
-    @lru_cache(maxsize=1)
-    def machine_types(self, project=None):
+    @lru_cache()
+    def region_zones(self, region, project=None):
         project = project or self.project
-        field_names = "name,zone,guestCpus,memoryMb,accelerators"
-        fields = f"items.zones.machineTypes({field_names}),nextPageToken"
 
-        machines = defaultdict(dict)
-        act = self.compute.machineTypes()
-        op = act.aggregatedList(project=project, fields=fields)
+        act = self.compute.zones()
+        flt = "(region eq '{}')".format(escape_regex_link(region))
+        op = act.list(project=project, filter=flt)
+        zones = {}
         while op is not None:
             result = ensure_execute(op)
-            machine_iter = chain.from_iterable(
-                m["machineTypes"]
-                for m in result["items"].values()
-                if "machineTypes" in m
-            )
-            for machine in machine_iter:
-                name = machine["name"]
-                zone = machine["zone"]
-                machines[name][zone] = machine
+            zones.update({zone["name"]: zone for zone in result.get("items", [])})
 
-            op = act.aggregatedList_next(op, result)
+            op = act.list_next(op, result)
+        return NSDict(zones)
+
+    def zone_machine_types(self, zone, project=None):
+        project = project or self.project
+
+        act = self.compute.machineTypes()
+        op = act.list(project=project, zone=zone)
+        machine_types = {}
+        while op is not None:
+            result = ensure_execute(op)
+            machine_types.update(
+                {machine["name"]: machine for machine in result.get("items", [])}
+            )
+            op = act.list_next(op, result)
+        return NSDict(machine_types)
+
+    @lru_cache()
+    def region_machine_types(self, region, project=None):
+        project = project or self.project
+
+        zones = self.region_zones(region).keys()
+        machines = {
+            zone: self.zone_machine_types(zone, project=project) for zone in zones
+        }
         return machines
 
-    def machine_type(self, machine_type, project=None, zone=None):
+    def machine_type(self, machine_type, project=None, zone=None, region=None):
         """ """
         custom_patt = re.compile(
             r"((?P<family>\w+)-)?custom-(?P<cpus>\d+)-(?P<mem>\d+)"
@@ -1729,6 +1751,18 @@ class Lookup:
                     project=project, zone=zone, machineType=machine_type
                 )
             )
+        elif region is not None:
+            machines = self.region_machine_types(region, project=project)
+            machine_info = next(
+                (
+                    zone_machines[machine_type]
+                    for zone, zone_machines in machines.items()
+                    if machine_type in zone_machines
+                ),
+                None,
+            )
+            if machine_info is None:
+                raise Exception(f"machine type {machine_type} not found")
         elif custom_match is not None:
             groups = custom_match.groupdict()
             cpus, mem = (groups[k] for k in ["cpus", "mem"])
@@ -1737,36 +1771,10 @@ class Lookup:
                 "memoryMb": int(mem),
             }
         else:
-            machines = self.machine_types(project=project)
-            machine_info = next(iter(machines[machine_type].values()), None)
-            if machine_info is None:
-                raise Exception(f"machine type {machine_type} not found")
+            raise Exception(
+                f"Failed to look up machineType {machine_type}, no zone or region given"
+            )
         return NSDict(machine_info)
-
-    def template_machine_conf(self, template_link, project=None, zone=None):
-        template = self.template_info(template_link)
-        if not template.machineType:
-            temp_name = trim_self_link(template_link)
-            raise Exception(f"instance template {temp_name} has no machine type")
-        template.machine_info = self.machine_type(template.machineType, zone=zone)
-        machine = template.machine_info
-
-        machine_conf = NSDict()
-        machine_conf.boards = 1  # No information, assume 1
-        machine_conf.sockets = machine_type_sockets(template)
-        machine_conf.threads_per_core = 1
-        _div = 2 if getThreadsPerCore(template) == 1 else 1
-        machine_conf.cpus = (
-            int(machine.guestCpus / _div) if isSmt(template) else machine.guestCpus
-        )
-        machine_conf.cores_per_socket = int(machine_conf.cpus / machine_conf.sockets)
-        # Because the actual memory on the host will be different than
-        # what is configured (e.g. kernel will take it). From
-        # experiments, about 16 MB per GB are used (plus about 400 MB
-        # buffer for the first couple of GB's. Using 30 MB to be safe.
-        gb = machine.memoryMb // 1024
-        machine_conf.memory = machine.memoryMb - (400 + (30 * gb))
-        return machine_conf
 
     @contextmanager
     def template_cache(self, writeback=False):
@@ -1791,17 +1799,20 @@ class Lookup:
         finally:
             cache.close()
 
-    @lru_cache(maxsize=None)
-    def template_info(self, template_link, project=None):
+    def nodeset_template_info(self, nodeset, project=None):
         project = project or self.project
-        template_name = trim_self_link(template_link)
+
+        template_link = nodeset.instance_template
+
+        nodeset_name = nodeset.nodeset_name
         # split read and write access to minimize write-lock. This might be a
         # bit slower? TODO measure
         if self.template_cache_path.exists():
             with self.template_cache() as cache:
-                if template_name in cache:
-                    return NSDict(cache[template_name])
+                if nodeset_name in cache:
+                    return NSDict(cache[nodeset_name])
 
+        template_name = trim_self_link(template_link)
         template = ensure_execute(
             self.compute.instanceTemplates().get(
                 project=project, instanceTemplate=template_name
@@ -1814,11 +1825,33 @@ class Lookup:
         # TODO delete metadata to reduce memory footprint?
         # del template.metadata
 
+        region = parse_self_link(nodeset.subnetwork).region
+        machine_conf = self.machine_type(
+            template.machineType, project=project, region=region
+        )
+        template.machine_conf = machine_conf
+
+        machine_conf.boards = 1  # No information, assume 1
+        machine_conf.sockets = machine_type_sockets(machine_conf)
+        machine_conf.threads_per_core = 1
+        _div = 2 if getThreadsPerCore(template) == 1 else 1
+        machine_conf.cpus = (
+            int(machine_conf.guestCpus / _div)
+            if isSmt(template)
+            else machine_conf.guestCpus
+        )
+        machine_conf.cores_per_socket = int(machine_conf.cpus / machine_conf.sockets)
+        # Because the actual memory on the host will be different than
+        # what is configured (e.g. kernel will take it). From
+        # experiments, about 16 MB per GB are used (plus about 400 MB
+        # buffer for the first couple of GB's. Using 30 MB to be safe.
+        gb = machine_conf.memoryMb // 1024
+        machine_conf.memory = machine_conf.memoryMb - (400 + (30 * gb))
+
         # translate gpus into an easier-to-read format
-        machine_info = self.machine_type(template.machineType, project=project)
-        if machine_info.accelerators:
-            template.gpu_type = machine_info.accelerators[0].guestAcceleratorType
-            template.gpu_count = machine_info.accelerators[0].guestAcceleratorCount
+        if machine_conf.accelerators:
+            template.gpu_type = machine_conf.accelerators[0].guestAcceleratorType
+            template.gpu_count = machine_conf.accelerators[0].guestAcceleratorCount
         elif template.guestAccelerators:
             template.gpu_type = template.guestAccelerators[0].acceleratorType
             template.gpu_count = template.guestAccelerators[0].acceleratorCount
@@ -1828,7 +1861,7 @@ class Lookup:
 
         # keep write access open for minimum time
         with self.template_cache(writeback=True) as cache:
-            cache[template_name] = template.to_dict()
+            cache[nodeset_name] = template.to_dict()
         # cache should be owned by slurm
         chown_slurm(self.template_cache_path)
 

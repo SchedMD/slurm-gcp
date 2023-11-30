@@ -55,11 +55,8 @@ def test_gpu_job(cluster, lkp):
     for part_name, partition in lkp.cfg.partitions.items():
         for nodeset_name in partition.partition_nodeset:
             nodeset = lkp.cfg.nodeset.get(nodeset_name)
-            template = lkp.template_info(nodeset.instance_template)
-            if (
-                template.gpu_count > 0
-                and not template.shieldedInstanceConfig.enableSecureBoot
-            ):
+            info = lkp.nodeset_template_info(nodeset.instance_template)
+            if info.gpu_count > 0 and not info.shieldedInstanceConfig.enableSecureBoot:
                 gpu_parts[part_name] = partition
     if not gpu_parts:
         pytest.skip("no gpu partitions found")
@@ -85,17 +82,14 @@ def test_shielded(image_marker, cluster: Cluster, lkp: Lookup):
     shielded_parts = {}
     for part_name, partition in lkp.cfg.partitions.items():
         has_gpus = any(
-            lkp.template_info(
-                lkp.cfg.nodeset.get(nodeset_name).instance_template
-            ).gpu_count
-            > 0
+            lkp.nodeset_template_info(lkp.cfg.nodeset.get(nodeset_name)).gpu_count > 0
             for nodeset_name in partition.partition_nodeset
         )
         if skip_gpus and has_gpus:
             continue
         for nodeset_name in partition.partition_nodeset:
             nodeset = lkp.cfg.nodeset.get(nodeset_name)
-            template = lkp.template_info(nodeset.instance_template)
+            template = lkp.nodeset_template_info(nodeset)
             if template.shieldedInstanceConfig.enableSecureBoot:
                 shielded_parts[part_name] = partition
                 partition.has_gpus = has_gpus
@@ -175,8 +169,8 @@ def test_preemption(cluster: Cluster, lkp: Lookup):
     for part_name, partition in lkp.cfg.partitions.items():
         for nodeset_name in partition.partition_nodeset:
             nodeset = lkp.cfg.nodeset.get(nodeset_name)
-            template = lkp.template_info(nodeset.instance_template)
-            if template.scheduling.preemptible:
+            info = lkp.nodeset_template_info(nodeset)
+            if info.scheduling.preemptible:
                 partitions.append(part_name)
                 break
 

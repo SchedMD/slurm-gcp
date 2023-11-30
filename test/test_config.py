@@ -14,19 +14,19 @@ log = logging.getLogger()
 def test_gpu_config(cluster, lkp):
     gpu_groups = {}
     for nodeset_name, nodeset in lkp.cfg.nodeset.items():
-        template = lkp.template_info(nodeset.instance_template)
-        if template.gpu_count > 0:
-            gpu_groups[lkp.nodeset_prefix(nodeset_name)] = template
+        info = lkp.nodeset_template_info(nodeset)
+        if info.gpu_count > 0:
+            gpu_groups[lkp.nodeset_prefix(nodeset_name)] = info
     if not gpu_groups:
         pytest.skip("no gpu partitions found")
         return
 
-    for prefix, template in gpu_groups.items():
+    for prefix, info in gpu_groups.items():
         node = cluster.get_node(f"{prefix}-0")
         count = next(g for g in node["gres"].split(",") if g.startswith("gpu")).split(
             ":"
         )[1]
-        assert int(count) == template.gpu_count
+        assert int(count) == info.gpu_count
 
 
 def test_ops_agent(cluster, lkp):
