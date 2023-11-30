@@ -793,10 +793,25 @@ def setup_compute(args):
     slurmctld_host = f"{lkp.control_host}"
     if lkp.control_addr:
         slurmctld_host = f"{lkp.control_host}({lkp.control_addr})"
-    slurmd_options = [
-        f"-N {lkp.hostname}",
-        f'--conf-server="{slurmctld_host}:{lkp.control_host_port}"',
-    ]
+
+    nodeset = lkp.node_nodeset()
+    multiplicity = nodeset.multiplicity or 1
+    if multiplicity > 1 and lkp.node_is_static():
+        slurmd_options = []
+
+        slurmd_service = Path("/usr/lib/systemd/system/slurmd.service")
+        param_service = slurmd_service.with_name("slurmd@.service")
+        content = slurmd_service.read_text()
+        content = re.sub(r"\$SLURMD_OPTIONS", lambda m: f"-N %i {m.group()}", content)
+        param_service.write_text(content)
+    else:
+        slurmd_options = [f"-N {lkp.hostname}"]
+
+    slurmd_options.extend(
+        [
+            f'--conf-server="{slurmctld_host}:{lkp.control_host_port}"',
+        ]
+    )
     if args.slurmd_feature is not None:
         slurmd_options.append(f'--conf="Feature={args.slurmd_feature}"')
         slurmd_options.append("-Z")
@@ -815,14 +830,26 @@ def setup_compute(args):
 
     setup_slurmd_cronjob()
     setup_sudoers()
+
     run("systemctl restart munge", timeout=30)
-    run("systemctl enable slurmd", timeout=30)
-    run("systemctl restart slurmd", timeout=30)
+
+    if multiplicity > 1 and lkp.node_is_static():
+        index = lkp.node_index()
+        for i in range(index, index + multiplicity):
+            nodename = lkp.nodeset_range_nodelist(nodeset, i, i)
+            log.info(f"starting slurmd@{nodename}")
+            run(f"systemctl enable slurmd@{nodename}", timeout=30)
+            run(f"systemctl restart slurmd@{nodename}", timeout=30)
+            run(f"systemctl status slurmd@{nodename}", timeout=30)
+    else:
+        run("systemctl enable slurmd", timeout=30)
+        run("systemctl restart slurmd", timeout=30)
+        run("systemctl status slurmd", timeout=30)
+
     run("systemctl enable --now slurmcmd.timer", timeout=30)
 
     log.info("Check status of cluster services")
     run("systemctl status munge", timeout=30)
-    run("systemctl status slurmd", timeout=30)
 
     log.info("Done setting up compute")
 

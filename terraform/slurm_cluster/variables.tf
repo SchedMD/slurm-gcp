@@ -282,6 +282,7 @@ variable "nodeset" {
     machine_type        = optional(string)
     metadata            = optional(map(string), {})
     min_cpu_platform    = optional(string)
+    multiplicity        = optional(number, 1)
     network_tier        = optional(string, "STANDARD")
     on_host_maintenance = optional(string)
     preemptible         = optional(bool, false)

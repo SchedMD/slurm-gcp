@@ -771,6 +771,14 @@ def to_hostlist(nodenames):
     return hostlist
 
 
+def node_range(count, start=0):
+    return (start, start + count - 1)
+
+
+def node_range_hostlist(start, end):
+    return f"{start}" if start == end else f"[{start}-{end}]"
+
+
 def part_is_tpu(part):
     """check if partition with name part contains a nodeset of type tpu"""
     return len(lkp.cfg.partitions[part].partition_nodeset_tpu) > 0
@@ -1481,31 +1489,41 @@ class Lookup:
     def nodeset_prefix(self, nodeset_name):
         return f"{self.cfg.slurm_cluster_name}-{nodeset_name}"
 
-    def nodeset_lists(self, nodeset):
-        """Return static and dynamic nodenames given a partition node type
-        definition
-        """
+    def nodeset_static_range(self, nodeset):
+        return node_range(nodeset.node_count_static, start=0)
 
-        def node_range(count, start=0):
-            end = start + count - 1
-            return f"{start}" if count == 1 else f"[{start}-{end}]", end + 1
-
+    def nodeset_range_nodelist(self, nodeset, start, end):
+        if start > end:
+            return None
         prefix = self.nodeset_prefix(nodeset.nodeset_name)
-        static_count = nodeset.node_count_static
-        dynamic_count = nodeset.node_count_dynamic_max
-        static_range, end = node_range(static_count) if static_count else (None, 0)
-        dynamic_range, _ = (
-            node_range(dynamic_count, start=end) if dynamic_count else (None, 0)
-        )
+        expr = node_range_hostlist(start, end)
+        return f"{prefix}-{expr}"
 
-        static_nodelist = f"{prefix}-{static_range}" if static_count else None
-        dynamic_nodelist = f"{prefix}-{dynamic_range}" if dynamic_count else None
-        return static_nodelist, dynamic_nodelist
+    def nodeset_static_nodelist(self, nodeset):
+        start, end = self.nodeset_static_range(nodeset)
+        return self.nodeset_range_nodelist(nodeset, start, end)
+
+    def nodeset_dynamic_range(self, nodeset):
+        _, end = self.nodeset_static_range(nodeset)
+        return node_range(nodeset.node_count_dynamic_max, start=end + 1)
+
+    def nodeset_dynamic_nodelist(self, nodeset):
+        start, end = self.nodeset_dynamic_range(nodeset)
+        return self.nodeset_range_nodelist(nodeset, start, end)
+
+    def nodeset_node_range(self, nodeset):
+        start, _ = self.nodeset_static_range(nodeset)
+        _, end = self.nodeset_dynamic_range(nodeset)
+        return (start, end)
+
+    def nodeset_nodelist(self, nodeset):
+        start, end = self.nodeset_node_range(nodeset)
+        return self.nodeset_range_nodelist(nodeset, start, end)
 
     @lru_cache(maxsize=1)
     def static_nodelist(self):
         static_nodesets = (
-            self.nodeset_lists(ns)[0]
+            self.nodeset_static_nodelist(ns)
             for ns in chain(self.cfg.nodeset.values(), self.cfg.nodeset_tpu.values())
         )
         return [static for static in static_nodesets if static is not None]
@@ -1543,16 +1561,11 @@ class Lookup:
         static_nodes = []
         dynamic_nodes = []
 
-        for nodeset in self.cfg.nodeset.values():
-            static, dynamic = self.nodeset_lists(nodeset)
+        for nodeset in chain(self.cfg.nodeset.values(), self.cfg.nodeset_tpu.values()):
+            static = self.nodeset_static_nodelist(nodeset)
             if static is not None:
                 static_nodes.extend(to_hostnames(static))
-            if dynamic is not None:
-                dynamic_nodes.extend(to_hostnames(dynamic))
-        for nodeset in self.cfg.nodeset_tpu.values():
-            static, dynamic = self.nodeset_lists(nodeset)
-            if static is not None:
-                static_nodes.extend(to_hostnames(static))
+            dynamic = self.nodeset_dynamic_nodelist(nodeset)
             if dynamic is not None:
                 dynamic_nodes.extend(to_hostnames(dynamic))
         return static_nodes, dynamic_nodes

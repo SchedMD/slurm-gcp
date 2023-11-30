@@ -205,6 +205,11 @@ def find_node_status(nodename):
         if "COMPLETING" in state.flags:
             return NodeStatus.unbacked
         if state.base != "DOWN" and not power_flags:
+            if nodename in find_node_status.static_nodeset:
+                nodeset = lkp.node_nodeset(nodename)
+                index = lkp.node_index(nodename)
+                if nodeset.multiplicity > 1 and index % nodeset.multiplicity != 0:
+                    return NodeStatus.unchanged
             return NodeStatus.unbacked
         if state.base == "DOWN" and not power_flags and allow_power_down(state):
             return NodeStatus.power_down

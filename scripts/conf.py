@@ -138,9 +138,31 @@ def loginlines():
     return "\n".join(lines)
 
 
+def split_range(mult, start, end):
+    return zip(
+        range(start, end + mult, mult), range(start + mult - 1, end + mult, mult)
+    )
+
+
+def split_node_groups(nodeset):
+    multiplicity = nodeset.multiplicity or 1
+    if multiplicity == 1:
+        yield None, lkp.nodeset_static_nodelist(nodeset), "dynamic"
+    else:
+        for start, end in split_range(multiplicity, *lkp.nodeset_static_range(nodeset)):
+            hostname = lkp.nodeset_range_nodelist(nodeset, start, start)
+            nodelist = lkp.nodeset_range_nodelist(nodeset, start, end)
+            yield hostname, nodelist, "static"
+    yield None, lkp.nodeset_dynamic_nodelist(nodeset), "dynamic"
+
+
 def nodeset_lines(nodeset, lkp=lkp):
     template_info = lkp.template_info(nodeset.instance_template)
     machine_conf = lkp.template_machine_conf(nodeset.instance_template)
+
+    gres = None
+    if template_info.gpu_count:
+        gres = f"gpu:{template_info.gpu_count}"
 
     node_def = dict_to_conf(
         {
@@ -152,34 +174,33 @@ def nodeset_lines(nodeset, lkp=lkp):
             "CoresPerSocket": machine_conf.cores_per_socket,
             "ThreadsPerCore": machine_conf.threads_per_core,
             "CPUs": machine_conf.cpus,
+            "Gres": gres,
             **nodeset.node_conf,
         }
     )
 
-    gres = None
-    if template_info.gpu_count:
-        gres = f"gpu:{template_info.gpu_count}"
-
     lines = [node_def]
-    static, dynamic = lkp.nodeset_lists(nodeset)
     # static or dynamic could be None, but Nones are filtered out of the lines
+    multiplicity = nodeset.multiplicity or 1
+    ports = "{}-{}".format(*util.node_range(multiplicity, start=6818))
+
     lines.extend(
         dict_to_conf(
             {
                 "NodeName": nodelist,
+                "NodeHostname": hostname,
+                "Port": ports if multiplicity > 1 and persist == "static" else None,
                 "State": "CLOUD",
-                "Gres": gres,
             }
         )
+        for hostname, nodelist, persist in split_node_groups(nodeset)
         if nodelist is not None
-        else None
-        for nodelist in [static, dynamic]
     )
     lines.append(
         dict_to_conf(
             {
                 "NodeSet": nodeset.nodeset_name,
-                "Nodes": ",".join(filter(None, (static, dynamic))),
+                "Nodes": lkp.nodeset_nodelist(nodeset),
             }
         )
     )
@@ -199,7 +220,8 @@ def nodeset_tpu_lines(nodeset, lkp=lkp):
     )
 
     lines = [node_def]
-    static, dynamic = lkp.nodeset_lists(nodeset)
+    static = lkp.nodeset_static_nodelist(nodeset)
+    dynamic = lkp.nodeset_dynamic_nodelist(nodeset)
     # static or dynamic could be None, but Nones are filtered out of the lines
     lines.extend(
         dict_to_conf(
@@ -410,7 +432,7 @@ def gen_cloud_gres_conf(lkp=lkp):
         gpu_count = template_info.gpu_count
         if gpu_count == 0:
             continue
-        gpu_nodes[gpu_count].extend(filter(None, lkp.nodeset_lists(nodeset)))
+        gpu_nodes[gpu_count].extend(lkp.nodeset_nodelist(nodeset))
 
     lines = [
         dict_to_conf(
@@ -443,7 +465,8 @@ def tpu_nodeset_switch_lines(lkp=lkp):
     g_switches = []
     for nodeset in lkp.cfg.nodeset_tpu.values():
         tpuobj = TPU(nodeset)
-        static, dynamic = lkp.nodeset_lists(nodeset)
+        static = lkp.nodeset_static_nodelist(nodeset)
+        dynamic = lkp.nodeset_dynamic_nodelist(nodeset)
         if tpuobj.vmcount == 1:
             line = {
                 "SwitchName": nodeset.nodeset_name,
@@ -493,7 +516,8 @@ def nodeset_switch_lines(nodeset, lkp=lkp):
     lines = []
 
     for nodeset in lkp.cfg.nodeset.values():
-        static, dynamic = lkp.nodeset_lists(nodeset)
+        static = lkp.nodeset_static_nodelist(nodeset)
+        dynamic = lkp.nodeset_dynamic_nodelist(nodeset)
         line = {
             "SwitchName": nodeset.nodeset_name,
             "Nodes": ",".join(filter(None, (static, dynamic))),

@@ -4,7 +4,7 @@
 
 ProctrackType=proctrack/cgroup
 SlurmctldPidFile=/var/run/slurm/slurmctld.pid
-SlurmdPidFile=/var/run/slurm/slurmd.pid
+SlurmdPidFile=/var/run/slurm/slurmd-%n.pid
 TaskPlugin=task/affinity,task/cgroup
 MaxNodeCount=64000
 
@@ -44,7 +44,7 @@ MpiDefault={mpi_default}
 ReturnToService=2
 SlurmctldPort={control_host_port}
 SlurmdPort=6818
-SlurmdSpoolDir=/var/spool/slurmd
+SlurmdSpoolDir=/var/spool/slurmd-%n
 SlurmUser=slurm
 StateSaveLocation={state_save}
 

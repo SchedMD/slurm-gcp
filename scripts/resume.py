@@ -172,9 +172,7 @@ def create_instances_request(nodes, partition_name, placement_group, job_id=None
         else None
     )
     # overwrites properties across all instances
-    body.instanceProperties = instance_properties(
-        nodeset, model, placement_group, labels
-    )
+    body.instanceProperties = instance_properties(nodeset, placement_group, labels)
 
     # key is instance name, value overwrites properties
     body.perInstanceProperties = {k: per_instance_properties(k) for k in nodes}
@@ -641,10 +639,32 @@ def get_resume_file_data():
     return NSDict(json.loads(resume_json))
 
 
+def collapse_multiple_nodes(nodes):
+    filtered_nodes = set()
+    for prefix, gnodes in util.groupby_unsorted(nodes, lkp.node_prefix):
+        gnodes = list(gnodes)
+        nodeset = lkp.node_nodeset(gnodes[0])
+        multiplicity = nodeset.multiplicity or 1
+        if multiplicity == 1:
+            filtered_nodes.update(gnodes)
+            continue
+        for node in gnodes:
+            if lkp.node_is_static(node):
+                index = lkp.node_index(node)
+                primary = index - index % multiplicity
+                filtered_nodes.add(
+                    lkp.nodeset_range_nodelist(nodeset, primary, primary)
+                )
+            else:
+                filtered_nodes.add(node)
+    return list(filtered_nodes)
+
+
 def main(nodelist, force=False):
     """main called when run as script"""
     log.debug(f"ResumeProgram {nodelist}")
     nodes = expand_nodelist(nodelist)
+    nodes = collapse_multiple_nodes(nodes)
 
     # Filter out nodes not in config.yaml
     cloud_nodes, local_nodes = lkp.filter_nodes(nodes)

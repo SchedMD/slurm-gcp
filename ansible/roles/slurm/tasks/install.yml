@@ -52,6 +52,7 @@
       --sysconfdir={{slurm_paths.etc}}
       --with-jwt={{slurm_paths.install}}
       --with-systemdsystemunitdir=/usr/lib/systemd/system/
+      --enable-multiple-slurmd
       > /dev/null
     chdir: '{{slurm_paths.build}}'
 

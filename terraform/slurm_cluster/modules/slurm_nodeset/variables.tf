@@ -86,6 +86,17 @@ EOD
   }
 }
 
+variable "multiplicity" {
+  description = "Number of slurmd processes to run per VM."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.multiplicity >= 1
+    error_message = "slurmd multiplicity must be >= 1"
+  }
+}
+
 variable "node_count_static" {
   description = "Number of nodes to be statically created."
   type        = number

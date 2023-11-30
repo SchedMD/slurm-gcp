@@ -51,6 +51,7 @@ locals {
     enable_placement = var.enable_placement
     enable_public_ip = var.enable_public_ip
     network_tier     = var.network_tier
+    multiplicity     = var.multiplicity
   }
 }
 
