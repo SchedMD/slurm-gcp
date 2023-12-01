@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - Upgrade installed Slurm to 23.02.6
 - Fix deprecation warning in google_secret_manager_secret.
+- Fix TPU delete_node API return message.
 
 ## \[6.2.0\]
 

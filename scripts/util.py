@@ -1091,7 +1091,6 @@ class TPU:
             "create": State.READY,
             "start": State.READY,
             "stop": State.STOPPED,
-            "delete": State.TERMINATED,
         }
 
         __tpu_version_mapping = {
@@ -1188,6 +1187,8 @@ class TPU:
         des_state = self.__expected_states.get(op_name)
         # If the state is not in the table just print the response
         if des_state is None:
+            return False
+        if response.__class__.__name__ != "Node":  # If the response is not a node fail
             return False
         if response.state == des_state:
             return True
@@ -1301,7 +1302,7 @@ class TPU:
         try:
             resp = self._client.delete_node(request=request).result()
             if resp:
-                return self.__check_resp(resp, "delete")
+                return self.get_node(nodename=nodename) is None
             return False
         except gExceptions.NotFound:
             # log only error if vmcount is 1 as for other tpu vm count, this could be "phantom" nodes
