@@ -1273,7 +1273,10 @@ class Lookup:
         return self.node_group(node_name).instance_template
 
     def node_template_info(self, node_name=None):
-        return self.template_info(self.node_template(node_name))
+        template = self.node_template(node_name)
+        if not template:
+            return None
+        return self.template_info(template)
 
     def node_region(self, node_name=None):
         partition = self.node_partition(node_name)
