@@ -107,6 +107,7 @@ locals {
         access_config            = n.access_config
         additional_disks         = n.additional_disks
         bandwidth_tier           = n.bandwidth_tier
+        additional_networks      = n.additional_networks
         can_ip_forward           = n.can_ip_forward
         node_count_dynamic_max   = n.node_count_dynamic_max
         node_count_static        = n.node_count_static
