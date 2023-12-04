@@ -813,6 +813,7 @@ def setup_compute(args):
 Restart=on-failure
 """
         )
+        run("systemctl daemon-reload", timeout=30)
     else:
         slurmd_options = [f"-N {lkp.hostname}"]
 

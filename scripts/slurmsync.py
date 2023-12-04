@@ -458,10 +458,12 @@ def reconfigure_slurm():
             util.run(f"wall '{update_msg}'", timeout=30)
             log.debug("Done.")
         elif lkp.instance_role_safe in ["compute", "login"]:
-            log.info("Restarting slurmd to make changes take effect.")
-            run("systemctl restart slurmd")
-            util.run(f"wall '{update_msg}'", timeout=30)
-            log.debug("Done.")
+            nodeset = lkp.node_nodeset()
+            if nodeset.multiplicity == 1:
+                log.info("Restarting slurmd to make changes take effect.")
+                run("systemctl restart slurmd")
+                util.run(f"wall '{update_msg}'", timeout=30)
+                log.debug("Done.")
 
 
 def main():
