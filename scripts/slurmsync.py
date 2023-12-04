@@ -196,6 +196,17 @@ def find_node_status(nodename):
         ("POWER_DOWN", "POWERING_UP", "POWERING_DOWN", "POWERED_DOWN")
     )
     if inst is None:
+        nodeset = lkp.node_nodeset(nodename)
+        index = lkp.node_index(nodename)
+        if (
+            nodeset.multiplicity > 1
+            and index % nodeset.multiplicity != 0
+            and nodename in find_node_status.static_nodeset
+        ):
+            if "POWERED_DOWN" in state.flags:
+                return NodeStatus.resume
+            else:
+                return NodeStatus.unchanged
         if "POWERING_UP" in state.flags:
             return NodeStatus.unchanged
         if state.base == "DOWN" and "POWERED_DOWN" in state.flags:
@@ -205,11 +216,6 @@ def find_node_status(nodename):
         if "COMPLETING" in state.flags:
             return NodeStatus.unbacked
         if state.base != "DOWN" and not power_flags:
-            if nodename in find_node_status.static_nodeset:
-                nodeset = lkp.node_nodeset(nodename)
-                index = lkp.node_index(nodename)
-                if nodeset.multiplicity > 1 and index % nodeset.multiplicity != 0:
-                    return NodeStatus.unchanged
             return NodeStatus.unbacked
         if state.base == "DOWN" and not power_flags and allow_power_down(state):
             return NodeStatus.power_down
