@@ -770,7 +770,7 @@ def setup_login(args):
     install_custom_scripts()
 
     setup_network_storage()
-    setup_slurmd_cronjob()
+    # setup_slurmd_cronjob()
     setup_sudoers()
     run("systemctl restart munge")
     run("systemctl enable slurmd", timeout=30)
@@ -804,6 +804,15 @@ def setup_compute(args):
         content = slurmd_service.read_text()
         content = re.sub(r"\$SLURMD_OPTIONS", lambda m: f"-N %i {m.group()}", content)
         param_service.write_text(content)
+
+        override = Path("/etc/systemd/system/slurmd@.service.d/override.conf")
+        override.parent.mkdirp()
+        override.write_text(
+            """
+[Service]
+Restart=on-failure
+"""
+        )
     else:
         slurmd_options = [f"-N {lkp.hostname}"]
 
