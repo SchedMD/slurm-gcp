@@ -728,8 +728,8 @@ def setup_controller(args):
     run("systemctl enable slurmctld", timeout=30)
     run("systemctl restart slurmctld", timeout=30)
 
-    run("systemctl enable slurmrestd", timeout=30)
-    run("systemctl restart slurmrestd", timeout=30)
+    # run("systemctl enable slurmrestd", timeout=30)
+    # run("systemctl restart slurmrestd", timeout=30)
 
     # Export at the end to signal that everything is up
     run("systemctl enable nfs-server", timeout=30)
@@ -742,7 +742,7 @@ def setup_controller(args):
     run("systemctl status munge", timeout=30)
     run("systemctl status slurmdbd", timeout=30)
     run("systemctl status slurmctld", timeout=30)
-    run("systemctl status slurmrestd", timeout=30)
+    # run("systemctl status slurmrestd", timeout=30)
 
     slurmsync.sync_slurm()
     run("systemctl enable slurm_load_bq.timer", timeout=30)
