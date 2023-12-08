@@ -489,7 +489,9 @@ def resume_nodes(nodes, resume_data=None):
 def update_job_comment(nodelist: list, comment: str):
     resume_data = global_resume_data
     if resume_data is None:
-        log.error("Cannot update and notify jobs with API failures.")
+        log.warning(
+            "Cannot update and notify jobs with API failures as no valid resume file is present."
+        )
         return
     if isinstance(nodelist, str):
         nodelist: list = util.to_hostnames(nodelist)
