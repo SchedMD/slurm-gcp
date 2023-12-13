@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## \[5.9.2\]
 
-- Upgrade slurm to 22.05.10
+- Upgrade slurm to 22.05.11
 - Fix slurmsync on reconfig when removing nodes.
 
 ## \[5.9.1\]

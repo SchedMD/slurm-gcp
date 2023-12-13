@@ -42,7 +42,7 @@ can be created and used instead.
 ### Installed Software for HPC
 
 - [Slurm](https://www.schedmd.com/downloads.php)
-  - 22.05.10
+  - 22.05.11
 - [lmod](https://lmod.readthedocs.io/en/latest/index.html)
 - [openmpi](https://www.open-mpi.org/)
   - v4.1.x
