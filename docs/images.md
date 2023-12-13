@@ -43,7 +43,7 @@ can be created and used instead.
 ### Installed Software for HPC
 
 - [Slurm](https://www.schedmd.com/downloads.php)
-  - 23.02.6
+  - 23.02.7
 - [lmod](https://lmod.readthedocs.io/en/latest/index.html)
 - [openmpi](https://www.open-mpi.org/)
   - v4.1.x
