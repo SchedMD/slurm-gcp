@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## \[6.2.1\]
+## \[6.3.0\]
 
 - Upgrade installed Slurm to 23.02.7
 - Fix deprecation warning in google_secret_manager_secret.

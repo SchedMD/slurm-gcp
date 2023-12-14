@@ -74,12 +74,12 @@ For the [TPU](./glossary.md#tpu) nodes docker images are also released.
 
 |       Project        | Image Family                        | Arch   | Status         |
 | :------------------: | :---------------------------------- | :----- | :------------- |
-| schedmd-slurm-public | slurm-gcp-6-2-debian-11             | x86_64 | Supported      |
-| schedmd-slurm-public | slurm-gcp-6-2-hpc-rocky-linux-8     | x86_64 | Supported      |
-| schedmd-slurm-public | slurm-gcp-6-2-ubuntu-2004-lts       | x86_64 | Supported      |
-| schedmd-slurm-public | slurm-gcp-6-2-ubuntu-2204-lts-arm64 | ARM64  | Supported      |
-| schedmd-slurm-public | slurm-gcp-6-2-hpc-centos-7-k80      | x86_64 | EOL 2024-05-01 |
-| schedmd-slurm-public | slurm-gcp-6-2-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
+| schedmd-slurm-public | slurm-gcp-6-3-debian-11             | x86_64 | Supported      |
+| schedmd-slurm-public | slurm-gcp-6-3-hpc-rocky-linux-8     | x86_64 | Supported      |
+| schedmd-slurm-public | slurm-gcp-6-3-ubuntu-2004-lts       | x86_64 | Supported      |
+| schedmd-slurm-public | slurm-gcp-6-3-ubuntu-2204-lts-arm64 | ARM64  | Supported      |
+| schedmd-slurm-public | slurm-gcp-6-3-hpc-centos-7-k80      | x86_64 | EOL 2024-05-01 |
+| schedmd-slurm-public | slurm-gcp-6-3-hpc-centos-7          | x86_64 | EOL 2024-01-01 |
 
 ### Published Docker Image Family
 
