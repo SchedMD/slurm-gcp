@@ -26,7 +26,7 @@ jedi==0.18.2; python_version >= '3.6'
 matplotlib-inline==0.1.6; python_version >= '3.5'
 more-executors==2.11.4
 packaging==23.1; python_version >= '3.7'
-paramiko==3.2.0
+paramiko==3.4.0
 parso==0.8.3; python_version >= '3.6'
 pexpect==4.8.0; sys_platform != 'win32'
 pickleshare==0.7.5
