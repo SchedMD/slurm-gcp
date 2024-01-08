@@ -346,6 +346,7 @@ variable "nodeset_tpu" {
     })
     tf_version   = string
     preemptible  = optional(bool, false)
+    reserved     = optional(bool, false)
     preserve_tpu = optional(bool, true)
     zone         = string
     data_disks   = optional(list(string), [])

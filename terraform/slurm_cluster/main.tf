@@ -234,6 +234,7 @@ module "slurm_nodeset_tpu" {
   accelerator_config     = each.value.accelerator_config
   tf_version             = each.value.tf_version
   preemptible            = each.value.preemptible
+  reserved               = each.value.reserved
   preserve_tpu           = each.value.preserve_tpu
   enable_public_ip       = each.value.enable_public_ip
   service_account        = each.value.service_account
