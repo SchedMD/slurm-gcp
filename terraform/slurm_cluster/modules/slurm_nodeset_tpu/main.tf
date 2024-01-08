@@ -61,6 +61,7 @@ locals {
     accelerator_config     = var.accelerator_config
     tf_version             = var.tf_version
     preemptible            = local.can_preempt ? var.preemptible : false
+    reserved               = var.reserved
     node_count_dynamic_max = var.node_count_dynamic_max
     node_count_static      = var.node_count_static
     enable_public_ip       = var.enable_public_ip
@@ -110,6 +111,10 @@ resource "null_resource" "nodeset_tpu" {
     precondition {
       condition     = sum([var.node_count_dynamic_max, var.node_count_static]) > 0
       error_message = "Sum of node_count_dynamic_max and node_count_static must be > 0."
+    }
+    precondition {
+      condition     = !(var.preemptible && var.reserved)
+      error_message = "Nodeset cannot be preemptible and reserved at the same time."
     }
     precondition {
       condition     = !(var.subnetwork == null && !var.enable_public_ip)
