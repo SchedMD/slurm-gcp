@@ -1149,6 +1149,10 @@ class TPU:
         return self._nodeset.preemptible
 
     @property
+    def reserved(self):
+        return self._nodeset.reserved
+
+    @property
     def service_account(self):
         return self._nodeset.service_account
 
@@ -1277,6 +1281,7 @@ class TPU:
             node.service_account.email = self.nodeset.service_account.email
             node.service_account.scope = self.nodeset.service_account.scopes
         node.scheduling_config.preemptible = self.preemptible
+        node.scheduling_config.reserved = self.reserved
         if self.nodeset.network:
             node.network_config.network = self.nodeset.network
         if self.nodeset.subnetwork:

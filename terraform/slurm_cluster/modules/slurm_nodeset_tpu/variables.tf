@@ -77,6 +77,12 @@ variable "preemptible" {
   default     = false
 }
 
+variable "reserved" {
+  description = "Specify whether TPU-vms in this nodeset are created under a reservation."
+  type        = bool
+  default     = false
+}
+
 variable "preserve_tpu" {
   description = "Specify whether TPU-vms will get preserve on suspend, if set to true, on suspend vm is stopped, on false it gets deleted"
   type        = bool
