@@ -68,8 +68,8 @@ build {
       "ANSIBLE_CONFIG=${local.ansible_dir}/ansible.cfg",
     ]
     extra_arguments = [
-      "--extra-vars",
-      "${jsonencode(local.ansible_vars)}",
+      "--extra-vars", "${jsonencode(local.ansible_vars)}",
+      "--scp-extra-args", "'-O'",
     ]
   }
   dynamic "provisioner" {
@@ -104,8 +104,8 @@ build {
       "ANSIBLE_CONFIG=${local.ansible_dir}/ansible.cfg",
     ]
     extra_arguments = [
-      "--extra-vars",
-      "${jsonencode(local.ansible_vars)}",
+      "--extra-vars", "${jsonencode(local.ansible_vars)}",
+      "--scp-extra-args", "'-O'",
     ]
   }
   post-processors {

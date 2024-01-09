@@ -114,7 +114,7 @@ parser.add_argument(
     "--gcp_version",
     "-g",
     dest="slurmgcp_version",
-    default="6.2.0",
+    default="6.3",
     help="The slurm_gcp version to use for the image.",
 )
 parser.add_argument(
@@ -194,6 +194,7 @@ for tf_version, docker_image in dock_build_data.items():
         with open("docker-manifest.json", "r") as f:
             data = json.load(f)
             image_name = data["builds"][0]["artifact_id"]
+        os.remove("docker-manifest.json")
         if image_name:
             print("Pushing the image")
             try:

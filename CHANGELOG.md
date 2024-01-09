@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - Add reserved property for nodeset_tpu
 - update lustre repository url
+- fix docker build issues
 
 ## \[6.3.0\]
 

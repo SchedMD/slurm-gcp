@@ -17,3 +17,5 @@ dependencies:
 - role: common
 - role: lmod
 - role: slurm
+  vars:
+    handle_services: false

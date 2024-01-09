@@ -19,4 +19,6 @@ dependencies:
 - role: mariadb
 - role: munge
 - role: cgroups
+  vars:
+    change_grub: false
 - role: libjwt
