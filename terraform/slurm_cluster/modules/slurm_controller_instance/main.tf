@@ -20,8 +20,8 @@
 
 locals {
   region = (
-    length(regexall("/regions/([^/]*)", var.subnetwork)) > 0
-    ? flatten(regexall("/regions/([^/]*)", var.subnetwork))[0]
+    length(regexall("/regions/([^/]*)", var.subnetwork != null ? var.subnetwork : "")) > 0
+    ? flatten(regexall("/regions/([^/]*)", var.subnetwork != null ? var.subnetwork : ""))[0]
     : var.region
   )
 

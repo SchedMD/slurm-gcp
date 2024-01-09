@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## \[5.10.1\]
+
+- Add maintenance_interval
+
 ## \[5.10.0\]
 
 - Upgrade slurm to 23.02.7
