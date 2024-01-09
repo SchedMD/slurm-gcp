@@ -319,14 +319,15 @@ EOD
         count = number
         type  = string
       })
-      instance_template   = string
-      labels              = map(string)
-      machine_type        = string
-      metadata            = map(string)
-      min_cpu_platform    = string
-      on_host_maintenance = string
-      preemptible         = bool
-      reservation_name    = string
+      instance_template    = string
+      labels               = map(string)
+      machine_type         = string
+      metadata             = map(string)
+      min_cpu_platform     = string
+      on_host_maintenance  = string
+      preemptible          = bool
+      reservation_name     = string
+      maintenance_interval = string
       service_account = object({
         email  = string
         scopes = list(string)
@@ -398,6 +399,7 @@ EOD
           on_host_maintenance      = null
           preemptible              = false
           reservation_name         = null
+          maintenance_interval     = null
           service_account          = null
           shielded_instance_config = null
           spot_instance_config     = null

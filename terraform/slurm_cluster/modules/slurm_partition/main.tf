@@ -58,6 +58,7 @@ locals {
       # Beta Features
       enable_spot_vm       = x.enable_spot_vm
       reservation_name     = x.reservation_name
+      maintenance_interval = x.maintenance_interval
       spot_instance_config = x.spot_instance_config != null ? x.spot_instance_config : local.spot_instance_config
     }
   }

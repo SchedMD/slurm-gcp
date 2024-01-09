@@ -386,17 +386,16 @@ def is_exclusive_node(node):
     )
 
 
-def reservation_placement(reservation):
+def reservation_resource_policies(reservation):
     """
-    Inspects reservation object, returns placement policy name if one is found.
+    Inspects reservation object, returns list of resource policies names.
+    Converts policy URLs to names, e.g.:
+    projects/111111/regions/us-central1/resourcePolicies/zebra -> zebra
     """
-    url = reservation.get("resourcePolicies", {}).get("placement")
-    if url:
-        return trim_self_link(url)
-    return None
+    return [u.split("/")[-1] for u in reservation.get("resourcePolicies", {}).values()]
 
 
-def compute_service(credentials=None, user_agent=USER_AGENT, version="v1"):
+def compute_service(credentials=None, user_agent=USER_AGENT, version="beta"):
     """Make thread-safe compute service handle
     creates a new Http for each request
     """

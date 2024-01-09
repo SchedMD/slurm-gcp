@@ -127,6 +127,7 @@ locals {
           enable_shielded_vm       = false
           enable_spot_vm           = false
           reservation_name         = null
+          maintenance_interval     = null
           gpu                      = null
           instance_template        = null
           labels                   = {}
@@ -182,6 +183,7 @@ locals {
           enable_shielded_vm     = false
           enable_spot_vm         = false
           reservation_name       = null
+          maintenance_interval   = null
           gpu = {
             count = 1
             type  = "nvidia-tesla-v100"

@@ -132,14 +132,26 @@ def instance_properties(partition, model, placement_group, labels=None):
             "key": "compute.googleapis.com/reservation-name",
             "values": [reservation_name],
         }
-        
-        placement = util.reservation_placement(reservation)
-        if placement:
-            props.resourcePolicies = [placement]
-            log.info(f"reservation {reservation_name} is being used with placement policy {placement}")
+
+        policies = util.reservation_resource_policies(reservation)
+        if policies:
+            props.scheduling = {
+                "onHostMaintenance": "TERMINATE",
+                "automaticRestart": False,
+            }
+            props.resourcePolicies = policies
+            log.info(
+                f"reservation {reservation_name} is being used with policies: {policies}"
+            )
         else:
             props.resourcePolicies = []
-            log.info(f"reservation {reservation_name} is being used without a placement policy")
+            log.info(
+                f"reservation {reservation_name} is being used without any policies"
+            )
+
+    if node_group.maintenance_interval:
+        props.scheduling = props.scheduling or {}
+        props.scheduling["maintenanceInterval"] = node_group.maintenance_interval
 
     return props
 
