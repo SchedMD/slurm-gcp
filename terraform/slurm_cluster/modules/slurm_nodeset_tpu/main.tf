@@ -112,6 +112,10 @@ resource "null_resource" "nodeset_tpu" {
       error_message = "Sum of node_count_dynamic_max and node_count_static must be > 0."
     }
     precondition {
+      condition     = !(var.preemptible && var.reserved)
+      error_message = "Nodeset cannot be preemptible and reserved at the same time."
+    }
+    precondition {
       condition     = !(var.subnetwork == null && !var.enable_public_ip)
       error_message = "Using the default subnetwork for the TPU nodeset requires enable_public_ip set to true."
     }
