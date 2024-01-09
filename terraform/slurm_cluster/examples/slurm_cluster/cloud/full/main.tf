@@ -121,6 +121,7 @@ locals {
         enable_shielded_vm       = n.enable_shielded_vm
         enable_spot_vm           = n.enable_spot_vm
         reservation_name         = n.reservation_name
+        maintenance_interval     = n.maintenance_interval
         gpu                      = n.gpu
         group_name               = n.group_name
         instance_template        = n.instance_template
