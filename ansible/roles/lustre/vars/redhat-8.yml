@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-lustre_repo_url: https://downloads.whamcloud.com/public/lustre/latest-release/el8.8/client
+lustre_repo_url: https://downloads.whamcloud.com/public/lustre/latest-release/el8.9/client
 
 lustre_packages:
 - lustre-client
