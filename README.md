@@ -1,17 +1,16 @@
 # Slurm on Google Cloud Platform
 
-#### NOTICE
+#### This repository is no longer actively developed
 
-##### 5.7.3
+6.3.1 is the last release on this repository. Active development will continue
+here:
 
-The naming scheme for SchedMD published images has changed with release 5.7.3.
-This is to ensure no incompatibilities between the terraform modules and old
-images that could be in the same family as a newer release. From now on, the
-image family includes the slurm-gcp major and minor version instead of the slurm
-version.
+https://github.com/GoogleCloudPlatform/slurm-gcp
 
-See [Images doc](./docs/images.md#published-image-family) for the latest
-published images.
+[Google HPC-Toolkit](https://github.com/GoogleCloudPlatform/hpc-toolkit) is the
+recommended way to use Slurm in GCP.
+
+______________________________________________________________________
 
 [FAQ](./docs/faq.md) | [Troubleshooting](./docs/troubleshooting.md) |
 [Glossary](./docs/glossary.md)
